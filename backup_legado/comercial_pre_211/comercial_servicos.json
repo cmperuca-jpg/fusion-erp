@@ -1,0 +1,50 @@
+[
+  {
+    "id": "srv_danca",
+    "nome": "Dança",
+    "modalidade": "Dança",
+    "descricao": "Serviço migrado a partir de turmas de Dança.",
+    "valorMensal": 50,
+    "valorPrePago": 80,
+    "valorDiarista": 30,
+    "status": "Ativo",
+    "criadoEm": "2026-07-02T17:23:54.521Z",
+    "atualizadoEm": "2026-07-02T21:49:23.469Z"
+  },
+  {
+    "id": "srv_funcional",
+    "nome": "Funcional",
+    "modalidade": "Funcional",
+    "descricao": "Serviço migrado a partir de turmas de Funcional.",
+    "valorMensal": 30,
+    "valorPrePago": 50,
+    "valorDiarista": 30,
+    "status": "Ativo",
+    "criadoEm": "2026-07-02T17:23:54.521Z",
+    "atualizadoEm": "2026-07-02T17:23:54.521Z"
+  },
+  {
+    "id": "srv_musculacao",
+    "nome": "Musculação",
+    "modalidade": "Musculação",
+    "descricao": "Serviço migrado a partir de turmas de Musculação.",
+    "valorMensal": 50,
+    "valorPrePago": 70,
+    "valorDiarista": 30,
+    "status": "Ativo",
+    "criadoEm": "2026-07-02T17:23:54.521Z",
+    "atualizadoEm": "2026-07-02T21:49:23.450Z"
+  },
+  {
+    "id": "srv_natacao",
+    "nome": "Natação",
+    "modalidade": "Natação",
+    "descricao": "Serviço migrado a partir de turmas de Natação.",
+    "valorMensal": 100,
+    "valorPrePago": 120,
+    "valorDiarista": 30,
+    "status": "Ativo",
+    "criadoEm": "2026-07-02T17:23:54.505Z",
+    "atualizadoEm": "2026-07-02T21:49:23.469Z"
+  }
+]

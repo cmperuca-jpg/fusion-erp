@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agenda - Fusion ERP</title>
+  <link rel="stylesheet" href="/css/components.css" />
+  <link rel="stylesheet" href="/pages/agenda/agenda.css" />
+  <link rel="stylesheet" href="/assets/css/fusion-app.css">
+  <script src="/assets/js/fusion-auth.js"></script>
+  <script>FusionAuth.proteger();</script>
+  <meta name="fusion-existing-pages" content="agenda,alunos,avaliacoes,bi,bi-academia,bi-academia-operacional,bi-financeiro,caixa,checkin,configuracoes,dashboard,estoque,exercicios,financeiro,login,matriculas,mensalidades,modalidades,modelos-treino,pagamentos,planos,presencas,professores,recebimentos,relatorios-caixa,treinos,turmas">
+</head>
+<body>
+  <main class="main">
+    <section class="page-actions">
+      <div>
+        <h2>Agenda de Aulas</h2>
+        <p>Controle diário, semanal e mensal das aulas, turmas e professores.</p>
+      </div>
+
+      <button class="btn-primary" id="btnNovaAula">
+        Nova Aula
+      </button>
+    </section>
+
+    <section class="dashboard-grid">
+      <div class="card kpi">
+        <span>Total de Aulas</span>
+        <strong id="kpiTotal">0</strong>
+        <small>Aulas cadastradas</small>
+      </div>
+
+      <div class="card kpi">
+        <span>Aulas Hoje</span>
+        <strong id="kpiHoje">0</strong>
+        <small>Agenda do dia</small>
+      </div>
+
+      <div class="card kpi">
+        <span>Ativas</span>
+        <strong id="kpiAtivas">0</strong>
+        <small>Aulas disponíveis</small>
+      </div>
+
+      <div class="card kpi">
+        <span>Canceladas</span>
+        <strong id="kpiCanceladas">0</strong>
+        <small>Aulas suspensas</small>
+      </div>
+    </section>
+
+    <section class="card filtros-agenda">
+      <input id="buscaProfessor" type="text" placeholder="Filtrar por professor" />
+
+      <select id="filtroStatus">
+        <option value="">Todos os status</option>
+        <option value="Ativa">Ativa</option>
+        <option value="Cancelada">Cancelada</option>
+        <option value="Concluída">Concluída</option>
+      </select>
+
+      <input id="filtroData" type="date" />
+
+      <button class="btn-secondary" id="btnFiltrar">Filtrar</button>
+      <button class="btn-light" id="btnLimpar">Limpar</button>
+    </section>
+
+    <section class="card">
+      <h2>Calendário Operacional</h2>
+
+      <div class="agenda-lista" id="listaAgenda"></div>
+    </section>
+  </main>
+
+  <div class="modal-overlay" id="modalAula">
+    <div class="modal">
+      <header class="modal-header">
+        <h2 id="modalTitulo">Nova Aula</h2>
+        <button id="btnFecharModal">×</button>
+      </header>
+
+      <form id="formAula" class="form-grid">
+        <input type="hidden" id="aulaId" />
+
+        <label>
+          Título
+          <input id="titulo" required placeholder="Ex: Natação Infantil" />
+        </label>
+
+        <label>
+          Modalidade
+          <input id="modalidade" required placeholder="Ex: Natação" />
+        </label>
+
+        <label>
+          Turma
+          <input id="turma" required placeholder="Ex: Infantil A" />
+        </label>
+
+        <label>
+          Professor
+          <input id="professor" required placeholder="Ex: Ana Paula" />
+        </label>
+
+        <label>
+          Sala
+          <input id="sala" placeholder="Ex: Piscina 1" />
+        </label>
+
+        <label>
+          Data
+          <input id="data" type="date" required />
+        </label>
+
+        <label>
+          Início
+          <input id="horaInicio" type="time" required />
+        </label>
+
+        <label>
+          Fim
+          <input id="horaFim" type="time" required />
+        </label>
+
+        <label>
+          Capacidade
+          <input id="capacidade" type="number" min="0" value="0" />
+        </label>
+
+        <label>
+          Inscritos
+          <input id="inscritos" type="number" min="0" value="0" />
+        </label>
+
+        <label>
+          Status
+          <select id="status">
+            <option value="Ativa">Ativa</option>
+            <option value="Cancelada">Cancelada</option>
+            <option value="Concluída">Concluída</option>
+          </select>
+        </label>
+
+        <label class="full">
+          Observações
+          <textarea id="observacoes" rows="3"></textarea>
+        </label>
+
+        <footer class="modal-actions full">
+          <button type="button" class="btn-light" id="btnCancelar">Cancelar</button>
+          <button type="submit" class="btn-primary">Salvar</button>
+        </footer>
+      </form>
+    </div>
+  </div>
+  <script src="/pages/agenda/agenda.js"></script>
+    <script src="/assets/js/fusion-layout.js"></script>
+</body>
+</html>

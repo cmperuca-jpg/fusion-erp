@@ -1,0 +1,10 @@
+Fusion ERP - Financeiro Parte 4.2
+Tela: Pagamentos / Contas a Pagar
+Pacote: ZIP 8
+
+Incrementos:
+- Modal de detalhes do pagamento.
+- Histórico/auditoria com movimentações, baixas, eventos ou fallback inferido.
+- Ações rápidas: detalhes, duplicar e baixar.
+- Duplicação de pagamento preservando fornecedor, categoria, centro de custo e valor.
+- Mantida a base do ZIP 7.

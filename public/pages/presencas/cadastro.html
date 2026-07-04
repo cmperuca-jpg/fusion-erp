@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fusion ERP - Check-in</title>
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/assets/css/fusion-app.css">
+  <script src="/assets/js/fusion-auth.js"></script>
+  <script>FusionAuth.proteger();</script>
+  <meta name="fusion-existing-pages" content="agenda,alunos,avaliacoes,bi,bi-academia,bi-academia-operacional,bi-financeiro,caixa,checkin,configuracoes,dashboard,estoque,exercicios,financeiro,login,matriculas,mensalidades,modalidades,modelos-treino,pagamentos,planos,presencas,professores,recebimentos,relatorios-caixa,treinos,turmas">
+</head>
+<body>
+
+<main class="main">
+
+<section class="card">
+
+  <div class="cadastro-header">
+    <div>
+      <h2 id="tituloCadastro">Novo Check-in</h2>
+      <p>Registre a entrada do aluno.</p>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="dados">Dados</button>
+    <button class="tab" data-tab="vinculos">Vínculos</button>
+    <button class="tab" data-tab="observacoes">Observações</button>
+  </div>
+
+  <form id="formPresenca">
+
+    <input type="hidden" id="presencaId">
+    <input type="hidden" id="matricula_id">
+
+    <div class="tab-content active" id="tab-dados">
+      <select id="aluno_id" required>
+        <option value="">Selecione o aluno</option>
+      </select>
+
+      <input id="data" type="date" required>
+      <input id="hora_entrada" type="time" required>
+      <input id="hora_saida" type="time">
+
+      <select id="tipo">
+        <option value="manual">Manual</option>
+        <option value="qr_code">QR Code</option>
+        <option value="biometria">Biometria</option>
+        <option value="recepcao">Recepção</option>
+      </select>
+
+      <select id="status">
+        <option value="presente">Presente</option>
+        <option value="saida">Saída registrada</option>
+        <option value="cancelado">Cancelado</option>
+      </select>
+    </div>
+
+    <div class="tab-content" id="tab-vinculos">
+      <select id="turma_id">
+        <option value="">Selecione a turma</option>
+      </select>
+
+      <select id="professor_id">
+        <option value="">Professor responsável</option>
+      </select>
+
+      <input id="responsavel" placeholder="Responsável pelo check-in">
+    </div>
+
+    <div class="tab-content" id="tab-observacoes">
+      <textarea id="observacoes" placeholder="Observações"></textarea>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit">Salvar</button>
+      <button type="button" onclick="history.back()">Cancelar</button>
+    </div>
+
+  </form>
+
+</section>
+
+</main>
+<script src="/js/tabs.js"></script>
+<script src="/js/modal.js"></script>
+<script src="/js/presencas/cadastro.js"></script>
+
+    <script src="/assets/js/fusion-layout.js"></script>
+</body>
+</html>

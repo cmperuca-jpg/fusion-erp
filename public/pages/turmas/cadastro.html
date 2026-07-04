@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fusion ERP - Cadastro de Turma</title>
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/assets/css/fusion-app.css">
+  <script src="/assets/js/fusion-auth.js"></script>
+  <script>FusionAuth.proteger();</script>
+  <meta name="fusion-existing-pages" content="agenda,alunos,avaliacoes,bi,bi-academia,bi-academia-operacional,bi-financeiro,caixa,checkin,configuracoes,dashboard,estoque,exercicios,financeiro,login,matriculas,mensalidades,modalidades,modelos-treino,pagamentos,planos,presencas,professores,recebimentos,relatorios-caixa,treinos,turmas">
+</head>
+<body>
+
+<main class="main">
+
+<section class="card">
+
+  <div class="cadastro-header">
+    <div>
+      <h2 id="tituloCadastro">Nova Turma</h2>
+      <p>Cadastre turmas, modalidades, horários e capacidade.</p>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="dados">Dados</button>
+    <button class="tab" data-tab="horarios">Horários</button>
+    <button class="tab" data-tab="observacoes">Observações</button>
+  </div>
+
+  <form id="formTurma">
+
+    <input type="hidden" id="turmaId">
+
+    <div class="tab-content active" id="tab-dados">
+      <input id="nome" placeholder="Nome da turma" required>
+
+      <select id="modalidade">
+        <option value="">Modalidade</option>
+        <option value="Musculação">Musculação</option>
+        <option value="Natação">Natação</option>
+        <option value="Funcional">Funcional</option>
+        <option value="Cross">Cross</option>
+        <option value="Lutas">Lutas</option>
+        <option value="Pilates">Pilates</option>
+        <option value="Dança">Dança</option>
+      </select>
+
+      <select id="professor_id">
+        <option value="">Professor responsável</option>
+      </select>
+
+      <input id="capacidade" placeholder="Capacidade de alunos">
+      <input id="sala_local" placeholder="Sala/Local">
+
+      <select id="status">
+        <option value="ativa">Ativa</option>
+        <option value="inativa">Inativa</option>
+        <option value="encerrada">Encerrada</option>
+      </select>
+    </div>
+
+    <div class="tab-content" id="tab-horarios">
+      <input id="dias_semana" placeholder="Dias da semana. Ex: Segunda, Quarta e Sexta">
+      <input id="hora_inicio" type="time">
+      <input id="hora_fim" type="time">
+      <input id="data_inicio" type="date">
+      <input id="data_fim" type="date">
+    </div>
+
+    <div class="tab-content" id="tab-observacoes">
+      <textarea id="observacoes" placeholder="Observações"></textarea>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit">Salvar</button>
+      <button type="button" onclick="history.back()">Cancelar</button>
+    </div>
+
+  </form>
+
+</section>
+
+</main>
+<script src="/js/tabs.js"></script>
+<script src="/js/modal.js"></script>
+<script src="/js/turmas/cadastro.js"></script>
+
+    <script src="/assets/js/fusion-layout.js"></script>
+</body>
+</html>

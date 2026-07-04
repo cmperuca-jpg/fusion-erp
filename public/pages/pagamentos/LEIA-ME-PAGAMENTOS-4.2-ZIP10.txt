@@ -1,0 +1,12 @@
+Fusion ERP - Financeiro Parte 4.2
+Tela: Pagamentos / Contas a Pagar
+Pacote: ZIP 10
+
+Incrementos:
+- Modal de resumo de pagamentos.
+- Resumo por status, categoria e centro de custo.
+- Exportação CSV do resumo.
+- Impressão do resumo.
+- Impressão geral da tela.
+- Comprovante simples de pagamento.
+- Mantida a base do ZIP 9.

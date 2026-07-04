@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fusion ERP - Ficha do Agendamento</title>
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/assets/css/fusion-app.css">
+  <script src="/assets/js/fusion-auth.js"></script>
+  <script>FusionAuth.proteger();</script>
+  <meta name="fusion-existing-pages" content="agenda,alunos,avaliacoes,bi,bi-academia,bi-academia-operacional,bi-financeiro,caixa,checkin,configuracoes,dashboard,estoque,exercicios,financeiro,login,matriculas,mensalidades,modalidades,modelos-treino,pagamentos,planos,presencas,professores,recebimentos,relatorios-caixa,treinos,turmas">
+</head>
+<body>
+
+<main class="main">
+
+<section class="card">
+
+  <div class="cadastro-header">
+    <div>
+      <h2 id="tituloAgendamento">Carregando...</h2>
+      <p>Ficha completa do agendamento.</p>
+    </div>
+  </div>
+
+  <div class="ficha-grid">
+    <p><b>Tipo:</b> <span id="tipo"></span></p>
+    <p><b>Data:</b> <span id="data"></span></p>
+    <p><b>Horário:</b> <span id="horario"></span></p>
+    <p><b>Aluno:</b> <span id="aluno"></span></p>
+    <p><b>Professor:</b> <span id="professor"></span></p>
+    <p><b>Local:</b> <span id="local"></span></p>
+    <p><b>Status:</b> <span id="status"></span></p>
+    <p><b>Recorrência:</b> <span id="recorrencia"></span></p>
+  </div>
+
+  <br>
+
+  <h3>Observações</h3>
+  <p id="observacoes"></p>
+
+  <div class="form-actions">
+    <button id="btnEditar">Editar</button>
+    <button onclick="window.print()">Imprimir</button>
+    <button onclick="window.location='/pages/agenda/'">Voltar</button>
+  </div>
+
+</section>
+
+</main>
+<script src="/js/agenda/ficha.js"></script>
+
+    <script src="/assets/js/fusion-layout.js"></script>
+</body>
+</html>

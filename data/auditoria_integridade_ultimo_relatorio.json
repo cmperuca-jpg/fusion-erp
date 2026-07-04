@@ -1,0 +1,154 @@
+{
+  "totais": {
+    "alunos": 17,
+    "alunosAtivos": 17,
+    "matriculas": 22,
+    "mensalidades": 37,
+    "financeiro": 49,
+    "recebimentos": 0,
+    "movimentosCaixa": 33
+  },
+  "problemas": {
+    "mensalidadesSemAluno": [
+      {
+        "id": "men_1782848690249_b5a9df",
+        "alunoId": "2541ef3d-f953-4b28-bc40-717c4f1748b7",
+        "competencia": "2026-06",
+        "status": "pago"
+      },
+      {
+        "id": "men_1782914486084_977770",
+        "alunoId": "2541ef3d-f953-4b28-bc40-717c4f1748b7",
+        "competencia": "2026-07",
+        "status": "pago"
+      },
+      {
+        "id": "men_1782919793276_341116",
+        "alunoId": "92f0d9f5-6cf4-446a-b361-ced035ab9ef0",
+        "competencia": "2026-07",
+        "status": "pago"
+      },
+      {
+        "id": "men_1782920546489_13024",
+        "alunoId": "1c6253b4-c50a-4cb4-b5a4-98684b05f4c9",
+        "competencia": "2026-07",
+        "status": "pago"
+      },
+      {
+        "id": "men_1782921437527_898278",
+        "alunoId": "4ee97a65-97a0-4f13-b1ab-b8a951cb1c4f",
+        "competencia": "2026-07",
+        "status": "pago"
+      },
+      {
+        "id": "men_1782934902120_300180",
+        "alunoId": "cc1bc20f-99d6-494a-89c0-4136d8d2c2cb",
+        "competencia": "2026-07",
+        "status": "pago"
+      },
+      {
+        "id": "men_auto_1782934916191_814134",
+        "alunoId": "cc1bc20f-99d6-494a-89c0-4136d8d2c2cb",
+        "competencia": "2026-08",
+        "status": "cancelado"
+      }
+    ],
+    "mensalidadesDeAlunoInativoAbertas": [],
+    "mensalidadesSemMatricula": [],
+    "financeiroSemAluno": [
+      {
+        "id": "fin_men_1782845490485_f043a2",
+        "alunoId": "2541ef3d-f953-4b28-bc40-717c4f1748b7",
+        "descricao": "Mensalidade marcos andre - 2026-07",
+        "status": "Pago"
+      },
+      {
+        "id": "fin_men_1782845797824_756136",
+        "alunoId": "2541ef3d-f953-4b28-bc40-717c4f1748b7",
+        "descricao": "Mensalidade marcos andre - 2026-06",
+        "status": "Pago"
+      },
+      {
+        "id": "fin_men_1782848690249_b5a9df",
+        "alunoId": "2541ef3d-f953-4b28-bc40-717c4f1748b7",
+        "descricao": "Mensalidade marcos andre - 2026-06",
+        "status": "Pago"
+      },
+      {
+        "id": "fin_1782914486084_613946",
+        "alunoId": "2541ef3d-f953-4b28-bc40-717c4f1748b7",
+        "descricao": "Matrícula inicial - marcos andre",
+        "status": "Pago"
+      },
+      {
+        "id": "fin_1782919793277_226390",
+        "alunoId": "92f0d9f5-6cf4-446a-b361-ced035ab9ef0",
+        "descricao": "Matrícula inicial - marieta neves",
+        "status": "Pago"
+      },
+      {
+        "id": "fin_1782920546489_376710",
+        "alunoId": "1c6253b4-c50a-4cb4-b5a4-98684b05f4c9",
+        "descricao": "Matrícula inicial - plinio vasconcelos",
+        "status": "Pago"
+      },
+      {
+        "id": "fin_men_1782919793276_341116",
+        "alunoId": "92f0d9f5-6cf4-446a-b361-ced035ab9ef0",
+        "descricao": "Mensalidade  - 2026-07",
+        "status": "Pago"
+      },
+      {
+        "id": "fin_men_1782920546489_13024",
+        "alunoId": "1c6253b4-c50a-4cb4-b5a4-98684b05f4c9",
+        "descricao": "Mensalidade  - 2026-07",
+        "status": "Pago"
+      },
+      {
+        "id": "fin_men_1782914486084_977770",
+        "alunoId": "2541ef3d-f953-4b28-bc40-717c4f1748b7",
+        "descricao": "Mensalidade  - 2026-07",
+        "status": "Pago"
+      },
+      {
+        "id": "fin_1782921437527_249404",
+        "alunoId": "4ee97a65-97a0-4f13-b1ab-b8a951cb1c4f",
+        "descricao": "Matrícula inicial - gabriel antunes",
+        "status": "Pago"
+      },
+      {
+        "id": "fin_men_1782921437527_898278",
+        "alunoId": "4ee97a65-97a0-4f13-b1ab-b8a951cb1c4f",
+        "descricao": "Mensalidade  - 2026-07",
+        "status": "Pago"
+      },
+      {
+        "id": "fin_1782934902121_601148",
+        "alunoId": "cc1bc20f-99d6-494a-89c0-4136d8d2c2cb",
+        "descricao": "Matrícula inicial - orfão teste",
+        "status": "Pago"
+      },
+      {
+        "id": "fin_men_auto_1782934916191_814134",
+        "alunoId": "cc1bc20f-99d6-494a-89c0-4136d8d2c2cb",
+        "descricao": "Mensalidade orfão teste - 2026-08",
+        "status": "Cancelado"
+      }
+    ],
+    "financeiroDeAlunoInativoAberto": [],
+    "financeiroSemMensalidade": [
+      {
+        "id": "fin_men_1782845490485_f043a2",
+        "mensalidadeId": "men_1782845490485_f043a2",
+        "status": "Pago"
+      },
+      {
+        "id": "fin_men_1782845797824_756136",
+        "mensalidadeId": "men_1782845797824_756136",
+        "status": "Pago"
+      }
+    ],
+    "recebimentosSemAluno": [],
+    "duplicidadeMensalidadeCompetencia": []
+  }
+}

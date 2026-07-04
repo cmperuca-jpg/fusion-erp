@@ -1,0 +1,57 @@
+.treinos-page{display:grid;gap:14px}.treino-header-card{background:#fff;border:1px solid #dbe3ef;border-radius:12px;padding:18px;display:flex;justify-content:space-between;align-items:center;gap:14px}.treino-header-card h2{margin:0 0 6px}.treino-header-card p{margin:0;color:#64748b}.treino-actions{display:flex;gap:8px}.treino-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.treino-kpis>div{background:#fff;border:1px solid #dbe3ef;border-radius:12px;padding:16px}.treino-kpis span{display:block;color:#64748b;font-size:13px}.treino-kpis strong{font-size:26px}.treino-toolbar{display:grid;grid-template-columns:1fr 220px 220px 160px;gap:12px}.field label{display:block;font-size:13px;font-weight:700;color:#334155;margin-bottom:6px}.field input,.field select,.field textarea{width:100%;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:8px;padding:9px 10px;font:inherit;background:#fff}.alert{padding:12px;border-radius:10px;border:1px solid #fecaca;background:#fef2f2;color:#991b1b}.alert.sucesso{border-color:#86efac;background:#f0fdf4;color:#166534}.hidden{display:none!important}.table-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.table-top h3{margin:0}.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse}th,td{border-bottom:1px solid #e2e8f0;padding:10px;text-align:left;vertical-align:middle}th{font-size:12px;color:#64748b;text-transform:uppercase}.text-right{text-align:right!important;white-space:nowrap}.btn-row,.btn-light{border:1px solid #cbd5e1;background:#fff;border-radius:7px;padding:8px 10px;cursor:pointer;color:#0f172a;text-decoration:none}.btn-row.danger{border-color:#fecaca;color:#991b1b}.modal-backdrop{position:fixed;inset:0;background:rgba(2,6,23,.58);display:flex;align-items:center;justify-content:center;z-index:70;padding:18px}.modal-card{width:min(1180px,98vw);max-height:92vh;overflow:auto;background:#fff;border-radius:14px;box-shadow:0 24px 80px rgba(0,0,0,.30)}.modal-head{display:flex;justify-content:space-between;align-items:center;padding:16px 18px;border-bottom:1px solid #e2e8f0}.modal-head h3{margin:0}.modal-head button{border:0;background:#f1f5f9;border-radius:8px;font-size:22px;width:34px;height:34px;cursor:pointer}.treino-form{padding:18px;display:grid;gap:14px}.form-section-title{font-weight:800;color:#0f172a;border-left:4px solid #ff6600;padding-left:10px}.grid-3{display:grid;grid-template-columns:1fr 1fr 180px;gap:12px}.modal-actions{display:flex;justify-content:flex-end;gap:10px}.treino-exercicios-head{padding-top:6px;border-top:1px solid #e2e8f0}.exercicios-box{display:grid;gap:10px}.exercicio-item{border:1px solid #e2e8f0;background:#f8fafc;border-radius:10px;padding:12px}.exercicio-grid{display:grid;grid-template-columns:1.3fr 120px 90px 110px 100px 100px 100px 1fr 42px;gap:8px;align-items:end}.badge{display:inline-flex;padding:5px 9px;border-radius:999px;background:#e2e8f0;color:#334155;font-size:12px;font-weight:700;text-transform:capitalize}.status-ativo{background:#dcfce7;color:#166534}.status-vencido{background:#fef3c7;color:#92400e}.status-cancelado{background:#fee2e2;color:#991b1b}@media(max-width:1100px){.exercicio-grid{grid-template-columns:1fr 1fr 1fr}.treino-toolbar{grid-template-columns:1fr 1fr}}@media(max-width:850px){.treino-kpis,.treino-toolbar,.grid-3,.exercicio-grid{grid-template-columns:1fr}.treino-header-card{flex-direction:column;align-items:flex-start}}
+
+.btn-row.primary{border-color:#ff6600;color:#9a3d00;font-weight:700}.btn-row:disabled{opacity:.45;cursor:not-allowed}.execucao-modal{width:min(1040px,96vw)}.exec-resumo{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.exec-resumo>div,.exec-prescricao>div{border:1px solid #e2e8f0;border-radius:10px;background:#f8fafc;padding:10px}.exec-resumo span,.exec-prescricao span,.exec-head span{display:block;font-size:12px;color:#64748b}.exec-resumo strong,.exec-prescricao strong{display:block;margin-top:3px;color:#0f172a}.exec-box{display:grid;gap:12px}.exec-item{border:1px solid #dbe3ef;border-radius:12px;padding:14px;background:#fff}.exec-item.concluido{background:#f8fafc}.exec-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:12px}.exec-head h4{margin:3px 0 0;font-size:18px}.exec-prescricao{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}.exec-inputs{display:grid;grid-template-columns:1fr 1fr 1.4fr auto;gap:10px;align-items:end}@media(max-width:900px){.exec-resumo,.exec-prescricao,.exec-inputs{grid-template-columns:1fr}.exec-head{flex-direction:column}}
+
+/* Fusion ERP 2.6-B2 */
+.exec-progress-card{grid-column:span 2}.exec-progress{height:10px;background:#e2e8f0;border-radius:999px;overflow:hidden;margin-top:8px}.exec-progress i{display:block;height:100%;background:#ff6600;border-radius:999px}.exec-navegador{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}.exec-dot{width:36px;height:36px;border-radius:999px;border:1px solid #cbd5e1;background:#fff;cursor:pointer;font-weight:800}.exec-dot.ativo{border-color:#ff6600;color:#9a3d00;background:#fff7ed}.exec-dot.feito{border-color:#86efac;background:#f0fdf4;color:#166534}.exec-atual{border:1px solid #dbe3ef;border-radius:14px;background:#fff;padding:16px}.exec-atual.concluido{background:#f8fafc}.exec-inputs-b2{grid-template-columns:1fr 1fr 1.4fr}.exec-descanso-card{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid #e2e8f0;background:#f8fafc;border-radius:12px;padding:12px;margin:12px 0}.exec-descanso-card span{display:block;font-size:12px;color:#64748b}.exec-descanso-card strong{display:block;font-size:26px;color:#0f172a}.exec-nav-actions{display:flex;justify-content:space-between;gap:10px;align-items:center}.exec-nav-actions button:disabled{opacity:.45;cursor:not-allowed}@media(max-width:900px){.exec-progress-card{grid-column:span 1}.exec-inputs-b2,.exec-nav-actions{grid-template-columns:1fr;display:grid}.exec-descanso-card{align-items:stretch;flex-direction:column}}
+
+/* Fusion ERP 2.6-C */
+.progressao-card{border:1px solid #fed7aa;background:#fff7ed;border-radius:12px;padding:12px;margin:12px 0}.progressao-head{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.progressao-head>div{background:#fff;border:1px solid #ffedd5;border-radius:10px;padding:10px}.progressao-card span{display:block;font-size:12px;color:#9a3412}.progressao-card strong{display:block;margin-top:3px;color:#0f172a}.progressao-card p{margin:10px 0;color:#7c2d12}.progressao-mini-historico{display:grid;gap:6px}.progressao-mini-historico span{background:#fff;border:1px solid #ffedd5;border-radius:8px;padding:7px;color:#334155}@media(max-width:900px){.progressao-head{grid-template-columns:1fr}}
+
+
+/* Fusion ERP 2.6.1-L - modo Portal do Professor - rolagem corrigida */
+html.embed-mode,
+body.embed-mode{
+  background:#fff;
+  min-height:100%;
+  overflow:auto!important;
+}
+body.embed-mode .fusion-shell{display:none!important}
+body.embed-mode #modal:not(.hidden),
+body.embed-mode #modalExecucao:not(.hidden){
+  position:static!important;
+  inset:auto!important;
+  background:#fff!important;
+  padding:0!important;
+  display:block!important;
+  min-height:auto!important;
+  height:auto!important;
+  overflow:visible!important;
+}
+body.embed-mode .modal-card{
+  width:100%!important;
+  max-width:none!important;
+  height:auto!important;
+  max-height:none!important;
+  min-height:auto!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  overflow:visible!important;
+}
+body.embed-mode .modal-head{
+  position:sticky;
+  top:0;
+  background:#fff;
+  z-index:5;
+}
+body.embed-mode .treino-form{padding:16px 16px 110px}
+body.embed-mode .modal-actions{
+  position:sticky;
+  bottom:0;
+  background:#fff;
+  border-top:1px solid #e2e8f0;
+  padding:12px 0;
+  z-index:6;
+}
+body.embed-mode .modal-backdrop.hidden{display:none!important}
+body.embed-mode .exercicios-box{padding-bottom:80px}

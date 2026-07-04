@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fusion ERP - Professores</title>
+  <link rel="stylesheet" href="/assets/css/fusion-app.css">
+  <link rel="stylesheet" href="/assets/css/fusion-menu-global.css">
+  <link rel="stylesheet" href="./style.css">
+  <script src="/assets/js/fusion-auth.js"></script>
+  <script>FusionAuth.proteger();</script>
+  <meta name="fusion-existing-pages" content="agenda,alunos,avaliacoes,bi,bi-academia,bi-academia-operacional,bi-financeiro,caixa,checkin,configuracoes,dashboard,estoque,exercicios,financeiro,login,matriculas,mensalidades,modalidades,modelos-treino,pagamentos,planos,presencas,professores,recebimentos,relatorios-caixa,treinos,turmas">
+</head>
+<body>
+<div class="fusion-shell">
+<main class="fusion-main">
+    <header class="fusion-topbar">
+      <div class="fusion-title">Professores</div>
+      <div><span data-fusion-user></span> <button onclick="FusionAuth.sair()">Sair</button></div>
+    </header>
+
+    <section class="fusion-content professores-page">
+      <div class="prof-header-card">
+        <div>
+          <h2>Gestão de Professores</h2>
+          <p>Cadastro, CREF, especialidades, agenda, turmas e prontuário profissional.</p>
+        </div>
+        <div class="prof-actions">
+          <button class="fusion-button secondary" id="btnAtualizar" type="button">Atualizar</button>
+          <button class="fusion-button" id="btnNovo" type="button">Novo professor</button>
+        </div>
+      </div>
+
+      <div class="prof-kpis">
+        <div><span>Total</span><strong id="kpiTotal">0</strong></div>
+        <div><span>Ativos</span><strong id="kpiAtivos">0</strong></div>
+        <div><span>Modalidades</span><strong id="kpiModalidades">0</strong></div>
+        <div><span>CREF informado</span><strong id="kpiCref">0</strong></div>
+      </div>
+
+      <div class="fusion-card toolbar">
+        <div class="field"><label for="busca">Pesquisar</label><input id="busca" placeholder="Nome, CPF, CREF, modalidade ou especialidade"></div>
+        <div class="field"><label for="filtroStatus">Status</label><select id="filtroStatus"><option value="">Todos</option><option value="ativo">Ativo</option><option value="inativo">Inativo</option><option value="cancelado">Cancelado</option></select></div>
+      </div>
+
+      <div id="alerta" class="alert hidden"></div>
+
+      <div class="fusion-card">
+        <div class="table-top"><h3>Professores cadastrados</h3><span id="contador">0 registro(s)</span></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Nome</th><th>CREF</th><th>Contato</th><th>Especialidades</th><th>Status</th><th class="text-right">Ações</th></tr></thead>
+            <tbody id="tabela"><tr><td colspan="6">Carregando...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="modal-backdrop hidden" id="modal">
+  <div class="modal-card modal-large">
+    <div class="modal-head">
+      <h3 id="modalTitulo">Novo professor</h3>
+      <button id="btnFechar" type="button" aria-label="Fechar">×</button>
+    </div>
+
+    <div class="tabs" role="tablist">
+      <button class="tab active" data-tab="cadastro" type="button">Cadastro</button>
+      <button class="tab" data-tab="profissional" type="button">Profissional</button>
+      <button class="tab" data-tab="agenda" type="button">Agenda</button>
+      <button class="tab" data-tab="financeiro" type="button">Financeiro</button>
+      <button class="tab" data-tab="documentos" type="button">Documentos</button>
+      <button class="tab" data-tab="prontuario" type="button">Prontuário</button>
+    </div>
+
+    <form id="form" class="prof-form">
+      <input type="hidden" id="id">
+
+      <section class="tab-panel active" id="tab-cadastro">
+        <div class="grid-2"><div class="field"><label for="nome">Nome completo *</label><input id="nome" required></div><div class="field"><label for="status">Status</label><select id="status"><option value="Ativo">Ativo</option><option value="Inativo">Inativo</option><option value="Cancelado">Cancelado</option></select></div></div>
+        <div class="grid-3"><div class="field"><label for="cpf">CPF</label><input id="cpf"></div><div class="field"><label for="rg">RG</label><input id="rg"></div><div class="field"><label for="dataNascimento">Nascimento</label><input id="dataNascimento" type="date"></div></div>
+        <div class="grid-3"><div class="field"><label for="telefone">Telefone</label><input id="telefone"></div><div class="field"><label for="whatsapp">WhatsApp</label><input id="whatsapp"></div><div class="field"><label for="email">E-mail</label><input id="email" type="email"></div></div>
+        <div class="grid-3"><div class="field"><label for="cep">CEP</label><input id="cep"></div><div class="field"><label for="cidade">Cidade</label><input id="cidade"></div><div class="field"><label for="estado">Estado</label><input id="estado" maxlength="2"></div></div>
+        <div class="field"><label for="endereco">Endereço</label><input id="endereco"></div>
+      </section>
+
+      <section class="tab-panel" id="tab-profissional">
+        <div class="grid-3"><div class="field"><label for="cref">CREF</label><input id="cref"></div><div class="field"><label for="tipoContrato">Tipo de contrato</label><select id="tipoContrato"><option value="">Não informado</option><option>CLT</option><option>Prestador</option><option>Autônomo</option><option>Parceria</option></select></div><div class="field"><label for="valorHora">Valor hora</label><input id="valorHora" inputmode="decimal"></div></div>
+        <div class="grid-2"><div class="field"><label for="especialidade">Especialidade principal</label><input id="especialidade"></div><div class="field"><label for="dataAdmissao">Data de admissão</label><input id="dataAdmissao" type="date"></div></div>
+        <div class="grid-2"><div class="field"><label for="especialidades">Especialidades</label><input id="especialidades" placeholder="Musculação, Funcional, Natação"></div><div class="field"><label for="modalidades">Modalidades</label><input id="modalidades" placeholder="Musculação, Natação"></div></div>
+        <div class="field"><label for="observacoes">Observações profissionais</label><textarea id="observacoes" rows="4"></textarea></div>
+      </section>
+
+      <section class="tab-panel" id="tab-agenda">
+        <div class="grid-3"><div class="field"><label for="diasTrabalho">Dias de trabalho</label><input id="diasTrabalho" placeholder="Segunda, Quarta, Sexta"></div><div class="field"><label for="horarioInicio">Início</label><input id="horarioInicio" type="time"></div><div class="field"><label for="horarioFim">Fim</label><input id="horarioFim" type="time"></div></div>
+        <div id="agendaResumo" class="mini-panel">Salve ou selecione um professor para carregar agenda e turmas.</div>
+      </section>
+
+      <section class="tab-panel" id="tab-financeiro">
+        <div class="grid-3"><div class="field"><label for="banco">Banco</label><input id="banco"></div><div class="field"><label for="agencia">Agência</label><input id="agencia"></div><div class="field"><label for="conta">Conta</label><input id="conta"></div></div>
+        <div class="field"><label for="chavePix">Chave PIX</label><input id="chavePix"></div>
+      </section>
+
+      <section class="tab-panel" id="tab-documentos">
+        <div class="grid-2"><div class="field"><label for="nomeDocumento">Nome do documento</label><input id="nomeDocumento"></div><div class="field"><label for="arquivoDocumento">Arquivo</label><input id="arquivoDocumento" type="file"></div></div>
+        <button type="button" class="btn-light" id="btnAdicionarDoc">Adicionar documento</button>
+        <div id="listaDocs" class="docs-list"></div>
+      </section>
+
+      <section class="tab-panel" id="tab-prontuario">
+        <div id="prontuario">Selecione um professor para carregar o prontuário.</div>
+      </section>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-light" id="btnImprimir">Imprimir</button>
+        <button type="button" class="btn-light" id="btnCancelar">Cancelar</button>
+        <button type="submit" class="fusion-button" id="btnSalvar">Salvar professor</button>
+      </div>
+    </form>
+  </div>
+</div>
+<script src="./index.js"></script>
+  <script src="/assets/js/fusion-ciclo-professor-aluno.js"></script>
+  <script src="/assets/js/fusion-menu-global.js"></script>
+    <script src="/assets/js/fusion-layout.js"></script>
+</body>
+</html>

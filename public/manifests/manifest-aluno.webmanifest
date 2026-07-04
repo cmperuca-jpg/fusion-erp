@@ -1,0 +1,37 @@
+{
+  "name": "Fusion ERP Aluno",
+  "short_name": "Aluno",
+  "description": "Fusion ERP Aluno instalado como app no Chrome Android e Safari iOS.",
+  "start_url": "/pages/portal-aluno/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#16a34a",
+  "lang": "pt-BR",
+  "categories": [
+    "business",
+    "productivity",
+    "health"
+  ],
+  "icons": [
+    {
+      "src": "/assets/pwa/icons/fusion-aluno-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/pwa/icons/fusion-aluno-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/pwa/icons/fusion-aluno-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

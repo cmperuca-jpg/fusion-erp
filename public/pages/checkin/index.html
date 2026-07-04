@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Check-in - Fusion ERP</title>
+  <link rel="stylesheet" href="/css/components.css" />
+  <link rel="stylesheet" href="/pages/checkin/checkin.css" />
+  <link rel="stylesheet" href="/assets/css/fusion-app.css">
+  <script src="/assets/js/fusion-auth.js"></script>
+  <script>FusionAuth.proteger();</script>
+  <meta name="fusion-existing-pages" content="agenda,alunos,avaliacoes,bi,bi-academia,bi-academia-operacional,bi-financeiro,caixa,checkin,configuracoes,dashboard,estoque,exercicios,financeiro,login,matriculas,mensalidades,modalidades,modelos-treino,pagamentos,planos,presencas,professores,recebimentos,relatorios-caixa,treinos,turmas">
+</head>
+<body>
+  <main class="main">
+    <section class="page-actions">
+      <div>
+        <h2>Check-in</h2>
+        <p>Controle de entrada, saída, presença, bloqueios de acesso e início automático do treino de musculação.</p>
+      </div>
+
+      <button class="btn-primary" id="btnNovoCheckin">
+        Novo Check-in
+      </button>
+    </section>
+
+    <section class="dashboard-grid">
+      <div class="card kpi">
+        <span>Total</span>
+        <strong id="kpiTotal">0</strong>
+        <small>Registros cadastrados</small>
+      </div>
+
+      <div class="card kpi">
+        <span>Hoje</span>
+        <strong id="kpiHoje">0</strong>
+        <small>Entradas do dia</small>
+      </div>
+
+      <div class="card kpi">
+        <span>Liberados</span>
+        <strong id="kpiLiberados">0</strong>
+        <small>Acessos permitidos</small>
+      </div>
+
+      <div class="card kpi">
+        <span>Bloqueados</span>
+        <strong id="kpiBloqueados">0</strong>
+        <small>Acessos negados</small>
+      </div>
+    </section>
+
+    <section class="card painel-checkin">
+      <div>
+        <h2>Entrada rápida</h2>
+        <p>Check-in inteligente por matrícula, CPF, QR Code ou código do aluno, validando matrícula, financeiro, frequência e treino ativo.</p>
+      </div>
+
+      <div class="entrada-rapida">
+        <input id="entradaCodigo" placeholder="Digite matrícula, CPF, QR Code ou código do aluno" />
+        <button class="btn-secondary" id="btnEntradaRapida">Registrar</button>
+      </div>
+    </section>
+
+    <section class="card filtros-checkin">
+      <input id="busca" placeholder="Buscar aluno, matrícula, plano, modalidade ou professor" />
+
+      <select id="filtroStatus">
+        <option value="">Todos os status</option>
+        <option value="Liberado">Liberado</option>
+        <option value="Bloqueado">Bloqueado</option>
+      </select>
+
+      <input id="filtroData" type="date" />
+
+      <button class="btn-secondary" id="btnFiltrar">Filtrar</button>
+      <button class="btn-light" id="btnLimpar">Limpar</button>
+    </section>
+
+    <section class="card">
+      <h2>Histórico de Check-in</h2>
+
+      <div class="tabela-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Aluno</th>
+              <th>Matrícula</th>
+              <th>Plano</th>
+              <th>Modalidade</th>
+              <th>Data</th>
+              <th>Entrada</th>
+              <th>Saída</th>
+              <th>Status</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+
+          <tbody id="tabelaCheckin"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <div class="modal-overlay" id="modalCheckin">
+    <div class="modal">
+      <header class="modal-header">
+        <h2 id="modalTitulo">Novo Check-in</h2>
+        <button id="btnFecharModal">×</button>
+      </header>
+
+      <form id="formCheckin" class="form-grid">
+        <input type="hidden" id="registroId" />
+
+        <label>
+          Aluno
+          <select id="aluno" required>
+            <option value="">Carregando alunos...</option>
+          </select>
+        </label>
+
+        <label>
+          Matrícula
+          <select id="matricula" required>
+            <option value="">Selecione o aluno</option>
+          </select>
+        </label>
+
+        <label>
+          Plano
+          <select id="plano">
+            <option value="">Selecione o aluno</option>
+          </select>
+        </label>
+
+        <label>
+          Modalidade
+          <select id="modalidade">
+            <option value="Musculação">Musculação</option>
+          </select>
+        </label>
+
+        <label>
+          Turma
+          <select id="turma">
+            <option value="">Carregando turmas...</option>
+          </select>
+        </label>
+
+        <label>
+          Professor
+          <select id="professor">
+            <option value="">Carregando professores...</option>
+          </select>
+        </label>
+
+        <label>
+          Data
+          <input id="data" type="date" />
+        </label>
+
+        <label>
+          Hora de entrada
+          <input id="horaEntrada" type="time" />
+        </label>
+
+        <label>
+          Hora de saída
+          <input id="horaSaida" type="time" />
+        </label>
+
+        <label>
+          Tipo
+          <select id="tipo">
+            <option value="Manual">Manual</option>
+            <option value="QR Code">QR Code</option>
+            <option value="Senha">Senha</option>
+            <option value="Cartão">Cartão</option>
+            <option value="Biometria">Biometria</option>
+          </select>
+        </label>
+
+        <label>
+          Status
+          <select id="status">
+            <option value="Liberado">Liberado</option>
+            <option value="Bloqueado">Bloqueado</option>
+          </select>
+        </label>
+
+        <label class="full">
+          Observações
+          <textarea id="observacoes" rows="3"></textarea>
+        </label>
+
+        <footer class="modal-actions full">
+          <button type="button" class="btn-light" id="btnCancelar">Cancelar</button>
+          <button type="submit" class="btn-primary">Salvar</button>
+        </footer>
+      </form>
+    </div>
+  </div>
+  <script src="/assets/js/fusion-layout.js"></script>
+  <script src="/pages/checkin/checkin.js"></script>
+</body>
+</html>

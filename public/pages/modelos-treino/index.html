@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fusion ERP - Modelos de Treino</title>
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/assets/css/fusion-app.css">
+  <script src="/assets/js/fusion-auth.js"></script>
+  <script>FusionAuth.proteger();</script>
+  <meta name="fusion-existing-pages" content="agenda,alunos,avaliacoes,bi,bi-academia,bi-academia-operacional,bi-financeiro,caixa,checkin,configuracoes,dashboard,estoque,exercicios,financeiro,login,matriculas,mensalidades,modalidades,modelos-treino,pagamentos,planos,presencas,professores,recebimentos,relatorios-caixa,treinos,turmas">
+</head>
+<body>
+
+<main class="main">
+
+<section class="card">
+
+  <div class="cadastro-header">
+    <div>
+      <h2>Modelos de Treino</h2>
+      <p>Crie modelos reutilizáveis para aplicar rapidamente aos alunos.</p>
+    </div>
+  </div>
+
+  <form id="formModelo">
+
+    <input type="hidden" id="modeloId">
+
+    <div class="tab-content active">
+
+      <input id="nome" placeholder="Nome do modelo. Ex: Hipertrofia A" required>
+
+      <input id="objetivo" placeholder="Objetivo. Ex: Hipertrofia">
+
+      <select id="categoria">
+        <option value="">Categoria</option>
+        <option value="Hipertrofia">Hipertrofia</option>
+        <option value="Emagrecimento">Emagrecimento</option>
+        <option value="Condicionamento">Condicionamento</option>
+        <option value="Funcional">Funcional</option>
+        <option value="Iniciante">Iniciante</option>
+        <option value="Idosos">Idosos</option>
+        <option value="Natação">Natação</option>
+      </select>
+
+      <select id="nivel">
+        <option value="">Nível</option>
+        <option value="Iniciante">Iniciante</option>
+        <option value="Intermediário">Intermediário</option>
+        <option value="Avançado">Avançado</option>
+      </select>
+
+      <select id="status">
+        <option value="ativo">Ativo</option>
+        <option value="inativo">Inativo</option>
+      </select>
+
+      <textarea id="descricao" placeholder="Descrição do modelo"></textarea>
+
+    </div>
+
+    <br>
+
+    <h3>Adicionar exercício ao modelo</h3>
+
+    <div class="filtros">
+      <input id="buscaExercicio" placeholder="Pesquisar exercício">
+
+      <select id="filtroGrupoExercicio">
+        <option value="">Todos os grupos</option>
+        <option value="Peito">Peito</option>
+        <option value="Costas">Costas</option>
+        <option value="Ombros">Ombros</option>
+        <option value="Bíceps">Bíceps</option>
+        <option value="Tríceps">Tríceps</option>
+        <option value="Abdômen">Abdômen</option>
+        <option value="Quadríceps">Quadríceps</option>
+        <option value="Posterior">Posterior</option>
+        <option value="Glúteos">Glúteos</option>
+        <option value="Panturrilhas">Panturrilhas</option>
+        <option value="Cardio">Cardio</option>
+      </select>
+
+      <button type="button" onclick="filtrarExercicios()">Buscar</button>
+      <button type="button" onclick="limparBuscaExercicios()">Limpar</button>
+    </div>
+
+    <div id="resultadoExercicios"></div>
+
+    <br>
+
+    <h3>Exercícios do modelo</h3>
+
+    <div id="listaModelo"></div>
+
+    <div class="form-actions">
+      <button type="submit">Salvar Modelo</button>
+      <button type="button" onclick="limparModelo()">Novo</button>
+    </div>
+
+  </form>
+
+</section>
+
+<br>
+
+<section class="card">
+
+  <h2>Aplicar modelo a aluno</h2>
+
+  <div class="filtros">
+    <select id="modeloAplicar">
+      <option value="">Selecione o modelo</option>
+    </select>
+
+    <select id="alunoAplicar">
+      <option value="">Selecione o aluno</option>
+    </select>
+
+    <button type="button" onclick="aplicarModeloAoAluno()">Aplicar ao aluno</button>
+  </div>
+
+</section>
+
+<br>
+
+<section class="card">
+  <h2>Modelos cadastrados</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Modelo</th>
+        <th>Objetivo</th>
+        <th>Categoria</th>
+        <th>Nível</th>
+        <th>Status</th>
+        <th>Exercícios</th>
+        <th width="240">Ações</th>
+      </tr>
+    </thead>
+    <tbody id="tabelaModelos"></tbody>
+  </table>
+</section>
+
+</main>
+<script src="/js/modal.js"></script>
+
+<script src="/js/modelos-treino/util.js"></script>
+<script src="/js/modelos-treino/api.js"></script>
+<script src="/js/modelos-treino/exercicios.js"></script>
+<script src="/js/modelos-treino/montador.js"></script>
+<script src="/js/modelos-treino/lista.js"></script>
+<script src="/js/modelos-treino/index.js"></script>
+
+    <script src="/assets/js/fusion-layout.js"></script>
+</body>
+</html>

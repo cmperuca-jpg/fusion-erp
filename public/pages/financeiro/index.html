@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Financeiro - Fusion ERP</title>
+  <link rel="stylesheet" href="/css/components.css" />
+  <link rel="stylesheet" href="/pages/financeiro/financeiro.css" />
+  <link rel="stylesheet" href="/assets/css/fusion-app.css">
+  <script src="/assets/js/fusion-auth.js"></script>
+  <script>FusionAuth.proteger();</script>
+  <meta name="fusion-existing-pages" content="agenda,alunos,avaliacoes,bi,bi-academia,bi-academia-operacional,bi-financeiro,caixa,checkin,configuracoes,dashboard,estoque,exercicios,financeiro,login,matriculas,mensalidades,modalidades,modelos-treino,pagamentos,planos,presencas,professores,recebimentos,relatorios-caixa,treinos,turmas">
+</head>
+<body>
+  <main class="main">
+    <section class="page-actions">
+      <div>
+        <h2>Financeiro</h2>
+        <p>Contas a receber, contas a pagar, fluxo de caixa e saldo previsto.</p>
+      </div>
+
+      <div class="page-action-buttons">
+        <button class="btn-light" id="btnTaxasCartao" type="button">Taxas de recebimento</button>
+        <button class="btn-primary" id="btnNovoLancamento" type="button">
+          Novo Lançamento
+        </button>
+      </div>
+    </section>
+
+    <section class="financeiro-kpis">
+      <div class="card kpi">
+        <span>Receita líquida recebida</span>
+        <strong id="kpiReceitasPagas">R$ 0,00</strong>
+        <small>Valor que realmente entrou</small>
+      </div>
+
+      <div class="card kpi">
+        <span>Receitas em Aberto</span>
+        <strong id="kpiReceitasAbertas">R$ 0,00</strong>
+        <small>Valores a receber</small>
+      </div>
+
+      <div class="card kpi">
+        <span>Taxas financeiras</span>
+        <strong id="kpiDespesasAbertas">R$ 0,00</strong>
+        <small>Custos de operadora</small>
+      </div>
+
+      <div class="card kpi">
+        <span>Saldo líquido previsto</span>
+        <strong id="kpiSaldoPrevisto">R$ 0,00</strong>
+        <small>Receitas menos despesas</small>
+      </div>
+    </section>
+
+    <section class="card filtros-financeiro">
+      <input id="busca" placeholder="Buscar descrição, categoria, centro de custo ou pessoa" />
+
+      <select id="filtroTipo">
+        <option value="">Todos os tipos</option>
+        <option value="receber">A receber</option>
+        <option value="pagar">A pagar</option>
+      </select>
+
+      <select id="filtroStatus">
+        <option value="">Todos os status</option>
+        <option value="Aberto">Aberto</option>
+        <option value="Pago">Pago</option>
+        <option value="Cancelado">Cancelado</option>
+      </select>
+
+      <button class="btn-secondary" id="btnFiltrar">Filtrar</button>
+      <button class="btn-light" id="btnLimpar">Limpar</button>
+    </section>
+
+    <section class="card">
+      <h2>Lançamentos Financeiros</h2>
+
+      <div class="tabela-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Tipo</th>
+              <th>Descrição</th>
+              <th>Categoria</th>
+              <th>Pessoa/Fornecedor</th>
+              <th>Vencimento</th>
+              <th>Valor cobrado</th>
+              <th>Valor pago</th>
+              <th>Taxa</th>
+              <th>Recebido</th>
+              <th>Status</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+
+          <tbody id="tabelaFinanceiro"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <div class="modal-overlay" id="modalFinanceiro">
+    <div class="modal">
+      <header class="modal-header">
+        <h2 id="modalTitulo">Novo Lançamento</h2>
+        <button id="btnFecharModal">×</button>
+      </header>
+
+      <form id="formFinanceiro" class="form-grid">
+        <input type="hidden" id="lancamentoId" />
+
+        <label>
+          Tipo
+          <select id="tipo">
+            <option value="receber">A receber</option>
+            <option value="pagar">A pagar</option>
+          </select>
+        </label>
+
+        <label>
+          Status
+          <select id="status">
+            <option value="Aberto">Aberto</option>
+            <option value="Pago">Pago</option>
+            <option value="Cancelado">Cancelado</option>
+          </select>
+        </label>
+
+        <label class="full">
+          Descrição
+          <input id="descricao" required placeholder="Ex: Mensalidade aluno" />
+        </label>
+
+        <label>
+          Categoria
+          <input id="categoria" placeholder="Ex: Mensalidades" />
+        </label>
+
+        <label>
+          Centro de custo
+          <input id="centroCusto" placeholder="Ex: Academia" />
+        </label>
+
+        <label>
+          Aluno/Fornecedor
+          <input id="alunoFornecedor" placeholder="Nome do aluno ou fornecedor" />
+        </label>
+
+        <label>
+          Valor
+          <input id="valor" type="number" step="0.01" min="0" required />
+        </label>
+
+        <label>
+          Vencimento
+          <input id="vencimento" type="date" required />
+        </label>
+
+        <label>
+          Pagamento
+          <input id="pagamento" type="date" />
+        </label>
+
+        <label>
+          Forma de pagamento
+          <select id="formaPagamento">
+            <option value="">Não informado</option>
+            <option value="Dinheiro">Dinheiro</option>
+            <option value="PIX">PIX</option>
+            <option value="Cartão de Crédito">Cartão de Crédito</option>
+            <option value="Cartão de Débito">Cartão de Débito</option>
+            <option value="Boleto">Boleto</option>
+            <option value="Transferência">Transferência</option>
+          </select>
+        </label>
+
+        <label class="full">
+          Observações
+          <textarea id="observacoes" rows="3"></textarea>
+        </label>
+
+        <footer class="modal-actions full">
+          <button type="button" class="btn-light" id="btnCancelar">Cancelar</button>
+          <button type="submit" class="btn-primary">Salvar</button>
+        </footer>
+      </form>
+    </div>
+  </div>
+
+
+
+  <div class="modal-overlay" id="modalBaixaFinanceiro">
+    <div class="modal modal-baixa">
+      <header class="modal-header">
+        <h2>Confirmar recebimento</h2>
+        <button id="btnFecharBaixa" type="button">×</button>
+      </header>
+
+      <div class="resumo-baixa" id="resumoBaixa">
+        Carregando dados do lançamento...
+      </div>
+
+      <form id="formBaixaFinanceiro" class="form-grid">
+        <input type="hidden" id="baixaLancamentoId" />
+        <input type="hidden" id="baixaMensalidadeId" />
+
+        <label>
+          Valor devido
+          <input id="baixaValorDevido" type="number" step="0.01" min="0" readonly />
+        </label>
+
+        <label>
+          Valor pago *
+          <input id="baixaValorPago" type="number" step="0.01" min="0.01" required />
+        </label>
+
+        <label>
+          Data do pagamento
+          <input id="baixaDataPagamento" type="date" required />
+        </label>
+
+        <label>
+          Forma de pagamento
+          <select id="baixaFormaPagamento" required>
+            <option value="Dinheiro">Dinheiro</option>
+            <option value="PIX">PIX</option>
+            <option value="Cartão de Débito">Cartão de Débito</option>
+            <option value="Cartão de Crédito">Cartão de Crédito</option>
+            <option value="Boleto">Boleto</option>
+            <option value="Transferência">Transferência</option>
+          </select>
+        </label>
+
+        <div class="full painel-cartao" id="painelCartao" hidden>
+          <div class="painel-cartao-head">
+            <div>
+              <strong>Taxas do recebimento</strong>
+              <span>Selecione cartão, PIX ou boleto para calcular taxa percentual, taxa fixa e valor líquido.</span>
+            </div>
+            <button class="btn-light" id="btnAbrirTaxasNoRecebimento" type="button">Configurar taxas</button>
+          </div>
+          <div class="grid-cartao">
+            <label>
+              Bandeira
+              <select id="baixaBandeiraCartao"></select>
+            </label>
+            <label>
+              Modalidade
+              <select id="baixaModalidadeCartao">
+                <option value="debito">Débito</option>
+                <option value="credito">Crédito</option>
+                <option value="pix">PIX</option>
+                <option value="boleto">Boleto</option>
+              </select>
+            </label>
+            <label>
+              Parcelas
+              <select id="baixaParcelasCartao"></select>
+            </label>
+            <label>
+              Taxa %
+              <input id="baixaTaxaPercentual" type="number" step="0.01" min="0" />
+            </label>
+            <label>
+              Taxa fixa R$
+              <input id="baixaTaxaFixa" type="number" step="0.01" min="0" />
+            </label>
+          </div>
+          <div class="resultado-cartao">
+            <div><span>Valor bruto</span><strong id="calcValorBruto">R$ 0,00</strong></div>
+            <div><span>Taxa operadora</span><strong id="calcTaxaValor">R$ 0,00</strong></div>
+            <div class="liquido"><span>Valor líquido</span><strong id="calcValorLiquido">R$ 0,00</strong></div>
+          </div>
+        </div>
+
+        <label>
+          Desconto
+          <input id="baixaDesconto" type="number" step="0.01" min="0" value="0" />
+        </label>
+
+        <label>
+          Acréscimo/Juros
+          <input id="baixaJuros" type="number" step="0.01" min="0" value="0" />
+        </label>
+
+        <label class="full">
+          Observação
+          <textarea id="baixaObservacao" rows="3" placeholder="Opcional"></textarea>
+        </label>
+
+        <footer class="modal-actions full">
+          <button type="button" class="btn-light" id="btnCancelarBaixa">Cancelar</button>
+          <button type="submit" class="btn-primary" id="btnConfirmarBaixa">Confirmar pagamento</button>
+        </footer>
+      </form>
+    </div>
+  </div>
+
+
+
+  <div class="modal-overlay" id="modalTaxasCartao">
+    <div class="modal modal-taxas">
+      <header class="modal-header">
+        <h2>Configurar taxas de recebimento</h2>
+        <button id="btnFecharTaxas" type="button">×</button>
+      </header>
+      <p class="texto-apoio">Valores de teste para cartões, PIX recebido e boleto emitido. Ajuste depois para as taxas reais da sua operadora/banco.</p>
+      <div class="taxas-actions">
+        <button type="button" class="btn-light" id="btnAdicionarTaxa">Adicionar taxa</button>
+        <button type="button" class="btn-secondary" id="btnRestaurarTaxas">Restaurar taxas de teste</button>
+      </div>
+      <div class="tabela-container tabela-taxas">
+        <table>
+          <thead>
+            <tr>
+              <th>Bandeira</th>
+              <th>Modalidade</th>
+              <th>Parcelas</th>
+              <th>Taxa %</th>
+              <th>Taxa fixa R$</th>
+              <th>Descrição</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tabelaTaxasCartao"></tbody>
+        </table>
+      </div>
+      <footer class="modal-actions full">
+        <button type="button" class="btn-light" id="btnCancelarTaxas">Cancelar</button>
+        <button type="button" class="btn-primary" id="btnSalvarTaxas">Salvar taxas</button>
+      </footer>
+    </div>
+  </div>
+  <script src="/pages/financeiro/financeiro.js"></script>
+    <script src="/assets/js/fusion-layout.js"></script>
+</body>
+</html>

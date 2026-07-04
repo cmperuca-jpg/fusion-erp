@@ -1,0 +1,33 @@
+{
+  "ok": true,
+  "criadoEm": "2026-07-02T12:01:57.094Z",
+  "raizProjeto": "C:\\Users\\academia01\\Desktop\\site erp (2)\\site erp",
+  "pastaArquivada": "_arquivados_fora_producao_2026-07-02T12-01-56-729Z",
+  "arquivosAntes": 546,
+  "arquivosDepois": 340,
+  "itensMovidos": [
+    "AJUSTE_SERVER_SE_NECESSARIO.txt",
+    "INSTRUCOES_RESET_BASE_TESTE.txt",
+    "LEIA-ME-ETAPA1.txt",
+    "LEIA-ME_LAYOUT_UNICO_V3.txt",
+    "LEIA-ME_LAYOUT_UNICO_V4.txt",
+    "LEIA_CORRECOES_PRIMARIAS.txt",
+    "README.txt",
+    "README_LAYOUT_GLOBAL.txt",
+    "README_LAYOUT_LOGIN_PUBLICO_V1.txt",
+    "README_MENU_V3.txt",
+    "README_MENU_V4.txt",
+    "backend",
+    "backup_layout_global_componentizado_2026-07-02T02-37-13-954Z",
+    "backups",
+    "data - Copia",
+    "data\\backups",
+    "frontend",
+    "fusion_reset_base_teste_v1.zip",
+    "public/assets/css/fusion-app.css.bak-menu-v4-1782959331682",
+    "public/assets/js/fusion-layout.js.bak-menu-v4-1782959331693",
+    "routes",
+    "server.mjs.backup-relatorio-1782939417088",
+    "server.zip"
+  ]
+}

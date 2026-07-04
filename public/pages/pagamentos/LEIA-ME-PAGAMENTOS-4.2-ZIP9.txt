@@ -1,0 +1,11 @@
+Fusion ERP - Financeiro Parte 4.2
+Tela: Pagamentos / Contas a Pagar
+Pacote: ZIP 9
+
+Incrementos:
+- Dashboard de pagamentos.
+- Resumo por categoria.
+- Resumo por centro de custo.
+- Lista de próximos vencimentos.
+- Dashboard respeita filtros aplicados.
+- Mantida a base do ZIP 8.

@@ -1,0 +1,109 @@
+.avaliacoes-page,.aval-page{display:grid;gap:14px}.fusion-menu a.active{background:#ff6600;color:#fff}.aval-header-card{background:#fff;border:1px solid #dbe3ef;border-radius:12px;padding:18px;display:flex;justify-content:space-between;align-items:center}.aval-header-card h2{margin:0 0 6px}.aval-header-card p{margin:0;color:#64748b}.aval-actions{display:flex;gap:8px}.aval-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.aval-kpis>div{background:#fff;border:1px solid #dbe3ef;border-radius:12px;padding:16px}.aval-kpis span{display:block;color:#64748b;font-size:13px}.aval-kpis strong{font-size:26px}.aval-toolbar{display:grid;grid-template-columns:1fr 220px 180px auto;gap:12px}.field label{display:block;font-size:13px;font-weight:700;color:#334155;margin-bottom:6px}.field input,.field select,.field textarea,.sca-panel input,.sca-panel select,.sca-panel textarea{width:100%;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:6px;padding:8px 9px;font:inherit;background:#fff}.alert{padding:12px;border-radius:10px;border:1px solid #fecaca;background:#fef2f2;color:#991b1b}.alert.sucesso{border-color:#86efac;background:#f0fdf4;color:#166534}.hidden{display:none!important}.table-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.table-top h3{margin:0}.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse}th,td{border-bottom:1px solid #e2e8f0;padding:10px;text-align:left}th{font-size:12px;color:#64748b;text-transform:uppercase}.text-right{text-align:right!important}.btn-row,.btn-light{border:1px solid #cbd5e1;background:#fff;border-radius:7px;padding:8px 10px;cursor:pointer;color:#0f172a;text-decoration:none}.btn-row.danger{border-color:#fecaca;color:#991b1b}.modal-backdrop{position:fixed;inset:0;background:rgba(2,6,23,.58);display:flex;align-items:center;justify-content:center;z-index:60;padding:18px}.modal-avaliacao{width:min(1120px,98vw);height:min(92vh,820px);overflow:auto;background:#fff;border:3px solid #1261dc;border-radius:8px;box-shadow:0 24px 80px rgba(0,0,0,.30)}.sca-titlebar{background:#1261dc;color:#fff;padding:8px 12px;display:flex;justify-content:space-between;align-items:center}.sca-titlebar button{background:#ef4444;color:#fff;border:0;border-radius:4px;font-size:18px;width:34px;height:30px;cursor:pointer}.aval-form{display:block}.sca-topline{display:grid;grid-template-columns:110px 1fr 160px 140px 110px;gap:8px;padding:12px 18px 8px;align-items:end}.professor-lock{margin:0 18px 8px;padding:9px 10px;background:#f8fafc;border:1px solid #dbe3ef;border-radius:8px;color:#334155}.sca-tabs{display:flex;gap:2px;padding:0 18px;border-bottom:1px solid #cbd5e1;background:#eef2f7;overflow-x:auto}.tab{border:1px solid #94a3b8;background:linear-gradient(#fff,#e5edf6);border-radius:6px 6px 0 0;padding:7px 13px;cursor:pointer;color:#0f172a;white-space:nowrap;font-weight:600}.tab.active{background:#fff;color:#ff6600;border-bottom-color:#fff}.tab-panel{display:none;padding:18px}.tab-panel.active{display:block}.sca-panel{border:1px solid #cbd5e1;background:#fff;padding:16px;border-radius:2px}.sca-panel h4{margin:0 0 12px;color:#005bbb}.two-col{display:grid;grid-template-columns:1.1fr .9fr;gap:18px}.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.sca-panel label{display:block;font-weight:700;color:#334155;margin-bottom:12px}.sca-panel label input,.sca-panel label select,.sca-panel label textarea{margin-top:5px}.parq-list{display:grid;gap:8px}.parq-item{display:grid;grid-template-columns:1fr 70px 70px;gap:8px;padding:8px;border-bottom:1px solid #e2e8f0;align-items:center}.parq-item label{margin:0;font-weight:500}.warn{color:#dc2626;font-weight:700}.risco-grid{display:grid;gap:12px}.resultado-card{border:1px solid #e2e8f0;border-radius:4px;background:#f8fafc;padding:16px;min-height:260px}.risk-meter{height:170px;width:14px;background:#e5e7eb;margin:20px auto;border-radius:10px;display:flex;align-items:flex-end;overflow:hidden}.risk-meter div{width:100%;background:#ff6600;height:4%}.risk-score{text-align:center;margin:8px}.risk-score span{display:block;color:#64748b}.risk-score strong{font-size:26px;color:#005bbb}.info{margin-top:10px;text-align:center;color:#0066cc}.perimetros-layout{display:grid;grid-template-columns:1.35fr .75fr;gap:18px}.perimetros-list{max-height:520px;overflow:auto;padding-right:6px}.measure-row{display:grid;gap:8px;align-items:center;border-bottom:1px solid #f1f5f9;padding:8px;background:#fafafa}.measure-row.single{grid-template-columns:180px 110px}.measure-row.pair{grid-template-columns:180px 65px 90px 75px 90px}.measure-row label{margin:0;text-align:right;color:#334155}.measure-row input{text-align:right;font-size:18px;font-weight:700}.measure-row.req label{color:#005bbb}.rcq-value,.sum-value{text-align:center;margin:30px 0}.rcq-value span,.sum-value span{display:block;color:#64748b}.rcq-value strong,.sum-value strong{font-size:32px;color:#005bbb}.subtabs{display:flex;gap:4px;margin:18px 0 12px;border-bottom:1px solid #cbd5e1}.subtab{border:1px solid #cbd5e1;background:#fff;border-radius:5px 5px 0 0;padding:8px 12px;cursor:pointer}.subtab.active{border-bottom-color:#fff;color:#ff6600;font-weight:700}.subpanel{display:none}.subpanel.active{display:block}.result-row{margin-top:16px}.inline-options{display:flex;gap:14px;align-items:center;margin:12px 0}.inline-options label{margin:0;font-weight:500}.protocol-list{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:28px}.protocol-list label{font-weight:500}.neuro-list{display:grid;gap:18px}.neuro-item{display:grid;grid-template-columns:220px 180px 1fr;align-items:center;gap:20px;border:1px solid #e2e8f0;padding:16px}.neuro-item strong{display:block;color:#005bbb}.neuro-item span{font-size:13px;color:#64748b}.neuro-item label{margin:0}.neuro-item input{font-size:20px;font-weight:700;text-align:right}.postural-panel{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.postural-card strong{display:block;margin-bottom:8px}.foto-postural{height:280px;border:1px solid #94a3b8;display:grid;place-items:center;color:#64748b;background:#fff;margin-bottom:8px;text-align:center}.foto-postural img{width:100%;height:100%;object-fit:cover}.relatorio-preview{border:1px solid #e2e8f0;border-radius:8px;background:#fff;padding:18px;min-height:260px}.timeline-item{display:flex;gap:14px;flex-wrap:wrap;border-bottom:1px solid #e2e8f0;padding:10px 0}.modal-actions{position:sticky;bottom:0;background:#fff;border-top:1px solid #e2e8f0;display:flex;justify-content:flex-end;gap:10px;padding:12px 18px}@media(max-width:980px){.sca-topline,.two-col,.perimetros-layout,.grid-2,.grid-3,.grid-4,.aval-kpis,.aval-toolbar,.postural-panel,.neuro-item{grid-template-columns:1fr}.measure-row.single,.measure-row.pair{grid-template-columns:1fr 1fr}.measure-row label{text-align:left}.protocol-list{grid-template-columns:1fr}.modal-avaliacao{height:96vh}}
+
+/* Fusion ERP 2.6.1-L: modo portal/professor embutido */
+body.modo-embed-avaliacao{background:#fff;margin:0;overflow:hidden}.modo-embed-avaliacao .fusion-shell{display:block}.modo-embed-avaliacao .fusion-main{margin:0!important;width:100%!important}.modo-embed-avaliacao .fusion-topbar,.modo-embed-avaliacao .fusion-menu,.modo-embed-avaliacao .fusion-sidebar,.modo-embed-avaliacao aside{display:none!important}.modo-embed-avaliacao .fusion-content{padding:0!important;margin:0!important}.modo-embed-avaliacao .aval-header-card,.modo-embed-avaliacao .aval-kpis,.modo-embed-avaliacao .aval-toolbar,.modo-embed-avaliacao .fusion-card:not(.evol-card){display:none}.modo-embed-avaliacao .evol-card{display:none}.modo-embed-avaliacao #alerta{margin:8px}.modo-embed-avaliacao .modal-backdrop{position:fixed;inset:0;background:#fff;padding:0;z-index:1;display:block}.modo-embed-avaliacao .modal-avaliacao{width:100%;height:100vh;max-height:none;border:0;border-radius:0;box-shadow:none}.modo-embed-avaliacao .sca-titlebar{position:sticky;top:0;z-index:3}.modo-embed-avaliacao .modal-actions{position:sticky;bottom:0;background:#fff;border-top:1px solid #dbe3ef;padding:10px 18px}.modo-embed-avaliacao table{font-size:13px}
+
+
+/* Fusion ERP 2.7.3-C - Avaliação V3: topo compacto e modo nova/editar */
+.modal-avaliacao{border:1px solid #dbe3ef!important;border-radius:18px!important;background:#fff!important;box-shadow:0 22px 70px rgba(15,23,42,.18)!important;}
+.sca-titlebar{background:#fff!important;color:#0f172a!important;border-bottom:1px solid #e2e8f0!important;padding:14px 18px!important;position:sticky;top:0;z-index:5;}
+.sca-titlebar strong{color:#ff6600;font-size:18px;}
+.sca-titlebar button{background:#f8fafc!important;color:#0f172a!important;border:1px solid #e2e8f0!important;border-radius:12px!important;width:36px!important;height:36px!important;}
+.sca-topline.aval-meta-grid{display:grid!important;grid-template-columns:1.05fr 1.35fr .95fr .85fr .65fr!important;gap:12px!important;padding:16px 18px 10px!important;align-items:end!important;}
+.sca-topline.aval-meta-grid .field{min-width:0!important;}
+.sca-topline.aval-meta-grid input,.sca-topline.aval-meta-grid select{height:42px!important;border-radius:12px!important;border:1px solid #cbd5e1!important;padding:8px 12px!important;background:#fff!important;}
+.sca-topline.aval-meta-grid label{font-size:12px!important;font-weight:800!important;color:#334155!important;margin-bottom:6px!important;}
+.professor-lock{margin:0 18px 12px!important;border:1px solid #fed7aa!important;background:#fff7ed!important;color:#9a3412!important;border-radius:12px!important;padding:10px 12px!important;}
+.avaliacao-mode{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0 18px 14px;}
+.modo-card{display:grid;grid-template-columns:auto 1fr;grid-template-areas:"icon title" "icon desc";gap:3px 12px;text-align:left;border:1px solid #dbe3ef;background:#fff;border-radius:16px;padding:14px 16px;color:#0f172a;box-shadow:0 8px 20px rgba(15,23,42,.04);}
+.modo-card .modo-icon{grid-area:icon;display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:#f8fafc;color:#ff6600;font-size:22px;line-height:1;}
+.modo-card strong{grid-area:title;font-size:16px;}
+.modo-card small{grid-area:desc;color:#64748b;font-size:13px;}
+.modo-card.active{border-color:#ff6600;background:#fff7ed;box-shadow:0 10px 26px rgba(255,102,0,.12);}
+.modo-card.active .modo-icon{background:#ff6600;color:#fff;}
+.sca-tabs{background:#fff!important;border:1px solid #e2e8f0!important;border-radius:16px!important;margin:0 18px 10px!important;padding:10px!important;gap:8px!important;}
+.sca-tabs .tab{border:1px solid #dbe3ef!important;background:#fff!important;border-radius:999px!important;padding:9px 14px!important;}
+.sca-tabs .tab.active{background:#ff6600!important;border-color:#ff6600!important;color:#fff!important;}
+.modo-embed-avaliacao .sca-topline.aval-meta-grid{grid-template-columns:1.05fr 1.35fr .95fr .85fr .65fr!important;}
+.modo-embed-avaliacao .avaliacao-mode{grid-template-columns:1fr 1fr;}
+@media(max-width:1100px){.sca-topline.aval-meta-grid,.modo-embed-avaliacao .sca-topline.aval-meta-grid{grid-template-columns:1fr 1fr!important}.avaliacao-mode,.modo-embed-avaliacao .avaliacao-mode{grid-template-columns:1fr!important}.hora-box{grid-column:auto!important}}
+
+
+/* Fusion ERP 2.7.3-D - Avaliação V3: organização final de anamnese, perímetros e fotos */
+body.modo-embed-avaliacao .modal-avaliacao{overflow:hidden!important;}
+body.modo-embed-avaliacao .aval-form{height:calc(100vh - 64px);overflow:auto;padding-bottom:76px;}
+body.modo-embed-avaliacao .tab-panel{padding:12px 18px 16px!important;}
+body.modo-embed-avaliacao .tab-panel.active{display:block!important;}
+body.modo-embed-avaliacao #tab-anamnese .two-col{display:grid!important;grid-template-columns:minmax(310px,.9fr) minmax(430px,1.1fr)!important;gap:16px!important;align-items:start;}
+body.modo-embed-avaliacao #tab-anamnese .sca-panel{border-radius:16px!important;border:1px solid #dbe3ef!important;padding:14px!important;}
+body.modo-embed-avaliacao #tab-anamnese label{font-size:13px!important;margin-bottom:8px!important;}
+body.modo-embed-avaliacao #tab-anamnese input,body.modo-embed-avaliacao #tab-anamnese textarea{height:38px!important;border-radius:10px!important;}
+body.modo-embed-avaliacao #tab-anamnese textarea{height:94px!important;}
+body.modo-embed-avaliacao .parq-list{gap:0!important;border:1px solid #e2e8f0;border-radius:14px;overflow:hidden;background:#fff;}
+body.modo-embed-avaliacao .parq-item{grid-template-columns:minmax(320px,1fr) 58px 58px!important;gap:8px!important;padding:9px 12px!important;background:#fff!important;}
+body.modo-embed-avaliacao .parq-item label{display:flex!important;align-items:center!important;gap:5px!important;margin:0!important;font-size:13px!important;}
+body.modo-embed-avaliacao #tab-perimetros .perimetros-layout{display:grid!important;grid-template-columns:minmax(420px,1.05fr) minmax(330px,.95fr)!important;gap:16px!important;align-items:start;}
+body.modo-embed-avaliacao #tab-perimetros .sca-panel{border-radius:16px!important;border:1px solid #dbe3ef!important;padding:14px!important;}
+body.modo-embed-avaliacao #tab-perimetros .perimetros-list{max-height:520px!important;overflow:auto!important;padding-right:6px!important;}
+body.modo-embed-avaliacao #tab-perimetros .measure-row{background:#f8fafc!important;border:1px solid #e5edf6!important;border-radius:10px!important;margin-bottom:6px!important;padding:7px 9px!important;min-height:42px!important;}
+body.modo-embed-avaliacao #tab-perimetros .measure-row.single{grid-template-columns:145px 96px!important;justify-content:start!important;}
+body.modo-embed-avaliacao #tab-perimetros .measure-row.pair{grid-template-columns:145px 48px 82px 58px 82px!important;}
+body.modo-embed-avaliacao #tab-perimetros .measure-row label{font-size:13px!important;font-weight:800!important;text-align:right!important;color:#334155!important;}
+body.modo-embed-avaliacao #tab-perimetros .measure-row span{font-size:12px!important;color:#475569!important;}
+body.modo-embed-avaliacao #tab-perimetros .measure-row input{height:30px!important;max-width:96px!important;text-align:right!important;font-size:17px!important;font-weight:900!important;border-radius:4px!important;padding:3px 8px!important;background:#fff!important;}
+body.modo-embed-avaliacao #tab-perimetros .resultado-card{border-radius:16px!important;border:1px solid #dbe3ef!important;min-height:520px!important;background:#fff!important;display:grid;grid-template-rows:auto auto 1fr auto auto auto;align-items:start;}
+body.modo-embed-avaliacao #tab-perimetros .resultado-card h4{color:#005bbb!important;margin-bottom:8px!important;}
+.avaliacao-corpo-wrap{display:grid;place-items:center;min-height:190px;margin:6px 0 8px;border-bottom:1px solid #e2e8f0;}
+.avaliacao-corpo{position:relative;width:130px;height:188px;}
+.avaliacao-corpo span{position:absolute;display:block;background:#ffb38a;border:1px solid rgba(15,23,42,.08);}
+.avaliacao-corpo .head{width:34px;height:34px;border-radius:50%;left:48px;top:4px;background:#ffd1b8;}
+.avaliacao-corpo .torso{width:50px;height:70px;border-radius:24px 24px 20px 20px;left:40px;top:40px;background:#1e90ff;}
+.avaliacao-corpo .hip{width:58px;height:26px;border-radius:14px;left:36px;top:103px;background:#111827;}
+.avaliacao-corpo .arm{width:18px;height:70px;border-radius:20px;top:45px;background:#ffd1b8;}
+.avaliacao-corpo .arm.left{left:20px;transform:rotate(7deg)}.avaliacao-corpo .arm.right{right:20px;transform:rotate(-7deg)}
+.avaliacao-corpo .leg{width:20px;height:72px;border-radius:16px;top:124px;background:#111827;}
+.avaliacao-corpo .leg.left{left:42px;transform:rotate(4deg)}.avaliacao-corpo .leg.right{right:42px;transform:rotate(-4deg)}
+.avaliacao-corpo.figura-feminina .torso{width:56px;left:37px;border-radius:28px 28px 18px 18px;background:#ff7f50;}
+.avaliacao-corpo.figura-feminina .hip{width:70px;left:30px;background:#111827;}
+.avaliacao-corpo.figura-masculina .torso{width:64px;left:33px;border-radius:18px 18px 14px 14px;background:#1e90ff;}
+.avaliacao-corpo.figura-masculina .hip{width:58px;left:36px;}
+body.modo-embed-avaliacao .rcq-value,body.modo-embed-avaliacao .sum-value{margin:10px 0!important;text-align:center!important;}
+body.modo-embed-avaliacao .rcq-value strong,body.modo-embed-avaliacao .sum-value strong{font-size:28px!important;color:#005bbb!important;}
+body.modo-embed-avaliacao #tab-postural .postural-panel{display:grid!important;grid-template-columns:repeat(2,minmax(240px,1fr))!important;gap:12px!important;}
+body.modo-embed-avaliacao #tab-postural .postural-card{border:1px solid #dbe3ef;border-radius:14px;padding:10px;background:#fff;}
+body.modo-embed-avaliacao #tab-postural .foto-postural{height:180px!important;border-radius:12px!important;background:#f8fafc!important;}
+body.modo-embed-avaliacao #tab-postural input[type=file]{width:100%;height:36px!important;border-radius:10px!important;}
+@media(max-width:980px){
+ body.modo-embed-avaliacao #tab-anamnese .two-col,body.modo-embed-avaliacao #tab-perimetros .perimetros-layout,body.modo-embed-avaliacao #tab-postural .postural-panel{grid-template-columns:1fr!important;}
+ body.modo-embed-avaliacao #tab-perimetros .measure-row.single,body.modo-embed-avaliacao #tab-perimetros .measure-row.pair{grid-template-columns:1fr 1fr!important;}
+ body.modo-embed-avaliacao #tab-perimetros .measure-row label{text-align:left!important;}
+}
+
+
+/* Fusion ERP 2.7.4 — Consolidação Final da Avaliação Física */
+body.modo-embed-avaliacao{background:#f4f6f9!important;}
+body.modo-embed-avaliacao .sca-titlebar{height:58px!important;padding:10px 16px!important;}
+body.modo-embed-avaliacao .aval-form{height:calc(100vh - 58px)!important;padding-bottom:82px!important;}
+body.modo-embed-avaliacao .sca-tabs{position:sticky;top:58px;z-index:4;overflow:auto;white-space:nowrap;scrollbar-width:thin;}
+body.modo-embed-avaliacao .sca-tabs .tab{flex:0 0 auto;}
+body.modo-embed-avaliacao .sca-panel{box-shadow:0 8px 22px rgba(15,23,42,.04);}
+body.modo-embed-avaliacao .field input,body.modo-embed-avaliacao .field select,body.modo-embed-avaliacao label input,body.modo-embed-avaliacao label select,body.modo-embed-avaliacao textarea{border:1px solid #cbd5e1!important;background:#fff!important;}
+body.modo-embed-avaliacao .field input:focus,body.modo-embed-avaliacao .field select:focus,body.modo-embed-avaliacao label input:focus,body.modo-embed-avaliacao label select:focus,body.modo-embed-avaliacao textarea:focus{outline:2px solid rgba(255,102,0,.18)!important;border-color:#ff6600!important;}
+body.modo-embed-avaliacao #tab-composicao .grid-4,body.modo-embed-avaliacao #tab-cardio .grid-4,body.modo-embed-avaliacao #tab-neuromotores .grid-4{display:grid!important;grid-template-columns:repeat(4,minmax(150px,1fr))!important;gap:12px!important;}
+body.modo-embed-avaliacao #tab-perimetros .perimetros-list h4{position:sticky;top:0;background:#fff;z-index:2;padding:0 0 8px;margin-bottom:8px;}
+body.modo-embed-avaliacao #tab-perimetros .measure-row.req{border-color:#fed7aa!important;background:#fff7ed!important;}
+body.modo-embed-avaliacao .avaliacao-corpo-wrap{background:linear-gradient(180deg,#f8fafc,#fff);border:1px solid #e2e8f0;border-radius:16px;}
+body.modo-embed-avaliacao .resultado-card .info{border-radius:12px;background:#f8fafc;border:1px solid #e2e8f0;padding:10px 12px;font-weight:800;color:#334155;}
+body.modo-embed-avaliacao .foto-postural{border:1px dashed #cbd5e1!important;display:grid!important;place-items:center!important;color:#64748b!important;overflow:hidden;}
+body.modo-embed-avaliacao .foto-postural img{width:100%;height:100%;object-fit:cover;display:block;}
+.relatorio-preview{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:18px;line-height:1.45;color:#0f172a;}
+.relatorio-preview h1{color:#ff6600;margin-top:0;}
+.relatorio-preview h3{border-bottom:1px solid #e2e8f0;padding-bottom:6px;margin-top:18px;}
+.relatorio-preview .report-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:12px 0;}
+.relatorio-preview .report-grid>div{border:1px solid #e2e8f0;border-radius:12px;background:#f8fafc;padding:12px;}
+.relatorio-preview table{width:100%;border-collapse:collapse;margin-top:8px;}
+.relatorio-preview td,.relatorio-preview th{border:1px solid #e2e8f0;padding:8px;text-align:left;}
+.modal-actions{box-shadow:0 -10px 24px rgba(15,23,42,.08);}
+@media(max-width:1100px){body.modo-embed-avaliacao #tab-composicao .grid-4,body.modo-embed-avaliacao #tab-cardio .grid-4,body.modo-embed-avaliacao #tab-neuromotores .grid-4,.relatorio-preview .report-grid{grid-template-columns:1fr 1fr!important;}}
+@media(max-width:720px){body.modo-embed-avaliacao .sca-topline.aval-meta-grid,body.modo-embed-avaliacao #tab-composicao .grid-4,body.modo-embed-avaliacao #tab-cardio .grid-4,body.modo-embed-avaliacao #tab-neuromotores .grid-4,.relatorio-preview .report-grid{grid-template-columns:1fr!important;}body.modo-embed-avaliacao .modal-actions{display:grid;grid-template-columns:1fr;gap:8px}.relatorio-preview{padding:12px}}
+@media print{body{background:#fff!important}.modal-actions,.sca-tabs,.sca-titlebar button,.avaliacao-mode,.professor-lock{display:none!important}.modal-backdrop,.modal-avaliacao,.aval-form{position:static!important;height:auto!important;overflow:visible!important}.tab-panel{display:none!important}#tab-relatorio{display:block!important}.relatorio-preview{border:0!important;padding:0!important}.relatorio-preview .report-grid{grid-template-columns:repeat(3,1fr)!important}.relatorio-preview table{font-size:12px}.relatorio-preview h1{font-size:22px}}

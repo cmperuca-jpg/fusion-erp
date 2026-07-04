@@ -1,0 +1,15 @@
+{
+  "ok": true,
+  "versao": "2.6.1-L",
+  "data": "2026-07-03T19:01:36.280Z",
+  "operacao": "sincronizar_ativacao_pos_pagamento",
+  "alteracoes": [
+    {
+      "alunoId": "91c7eb65-660b-4a98-abd9-d284772e0191",
+      "aluno": "marcos andre",
+      "matriculaId": "mat_1783103608764_965859",
+      "financeiroInicialId": "fin_1783103608766_642720",
+      "status": "Ativa"
+    }
+  ]
+}

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fusion ERP - BI Operacional</title>
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/assets/css/fusion-app.css">
+  <script src="/assets/js/fusion-auth.js"></script>
+  <script>FusionAuth.proteger();</script>
+  <meta name="fusion-existing-pages" content="agenda,alunos,avaliacoes,bi,bi-academia,bi-academia-operacional,bi-financeiro,caixa,checkin,configuracoes,dashboard,estoque,exercicios,financeiro,login,matriculas,mensalidades,modalidades,modelos-treino,pagamentos,planos,presencas,professores,recebimentos,relatorios-caixa,treinos,turmas">
+</head>
+<body>
+
+<main class="main">
+
+<section class="card">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+    <div>
+      <h2>BI Operacional</h2>
+      <p>Indicadores de turmas, professores e agenda.</p>
+    </div>
+
+    <button onclick="exportarCSV()">Exportar CSV</button>
+  </div>
+
+  <div class="filtros">
+    <input id="filtroInicio" type="date">
+    <input id="filtroFim" type="date">
+    <button onclick="carregarDashboard()">Atualizar</button>
+    <button onclick="limparFiltros()">Limpar</button>
+  </div>
+</section>
+
+<br>
+
+<section class="cards">
+  <div class="card"><h3>Turmas ativas</h3><strong id="kpiTurmasAtivas">0</strong></div>
+  <div class="card"><h3>Capacidade total</h3><strong id="kpiCapacidadeTotal">0</strong></div>
+  <div class="card"><h3>Professores ativos</h3><strong id="kpiProfessoresAtivos">0</strong></div>
+  <div class="card"><h3>Agenda hoje</h3><strong id="kpiAgendaHoje">0</strong></div>
+</section>
+
+<br>
+
+<section class="cards">
+  <div class="card"><h3>Total turmas</h3><strong id="kpiTotalTurmas">0</strong></div>
+  <div class="card"><h3>Turmas encerradas</h3><strong id="kpiTurmasEncerradas">0</strong></div>
+  <div class="card"><h3>Total professores</h3><strong id="kpiTotalProfessores">0</strong></div>
+  <div class="card"><h3>Agenda período</h3><strong id="kpiAgendaPeriodo">0</strong></div>
+</section>
+
+<br>
+
+<section class="cards">
+  <div class="card">
+    <h2>Turmas por modalidade</h2>
+    <canvas id="graficoTurmasModalidade"></canvas>
+  </div>
+
+  <div class="card">
+    <h2>Professores por especialidade</h2>
+    <canvas id="graficoProfessoresEspecialidade"></canvas>
+  </div>
+</section>
+
+<br>
+
+<section class="cards">
+  <div class="card">
+    <h2>Agenda por tipo</h2>
+    <canvas id="graficoAgendaTipo"></canvas>
+  </div>
+
+  <div class="card">
+    <h2>Agenda por mês</h2>
+    <canvas id="graficoAgendaMes"></canvas>
+  </div>
+</section>
+
+<br>
+
+<section class="cards">
+  <div class="card">
+    <h2>Professores por turmas</h2>
+    <div id="rankingProfessoresTurmas">Carregando...</div>
+  </div>
+
+  <div class="card">
+    <h2>Professores por agenda</h2>
+    <div id="rankingProfessoresAgenda">Carregando...</div>
+  </div>
+</section>
+
+<br>
+
+<section class="cards">
+  <div class="card">
+    <h2>Agenda de hoje</h2>
+    <div id="agendaHoje">Carregando...</div>
+  </div>
+
+  <div class="card">
+    <h2>Turmas sem professor</h2>
+    <div id="turmasSemProfessor">Carregando...</div>
+  </div>
+</section>
+
+<br>
+
+<section class="card">
+  <h2>Ocupação das turmas</h2>
+  <div id="turmasOcupacao">Carregando...</div>
+</section>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="/js/bi-academia-operacional/index.js"></script>
+
+    <script src="/assets/js/fusion-layout.js"></script>
+</body>
+</html>

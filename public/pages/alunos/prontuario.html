@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fusion ERP - Prontuário do Aluno</title>
+  <link rel="stylesheet" href="/assets/css/fusion-app.css">
+  <link rel="stylesheet" href="/assets/css/fusion-menu-global.css">
+  <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="./prontuario.css">
+  <script src="/assets/js/fusion-auth.js"></script>
+  <script>FusionAuth.proteger();</script>
+  <meta name="fusion-existing-pages" content="agenda,alunos,avaliacoes,bi,bi-academia,bi-academia-operacional,bi-financeiro,caixa,checkin,configuracoes,dashboard,estoque,exercicios,financeiro,login,matriculas,mensalidades,modalidades,modelos-treino,pagamentos,planos,presencas,professores,recebimentos,relatorios-caixa,treinos,turmas">
+  <link rel="stylesheet" href="./central-comercial.css">
+</head>
+<body>
+  <div class="fusion-shell">
+    <main class="fusion-main">
+      <header class="fusion-topbar">
+        <div class="fusion-title">Prontuário do Aluno</div>
+        <div><span data-fusion-user></span> <button onclick="FusionAuth.sair()">Sair</button></div>
+      </header>
+
+      <section class="fusion-content prontuario-page">
+        <div id="alerta" class="alunos-alert hidden"></div>
+
+        <div class="prontuario-header fusion-card">
+          <div class="foto-grande" id="fotoAluno">Foto</div>
+          <div>
+            <h2 id="nomeAluno">Carregando...</h2>
+            <p id="subtituloAluno">Ficha completa, financeiro, avaliações, treinos e histórico.</p>
+            <div class="chip-row" id="chipsAluno"></div>
+          </div>
+          <div class="prontuario-actions">
+            <button class="fusion-button secondary" type="button" onclick="history.back()">Voltar</button>
+            <button class="fusion-button secondary" type="button" id="btnEditar">Editar</button>
+            <button class="fusion-button" type="button" id="btnImprimir">Imprimir</button>
+          </div>
+        </div>
+
+        <div class="prontuario-kpis">
+          <div class="aluno-kpi"><span>Próximo vencimento</span><strong id="kpiProximo">-</strong></div>
+          <div class="aluno-kpi"><span>Aberto</span><strong id="kpiAberto">R$ 0,00</strong></div>
+          <div class="aluno-kpi"><span>Pago</span><strong id="kpiPago">R$ 0,00</strong></div>
+          <div class="aluno-kpi"><span>Última avaliação</span><strong id="kpiAvaliacao">-</strong></div>
+        </div>
+
+        <div class="prontuario-tabs fusion-card">
+          <button class="tab active" data-tab="resumo">Resumo</button>
+          <button class="tab" data-tab="financeiro">Financeiro</button>
+          <button class="tab" data-tab="matriculas">Matrículas</button>
+          <button class="tab" data-tab="contrato-comercial">Contrato Comercial</button>
+          <button class="tab" data-tab="servicos-contratados">Serviços Contratados</button>
+          <button class="tab" data-tab="avaliacoes">Avaliações</button>
+          <button class="tab" data-tab="treinos">Treinos</button>
+          <button class="tab" data-tab="checkins">Check-ins</button>
+          <button class="tab" data-tab="timeline">Linha do tempo</button>
+        </div>
+
+        <div class="tab-panel active" id="tab-resumo">
+          <div class="grid-2 prontuario-grid">
+            <div class="fusion-card"><h3>Dados cadastrais</h3><div id="dadosAluno" class="info-grid"></div></div>
+            <div class="fusion-card"><h3>Dados médicos</h3><div id="dadosMedicos" class="info-grid"></div></div>
+          </div>
+        </div>
+
+        <div class="tab-panel" id="tab-financeiro">
+          <div class="fusion-card"><h3>Mensalidades</h3><div class="table-wrap"><table class="alunos-table"><thead><tr><th>Competência</th><th>Vencimento</th><th>Valor</th><th>Status</th></tr></thead><tbody id="listaMensalidades"></tbody></table></div></div>
+          <div class="fusion-card"><h3>Lançamentos financeiros</h3><div class="table-wrap"><table class="alunos-table"><thead><tr><th>Descrição</th><th>Vencimento</th><th>Valor</th><th>Status</th></tr></thead><tbody id="listaFinanceiro"></tbody></table></div></div>
+        </div>
+
+        <div class="tab-panel" id="tab-matriculas"><div class="fusion-card"><h3>Matrículas e planos</h3><div id="listaMatriculas" class="cards-list"></div></div></div>
+        
+        <div class="tab-panel" id="tab-contrato-comercial">
+          <div class="fusion-card comercial-card">
+            <h3>Contrato Comercial</h3>
+            <div id="contratoComercialResumo" class="info-grid"></div>
+          </div>
+        </div>
+
+        <div class="tab-panel" id="tab-servicos-contratados">
+          <div class="fusion-card comercial-card">
+            <div class="comercial-head">
+              <h3>Serviços Contratados</h3>
+              <button class="fusion-button" id="btnSalvarChecklistComercial" type="button">Salvar contrato</button>
+            </div>
+            <div id="servicosChecklist" class="servicos-checklist">Carregando...</div>
+            <div id="contratoTotalBox" class="contrato-total-box"></div>
+          </div>
+        </div>
+
+        <div class="tab-panel" id="tab-avaliacoes"><div class="fusion-card"><h3>Avaliações físicas</h3><div id="listaAvaliacoes" class="cards-list"></div></div></div>
+        <div class="tab-panel" id="tab-treinos"><div class="fusion-card"><h3>Treinos</h3><div id="listaTreinos" class="cards-list"></div></div></div>
+        <div class="tab-panel" id="tab-checkins"><div class="fusion-card"><h3>Check-ins</h3><div id="listaCheckins" class="cards-list"></div></div></div>
+        <div class="tab-panel" id="tab-timeline"><div class="fusion-card"><h3>Linha do tempo</h3><div id="linhaTempo" class="timeline"></div></div></div>
+      </section>
+    </main>
+  </div>
+
+  <script src="./prontuario.js"></script>
+  <script src="/js/alunos/central-comercial.js"></script>
+  <script src="/assets/js/fusion-menu-global.js"></script>
+    <script src="/assets/js/fusion-layout.js"></script>
+</body>
+</html>

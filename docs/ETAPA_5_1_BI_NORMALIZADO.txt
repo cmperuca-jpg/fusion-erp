@@ -1,0 +1,22 @@
+Fusion ERP v2.0 - Etapa 5.1 - BI normalizado
+
+Arquivos alterados:
+- modules/bi/bi.repository.mjs
+- modules/bi/bi.service.mjs
+
+Correções:
+- Status agora é comparado de forma normalizada: ativo/Ativo/Ativa/ATIVA.
+- Campos antigos e novos foram aceitos: aluno_id/alunoId, professor_id/professorId, hora_inicio/horaInicio.
+- BI usa checkin.json/checkins.json como fallback quando presencas.json não existir.
+- Vínculos de matrícula gravados em checkins.json não são contados como presença real.
+- BI Operacional agora reconhece professores por ID ou por nome.
+- Ocupação de turmas usa alunosMatriculados/inscritos ou matrícula vinculada à turma, quando existir.
+- Financeiro do serviço BI passa a aceitar valorPago, valor_pago, valorRecebido e valorLiquido.
+
+Teste recomendado:
+1. npm start
+2. Abrir /pages/bi-academia/index.html
+3. Conferir Alunos ativos e Matrículas ativas.
+4. Abrir /pages/bi-academia-operacional/index.html
+5. Conferir Turmas ativas e Professores ativos.
+6. Conferir se o fluxo Financeiro/Caixa/BI Financeiro segue funcionando.

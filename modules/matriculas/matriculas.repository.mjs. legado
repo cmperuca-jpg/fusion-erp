@@ -1,0 +1,98 @@
+import fs from "fs/promises";
+import path from "path";
+import crypto from "crypto";
+
+const arquivo = path.resolve("data/matriculas.json");
+
+async function garantirArquivo() {
+  await fs.mkdir("data", { recursive: true });
+
+  try {
+    await fs.access(arquivo);
+  } catch {
+    await fs.writeFile(arquivo, "[]");
+  }
+}
+
+async function lerMatriculas() {
+  await garantirArquivo();
+  const conteudo = await fs.readFile(arquivo, "utf8");
+  return JSON.parse(conteudo);
+}
+
+async function salvarMatriculas(matriculas) {
+  await garantirArquivo();
+  await fs.writeFile(arquivo, JSON.stringify(matriculas, null, 2));
+}
+
+function matriculaAtivaDuplicada(matriculas, dados, ignorarId = null) {
+  return matriculas.some(item =>
+    item.id !== ignorarId &&
+    item.aluno_id === dados.aluno_id &&
+    item.turma_id === dados.turma_id &&
+    item.status === "ativa" &&
+    dados.status !== "cancelada" &&
+    dados.status !== "encerrada"
+  );
+}
+
+export async function listarMatriculas() {
+  return await lerMatriculas();
+}
+
+export async function buscarMatricula(id) {
+  const matriculas = await lerMatriculas();
+  return matriculas.find(matricula => matricula.id === id);
+}
+
+export async function criarMatricula(dados) {
+  const matriculas = await lerMatriculas();
+
+  if (matriculaAtivaDuplicada(matriculas, dados)) {
+    throw new Error("Este aluno já possui matrícula ativa nesta turma.");
+  }
+
+  const matricula = {
+    id: crypto.randomUUID(),
+    criado_em: new Date().toISOString(),
+    atualizado_em: new Date().toISOString(),
+    ...dados
+  };
+
+  matriculas.push(matricula);
+  await salvarMatriculas(matriculas);
+
+  return matricula;
+}
+
+export async function atualizarMatricula(id, dados) {
+  const matriculas = await lerMatriculas();
+  const index = matriculas.findIndex(matricula => matricula.id === id);
+
+  if (index === -1) return null;
+
+  const atualizada = {
+    ...matriculas[index],
+    ...dados,
+    atualizado_em: new Date().toISOString()
+  };
+
+  if (matriculaAtivaDuplicada(matriculas, atualizada, id)) {
+    throw new Error("Este aluno já possui matrícula ativa nesta turma.");
+  }
+
+  matriculas[index] = atualizada;
+
+  await salvarMatriculas(matriculas);
+
+  return matriculas[index];
+}
+
+export async function excluirMatricula(id) {
+  const matriculas = await lerMatriculas();
+  const filtradas = matriculas.filter(matricula => matricula.id !== id);
+
+  await salvarMatriculas(filtradas);
+
+  return matriculas.length !== filtradas.length;
+}

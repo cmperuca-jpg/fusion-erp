@@ -1,0 +1,11 @@
+Fusion ERP - Financeiro Parte 4.2
+Tela: Pagamentos / Contas a Pagar
+Pacote: ZIP 4
+
+Incrementos:
+- Baixa de pagamentos com data do pagamento.
+- Baixa total ou parcial.
+- Validação contra valor maior que o saldo.
+- Cálculo de saldo anterior e saldo restante.
+- Status sugerido após baixa: pago ou parcial.
+- Payload inclui histórico da operação para compatibilidade com backend.

@@ -1,0 +1,17 @@
+Correção: Prontuário do professor com sanfona/lista de alunos vinculados.
+
+Uso:
+1. Pare o servidor: Ctrl + C
+2. Extraia este ZIP na raiz do projeto, substituindo arquivos.
+3. Inicie: npm start
+4. Abra Professores > Prontuário.
+
+Critério de vínculo:
+- aluno.professor_responsavel igual ao nome do professor; ou
+- aluno.professorResponsavel/professor/nomeProfessor; ou
+- professorId/professor_id quando existir.
+
+Ações por aluno:
+- Ficha
+- Avaliação
+- Treino

@@ -1,0 +1,29 @@
+[
+  {
+    "id": "6980ab38-5a58-4d8d-89eb-ce088e52255d",
+    "nome": "MUSCULAÇÃO",
+    "tipo": "Mensal",
+    "tipoPlano": "Mensal",
+    "descricao": "",
+    "valorMatricula": 0,
+    "valorMensal": 65,
+    "taxaMatricula": 0,
+    "cobraMatricula": true,
+    "geraMensalidade": true,
+    "recorrenciaMeses": 0,
+    "renovacaoAutomatica": true,
+    "bloquearAoVencer": false,
+    "permiteServicosExtras": true,
+    "fidelidadeMeses": 0,
+    "descontoPercentual": 0,
+    "multaAtrasoPercentual": 0,
+    "limiteSemanal": 0,
+    "modalidadesIncluidas": [
+      "MUSCULAÇÃO"
+    ],
+    "horariosPermitidos": "Livre",
+    "status": "Ativo",
+    "criadoEm": "2026-07-03T18:26:13.295Z",
+    "atualizadoEm": "2026-07-03T18:26:13.295Z"
+  }
+]

@@ -1,0 +1,56 @@
+
+/* Fusion ERP 2.7.4 - adaptação Chrome Android / Safari iOS */
+:root{
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --fusion-touch: 44px;
+}
+html{min-height:100%;-webkit-text-size-adjust:100%;text-size-adjust:100%;scroll-behavior:smooth;}
+body{min-height:100%;overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent;padding-left:var(--safe-left);padding-right:var(--safe-right);}
+button,a,input,select,textarea{font:inherit;touch-action:manipulation;}
+button,a{min-height:var(--fusion-touch);}
+input,select,textarea{font-size:16px!important;}
+iframe{max-width:100%;border:0;}
+.fusion-pwa-banner{position:fixed;left:12px;right:12px;bottom:calc(12px + var(--safe-bottom));z-index:99999;background:#101826;color:#fff;border:1px solid rgba(255,255,255,.16);border-radius:16px;padding:12px 14px;box-shadow:0 12px 40px rgba(0,0,0,.28);display:none;gap:10px;align-items:center;justify-content:space-between;}
+.fusion-pwa-banner.show{display:flex;}
+.fusion-pwa-banner strong{display:block;font-size:14px;line-height:1.2;}
+.fusion-pwa-banner span{display:block;font-size:12px;color:#cbd5e1;margin-top:2px;}
+.fusion-pwa-banner button{border:0;border-radius:12px;padding:10px 12px;background:#ff6600;color:#fff;font-weight:800;white-space:nowrap;}
+.fusion-ios-hint{position:fixed;left:12px;right:12px;bottom:calc(12px + var(--safe-bottom));z-index:99999;background:#fff;color:#101826;border:1px solid #e5e7eb;border-radius:16px;padding:12px 14px;box-shadow:0 12px 40px rgba(0,0,0,.22);display:none;font-size:13px;}
+.fusion-ios-hint.show{display:block;}
+.fusion-ios-hint button{float:right;border:0;background:#101826;color:#fff;border-radius:10px;padding:6px 10px;min-height:32px;}
+@media (max-width: 900px){
+  body{background:#f3f6fb;}
+  .portal-app,.portal-shell .portal-app,.fusion-shell{min-height:100dvh;width:100%;}
+  .portal-app,.portal-shell .portal-app{display:block!important;}
+  .sidebar{position:fixed!important;left:0!important;right:0!important;bottom:0!important;top:auto!important;z-index:9990;width:auto!important;height:auto!important;max-height:44dvh;overflow-x:auto!important;overflow-y:hidden!important;display:flex!important;align-items:center!important;gap:8px!important;padding:8px 10px calc(8px + var(--safe-bottom))!important;border-radius:18px 18px 0 0!important;box-shadow:0 -10px 32px rgba(15,23,42,.18)!important;}
+  .sidebar .brand,.sidebar .prof-box{display:none!important;}
+  .sidebar .nav,.sidebar .sair{flex:0 0 auto!important;white-space:nowrap!important;border-radius:999px!important;padding:10px 14px!important;min-width:auto!important;min-height:42px!important;font-size:13px!important;}
+  .content,.fusion-main{width:100%!important;margin:0!important;padding:calc(12px + var(--safe-top)) 12px calc(86px + var(--safe-bottom))!important;box-sizing:border-box!important;}
+  .topbar,.fusion-topbar{position:sticky!important;top:0!important;z-index:100;background:rgba(255,255,255,.94)!important;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-radius:0 0 18px 18px!important;margin:-12px -12px 12px!important;padding:14px 12px!important;display:flex!important;gap:10px!important;align-items:flex-start!important;justify-content:space-between!important;}
+  .topbar h1,.topbar h2,.fusion-title{font-size:20px!important;line-height:1.15!important;margin:0!important;}
+  .top-actions,.status-wrap{display:flex!important;gap:8px!important;align-items:center!important;flex-wrap:wrap!important;justify-content:flex-end!important;}
+  .kpis,.portal-grid,.grid-main,.fusion-content .kpis{display:grid!important;grid-template-columns:1fr!important;gap:12px!important;}
+  .card,.fusion-card,.login-card{border-radius:18px!important;box-shadow:0 8px 24px rgba(15,23,42,.08)!important;}
+  .portal-login{min-height:100dvh!important;padding:calc(18px + var(--safe-top)) 14px calc(18px + var(--safe-bottom))!important;box-sizing:border-box!important;display:flex!important;align-items:center!important;justify-content:center!important;}
+  .portal-login .login-card, form.card{width:100%!important;max-width:430px!important;padding:22px!important;box-sizing:border-box!important;}
+  form.card{margin:0 14px!important;}
+  label{display:block!important;}
+  input,select,textarea,button{width:100%;box-sizing:border-box;}
+  .section-head,.page-head,.actions,.toolbar{display:grid!important;grid-template-columns:1fr!important;gap:10px!important;align-items:stretch!important;}
+  .table-wrap{overflow-x:auto!important;-webkit-overflow-scrolling:touch!important;}
+  table{min-width:720px!important;}
+  .professor-avaliacoes-v3-frame,.professor-treinos-v3-frame,.treinos-v3-frame{height:calc(100dvh - 155px)!important;min-height:640px!important;border-radius:18px!important;background:#fff!important;}
+}
+@media (max-width: 480px){
+  .content,.fusion-main{padding-left:10px!important;padding-right:10px!important;}
+  .topbar h1,.topbar h2,.fusion-title{font-size:18px!important;}
+  .card,.fusion-card,.login-card{padding:14px!important;}
+  .sidebar .nav,.sidebar .sair{font-size:12px!important;padding:9px 12px!important;}
+}
+@supports (-webkit-touch-callout: none){
+  html,body{height:-webkit-fill-available;}
+  input,textarea{border-radius:12px;}
+}

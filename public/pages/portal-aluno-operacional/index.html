@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>Fusion ERP - Portal do Aluno</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <main class="page">
+    <header class="top">
+      <div>
+        <h1>Portal do Aluno</h1>
+        <p>Serviços, agenda, frequência, treinos, avaliações e financeiro.</p>
+      </div>
+      <a href="/pages/dashboard/index.html">Voltar</a>
+    </header>
+
+    <section class="card filtros">
+      <label>ID do aluno
+        <input id="alunoId" placeholder="Cole o ID do aluno">
+      </label>
+      <label>Data
+        <input id="data" type="date">
+      </label>
+      <button id="btnCarregar">Carregar</button>
+    </section>
+
+    <section id="resumo" class="grid"></section>
+
+    <section class="cols">
+      <div class="card">
+        <h2>Agenda de hoje</h2>
+        <div id="agendaHoje"></div>
+      </div>
+      <div class="card">
+        <h2>Serviços contratados</h2>
+        <div id="servicos"></div>
+      </div>
+    </section>
+
+    <section class="cols">
+      <div class="card">
+        <h2>Treinos</h2>
+        <div id="treinos"></div>
+      </div>
+      <div class="card">
+        <h2>Financeiro</h2>
+        <div id="financeiro"></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Frequência recente</h2>
+      <div id="frequencia"></div>
+    </section>
+  </main>
+  <script src="./index.js"></script>
+</body>
+</html>

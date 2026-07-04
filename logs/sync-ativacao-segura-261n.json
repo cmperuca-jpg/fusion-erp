@@ -1,0 +1,14 @@
+{
+  "ok": true,
+  "versao": "2.6.1-N",
+  "data": "2026-07-03T19:57:44.226Z",
+  "regra": "Ativa somente a matrícula vinculada ao lançamento pago; não cancela outras pendências.",
+  "alteracoes": [
+    {
+      "alunoId": "91c7eb65-660b-4a98-abd9-d284772e0191",
+      "matriculaId": "mat_1783103608764_965859",
+      "financeiroId": "fin_1783103608766_642720",
+      "status": "Ativa"
+    }
+  ]
+}

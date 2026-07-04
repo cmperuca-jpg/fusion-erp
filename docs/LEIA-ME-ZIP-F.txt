@@ -1,0 +1,25 @@
+Fusion ERP - ZIP F - Registro da integração de matrícula no server.mjs
+
+Objetivo:
+Registrar no Express os arquivos de integração criados no pacote anterior, sem refazer o bloco Alunos restaurado.
+
+Arquivos incluídos:
+- server.mjs
+- modules/matriculas/matricula.integracao.routes.mjs
+- modules/matriculas/matricula.integracao.service.mjs
+- public/assets/js/fusion-matricula-integracao.js
+
+Como aplicar:
+1. Feche o servidor Node, se estiver rodando.
+2. Extraia este ZIP na raiz do projeto, onde fica o server.mjs.
+3. Confirme que o Windows vai mesclar as pastas modules e public, não apagar as pastas existentes.
+4. Substitua o server.mjs quando solicitado.
+5. Rode: node --check server.mjs
+6. Depois rode: npm start
+
+Rotas adicionadas:
+POST /api/matriculas/integrar
+POST /api/matriculas/trocar-plano
+
+Observação:
+Este pacote não altera alunos.routes.mjs nem alunos.service.mjs.

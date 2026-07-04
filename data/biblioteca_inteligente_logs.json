@@ -1,0 +1,27 @@
+[
+  {
+    "id": "log_1783140021031_03787a",
+    "criadoEm": "2026-07-04T04:40:21.032Z",
+    "acao": "validar_biblioteca",
+    "problemas": 12
+  },
+  {
+    "id": "log_1783139956307_18059a",
+    "criadoEm": "2026-07-04T04:39:16.307Z",
+    "acao": "organizar_biblioteca",
+    "resumo": {
+      "novos": 439,
+      "atualizados": 0,
+      "preservados": 663,
+      "removidos": 0,
+      "total": 1114
+    }
+  },
+  {
+    "id": "log_1783139926616_bed3e7",
+    "criadoEm": "2026-07-04T04:38:46.618Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "FLASH_0001",
+    "nome": "abidominal supra"
+  }
+]

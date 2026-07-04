@@ -1,0 +1,37 @@
+{
+  "name": "Fusion ERP Sistema",
+  "short_name": "Sistema",
+  "description": "Fusion ERP Sistema instalado como app no Chrome Android e Safari iOS.",
+  "start_url": "/pages/login/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#ff6600",
+  "lang": "pt-BR",
+  "categories": [
+    "business",
+    "productivity",
+    "health"
+  ],
+  "icons": [
+    {
+      "src": "/assets/pwa/icons/fusion-sistema-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/pwa/icons/fusion-sistema-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/pwa/icons/fusion-sistema-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

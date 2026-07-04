@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Portal do Aluno - Fusion ERP</title>
+  <link rel="stylesheet" href="./style.css">
+
+<meta name="theme-color" content="#16a34a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Fusion Aluno">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="/manifest-aluno.webmanifest">
+<link rel="apple-touch-icon" href="/assets/pwa/icons/fusion-aluno-180.png">
+<link rel="stylesheet" href="/assets/pwa/fusion-pwa-mobile.css">
+</head>
+<body>
+  <main class="portal-shell">
+    <section class="portal-login" id="telaLogin">
+      <div class="brand">Fusion ERP</div>
+      <div class="card login-card">
+        <h1>Portal do Aluno</h1>
+        <p>Acesse treinos, avaliações, evolução e pagamentos.</p>
+        <form id="formAcesso">
+          <label>CPF <input id="cpf" autocomplete="username" placeholder="000.000.000-00" required></label>
+          <label>Data de nascimento <input id="dataNascimento" type="date"></label>
+          <label>Telefone/WhatsApp, se não tiver nascimento cadastrado <input id="telefone" placeholder="(00) 00000-0000"></label>
+          <button type="submit">Acessar</button>
+        </form>
+        <div id="alerta" class="alert hidden"></div>
+      </div>
+    </section>
+
+    <section class="portal-app hidden" id="telaPortal">
+      <aside class="sidebar">
+        <div class="brand">Fusion ERP</div>
+        <button class="nav active" data-tab="inicio">Início</button>
+        <button class="nav" data-tab="treinos">Treinos</button>
+        <button class="nav" data-tab="evolucao">Evolução</button>
+        <button class="nav" data-tab="ia">IA Progressão</button>
+        <button class="nav" data-tab="metas">Metas</button>
+        <button class="nav" data-tab="agenda">Agenda</button>
+        <button class="nav" data-tab="avaliacoes">Avaliações</button>
+        <button class="nav" data-tab="pagamentos">Pagamentos</button>
+        <button class="nav" data-tab="perfil">Perfil</button>
+        <button class="sair" id="btnSair">Sair</button>
+      </aside>
+
+      <section class="content">
+        <header class="topbar">
+          <div><h2 id="nomeAluno">Aluno</h2><span id="infoAluno">Portal do Aluno</span></div>
+          <div class="status-wrap"><small id="ultimaAtualizacao">2.6-E2</small><strong id="statusAluno">Ativo</strong></div>
+        </header>
+
+        <div class="tab active" id="tab-inicio">
+          <div class="kpis">
+            <div class="card"><span>Treinos</span><strong id="kpiTreinos">0</strong></div>
+            <div class="card"><span>Execuções</span><strong id="kpiExecucoes">0</strong></div>
+            <div class="card"><span>Frequência mês</span><strong id="kpiFrequencia">0</strong></div>
+            <div class="card"><span>Streak</span><strong id="kpiStreak">0 dias</strong></div>
+            <div class="card"><span>Pagamentos em aberto</span><strong id="kpiAberto">0</strong></div>
+            <div class="card"><span>Próximo vencimento</span><strong id="kpiVencimento">-</strong></div>
+            <div class="card"><span>Volume total</span><strong id="kpiVolume">0 kg</strong></div>
+          </div>
+
+          <div class="portal-grid">
+            <div class="card destaque"><h3>Treino de hoje <small>2.6-E2</small></h3><div id="treinoAgora"></div></div>
+            <div class="card"><h3>Progressão <small>2.6-E2</small></h3><div id="progressaoAluno"></div></div>
+            <div class="card"><h3>Histórico recente <small>2.6-E2</small></h3><div id="historicoVolumes"></div></div>
+            <div class="card"><h3>Resumo <small>2.6-E2</small></h3><div id="resumoInicio"></div></div>
+          </div>
+        </div>
+
+        <div class="tab" id="tab-treinos">
+          <div class="treinos-v3-embed-shell">
+            <iframe id="treinosV3Frame" class="treinos-v3-frame" title="Treinos V3 do aluno" loading="lazy"></iframe>
+          </div>
+        </div>
+        <div class="tab" id="tab-evolucao">
+          <div class="portal-grid full">
+            <div class="card"><h3>Evolução de cargas</h3><div id="graficoCargas"></div></div>
+            <div class="card"><h3>Volume por treino</h3><div id="graficoVolumes"></div></div>
+            <div class="card"><h3>Recordes pessoais</h3><div id="listaPR"></div></div>
+            <div class="card"><h3>Resumo 30/90 dias</h3><div id="resumoEvolucao"></div></div>
+          </div>
+        </div>
+
+        <div class="tab" id="tab-ia">
+          <div class="portal-grid full">
+            <div class="card destaque"><h3>IA de Progressão Física <small>2.6-F</small></h3><div id="iaResumo"></div></div>
+            <div class="card"><h3>Recomendações para o aluno</h3><div id="iaAluno"></div></div>
+            <div class="card"><h3>Recomendações para o professor</h3><div id="iaProfessor"></div></div>
+            <div class="card"><h3>Análise por exercício</h3><div id="iaExercicios"></div></div>
+          </div>
+        </div>
+
+        <div class="tab" id="tab-metas">
+          <div class="portal-grid full">
+            <div class="card"><h3>Metas semanais</h3><div id="listaMetas"></div></div>
+            <div class="card"><h3>Conquistas</h3><div id="listaConquistas"></div></div>
+            <div class="card"><h3>Avisos do professor</h3><div id="listaAvisos"></div></div>
+          </div>
+        </div>
+        <div class="tab" id="tab-agenda"><div class="card"><h3>Próximos treinos e agenda</h3><div id="listaAgenda"></div></div></div>
+        <div class="tab" id="tab-avaliacoes">
+          <section class="avaliacao-aluno-page">
+            <div id="avaliacaoAlunoRelatorio"></div>
+          </section>
+        </div>
+        <div class="tab" id="tab-pagamentos"><div class="card"><h3>Pagamentos e mensalidades</h3><div id="listaPagamentos"></div></div></div>
+        <div class="tab" id="tab-perfil"><div class="card"><h3>Meus dados</h3><div id="dadosPerfil"></div></div></div>
+      </section>
+    </section>
+  </main>
+  <script src="./index.js"></script>
+
+<script src="/assets/pwa/fusion-pwa-install.js" defer></script>
+</body>
+</html>

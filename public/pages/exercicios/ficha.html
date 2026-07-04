@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fusion ERP - Ficha do Exercício</title>
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/assets/css/fusion-app.css">
+  <script src="/assets/js/fusion-auth.js"></script>
+  <script>FusionAuth.proteger();</script>
+  <meta name="fusion-existing-pages" content="agenda,alunos,avaliacoes,bi,bi-academia,bi-academia-operacional,bi-financeiro,caixa,checkin,configuracoes,dashboard,estoque,exercicios,financeiro,login,matriculas,mensalidades,modalidades,modelos-treino,pagamentos,planos,presencas,professores,recebimentos,relatorios-caixa,treinos,turmas">
+</head>
+<body>
+
+<main class="main">
+
+<section class="card">
+
+  <div class="cadastro-header">
+    <div>
+      <h2 id="nomeExercicio">Carregando...</h2>
+      <p>Ficha técnica do exercício.</p>
+    </div>
+
+    <div class="foto-preview">
+      <img id="imagemPreview" src="" style="display:none;">
+      <span id="imagemTexto">Imagem</span>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="dados">Dados</button>
+    <button class="tab" data-tab="execucao">Execução</button>
+    <button class="tab" data-tab="video">Vídeo</button>
+  </div>
+
+  <div class="tab-content active ficha-grid" id="tab-dados">
+    <p><b>Grupo muscular:</b> <span id="grupo_muscular"></span></p>
+    <p><b>Equipamento:</b> <span id="equipamento"></span></p>
+    <p><b>Dificuldade:</b> <span id="dificuldade"></span></p>
+    <p><b>Tipo:</b> <span id="tipo"></span></p>
+    <p><b>Status:</b> <span id="status"></span></p>
+  </div>
+
+  <div class="tab-content" id="tab-execucao">
+    <h3>Descrição</h3>
+    <p id="descricao"></p>
+
+    <br>
+
+    <h3>Como executar</h3>
+    <p id="execucao"></p>
+
+    <br>
+
+    <h3>Músculos envolvidos</h3>
+    <p id="musculos_envolvidos"></p>
+  </div>
+
+  <div class="tab-content" id="tab-video">
+    <h3>Vídeo</h3>
+    <p id="video_url"></p>
+  </div>
+
+  <div class="form-actions">
+    <button id="btnEditar">Editar</button>
+    <button onclick="window.location='/pages/exercicios/'">Voltar</button>
+  </div>
+
+</section>
+
+</main>
+<script src="/js/tabs.js"></script>
+<script src="/js/exercicio-ficha.js"></script>
+
+    <script src="/assets/js/fusion-layout.js"></script>
+</body>
+</html>

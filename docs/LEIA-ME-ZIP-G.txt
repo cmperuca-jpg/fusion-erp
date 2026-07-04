@@ -1,0 +1,15 @@
+ZIP G - Correção do status da integração de matrícula
+
+Correção aplicada:
+- Adicionada a rota GET /api/matriculas/integracao/status.
+- Mantidas as rotas POST /api/matriculas/integrar e POST /api/matriculas/trocar-plano.
+
+Como aplicar:
+1. Feche o servidor se estiver rodando.
+2. Extraia este ZIP na raiz do projeto.
+3. Permita mesclar/substituir os arquivos existentes.
+4. Rode npm start.
+5. Teste: http://localhost:3000/api/matriculas/integracao/status
+
+Observação:
+Este pacote não altera server.mjs. Ele corrige apenas o arquivo de rotas da integração de matrícula.

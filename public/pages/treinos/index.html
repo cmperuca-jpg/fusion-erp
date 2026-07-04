@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fusion ERP - Treinos</title>
+  <meta http-equiv="refresh" content="0;url=/pages/treinos-v3/">
+  <link rel="stylesheet" href="/assets/css/fusion-app.css">
+  <script src="/assets/js/fusion-auth.js"></script>
+  <script>
+    window.FUSION_EMBED = new URLSearchParams(location.search).get('embed') === '1';
+    if (!window.FUSION_EMBED && window.FusionAuth) FusionAuth.proteger();
+
+    const params = new URLSearchParams(location.search);
+    const destino = new URL('/pages/treinos-v3/', location.origin);
+    for (const [k, v] of params.entries()) destino.searchParams.set(k, v);
+    location.replace(destino.pathname + destino.search);
+  </script>
+</head>
+<body>
+  <main class="fusion-shell">
+    <section class="fusion-content">
+      <div class="fusion-card">
+        <h2>Redirecionando para Treinos V3...</h2>
+        <p>O módulo antigo de criação de treinos foi substituído pelo Montador Treinos V3.</p>
+        <p><a href="/pages/treinos-v3/">Abrir Treinos V3</a></p>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

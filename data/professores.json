@@ -1,0 +1,51 @@
+[
+  {
+    "id": "e1bdfb38-50bf-47fb-87ba-052ab6434f84",
+    "status": "Ativo",
+    "criadoEm": "2026-07-03T18:28:37.356Z",
+    "atualizadoEm": "2026-07-03T18:28:37.356Z",
+    "nome": "MARCOS ANDRE DE SOUZA",
+    "cpf": "04877315497",
+    "rg": "2000001220025",
+    "cref": "ESTAGIARIO",
+    "email": "cmmarechais@gmail.com",
+    "telefone": "82988450407",
+    "whatsapp": "(82) 98845-0407",
+    "dataNascimento": "1981-10-06",
+    "especialidade": "preparação fisica",
+    "especialidades": [
+      "CAPOEIRA",
+      "MUSCULAÇÃO",
+      "NATAÇÃO"
+    ],
+    "modalidades": [
+      "TODAS"
+    ],
+    "diasTrabalho": [
+      "SEGUNDA",
+      "TERÇA",
+      "QUARTA",
+      "QUINTA",
+      "SEXTA",
+      "SABADO",
+      "DOMINGO"
+    ],
+    "horarioInicio": "05:00",
+    "horarioFim": "14:00",
+    "tipoContrato": "Prestador",
+    "valorHora": "10,00",
+    "banco": "BANCO INTER",
+    "agencia": "",
+    "conta": "",
+    "chavePix": "82988450407",
+    "endereco": "Rua Mensageiro José Raimundo dos Santos, 260",
+    "observacoes": "",
+    "documentos": [
+      {
+        "nome": "marcos andre",
+        "tipo": "manual",
+        "arquivo_base64": ""
+      }
+    ]
+  }
+]

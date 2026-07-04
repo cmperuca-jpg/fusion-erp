@@ -1,0 +1,93 @@
+[
+  {
+    "bandeira": "Mastercard",
+    "modalidade": "debito",
+    "parcelas": 1,
+    "percentual": 1.09,
+    "descricao": "Débito Mastercard"
+  },
+  {
+    "bandeira": "Mastercard",
+    "modalidade": "credito",
+    "parcelas": 1,
+    "percentual": 2.99,
+    "descricao": "Crédito Mastercard 1x"
+  },
+  {
+    "bandeira": "Mastercard",
+    "modalidade": "credito",
+    "parcelas": 2,
+    "percentual": 4.05,
+    "descricao": "Crédito Mastercard 2x"
+  },
+  {
+    "bandeira": "Visa",
+    "modalidade": "debito",
+    "parcelas": 1,
+    "percentual": 1.15,
+    "descricao": "Débito Visa"
+  },
+  {
+    "bandeira": "Visa",
+    "modalidade": "credito",
+    "parcelas": 1,
+    "percentual": 3.05,
+    "descricao": "Crédito Visa 1x"
+  },
+  {
+    "bandeira": "Visa",
+    "modalidade": "credito",
+    "parcelas": 2,
+    "percentual": 4.15,
+    "descricao": "Crédito Visa 2x"
+  },
+  {
+    "bandeira": "Elo",
+    "modalidade": "debito",
+    "parcelas": 1,
+    "percentual": 1.35,
+    "descricao": "Débito Elo"
+  },
+  {
+    "bandeira": "Elo",
+    "modalidade": "credito",
+    "parcelas": 1,
+    "percentual": 3.35,
+    "descricao": "Crédito Elo 1x"
+  },
+  {
+    "bandeira": "Elo",
+    "modalidade": "credito",
+    "parcelas": 2,
+    "percentual": 4.45,
+    "descricao": "Crédito Elo 2x"
+  },
+  {
+    "bandeira": "Hipercard",
+    "modalidade": "credito",
+    "parcelas": 1,
+    "percentual": 3.49,
+    "descricao": "Crédito Hipercard 1x"
+  },
+  {
+    "bandeira": "Hipercard",
+    "modalidade": "credito",
+    "parcelas": 2,
+    "percentual": 4.75,
+    "descricao": "Crédito Hipercard 2x"
+  },
+  {
+    "bandeira": "American Express",
+    "modalidade": "credito",
+    "parcelas": 1,
+    "percentual": 3.85,
+    "descricao": "Crédito Amex 1x"
+  },
+  {
+    "bandeira": "American Express",
+    "modalidade": "credito",
+    "parcelas": 2,
+    "percentual": 5.1,
+    "descricao": "Crédito Amex 2x"
+  }
+]

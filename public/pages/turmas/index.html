@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Turmas - Fusion ERP</title>
+  <link rel="stylesheet" href="/css/components.css" />
+  <link rel="stylesheet" href="/pages/turmas/turmas.css" />
+  <link rel="stylesheet" href="/assets/css/fusion-app.css">
+  <script src="/assets/js/fusion-auth.js"></script>
+  <script>FusionAuth.proteger();</script>
+  <meta name="fusion-existing-pages" content="agenda,alunos,avaliacoes,bi,bi-academia,bi-academia-operacional,bi-financeiro,caixa,checkin,configuracoes,dashboard,estoque,exercicios,financeiro,login,matriculas,mensalidades,modalidades,modelos-treino,pagamentos,planos,presencas,professores,recebimentos,relatorios-caixa,treinos,turmas">
+</head>
+<body>
+  <main class="main">
+    <section class="modulo-header">
+      <div>
+        <h2>Turmas</h2>
+        <p>Controle de turmas, vagas, professores, modalidades e horários.</p>
+      </div>
+      <button class="btn-primary" id="btnNovaTurma">Nova Turma</button>
+    </section>
+
+    <section class="kpi-grid">
+      <article class="card kpi-card">
+        <span>Total</span>
+        <strong id="kpiTotal">0</strong>
+      </article>
+      <article class="card kpi-card">
+        <span>Ativas</span>
+        <strong id="kpiAtivas">0</strong>
+      </article>
+      <article class="card kpi-card">
+        <span>Inativas</span>
+        <strong id="kpiInativas">0</strong>
+      </article>
+      <article class="card kpi-card">
+        <span>Vagas livres</span>
+        <strong id="kpiVagas">0</strong>
+      </article>
+    </section>
+
+    <section class="card filtros-card">
+      <input type="search" id="campoBusca" placeholder="Pesquisar turma, modalidade ou professor" />
+      <select id="filtroStatus">
+        <option value="Todos">Todos os status</option>
+        <option value="Ativa">Ativa</option>
+        <option value="Inativa">Inativa</option>
+      </select>
+    </section>
+
+    <section class="card tabela-card">
+      <table>
+        <thead>
+          <tr>
+            <th>Turma</th>
+            <th>Modalidade</th>
+            <th>Professor</th>
+            <th>Dias</th>
+            <th>Horário</th>
+            <th>Vagas</th>
+            <th>Status</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="tabelaTurmas"></tbody>
+      </table>
+    </section>
+  </main>
+
+  <div class="modal-backdrop" id="modalTurma">
+    <form class="modal" id="formTurma">
+      <input type="hidden" id="turmaId" />
+
+      <header class="modal-header">
+        <h2 id="modalTitulo">Nova Turma</h2>
+        <button type="button" class="btn-icon" id="btnFecharModal">×</button>
+      </header>
+
+      <div class="form-grid">
+        <label>
+          Nome da turma
+          <input id="nome" required />
+        </label>
+
+        <label>
+          Modalidade
+          <input id="modalidade" required placeholder="Ex.: Natação" />
+        </label>
+
+        <label>
+          Professor
+          <input id="professor" required placeholder="Nome do professor" />
+        </label>
+
+        <label>
+          Sala/Local
+          <input id="sala" placeholder="Ex.: Piscina 1" />
+        </label>
+
+        <label>
+          Dias da semana
+          <input id="diasSemana" required placeholder="Ex.: Segunda, Quarta e Sexta" />
+        </label>
+
+        <label>
+          Horário
+          <input id="horario" required placeholder="Ex.: 07:00 às 08:00" />
+        </label>
+
+        <label>
+          Capacidade
+          <input id="capacidade" type="number" min="1" required />
+        </label>
+
+        <label>
+          Alunos matriculados
+          <input id="alunosMatriculados" type="number" min="0" value="0" />
+        </label>
+
+        <label>
+          Status
+          <select id="status">
+            <option value="Ativa">Ativa</option>
+            <option value="Inativa">Inativa</option>
+          </select>
+        </label>
+      </div>
+
+      <label>
+        Observações
+        <textarea id="observacoes" rows="3"></textarea>
+      </label>
+
+      <footer class="modal-footer">
+        <button type="button" class="btn-secondary" id="btnCancelar">Cancelar</button>
+        <button type="submit" class="btn-primary">Salvar</button>
+      </footer>
+    </form>
+  </div>
+  <script src="/pages/turmas/turmas.js"></script>
+    <script src="/assets/js/fusion-layout.js"></script>
+</body>
+</html>

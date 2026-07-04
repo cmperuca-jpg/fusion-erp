@@ -1,0 +1,11 @@
+Fusion ERP - Financeiro Parte 4.2
+Tela: Pagamentos / Contas a Pagar
+Pacote: ZIP 7
+
+Incrementos:
+- Seleção de pagamentos na tabela.
+- Selecionar todos da página.
+- Selecionar todos os filtrados que estejam em aberto.
+- Barra de lote com quantidade e valor total selecionado.
+- Baixa total em lote com data, forma e observação.
+- Payload individual para cada baixa em lote.

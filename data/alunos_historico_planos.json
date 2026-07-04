@@ -1,0 +1,38 @@
+[
+  {
+    "id": "hist_plano_1783103608768_354005",
+    "alunoId": "91c7eb65-660b-4a98-abd9-d284772e0191",
+    "aluno": "marcos andre",
+    "matriculaId": "mat_1783103608764_965859",
+    "numeroMatricula": "MAT-202607-000001",
+    "planoId": "6980ab38-5a58-4d8d-89eb-ce088e52255d",
+    "plano": "MUSCULAÇÃO",
+    "tipoPlano": "Mensal",
+    "valorMatricula": 20,
+    "valorPlano": 65,
+    "valorServicos": 0,
+    "valorMensalTotal": 65,
+    "valorTotalInicial": 85,
+    "servicos": [],
+    "acao": "matricula_pendente_pagamento",
+    "criadoEm": "2026-07-03T18:33:28.768Z"
+  },
+  {
+    "id": "hist_plano_1783104576306_457395",
+    "alunoId": "91c7eb65-660b-4a98-abd9-d284772e0191",
+    "aluno": "marcos andre",
+    "matriculaId": "mat_1783104576305_815417",
+    "numeroMatricula": "MAT-202607-000002",
+    "planoId": "6980ab38-5a58-4d8d-89eb-ce088e52255d",
+    "plano": "MUSCULAÇÃO",
+    "tipoPlano": "Mensal",
+    "valorMatricula": 0,
+    "valorPlano": 65,
+    "valorServicos": 0,
+    "valorMensalTotal": 65,
+    "valorTotalInicial": 65,
+    "servicos": [],
+    "acao": "matricula_pendente_pagamento",
+    "criadoEm": "2026-07-03T18:49:36.306Z"
+  }
+]

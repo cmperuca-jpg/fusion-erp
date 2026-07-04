@@ -1,0 +1,10 @@
+Fusion ERP - Financeiro Parte 4.2
+Tela: Pagamentos / Contas a Pagar
+Pacote: ZIP 6
+
+Incrementos:
+- Modal estruturado para estorno e cancelamento.
+- Motivo e data obrigatórios para ações críticas.
+- Payload com histórico de estorno/cancelamento.
+- Bloqueios por status para evitar ações indevidas.
+- Destaque visual para pagamentos cancelados e estornados.

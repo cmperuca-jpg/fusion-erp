@@ -1,0 +1,33 @@
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 12px 10px;
+  border-bottom: 1px solid var(--fusion-border);
+  text-align: left;
+  vertical-align: middle;
+}
+
+th {
+  color: var(--fusion-muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+td {
+  color: #334155;
+  font-size: 14px;
+}
+
+tr:hover td {
+  background: var(--fusion-soft);
+}

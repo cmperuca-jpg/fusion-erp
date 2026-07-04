@@ -1,0 +1,37 @@
+{
+  "caixas": [
+    {
+      "id": "cx_1783103651289_e0efff",
+      "dataAbertura": "2026-07-03",
+      "valorAbertura": 0,
+      "responsavel": "Administrador",
+      "observacaoAbertura": "",
+      "status": "aberto",
+      "abertoEm": "2026-07-03T18:34:11.290Z",
+      "fechadoEm": "",
+      "valorFechamentoInformado": null,
+      "diferenca": null,
+      "observacaoFechamento": ""
+    }
+  ],
+  "movimentos": [
+    {
+      "id": "mov_1783103702952_994a44",
+      "caixaId": "cx_1783103651289_e0efff",
+      "tipo": "entrada",
+      "descricao": "Recebimento matrícula inicial marcos andre",
+      "categoria": "Matrículas",
+      "pessoa": "marcos andre",
+      "formaPagamento": "Cartão de Crédito",
+      "valor": 81.73,
+      "data": "2026-07-03",
+      "status": "ativo",
+      "origem": "mensalidades",
+      "mensalidadeId": "men_1783103608766_368011",
+      "observacao": "Baixa pelo financeiro",
+      "lancamentoFinanceiroId": "fin_1783103608766_642720",
+      "criadoEm": "2026-07-03T18:35:02.952Z",
+      "atualizadoEm": "2026-07-03T18:35:02.952Z"
+    }
+  ]
+}

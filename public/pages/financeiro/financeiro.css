@@ -1,0 +1,331 @@
+.page-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.page-actions h2 {
+  margin: 0;
+  color: #0f172a;
+}
+
+.page-actions p {
+  margin: 6px 0 0;
+  color: #64748b;
+}
+
+.financeiro-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+}
+
+.filtros-financeiro {
+  display: grid;
+  grid-template-columns: 1fr 180px 180px auto auto;
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.filtros-financeiro input,
+.filtros-financeiro select,
+.form-grid input,
+.form-grid select,
+.form-grid textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 11px;
+  font: inherit;
+}
+
+.tabela-container {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th {
+  text-align: left;
+  color: #475569;
+  font-size: 13px;
+  padding: 10px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+td {
+  padding: 12px 10px;
+  border-bottom: 1px solid #e2e8f0;
+  color: #0f172a;
+}
+
+.badge {
+  display: inline-flex;
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.badge.pago {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.badge.aberto {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.badge.cancelado {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.tipo {
+  font-weight: 800;
+}
+
+.tipo.receber {
+  color: #166534;
+}
+
+.tipo.pagar {
+  color: #991b1b;
+}
+
+.acoes {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn-primary,
+.btn-secondary,
+.btn-light,
+.btn-danger {
+  border: none;
+  border-radius: 10px;
+  padding: 11px 15px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.btn-primary {
+  background: #ff6600;
+  color: white;
+}
+
+.btn-secondary {
+  background: #1e293b;
+  color: white;
+}
+
+.btn-light {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.btn-danger {
+  background: #dc2626;
+  color: white;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.6);
+  z-index: 50;
+}
+
+.modal-overlay.ativo {
+  display: flex;
+}
+
+.modal {
+  width: min(900px, 94vw);
+  max-height: 92vh;
+  overflow: auto;
+  background: white;
+  border-radius: 18px;
+  padding: 22px;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.modal-header button {
+  border: none;
+  background: transparent;
+  font-size: 28px;
+  cursor: pointer;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+
+.form-grid label {
+  display: grid;
+  gap: 6px;
+  color: #334155;
+  font-weight: 700;
+}
+
+.full {
+  grid-column: 1 / -1;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+@media (max-width: 1000px) {
+  .financeiro-kpis,
+  .filtros-financeiro,
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .page-actions {
+    display: grid;
+    gap: 12px;
+  }
+}
+
+.resumo-baixa {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 16px;
+  display: grid;
+  gap: 6px;
+  color: #0f172a;
+}
+
+.modal-baixa {
+  width: min(720px, 94vw);
+}
+
+button:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+.page-action-buttons {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.painel-cartao {
+  border: 1px solid #fed7aa;
+  background: #fff7ed;
+  border-radius: 14px;
+  padding: 14px;
+  display: grid;
+  gap: 12px;
+}
+
+.painel-cartao[hidden] {
+  display: none;
+}
+
+.painel-cartao-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.painel-cartao-head span,
+.texto-apoio {
+  display: block;
+  color: #64748b;
+  font-size: 13px;
+  margin-top: 3px;
+}
+
+.grid-cartao {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.resultado-cartao {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.resultado-cartao div {
+  background: #fff;
+  border: 1px solid #fed7aa;
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.resultado-cartao span {
+  display: block;
+  color: #64748b;
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.resultado-cartao strong {
+  color: #0f172a;
+}
+
+.resultado-cartao .liquido strong {
+  color: #166534;
+}
+
+.modal-taxas {
+  width: min(1050px, 96vw);
+}
+
+.taxas-actions {
+  display: flex;
+  gap: 10px;
+  margin: 14px 0;
+  flex-wrap: wrap;
+}
+
+.tabela-taxas input,
+.tabela-taxas select {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 9px;
+  font: inherit;
+}
+
+@media (max-width: 1000px) {
+  .grid-cartao,
+  .resultado-cartao {
+    grid-template-columns: 1fr;
+  }
+
+  .painel-cartao-head {
+    display: grid;
+  }
+}

@@ -1,0 +1,212 @@
+{
+  "ok": true,
+  "operacao": "reset-sistema-virgem",
+  "versaoBase": "2.6.1-e",
+  "data": "2026-07-03T17:29:21.574Z",
+  "objetivo": "Zerar dados operacionais para teste completo de usabilidade em base limpa.",
+  "backup": {
+    "pasta": "backups/reset-sistema-virgem-2026-07-03T17-29-21-397Z",
+    "dataCopiado": true,
+    "logsCopiado": true
+  },
+  "resumo": {
+    "arquivosJsonProcessados": 20,
+    "arquivosJsonZerados": 20,
+    "falhas": 0,
+    "logsRemovidos": 6
+  },
+  "arquivos": [
+    {
+      "arquivo": "data/alunos.json",
+      "existia": true,
+      "zerado": true,
+      "tipoAnterior": "array",
+      "registrosAnteriores": 10,
+      "novoFormato": "array-vazio"
+    },
+    {
+      "arquivo": "data/professores.json",
+      "existia": true,
+      "zerado": true,
+      "tipoAnterior": "array",
+      "registrosAnteriores": 1,
+      "novoFormato": "array-vazio"
+    },
+    {
+      "arquivo": "data/planos.json",
+      "existia": true,
+      "zerado": true,
+      "tipoAnterior": "array",
+      "registrosAnteriores": 3,
+      "novoFormato": "array-vazio"
+    },
+    {
+      "arquivo": "data/turmas.json",
+      "existia": true,
+      "zerado": true,
+      "tipoAnterior": "array",
+      "registrosAnteriores": 0,
+      "novoFormato": "array-vazio"
+    },
+    {
+      "arquivo": "data/matriculas.json",
+      "existia": true,
+      "zerado": true,
+      "tipoAnterior": "array",
+      "registrosAnteriores": 11,
+      "novoFormato": "array-vazio"
+    },
+    {
+      "arquivo": "data/financeiro.json",
+      "existia": true,
+      "zerado": true,
+      "tipoAnterior": "array",
+      "registrosAnteriores": 24,
+      "novoFormato": "array-vazio"
+    },
+    {
+      "arquivo": "data/mensalidades.json",
+      "existia": true,
+      "zerado": true,
+      "tipoAnterior": "array",
+      "registrosAnteriores": 22,
+      "novoFormato": "array-vazio"
+    },
+    {
+      "arquivo": "data/pagamentos.json",
+      "existia": true,
+      "zerado": true,
+      "tipoAnterior": "array",
+      "registrosAnteriores": 0,
+      "novoFormato": "array-vazio"
+    },
+    {
+      "arquivo": "data/recebimentos.json",
+      "existia": true,
+      "zerado": true,
+      "tipoAnterior": "array",
+      "registrosAnteriores": 13,
+      "novoFormato": "array-vazio"
+    },
+    {
+      "arquivo": "data/caixa.json",
+      "existia": true,
+      "zerado": true,
+      "tipoAnterior": "object",
+      "registrosAnteriores": 2,
+      "novoFormato": "array-vazio"
+    },
+    {
+      "arquivo": "data/frequencia.json",
+      "existia": true,
+      "zerado": true,
+      "tipoAnterior": "array",
+      "registrosAnteriores": 0,
+      "novoFormato": "array-vazio"
+    },
+    {
+      "arquivo": "data/checkins.json",
+      "existia": true,
+      "zerado": true,
+      "tipoAnterior": "array",
+      "registrosAnteriores": 10,
+      "novoFormato": "array-vazio"
+    },
+    {
+      "arquivo": "data/checkin.json",
+      "existia": true,
+      "zerado": true,
+      "tipoAnterior": "array",
+      "registrosAnteriores": 0,
+      "novoFormato": "array-vazio"
+    },
+    {
+      "arquivo": "data/treinos.json",
+      "existia": true,
+      "zerado": true,
+      "tipoAnterior": "array",
+      "registrosAnteriores": 0,
+      "novoFormato": "array-vazio"
+    },
+    {
+      "arquivo": "data/treinos_integrados.json",
+      "existia": true,
+      "zerado": true,
+      "tipoAnterior": "array",
+      "registrosAnteriores": 0,
+      "novoFormato": "array-vazio"
+    },
+    {
+      "arquivo": "data/treinos_execucoes.json",
+      "existia": true,
+      "zerado": true,
+      "tipoAnterior": "array",
+      "registrosAnteriores": 0,
+      "novoFormato": "array-vazio"
+    },
+    {
+      "arquivo": "data/avaliacoes.json",
+      "existia": true,
+      "zerado": true,
+      "tipoAnterior": "array",
+      "registrosAnteriores": 0,
+      "novoFormato": "array-vazio"
+    },
+    {
+      "arquivo": "data/relatorios.json",
+      "existia": true,
+      "zerado": true,
+      "tipoAnterior": "array",
+      "registrosAnteriores": 0,
+      "novoFormato": "array-vazio"
+    },
+    {
+      "arquivo": "data/leads.json",
+      "existia": true,
+      "zerado": true,
+      "tipoAnterior": "array",
+      "registrosAnteriores": 0,
+      "novoFormato": "array-vazio"
+    },
+    {
+      "arquivo": "data/crm.json",
+      "existia": true,
+      "zerado": true,
+      "tipoAnterior": "array",
+      "registrosAnteriores": 0,
+      "novoFormato": "array-vazio"
+    }
+  ],
+  "logsRemovidos": [
+    {
+      "arquivo": "logs/consolidacao-comercial-261f2.json",
+      "removido": true
+    },
+    {
+      "arquivo": "logs/consolidacao-venda-inicial-261g.json",
+      "removido": true
+    },
+    {
+      "arquivo": "logs/homologacao-baixas-caixa-261h.json",
+      "removido": true
+    },
+    {
+      "arquivo": "logs/homologacao-motor-financeiro-unico-261i.json",
+      "removido": true
+    },
+    {
+      "arquivo": "logs/reset-sistema-virgem.json",
+      "removido": true
+    },
+    {
+      "arquivo": "logs/sincronizar-recebimentos-financeiro.json",
+      "removido": true
+    }
+  ],
+  "observacoes": [
+    "Todos os JSONs operacionais foram reiniciados como array vazio.",
+    "Os dados anteriores foram copiados para a pasta backups antes do reset.",
+    "Os relatórios antigos em logs foram removidos após backup.",
+    "Este reset não altera módulos, rotas, páginas nem arquitetura do ERP."
+  ]
+}

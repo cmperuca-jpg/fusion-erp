@@ -1,0 +1,17 @@
+[
+  {
+    "id": "d9df0fdc-5804-4d13-87a0-3c16f7d3e5da",
+    "nome": "MUSCULAÇÃO",
+    "categoria": "FORÇA",
+    "descricao": "",
+    "professorResponsavel": "TODOS",
+    "duracaoMinutos": 60,
+    "capacidadeMaxima": 20,
+    "valorSugerido": 0,
+    "cor": "#ff6b00",
+    "icone": "🏋️",
+    "status": "Ativa",
+    "criadoEm": "2026-07-03T18:32:00.041Z",
+    "atualizadoEm": "2026-07-03T18:32:00.041Z"
+  }
+]

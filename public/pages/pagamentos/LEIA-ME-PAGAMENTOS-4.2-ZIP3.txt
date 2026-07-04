@@ -1,0 +1,11 @@
+Fusion ERP - Financeiro Parte 4.2
+Tela: Pagamentos / Contas a Pagar
+Pacote: ZIP 3
+
+Incrementos:
+- Cadastro de pagamentos com centro de custo.
+- Criação de parcelas automáticas.
+- Recorrência semanal, quinzenal e mensal.
+- Validação do formulário antes de salvar.
+- Exportação CSV inclui centro de custo.
+- Mantida a base do ZIP 2 enviada pelo usuário.

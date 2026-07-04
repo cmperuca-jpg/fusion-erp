@@ -1,0 +1,280 @@
+/* Fusion ERP - layout global único */
+:root {
+  --fusion-sidebar-width: 278px;
+  --fusion-sidebar-bg: #101826;
+  --fusion-sidebar-text: #dbe4f0;
+  --fusion-orange: #ff6600;
+  --fusion-border: #d8dee8;
+  --fusion-text: #1f2937;
+  --fusion-muted: #6b7280;
+}
+
+* { box-sizing: border-box; }
+html, body { min-height: 100%; }
+body {
+  margin: 0 !important;
+  font-family: Arial, Helvetica, sans-serif !important;
+  background: #f4f6f9 !important;
+  color: var(--fusion-text);
+}
+a { color: inherit; text-decoration: none; }
+
+/* Neutraliza menus antigos que tenham sobrado antes do JS carregar */
+body > aside.sidebar,
+body > .sidebar:not(.fusion-sidebar) { display: none !important; }
+
+.fusion-shell { display: flex; min-height: 100vh; width: 100%; }
+.fusion-sidebar {
+  width: var(--fusion-sidebar-width) !important;
+  min-width: var(--fusion-sidebar-width) !important;
+  max-width: var(--fusion-sidebar-width) !important;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  overflow: hidden;
+  background: var(--fusion-sidebar-bg);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  font-family: Arial, Helvetica, sans-serif !important;
+  z-index: 20;
+}
+.fusion-brand {
+  height: 68px; min-height: 68px; padding: 0 20px;
+  display: flex; align-items: center;
+  color: var(--fusion-orange); border-bottom: 1px solid rgba(255,255,255,.08);
+  font-size: 22px !important; line-height: 1 !important; font-weight: 700 !important; white-space: nowrap;
+}
+.fusion-menu {
+  flex: 1; overflow-y: auto; overflow-x: hidden; padding: 12px 12px 18px;
+  scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.25) transparent; scroll-behavior: auto !important;
+}
+.fusion-menu-group {
+  margin: 16px 10px 7px; color: #778397; font-size: 11px !important; line-height: 1.1 !important;
+  letter-spacing: .06em; font-weight: 800 !important; text-transform: uppercase; white-space: nowrap;
+}
+.fusion-menu a {
+  width: 100%; min-height: 42px; display: flex !important; align-items: center !important; gap: 10px !important;
+  padding: 10px 12px !important; margin: 3px 0 !important; border-radius: 10px !important;
+  color: var(--fusion-sidebar-text) !important; font-family: Arial, Helvetica, sans-serif !important;
+  font-size: 14px !important; line-height: 1.2 !important; font-weight: 600 !important;
+  text-decoration: none !important; white-space: nowrap !important; box-sizing: border-box;
+  transition: background .12s ease, color .12s ease;
+}
+.fusion-menu a span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fusion-menu-icon { width: 24px !important; min-width: 24px !important; max-width: 24px !important; height: 22px !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; font-size: 16px !important; line-height: 1 !important; text-align: center !important; }
+.fusion-menu a:hover, .fusion-menu a.active, .fusion-menu a[aria-current="page"] { background: var(--fusion-orange) !important; color: #fff !important; }
+.fusion-sidebar-footer { min-height: 50px; padding: 14px 16px; border-top: 1px solid rgba(255,255,255,.08); color: #9aa4b2; font-size: 12px !important; line-height: 1.3 !important; white-space: nowrap; }
+
+.fusion-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.fusion-topbar { height: 64px; min-height: 64px; background: #fff; border-bottom: 1px solid var(--fusion-border); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; box-sizing: border-box; }
+.fusion-title { font-size: 20px !important; font-weight: 700 !important; line-height: 1.2 !important; color: var(--fusion-text); }
+.fusion-userbar { display: inline-flex; align-items: center; gap: 10px; color: var(--fusion-muted); font-size: 14px !important; }
+.fusion-userbar button, .fusion-topbar button { border: 1px solid #cbd5e1; background: #fff; border-radius: 8px; padding: 8px 11px; cursor: pointer; font: inherit; color: #0f172a; }
+.fusion-content { padding: 24px; box-sizing: border-box; }
+.fusion-card { background: #fff; border: 1px solid var(--fusion-border); border-radius: 14px; padding: 18px; box-shadow: 0 8px 20px rgba(16,24,38,.05); }
+.fusion-button { background: var(--fusion-orange); color: #fff; border: 0; border-radius: 9px; padding: 10px 14px; cursor: pointer; font-weight: 700; }
+.fusion-button.secondary { background: #172136; color: #fff; }
+
+/* Compatibilidade com páginas antigas que usam .main, .card, .page-actions */
+.fusion-main > .main { margin: 0 !important; width: auto !important; max-width: none !important; padding: 24px !important; }
+.fusion-main > section:not(.fusion-content), .fusion-main > .page-actions, .fusion-main > .card, .fusion-main > .kpi-grid, .fusion-main > .financeiro-kpis { margin-left: 0 !important; }
+
+@media (max-width: 900px) {
+  .fusion-shell { display: block; }
+  .fusion-sidebar { position: relative; width: 100% !important; min-width: 0 !important; max-width: none !important; height: auto; max-height: 60vh; }
+}
+
+/* === FUSION_LAYOUT_UNICO_V3_START === */
+:root {
+  --fusion-sidebar-width: 278px;
+  --fusion-sidebar-bg: #101826;
+  --fusion-sidebar-text: #dbe4f0;
+  --fusion-orange: #ff6600;
+  --fusion-border: #d8dee8;
+}
+html, body { min-height: 100%; }
+body {
+  margin: 0 !important;
+  font-family: Arial, Helvetica, sans-serif !important;
+  background: #f4f6f9 !important;
+  color: #1f2937;
+}
+body.fusion-public-page { background: #f4f6f9 !important; }
+.fusion-shell {
+  display: flex !important;
+  min-height: 100vh !important;
+  width: 100% !important;
+  align-items: stretch !important;
+}
+.fusion-sidebar {
+  width: var(--fusion-sidebar-width) !important;
+  min-width: var(--fusion-sidebar-width) !important;
+  max-width: var(--fusion-sidebar-width) !important;
+  height: 100vh !important;
+  position: sticky !important;
+  top: 0 !important;
+  left: 0 !important;
+  overflow: hidden !important;
+  background: var(--fusion-sidebar-bg) !important;
+  color: #fff !important;
+  display: flex !important;
+  flex-direction: column !important;
+  font-family: Arial, Helvetica, sans-serif !important;
+  z-index: 20 !important;
+}
+.fusion-brand {
+  height: 68px !important;
+  min-height: 68px !important;
+  padding: 0 20px !important;
+  display: flex !important;
+  align-items: center !important;
+  color: var(--fusion-orange) !important;
+  border-bottom: 1px solid rgba(255,255,255,.08) !important;
+  font-size: 22px !important;
+  line-height: 1 !important;
+  font-weight: 700 !important;
+  white-space: nowrap !important;
+}
+.fusion-menu {
+  flex: 1 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding: 12px 12px 18px !important;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,.25) transparent;
+  scroll-behavior: auto !important;
+}
+.fusion-menu-group {
+  margin: 16px 10px 7px !important;
+  color: #9aa4b2 !important;
+  font-size: 11px !important;
+  line-height: 1.1 !important;
+  letter-spacing: .09em !important;
+  font-weight: 800 !important;
+  text-transform: uppercase !important;
+  white-space: nowrap !important;
+}
+.fusion-menu a {
+  width: 100% !important;
+  min-height: 42px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 10px 12px !important;
+  margin: 3px 0 !important;
+  border-radius: 10px !important;
+  color: var(--fusion-sidebar-text) !important;
+  font-family: Arial, Helvetica, sans-serif !important;
+  font-size: 14px !important;
+  line-height: 1.2 !important;
+  font-weight: 600 !important;
+  text-decoration: none !important;
+  white-space: nowrap !important;
+  box-sizing: border-box !important;
+  background: transparent !important;
+}
+.fusion-menu a span:last-child { overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important; }
+.fusion-menu-icon {
+  width: 24px !important; min-width: 24px !important; max-width: 24px !important;
+  height: 22px !important;
+  display: inline-flex !important; align-items: center !important; justify-content: center !important;
+  font-size: 16px !important; line-height: 1 !important; text-align: center !important;
+}
+.fusion-menu a:hover,
+.fusion-menu a.active,
+.fusion-menu a[aria-current="page"] {
+  background: var(--fusion-orange) !important;
+  color: #fff !important;
+}
+.fusion-sidebar-footer {
+  min-height: 50px !important;
+  padding: 14px 16px !important;
+  border-top: 1px solid rgba(255,255,255,.08) !important;
+  color: #9aa4b2 !important;
+  font-size: 12px !important;
+  line-height: 1.3 !important;
+  white-space: nowrap !important;
+}
+.fusion-main {
+  flex: 1 !important;
+  min-width: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  width: auto !important;
+  background: #f4f6f9 !important;
+}
+.fusion-topbar {
+  height: 64px !important;
+  min-height: 64px !important;
+  background: #fff !important;
+  border-bottom: 1px solid var(--fusion-border) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 0 24px !important;
+  box-sizing: border-box !important;
+  margin: 0 !important;
+  width: 100% !important;
+}
+.fusion-title { font-size: 20px !important; font-weight: 700 !important; line-height: 1.2 !important; color: #1f2937 !important; }
+.fusion-userbar { display: inline-flex !important; align-items: center !important; gap: 10px !important; color: #6b7280 !important; font-size: 14px !important; }
+.fusion-userbar button, .fusion-topbar button {
+  border: 1px solid #cbd5e1 !important;
+  background: #fff !important;
+  border-radius: 8px !important;
+  padding: 8px 11px !important;
+  cursor: pointer !important;
+  font: inherit !important;
+  color: #0f172a !important;
+}
+.fusion-page-content,
+.fusion-main > main.main,
+.fusion-main > main {
+  margin: 0 !important;
+  margin-left: 0 !important;
+  width: 100% !important;
+  max-width: none !important;
+  min-height: auto !important;
+  padding: 24px !important;
+  box-sizing: border-box !important;
+  background: #f4f6f9 !important;
+}
+.fusion-content { padding: 24px !important; box-sizing: border-box !important; width: 100% !important; }
+.fusion-card, .card {
+  background: #fff;
+  border: 1px solid var(--fusion-border);
+  border-radius: 14px;
+}
+.fusion-button {
+  background: var(--fusion-orange);
+  color: #fff;
+  border: 0;
+  border-radius: 9px;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-weight: 700;
+}
+.fusion-button.secondary { background: #172136; color: #fff; }
+
+body.fusion-layout-ready > aside.sidebar,
+body.fusion-layout-ready > .sidebar,
+body.fusion-layout-ready .fusion-main aside.sidebar,
+body.fusion-layout-ready .fusion-main .sidebar {
+  display: none !important;
+}
+
+@media (max-width: 900px) {
+  .fusion-shell { display: block !important; }
+  .fusion-sidebar {
+    position: relative !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    height: auto !important;
+    max-height: 60vh !important;
+  }
+}
+/* === FUSION_LAYOUT_UNICO_V3_END === */

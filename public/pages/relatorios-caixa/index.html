@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Relatório Diário de Caixa - Fusion ERP</title>
+  <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="/assets/css/fusion-app.css">
+  <script src="/assets/js/fusion-auth.js"></script>
+  <script>FusionAuth.proteger();</script>
+  <meta name="fusion-existing-pages" content="agenda,alunos,avaliacoes,bi,bi-academia,bi-academia-operacional,bi-financeiro,caixa,checkin,configuracoes,dashboard,estoque,exercicios,financeiro,login,matriculas,mensalidades,modalidades,modelos-treino,pagamentos,planos,presencas,professores,recebimentos,relatorios-caixa,treinos,turmas">
+</head>
+<body>
+  <main>
+    <header class="topo">
+      <div>
+        <h2>Relatório Diário de Caixa</h2>
+        <p>Recebimentos, taxas, líquido, saídas e fechamento por período.</p>
+      </div>
+      <button id="btnImprimir">Imprimir</button>
+    </header>
+
+    <section class="card filtros">
+      <label>Data inicial
+        <input type="date" id="dataInicio">
+      </label>
+      <label>Data final
+        <input type="date" id="dataFim">
+      </label>
+      <label>Forma
+        <select id="formaPagamento">
+          <option value="">Todas</option>
+          <option>Dinheiro</option>
+          <option>PIX</option>
+          <option>Débito</option>
+          <option>Crédito</option>
+          <option>Boleto</option>
+        </select>
+      </label>
+      <label>Categoria
+        <input id="categoria" placeholder="Matrículas, Mensalidades...">
+      </label>
+      <button id="btnGerar">Gerar relatório</button>
+    </section>
+
+    <section class="grid-resumo" id="resumoCards"></section>
+
+    <section class="card">
+      <h3>Totais por forma de pagamento</h3>
+      <table>
+        <thead><tr><th>Forma</th><th>Qtd.</th><th>Bruto</th><th>Taxas</th><th>Líquido</th></tr></thead>
+        <tbody id="porForma"></tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h3>Recebimentos</h3>
+      <table>
+        <thead><tr><th>Hora</th><th>Cliente</th><th>Descrição</th><th>Categoria</th><th>Forma</th><th>Bruto</th><th>Taxa</th><th>Líquido</th></tr></thead>
+        <tbody id="recebimentos"></tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h3>Saídas / Pagamentos</h3>
+      <table>
+        <thead><tr><th>Hora</th><th>Pessoa</th><th>Descrição</th><th>Categoria</th><th>Forma</th><th>Valor</th></tr></thead>
+        <tbody id="pagamentos"></tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h3>Totais por categoria</h3>
+      <table>
+        <thead><tr><th>Categoria</th><th>Qtd.</th><th>Bruto</th><th>Taxas</th><th>Líquido</th></tr></thead>
+        <tbody id="porCategoria"></tbody>
+      </table>
+    </section>
+  </main>
+
+  <script type="module" src="./index.js"></script>
+    <script src="/assets/js/fusion-layout.js"></script>
+</body>
+</html>

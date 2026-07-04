@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Modalidades - Fusion ERP</title>
+  <link rel="stylesheet" href="/css/components.css" />
+  <link rel="stylesheet" href="/pages/modalidades/modalidades.css" />
+  <link rel="stylesheet" href="/assets/css/fusion-app.css">
+  <script src="/assets/js/fusion-auth.js"></script>
+  <script>FusionAuth.proteger();</script>
+  <meta name="fusion-existing-pages" content="agenda,alunos,avaliacoes,bi,bi-academia,bi-academia-operacional,bi-financeiro,caixa,checkin,configuracoes,dashboard,estoque,exercicios,financeiro,login,matriculas,mensalidades,modalidades,modelos-treino,pagamentos,planos,presencas,professores,recebimentos,relatorios-caixa,treinos,turmas">
+</head>
+<body>
+  <main class="main">
+    <section class="page-actions">
+      <button class="btn-primary" id="btnNovaModalidade">Nova Modalidade</button>
+    </section>
+
+    <section class="kpi-grid">
+      <div class="card kpi-card"><span>Total</span><strong id="kpiTotal">0</strong></div>
+      <div class="card kpi-card"><span>Ativas</span><strong id="kpiAtivas">0</strong></div>
+      <div class="card kpi-card"><span>Inativas</span><strong id="kpiInativas">0</strong></div>
+      <div class="card kpi-card"><span>Categorias</span><strong id="kpiCategorias">0</strong></div>
+    </section>
+
+    <section class="card">
+      <div class="filters-row">
+        <input id="buscaModalidade" type="text" placeholder="Buscar por nome, categoria, professor ou descrição" />
+        <select id="filtroStatus">
+          <option value="Todos">Todos os status</option>
+          <option value="Ativa">Ativas</option>
+          <option value="Inativa">Inativas</option>
+        </select>
+      </div>
+
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>Modalidade</th>
+              <th>Categoria</th>
+              <th>Professor</th>
+              <th>Duração</th>
+              <th>Capacidade</th>
+              <th>Valor</th>
+              <th>Status</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tabelaModalidades"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <div class="modal-backdrop" id="modalModalidade">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 id="modalTitulo">Nova Modalidade</h2>
+        <button class="btn-icon" id="btnFecharModal">×</button>
+      </div>
+
+      <form id="formModalidade" class="form-grid">
+        <input type="hidden" id="modalidadeId" />
+
+        <label>Nome
+          <input id="nome" required placeholder="Ex.: Musculação" />
+        </label>
+
+        <label>Categoria
+          <input id="categoria" required placeholder="Ex.: Força, Aquática, Funcional" />
+        </label>
+
+        <label>Professor responsável
+          <input id="professorResponsavel" placeholder="Nome do professor" />
+        </label>
+
+        <label>Duração em minutos
+          <input id="duracaoMinutos" type="number" min="1" value="60" />
+        </label>
+
+        <label>Capacidade máxima
+          <input id="capacidadeMaxima" type="number" min="1" value="20" />
+        </label>
+
+        <label>Valor sugerido
+          <input id="valorSugerido" type="number" min="0" step="0.01" value="0" />
+        </label>
+
+        <label>Ícone
+          <input id="icone" placeholder="🏋️" />
+        </label>
+
+        <label>Cor
+          <input id="cor" type="color" value="#ff6b00" />
+        </label>
+
+        <label>Status
+          <select id="status">
+            <option value="Ativa">Ativa</option>
+            <option value="Inativa">Inativa</option>
+          </select>
+        </label>
+
+        <label class="full">Descrição
+          <textarea id="descricao" rows="3" placeholder="Descrição resumida da modalidade"></textarea>
+        </label>
+
+        <div class="modal-actions full">
+          <button type="button" class="btn-secondary" id="btnCancelar">Cancelar</button>
+          <button type="submit" class="btn-primary">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <script src="/pages/modalidades/modalidades.js"></script>
+    <script src="/assets/js/fusion-layout.js"></script>
+</body>
+</html>

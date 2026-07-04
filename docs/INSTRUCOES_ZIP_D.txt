@@ -1,0 +1,31 @@
+ZIP D - Integração Completa da Matrícula
+
+Arquivos incluídos:
+- lib/fusion-json-store.mjs
+- lib/matriculas.service.mjs
+- routes/matriculas.routes.mjs
+- public/assets/js/alunos-matricula-integracao.js
+- scripts/aplicar-zip-d.mjs
+
+Aplicação:
+1. Extraia o conteúdo na raiz do projeto Fusion ERP.
+2. Execute: node scripts/aplicar-zip-d.mjs
+3. Execute: node --check server.mjs
+4. Inicie: npm start
+
+Rotas adicionadas:
+- POST /api/matriculas
+- POST /api/alunos/:id/matricula
+- POST /api/alunos/:id/trocar-plano
+- POST /api/alunos/:id/gerar-mensalidade-inicial
+
+Arquivos JSON usados/criados:
+- data/alunos.json
+- data/planos.json
+- data/mensalidades.json
+- data/financeiro.json
+- data/alunos_historico.json
+- data/checkins.json
+
+Resultado esperado:
+Ao salvar uma matrícula com planoId válido, o aluno recebe planoId, plano, valorMensal, taxaMatricula e modalidades. O sistema gera a mensalidade inicial, cria lançamento financeiro a receber, registra histórico e prepara permissões de check-in.

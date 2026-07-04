@@ -1,0 +1,13 @@
+Fusion ERP - Financeiro Parte 4.1-B
+Tela: Recebimentos
+Pacote: ZIP 15 - Revisão final / QA
+Arquitetura mantida: Express + módulos .mjs + JSON local + frontend HTML/CSS/JS
+
+Arquivos:
+public/pages/recebimentos/index.html
+public/pages/recebimentos/style.css
+public/pages/recebimentos/api.js
+public/pages/recebimentos/index.js
+
+Observação:
+Este pacote fecha a Parte 4.1-B com a base enviada/testada pelo usuário e pequenos ajustes finais seguros de identificação, acessibilidade e status visual.

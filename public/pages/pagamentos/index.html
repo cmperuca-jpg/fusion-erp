@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Fusion ERP - Pagamentos</title>
+  <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="/assets/css/fusion-app.css">
+  <script src="/assets/js/fusion-auth.js"></script>
+  <script>FusionAuth.proteger();</script>
+  <meta name="fusion-existing-pages" content="agenda,alunos,avaliacoes,bi,bi-academia,bi-academia-operacional,bi-financeiro,caixa,checkin,configuracoes,dashboard,estoque,exercicios,financeiro,login,matriculas,mensalidades,modalidades,modelos-treino,pagamentos,planos,presencas,professores,recebimentos,relatorios-caixa,treinos,turmas">
+</head>
+<body>
+  <main class="fusion-page">
+    <section class="page-header">
+      <div>
+        <p class="eyebrow">Financeiro</p>
+        <h1>Pagamentos</h1>
+        <p class="subtitle">Controle de contas a pagar, baixas, vencimentos, cancelamentos e estornos.</p>
+        <p id="versaoTelaPagamentos" class="version-tag">Parte 4.2 - ZIP 10</p>
+      </div>
+      <div class="actions">
+        <button id="btnAtualizar" class="btn btn-secondary" type="button">Atualizar</button>
+        <button id="btnDiagnostico" class="btn btn-light" type="button">Diagnóstico</button>
+        <button id="btnExportar" class="btn btn-light" type="button">Exportar CSV</button>
+        <button id="btnResumo" class="btn btn-light" type="button">Resumo</button>
+        <button id="btnImprimir" class="btn btn-light" type="button">Imprimir</button>
+        <button id="btnNovo" class="btn btn-primary" type="button">Novo pagamento</button>
+      </div>
+    </section>
+
+    <section id="avisoSistema" class="system-alert" hidden></section>
+    <section id="statusIntegracao" class="integration-status" hidden></section>
+
+    <section class="cards-resumo" aria-label="Resumo dos pagamentos">
+      <article class="card"><span>Total</span><strong id="kpiTotal">0</strong></article>
+      <article class="card"><span>Abertos</span><strong id="kpiAbertos">0</strong></article>
+      <article class="card"><span>Pagos</span><strong id="kpiPagos">0</strong></article>
+      <article class="card"><span>Parciais</span><strong id="kpiParciais">0</strong></article>
+      <article class="card money"><span>Valor previsto</span><strong id="kpiValorPrevisto">R$ 0,00</strong></article>
+      <article class="card money"><span>Valor pago</span><strong id="kpiValorPago">R$ 0,00</strong></article>
+      <article class="card danger"><span>Em aberto</span><strong id="kpiValorAberto">R$ 0,00</strong></article>
+      <article class="card danger"><span>Vencidos</span><strong id="kpiVencidos">0</strong></article>
+      <article class="card money"><span>Saldo parcial</span><strong id="kpiValorParcial">R$ 0,00</strong></article>
+    </section>
+
+    <section class="panel dashboard" id="dashboardPagamentos">
+      <div class="dashboard-head">
+        <h2>Dashboard de pagamentos</h2>
+        <span id="dashPeriodo">Visão geral</span>
+      </div>
+      <div class="dash-grid">
+        <div class="dash-box">
+          <h3>Por categoria</h3>
+          <div id="dashCategorias" class="dash-list">Sem dados</div>
+        </div>
+        <div class="dash-box">
+          <h3>Por centro de custo</h3>
+          <div id="dashCentroCusto" class="dash-list">Sem dados</div>
+        </div>
+        <div class="dash-box">
+          <h3>Próximos vencimentos</h3>
+          <div id="dashVencimentos" class="dash-list">Sem dados</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel filtros">
+      <div class="field">
+        <label for="fBusca">Pesquisar</label>
+        <input id="fBusca" type="search" placeholder="Fornecedor, descrição, documento ou categoria">
+      </div>
+      <div class="field">
+        <label for="fStatus">Status</label>
+        <select id="fStatus">
+          <option value="">Todos</option>
+          <option value="aberto">Aberto</option>
+          <option value="pago">Pago</option>
+          <option value="parcial">Parcial</option>
+          <option value="cancelado">Cancelado</option>
+          <option value="estornado">Estornado</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="fForma">Forma</label>
+        <select id="fForma">
+          <option value="">Todas</option>
+          <option value="dinheiro">Dinheiro</option>
+          <option value="pix">Pix</option>
+          <option value="cartao">Cartão</option>
+          <option value="boleto">Boleto</option>
+          <option value="transferencia">Transferência</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="fRapido">Filtro rápido</label>
+        <select id="fRapido">
+          <option value="">Todos</option>
+          <option value="vencidos">Vencidos</option>
+          <option value="hoje">Vencem hoje</option>
+          <option value="semana">Próximos 7 dias</option>
+          <option value="aberto_com_saldo">Abertos com saldo</option>
+          <option value="parciais_com_saldo">Parciais com saldo</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="fInicio">De</label>
+        <input id="fInicio" type="date">
+      </div>
+      <div class="field">
+        <label for="fFim">Até</label>
+        <input id="fFim" type="date">
+      </div>
+      <div class="field buttons">
+        <button id="btnFiltrar" class="btn btn-primary" type="button">Filtrar</button>
+        <button id="btnLimpar" class="btn btn-light" type="button">Limpar</button>
+      </div>
+    </section>
+
+    <section class="panel bulk-bar" id="barraLote">
+      <strong id="txtSelecionados">0 selecionados</strong>
+      <span id="txtValorSelecionado">R$ 0,00 em aberto</span>
+      <button id="btnSelecionarFiltrados" class="btn btn-light" type="button">Selecionar filtrados</button>
+      <button id="btnBaixaLote" class="btn btn-primary" type="button" disabled>Baixar selecionados</button>
+      <button id="btnLimparSelecao" class="btn btn-light" type="button" disabled>Limpar seleção</button>
+    </section>
+
+    <section class="panel table-wrap">
+      <div class="table-top">
+        <h2>Lista de pagamentos</h2>
+        <span id="contadorLista">0 registros</span>
+      </div>
+
+      <table id="tbPagamentos">
+        <thead>
+          <tr>
+            <th class="check"><input id="chkTodos" type="checkbox" aria-label="Selecionar todos da página"></th>
+            <th><button class="sort-btn" data-sort="vencimento" type="button">Vencimento</button></th>
+            <th><button class="sort-btn" data-sort="fornecedor" type="button">Fornecedor</button></th>
+            <th><button class="sort-btn" data-sort="descricao" type="button">Descrição</button></th>
+            <th><button class="sort-btn" data-sort="categoria" type="button">Categoria</button></th>
+            <th><button class="sort-btn" data-sort="forma" type="button">Forma</button></th>
+            <th class="num"><button class="sort-btn" data-sort="valor" type="button">Valor</button></th>
+            <th class="num"><button class="sort-btn" data-sort="pago" type="button">Pago</button></th>
+            <th class="num"><button class="sort-btn" data-sort="saldo" type="button">Saldo</button></th>
+            <th><button class="sort-btn" data-sort="status" type="button">Status</button></th>
+            <th>Tipo</th>
+            <th class="acoes">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td colspan="12" class="empty">Carregando pagamentos...</td></tr>
+        </tbody>
+      </table>
+
+      <div class="paginacao">
+        <button id="btnAnterior" class="btn btn-light" type="button">Anterior</button>
+        <span id="paginaAtual">Página 1</span>
+        <button id="btnProxima" class="btn btn-light" type="button">Próxima</button>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="modalBaixa">
+    <form method="dialog" class="modal-card">
+      <header><h3>Registrar pagamento</h3><button id="btnFecharModal" class="icon-btn" type="button" aria-label="Fechar">×</button></header>
+      <input id="baixaId" type="hidden">
+      <div class="field"><label for="baixaValor">Valor pago</label><input id="baixaValor" type="number" step="0.01" min="0"></div>
+      <div class="field"><label for="baixaData">Data do pagamento</label><input id="baixaData" type="date"></div>
+      <div class="field">
+        <label for="baixaForma">Forma de pagamento</label>
+        <select id="baixaForma">
+          <option value="pix">Pix</option>
+          <option value="dinheiro">Dinheiro</option>
+          <option value="cartao">Cartão</option>
+          <option value="boleto">Boleto</option>
+          <option value="transferencia">Transferência</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="baixaTipo">Tipo de baixa</label>
+        <select id="baixaTipo">
+          <option value="auto">Automática pelo valor</option>
+          <option value="total">Total</option>
+          <option value="parcial">Parcial</option>
+        </select>
+      </div>
+      <div class="field"><label for="baixaObs">Observação</label><textarea id="baixaObs" rows="3"></textarea></div>
+      <footer><button class="btn btn-light" id="btnCancelarBaixa" type="button">Cancelar</button><button class="btn btn-primary" id="btnConfirmarBaixa" type="button">Confirmar pagamento</button></footer>
+    </form>
+  </dialog>
+
+  <dialog id="modalNovo">
+    <form method="dialog" class="modal-card modal-large">
+      <header><h3>Novo pagamento</h3><button id="btnFecharNovo" class="icon-btn" type="button" aria-label="Fechar">×</button></header>
+      <div class="modal-grid">
+        <div class="field"><label for="novoFornecedor">Fornecedor</label><input id="novoFornecedor" type="text"></div>
+        <div class="field"><label for="novoDocumento">Documento</label><input id="novoDocumento" type="text"></div>
+        <div class="field span-2"><label for="novoDescricao">Descrição</label><input id="novoDescricao" type="text"></div>
+        <div class="field"><label for="novoCategoria">Categoria</label><input id="novoCategoria" type="text"></div>
+        <div class="field"><label for="novoCentroCusto">Centro de custo</label><input id="novoCentroCusto" type="text" placeholder="Ex.: Administrativo, Limpeza, Manutenção"></div>
+        <div class="field"><label for="novoVencimento">Vencimento</label><input id="novoVencimento" type="date"></div>
+        <div class="field"><label for="novoValor">Valor</label><input id="novoValor" type="number" step="0.01" min="0"></div>
+        <div class="field"><label for="novoForma">Forma prevista</label><select id="novoForma"><option value="">Não definida</option><option value="dinheiro">Dinheiro</option><option value="pix">Pix</option><option value="cartao">Cartão</option><option value="boleto">Boleto</option><option value="transferencia">Transferência</option></select></div>
+        <div class="field"><label for="novoStatus">Status</label><select id="novoStatus"><option value="aberto">Aberto</option><option value="pago">Pago</option><option value="parcial">Parcial</option></select></div>
+        <div class="field"><label for="novoParcelas">Parcelas</label><input id="novoParcelas" type="number" min="1" max="36" value="1"></div>
+        <div class="field"><label for="novoRecorrencia">Recorrência</label><select id="novoRecorrencia"><option value="">Não recorrente</option><option value="mensal">Mensal</option><option value="quinzenal">Quinzenal</option><option value="semanal">Semanal</option></select></div>
+        <div class="field span-2"><label for="novoObs">Observação</label><textarea id="novoObs" rows="3"></textarea></div>
+      </div>
+      <footer><button class="btn btn-light" id="btnCancelarNovo" type="button">Cancelar</button><button class="btn btn-primary" id="btnSalvarNovo" type="button">Salvar pagamento</button></footer>
+    </form>
+  </dialog>
+
+  <dialog id="modalResumo">
+    <form method="dialog" class="modal-card modal-large">
+      <header><h3>Resumo de pagamentos</h3><button id="btnFecharResumo" class="icon-btn" type="button" aria-label="Fechar">×</button></header>
+      <div id="resumoConteudo" class="summary-content"></div>
+      <footer>
+        <button class="btn btn-light" id="btnImprimirResumo" type="button">Imprimir resumo</button>
+        <button class="btn btn-primary" id="btnExportarResumo" type="button">Exportar resumo CSV</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <dialog id="modalDetalhe">
+    <form method="dialog" class="modal-card modal-large">
+      <header><h3>Detalhe do pagamento</h3><button id="btnFecharDetalhe" class="icon-btn" type="button" aria-label="Fechar">×</button></header>
+      <div id="detalheConteudo" class="detail-content"></div>
+      <footer>
+        <button class="btn btn-light" id="btnComprovanteDetalhe" type="button">Comprovante</button>
+        <button class="btn btn-light" id="btnDuplicarDetalhe" type="button">Duplicar</button>
+        <button class="btn btn-primary" id="btnBaixarDetalhe" type="button">Baixar</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <dialog id="modalLote">
+    <form method="dialog" class="modal-card">
+      <header><h3>Baixa em lote</h3><button id="btnFecharLote" class="icon-btn" type="button" aria-label="Fechar">×</button></header>
+      <div class="field info-lote"><strong id="loteQtd">0 pagamentos selecionados</strong><span id="loteValor">R$ 0,00 em aberto</span></div>
+      <div class="field"><label for="loteData">Data do pagamento</label><input id="loteData" type="date"></div>
+      <div class="field">
+        <label for="loteForma">Forma de pagamento</label>
+        <select id="loteForma">
+          <option value="pix">Pix</option>
+          <option value="dinheiro">Dinheiro</option>
+          <option value="cartao">Cartão</option>
+          <option value="boleto">Boleto</option>
+          <option value="transferencia">Transferência</option>
+        </select>
+      </div>
+      <div class="field"><label for="loteObs">Observação</label><textarea id="loteObs" rows="3">Baixa em lote pela tela de pagamentos</textarea></div>
+      <footer><button class="btn btn-light" id="btnCancelarLote" type="button">Cancelar</button><button class="btn btn-primary" id="btnConfirmarLote" type="button">Confirmar lote</button></footer>
+    </form>
+  </dialog>
+
+  <dialog id="modalAcao">
+    <form method="dialog" class="modal-card">
+      <header><h3 id="acaoTitulo">Ação</h3><button id="btnFecharAcao" class="icon-btn" type="button" aria-label="Fechar">×</button></header>
+      <input id="acaoId" type="hidden">
+      <input id="acaoTipo" type="hidden">
+      <div class="field"><label for="acaoData">Data</label><input id="acaoData" type="date"></div>
+      <div class="field">
+        <label for="acaoMotivo">Motivo</label>
+        <textarea id="acaoMotivo" rows="4" placeholder="Informe o motivo da ação"></textarea>
+      </div>
+      <footer>
+        <button class="btn btn-light" id="btnCancelarAcao" type="button">Cancelar</button>
+        <button class="btn btn-primary" id="btnConfirmarAcao" type="button">Confirmar</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <script type="module" src="./index.js"></script>
+    <script src="/assets/js/fusion-layout.js"></script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+{
+  "ok": true,
+  "versao": "2.6.1-K",
+  "data": "2026-07-03T18:48:58.984Z",
+  "correcao": "ativacao-aluno-matricula-apos-baixa",
+  "regras": [
+    "Ao baixar a entrada inicial da matrícula, o aluno muda para ativo.",
+    "A matrícula muda para Ativa.",
+    "O vínculo de check-in muda para Ativo.",
+    "A mensagem falsa de aluno sem matrícula ativa deixa de representar o estado final."
+  ]
+}

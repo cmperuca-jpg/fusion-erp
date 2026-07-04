@@ -1,0 +1,10 @@
+Fusion ERP - Financeiro Parte 4.2
+Tela: Pagamentos / Contas a Pagar
+Pacote: ZIP 2
+
+Incrementos:
+- Filtro rápido: vencidos, vencem hoje, próximos 7 dias e abertos com saldo.
+- Ordenação por colunas.
+- Destaque visual para pagamentos vencidos e vencendo hoje.
+- Eventos locais mais rápidos nos filtros.
+- Preservada a base do ZIP 1 enviada pelo usuário.

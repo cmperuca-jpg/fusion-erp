@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Planos - Fusion ERP</title>
+  <link rel="stylesheet" href="/css/components.css" />
+  <link rel="stylesheet" href="/pages/planos/planos.css" />
+  <link rel="stylesheet" href="/assets/css/fusion-app.css">
+  <script src="/assets/js/fusion-auth.js"></script>
+  <script>FusionAuth.proteger();</script>
+  <meta name="fusion-existing-pages" content="agenda,alunos,avaliacoes,bi,bi-academia,bi-academia-operacional,bi-financeiro,caixa,checkin,configuracoes,dashboard,estoque,exercicios,financeiro,login,matriculas,mensalidades,modalidades,modelos-treino,pagamentos,planos,presencas,professores,recebimentos,relatorios-caixa,treinos,turmas">
+</head>
+<body>
+  <main class="main">
+    <section class="page-actions">
+      <button class="btn-primary" id="btnNovoPlano">Novo Plano</button>
+    </section>
+
+    <section class="kpi-grid">
+      <div class="card kpi-card"><span>Total</span><strong id="kpiTotal">0</strong></div>
+      <div class="card kpi-card"><span>Ativos</span><strong id="kpiAtivos">0</strong></div>
+      <div class="card kpi-card"><span>Inativos</span><strong id="kpiInativos">0</strong></div>
+      <div class="card kpi-card"><span>Receita potencial</span><strong id="kpiReceita">R$ 0,00</strong></div>
+    </section>
+
+    <section class="card">
+      <div class="filters-row">
+        <input id="buscaPlano" type="text" placeholder="Buscar por nome, tipo, modalidade ou descrição" />
+        <select id="filtroTipo">
+          <option value="Todos">Todos os tipos</option>
+          <option value="Mensal">Mensal</option>
+          <option value="Trimestral">Trimestral</option>
+          <option value="Semestral">Semestral</option>
+          <option value="Anual">Anual</option>
+          <option value="Diária">Diária</option>
+        </select>
+        <select id="filtroStatus">
+          <option value="Todos">Todos os status</option>
+          <option value="Ativo">Ativos</option>
+          <option value="Inativo">Inativos</option>
+        </select>
+      </div>
+
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>Plano</th>
+              <th>Tipo</th>
+              <th>Valor</th>
+              <th>Matrícula</th>
+              <th>Modalidades</th>
+              <th>Limite</th>
+              <th>Fidelidade</th>
+              <th>Status</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tabelaPlanos"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <div class="modal-backdrop" id="modalPlano">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 id="modalTitulo">Novo Plano</h2>
+        <button class="btn-icon" id="btnFecharModal">×</button>
+      </div>
+
+      <form id="formPlano" class="form-grid">
+        <input type="hidden" id="planoId" />
+
+        <label>Nome
+          <input id="nome" required placeholder="Ex.: Plano Combo" />
+        </label>
+
+        <label>Tipo
+          <select id="tipo" required>
+            <option value="Mensal">Mensal</option>
+            <option value="Trimestral">Trimestral</option>
+            <option value="Semestral">Semestral</option>
+            <option value="Anual">Anual</option>
+            <option value="Diária">Diária</option>
+          </select>
+        </label>
+
+        <label>Status
+          <select id="status">
+            <option value="Ativo">Ativo</option>
+            <option value="Inativo">Inativo</option>
+          </select>
+        </label>
+
+        <label>Valor mensal
+          <input id="valorMensal" type="number" min="0" step="0.01" value="0" />
+        </label>
+
+        <label>Taxa de matrícula
+          <input id="taxaMatricula" type="number" min="0" step="0.01" value="0" />
+        </label>
+
+        <label>Fidelidade em meses
+          <input id="fidelidadeMeses" type="number" min="0" value="0" />
+        </label>
+
+        <label>Desconto (%)
+          <input id="descontoPercentual" type="number" min="0" max="100" step="0.01" value="0" />
+        </label>
+
+        <label>Multa por atraso (%)
+          <input id="multaAtrasoPercentual" type="number" min="0" max="100" step="0.01" value="0" />
+        </label>
+
+        <label>Limite semanal
+          <input id="limiteSemanal" type="number" min="0" value="0" placeholder="0 = ilimitado" />
+        </label>
+
+        <label class="full">Modalidades incluídas
+          <input id="modalidadesIncluidas" placeholder="Ex.: Musculação, Natação, Funcional" />
+        </label>
+
+        <label>Horários permitidos
+          <input id="horariosPermitidos" placeholder="Ex.: Livre, manhã, noite" value="Livre" />
+        </label>
+
+        <label class="full">Descrição
+          <textarea id="descricao" rows="3" placeholder="Regras e observações do plano"></textarea>
+        </label>
+
+        <div class="modal-actions full">
+          <button type="button" class="btn-secondary" id="btnCancelar">Cancelar</button>
+          <button type="submit" class="btn-primary">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <script src="/pages/planos/planos.js"></script>
+    <script src="/assets/js/fusion-layout.js"></script>
+</body>
+</html>

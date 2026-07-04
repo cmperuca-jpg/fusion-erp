@@ -1,0 +1,15 @@
+Fusion ERP - Financeiro Parte 4.2
+Tela: Pagamentos / Contas a Pagar
+Pacote: ZIP 1
+
+Arquivos:
+public/pages/pagamentos/index.html
+public/pages/pagamentos/style.css
+public/pages/pagamentos/api.js
+public/pages/pagamentos/index.js
+
+Arquitetura preservada:
+Express + módulos .mjs + JSON local + frontend HTML/CSS/JS.
+
+Observação:
+Este pacote inicia a Parte 4.2, aproveitando o padrão consolidado na tela de Recebimentos.

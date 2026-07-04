@@ -1,0 +1,8 @@
+Patch: vínculo Professor ⇄ Aluno por ID.
+
+Depois de extrair na raiz do projeto, execute:
+node scripts/corrigir-vinculo-professor-aluno.mjs
+npm start
+
+O cadastro do aluno passa a salvar professorId e professorNome.
+O prontuário do professor passa a listar os alunos vinculados por ID, mantendo compatibilidade com registros antigos salvos por nome.

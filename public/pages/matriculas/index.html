@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fusion ERP - Matrículas</title>
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/assets/css/fusion-app.css">
+  <script src="/assets/js/fusion-auth.js"></script>
+  <script>FusionAuth.proteger();</script>
+  <meta name="fusion-existing-pages" content="agenda,alunos,avaliacoes,bi,bi-academia,bi-academia-operacional,bi-financeiro,caixa,checkin,configuracoes,dashboard,estoque,exercicios,financeiro,login,matriculas,mensalidades,modalidades,modelos-treino,pagamentos,planos,presencas,professores,recebimentos,relatorios-caixa,treinos,turmas">
+</head>
+<body>
+
+<main class="main">
+
+<section class="card">
+
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+    <div>
+      <h2>Matrículas</h2>
+      <p>Vincule alunos às turmas e controle situação de matrícula.</p>
+    </div>
+
+    <a href="/pages/matriculas/cadastro.html">
+      <button>Nova Matrícula</button>
+    </a>
+  </div>
+
+  <div class="filtros">
+    <input id="filtroAluno" placeholder="Pesquisar aluno">
+    <input id="filtroTurma" placeholder="Pesquisar turma">
+
+    <select id="filtroStatus">
+      <option value="">Todos status</option>
+      <option value="ativa">Ativa</option>
+      <option value="trancada">Trancada</option>
+      <option value="encerrada">Encerrada</option>
+      <option value="cancelada">Cancelada</option>
+    </select>
+
+    <button onclick="aplicarFiltros()">Pesquisar</button>
+    <button onclick="limparFiltros()">Limpar</button>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Aluno</th>
+        <th>Turma</th>
+        <th>Plano</th>
+        <th>Valor</th>
+        <th>Início</th>
+        <th>Fim</th>
+        <th>Status</th>
+        <th width="240">Ações</th>
+      </tr>
+    </thead>
+    <tbody id="tabelaMatriculas"></tbody>
+  </table>
+
+</section>
+
+</main>
+<script src="/js/modal.js"></script>
+<script src="/js/matriculas/index.js"></script>
+
+    <script src="/assets/js/fusion-layout.js"></script>
+</body>
+</html>

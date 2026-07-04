@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Fusion ERP - Cadastro de Aluno</title>
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/assets/css/fusion-app.css">
+</head>
+<body>
+
+  <aside class="sidebar">
+    <h2>Fusion ERP</h2>
+
+    <a href="/pages/dashboard/">🏠 Dashboard</a>
+    <a href="/pages/alunos/">👥 Alunos</a>
+    <a href="/pages/professores/">🧑‍🏫 Professores</a>
+    <a href="/pages/treinos/">💪 Treinos</a>
+    <a href="/pages/financeiro/">💰 Financeiro</a>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <h1>Cadastro de Aluno</h1>
+
+      <div>
+        <span id="nomeUsuario">Administrador</span>
+        <button onclick="sair()">Sair</button>
+      </div>
+    </header>
+
+    <section class="card">
+      <form id="formAluno">
+        <input type="hidden" id="alunoId">
+
+        <h2>Dados pessoais</h2>
+
+        <input id="nome" placeholder="Nome completo" required>
+        <input id="cpf" placeholder="CPF">
+        <input id="rg" placeholder="RG">
+        <input id="data_nascimento" type="date">
+        <input id="sexo" placeholder="Sexo">
+        <input id="estado_civil" placeholder="Estado civil">
+        <input id="nacionalidade" placeholder="Nacionalidade">
+        <input id="profissao" placeholder="Profissão">
+
+        <h2>Endereço</h2>
+
+        <input id="cep" placeholder="CEP">
+        <input id="endereco" placeholder="Endereço">
+        <input id="numero" placeholder="Número">
+        <input id="complemento" placeholder="Complemento">
+        <input id="bairro" placeholder="Bairro">
+        <input id="cidade" placeholder="Cidade">
+        <input id="estado" placeholder="Estado">
+
+        <h2>Contatos</h2>
+
+        <input id="telefone" placeholder="Telefone">
+        <input id="whatsapp" placeholder="WhatsApp">
+        <input id="email" placeholder="E-mail">
+        <input id="contato_emergencia" placeholder="Contato de emergência">
+        <input id="responsavel" placeholder="Responsável">
+
+        <h2>Saúde</h2>
+
+        <input id="tipo_sanguineo" placeholder="Tipo sanguíneo">
+        <input id="alergias" placeholder="Alergias">
+        <input id="restricoes_medicas" placeholder="Restrições médicas">
+        <input id="medicamentos" placeholder="Medicamentos">
+        <input id="lesoes" placeholder="Lesões">
+
+        <h2>Academia</h2>
+
+        <input id="plano" placeholder="Plano">
+        <input id="professor_responsavel" placeholder="Professor responsável">
+        <input id="data_matricula" type="date">
+        <input id="objetivo" placeholder="Objetivo">
+
+        <select id="status">
+          <option value="ativo">Ativo</option>
+          <option value="inativo">Inativo</option>
+        </select>
+
+        <textarea id="observacoes" placeholder="Observações"></textarea>
+
+        <button type="submit">Salvar</button>
+        <a href="/pages/alunos/">
+          <button type="button">Voltar</button>
+        </a>
+      </form>
+    </section>
+  </main>
+  <script src="/js/alunos-cadastro.js"></script>
+
+  </body>
+</html>

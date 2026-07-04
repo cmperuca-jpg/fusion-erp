@@ -1,0 +1,11 @@
+Fusion ERP - Financeiro Parte 4.2
+Tela: Pagamentos / Contas a Pagar
+Pacote: ZIP 5
+
+Incrementos:
+- Identificação visual de pagamentos parciais.
+- Filtro rápido: parciais com saldo.
+- KPI de saldo parcial.
+- Coluna Tipo: total, parcial ou sem baixa.
+- CSV inclui tipo de baixa.
+- Mantida a base do ZIP 4.

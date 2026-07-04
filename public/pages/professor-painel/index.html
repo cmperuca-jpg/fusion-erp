@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Portal do Professor - Fusion ERP</title>
+  <link rel="stylesheet" href="./style.css">
+
+<meta name="theme-color" content="#2563eb">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Fusion Professor">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="/manifest-professor.webmanifest">
+<link rel="apple-touch-icon" href="/assets/pwa/icons/fusion-professor-180.png">
+<link rel="stylesheet" href="/assets/pwa/fusion-pwa-mobile.css">
+</head>
+<body>
+  <main class="portal-app" id="app">
+    <aside class="sidebar">
+      <div class="brand">Fusion ERP</div>
+      <div class="prof-box">
+        <strong id="professorNomeMenu">Professor</strong>
+        <small id="professorCrefMenu">Portal do Professor</small>
+      </div>
+      <button class="nav active" data-tab="inicio" type="button">Início</button>
+      <button class="nav" data-tab="alunos" type="button">Alunos</button>
+      <button class="nav" data-tab="avaliacoes" type="button">Avaliações</button>
+      <button class="nav" data-tab="treinos" type="button">Treinos</button>
+      <button class="nav" data-tab="evolucao" type="button">Evolução</button>
+      <button class="nav" data-tab="chamada" type="button">Chamada</button>
+      <button class="nav" data-tab="perfil" type="button">Perfil</button>
+      <button class="sair" id="btnSair" type="button">Sair</button>
+    </aside>
+
+    <section class="content">
+      <header class="topbar">
+        <div>
+          <h1>Dashboard do Professor</h1>
+          <span id="subtitulo">Centro operacional do professor</span>
+        </div>
+        <div class="top-actions">
+          <small id="ultimaAtualizacao">-</small>
+          <button id="btnAtualizar" type="button">Atualizar</button>
+        </div>
+      </header>
+
+      <div id="alerta" class="alert hidden"></div>
+
+      <section class="tab active" id="tab-inicio">
+        <div class="kpis">
+          <div class="card"><span>Alunos</span><strong id="kpiAlunos">0</strong></div>
+          <div class="card"><span>Treinos</span><strong id="kpiTreinos">0</strong></div>
+          <div class="card"><span>Avaliações</span><strong id="kpiAvaliacoes">0</strong></div>
+          <div class="card"><span>Em execução</span><strong id="kpiExecucao">0</strong></div>
+          <div class="card"><span>Alertas</span><strong id="kpiAlertas">0</strong></div>
+        </div>
+        <div class="portal-grid">
+          <div class="card destaque"><h3>Alunos em atendimento</h3><div id="alunosResumo"></div></div>
+          <div class="card"><h3>Treinos em execução</h3><div id="execucoes"></div></div>
+          <div class="card"><h3>Alertas</h3><div id="alertasOperacionais"></div></div>
+          <div class="card"><h3>Check-ins ativos</h3><div id="checkins"></div></div>
+        </div>
+      </section>
+
+      <section class="tab" id="tab-alunos">
+        <div class="card">
+          <div class="section-head"><h3>Meus alunos</h3><input id="buscaAluno" placeholder="Buscar aluno"></div>
+          <div id="listaAlunos" class="alunos-grid"></div>
+        </div>
+      </section>
+
+      <section class="tab" id="tab-avaliacoes">
+        <div class="professor-avaliacoes-v3-shell">
+          <iframe id="avaliacoesV3ProfessorFrame" class="professor-avaliacoes-v3-frame" title="Avaliação Física V3"></iframe>
+        </div>
+      </section>
+
+      <section class="tab" id="tab-treinos">
+        <div class="professor-treinos-v3-shell">
+          <iframe id="treinosV3ProfessorFrame" class="professor-treinos-v3-frame" title="Montador Treinos V3"></iframe>
+        </div>
+      </section>
+
+      <section class="tab" id="tab-evolucao"><div class="card"><h3>Evolução dos alunos</h3><div id="listaEvolucao"></div></div></section>
+      <section class="tab" id="tab-chamada"><div class="card"><h3>Chamada e agenda</h3><div id="listaChamada"></div></div></section>
+      <section class="tab" id="tab-perfil"><div class="card"><h3>Meus dados</h3><div id="dadosPerfil"></div></div></section>
+    </section>
+  </main>
+
+  <div class="modal hidden" id="modalOperacao">
+    <div class="modal-card">
+      <div class="modal-head"><strong id="modalTitulo">Operação</strong><button id="btnFecharModal" type="button">×</button></div>
+      <iframe id="modalFrame" title="Operação"></iframe>
+    </div>
+  </div>
+
+  <script src="./index.js"></script>
+
+<script src="/assets/pwa/fusion-pwa-install.js" defer></script>
+</body>
+</html>

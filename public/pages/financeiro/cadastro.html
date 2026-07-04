@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fusion ERP - Lançamento Financeiro</title>
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/assets/css/fusion-app.css">
+  <script src="/assets/js/fusion-auth.js"></script>
+  <script>FusionAuth.proteger();</script>
+  <meta name="fusion-existing-pages" content="agenda,alunos,avaliacoes,bi,bi-academia,bi-academia-operacional,bi-financeiro,caixa,checkin,configuracoes,dashboard,estoque,exercicios,financeiro,login,matriculas,mensalidades,modalidades,modelos-treino,pagamentos,planos,presencas,professores,recebimentos,relatorios-caixa,treinos,turmas">
+</head>
+<body>
+
+<main class="main">
+
+<section class="card">
+
+  <div class="cadastro-header">
+    <div>
+      <h2 id="tituloCadastro">Novo Lançamento</h2>
+      <p>Cadastre contas a receber ou a pagar.</p>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="dados">Dados</button>
+    <button class="tab" data-tab="pagamento">Pagamento</button>
+    <button class="tab" data-tab="vinculos">Vínculos</button>
+    <button class="tab" data-tab="observacoes">Observações</button>
+  </div>
+
+  <form id="formFinanceiro">
+
+    <input type="hidden" id="lancamentoId">
+
+    <div class="tab-content active" id="tab-dados">
+      <select id="tipo">
+        <option value="receber">Receber</option>
+        <option value="pagar">Pagar</option>
+      </select>
+
+      <input id="descricao" placeholder="Descrição" required>
+      <input id="categoria" placeholder="Categoria">
+      <input id="competencia" placeholder="Competência. Ex: 07/2026">
+      <input id="data_vencimento" type="date">
+      <input id="valor" placeholder="Valor">
+
+      <select id="status">
+        <option value="pendente">Pendente</option>
+        <option value="pago">Pago</option>
+        <option value="vencido">Vencido</option>
+        <option value="cancelado">Cancelado</option>
+      </select>
+    </div>
+
+    <div class="tab-content" id="tab-pagamento">
+      <input id="data_pagamento" type="date">
+      <input id="valor_pago" placeholder="Valor pago">
+
+      <select id="forma_pagamento">
+        <option value="">Forma de pagamento</option>
+        <option value="Dinheiro">Dinheiro</option>
+        <option value="Pix">Pix</option>
+        <option value="Cartão de crédito">Cartão de crédito</option>
+        <option value="Cartão de débito">Cartão de débito</option>
+        <option value="Boleto">Boleto</option>
+        <option value="Transferência">Transferência</option>
+      </select>
+    </div>
+
+    <div class="tab-content" id="tab-vinculos">
+      <select id="aluno_id">
+        <option value="">Aluno relacionado</option>
+      </select>
+
+      <select id="matricula_id">
+        <option value="">Matrícula relacionada</option>
+      </select>
+    </div>
+
+    <div class="tab-content" id="tab-observacoes">
+      <textarea id="observacoes" placeholder="Observações"></textarea>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit">Salvar</button>
+      <button type="button" onclick="history.back()">Cancelar</button>
+    </div>
+
+  </form>
+
+</section>
+
+</main>
+<script src="/js/tabs.js"></script>
+<script src="/js/modal.js"></script>
+<script src="/js/financeiro/cadastro.js"></script>
+
+    <script src="/assets/js/fusion-layout.js"></script>
+</body>
+</html>

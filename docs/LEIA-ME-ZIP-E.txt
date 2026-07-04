@@ -1,0 +1,34 @@
+Fusion ERP - ZIP E - Continuação após restauração do bloco Alunos
+
+Objetivo:
+Adicionar integração segura da matrícula sem sobrescrever o módulo Alunos já restaurado.
+
+Arquivos incluídos:
+- server/modules/matriculas/matricula.integracao.service.mjs
+- server/modules/matriculas/matricula.integracao.routes.mjs
+- public/assets/js/fusion-matricula-integracao.js
+
+Como ativar no server.mjs:
+1. Adicione o import no topo do server.mjs:
+   import matriculaIntegracaoRoutes from './server/modules/matriculas/matricula.integracao.routes.mjs';
+
+2. Após criar o app Express, adicione:
+   app.use(matriculaIntegracaoRoutes);
+
+Rotas novas:
+- POST /api/matriculas/integrar
+  Body: { "alunoId": "...", "planoId": "..." }
+
+- POST /api/matriculas/trocar-plano
+  Body: { "alunoId": "...", "novoPlanoId": "..." }
+
+O que este pacote faz:
+- Salva planoId, plano, valorMensal, taxaMatricula e modalidades no aluno.
+- Cria histórico em data/alunos_historico_planos.json.
+- Gera mensalidade inicial em data/mensalidades.json.
+- Gera lançamento financeiro inicial em data/financeiro.json.
+- Cria vínculo técnico para check-in em data/checkins.json.
+- Prepara troca de plano sem apagar histórico.
+
+Observação:
+Este ZIP é incremental e seguro. Ele não substitui server.mjs automaticamente para evitar perda do bloco Alunos restaurado.

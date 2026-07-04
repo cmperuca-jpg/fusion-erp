@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fusion ERP - BI Academia</title>
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/assets/css/fusion-app.css">
+  <script src="/assets/js/fusion-auth.js"></script>
+  <script>FusionAuth.proteger();</script>
+  <meta name="fusion-existing-pages" content="agenda,alunos,avaliacoes,bi,bi-academia,bi-academia-operacional,bi-financeiro,caixa,checkin,configuracoes,dashboard,estoque,exercicios,financeiro,login,matriculas,mensalidades,modalidades,modelos-treino,pagamentos,planos,presencas,professores,recebimentos,relatorios-caixa,treinos,turmas">
+</head>
+<body>
+
+<main class="main">
+
+<section class="card">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+    <div>
+      <h2>BI Academia</h2>
+      <p>Indicadores de alunos, matrículas e presenças.</p>
+    </div>
+
+    <button onclick="exportarCSV()">Exportar CSV</button>
+  </div>
+
+  <div class="filtros">
+    <input id="filtroInicio" type="date">
+    <input id="filtroFim" type="date">
+    <button onclick="carregarDashboard()">Atualizar</button>
+    <button onclick="limparFiltros()">Limpar</button>
+  </div>
+</section>
+
+<br>
+
+<section class="cards">
+  <div class="card"><h3>Alunos ativos</h3><strong id="kpiAlunosAtivos">0</strong></div>
+  <div class="card"><h3>Alunos novos</h3><strong id="kpiAlunosNovos">0</strong></div>
+  <div class="card"><h3>Matrículas ativas</h3><strong id="kpiMatriculasAtivas">0</strong></div>
+  <div class="card"><h3>Presenças no período</h3><strong id="kpiPresencasPeriodo">0</strong></div>
+</section>
+
+<br>
+
+<section class="cards">
+  <div class="card"><h3>Presentes hoje</h3><strong id="kpiPresencasHoje">0</strong></div>
+  <div class="card"><h3>Check-ins abertos</h3><strong id="kpiCheckinsAbertos">0</strong></div>
+  <div class="card"><h3>Matrículas trancadas</h3><strong id="kpiMatriculasTrancadas">0</strong></div>
+  <div class="card"><h3>Matrículas canceladas</h3><strong id="kpiMatriculasCanceladas">0</strong></div>
+</section>
+
+<br>
+
+<section class="cards">
+  <div class="card">
+    <h2>Presenças por mês</h2>
+    <canvas id="graficoPresencas"></canvas>
+  </div>
+
+  <div class="card">
+    <h2>Matrículas por mês</h2>
+    <canvas id="graficoMatriculas"></canvas>
+  </div>
+</section>
+
+<br>
+
+<section class="cards">
+  <div class="card">
+    <h2>Alunos por plano</h2>
+    <canvas id="graficoPlanos"></canvas>
+  </div>
+
+  <div class="card">
+    <h2>Alunos por cidade</h2>
+    <canvas id="graficoCidades"></canvas>
+  </div>
+</section>
+
+<br>
+
+<section class="cards">
+  <div class="card">
+    <h2>Ranking de frequência por aluno</h2>
+    <div id="rankingAlunos">Carregando...</div>
+  </div>
+
+  <div class="card">
+    <h2>Ranking de frequência por turma</h2>
+    <div id="rankingTurmas">Carregando...</div>
+  </div>
+</section>
+
+<br>
+
+<section class="card">
+  <h2>Alunos ativos sem presença registrada</h2>
+  <div id="alunosSemPresenca">Carregando...</div>
+</section>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="/js/bi-academia/index.js"></script>
+
+    <script src="/assets/js/fusion-layout.js"></script>
+</body>
+</html>

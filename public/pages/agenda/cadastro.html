@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fusion ERP - Cadastro de Agendamento</title>
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/assets/css/fusion-app.css">
+  <script src="/assets/js/fusion-auth.js"></script>
+  <script>FusionAuth.proteger();</script>
+  <meta name="fusion-existing-pages" content="agenda,alunos,avaliacoes,bi,bi-academia,bi-academia-operacional,bi-financeiro,caixa,checkin,configuracoes,dashboard,estoque,exercicios,financeiro,login,matriculas,mensalidades,modalidades,modelos-treino,pagamentos,planos,presencas,professores,recebimentos,relatorios-caixa,treinos,turmas">
+</head>
+<body>
+
+<main class="main">
+
+<section class="card">
+
+  <div class="cadastro-header">
+    <div>
+      <h2 id="tituloCadastro">Novo Agendamento</h2>
+      <p>Cadastre horários para alunos, professores e atividades.</p>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="dados">Dados</button>
+    <button class="tab" data-tab="vinculos">Vínculos</button>
+    <button class="tab" data-tab="observacoes">Observações</button>
+  </div>
+
+  <form id="formAgenda">
+
+    <input type="hidden" id="agendamentoId">
+
+    <div class="tab-content active" id="tab-dados">
+      <input id="titulo" placeholder="Título do agendamento" required>
+
+      <select id="tipo">
+        <option value="">Tipo</option>
+        <option value="Avaliação Física">Avaliação Física</option>
+        <option value="Aula">Aula</option>
+        <option value="Atendimento">Atendimento</option>
+        <option value="Reunião">Reunião</option>
+        <option value="Outro">Outro</option>
+      </select>
+
+      <input id="data" type="date" required>
+      <input id="hora_inicio" type="time" required>
+      <input id="hora_fim" type="time">
+
+      <input id="local" placeholder="Local">
+
+      <select id="status">
+        <option value="agendado">Agendado</option>
+        <option value="realizado">Realizado</option>
+        <option value="cancelado">Cancelado</option>
+      </select>
+
+      <select id="recorrencia">
+        <option value="">Sem recorrência</option>
+        <option value="diaria">Diária</option>
+        <option value="semanal">Semanal</option>
+        <option value="mensal">Mensal</option>
+      </select>
+    </div>
+
+    <div class="tab-content" id="tab-vinculos">
+      <select id="aluno_id">
+        <option value="">Selecione o aluno</option>
+      </select>
+
+      <select id="professor_id">
+        <option value="">Selecione o professor</option>
+      </select>
+    </div>
+
+    <div class="tab-content" id="tab-observacoes">
+      <textarea id="observacoes" placeholder="Observações"></textarea>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit">Salvar</button>
+      <button type="button" onclick="history.back()">Cancelar</button>
+    </div>
+
+  </form>
+
+</section>
+
+</main>
+<script src="/js/tabs.js"></script>
+<script src="/js/modal.js"></script>
+<script src="/js/agenda/cadastro.js"></script>
+
+    <script src="/assets/js/fusion-layout.js"></script>
+</body>
+</html>

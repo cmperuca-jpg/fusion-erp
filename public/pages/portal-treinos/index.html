@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>Fusion ERP - Meus Treinos</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <main class="page">
+    <header class="top">
+      <div>
+        <h1>Meus Treinos</h1>
+        <p>Treinos ativos, exercícios e execução do dia.</p>
+      </div>
+      <a href="/pages/portal-aluno-operacional/index.html">Portal</a>
+    </header>
+
+    <section class="card filtros">
+      <label>ID do aluno
+        <input id="alunoId" placeholder="ID do aluno">
+      </label>
+      <button id="btnCarregar">Carregar</button>
+    </section>
+
+    <section id="treinos"></section>
+  </main>
+  <script src="./index.js"></script>
+</body>
+</html>

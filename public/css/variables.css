@@ -1,0 +1,19 @@
+:root {
+  --fusion-primary: #ff6a00;
+  --fusion-primary-dark: #e85f00;
+  --fusion-dark: #0f172a;
+  --fusion-dark-2: #111827;
+  --fusion-bg: #f4f6f9;
+  --fusion-card: #ffffff;
+  --fusion-border: #e5e7eb;
+  --fusion-text: #0f172a;
+  --fusion-muted: #64748b;
+  --fusion-soft: #f8fafc;
+  --fusion-success: #16a34a;
+  --fusion-warning: #f59e0b;
+  --fusion-danger: #dc2626;
+  --sidebar-width: 260px;
+  --topbar-height: 72px;
+  --radius: 14px;
+  --shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
+}

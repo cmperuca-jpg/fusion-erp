@@ -1,0 +1,107 @@
+{
+  "ok": true,
+  "versao": "2.6.1-piloto",
+  "data": "2026-07-03T18:24:04.024Z",
+  "modulo": "piloto_atual",
+  "arquivos": [
+    {
+      "arquivo": "server.mjs",
+      "existe": true
+    },
+    {
+      "arquivo": "package.json",
+      "existe": true
+    },
+    {
+      "arquivo": "modules/alunos/alunos.routes.mjs",
+      "existe": true
+    },
+    {
+      "arquivo": "modules/matriculas/matricula.integracao.routes.mjs",
+      "existe": true
+    },
+    {
+      "arquivo": "modules/financeiro/financeiro.routes.mjs",
+      "existe": true
+    },
+    {
+      "arquivo": "modules/financeiro/caixa.routes.mjs",
+      "existe": true
+    },
+    {
+      "arquivo": "public/pages/alunos/index.html",
+      "existe": true
+    },
+    {
+      "arquivo": "public/pages/financeiro/index.html",
+      "existe": true
+    },
+    {
+      "arquivo": "public/pages/caixa/index.html",
+      "existe": true
+    }
+  ],
+  "bases": [
+    {
+      "arquivo": "data/alunos.json",
+      "existe": true,
+      "jsonValido": true,
+      "registros": 0
+    },
+    {
+      "arquivo": "data/matriculas.json",
+      "existe": true,
+      "jsonValido": true,
+      "registros": 0
+    },
+    {
+      "arquivo": "data/financeiro.json",
+      "existe": true,
+      "jsonValido": true,
+      "registros": 0
+    },
+    {
+      "arquivo": "data/mensalidades.json",
+      "existe": true,
+      "jsonValido": true,
+      "registros": 0
+    },
+    {
+      "arquivo": "data/recebimentos.json",
+      "existe": true,
+      "jsonValido": true,
+      "registros": 0
+    },
+    {
+      "arquivo": "data/pagamentos.json",
+      "existe": true,
+      "jsonValido": true,
+      "registros": 0
+    },
+    {
+      "arquivo": "data/caixa.json",
+      "existe": true,
+      "jsonValido": true,
+      "registros": 2
+    },
+    {
+      "arquivo": "data/professores.json",
+      "existe": true,
+      "jsonValido": true,
+      "registros": 0
+    },
+    {
+      "arquivo": "data/planos.json",
+      "existe": true,
+      "jsonValido": true,
+      "registros": 0
+    },
+    {
+      "arquivo": "data/turmas.json",
+      "existe": true,
+      "jsonValido": true,
+      "registros": 0
+    }
+  ],
+  "recomendacao": "Executar piloto sem novas alterações estruturais. Registrar pendências para Fusion ERP 2.7."
+}

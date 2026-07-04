@@ -1,0 +1,91 @@
+import { Router } from "express";
+import * as matriculasService from "./matriculas.service.mjs";
+
+const router = Router();
+
+function statusErro(error, fallback = 500) {
+  return Number(error?.status || error?.statusCode || fallback);
+}
+
+function enviarErro(res, error, fallback = 500) {
+  const status = statusErro(error, fallback);
+  return res.status(status).json({
+    ok: false,
+    success: false,
+    erro: error?.message || "Erro ao processar matrícula."
+  });
+}
+
+router.get("/", async (req, res) => {
+  try {
+    const resultado = await matriculasService.listar(req.query);
+    res.json(resultado);
+  } catch (error) {
+    enviarErro(res, error, 500);
+  }
+});
+
+router.get("/ativa/:alunoId", async (req, res) => {
+  try {
+    const resultado = await matriculasService.buscarAtivaPorAluno(req.params.alunoId);
+    res.json(resultado);
+  } catch (error) {
+    enviarErro(res, error, 500);
+  }
+});
+
+router.get("/:id", async (req, res) => {
+  try {
+    const resultado = await matriculasService.buscar(req.params.id);
+    res.json(resultado);
+  } catch (error) {
+    enviarErro(res, error, 404);
+  }
+});
+
+router.post("/", async (req, res) => {
+  try {
+    const resultado = await matriculasService.criar(req.body);
+    res.status(resultado?.duplicada ? 200 : 201).json(resultado);
+  } catch (error) {
+    enviarErro(res, error, 400);
+  }
+});
+
+router.post("/trocar-plano", async (req, res) => {
+  try {
+    const resultado = await matriculasService.trocarPlano(req.body);
+    res.status(201).json(resultado);
+  } catch (error) {
+    enviarErro(res, error, 400);
+  }
+});
+
+router.patch("/:id/status", async (req, res) => {
+  try {
+    const resultado = await matriculasService.alterarStatus(req.params.id, req.body);
+    res.json(resultado);
+  } catch (error) {
+    enviarErro(res, error, 400);
+  }
+});
+
+router.put("/:id", async (req, res) => {
+  try {
+    const resultado = await matriculasService.atualizar(req.params.id, req.body);
+    res.json(resultado);
+  } catch (error) {
+    enviarErro(res, error, 400);
+  }
+});
+
+router.delete("/:id", async (req, res) => {
+  try {
+    const resultado = await matriculasService.excluir(req.params.id, req.body || {});
+    res.json({ ...resultado, mensagem: resultado?.mensagem || "Matrícula cancelada sem exclusão física." });
+  } catch (error) {
+    enviarErro(res, error, 400);
+  }
+});
+
+export default router;

@@ -1,0 +1,151 @@
+import {
+  listarMatriculas,
+  obterMatricula,
+  integrarMatriculaAluno,
+  trocarPlanoAluno,
+  alterarStatusMatricula,
+  carregarBaseMatricula
+} from "./matricula.integracao.service.mjs";
+
+function erroStatus(mensagem, status = 400) {
+  const erro = new Error(mensagem);
+  erro.status = status;
+  return erro;
+}
+
+function primeiroValor(...valores) {
+  return valores.find((valor) => valor !== undefined && valor !== null && String(valor).trim() !== "");
+}
+
+function normalizarFiltros(filtros = {}) {
+  return {
+    ...filtros,
+    alunoId: primeiroValor(filtros.alunoId, filtros.aluno_id, filtros.aluno),
+    turmaId: primeiroValor(filtros.turmaId, filtros.turma_id),
+    q: primeiroValor(filtros.q, filtros.busca, filtros.search),
+    status: primeiroValor(filtros.status)
+  };
+}
+
+function extrairAlunoId(dados = {}) {
+  return primeiroValor(dados.alunoId, dados.aluno_id, dados.idAluno, dados.aluno?.id);
+}
+
+function extrairPlanoId(dados = {}) {
+  return primeiroValor(dados.planoId, dados.plano_id, dados.idPlano, dados.plano?.id, dados.novoPlanoId, dados.novo_plano_id);
+}
+
+function montarOpcoes(dados = {}) {
+  return {
+    ...dados,
+    alunoId: undefined,
+    aluno_id: undefined,
+    planoId: undefined,
+    plano_id: undefined,
+    idAluno: undefined,
+    idPlano: undefined,
+    novoPlanoId: undefined,
+    novo_plano_id: undefined,
+    turmaId: primeiroValor(dados.turmaId, dados.turma_id),
+    turma_id: primeiroValor(dados.turmaId, dados.turma_id),
+    turma: primeiroValor(dados.turma, dados.turmaNome),
+    dataMatricula: primeiroValor(dados.dataMatricula, dados.data_matricula),
+    dataInicio: primeiroValor(dados.dataInicio, dados.data_inicio),
+    dataFim: primeiroValor(dados.dataFim, dados.data_fim),
+    vencimento: primeiroValor(dados.vencimento, dados.vencimentoInicial),
+    formaPagamento: primeiroValor(dados.formaPagamento, dados.forma_pagamento),
+    usuario: primeiroValor(dados.usuario, dados.operador, "Administrador")
+  };
+}
+
+function normalizarResposta(resultado) {
+  if (resultado?.ok !== undefined || resultado?.success !== undefined) return resultado;
+  return { ok: true, success: true, dados: resultado };
+}
+
+export async function listar(filtros = {}) {
+  return await listarMatriculas(normalizarFiltros(filtros));
+}
+
+export async function buscar(id) {
+  return await obterMatricula(id);
+}
+
+export async function buscarAtivaPorAluno(alunoId) {
+  if (!alunoId) throw erroStatus("Informe o alunoId.", 400);
+
+  const base = await carregarBaseMatricula();
+  const matricula = (base.matriculas || []).find((item) =>
+    String(item.alunoId) === String(alunoId) &&
+    ["Ativa", "Pendente", "Trancada"].includes(String(item.status || ""))
+  );
+
+  if (!matricula) {
+    return { ok: true, success: true, ativa: false, dados: null };
+  }
+
+  return await obterMatricula(matricula.id || matricula.numero);
+}
+
+export async function criar(dados = {}) {
+  const alunoId = extrairAlunoId(dados);
+  const planoId = extrairPlanoId(dados);
+
+  if (!alunoId) throw erroStatus("Informe o alunoId da matrícula.", 400);
+  if (!planoId) throw erroStatus("Informe o planoId da matrícula.", 400);
+
+  return await integrarMatriculaAluno(alunoId, planoId, montarOpcoes(dados));
+}
+
+export async function trocarPlano(dados = {}) {
+  const alunoId = extrairAlunoId(dados);
+  const novoPlanoId = extrairPlanoId(dados);
+
+  if (!alunoId) throw erroStatus("Informe o alunoId para trocar o plano.", 400);
+  if (!novoPlanoId) throw erroStatus("Informe o novoPlanoId para trocar o plano.", 400);
+
+  return await trocarPlanoAluno(alunoId, novoPlanoId, montarOpcoes(dados));
+}
+
+export async function atualizar(id, dados = {}) {
+  const status = primeiroValor(dados.status, dados.statusMatricula);
+
+  if (status) {
+    return await alterarStatusMatricula(
+      id,
+      status,
+      primeiroValor(dados.motivo, dados.observacao, dados.observacoes, "Atualização manual"),
+      primeiroValor(dados.usuario, dados.operador, "Administrador")
+    );
+  }
+
+  throw erroStatus(
+    "Atualização direta de matrícula foi desativada. Use criar, trocar-plano ou status para manter o Gestor de Matrículas consistente.",
+    400
+  );
+}
+
+export async function alterarStatus(id, dados = {}) {
+  const status = primeiroValor(dados.status, dados.statusMatricula);
+  if (!status) throw erroStatus("Informe o novo status da matrícula.", 400);
+
+  return await alterarStatusMatricula(
+    id,
+    status,
+    primeiroValor(dados.motivo, dados.observacao, dados.observacoes, "Alteração de status"),
+    primeiroValor(dados.usuario, dados.operador, "Administrador")
+  );
+}
+
+export async function excluir(id, dados = {}) {
+  // Exclusão física removida do fluxo principal.
+  // Preserva histórico, financeiro, mensalidades e BI usando cancelamento lógico.
+  const resultado = await alterarStatusMatricula(
+    id,
+    "Cancelada",
+    primeiroValor(dados.motivo, dados.observacao, "Cancelamento pelo endpoint DELETE"),
+    primeiroValor(dados.usuario, dados.operador, "Administrador")
+  );
+
+  return normalizarResposta(resultado);
+}
