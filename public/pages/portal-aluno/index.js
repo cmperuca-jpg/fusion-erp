@@ -87,7 +87,27 @@ function carregarTreinosV3Aluno(){
     frame.dataset.src = url;
     frame.src = url;
   }
+  ajustarFrameTreinosV3();
 }
+
+function ajustarFrameTreinosV3(altura){
+  const frame = $('#treinosV3Frame');
+  if(!frame) return;
+  const min = Math.max(760, window.innerHeight - 120);
+  const h = Math.max(min, Number(altura || 0));
+  frame.style.height = h + 'px';
+}
+
+window.addEventListener('message', function(ev){
+  const data = ev && ev.data ? ev.data : {};
+  if(data && data.tipo === 'fusion-treinos-v3-resize'){
+    ajustarFrameTreinosV3(data.altura);
+  }
+});
+
+window.addEventListener('resize', function(){
+  ajustarFrameTreinosV3();
+});
 
 function barra(label, valor, max, extra=''){
   const p = max ? Math.round((Number(valor||0)/max)*100) : 0;

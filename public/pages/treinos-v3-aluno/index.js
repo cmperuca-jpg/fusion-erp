@@ -1,5 +1,25 @@
 (function(){
   const $ = s => document.querySelector(s);
+  const EMBED = new URLSearchParams(location.search).get('embed') === '1';
+  if (EMBED) document.body.classList.add('embed-mode');
+
+  function emitirAlturaEmbed(){
+    if(!EMBED || !window.parent || window.parent === window) return;
+    const doc = document.documentElement;
+    const body = document.body;
+    const altura = Math.ceil(Math.max(
+      body.scrollHeight || 0,
+      body.offsetHeight || 0,
+      doc.clientHeight || 0,
+      doc.scrollHeight || 0,
+      doc.offsetHeight || 0
+    ));
+    window.parent.postMessage({ tipo: 'fusion-treinos-v3-resize', altura }, '*');
+  }
+
+  window.addEventListener('load', emitirAlturaEmbed);
+  window.addEventListener('resize', emitirAlturaEmbed);
+  setInterval(emitirAlturaEmbed, 800);
   const API_BIBLIOTECA = '/api/exercicios-biblioteca';
   const API_INTEGRADO = '/api/treinos-integrado';
   const API_OPERACIONAL = '/api/treinos-operacional';

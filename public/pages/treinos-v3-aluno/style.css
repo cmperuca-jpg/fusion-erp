@@ -144,3 +144,133 @@ button:disabled{opacity:.55;cursor:not-allowed}
   .media-box{min-height:240px}
   .modal-actions{display:grid;grid-template-columns:1fr}
 }
+
+
+/* === FUSION_TREINOS_V3_ALUNO_EMBED_RESPONSIVO_2_7_5_START === */
+html, body {
+  width: 100%;
+  min-height: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  max-width: 100%;
+}
+
+body.embed-mode {
+  background: #f4f6f9;
+  overflow: hidden;
+}
+
+body.embed-mode .aluno-treino-app {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+body.embed-mode .hero-card,
+body.embed-mode .prescricao-card {
+  border-radius: 16px;
+  box-shadow: 0 10px 26px rgba(15,23,42,.06);
+}
+
+body.embed-mode .hero-card {
+  margin-bottom: 12px;
+}
+
+body.embed-mode .tabs {
+  padding: 10px 0 12px;
+}
+
+body.embed-mode .exercise-list {
+  width: 100%;
+  min-width: 0;
+}
+
+body.embed-mode .exercise-card {
+  grid-template-columns: minmax(150px, 220px) minmax(0, 1fr) auto;
+  width: 100%;
+  min-width: 0;
+}
+
+body.embed-mode .exercise-card .thumb {
+  width: 100%;
+  max-width: 220px;
+  height: auto;
+  aspect-ratio: 16 / 10;
+}
+
+body.embed-mode .exercise-card img,
+body.embed-mode .exercise-card video,
+body.embed-mode .media-box img,
+body.embed-mode .media-box video {
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+body.embed-mode .mini-grid,
+body.embed-mode .exercise-stats {
+  min-width: 0;
+}
+
+body.embed-mode .modal {
+  position: fixed;
+  inset: 0;
+  padding: 14px;
+  overflow: auto;
+}
+
+body.embed-mode .modal-card {
+  width: min(1120px, 100%);
+  max-height: none;
+}
+
+body.embed-mode .media-box {
+  min-height: 280px;
+  max-height: 52vh;
+}
+
+@media (max-width: 920px) {
+  body.embed-mode {
+    overflow: auto;
+  }
+  body.embed-mode .hero-card,
+  body.embed-mode .section-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  body.embed-mode .exercise-card {
+    grid-template-columns: 1fr;
+  }
+  body.embed-mode .exercise-card .thumb {
+    max-width: none;
+    aspect-ratio: 16 / 9;
+  }
+  body.embed-mode .mini-grid,
+  body.embed-mode .exercise-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  body.embed-mode .modal-card {
+    grid-template-columns: 1fr;
+  }
+  body.embed-mode .media-box {
+    min-height: 220px;
+  }
+}
+
+@media (max-width: 540px) {
+  body.embed-mode .aluno-treino-app {
+    padding: 0;
+  }
+  body.embed-mode .mini-grid,
+  body.embed-mode .exercise-stats {
+    grid-template-columns: 1fr;
+  }
+  body.embed-mode .modal-actions {
+    grid-template-columns: 1fr;
+  }
+}
+/* === FUSION_TREINOS_V3_ALUNO_EMBED_RESPONSIVO_2_7_5_END === */
