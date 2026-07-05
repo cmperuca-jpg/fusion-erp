@@ -41,6 +41,7 @@ import presencasRoutes from "./modules/presencas/presencas.routes.mjs";
 import frequenciaRoutes from "./modules/frequencia/frequencia.routes.mjs";
 import operacaoRoutes from "./modules/operacao/operacao.routes.mjs";
 import comercialRoutes from "./modules/comercial/comercial.routes.mjs";
+import natacaoRoutes from "./modules/natacao/natacao.routes.mjs";
 
 import portalAlunoRoutes from './modules/portal-aluno/portal.routes.mjs';
 import portalProfessorRoutes from "./modules/portal-professor/portal-professor.routes.mjs";
@@ -52,6 +53,55 @@ const app = express();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+
+const isRender = Boolean(process.env.RENDER || process.env.RENDER_EXTERNAL_URL);
+const persistentRoot = process.env.FUSION_PERSISTENT_DIR || "/var/data/fusion";
+
+function garantirDiretorio(absPath) {
+  if (!fs.existsSync(absPath)) fs.mkdirSync(absPath, { recursive: true });
+}
+
+function copiarSeedsSeDiretorioVazio(origem, destino) {
+  if (!fs.existsSync(origem) || !fs.statSync(origem).isDirectory()) return;
+  garantirDiretorio(destino);
+  const destinoVazio = fs.readdirSync(destino).length === 0;
+  if (!destinoVazio) return;
+  fs.cpSync(origem, destino, { recursive: true, force: false, errorOnExist: false });
+}
+
+function prepararPersistenciaRender() {
+  const pastas = ["data", "uploads"];
+  for (const pasta of pastas) {
+    const localPath = path.join(__dirname, pasta);
+    const persistentePath = path.join(persistentRoot, pasta);
+
+    if (!isRender) {
+      garantirDiretorio(localPath);
+      continue;
+    }
+
+    garantirDiretorio(path.dirname(persistentePath));
+    copiarSeedsSeDiretorioVazio(localPath, persistentePath);
+
+    try {
+      if (fs.existsSync(localPath)) {
+        const stat = fs.lstatSync(localPath);
+        if (!stat.isSymbolicLink()) {
+          const backupPath = path.join(__dirname, `.${pasta}-repo-seed`);
+          if (!fs.existsSync(backupPath)) fs.renameSync(localPath, backupPath);
+          else fs.rmSync(localPath, { recursive: true, force: true });
+        }
+      }
+      if (!fs.existsSync(localPath)) fs.symlinkSync(persistentePath, localPath, "dir");
+    } catch (erro) {
+      console.warn(`[Render] Não foi possível vincular ${pasta} ao disco persistente: ${erro.message}`);
+      garantirDiretorio(localPath);
+    }
+  }
+}
+
+prepararPersistenciaRender();
 
 
 const pagamentosJsonCandidates = [
@@ -163,6 +213,26 @@ app.use(cors());
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
+
+app.get("/api/health", (req, res) => {
+  const dataPath = path.join(__dirname, "data");
+  const uploadsPath = path.join(__dirname, "uploads");
+  res.json({
+    ok: true,
+    sistema: "Fusion ERP",
+    versao: "2.7.4-render",
+    status: "online",
+    ambiente: process.env.NODE_ENV || "development",
+    render: isRender,
+    persistencia: {
+      root: isRender ? persistentRoot : __dirname,
+      data: fs.existsSync(dataPath),
+      uploads: fs.existsSync(uploadsPath)
+    },
+    timestamp: new Date().toISOString()
+  });
+});
+
 app.use(express.static(path.join(__dirname, "public")));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
@@ -173,7 +243,7 @@ app.get("/", (req, res) => {
 app.get("/api", (req, res) => {
   res.json({
     sistema: "Fusion ERP",
-    versao: "2.6.1-D",
+    versao: "2.7.4-render",
     status: "Online"
   });
 });
@@ -400,6 +470,7 @@ app.use("/api/frequencia", frequenciaRoutes);
 app.use("/api/operacao", operacaoRoutes);
 app.use(comercialRoutes);
 app.use("/api/comercial", comercialRoutes);
+app.use("/api/natacao", natacaoRoutes);
 
 
 // Aliases legados de páginas: evitam 404 em favoritos/menus antigos.

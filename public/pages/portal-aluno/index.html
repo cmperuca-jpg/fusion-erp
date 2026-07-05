@@ -11,8 +11,14 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Fusion Aluno">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<link rel="manifest" href="/manifest-aluno.webmanifest">
 <link rel="apple-touch-icon" href="/assets/pwa/icons/fusion-aluno-180.png">
+
+<link rel="manifest" href="/manifest-aluno.webmanifest">
+<meta name="theme-color" content="#16a34a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="/assets/pwa/icons/fusion-icon-180.png">
 <link rel="stylesheet" href="/assets/pwa/fusion-pwa-mobile.css">
 </head>
 <body>
@@ -24,8 +30,7 @@
         <p>Acesse treinos, avaliações, evolução e pagamentos.</p>
         <form id="formAcesso">
           <label>CPF <input id="cpf" autocomplete="username" placeholder="000.000.000-00" required></label>
-          <label>Data de nascimento <input id="dataNascimento" type="date"></label>
-          <label>Telefone/WhatsApp, se não tiver nascimento cadastrado <input id="telefone" placeholder="(00) 00000-0000"></label>
+          <label>Telefone / WhatsApp <input id="telefone" autocomplete="tel" inputmode="tel" placeholder="(00) 00000-0000" required></label>
           <button type="submit">Acessar</button>
         </form>
         <div id="alerta" class="alert hidden"></div>
@@ -46,6 +51,14 @@
         <button class="nav" data-tab="perfil">Perfil</button>
         <button class="sair" id="btnSair">Sair</button>
       </aside>
+
+      <nav class="bottom-nav" aria-label="Navegação principal do aluno">
+        <button class="nav active" data-tab="inicio" type="button"><span>Início</span></button>
+        <button class="nav" data-tab="treinos" type="button"><span>Treino</span></button>
+        <button class="nav" data-tab="evolucao" type="button"><span>Evolução</span></button>
+        <button class="nav" data-tab="avaliacoes" type="button"><span>Avaliação</span></button>
+        <button class="nav" data-tab="perfil" type="button"><span>Perfil</span></button>
+      </nav>
 
       <section class="content">
         <header class="topbar">

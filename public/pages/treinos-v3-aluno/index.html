@@ -14,7 +14,15 @@
         <h1 id="tituloTreino">Treino A</h1>
         <p id="descricaoTreino">Carregando biblioteca de exercícios...</p>
       </div>
-      <button id="btnIniciarTreino" type="button">Iniciar treino</button>
+      <div class="hero-actions">
+        <div class="workout-clock" id="relogioTreino" aria-live="polite">
+          <span>Estimado</span><strong id="tempoEstimadoTreino">--:--</strong>
+          <span>Decorrido</span><strong id="tempoDecorridoTreino">00:00</strong>
+        </div>
+        <button id="btnAudioTreino" class="audio-toggle" type="button" aria-pressed="true" title="Ativar ou desativar voz do treino">🔊 Voz</button>
+        <button id="btnComandoVoz" class="voice-command-toggle" type="button" aria-pressed="false" title="Ativar comandos por voz">🎙️ Comando</button>
+        <button id="btnIniciarTreino" type="button">Iniciar treino</button>
+      </div>
     </header>
 
     <nav class="tabs" id="tabsTreino"></nav>
@@ -25,9 +33,13 @@
           <small>PRESCRIÇÃO</small>
           <h2 id="nomeGrupo">Treino A</h2>
         </div>
-        <div class="timer-box">
-          <span>Descanso</span>
-          <strong id="cronometroDescanso">00:00</strong>
+        <div class="prescription-actions">
+          <div class="timer-box">
+            <span>Descanso</span>
+            <strong id="cronometroDescanso">00:00</strong>
+          </div>
+          <button id="btnInicioLivre" class="free-start" type="button">Início</button>
+          <button id="btnTerminarLivre" class="free-finish" type="button" disabled>Treino terminado</button>
         </div>
       </div>
       <div id="listaExercicios" class="exercise-list"></div>
@@ -36,7 +48,11 @@
 
   <div class="modal hidden" id="modalExercicio">
     <div class="modal-card">
-      <button class="modal-close" id="btnFecharModal" type="button">×</button>
+      <div class="modal-guided-top">
+        <div class="modal-clock"><span>Treino</span><strong id="modalTempoDecorrido">00:00</strong></div>
+        <label class="modal-volume"><span>Volume</span><input id="volumeTreino" type="range" min="0" max="100" value="100"></label>
+        <div class="modal-voice-status" id="statusComandoVoz">Voz manual</div>
+      </div>
       <div class="media-box" id="modalMedia"></div>
       <div class="modal-info">
         <small id="modalGrupo">GRUPO</small>
@@ -47,6 +63,14 @@
           <div><span>Repetições</span><strong id="modalReps">-</strong></div>
           <div><span>Carga</span><strong id="modalCarga">-</strong></div>
           <div><span>Descanso</span><strong id="modalDescanso">-</strong></div>
+        </div>
+
+        <div class="cardio-control hidden" id="cardioControl">
+          <label>Tempo do cardio (min)
+            <input id="cardioTempoAluno" type="number" min="1" step="1" value="20">
+          </label>
+          <button id="btnIniciarCardio" type="button">▶ Iniciar cardio</button>
+          <strong id="cardioCronometro">00:00</strong>
         </div>
 
         <p id="modalObs" class="modal-obs"></p>
@@ -65,6 +89,7 @@
     </div>
   </div>
 
+  <div class="offline-badge hidden" id="offlineBadge">Modo offline: usando último treino salvo</div>
   <div class="toast hidden" id="toast"></div>
 
   <script src="./index.js"></script>

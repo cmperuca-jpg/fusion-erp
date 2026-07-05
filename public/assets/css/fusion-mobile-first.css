@@ -1,0 +1,80 @@
+/* Fusion ERP 2.7.4 — ZIP 2 Mobile First
+   Camada focada em uso real no celular. Mantém a identidade visual e reorganiza fluxo, toque e leitura. */
+
+:root{
+  --fusion-touch: 48px;
+  --fusion-mobile-gap: 14px;
+  --fusion-mobile-radius: 14px;
+}
+
+*{box-sizing:border-box;}
+html{-webkit-text-size-adjust:100%;}
+body{min-width:0;overflow-x:hidden;}
+img,video,canvas,svg{max-width:100%;height:auto;}
+input,select,textarea,button{font-size:16px;}
+button,.btn,a.button,[role="button"],input[type="submit"],input[type="button"]{min-height:44px;touch-action:manipulation;}
+
+.fusion-mobile-toggle{display:none;align-items:center;justify-content:center;gap:8px;border:0;border-radius:12px;background:#ff6600;color:#fff;font-weight:800;min-width:48px;min-height:48px;padding:0 12px;cursor:pointer;box-shadow:0 8px 22px rgba(255,102,0,.22);}
+.fusion-mobile-toggle span{font-size:24px;line-height:1;}
+.fusion-mobile-backdrop{display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:880;}
+body.fusion-menu-open{overflow:hidden;}
+body.fusion-menu-open .fusion-mobile-backdrop{display:block;}
+
+.fusion-mobile-bottom-actions{display:none;}
+
+@media (max-width: 900px){
+  body{background:#f6f7fb;}
+  .fusion-shell{display:block;min-height:100vh;width:100%;}
+  .fusion-main{width:100%;min-width:0;padding:78px 14px 22px;margin:0;}
+  .fusion-topbar{position:fixed;top:0;left:0;right:0;z-index:850;min-height:64px;padding:10px 12px;background:#fff;border-bottom:1px solid rgba(15,23,42,.10);box-shadow:0 8px 24px rgba(15,23,42,.08);display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  .fusion-title{font-size:17px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
+  .fusion-userbar{display:flex;align-items:center;gap:8px;font-size:12px;white-space:nowrap;}
+  .fusion-userbar [data-fusion-user]{display:none;}
+  .fusion-userbar button{min-height:40px;padding:0 12px;border-radius:10px;}
+  .fusion-mobile-toggle{display:inline-flex;flex:0 0 auto;}
+
+  .fusion-sidebar{position:fixed;top:0;left:0;bottom:0;width:min(86vw,340px);height:100vh;z-index:900;transform:translateX(-105%);transition:transform .22s ease;background:#101826;box-shadow:18px 0 40px rgba(15,23,42,.30);overflow:hidden;}
+  body.fusion-menu-open .fusion-sidebar{transform:translateX(0);}
+  .fusion-brand{height:64px;display:flex;align-items:center;padding:0 18px;font-size:20px;}
+  .fusion-menu{height:calc(100vh - 110px);overflow-y:auto;-webkit-overflow-scrolling:touch;padding:8px 10px 18px;}
+  .fusion-menu a{min-height:48px;border-radius:12px;padding:12px 13px;font-size:15px;}
+  .fusion-menu-group{padding:16px 12px 7px;font-size:11px;letter-spacing:.08em;}
+  .fusion-sidebar-footer{font-size:12px;padding:10px 18px;}
+
+  main,section,article,.container,.content,.page,.page-content,.painel,.panel,.card,.box,.dashboard-card{min-width:0;}
+  h1{font-size:clamp(22px,6vw,28px);line-height:1.15;margin-bottom:12px;}
+  h2{font-size:clamp(19px,5vw,24px);line-height:1.2;}
+  h3{font-size:clamp(17px,4.3vw,21px);}
+  p,li,label,td,th{font-size:15px;line-height:1.45;}
+
+  .cards,.grid,.dashboard-grid,.kpi-grid,.metrics-grid,.painel-grid,.form-grid,.row,.stats,.atalhos,.actions-grid{display:grid!important;grid-template-columns:1fr!important;gap:var(--fusion-mobile-gap)!important;}
+  .card,.box,.panel,.dashboard-card,.kpi,.metric,.widget,form{border-radius:var(--fusion-mobile-radius);}
+  .card,.box,.panel,.dashboard-card,.kpi,.metric,.widget{padding:16px!important;}
+
+  form{width:100%;}
+  fieldset{min-width:0;border-radius:14px;}
+  label{display:block;margin-bottom:6px;font-weight:700;}
+  input,select,textarea{width:100%;min-height:48px;border-radius:12px;padding:11px 12px;}
+  textarea{min-height:96px;}
+  .form-row,.linha,.campo-duplo,.campo-triplo{display:grid!important;grid-template-columns:1fr!important;gap:12px!important;}
+
+  .actions,.botoes,.buttons,.toolbar,.top-actions,.page-actions,.form-actions{display:grid!important;grid-template-columns:1fr!important;gap:10px!important;width:100%;}
+  .actions button,.actions a,.botoes button,.botoes a,.buttons button,.buttons a,.toolbar button,.toolbar a,.top-actions button,.top-actions a,.page-actions button,.page-actions a,.form-actions button,.form-actions a{width:100%;justify-content:center;text-align:center;min-height:48px;border-radius:12px;}
+
+  table{min-width:720px;}
+  .table-wrap,.tabela-wrap,.table-responsive,.lista-tabela,table{max-width:100%;}
+  .table-wrap,.tabela-wrap,.table-responsive,.lista-tabela{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:14px;}
+  .fusion-main > table,.card > table,.box > table,.panel > table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+
+  .hide-mobile,.desktop-only{display:none!important;}
+  .mobile-only{display:initial!important;}
+}
+
+@media (max-width: 520px){
+  .fusion-main{padding-left:10px;padding-right:10px;}
+  .fusion-topbar{min-height:60px;}
+  .fusion-title{font-size:16px;}
+  .fusion-mobile-toggle{min-width:46px;min-height:46px;border-radius:11px;}
+  .card,.box,.panel,.dashboard-card,.kpi,.metric,.widget{padding:14px!important;}
+  .fusion-mobile-bottom-actions{position:sticky;bottom:0;z-index:700;display:grid;grid-template-columns:1fr;gap:8px;padding:10px;background:linear-gradient(180deg,rgba(246,247,251,0),#f6f7fb 25%);}
+}

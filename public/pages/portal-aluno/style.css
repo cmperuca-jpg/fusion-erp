@@ -223,3 +223,131 @@ html, body {
   }
 }
 /* === FUSION_RENDER_PORTAL_TREINOS_RESPONSIVO_2_7_5_END === */
+
+/* Fusion ERP 2.7.4 ZIP6 - Relatório de Avaliação Física no Portal do Aluno */
+@media (max-width:860px){
+  .avaliacao-card,.avaliacao-relatorio,.relatorio-preview{width:100%;max-width:100%;overflow:auto;box-sizing:border-box}
+  .avaliacao-card table,.avaliacao-relatorio table,.relatorio-preview table{min-width:620px}
+  .avaliacao-card button,.avaliacao-card a,.avaliacao-relatorio button,.avaliacao-relatorio a{min-height:46px}
+}
+@media (max-width:560px){
+  .avaliacao-card,.avaliacao-relatorio,.relatorio-preview{padding:12px!important;border-radius:14px!important}
+  .avaliacao-card h2,.avaliacao-card h3,.avaliacao-relatorio h2,.avaliacao-relatorio h3{font-size:18px!important;line-height:1.25}
+}
+
+
+/* Fusion ERP 2.7.5 — ZIP A1 Portal do Aluno Mobile First */
+.bottom-nav{display:none;}
+@media(max-width:800px){
+  body{background:#f4f6f9;}
+  .portal-login{padding:16px;align-items:start;place-items:center;}
+  .brand{font-size:20px;margin-bottom:12px;}
+  .login-card{width:100%;border-radius:18px;padding:20px;}
+  .login-card input{min-height:48px;font-size:16px;}
+  .login-card button{min-height:50px;font-size:16px;}
+  .portal-app{display:block;min-height:100dvh;padding-bottom:78px;}
+  .sidebar{display:none!important;}
+  .bottom-nav{position:fixed;left:0;right:0;bottom:0;z-index:70;display:grid;grid-template-columns:repeat(5,1fr);gap:6px;padding:8px max(8px,env(safe-area-inset-left)) calc(8px + env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-right));background:rgba(255,255,255,.96);border-top:1px solid var(--border);box-shadow:0 -12px 32px rgba(15,23,42,.12);backdrop-filter:blur(10px);}
+  .bottom-nav .nav{width:100%;min-height:52px;padding:6px 4px;border-radius:14px;background:#f8fafc;color:#334155;text-align:center;font-size:11px;display:grid;place-items:center;}
+  .bottom-nav .nav.active{background:var(--orange);color:#fff;}
+  .content{width:100%;min-width:0;}
+  .topbar{position:sticky;top:0;z-index:40;min-height:auto;padding:12px 14px;background:rgba(255,255,255,.97);backdrop-filter:blur(10px);}
+  .topbar h2{font-size:20px;margin-bottom:4px;}
+  .topbar span{font-size:13px;line-height:1.3;}
+  .status-wrap{width:100%;display:flex;justify-content:space-between;align-items:center;gap:8px;}
+  .status-wrap strong{font-size:12px;padding:5px 9px;}
+  .tab{padding:12px;}
+  .tab.active{display:grid;gap:12px;}
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
+  .kpis .card{padding:14px;min-height:86px;}
+  .kpis .card strong{font-size:20px;}
+  .card{border-radius:16px;padding:16px;box-shadow:0 8px 22px rgba(15,23,42,.07);}
+  .card h3{align-items:flex-start;gap:8px;font-size:17px;}
+  .portal-grid,.portal-grid.full{grid-template-columns:1fr;gap:12px;}
+  .mini-grid{grid-template-columns:1fr 1fr;gap:8px;}
+  .mini-grid>div{padding:10px;}
+  .exec-head{align-items:flex-start;}
+  .exec-head b{font-size:22px;}
+  #tab-treinos{padding:0;background:#f4f6f9;}
+  .treinos-v3-embed-shell{min-height:calc(100dvh - 130px);}
+  .treinos-v3-frame{height:calc(100dvh - 130px);min-height:calc(100dvh - 130px);}
+}
+@media(max-width:420px){
+  .kpis{grid-template-columns:1fr;}
+  .mini-grid{grid-template-columns:1fr;}
+  .bottom-nav{gap:4px;padding-left:6px;padding-right:6px;}
+  .bottom-nav .nav{font-size:10px;min-height:50px;}
+  .tab{padding:10px;}
+}
+@media(min-width:801px){
+  .portal-app{padding-bottom:0;}
+}
+
+
+/* === FUSION_ERP_2_7_5_ZIP_A1C_IFRAME_MODAL_POSITION_FIX_START === */
+@media(max-width:760px){
+  .portal-app .content{
+    height:100dvh;
+    overflow-y:auto;
+  }
+
+  .portal-app #tab-treinos.active{
+    padding:0;
+  }
+
+  .treinos-v3-embed-shell{
+    height:calc(100dvh - 130px);
+    min-height:520px;
+    overflow:hidden;
+  }
+
+  .treinos-v3-frame{
+    height:calc(100dvh - 130px) !important;
+    min-height:520px !important;
+    overflow:auto;
+  }
+}
+/* === FUSION_ERP_2_7_5_ZIP_A1C_IFRAME_MODAL_POSITION_FIX_END === */
+
+/* === FUSION_ERP_2_7_5_ZIP_A1D_TREINO_VIEWPORT_MOBILE_START === */
+@media(max-width:760px){
+  .portal-app #tab-treinos.active{
+    height:calc(100dvh - 82px);
+    overflow:hidden;
+  }
+
+  .treinos-v3-embed-shell{
+    height:calc(100dvh - 138px);
+    min-height:420px;
+    overflow:hidden;
+  }
+
+  .treinos-v3-frame{
+    height:calc(100dvh - 138px) !important;
+    min-height:420px !important;
+    overflow:auto;
+  }
+}
+/* === FUSION_ERP_2_7_5_ZIP_A1D_TREINO_VIEWPORT_MOBILE_END === */
+
+
+/* Fusion ERP 2.7.5 — ZIP A1E Login Portal Aluno CPF + Telefone */
+.login-card form{display:grid;gap:12px;}
+.login-card label{margin:0;}
+.login-card button{margin-top:4px;}
+@media(max-width:800px){
+  .portal-login{min-height:100dvh;padding:18px 14px;}
+  .portal-login .brand{margin-top:22px;margin-bottom:8px;}
+  .login-card{padding:18px;border-radius:18px;}
+  .login-card h1{font-size:28px;line-height:1.05;margin-bottom:8px;}
+  .login-card p{font-size:16px;line-height:1.25;margin-bottom:14px;}
+  .login-card form{gap:12px;}
+  .login-card label{font-size:15px;}
+  .login-card input{min-height:52px;padding:12px 14px;border-radius:13px;}
+  .login-card button{min-height:54px;border-radius:14px;margin-top:6px;}
+}
+@media(max-width:420px){
+  .portal-login .brand{margin-top:10px;}
+  .login-card h1{font-size:26px;}
+  .login-card p{font-size:15px;}
+}

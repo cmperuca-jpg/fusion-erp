@@ -23,3 +23,129 @@
   display:block;
   background:#f4f6f9;
 }
+
+
+/* Fusion ERP 2.7.4 ZIP4 - Portal do Professor: responsivo operacional */
+.mobile-menu-toggle{display:none;position:fixed;z-index:120;left:12px;top:12px;width:48px;height:48px;border:0;border-radius:14px;background:var(--orange);color:#fff;font-size:24px;font-weight:900;box-shadow:0 12px 30px rgba(15,23,42,.25);cursor:pointer}.mobile-menu-backdrop{position:fixed;inset:0;z-index:98;background:rgba(2,6,23,.55)}.sidebar{z-index:110}.content{max-width:100%;overflow-x:hidden}.topbar{position:sticky;top:0;z-index:40}.nav,.sair,.top-actions button,.btn-outline,input,select,textarea{min-height:44px}.btn-outline{display:inline-flex;align-items:center;justify-content:center;text-align:center;line-height:1.2}.aluno-card{min-width:0}.aluno-card h4,.item strong{overflow-wrap:anywhere}.professor-avaliacoes-v3-shell,.professor-treinos-v3-shell{max-width:100%;overflow:hidden}.professor-avaliacoes-v3-frame,.professor-treinos-v3-frame{max-width:100%}@media(max-width:1180px){.sidebar{width:230px;min-width:230px}.topbar h1{font-size:22px}.tab{padding:18px}.card{padding:16px}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:860px){body{padding-top:0}.mobile-menu-toggle{display:block}.portal-app{display:block;min-height:100vh}.sidebar{position:fixed;left:0;top:0;bottom:0;width:min(84vw,320px);height:100vh;min-width:0;transform:translateX(-105%);transition:transform .22s ease;box-shadow:22px 0 50px rgba(2,6,23,.35);overflow-y:auto;padding-top:72px}.portal-menu-open .sidebar{transform:translateX(0)}.content{width:100%;padding-top:0}.topbar{padding:72px 14px 14px;align-items:flex-start;gap:12px}.topbar h1{font-size:21px}.top-actions{width:100%;justify-content:space-between;align-items:stretch}.top-actions button{min-width:118px}.tab{padding:14px}.tab.active{display:block}.kpis{grid-template-columns:1fr;gap:10px}.portal-grid{grid-template-columns:1fr;gap:12px}.card{border-radius:14px;padding:14px}.section-head{display:grid;grid-template-columns:1fr;gap:10px}.section-head input{width:100%;min-width:0;font-size:16px}.alunos-grid{grid-template-columns:1fr}.aluno-card{padding:14px}.mini{grid-template-columns:1fr;gap:8px}.acoes{display:grid;grid-template-columns:1fr 1fr;gap:8px}.btn-outline{width:100%;padding:11px 10px}.modal{padding:0;align-items:stretch}.modal-card{width:100vw;height:100vh;border-radius:0}.modal-head{position:sticky;top:0;background:#fff;z-index:2}.professor-treinos-v3-shell,.professor-avaliacoes-v3-shell{height:calc(100dvh - 88px);min-height:calc(100dvh - 88px);border-radius:0;border-left:0;border-right:0}.professor-treinos-v3-frame,.professor-avaliacoes-v3-frame{height:100%;min-height:100%}#tab-treinos,#tab-avaliacoes{padding:0}}@media(max-width:480px){.topbar h1{font-size:19px}.top-actions{display:grid;grid-template-columns:1fr;gap:8px}.acoes{grid-template-columns:1fr}.card strong{font-size:20px}.brand{font-size:21px}.prof-box{padding:10px}.nav,.sair{padding:12px}.modal-head strong{font-size:14px}}
+
+
+/* Fusion ERP 2.7.5 ZIP C1 - Limpeza do Portal do Professor */
+.top-actions-clean{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:0;
+}
+.top-actions-clean small{
+  color:#64748b;
+  font-weight:700;
+}
+.portal-quick-flow,
+#tab-biblioteca,
+.professor-biblioteca-shell,
+.professor-biblioteca-frame{
+  display:none !important;
+}
+#btnAbrirAvaliacao,
+#btnAbrirTreinos,
+#btnAbrirBiblioteca,
+#btnAtualizar,
+#btnRecarregarTreinosV3,
+#btnRecarregarBiblioteca{
+  display:none !important;
+}
+.professor-frame-toolbar{
+  display:none !important;
+}
+@media(max-width:860px){
+  .top-actions-clean{
+    width:auto;
+    display:flex;
+  }
+}
+
+
+/* === Fusion ERP 2.7.6 P2A — Portal do Professor Mobile First === */
+@media (max-width: 900px){
+  html,body{width:100%;max-width:100%;overflow-x:hidden;background:#f4f6f9;}
+  .mobile-menu-toggle,.mobile-menu-backdrop{display:none!important;}
+  .portal-app{display:block;min-height:100dvh;padding-bottom:calc(78px + env(safe-area-inset-bottom,0px));}
+  .sidebar{position:fixed!important;left:0;right:0;bottom:0;top:auto!important;z-index:2000;width:100%!important;min-width:0!important;height:auto!important;min-height:0!important;max-height:none!important;background:#101826!important;padding:8px 8px calc(8px + env(safe-area-inset-bottom,0px))!important;display:flex!important;flex-direction:row!important;align-items:center!important;gap:7px!important;overflow-x:auto!important;overflow-y:hidden!important;border-radius:18px 18px 0 0;box-shadow:0 -12px 34px rgba(15,23,42,.26);-webkit-overflow-scrolling:touch;}
+  .sidebar .brand,.sidebar .prof-box{display:none!important;}
+  .sidebar .nav,.sidebar .sair{flex:0 0 auto!important;width:auto!important;min-width:78px!important;min-height:44px!important;margin:0!important;padding:9px 12px!important;border-radius:999px!important;text-align:center!important;font-size:12px!important;white-space:nowrap!important;}
+  .sidebar .nav.active{background:#ff6600!important;color:#fff!important;}
+  .content{width:100%!important;min-width:0!important;padding:0!important;}
+  .topbar{position:sticky!important;top:0;z-index:1200;min-height:0!important;padding:12px 12px!important;display:grid!important;grid-template-columns:1fr!important;gap:6px!important;background:rgba(255,255,255,.96)!important;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-radius:0 0 18px 18px;box-shadow:0 6px 18px rgba(15,23,42,.08);}
+  .topbar h1{font-size:19px!important;line-height:1.15;margin:0!important;}
+  .topbar span,.top-actions small{font-size:12px!important;}
+  .tab{padding:12px!important;}
+  .tab.active{display:block!important;}
+  .kpis{display:flex!important;grid-template-columns:none!important;gap:10px!important;overflow-x:auto!important;padding-bottom:4px!important;-webkit-overflow-scrolling:touch;}
+  .kpis .card{flex:0 0 138px!important;padding:14px!important;border-radius:16px!important;}
+  .portal-grid{display:grid!important;grid-template-columns:1fr!important;gap:12px!important;}
+  .card{border-radius:16px!important;padding:14px!important;box-shadow:0 8px 22px rgba(15,23,42,.07)!important;}
+  .section-head{display:grid!important;grid-template-columns:1fr!important;gap:10px!important;align-items:stretch!important;}
+  .section-head input{width:100%!important;min-width:0!important;height:44px!important;font-size:16px!important;}
+  .alunos-grid{grid-template-columns:1fr!important;gap:12px!important;}
+  .aluno-card{padding:14px!important;border-radius:16px!important;}
+  .mini{grid-template-columns:1fr 1fr 1fr!important;gap:6px!important;}
+  .mini>div{padding:8px!important;}
+  .acoes{display:grid!important;grid-template-columns:1fr 1fr!important;gap:8px!important;}
+  .acoes .btn-outline{width:100%!important;min-height:42px!important;text-align:center!important;}
+  #tab-avaliacoes,#tab-treinos{padding:0!important;background:#f4f6f9!important;}
+  #tab-avaliacoes.active,#tab-treinos.active{display:block!important;}
+  .professor-avaliacoes-v3-shell,.professor-treinos-v3-shell{width:100%!important;height:calc(100dvh - 76px - env(safe-area-inset-bottom,0px))!important;min-height:calc(100dvh - 76px - env(safe-area-inset-bottom,0px))!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:#f4f6f9!important;overflow:hidden!important;}
+  .professor-avaliacoes-v3-frame,.professor-treinos-v3-frame{width:100%!important;height:100%!important;min-height:100%!important;border:0!important;border-radius:0!important;background:#f4f6f9!important;display:block!important;}
+  .modal{padding:0!important;align-items:stretch!important;}
+  .modal-card{width:100vw!important;height:100dvh!important;border-radius:0!important;}
+}
+@media (max-width: 480px){
+  .sidebar .nav,.sidebar .sair{min-width:70px!important;font-size:11px!important;padding:8px 10px!important;}
+  .kpis .card{flex-basis:124px!important;}
+  .acoes{grid-template-columns:1fr!important;}
+}
+/* === /Fusion ERP 2.7.6 P2A === */
+
+
+/* === Fusion ERP 2.7.6 P2D — Finalização Mobile Professor START === */
+@media (max-width: 900px){
+  html,body{width:100%;min-height:100dvh;overflow-x:hidden;overscroll-behavior-y:contain;-webkit-text-size-adjust:100%;}
+  body{background:#f4f6f9!important;padding-bottom:env(safe-area-inset-bottom,0px)!important;}
+  .portal-app{min-height:100dvh!important;width:100%!important;display:block!important;}
+  .content{min-height:100dvh!important;padding-bottom:calc(78px + env(safe-area-inset-bottom,0px))!important;}
+  .topbar{position:sticky!important;top:0!important;z-index:70!important;min-height:auto!important;border-radius:0 0 18px 18px!important;margin:0!important;padding:calc(12px + env(safe-area-inset-top,0px)) 14px 12px!important;background:rgba(255,255,255,.96)!important;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:0 10px 26px rgba(15,23,42,.08)!important;}
+  .topbar h1{font-size:19px!important;line-height:1.12!important;}
+  .topbar span,.top-actions small{font-size:12px!important;}
+  .tab{padding:12px!important;}
+  .card{border-radius:18px!important;padding:14px!important;box-shadow:0 8px 22px rgba(15,23,42,.07)!important;}
+  .kpis{display:flex!important;gap:10px!important;overflow-x:auto!important;scroll-snap-type:x mandatory!important;padding-bottom:4px!important;-webkit-overflow-scrolling:touch!important;}
+  .kpis .card{min-width:128px!important;scroll-snap-align:start!important;}
+  .portal-grid,.alunos-grid{grid-template-columns:1fr!important;gap:12px!important;}
+  .aluno-card{border-radius:18px!important;padding:13px!important;}
+  .acoes{display:grid!important;grid-template-columns:1fr 1fr!important;gap:8px!important;}
+  .acoes .btn-outline{min-height:46px!important;display:grid!important;place-items:center!important;text-align:center!important;}
+  .sidebar{position:fixed!important;left:0!important;right:0!important;bottom:0!important;top:auto!important;z-index:90!important;width:100%!important;min-width:0!important;height:auto!important;min-height:0!important;max-height:none!important;display:flex!important;flex-direction:row!important;align-items:center!important;gap:8px!important;overflow-x:auto!important;overflow-y:hidden!important;padding:8px 10px calc(8px + env(safe-area-inset-bottom,0px))!important;border-radius:18px 18px 0 0!important;background:#101826!important;box-shadow:0 -12px 32px rgba(15,23,42,.22)!important;-webkit-overflow-scrolling:touch!important;}
+  .sidebar .brand,.sidebar .prof-box{display:none!important;}
+  .sidebar .nav,.sidebar .sair{flex:0 0 auto!important;width:auto!important;min-width:82px!important;min-height:44px!important;margin:0!important;text-align:center!important;border-radius:999px!important;padding:9px 12px!important;font-size:12px!important;white-space:nowrap!important;}
+  #tab-avaliacoes,#tab-treinos{padding:0!important;overflow:hidden!important;}
+  .professor-avaliacoes-v3-shell,.professor-treinos-v3-shell{height:calc(100dvh - 64px - env(safe-area-inset-bottom,0px))!important;min-height:calc(100dvh - 64px - env(safe-area-inset-bottom,0px))!important;width:100%!important;border-radius:0!important;border:0!important;overflow:hidden!important;background:#f4f6f9!important;}
+  .professor-avaliacoes-v3-frame,.professor-treinos-v3-frame{height:100%!important;min-height:100%!important;width:100%!important;border:0!important;border-radius:0!important;display:block!important;}
+  .mobile-menu-toggle,.mobile-menu-backdrop{display:none!important;}
+  button,input,select,textarea{min-height:44px;touch-action:manipulation;}
+}
+@media (orientation: landscape) and (max-height: 520px){
+  .topbar{position:relative!important;padding:10px 12px!important;}
+  .content{padding-bottom:60px!important;}
+  .professor-avaliacoes-v3-shell,.professor-treinos-v3-shell{height:calc(100dvh - 58px)!important;min-height:calc(100dvh - 58px)!important;}
+  .sidebar{padding:6px 8px!important;}
+  .sidebar .nav,.sidebar .sair{min-height:38px!important;font-size:11px!important;}
+}
+/* === Fusion ERP 2.7.6 P2D — Finalização Mobile Professor END === */
+
+
+/* Fusion ERP 2.9.0-N1 — Natação embutida no Portal do Professor */
+.professor-natacao-shell{width:100%;height:calc(100vh - 120px);min-height:760px;background:#f4f6f9;border:0;border-radius:16px;overflow:hidden}
+.professor-natacao-frame{display:block;width:100%;height:100%;border:0;background:#f4f6f9}
+#tab-natacao{padding:16px}
+#tab-natacao.active{display:block}
+@media(max-width:900px){#tab-natacao{padding:0!important}.professor-natacao-shell{height:calc(100dvh - 76px - env(safe-area-inset-bottom,0px))!important;min-height:calc(100dvh - 76px - env(safe-area-inset-bottom,0px))!important;border-radius:0!important}.professor-natacao-frame{height:100%!important;min-height:100%!important}}

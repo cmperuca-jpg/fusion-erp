@@ -8,7 +8,15 @@
   <link rel="stylesheet" href="/assets/css/fusion-menu-global.css">
   <script src="/assets/js/fusion-auth.js"></script>
   <script>FusionAuth.proteger();</script>
-  <meta name="fusion-existing-pages" content="agenda,alunos,avaliacoes,biblioteca-inteligente,bi,bi-academia,bi-academia-operacional,bi-financeiro,caixa,checkin,configuracoes,dashboard,estoque,exercicios,financeiro,login,matriculas,mensalidades,modalidades,modelos-treino,pagamentos,planos,presencas,professores,recebimentos,relatorios-caixa,treinos,turmas">
+  <meta name="fusion-existing-pages" content="agenda,alunos,avaliacoes,biblioteca-inteligente,bi,bi-academia,bi-academia-operacional,bi-financeiro,caixa,checkin,configuracoes,dashboard,estoque,exercicios,financeiro,login,matriculas,mensalidades,modalidades,modelos-treino,natacao-professor,natacao-aluno,pagamentos,planos,presencas,professores,recebimentos,relatorios-caixa,treinos,turmas">
+
+<link rel="manifest" href="/manifest-sistema.webmanifest">
+<meta name="theme-color" content="#ff6600">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="/assets/pwa/icons/fusion-icon-180.png">
+<link rel="stylesheet" href="/assets/pwa/fusion-pwa-mobile.css">
 </head>
 <body>
 <div class="fusion-shell">
@@ -43,5 +51,7 @@ function moeda(v){return Number(v||0).toLocaleString('pt-BR',{style:'currency',c
 </script>
   <script src="/assets/js/fusion-menu-global.js"></script>
     <script src="/assets/js/fusion-layout.js"></script>
+
+<script src="/assets/pwa/fusion-pwa-install.js" defer></script>
 </body>
 </html>

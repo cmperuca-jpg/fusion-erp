@@ -6,6 +6,41 @@ function gerarId(prefixo = "trn") { return `${prefixo}_${Date.now()}_${Math.rand
 function texto(v) { return String(v ?? "").trim(); }
 function normalizar(v) { return texto(v).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); }
 function ativo(item) { return !["cancelado","cancelada","encerrado","encerrada","inativo","inativa","arquivado","removido","removida"].includes(normalizar(item?.status || "Ativo")); }
+
+function mesmoAlunoTreino(treino = {}, alunoId = "") {
+  return String(treino.alunoId || treino.aluno_id || "") === String(alunoId || "");
+}
+
+function escolherTreinoAtivoMaisRecente(treinos = [], alunoId = "") {
+  return [...treinos]
+    .filter((t) => mesmoAlunoTreino(t, alunoId) && ativo(t))
+    .sort((a, b) => String(b.atualizadoEm || b.criadoEm || b.dataInicio || "").localeCompare(String(a.atualizadoEm || a.criadoEm || a.dataInicio || "")))[0] || null;
+}
+
+function arquivarTreinosAtivosDoAluno(treinos = [], alunoId = "", excetoId = "", motivo = "substituido_por_novo_treino") {
+  const agora = agoraISO();
+  let alterou = false;
+  const lista = treinos.map((t) => {
+    if (!mesmoAlunoTreino(t, alunoId) || !ativo(t) || String(t.id || "") === String(excetoId || "")) return t;
+    alterou = true;
+    return {
+      ...t,
+      status: "Arquivado",
+      arquivadoEm: agora,
+      arquivadoPorRegra: "treino_unico_ativo_por_aluno",
+      historico: [
+        ...(Array.isArray(t.historico) ? t.historico : []),
+        {
+          acao: "arquivar_treino_ativo_anterior",
+          usuario: "Motor Treinos Integrado",
+          criadoEm: agora,
+          detalhes: { motivo, treinoSubstitutoId: excetoId || "" }
+        }
+      ]
+    };
+  });
+  return { lista, alterou };
+}
 function alunoNome(a = {}) { return texto(a.nome || a.aluno || a.name || a.nomeCompleto || "Aluno"); }
 
 
@@ -259,10 +294,12 @@ export async function listarTreinosIntegrados(filtros = {}) {
   }
   if (filtros.status) lista = lista.filter((t) => normalizar(statusTreino(t)) === normalizar(filtros.status));
 
+  lista = lista.sort((a,b) => String(b.atualizadoEm || b.criadoEm || b.dataInicio || "").localeCompare(String(a.atualizadoEm || a.criadoEm || a.dataInicio || "")));
   return {
     ok: true,
     total: lista.length,
-    dados: lista.sort((a,b) => String(b.criadoEm || b.dataInicio || "").localeCompare(String(a.criadoEm || a.dataInicio || "")))
+    regra: "um_treino_ativo_por_aluno",
+    dados: lista
   };
 }
 
@@ -348,10 +385,24 @@ export async function criarTreinoIntegrado(dados = {}) {
     }]
   };
 
-  const lista = base.treinos;
+  const arquivamento = arquivarTreinosAtivosDoAluno(base.treinos, treino.alunoId, treino.id, "novo_treino_substitui_ativo_anterior");
+  const lista = arquivamento.lista;
+  treino.politicaSalvar = "substituir_ativo_anterior";
+  treino.historico = [
+    ...(Array.isArray(treino.historico) ? treino.historico : []),
+    {
+      acao: "regra_treino_unico_ativo",
+      usuario: dados.usuario || "Motor Treinos Integrado",
+      criadoEm: agoraISO(),
+      detalhes: {
+        regra: "Ao criar novo treino, qualquer treino ativo anterior do aluno é arquivado.",
+        arquivouAnterior: arquivamento.alterou
+      }
+    }
+  ];
   lista.push(treino);
   await salvarTreinos(lista);
-  return { ok: true, dados: hidratarTreinoComBiblioteca(treino, base.biblioteca) };
+  return { ok: true, regra: "um_treino_ativo_por_aluno", dados: hidratarTreinoComBiblioteca(treino, base.biblioteca) };
 }
 
 export async function atualizarTreinoIntegrado(id, dados = {}) {
@@ -376,8 +427,13 @@ export async function atualizarTreinoIntegrado(id, dados = {}) {
   };
 
   lista[idx] = novo;
-  await salvarTreinos(lista);
-  return { ok: true, dados: hidratarTreinoComBiblioteca(novo, base.biblioteca) };
+  let listaFinal = lista;
+  if (ativo(novo) && novo.alunoId) {
+    const arquivamento = arquivarTreinosAtivosDoAluno(lista, novo.alunoId, novo.id, "edicao_mantem_apenas_um_ativo");
+    listaFinal = arquivamento.lista;
+  }
+  await salvarTreinos(listaFinal);
+  return { ok: true, regra: "um_treino_ativo_por_aluno", dados: hidratarTreinoComBiblioteca(novo, base.biblioteca) };
 }
 
 export async function arquivarTreinoIntegrado(id, dados = {}) {

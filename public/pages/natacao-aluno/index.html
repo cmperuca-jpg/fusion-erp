@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fusion ERP - Portal do Aluno Natação</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <main class="swim-student-app">
+    <header class="student-hero">
+      <div>
+        <small>Fusion ERP 2.9.0-N3</small>
+        <h1>Portal do Aluno - Natação</h1>
+        <p id="alunoResumo">Informe o aluno para consultar recordes, evolução e histórico.</p>
+      </div>
+      <div class="student-actions">
+        <button id="btnVoltar" type="button">← Portal</button>
+        <button id="btnAtualizar" class="primary" type="button">Atualizar</button>
+      </div>
+    </header>
+
+    <section class="student-login" id="blocoIdentificacao">
+      <label>ID do aluno
+        <input id="alunoId" placeholder="Cole ou informe o ID do aluno">
+      </label>
+      <button id="btnCarregarAluno" class="primary" type="button">Carregar histórico</button>
+    </section>
+
+    <section class="student-kpis">
+      <article><span>Recordes pessoais</span><strong id="kpiRecordes">0</strong></article>
+      <article><span>Provas registradas</span><strong id="kpiProvas">0</strong></article>
+      <article><span>Melhor evolução</span><strong id="kpiEvolucao">0%</strong></article>
+      <article><span>Último tempo</span><strong id="kpiUltimoTempo">-</strong></article>
+    </section>
+
+    <section class="student-grid">
+      <section class="student-panel main-panel">
+        <div class="panel-head">
+          <div><strong>Meus recordes</strong><span>Melhores tempos por distância, estilo e piscina</span></div>
+          <select id="filtroDistancia">
+            <option value="">Todas as distâncias</option>
+            <option>25m</option><option>50m</option><option>100m</option><option>200m</option>
+            <option>400m</option><option>800m</option><option>1500m</option><option>Livre</option>
+          </select>
+        </div>
+        <div id="listaRecordes" class="records-list"></div>
+      </section>
+
+      <aside class="student-panel">
+        <div class="panel-head"><div><strong>Ranking</strong><span>Posição nas provas com ranking</span></div></div>
+        <div id="rankingAluno" class="ranking-list"></div>
+      </aside>
+    </section>
+
+    <section class="student-panel">
+      <div class="panel-head">
+        <div><strong>Evolução</strong><span>Últimas marcas por prova</span></div>
+        <select id="filtroEvolucao"></select>
+      </div>
+      <div class="evolution-card">
+        <canvas id="graficoEvolucao" width="900" height="260" aria-label="Gráfico de evolução"></canvas>
+        <div id="evolucaoResumo" class="evolution-summary"></div>
+      </div>
+    </section>
+
+    <section class="student-panel">
+      <div class="panel-head"><div><strong>Histórico completo</strong><span>Últimas sessões cronometradas</span></div></div>
+      <div id="historicoAluno" class="history-list"></div>
+    </section>
+  </main>
+
+  <div class="student-toast" id="studentToast"></div>
+  <script src="./index.js"></script>
+</body>
+</html>

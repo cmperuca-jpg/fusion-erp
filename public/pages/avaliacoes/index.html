@@ -79,6 +79,12 @@
       <button id="btnFechar" type="button">×</button>
     </div>
 
+    <div class="avaliacao-mobile-resumo" id="avaliacaoMobileResumo" aria-live="polite">
+      <div><span>IMC</span><strong id="mobileResumoImc">-</strong></div>
+      <div><span>RCQ</span><strong id="mobileResumoRcq">-</strong></div>
+      <button id="btnMobileVozAvaliacao" type="button">🎙️ Voz</button>
+    </div>
+
     <form id="form" class="aval-form">
       <input type="hidden" id="id">
       <input type="hidden" id="professor_id">
@@ -96,6 +102,18 @@
         <div class="field hora-box"><label>Hora</label><input id="hora" type="time"></div>
       </div>
       <div class="professor-lock">Professor avaliador: <strong id="professorNomeDisplay">Definido pelo professor responsável do aluno</strong></div>
+
+      <div class="avaliacao-voz-box" id="avaliacaoVozBox">
+        <div>
+          <strong>IA de medidas por voz</strong>
+          <small id="avaliacaoVozStatus">Pronto para ouvir o professor.</small>
+        </div>
+        <div class="avaliacao-voz-actions">
+          <button class="fusion-button secondary" id="btnVozAvaliacao" type="button">🎙️ Iniciar voz</button>
+          <button class="fusion-button secondary" id="btnRepetirVozAvaliacao" type="button">Repetir instrução</button>
+        </div>
+        <div class="avaliacao-voz-transcript" id="avaliacaoVozTranscricao">Fale livremente: “peso 82 vírgula 4, altura 1 e 78, cintura 90, quadril 102”.</div>
+      </div>
 
       <div class="avaliacao-mode" id="modoAvaliacaoBox">
         <button class="modo-card active" type="button" data-avmodo="nova">

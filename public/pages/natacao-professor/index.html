@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fusion ERP - Natação Professor</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <main class="nat-app">
+    <header class="nat-topbar">
+      <div>
+        <small>Fusion ERP 2.9.0-N4</small>
+        <h1>Painel Técnico da Natação</h1>
+        <p>Cronometragem, recordes, ranking, comparador e relatório técnico dos alunos.</p>
+      </div>
+      <div class="nat-actions">
+        <button id="btnPainel" type="button">← Painel</button>
+        <button id="btnNovaSessao" type="button">Nova sessão</button>
+        <button id="btnSalvarSessao" class="primary" type="button">Salvar resultados</button>
+      </div>
+    </header>
+
+    <section class="nat-tech-kpis" id="painelTecnicoResumo">
+      <article><span>Sessões</span><strong id="kpiSessoes">0</strong></article>
+      <article><span>Provas</span><strong id="kpiProvas">0</strong></article>
+      <article><span>Recordes</span><strong id="kpiRecordes">0</strong></article>
+      <article><span>Atletas</span><strong id="kpiAtletas">0</strong></article>
+      <article><span>Evolução média</span><strong id="kpiEvolucaoMedia">0%</strong></article>
+    </section>
+
+    <section class="nat-config">
+      <label>Prova / Distância
+        <select id="distancia">
+          <option value="25m">25m</option>
+          <option value="50m">50m</option>
+          <option value="100m">100m</option>
+          <option value="200m">200m</option>
+          <option value="400m">400m</option>
+          <option value="800m">800m</option>
+          <option value="1500m">1500m</option>
+          <option value="Livre">Livre</option>
+        </select>
+      </label>
+      <label>Estilo
+        <select id="estilo">
+          <option>Livre</option><option>Crawl</option><option>Costas</option><option>Peito</option><option>Borboleta</option><option>Medley</option>
+        </select>
+      </label>
+      <label>Piscina
+        <select id="piscina"><option value="25m">25m</option><option value="50m">50m</option><option value="Livre">Livre</option></select>
+      </label>
+      <label>Observação
+        <input id="observacao" placeholder="Ex.: teste semanal, turma infantil, seletiva...">
+      </label>
+    </section>
+
+    <section class="nat-selector">
+      <div class="nat-section-head">
+        <div><strong>Selecionar alunos</strong><span id="selecionadosInfo">0 de 10 selecionados</span></div>
+        <input id="buscaAlunoNatacao" placeholder="Buscar aluno">
+      </div>
+      <div id="listaAlunosNatacao" class="nat-students"></div>
+    </section>
+
+    <section class="nat-commandbar">
+      <button id="btnPreparar" type="button">Preparar raias</button>
+      <button id="btnIniciarTodos" class="primary" type="button" disabled>Iniciar todos</button>
+      <button id="btnPararTodos" type="button" disabled>Finalizar todos</button>
+      <button id="btnAtualizarTecnico" type="button">Atualizar técnico</button>
+      <div class="nat-beep" id="beepStatus">Pronto</div>
+    </section>
+
+    <section id="painelRaias" class="nat-lanes"></section>
+
+    <section class="nat-tech-grid">
+      <section class="nat-tech-card nat-records">
+        <div class="nat-section-head">
+          <div><strong>Ranking técnico</strong><span id="recordesInfo">0 provas com ranking</span></div>
+          <div class="nat-record-filters">
+            <select id="filtroRecordeDistancia"><option value="">Todas distâncias</option><option>25m</option><option>50m</option><option>100m</option><option>200m</option><option>400m</option><option>800m</option><option>1500m</option><option>Livre</option></select>
+            <select id="filtroRecordeEstilo"><option value="">Todos estilos</option><option>Livre</option><option>Crawl</option><option>Costas</option><option>Peito</option><option>Borboleta</option><option>Medley</option></select>
+            <button id="btnRecalcularRecordes" type="button">Recalcular</button>
+          </div>
+        </div>
+        <div id="recordesNatacao" class="nat-record-grid"></div>
+      </section>
+
+      <aside class="nat-tech-card">
+        <div class="nat-section-head"><div><strong>Comparador de alunos</strong><span>Use os alunos selecionados no painel</span></div></div>
+        <div class="compare-actions"><button id="btnCompararSelecionados" class="primary" type="button">Comparar selecionados</button></div>
+        <div id="comparadorNatacao" class="compare-list"></div>
+      </aside>
+    </section>
+
+    <section class="nat-tech-card">
+      <div class="nat-section-head"><div><strong>Evolução da turma</strong><span>Melhores evoluções calculadas pelo motor técnico</span></div></div>
+      <div id="evolucaoTurma" class="evolution-table"></div>
+    </section>
+
+    <section class="nat-history">
+      <div class="nat-section-head"><strong>Últimos resultados</strong><button id="btnAtualizarHistorico" type="button">Atualizar</button></div>
+      <div id="historicoNatacao" class="nat-history-list"></div>
+    </section>
+  </main>
+  <div class="nat-toast" id="natToast"></div>
+  <script src="./index.js"></script>
+</body>
+</html>

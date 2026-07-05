@@ -20,6 +20,10 @@
       </div>
     </header>
 
+    <div class="treino-selector-top" aria-label="Selecionar bloco do treino">
+      <div class="workout-tabs" id="tabsTreino"></div>
+    </div>
+
     <section class="train-shell">
       <aside class="library-panel">
         <div class="panel-title">
@@ -55,8 +59,6 @@
           <label>Objetivo <input id="objetivoTreino" value="Hipertrofia"></label>
           <label>Validade <input id="validadeTreino" type="date"></label>
         </div>
-
-        <div class="workout-tabs" id="tabsTreino"></div>
 
         <div class="group-header">
           <div>
@@ -106,6 +108,14 @@
       </aside>
     </section>
   </main>
+
+  <div class="treinos-rotate-lock" id="treinosRotateLock" aria-live="polite">
+    <div>
+      <strong>Gire o celular</strong>
+      <span>Para editar treino no Portal do Professor, use a tela na horizontal.</span>
+    </div>
+  </div>
+
   <script src="./index.js"></script>
 </body>
 </html>

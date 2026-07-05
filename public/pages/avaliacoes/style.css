@@ -107,3 +107,431 @@ body.modo-embed-avaliacao .foto-postural img{width:100%;height:100%;object-fit:c
 @media(max-width:1100px){body.modo-embed-avaliacao #tab-composicao .grid-4,body.modo-embed-avaliacao #tab-cardio .grid-4,body.modo-embed-avaliacao #tab-neuromotores .grid-4,.relatorio-preview .report-grid{grid-template-columns:1fr 1fr!important;}}
 @media(max-width:720px){body.modo-embed-avaliacao .sca-topline.aval-meta-grid,body.modo-embed-avaliacao #tab-composicao .grid-4,body.modo-embed-avaliacao #tab-cardio .grid-4,body.modo-embed-avaliacao #tab-neuromotores .grid-4,.relatorio-preview .report-grid{grid-template-columns:1fr!important;}body.modo-embed-avaliacao .modal-actions{display:grid;grid-template-columns:1fr;gap:8px}.relatorio-preview{padding:12px}}
 @media print{body{background:#fff!important}.modal-actions,.sca-tabs,.sca-titlebar button,.avaliacao-mode,.professor-lock{display:none!important}.modal-backdrop,.modal-avaliacao,.aval-form{position:static!important;height:auto!important;overflow:visible!important}.tab-panel{display:none!important}#tab-relatorio{display:block!important}.relatorio-preview{border:0!important;padding:0!important}.relatorio-preview .report-grid{grid-template-columns:repeat(3,1fr)!important}.relatorio-preview table{font-size:12px}.relatorio-preview h1{font-size:22px}}
+
+/* Fusion ERP 2.7.4 ZIP6 - Avaliação Física V3 responsiva/mobile first */
+:root{--fusion-touch:46px;--fusion-gap-mobile:12px}
+.avaliacoes-page *, .aval-page *, .modal-avaliacao *{box-sizing:border-box}
+.aval-header-card,.table-top{gap:12px;flex-wrap:wrap}
+.aval-actions{flex-wrap:wrap}.aval-actions .fusion-button,.btn-field .fusion-button{min-height:var(--fusion-touch)}
+.aval-toolbar{align-items:end}.aval-toolbar input,.aval-toolbar select{min-height:var(--fusion-touch);border-radius:12px}
+.table-wrap{max-width:100%;-webkit-overflow-scrolling:touch;border-radius:12px}
+.table-wrap table{min-width:860px}.table-wrap td,.table-wrap th{vertical-align:middle}
+.modal-avaliacao{max-width:1180px}.modal-avaliacao input,.modal-avaliacao select,.modal-avaliacao textarea{min-height:44px;border-radius:12px}
+.modal-avaliacao textarea{min-height:96px;resize:vertical}.sca-titlebar{gap:10px}.sca-titlebar>div{min-width:0}.sca-titlebar strong,.sca-titlebar span{line-height:1.25}.sca-tabs{scrollbar-width:thin}.tab{min-height:42px;display:inline-flex;align-items:center;justify-content:center}.tab-panel{scroll-margin-top:80px}
+.sca-panel{border-radius:16px}.sca-panel label{line-height:1.25}.grid-2,.grid-3,.grid-4{align-items:start}
+.perimetros-layout{align-items:start}.perimetros-list{max-height:min(62vh,560px);-webkit-overflow-scrolling:touch}.measure-row{border:1px solid #e2e8f0;border-radius:12px;margin-bottom:8px}.measure-row input{min-width:0}.rcq-value,.sum-value{margin:16px 0}.resultado-card{border-radius:16px;min-height:220px}.risk-meter{height:136px}.inline-options{flex-wrap:wrap}.modal-actions .fusion-button,.modal-actions button{min-height:var(--fusion-touch)}
+.postural-panel{align-items:start}.foto-postural{border-radius:14px;min-height:220px;height:clamp(220px,32vw,280px)}.relatorio-preview{overflow:auto}.timeline-item{align-items:center}
+@media (max-width:1180px){.aval-toolbar{grid-template-columns:1fr 180px 160px auto}.sca-topline.aval-meta-grid{grid-template-columns:1fr 1.4fr .9fr .8fr .7fr!important}.perimetros-layout{grid-template-columns:1fr}.perimetros-list{max-height:none}.postural-panel{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:860px){.aval-header-card{display:grid;grid-template-columns:1fr;padding:16px}.aval-actions{display:grid;grid-template-columns:1fr 1fr}.aval-kpis{grid-template-columns:1fr 1fr}.aval-kpis strong{font-size:22px}.aval-toolbar{grid-template-columns:1fr 1fr}.btn-field{grid-column:1/-1}.btn-field .fusion-button{width:100%}.modal-backdrop{padding:0;align-items:stretch}.modal-avaliacao{width:100vw!important;height:100dvh!important;max-height:none!important;border:0!important;border-radius:0!important}.sca-titlebar{border-radius:0!important}.sca-topline.aval-meta-grid{grid-template-columns:1fr 1fr!important;padding:12px!important}.sca-topline.aval-meta-grid .aluno-box{grid-column:1/-1}.avaliacao-mode{grid-template-columns:1fr;margin:0 12px 12px}.sca-tabs{padding:0 12px}.tab-panel{padding:12px}.sca-panel{padding:12px}.two-col,.grid-2,.grid-3,.grid-4,.protocol-list,.neuro-item{grid-template-columns:1fr!important}.measure-row.single,.measure-row.pair{grid-template-columns:1fr 1fr!important}.measure-row label{grid-column:1/-1;text-align:left}.neuro-item{gap:10px}.modal-actions{display:grid!important;grid-template-columns:1fr 1fr;padding:10px 12px}.modal-actions button,.modal-actions .fusion-button{width:100%}.relatorio-preview .report-grid{grid-template-columns:1fr!important}}
+@media (max-width:560px){.aval-page{gap:10px}.aval-header-card h2{font-size:20px}.aval-header-card p{font-size:14px}.aval-actions{grid-template-columns:1fr}.aval-kpis{grid-template-columns:1fr}.aval-kpis>div{padding:13px}.aval-toolbar{grid-template-columns:1fr}.fusion-card{padding:14px}.table-top{display:grid;grid-template-columns:1fr}.table-wrap table{min-width:760px;font-size:13px}.sca-titlebar{padding:12px!important}.sca-titlebar strong{font-size:16px}.sca-topline.aval-meta-grid{grid-template-columns:1fr!important}.professor-lock{margin:0 12px 10px!important}.tab{font-size:13px;padding:8px 10px}.measure-row.single,.measure-row.pair{grid-template-columns:1fr!important}.measure-row input{text-align:left;font-size:16px}.postural-panel{grid-template-columns:1fr}.foto-postural{height:220px}.modal-actions{grid-template-columns:1fr}.rcq-value strong,.sum-value strong{font-size:26px}.risk-meter{height:110px}.inline-options{display:grid;grid-template-columns:1fr}.relatorio-preview{font-size:14px;padding:12px}.relatorio-preview table{min-width:620px}}
+@supports(height:100dvh){.modal-avaliacao{max-height:92dvh}}
+
+
+/* Fusion ERP 2.7.6 P1 — IA de Avaliação Física por Voz */
+.avaliacao-voz-box{
+  margin:0 18px 14px;
+  border:1px solid #bfdbfe;
+  background:#eff6ff;
+  color:#0f172a;
+  border-radius:16px;
+  padding:12px;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:10px;
+  align-items:center;
+}
+.avaliacao-voz-box strong{display:block;color:#1d4ed8;font-size:15px;}
+.avaliacao-voz-box small{display:block;color:#475569;margin-top:3px;}
+.avaliacao-voz-box.ouvindo{border-color:#86efac;background:#f0fdf4;}
+.avaliacao-voz-box.erro{border-color:#fecaca;background:#fef2f2;}
+.avaliacao-voz-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;}
+.avaliacao-voz-actions .danger{border-color:#fecaca!important;background:#fee2e2!important;color:#991b1b!important;}
+.avaliacao-voz-transcript{
+  grid-column:1/-1;
+  min-height:42px;
+  border:1px dashed #93c5fd;
+  background:#fff;
+  border-radius:12px;
+  padding:9px 10px;
+  color:#334155;
+  font-size:13px;
+  white-space:pre-wrap;
+}
+.campo-preenchido-voz{
+  outline:3px solid rgba(37,99,235,.22)!important;
+  border-color:#2563eb!important;
+  background:#eff6ff!important;
+}
+@media(max-width:900px){
+  .avaliacao-voz-box{grid-template-columns:1fr;margin:0 12px 12px;}
+  .avaliacao-voz-actions{justify-content:stretch;}
+  .avaliacao-voz-actions button{width:100%;}
+}
+
+
+/* Fusion ERP 2.7.6 P2B — Avaliação Física Mobile */
+.avaliacao-mobile-resumo{
+  display:none;
+}
+
+@media (max-width: 860px){
+  html, body{
+    max-width:100%;
+    overflow-x:hidden;
+  }
+  body.aval-admin{
+    background:#f4f6f9;
+  }
+  .fusion-content.aval-page{
+    padding:12px!important;
+    gap:12px!important;
+  }
+  .aval-header-card{
+    border-radius:18px!important;
+    padding:14px!important;
+  }
+  .aval-header-card h2{
+    font-size:21px!important;
+    line-height:1.15!important;
+  }
+  .aval-actions{
+    width:100%!important;
+    display:grid!important;
+    grid-template-columns:1fr 1fr!important;
+  }
+  .aval-actions button,
+  .fusion-button,
+  .btn-row,
+  .btn-light{
+    min-height:46px!important;
+    border-radius:14px!important;
+    font-weight:900!important;
+  }
+  .aval-kpis{
+    grid-template-columns:1fr 1fr!important;
+    gap:10px!important;
+  }
+  .aval-kpis>div{
+    border-radius:16px!important;
+    padding:13px!important;
+  }
+  .aval-toolbar{
+    grid-template-columns:1fr!important;
+    gap:10px!important;
+  }
+  .aval-toolbar input,
+  .aval-toolbar select,
+  .field input,
+  .field select,
+  .field textarea,
+  .sca-panel input,
+  .sca-panel select,
+  .sca-panel textarea{
+    min-height:48px!important;
+    font-size:16px!important;
+    border-radius:14px!important;
+    padding:10px 12px!important;
+  }
+  .table-wrap{
+    border:1px solid #e2e8f0!important;
+    border-radius:16px!important;
+    background:#fff!important;
+  }
+  .modal-backdrop{
+    padding:0!important;
+    align-items:stretch!important;
+    justify-content:stretch!important;
+  }
+  .modal-avaliacao{
+    width:100vw!important;
+    height:100dvh!important;
+    max-height:none!important;
+    border:0!important;
+    border-radius:0!important;
+    box-shadow:none!important;
+  }
+  .sca-titlebar{
+    position:sticky!important;
+    top:0!important;
+    z-index:20!important;
+    min-height:56px!important;
+    padding:10px 12px!important;
+    border-radius:0!important;
+  }
+  .sca-titlebar>div{
+    min-width:0!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+    white-space:nowrap!important;
+  }
+  .sca-titlebar strong{
+    font-size:16px!important;
+  }
+  .sca-titlebar span{
+    font-size:13px!important;
+  }
+  .sca-titlebar button{
+    min-width:40px!important;
+    min-height:40px!important;
+    border-radius:12px!important;
+  }
+  .avaliacao-mobile-resumo{
+    position:sticky!important;
+    top:56px!important;
+    z-index:19!important;
+    display:grid!important;
+    grid-template-columns:1fr 1fr auto!important;
+    gap:8px!important;
+    align-items:center!important;
+    padding:8px 10px!important;
+    background:rgba(255,255,255,.96)!important;
+    border-bottom:1px solid #e2e8f0!important;
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+  }
+  .avaliacao-mobile-resumo>div{
+    min-height:44px!important;
+    border:1px solid #dbe3ef!important;
+    border-radius:14px!important;
+    background:#f8fafc!important;
+    padding:6px 10px!important;
+  }
+  .avaliacao-mobile-resumo span{
+    display:block!important;
+    font-size:11px!important;
+    text-transform:uppercase!important;
+    color:#64748b!important;
+    font-weight:900!important;
+    margin-bottom:2px!important;
+  }
+  .avaliacao-mobile-resumo strong{
+    display:block!important;
+    font-size:18px!important;
+    color:#0f172a!important;
+    line-height:1!important;
+  }
+  .avaliacao-mobile-resumo button{
+    min-width:78px!important;
+    min-height:44px!important;
+    border:0!important;
+    border-radius:14px!important;
+    background:#2563eb!important;
+    color:#fff!important;
+    font-weight:900!important;
+  }
+  .aval-form{
+    height:calc(100dvh - 56px)!important;
+    overflow:auto!important;
+    padding-bottom:92px!important;
+    -webkit-overflow-scrolling:touch!important;
+  }
+  .sca-topline.aval-meta-grid{
+    grid-template-columns:1fr!important;
+    gap:10px!important;
+    padding:12px!important;
+  }
+  .professor-lock{
+    margin:0 12px 10px!important;
+    border-radius:14px!important;
+  }
+  .avaliacao-voz-box{
+    margin:0 12px 10px!important;
+    grid-template-columns:1fr!important;
+    border-radius:18px!important;
+  }
+  .avaliacao-voz-actions{
+    display:grid!important;
+    grid-template-columns:1fr 1fr!important;
+  }
+  .avaliacao-voz-actions button{
+    width:100%!important;
+    min-height:46px!important;
+  }
+  .avaliacao-voz-transcript{
+    max-height:86px!important;
+    overflow:auto!important;
+  }
+  .avaliacao-mode{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    margin:0 12px 10px!important;
+  }
+  .modo-card{
+    border-radius:18px!important;
+    padding:12px!important;
+  }
+  .sca-tabs{
+    position:sticky!important;
+    top:112px!important;
+    z-index:18!important;
+    margin:0!important;
+    padding:8px 10px!important;
+    border-radius:0!important;
+    border-left:0!important;
+    border-right:0!important;
+    overflow-x:auto!important;
+    white-space:nowrap!important;
+    background:rgba(255,255,255,.96)!important;
+    -webkit-overflow-scrolling:touch!important;
+  }
+  .sca-tabs .tab{
+    flex:0 0 auto!important;
+    min-height:42px!important;
+    padding:8px 13px!important;
+    border-radius:999px!important;
+    font-size:13px!important;
+  }
+  .tab-panel{
+    padding:12px!important;
+  }
+  .tab-panel:not(.active){
+    display:none!important;
+  }
+  .sca-panel{
+    border-radius:18px!important;
+    padding:12px!important;
+    overflow:hidden!important;
+  }
+  .two-col,
+  .grid-2,
+  .grid-3,
+  .grid-4,
+  .perimetros-layout,
+  .postural-panel,
+  .protocol-list,
+  .neuro-item{
+    grid-template-columns:1fr!important;
+    gap:12px!important;
+  }
+  .perimetros-list{
+    max-height:none!important;
+    padding-right:0!important;
+    overflow:visible!important;
+  }
+  .measure-row.single,
+  .measure-row.pair{
+    grid-template-columns:1fr 1fr!important;
+    gap:8px!important;
+    padding:10px!important;
+    border-radius:16px!important;
+  }
+  .measure-row label{
+    grid-column:1/-1!important;
+    text-align:left!important;
+    font-size:14px!important;
+  }
+  .measure-row span{
+    align-self:center!important;
+    color:#64748b!important;
+    font-weight:800!important;
+  }
+  .measure-row input{
+    max-width:none!important;
+    width:100%!important;
+    text-align:left!important;
+    font-size:18px!important;
+    min-height:46px!important;
+    border-radius:14px!important;
+  }
+  .resultado-card{
+    min-height:0!important;
+    border-radius:18px!important;
+  }
+  .rcq-value,
+  .sum-value{
+    margin:12px 0!important;
+  }
+  .rcq-value strong,
+  .sum-value strong{
+    font-size:28px!important;
+  }
+  .avaliacao-corpo-wrap{
+    min-height:150px!important;
+  }
+  .foto-postural{
+    height:clamp(220px,60vw,320px)!important;
+    border-radius:18px!important;
+  }
+  .postural-card{
+    border:1px solid #e2e8f0!important;
+    border-radius:18px!important;
+    padding:12px!important;
+    background:#fff!important;
+  }
+  .modal-actions{
+    position:sticky!important;
+    bottom:0!important;
+    z-index:22!important;
+    display:grid!important;
+    grid-template-columns:1fr 1fr!important;
+    gap:8px!important;
+    padding:10px 12px calc(10px + env(safe-area-inset-bottom, 0px))!important;
+    background:rgba(255,255,255,.98)!important;
+    box-shadow:0 -10px 24px rgba(15,23,42,.10)!important;
+  }
+  .modal-actions button,
+  .modal-actions .fusion-button{
+    width:100%!important;
+    min-height:48px!important;
+  }
+}
+
+@media (max-width: 420px){
+  .avaliacao-mobile-resumo{
+    grid-template-columns:1fr 1fr!important;
+  }
+  .avaliacao-mobile-resumo button{
+    grid-column:1/-1!important;
+    width:100%!important;
+  }
+  .avaliacao-voz-actions,
+  .modal-actions{
+    grid-template-columns:1fr!important;
+  }
+  .measure-row.single,
+  .measure-row.pair{
+    grid-template-columns:1fr!important;
+  }
+}
+
+
+/* === Fusion ERP 2.7.6 P2D — Finalização Mobile Avaliação START === */
+@media (max-width: 900px){
+  html,body{width:100%;min-height:100dvh;overflow-x:hidden;overscroll-behavior-y:contain;-webkit-text-size-adjust:100%;}
+  body.modo-embed-avaliacao{overflow:hidden!important;background:#f4f6f9!important;}
+  body.modo-embed-avaliacao .modal-backdrop{position:fixed!important;inset:0!important;display:block!important;padding:0!important;background:#f4f6f9!important;overflow:hidden!important;}
+  body.modo-embed-avaliacao .modal-avaliacao,.modal-avaliacao{width:100vw!important;height:100dvh!important;max-height:100dvh!important;border:0!important;border-radius:0!important;box-shadow:none!important;overflow:hidden!important;background:#fff!important;}
+  .sca-titlebar{position:sticky!important;top:0!important;z-index:60!important;padding:calc(10px + env(safe-area-inset-top,0px)) 12px 10px!important;border-radius:0!important;background:#fff!important;}
+  .sca-titlebar strong{font-size:16px!important;}
+  .sca-titlebar button{min-width:42px!important;min-height:42px!important;}
+  .avaliacao-mobile-resumo{position:sticky!important;top:54px!important;z-index:55!important;margin:0!important;border-radius:0!important;border-left:0!important;border-right:0!important;box-shadow:0 8px 18px rgba(15,23,42,.08)!important;}
+  body.modo-embed-avaliacao .aval-form,.aval-form{height:calc(100dvh - 108px - env(safe-area-inset-top,0px))!important;overflow:auto!important;-webkit-overflow-scrolling:touch!important;padding-bottom:calc(88px + env(safe-area-inset-bottom,0px))!important;}
+  .sca-topline.aval-meta-grid,.modo-embed-avaliacao .sca-topline.aval-meta-grid{grid-template-columns:1fr!important;gap:10px!important;padding:12px!important;}
+  .professor-lock,.avaliacao-mode,.avaliacao-voz-box,.sca-tabs{margin-left:12px!important;margin-right:12px!important;}
+  .sca-tabs{position:sticky!important;top:108px!important;z-index:50!important;display:flex!important;overflow-x:auto!important;white-space:nowrap!important;padding:8px!important;border-radius:16px!important;background:#fff!important;-webkit-overflow-scrolling:touch!important;scroll-snap-type:x proximity!important;}
+  .sca-tabs .tab{flex:0 0 auto!important;min-height:42px!important;scroll-snap-align:start!important;}
+  .tab-panel{padding:12px!important;}
+  .sca-panel{border-radius:16px!important;padding:12px!important;}
+  .two-col,.grid-2,.grid-3,.grid-4,.perimetros-layout,.postural-panel,.neuro-item,.protocol-list{grid-template-columns:1fr!important;gap:10px!important;}
+  .perimetros-list{max-height:none!important;overflow:visible!important;padding-right:0!important;}
+  .measure-row.single,.measure-row.pair{grid-template-columns:1fr!important;gap:6px!important;border-radius:14px!important;border:1px solid #e2e8f0!important;margin-bottom:8px!important;background:#fff!important;}
+  .measure-row label{text-align:left!important;font-size:13px!important;}
+  .measure-row span{font-size:12px!important;color:#64748b!important;font-weight:800!important;}
+  .measure-row input,.sca-panel input,.sca-panel select,.sca-panel textarea,.field input,.field select,.field textarea{min-height:46px!important;border-radius:12px!important;font-size:16px!important;}
+  .modal-actions{position:fixed!important;left:0!important;right:0!important;bottom:0!important;z-index:70!important;display:grid!important;grid-template-columns:1fr 1fr!important;gap:8px!important;padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px))!important;background:rgba(255,255,255,.98)!important;box-shadow:0 -12px 30px rgba(15,23,42,.12)!important;}
+  .modal-actions button,.modal-actions .fusion-button{min-height:48px!important;border-radius:14px!important;}
+  .foto-postural{height:clamp(220px,54dvh,380px)!important;border-radius:18px!important;}
+}
+@media (max-width: 420px){
+  .avaliacao-mobile-resumo{grid-template-columns:1fr 1fr!important;gap:8px!important;}
+  .avaliacao-mobile-resumo button{grid-column:1/-1!important;}
+  .modal-actions{grid-template-columns:1fr!important;}
+}
+@media (orientation: landscape) and (max-height: 520px){
+  .sca-titlebar{position:relative!important;padding:8px 10px!important;}
+  .avaliacao-mobile-resumo{top:0!important;}
+  .sca-tabs{top:0!important;}
+  body.modo-embed-avaliacao .aval-form,.aval-form{height:calc(100dvh - 76px)!important;}
+  .modal-actions{position:sticky!important;}
+}
+/* === Fusion ERP 2.7.6 P2D — Finalização Mobile Avaliação END === */

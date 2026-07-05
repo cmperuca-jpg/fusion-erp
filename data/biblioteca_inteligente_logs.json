@@ -1,5 +1,496 @@
 [
   {
+    "id": "log_1783236111504_5f9826",
+    "criadoEm": "2026-07-05T07:21:51.504Z",
+    "acao": "organizar_biblioteca",
+    "resumo": {
+      "novos": 0,
+      "atualizados": 0,
+      "preservados": 1102,
+      "removidos": 0,
+      "total": 1114
+    }
+  },
+  {
+    "id": "log_1783236108359_953bcb",
+    "criadoEm": "2026-07-05T07:21:48.359Z",
+    "acao": "validar_biblioteca",
+    "problemas": 12
+  },
+  {
+    "id": "log_1783236090200_da50ec",
+    "criadoEm": "2026-07-05T07:21:30.201Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB399557111D9C",
+    "nome": "PRANCHA COM FLXÃO PLANTAR"
+  },
+  {
+    "id": "log_1783236052575_d46639",
+    "criadoEm": "2026-07-05T07:20:52.575Z",
+    "acao": "organizar_biblioteca",
+    "resumo": {
+      "novos": 0,
+      "atualizados": 2,
+      "preservados": 1100,
+      "removidos": 0,
+      "total": 1114
+    }
+  },
+  {
+    "id": "log_1783236035586_0c5ed7",
+    "criadoEm": "2026-07-05T07:20:35.586Z",
+    "acao": "validar_biblioteca",
+    "problemas": 12
+  },
+  {
+    "id": "log_1783235523164_34a870",
+    "criadoEm": "2026-07-05T07:12:03.164Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB399558121E52",
+    "nome": "ROSCA ALTERNADA INCLINADA"
+  },
+  {
+    "id": "log_1783235476744_385740",
+    "criadoEm": "2026-07-05T07:11:16.744Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB39955805F4F5",
+    "nome": "ROSCA ALTERNADA DA POLIA ALTA"
+  },
+  {
+    "id": "log_1783235462373_236903",
+    "criadoEm": "2026-07-05T07:11:02.373Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB39955801C2D3",
+    "nome": "ROSCA ALTERNADA COM ISOMETRIA"
+  },
+  {
+    "id": "log_1783235450707_4833d9",
+    "criadoEm": "2026-07-05T07:10:50.707Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB399557972012",
+    "nome": "ROSCA ALTERNADA"
+  },
+  {
+    "id": "log_1783235440498_88677f",
+    "criadoEm": "2026-07-05T07:10:40.498Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB39955794B559",
+    "nome": "ROSCA 21 NO CROSS"
+  },
+  {
+    "id": "log_1783235413849_4b38d0",
+    "criadoEm": "2026-07-05T07:10:13.849Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB39955791B108",
+    "nome": "ROSCA 21 INVERSA"
+  },
+  {
+    "id": "log_1783235391970_29a209",
+    "criadoEm": "2026-07-05T07:09:51.970Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB399557885099",
+    "nome": "ROSCA 21 COM HALTERE"
+  },
+  {
+    "id": "log_1783235375355_2f4945",
+    "criadoEm": "2026-07-05T07:09:35.355Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB39955784DE9D",
+    "nome": "ROSCA 21 COM BARRA"
+  },
+  {
+    "id": "log_1783235354772_82c23b",
+    "criadoEm": "2026-07-05T07:09:14.772Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB399557786306",
+    "nome": "BARRA FIXA SUPINADA"
+  },
+  {
+    "id": "log_1783235274827_34fb0b",
+    "criadoEm": "2026-07-05T07:07:54.827Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB39955781DE50",
+    "nome": "ROSCA CONCENTRADA SCOTT"
+  },
+  {
+    "id": "log_1783235184560_2faba9",
+    "criadoEm": "2026-07-05T07:06:24.560Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB399557719F7A",
+    "nome": "ROTAÇÃO DOS PULSOS"
+  },
+  {
+    "id": "log_1783235160870_b61786",
+    "criadoEm": "2026-07-05T07:06:00.870Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB39955767783D",
+    "nome": "ROTAÇÃO DOS ANTE BRAÇOS"
+  },
+  {
+    "id": "log_1783235116211_0cd49a",
+    "criadoEm": "2026-07-05T07:05:16.211Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB3995574967DE",
+    "nome": "FLEXÃO DE PUNHO PRONADO"
+  },
+  {
+    "id": "log_1783234773053_ae464d",
+    "criadoEm": "2026-07-05T06:59:33.053Z",
+    "acao": "validar_biblioteca",
+    "problemas": 12
+  },
+  {
+    "id": "log_1783234731970_a34ed0",
+    "criadoEm": "2026-07-05T06:58:51.970Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB39955763E837",
+    "nome": "ROTACÃO DE PUNHO COM HALTERES"
+  },
+  {
+    "id": "log_1783234710640_8fb9ca",
+    "criadoEm": "2026-07-05T06:58:30.640Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB39955759063F",
+    "nome": "ROSCA INVERSA NO CROSS"
+  },
+  {
+    "id": "log_1783234676909_5cfea8",
+    "criadoEm": "2026-07-05T06:57:56.909Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB3995575696FD",
+    "nome": "ROSCA DE PUNHO COM ROLO"
+  },
+  {
+    "id": "log_1783234655514_aba709",
+    "criadoEm": "2026-07-05T06:57:35.515Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB399557526F82",
+    "nome": "HANDSTAND"
+  },
+  {
+    "id": "log_1783234569348_bd0b21",
+    "criadoEm": "2026-07-05T06:56:09.348Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB399557466A6B",
+    "nome": "FLEXÃO DE PUNHO"
+  },
+  {
+    "id": "log_1783234509933_864a78",
+    "criadoEm": "2026-07-05T06:55:09.933Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB39955743BD63",
+    "nome": "ALONGAMENTO DOS EXTENSORES DO PUNHO"
+  },
+  {
+    "id": "log_1783234492824_ac7077",
+    "criadoEm": "2026-07-05T06:54:52.824Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB39955739A2DD",
+    "nome": "TOE TOUCH UNILATERAL NO SOLO"
+  },
+  {
+    "id": "log_1783234484723_387776",
+    "criadoEm": "2026-07-05T06:54:44.723Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB39955735AEE6",
+    "nome": "ROTACÃO DE TRONCO COM 3 APOIO"
+  },
+  {
+    "id": "log_1783234468885_566916",
+    "criadoEm": "2026-07-05T06:54:28.885Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB3995573137DA",
+    "nome": "ROLL UP"
+  },
+  {
+    "id": "log_1783234458513_10a30a",
+    "criadoEm": "2026-07-05T06:54:18.513Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB399557298476",
+    "nome": "REMADA EM PRANCHA COM KETTLEBELL"
+  },
+  {
+    "id": "log_1783234442016_006a4f",
+    "criadoEm": "2026-07-05T06:54:02.016Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB399557261BCE",
+    "nome": "PRANCHA SUSPENSA COM TRAÇÃO ELASTICA"
+  },
+  {
+    "id": "log_1783234412169_0b1d02",
+    "criadoEm": "2026-07-05T06:53:32.169Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB39955721D441",
+    "nome": "PRANCHA LATERAL"
+  },
+  {
+    "id": "log_1783234398846_c97820",
+    "criadoEm": "2026-07-05T06:53:18.846Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB39955718C457",
+    "nome": "PRANCHA FRONTAL COM BOLA SUICA"
+  },
+  {
+    "id": "log_1783234383505_d7b0ef",
+    "criadoEm": "2026-07-05T06:53:03.505Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB39955714B302",
+    "nome": "PRANCHA COM OS PE NA BOLA SUICA"
+  },
+  {
+    "id": "log_1783234358249_2ba083",
+    "criadoEm": "2026-07-05T06:52:38.249Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB399557072933",
+    "nome": "PRANCHA COM FLEXÃO DE JOELHO INTERNA NO JUMP"
+  },
+  {
+    "id": "log_1783234348108_65c3bc",
+    "criadoEm": "2026-07-05T06:52:28.108Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB399557072933",
+    "nome": "PRANCHA COM FLEXÃO DE JOELHO INTERNA NO JUMP"
+  },
+  {
+    "id": "log_1783234318960_95c331",
+    "criadoEm": "2026-07-05T06:51:58.960Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB3995570397ED",
+    "nome": "PRANCHA COM FLEXÃO DE JOELHO EXTERNA NO JUMP"
+  },
+  {
+    "id": "log_1783234296261_bbc48d",
+    "criadoEm": "2026-07-05T06:51:36.261Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB3995569927F6",
+    "nome": "PRANCHA COM CHUTE LATERAL"
+  },
+  {
+    "id": "log_1783233984004_9c7c83",
+    "criadoEm": "2026-07-05T06:46:24.004Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB399556954702",
+    "nome": "PRANCHA ALTA COM TOQUE NOS OMBROS"
+  },
+  {
+    "id": "log_1783233972758_b9239e",
+    "criadoEm": "2026-07-05T06:46:12.759Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB39955692CA71",
+    "nome": "PRANCHA ABDOMINAL NO BANCO DECLINADO"
+  },
+  {
+    "id": "log_1783233953620_add91f",
+    "criadoEm": "2026-07-05T06:45:53.620Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB39955688961C",
+    "nome": "POSE DO CAMELO"
+  },
+  {
+    "id": "log_1783233944315_150ee1",
+    "criadoEm": "2026-07-05T06:45:44.315Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB39955684C056",
+    "nome": "PONTE COM EXTENSCO DE PERNA"
+  },
+  {
+    "id": "log_1783233936120_1dd7bb",
+    "criadoEm": "2026-07-05T06:45:36.120Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB399556810DD2",
+    "nome": "PERDIGUEIRO ESTATICO"
+  },
+  {
+    "id": "log_1783233927113_a4af8c",
+    "criadoEm": "2026-07-05T06:45:27.113Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB399556787627",
+    "nome": "PANCHA COM FLEXÃO DE JOELHO NO JUMP"
+  },
+  {
+    "id": "log_1783233911406_1551e2",
+    "criadoEm": "2026-07-05T06:45:11.406Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB3995567351BF",
+    "nome": "PALLOF PRESS COM FAIXA ELASTICA"
+  },
+  {
+    "id": "log_1783233897819_e88674",
+    "criadoEm": "2026-07-05T06:44:57.819Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB399556667CFE",
+    "nome": "NECK PULL"
+  },
+  {
+    "id": "log_1783233889611_c96edd",
+    "criadoEm": "2026-07-05T06:44:49.611Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB399556693045",
+    "nome": "ONE LEG STRETCH"
+  },
+  {
+    "id": "log_1783233876313_1cf9ff",
+    "criadoEm": "2026-07-05T06:44:36.313Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB39955662F584",
+    "nome": "HUNDRED"
+  },
+  {
+    "id": "log_1783233864797_4b0d42",
+    "criadoEm": "2026-07-05T06:44:24.797Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB39955654BCDE",
+    "nome": "FLEXÃO TOTAL DE QUADRIL COM CANELEIRA"
+  },
+  {
+    "id": "log_1783233842748_c782ee",
+    "criadoEm": "2026-07-05T06:44:02.748Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB399556465D28",
+    "nome": "FLEXÃO LATERAL DE TRONCO EM PE"
+  },
+  {
+    "id": "log_1783233827753_a9039f",
+    "criadoEm": "2026-07-05T06:43:47.753Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB399556410F6F",
+    "nome": "FLEXÃO DE QUADRIL COM CANELEIRA"
+  },
+  {
+    "id": "log_1783233800945_3c042c",
+    "criadoEm": "2026-07-05T06:43:20.946Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB39955658AA76",
+    "nome": "FLEXÃO UNILATERAL DE TRONCO EM PE"
+  },
+  {
+    "id": "log_1783233787329_60bd9c",
+    "criadoEm": "2026-07-05T06:43:07.329Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB399556371155",
+    "nome": "FLEXAO ALTERNADA DE QUADRIL NA PARALELA"
+  },
+  {
+    "id": "log_1783233755357_189a9b",
+    "criadoEm": "2026-07-05T06:42:35.358Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB399556333032",
+    "nome": "ELEVACCO DE PERNAS NA BARRA FIXA"
+  },
+  {
+    "id": "log_1783233732229_606852",
+    "criadoEm": "2026-07-05T06:42:12.229Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB39955630C158",
+    "nome": "ELEVAÇÃO DE PERNAS COM GIRO DE TRONCO"
+  },
+  {
+    "id": "log_1783233705887_b9c646",
+    "criadoEm": "2026-07-05T06:41:45.887Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB399556252803",
+    "nome": "ELEVAÇÃO DE JOELHOS NA BARRA FIXA"
+  },
+  {
+    "id": "log_1783233683760_8d9f02",
+    "criadoEm": "2026-07-05T06:41:23.760Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB399556211303",
+    "nome": "DOUBLE LEG STRETCH"
+  },
+  {
+    "id": "log_1783233665349_0716a4",
+    "criadoEm": "2026-07-05T06:41:05.349Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB3995561751C6",
+    "nome": "CRUZAMENTO OBLIQUO V"
+  },
+  {
+    "id": "log_1783233646621_8d7918",
+    "criadoEm": "2026-07-05T06:40:46.621Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB399556141707",
+    "nome": "BOLA CRUNCH"
+  },
+  {
+    "id": "log_1783233639522_bccd5b",
+    "criadoEm": "2026-07-05T06:40:39.522Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB3995561089E8",
+    "nome": "ALONGAMENTO ABDOMEM"
+  },
+  {
+    "id": "log_1783233632484_59a7c3",
+    "criadoEm": "2026-07-05T06:40:32.484Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB39955606B915",
+    "nome": "ABDOMINAL V SIT"
+  },
+  {
+    "id": "log_1783233593380_325ee2",
+    "criadoEm": "2026-07-05T06:39:53.380Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB3995560135A3",
+    "nome": "ABDOMINAL TESOURA ABERTO NO JUMP"
+  },
+  {
+    "id": "log_1783233583982_832696",
+    "criadoEm": "2026-07-05T06:39:43.982Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB39955596A4FD",
+    "nome": "ABDOMINAL SUPRA NO CABO"
+  },
+  {
+    "id": "log_1783216973538_7d2045",
+    "criadoEm": "2026-07-05T02:02:53.539Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB39955658AA76",
+    "nome": "FLEXÃO UNILATERAL DE TRONCO EM PE 617"
+  },
+  {
+    "id": "log_1783216811587_496452",
+    "criadoEm": "2026-07-05T02:00:11.587Z",
+    "acao": "organizar_biblioteca",
+    "resumo": {
+      "novos": 0,
+      "atualizados": 0,
+      "preservados": 1102,
+      "removidos": 0,
+      "total": 1114
+    }
+  },
+  {
+    "id": "log_1783216803982_897afb",
+    "criadoEm": "2026-07-05T02:00:03.982Z",
+    "acao": "editar_exercicio",
+    "exercicioId": "EXB399556252803",
+    "nome": "ELEVAÇÃO DE JOELHOS NA BARRA FIXA"
+  },
+  {
+    "id": "log_1783208013175_d62971",
+    "criadoEm": "2026-07-04T23:33:33.175Z",
+    "acao": "organizar_biblioteca",
+    "resumo": {
+      "novos": 0,
+      "atualizados": 0,
+      "preservados": 1102,
+      "removidos": 0,
+      "total": 1114
+    }
+  },
+  {
+    "id": "log_1783208006396_04712f",
+    "criadoEm": "2026-07-04T23:33:26.396Z",
+    "acao": "organizar_biblioteca",
+    "resumo": {
+      "novos": 0,
+      "atualizados": 0,
+      "preservados": 1102,
+      "removidos": 0,
+      "total": 1114
+    }
+  },
+  {
     "id": "log_1783140021031_03787a",
     "criadoEm": "2026-07-04T04:40:21.032Z",
     "acao": "validar_biblioteca",

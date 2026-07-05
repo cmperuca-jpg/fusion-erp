@@ -8,6 +8,7 @@
   let avaliacoes = [];
   let treinoV3Carregado = false;
   let avaliacaoV3Carregada = false;
+  let natacaoCarregada = false;
 
   function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
   function norm(v){return String(v||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
@@ -48,7 +49,7 @@
   }
 
   function ultimaAvaliacao(alunoId){return avaliacoes.filter(a=>String(a.alunoId||a.aluno_id)===String(alunoId)).sort((a,b)=>String(b.data||b.criadoEm||b.criado_em||'').localeCompare(String(a.data||a.criadoEm||a.criado_em||'')))[0]||null;}
-  function treinoAtivo(alunoId){return treinos.filter(t=>String(t.alunoId||t.aluno_id)===String(alunoId) && !['cancelado','inativo','arquivado'].includes(norm(t.status||'ativo'))).sort((a,b)=>String(b.dataInicio||b.data_inicio||b.criadoEm||'').localeCompare(String(a.dataInicio||a.data_inicio||a.criadoEm||'')))[0]||null;}
+  function treinoAtivo(alunoId){return treinos.filter(t=>String(t.alunoId||t.aluno_id)===String(alunoId) && !['cancelado','inativo','arquivado','encerrado'].includes(norm(t.status||'ativo'))).sort((a,b)=>String(b.atualizadoEm||b.criadoEm||b.dataInicio||b.data_inicio||'').localeCompare(String(a.atualizadoEm||a.criadoEm||a.dataInicio||a.data_inicio||'')))[0]||null;}
 
   function abrir(titulo,url){
     $('#modalTitulo').textContent=titulo;
@@ -59,12 +60,13 @@
 
   function urlAval(aluno,modo){const q=new URLSearchParams({alunoId:idAluno(aluno),professorId:idProf(professor)}); if(modo==='nova')q.set('nova','1'); if(modo==='editar')q.set('editar','1'); return `/pages/avaliacoes/index.html?${q}`;}
   function urlFicha(aluno){return `/pages/alunos/ficha.html?id=${encodeURIComponent(idAluno(aluno))}&alunoId=${encodeURIComponent(idAluno(aluno))}`;}
-  function urlTreinosV3(aluno=null){
-    const q = new URLSearchParams({ embed:'1' });
+  function urlTreinosV3(aluno=null, modo='novo', treinoId=''){
+    const q = new URLSearchParams({ embed:'1', modo });
     const pid = idProf(professor);
     if(pid) q.set('professorId', pid);
     if(aluno && idAluno(aluno)) q.set('alunoId', idAluno(aluno));
-    return `/pages/treinos-v3/?${q.toString()}`;
+    if(treinoId) q.set('treinoId', treinoId);
+    return `/pages/treinos-v4/?${q.toString()}`;
   }
   function urlAvaliacoesV3(aluno=null, modo=''){
     const q = new URLSearchParams({ embed:'1' });
@@ -105,12 +107,17 @@
     };
   }
 
-  function carregarTreinosV3(aluno=null){
+  function carregarTreinosV3(aluno=null, modo='novo'){
     const frame = $('#treinosV3ProfessorFrame');
     if(!frame) return;
     const contexto = contextoTreinosV3(aluno);
-    try { localStorage.setItem('fusion_treinos_v3_professor_contexto', JSON.stringify(contexto)); } catch {}
-    const url = urlTreinosV3(aluno);
+    const treino = aluno && modo === 'editar' ? treinoAtivo(idAluno(aluno)) : null;
+    const treinoId = treino ? String(treino.id || treino._id || '') : '';
+    contexto.modoTreino = modo;
+    contexto.treinoSelecionadoId = treinoId;
+    try { localStorage.setItem('fusion_treinos_v3_professor_contexto', JSON.stringify(contexto));
+    localStorage.setItem('fusion_treinos_v4_professor_contexto', JSON.stringify(contexto)); } catch {}
+    const url = urlTreinosV3(aluno, modo, treinoId);
     if(frame.src && frame.src.includes(url) && treinoV3Carregado) {
       try { frame.contentWindow?.postMessage({ tipo:'fusion_treinos_v3_contexto', contexto }, location.origin); } catch {}
       return;
@@ -119,12 +126,55 @@
     treinoV3Carregado = true;
   }
 
+
+  function urlNatacaoProfessor(){
+    const q = new URLSearchParams({ embed:'1' });
+    const pid = idProf(professor);
+    if(pid) q.set('professorId', pid);
+    return `/pages/natacao-professor/?${q.toString()}`;
+  }
+
+  function carregarNatacaoProfessor(){
+    const frame = $('#natacaoProfessorFrame');
+    if(!frame) return;
+    const contexto = {
+      origem: 'portal_professor',
+      atualizadoEm: new Date().toISOString(),
+      professor: professor || {},
+      professorId: idProf(professor),
+      professorNome: nomeProf(professor),
+      alunos: Array.isArray(alunos) ? alunos.map(a => ({
+        ...a,
+        id: idAluno(a),
+        alunoId: idAluno(a),
+        nome: nomeAluno(a),
+        professorId: a.professorId || a.professor_id || idProf(professor),
+        professorNome: a.professorNome || a.professor || nomeProf(professor)
+      })) : []
+    };
+    try { localStorage.setItem('fusion_natacao_professor_contexto', JSON.stringify(contexto)); } catch {}
+    const url = urlNatacaoProfessor();
+    if(frame.src && frame.src.includes(url) && natacaoCarregada){
+      try { frame.contentWindow?.postMessage({ tipo:'fusion_natacao_contexto', contexto }, location.origin); } catch {}
+      return;
+    }
+    frame.src = url;
+    natacaoCarregada = true;
+  }
+
   window.profOperacao=function(tipo,alunoId){
     const aluno = alunos.find(a=>idAluno(a)===String(alunoId));
     if(!aluno) return mostrar('Aluno não encontrado.');
     if(tipo==='nova-avaliacao') { ativarTab('avaliacoes'); carregarAvaliacoesV3(aluno,'nova'); return; }
     if(tipo==='editar-avaliacao') { ativarTab('avaliacoes'); carregarAvaliacoesV3(aluno,'editar'); return; }
-    if(tipo==='novo-treino' || tipo==='editar-treino') { ativarTab('treinos'); carregarTreinosV3(aluno); return; }
+    if(tipo==='novo-treino') { ativarTab('treinos'); carregarTreinosV3(aluno, 'novo'); return; }
+    if(tipo==='editar-treino') {
+      const tr = treinoAtivo(idAluno(aluno));
+      if(!tr) return mostrar('Este aluno ainda não possui treino ativo para editar. Use Novo treino.');
+      ativarTab('treinos');
+      carregarTreinosV3(aluno, 'editar');
+      return;
+    }
     if(tipo==='executar') return abrir('Executar treino',`/pages/treinos/index.html?alunoId=${encodeURIComponent(idAluno(aluno))}&professorId=${encodeURIComponent(idProf(professor))}&embed=1`);
     if(tipo==='ficha') return abrir('Ficha do aluno',urlFicha(aluno));
     if(tipo==='evolucao') { ativarTab('evolucao'); return; }
@@ -172,7 +222,9 @@
     $('#listaAlunos').innerHTML=lista.length?lista.map(cardAluno).join(''):vazio('Nenhum aluno encontrado.');
   }
   function renderAvaliacoes(){
-    $('#listaAvaliacoes').innerHTML=avaliacoes.length?avaliacoes.map(a=>`<div class="item"><strong>${esc(a.alunoNome||a.aluno||'Aluno')} — ${data(a.data||a.criadoEm||a.criado_em)}</strong><small>Peso: ${esc(a.peso||'-')} · IMC: ${esc(a.imc||'-')} · Objetivo: ${esc(a.objetivo||'-')}</small></div>`).join(''):vazio('Nenhuma avaliação encontrada.');
+    const lista = $('#listaAvaliacoes');
+    if(!lista) return;
+    lista.innerHTML=avaliacoes.length?avaliacoes.map(a=>`<div class="item"><strong>${esc(a.alunoNome||a.aluno||'Aluno')} — ${data(a.data||a.criadoEm||a.criado_em)}</strong><small>Peso: ${esc(a.peso||'-')} · IMC: ${esc(a.imc||'-')} · Objetivo: ${esc(a.objetivo||'-')}</small></div>`).join(''):vazio('Nenhuma avaliação encontrada.');
   }
   function renderEvolucao(){
     const linhas = alunos.map(a=>{ const av=ultimaAvaliacao(idAluno(a)); const tr=treinoAtivo(idAluno(a)); return `<div class="item"><strong>${esc(nomeAluno(a))}</strong><small>Última avaliação: ${esc(av?data(av.data||av.criadoEm||av.criado_em):'-')} · Treino: ${esc(tr?(tr.nome||tr.objetivo||'Ativo'):'-')}</small></div>`; });
@@ -191,13 +243,13 @@
   function ativarTab(tab){
     document.querySelectorAll('.nav').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
     document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.id===`tab-${tab}`));
-    if(tab === 'treinos') carregarTreinosV3();
+    if(tab === 'treinos') carregarTreinosV3(null, 'novo');
     if(tab === 'avaliacoes') carregarAvaliacoesV3();
+    if(tab === 'natacao') carregarNatacaoProfessor();
   }
 
   document.querySelectorAll('.nav').forEach(btn=>btn.addEventListener('click',()=>ativarTab(btn.dataset.tab)));
   $('#btnSair')?.addEventListener('click',sair);
-  $('#btnAtualizar')?.addEventListener('click',carregar);
   $('#btnFecharModal')?.addEventListener('click',fecharModal);
   $('#buscaAluno')?.addEventListener('input',renderAlunos);
 
@@ -212,6 +264,33 @@
       avaliacaoV3Carregada = false;
       carregar();
     }
+    if(ev.data?.tipo === 'fusion_natacao_salva'){
+      natacaoCarregada = false;
+      carregar();
+    }
   });
+
+  function fecharMenuMobile(){
+    document.body.classList.remove('portal-menu-open');
+    $('#mobileMenuBackdrop')?.classList.add('hidden');
+    $('#btnMobileMenu')?.setAttribute('aria-expanded','false');
+  }
+
+  function abrirMenuMobile(){
+    document.body.classList.add('portal-menu-open');
+    $('#mobileMenuBackdrop')?.classList.remove('hidden');
+    $('#btnMobileMenu')?.setAttribute('aria-expanded','true');
+  }
+
+  function alternarMenuMobile(){
+    if(document.body.classList.contains('portal-menu-open')) fecharMenuMobile();
+    else abrirMenuMobile();
+  }
+
+  $('#btnMobileMenu')?.addEventListener('click', alternarMenuMobile);
+  $('#mobileMenuBackdrop')?.addEventListener('click', fecharMenuMobile);
+  window.addEventListener('keydown', ev => { if(ev.key === 'Escape') fecharMenuMobile(); });
+  document.querySelectorAll('.nav').forEach(btn=>btn.addEventListener('click',fecharMenuMobile));
+
   carregar();
 })();

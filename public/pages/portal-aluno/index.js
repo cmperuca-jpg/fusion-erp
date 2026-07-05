@@ -3,6 +3,7 @@ let dadosPortal = null;
 let autoTimer = null;
 let alunoCompletoAvaliacoesCarregado = false;
 let alunoCompletoAvaliacoesCarregando = false;
+let abaMobileInicialAplicada = false;
 const $ = s => document.querySelector(s);
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function fmt(v){const n=Number(String(v??'').replace(',','.'));return Number.isFinite(n)?n.toLocaleString('pt-BR',{style:'currency',currency:'BRL'}):'-';}
@@ -51,6 +52,20 @@ function render(){
   $('#kpiVolume').textContent=`${num(d.resumo.volumeTotal||0)} kg`;
   $('#resumoInicio').innerHTML=`<div class="item"><strong>Plano</strong><small>${esc(d.aluno.plano||'-')}</small></div><div class="item"><strong>Professor responsável</strong><small>${esc(d.aluno.professorNome||'-')}</small></div><div class="item"><strong>Frequência no mês</strong><small>${d.resumo.frequenciaMes?.presentes||0} presença(s)</small></div><div class="item"><strong>Sequência atual</strong><small>${d.resumo.streak?.atual||0} dia(s)</small></div>`;
   renderTreinoAgora(); renderProgressao(); renderHistoricoVolumes(); renderTreinos(); renderEvolucao(); renderIAProgressao(); renderMetas(); renderAgenda(); renderAvaliacoes(); renderPagamentos(); renderPerfil();
+  aplicarAbaInicialMobile();
+}
+
+function isMobileAluno(){ return window.matchMedia && window.matchMedia('(max-width: 800px)').matches; }
+function ativarAbaAluno(tab){
+  document.querySelectorAll('.nav').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.id===`tab-${tab}`));
+  if(tab==='treinos') carregarTreinosV3Aluno();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function aplicarAbaInicialMobile(){
+  if(abaMobileInicialAplicada || !isMobileAluno()) return;
+  abaMobileInicialAplicada = true;
+  ativarAbaAluno('treinos');
 }
 
 function renderTreinoAgora(){
@@ -93,9 +108,22 @@ function carregarTreinosV3Aluno(){
 function ajustarFrameTreinosV3(altura){
   const frame = $('#treinosV3Frame');
   if(!frame) return;
-  const min = Math.max(760, window.innerHeight - 120);
-  const h = Math.max(min, Number(altura || 0));
+
+  // Mobile First: no celular o iframe precisa manter a altura da tela visível.
+  // Se ele receber a altura total do conteúdo, o modal interno fica centralizado
+  // no iframe inteiro e o aluno precisa rolar muito até encontrá-lo.
+  if(isMobileAluno()){
+    const hMobile = Math.max(520, window.innerHeight - 130);
+    frame.style.height = hMobile + 'px';
+    frame.style.minHeight = hMobile + 'px';
+    return;
+  }
+
+  const desconto = 120;
+  const minBase = Math.max(760, window.innerHeight - desconto);
+  const h = Math.max(minBase, Number(altura || 0));
   frame.style.height = h + 'px';
+  frame.style.minHeight = minBase + 'px';
 }
 
 window.addEventListener('message', function(ev){
@@ -481,7 +509,7 @@ window.imprimirAvaliacaoAluno = function(){
 function renderPagamentos(){const lista=[...(dadosPortal.financeiro||[]),...(dadosPortal.mensalidades||[])];$('#listaPagamentos').innerHTML=lista.length?lista.map(p=>`<div class="item"><strong>${esc(p.descricao||p.competencia||'Cobrança')}</strong><small>Vencimento: ${data(p.vencimento)} · Valor: ${fmt(p.valor||p.total||p.valorBruto)} <span class="badge ${statusClass(p.status)}">${esc(p.status||'aberto')}</span></small></div>`).join(''):vazio('Nenhum pagamento encontrado.');}
 function renderPerfil(){const a=dadosPortal.aluno;$('#dadosPerfil').innerHTML=`<div class="item"><strong>Nome</strong><small>${esc(a.nome)}</small></div><div class="item"><strong>Plano</strong><small>${esc(a.plano||'-')}</small></div><div class="item"><strong>Professor</strong><small>${esc(a.professorNome||'-')}</small></div><div class="item"><strong>Status</strong><small>${esc(a.status||'-')}</small></div>`;}
 
-document.querySelectorAll('.nav').forEach(btn=>btn.addEventListener('click',()=>{const tab=btn.dataset.tab;document.querySelectorAll('.nav').forEach(b=>b.classList.toggle('active',b===btn));document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.id===`tab-${tab}`));if(tab==='treinos') carregarTreinosV3Aluno();}));
+document.querySelectorAll('.nav').forEach(btn=>btn.addEventListener('click',()=>{ ativarAbaAluno(btn.dataset.tab); }));
 $('#formAcesso').addEventListener('submit',acessar);
 $('#btnSair').addEventListener('click',()=>{sessionStorage.removeItem('fusion_portal_aluno');location.reload();});
 try{const salvo=JSON.parse(sessionStorage.getItem('fusion_portal_aluno')||'null');if(salvo&&salvo.ok){dadosPortal=salvo;render();iniciarAtualizacaoAutomatica();atualizarDashboard();}}catch{}

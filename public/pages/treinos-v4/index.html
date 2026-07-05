@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fusion ERP - Treinos V4 Professor</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <main class="v4-app">
+    <header class="v4-topbar">
+      <div class="v4-brand">
+        <button id="btnVoltarPainel" class="v4-back" type="button">← Painel do Professor</button>
+        <div>
+          <span>Fusion ERP 2.8.1</span>
+          <strong>Treinos V4 Professor</strong>
+        </div>
+      </div>
+      <div class="v4-actions">
+        <button id="btnAtualizar" type="button">Atualizar</button>
+        <button id="btnSalvar" class="primary" type="button">Salvar treino</button>
+      </div>
+    </header>
+
+    <section class="v4-prescricao">
+      <label>Aluno
+        <select id="alunoId"><option value="">Carregando alunos...</option></select>
+      </label>
+      <label class="professor-field">Professor
+        <select id="professorId"><option value="">Carregando professores...</option></select>
+      </label>
+      <label>Objetivo
+        <input id="objetivoTreino" value="Hipertrofia">
+      </label>
+      <label>Validade
+        <input id="validadeTreino" type="date">
+      </label>
+    </section>
+
+    <nav class="v4-treino-tabs" id="tabsTreino" aria-label="Selecionar treino"></nav>
+
+
+    <section class="v4-smartbar" aria-label="Ações rápidas do Treinos V4">
+      <div class="v4-smart-group">
+        <span>Modelos rápidos</span>
+        <button type="button" data-v4-modelo="hipertrofia-abc">Hipertrofia ABC</button>
+        <button type="button" data-v4-modelo="iniciante-ab">Iniciante AB</button>
+        <button type="button" data-v4-modelo="emagrecimento">Emagrecimento</button>
+      </div>
+      <div class="v4-smart-group v4-smart-ai">
+        <span>IA operacional</span>
+        <button type="button" id="btnIaCompletar">Completar treino atual</button>
+        <button type="button" id="btnIaSeries">Ajustar séries</button>
+        <button type="button" id="btnLimparTreinoAtual">Limpar treino atual</button>
+      </div>
+    </section>
+
+    <section class="v4-workspace">
+      <aside class="v4-library">
+        <div class="v4-panel-head">
+          <div>
+            <strong>Biblioteca</strong>
+            <small id="bibliotecaStatus">Carregando...</small>
+          </div>
+        </div>
+
+        <div class="v4-library-modes" aria-label="Modo da biblioteca">
+          <button type="button" class="active" data-bib-mode="todos">Todos</button>
+          <button type="button" data-bib-mode="favoritos">Favoritos</button>
+          <button type="button" data-bib-mode="recentes">Recentes</button>
+        </div>
+
+        <div class="v4-filter-row">
+          <label>Grupo muscular
+            <select id="filtroGrupoSelect"><option value="">Todos</option></select>
+          </label>
+          <label>Buscar
+            <span class="v4-search-inline">
+              <input id="buscaExercicio" placeholder="Digite o exercício">
+              <button id="btnLimparBusca" type="button" aria-label="Limpar busca">×</button>
+            </span>
+          </label>
+        </div>
+
+        <div class="v4-fast-groups" id="grupoChips"></div>
+        <div class="v4-list-status" id="grupoBibliotecaStatus">Selecione um grupo muscular.</div>
+        <div class="v4-exercise-list" id="listaExercicios"></div>
+      </aside>
+
+      <section class="v4-builder">
+        <div class="v4-panel-head v4-builder-head">
+          <div>
+            <span id="grupoAtualLabel">Treino A</span>
+            <strong id="grupoTitulo">Treino A</strong>
+          </div>
+          <label>Descrição
+            <input id="descricaoGrupo" placeholder="Ex.: Peito e tríceps">
+          </label>
+        </div>
+
+        <div class="v4-builder-summary" id="treinoResumoAtual">0 exercícios · 0 min</div>
+
+        <div class="v4-selected-list" id="listaTreinoSelecionado"></div>
+      </section>
+    </section>
+  </main>
+
+  <div class="v4-bottom-actions" aria-label="Ações fixas">
+    <button id="btnBottomPainel" type="button">🏠 Painel</button>
+    <button id="btnBottomIa" type="button">🤖 IA</button>
+    <button id="btnBottomSalvar" type="button">💾 Salvar</button>
+  </div>
+  <div class="v4-toast" id="v4Toast" role="status" aria-live="polite"></div>
+  <script src="./index.js"></script>
+</body>
+</html>

@@ -3,8 +3,8 @@
     "id": "786b926f-bf57-489f-96db-475c3d34e4be",
     "criado_em": "2026-07-03T21:30:16.151Z",
     "criadoEm": "2026-07-03T21:30:16.151Z",
-    "atualizado_em": "2026-07-03T21:30:16.151Z",
-    "atualizadoEm": "2026-07-03T21:30:16.151Z",
+    "atualizado_em": "2026-07-04T20:56:38.020Z",
+    "atualizadoEm": "2026-07-04T20:56:38.020Z",
     "aluno_id": "91c7eb65-660b-4a98-abd9-d284772e0191",
     "alunoId": "91c7eb65-660b-4a98-abd9-d284772e0191",
     "alunoNome": "marcos andre",
@@ -18,31 +18,31 @@
     "parq": [
       {
         "pergunta": "Alguma vez um médico lhe disse que você possui problema do coração e recomendou atividade física supervisionada?",
-        "resposta": "nao"
+        "resposta": ""
       },
       {
         "pergunta": "Você sente dor no peito causada pela prática de atividade física?",
-        "resposta": "nao"
+        "resposta": ""
       },
       {
         "pergunta": "Você sentiu dor no peito no último mês?",
-        "resposta": "nao"
+        "resposta": ""
       },
       {
         "pergunta": "Você tende a perder a consciência ou cair por tontura ou desmaio?",
-        "resposta": "nao"
+        "resposta": ""
       },
       {
         "pergunta": "Você tem problema ósseo ou muscular que poderia ser agravado pela prática de atividade física?",
-        "resposta": "nao"
+        "resposta": ""
       },
       {
         "pergunta": "Algum médico já recomendou medicamento para pressão arterial, circulação ou coração?",
-        "resposta": "nao"
+        "resposta": ""
       },
       {
         "pergunta": "Você tem outra razão para procurar orientação médica antes de praticar atividade física?",
-        "resposta": "nao"
+        "resposta": ""
       }
     ],
     "fotos": {
@@ -99,6 +99,20 @@
     "risco_pontuacao": "12",
     "risco_classificacao": "Risco abaixo da média",
     "condicao_fisica": "sedentario",
-    "protocolo_cardio": "1 milha"
+    "protocolo_cardio": "1 milha",
+    "rcq_classificacao": "Risco baixo",
+    "diagnostico_ia": "Acompanhamento recomendado",
+    "diagnostico_pontos": [
+      "Somatório de perímetros: 1254,00 cm."
+    ],
+    "diagnostico_atencao": [
+      "IMC 3501,00 classificado como Obesidade III.",
+      "RCQ 86,00 com risco elevado."
+    ],
+    "diagnostico_conduta": [
+      "Use esta avaliação como linha de base para o próximo comparativo.",
+      "Priorizar controle de composição corporal, cintura/quadril e evolução gradual de cargas.",
+      "Reavaliar em 30 a 45 dias ou conforme conduta do professor."
+    ]
   }
 ]

@@ -9,18 +9,32 @@
 <body>
   <main class="portal-shell">
     <section class="portal-login">
-      <div class="brand">Fusion ERP</div>
-      <div class="card login-card">
-        <h1>Portal do Professor</h1>
-        <p>Acesse o painel operacional com os dados cadastrados no módulo Professores.</p>
-        <form id="formAcesso">
-          <label>CPF <input id="cpf" autocomplete="username" placeholder="000.000.000-00" required></label>
-          <label>Data de nascimento <input id="dataNascimento" type="date"></label>
-          <label>Telefone/WhatsApp, se não tiver nascimento cadastrado <input id="telefone" placeholder="(00) 00000-0000"></label>
-          <label>CREF, se preferir usar como chave <input id="cref" placeholder="CREF cadastrado"></label>
-          <button type="submit">Acessar painel</button>
-        </form>
-        <div id="alerta" class="alert hidden"></div>
+      <div class="login-wrap">
+        <div class="brand">Fusion ERP</div>
+        <div class="card login-card">
+          <small class="eyebrow">ACESSO RÁPIDO</small>
+          <h1>Portal do Professor</h1>
+          <p>Entre com CPF e telefone/WhatsApp cadastrados no módulo Professores.</p>
+
+          <form id="formAcesso" autocomplete="on">
+            <label>CPF
+              <input id="cpf" autocomplete="username" inputmode="numeric" placeholder="000.000.000-00" required>
+            </label>
+
+            <label>Telefone / WhatsApp
+              <input id="telefone" autocomplete="tel" inputmode="tel" placeholder="(00) 00000-0000" required>
+            </label>
+
+            <label class="remember-line">
+              <input id="lembrarDispositivo" type="checkbox" checked>
+              <span>Lembrar deste dispositivo</span>
+            </label>
+
+            <button type="submit">Acessar painel</button>
+          </form>
+
+          <div id="alerta" class="alert hidden"></div>
+        </div>
       </div>
     </section>
   </main>

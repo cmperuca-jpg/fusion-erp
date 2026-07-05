@@ -16,6 +16,7 @@
     { id:'C', nome:'Treino C', descricao:'', exercicios:[] },
     { id:'D', nome:'Treino D', descricao:'', exercicios:[] },
     { id:'CARDIO', nome:'Cardio', descricao:'', exercicios:[] },
+    { id:'FUNCIONAL', nome:'Funcional', descricao:'', exercicios:[] },
     { id:'ALONG', nome:'Alongamento', descricao:'', exercicios:[] }
   ];
 
@@ -27,6 +28,9 @@
   let mostrarTodos = false;
   let treinoAtual = 'A';
   let contextoProfessor = null;
+  let treinoIntegradoAtualId = params.get('treinoId') || '';
+  let modoTreino = params.get('modo') || (params.get('treinoId') || params.get('alunoId') ? 'editar' : 'novo');
+  let treinoExistenteCarregado = false;
 
   function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
   function normalizar(v){return String(v||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
@@ -66,6 +70,142 @@
     const ctx = lerContextoProfessor();
     const prof = professores.find(p => idProfessor(p) === String(pid));
     return nomeProfessor(prof || ctx.professor || {}) || professorNomeAluno(aluno || {}) || '';
+  }
+
+  function resetTreinosV3(){
+    treinos.forEach(t => { t.descricao = ''; t.exercicios = []; });
+    treinoAtual = 'A';
+    treinoIntegradoAtualId = '';
+    treinoExistenteCarregado = false;
+    const btn = $('#btnSalvar');
+    if(btn) btn.textContent = 'Salvar treino';
+  }
+
+  function limparTreinoParaNovo(){
+    treinos.forEach(t => { t.descricao = ''; t.exercicios = []; });
+    treinoAtual = 'A';
+    treinoIntegradoAtualId = '';
+    modoTreino = 'novo';
+    treinoExistenteCarregado = false;
+    if($('#objetivoTreino') && !$('#objetivoTreino').value) $('#objetivoTreino').value = 'Hipertrofia';
+    if($('#validadeTreino') && !$('#validadeTreino').value) $('#validadeTreino').value = dataFutura(45);
+    const btn = $('#btnSalvar');
+    if(btn) btn.textContent = 'Salvar treino';
+    renderTudo();
+  }
+
+  function statusAtivo(t={}){
+    return !['cancelado','cancelada','encerrado','encerrada','inativo','inativa','arquivado','removido','removida']
+      .includes(normalizar(t.status || 'Ativo'));
+  }
+
+  function normalizarGrupoTreino(v=''){
+    const n = normalizar(v);
+    if(n.includes('treino b') || n === 'b') return 'B';
+    if(n.includes('treino c') || n === 'c') return 'C';
+    if(n.includes('treino d') || n === 'd') return 'D';
+    if(n.includes('cardio')) return 'CARDIO';
+    if(n.includes('funcional')) return 'FUNCIONAL';
+    if(n.includes('along')) return 'ALONG';
+    return 'A';
+  }
+
+  function grupoPorOrdem(ex={}, idx=0){
+    const bruto = ex.treinoGrupoId || ex.origemGrupo || ex.grupoTreino || ex.divisao || ex.observacao || ex.observacoes || '';
+    if(bruto) return normalizarGrupoTreino(bruto);
+    const ordem = Number(ex.ordem || idx + 1);
+    if(ordem >= 500) return 'ALONG';
+    if(ordem >= 400) return 'CARDIO';
+    if(ordem >= 300) return 'D';
+    if(ordem >= 200) return 'C';
+    if(ordem >= 100) return 'B';
+    return 'A';
+  }
+
+  function preencherTreinoExistente(treinoExistente={}){
+    if(!treinoExistente || !Array.isArray(treinoExistente.exercicios)) return false;
+
+    treinos.forEach(t => { t.descricao = ''; t.exercicios = []; });
+
+    treinoIntegradoAtualId = treinoExistente.id || treinoExistente._id || treinoIntegradoAtualId || '';
+    modoTreino = 'editar';
+    treinoExistenteCarregado = true;
+
+    if($('#alunoId') && (treinoExistente.alunoId || treinoExistente.aluno_id)) $('#alunoId').value = treinoExistente.alunoId || treinoExistente.aluno_id;
+    if($('#professorId') && (treinoExistente.professorId || treinoExistente.professor_id)) $('#professorId').value = treinoExistente.professorId || treinoExistente.professor_id;
+    if($('#objetivoTreino')) $('#objetivoTreino').value = treinoExistente.objetivo || treinoExistente.nome || 'Condicionamento físico';
+    if($('#validadeTreino')) $('#validadeTreino').value = (treinoExistente.dataValidade || treinoExistente.validade || '').slice(0,10) || dataFutura(45);
+
+    treinoExistente.exercicios.forEach((ex, idx) => {
+      const grupoId = grupoPorOrdem(ex, idx);
+      const grupo = treinos.find(t => t.id === grupoId) || treinos[0];
+      const obsGrupo = String(ex.origemGrupo || ex.grupoTreino || ex.divisao || '').trim();
+      if(obsGrupo && !grupo.descricao && obsGrupo !== grupo.nome) grupo.descricao = obsGrupo;
+
+      grupo.exercicios.push({
+        ...ex,
+        id: ex.bibliotecaId || ex.exercicioId || ex.id || `ex_${idx}`,
+        exercicioId: ex.exercicioId || ex.bibliotecaId || ex.id || '',
+        bibliotecaId: ex.bibliotecaId || ex.exercicioId || ex.id || '',
+        bibliotecaKey: ex.bibliotecaKey || chaveBiblioteca(ex),
+        nome: ex.nome || ex.nomeOriginal || ex.exercicio || 'Exercício',
+        grupo: ex.grupo || ex.grupoMuscular || '',
+        grupoMuscular: ex.grupoMuscular || ex.grupo || '',
+        equipamento: ex.equipamento || '',
+        series: ex.series || '3',
+        repeticoes: ex.repeticoes || ex.reps || '10-12',
+        carga: ex.carga || '',
+        descanso: ex.descanso || '60s',
+        observacoes: ex.observacoes || ex.observacao || ''
+      });
+    });
+
+    const primeiroComExercicio = treinos.find(t => t.exercicios.length);
+    treinoAtual = primeiroComExercicio ? primeiroComExercicio.id : 'A';
+
+    const btn = $('#btnSalvar');
+    if(btn) btn.textContent = 'Atualizar treino';
+
+    renderTudo();
+    return true;
+  }
+
+  async function buscarTreinosAtivosAluno(alunoId){
+    if(!alunoId) return [];
+    const q = new URLSearchParams({ alunoId });
+    const pid = professorIdAtivo();
+    if(pid) q.set('professorId', pid);
+    const resp = await fetch(`${API_TREINOS_INTEGRADO}?${q.toString()}`, {cache:'no-store'});
+    const json = await safeJson(resp);
+    if(!resp.ok || json.ok === false) throw new Error(json.mensagem || json.erro || `HTTP ${resp.status}`);
+    return extrairLista(json, 'dados')
+      .filter(statusAtivo)
+      .sort((a,b) => String(b.atualizadoEm || b.criadoEm || b.dataInicio || '').localeCompare(String(a.atualizadoEm || a.criadoEm || a.dataInicio || '')));
+  }
+
+  async function carregarTreinoExistente(forcar=false){
+    if(!forcar && treinoExistenteCarregado) return;
+    if(modoTreino !== 'editar') return;
+
+    const alunoId = $('#alunoId')?.value || params.get('alunoId') || lerContextoProfessor().alunoSelecionadoId || '';
+    if(!alunoId) return;
+
+    try{
+      const lista = await buscarTreinosAtivosAluno(alunoId);
+      const escolhido = treinoIntegradoAtualId
+        ? (lista.find(t => String(t.id || t._id) === String(treinoIntegradoAtualId)) || lista[0])
+        : lista[0];
+
+      if(escolhido) {
+        preencherTreinoExistente(escolhido);
+      } else {
+        limparTreinoParaNovo();
+        alert('Este aluno ainda não possui treino ativo para editar. Um novo treino será iniciado.');
+      }
+    }catch(erro){
+      console.warn('Treinos V3: não foi possível carregar treino existente', erro);
+      alert(`Não foi possível abrir o treino ativo para edição.\n${erro.message}`);
+    }
   }
 
   function mediaTag(ex, classe='media'){
@@ -217,8 +357,12 @@
   }
 
   function renderTabs(){
-    $('#tabsTreino').innerHTML = treinos.map(t=>`<button type="button" class="tab-btn ${t.id===treinoAtual?'active':''}" data-id="${esc(t.id)}">${esc(t.nome)}</button>`).join('');
+    const tabs = $('#tabsTreino');
+    if(!tabs) return;
+    tabs.innerHTML = treinos.map(t=>`<button type="button" class="tab-btn ${t.id===treinoAtual?'active':''}" data-id="${esc(t.id)}" aria-pressed="${t.id===treinoAtual?'true':'false'}"><span>${esc(t.nome)}</span><small>${(t.exercicios||[]).length}</small></button>`).join('');
     $$('#tabsTreino .tab-btn').forEach(btn=>btn.onclick=()=>{salvarDescricao(); treinoAtual=btn.dataset.id; renderTudo();});
+    const ativo = tabs.querySelector('.tab-btn.active');
+    if(ativo && typeof ativo.scrollIntoView === 'function') ativo.scrollIntoView({block:'nearest', inline:'center', behavior:'smooth'});
   }
 
   function salvarDescricao(){
@@ -351,18 +495,30 @@
     if(btn){ btn.disabled = true; btn.textContent = 'Salvando...'; }
 
     try{
-      const resp = await fetch(API_TREINOS_INTEGRADO, {
-        method:'POST',
+      const url = treinoIntegradoAtualId && modoTreino === 'editar'
+        ? `${API_TREINOS_INTEGRADO}/${encodeURIComponent(treinoIntegradoAtualId)}`
+        : API_TREINOS_INTEGRADO;
+      payload.politicaSalvar = treinoIntegradoAtualId && modoTreino === 'editar' ? 'editar_existente' : 'substituir_ativo_anterior';
+      if(treinoIntegradoAtualId && modoTreino === 'editar') payload.id = treinoIntegradoAtualId;
+      const resp = await fetch(url, {
+        method: treinoIntegradoAtualId && modoTreino === 'editar' ? 'PUT' : 'POST',
         headers:{'Content-Type':'application/json'},
         body: JSON.stringify(payload)
       });
       const json = await safeJson(resp);
       if(!resp.ok || json.ok === false) throw new Error(json.mensagem || json.erro || `HTTP ${resp.status}`);
       const salvo = json.dados || json.treino || json;
+      if(salvo.id) {
+        treinoIntegradoAtualId = salvo.id;
+        modoTreino = 'editar';
+        treinoExistenteCarregado = true;
+        const btnSalvar = $('#btnSalvar');
+        if(btnSalvar) btnSalvar.textContent = 'Atualizar treino';
+      }
       localStorage.setItem('fusion_treinos_v3_ultimo', JSON.stringify(salvo));
       localStorage.setItem('fusion_treinos_v3_alunoId', payload.alunoId);
       if(payload.professorId) localStorage.setItem('fusion_treinos_v3_professorId', payload.professorId);
-      alert(`Treino V3 salvo no motor integrado. ID: ${salvo.id || 'gerado'}`);
+      alert(`Treino V3 ${modoTreino === 'editar' ? 'atualizado' : 'salvo'} no motor integrado. ID: ${salvo.id || treinoIntegradoAtualId || 'gerado'}`);
       console.log('Treino V3 integrado salvo', salvo);
     }catch(erro){
       console.error('Erro ao salvar Treinos V3', erro, payload);
@@ -376,18 +532,42 @@
     if(ev.origin !== location.origin) return;
     if(ev.data?.tipo === 'fusion_treinos_v3_contexto'){
       contextoProfessor = ev.data.contexto || contextoProfessor;
+      if(contextoProfessor?.modoTreino) modoTreino = contextoProfessor.modoTreino;
+      if(contextoProfessor?.treinoSelecionadoId) treinoIntegradoAtualId = contextoProfessor.treinoSelecionadoId;
+      treinoExistenteCarregado = false;
       try { localStorage.setItem('fusion_treinos_v3_professor_contexto', JSON.stringify(contextoProfessor)); } catch {}
-      carregarContexto();
+      carregarContexto().then(()=>carregarTreinoExistente(true));
     }
   });
 
-  window.FusionTreinosV3 = { remover:removerExercicio, mover, campo:atualizarCampo, payload:montarPayloadIntegrado };
+  window.FusionTreinosV3 = { remover:removerExercicio, mover, campo:atualizarCampo, payload:montarPayloadIntegrado, carregarTreinoExistente, limparTreinoParaNovo };
+  $('#alunoId')?.addEventListener('change',()=>{
+    localStorage.setItem('fusion_treinos_v3_alunoId', $('#alunoId')?.value || '');
+    treinoExistenteCarregado = false;
+    if(modoTreino === 'editar') carregarTreinoExistente(true);
+  });
   $('#buscaExercicio')?.addEventListener('input', renderBiblioteca);
   $('#descricaoGrupo')?.addEventListener('input', salvarDescricao);
   $('#btnAtualizar')?.addEventListener('click', carregarBiblioteca);
   $('#btnSalvar')?.addEventListener('click', salvarModelo);
   $('#validadeTreino') && ($('#validadeTreino').value = dataFutura(45));
   renderTudo();
-  carregarContexto();
+  carregarContexto().then(()=>{
+    if(modoTreino === 'editar') return carregarTreinoExistente(true);
+    limparTreinoParaNovo();
+  });
   carregarBiblioteca();
 })();
+
+/* === FUSION_ERP_2_8_0_P2E_TREINOS_MOBILE_FIX_START === */
+/* Removido o atalho flutuante Biblioteca/Treino no mobile.
+   Ele ficava preso no meio da tela dentro do iframe do Portal do Professor
+   e misturava biblioteca, formulário do aluno e edição do treino.
+   A navegação agora segue o fluxo natural da página: Biblioteca acima, Treino abaixo. */
+(function(){
+  function ready(fn){document.readyState==='loading'?document.addEventListener('DOMContentLoaded',fn):fn();}
+  ready(function(){
+    document.querySelectorAll('.fusion-treinos-mobile-tools').forEach(el => el.remove());
+  });
+})();
+/* === FUSION_ERP_2_8_0_P2E_TREINOS_MOBILE_FIX_END === */

@@ -16,6 +16,14 @@
     for (const [k, v] of params.entries()) destino.searchParams.set(k, v);
     location.replace(destino.pathname + destino.search);
   </script>
+
+<link rel="manifest" href="/manifest-sistema.webmanifest">
+<meta name="theme-color" content="#ff6600">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="/assets/pwa/icons/fusion-icon-180.png">
+<link rel="stylesheet" href="/assets/pwa/fusion-pwa-mobile.css">
 </head>
 <body>
   <main class="fusion-shell">
@@ -27,5 +35,7 @@
       </div>
     </section>
   </main>
+
+<script src="/assets/pwa/fusion-pwa-install.js" defer></script>
 </body>
 </html>

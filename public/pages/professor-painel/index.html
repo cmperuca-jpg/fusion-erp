@@ -16,8 +16,10 @@
 <link rel="stylesheet" href="/assets/pwa/fusion-pwa-mobile.css">
 </head>
 <body>
+  <button class="mobile-menu-toggle" id="btnMobileMenu" type="button" aria-label="Abrir menu" aria-expanded="false">☰</button>
+  <div class="mobile-menu-backdrop hidden" id="mobileMenuBackdrop"></div>
   <main class="portal-app" id="app">
-    <aside class="sidebar">
+    <aside class="sidebar" id="portalSidebar">
       <div class="brand">Fusion ERP</div>
       <div class="prof-box">
         <strong id="professorNomeMenu">Professor</strong>
@@ -29,6 +31,7 @@
       <button class="nav" data-tab="treinos" type="button">Treinos</button>
       <button class="nav" data-tab="evolucao" type="button">Evolução</button>
       <button class="nav" data-tab="chamada" type="button">Chamada</button>
+      <button class="nav" data-tab="natacao" type="button">Natação</button>
       <button class="nav" data-tab="perfil" type="button">Perfil</button>
       <button class="sair" id="btnSair" type="button">Sair</button>
     </aside>
@@ -39,9 +42,8 @@
           <h1>Dashboard do Professor</h1>
           <span id="subtitulo">Centro operacional do professor</span>
         </div>
-        <div class="top-actions">
-          <small id="ultimaAtualizacao">-</small>
-          <button id="btnAtualizar" type="button">Atualizar</button>
+        <div class="top-actions top-actions-clean">
+          <small id="ultimaAtualizacao">Última atualização: -</small>
         </div>
       </header>
 
@@ -78,11 +80,16 @@
 
       <section class="tab" id="tab-treinos">
         <div class="professor-treinos-v3-shell">
-          <iframe id="treinosV3ProfessorFrame" class="professor-treinos-v3-frame" title="Montador Treinos V3"></iframe>
+          <iframe id="treinosV3ProfessorFrame" class="professor-treinos-v3-frame" title="Montador Treinos V4"></iframe>
         </div>
       </section>
 
       <section class="tab" id="tab-evolucao"><div class="card"><h3>Evolução dos alunos</h3><div id="listaEvolucao"></div></div></section>
+      <section class="tab" id="tab-natacao">
+        <div class="professor-natacao-shell">
+          <iframe id="natacaoProfessorFrame" class="professor-natacao-frame" title="Cronometragem da Natação"></iframe>
+        </div>
+      </section>
       <section class="tab" id="tab-chamada"><div class="card"><h3>Chamada e agenda</h3><div id="listaChamada"></div></div></section>
       <section class="tab" id="tab-perfil"><div class="card"><h3>Meus dados</h3><div id="dadosPerfil"></div></div></section>
     </section>
