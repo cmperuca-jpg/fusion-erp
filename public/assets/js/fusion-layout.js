@@ -2,13 +2,28 @@
   const PAGINAS_SEM_MENU = [
     "/pages/avaliacoes/",
     "/pages/avaliacoes/index.html",
+
     "/pages/treinos/",
     "/pages/treinos/index.html",
+
     "/pages/comercial-painel/",
     "/pages/comercial-painel/index.html",
+
     "/pages/matricula-online/",
-    "/pages/matricula-online/index.html"
-  ];
+    "/pages/matricula-online/index.html",
+
+    "/pages/aluno-avaliacao/",
+    "/pages/aluno-avaliacao/index.html",
+
+    "/pages/aluno-treino/",
+    "/pages/aluno-treino/index.html",
+
+    "/pages/aluno-login/",
+    "/pages/aluno-login/index.html",
+
+    "/pages/professor-login/",
+    "/pages/professor-login/index.html"
+];
 
   const ITENS_MENU = [
     { grupo: "Principal", itens: [
@@ -122,6 +137,12 @@
   }
 
   window.carregarLayout = function carregarLayout(titulo) {
+
+    if (paginaSemMenu()) {
+        removerMenusExistentes();
+        return;
+    }
+
     montarMenu();
     preencherUsuarioTopo();
 
