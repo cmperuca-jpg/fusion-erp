@@ -43,6 +43,54 @@ router.post("/:id/desligar", async (req, res) => {
 });
 
 
+
+router.post("/:id/reativar-cobranca", async (req, res) => {
+  try {
+    const resultado = await alunosService.criarCobrancaReativacao(req.params.id, {
+      ...req.body,
+      usuario: req.body?.usuario || "sistema",
+      motivo: req.body?.motivo || req.body?.motivoReativacao || "Reativação com cobrança no caixa."
+    });
+
+    if (!resultado) {
+      return res.status(404).json({ ok: false, erro: "Aluno não encontrado", mensagem: "Aluno não encontrado" });
+    }
+
+    res.json({
+      ok: true,
+      sucesso: true,
+      resultado,
+      mensagem: "Cobrança de reativação criada. Após baixa no caixa/recebimentos, o aluno será ativado e a próxima fatura será gerada."
+    });
+  } catch (error) {
+    erro(res, error, 400);
+  }
+});
+
+router.post("/:id/reativar", async (req, res) => {
+  try {
+    const resultado = await alunosService.reativar(req.params.id, {
+      ...req.body,
+      usuario: req.body?.usuario || "sistema",
+      motivo: req.body?.motivo || req.body?.motivoReativacao || "Reativação manual do aluno."
+    });
+
+    if (!resultado) {
+      return res.status(404).json({ ok: false, erro: "Aluno não encontrado", mensagem: "Aluno não encontrado" });
+    }
+
+    res.json({
+      ok: true,
+      sucesso: true,
+      resultado,
+      mensagem: "Aluno reativado. Matrícula ativa, mensalidade, financeiro e recebimento em aberto foram sincronizados."
+    });
+  } catch (error) {
+    erro(res, error, 400);
+  }
+});
+
+
 router.get("/:id/prontuario", async (req, res) => {
   try {
     const resultado = await alunosService.prontuario(req.params.id);

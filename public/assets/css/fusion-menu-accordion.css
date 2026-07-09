@@ -1,0 +1,104 @@
+/* Fusion ERP 2.7.5 - ZIP B3.2
+   Correção do menu accordion: recolhe de verdade os itens e preserva cores/legibilidade. */
+
+.fusion-menu-section {
+  margin: 4px 8px 10px;
+}
+
+.fusion-menu-group {
+  width: 100%;
+  min-height: 34px;
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: #93b4dd;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.fusion-menu-group:hover,
+.fusion-menu-section.is-open > .fusion-menu-group {
+  border-color: rgba(148, 163, 184, .45);
+  background: rgba(15, 23, 42, .55);
+  color: #dbeafe;
+}
+
+.fusion-menu-caret {
+  display: inline-flex;
+  width: 12px;
+  transition: transform .18s ease;
+  color: #ff6600;
+}
+
+.fusion-menu-section.is-open .fusion-menu-caret {
+  transform: rotate(90deg);
+}
+
+.fusion-menu-items {
+  display: grid;
+  gap: 4px;
+  margin-top: 4px;
+  overflow: hidden;
+  transition: max-height .2s ease, opacity .16s ease;
+  max-height: 620px;
+  opacity: 1;
+}
+
+.fusion-menu-section.is-collapsed .fusion-menu-items {
+  max-height: 0 !important;
+  opacity: 0;
+  pointer-events: none;
+  margin-top: 0;
+}
+
+.fusion-menu a {
+  color: #f8fafc !important;
+  opacity: 1 !important;
+}
+
+.fusion-menu a:not(.active) {
+  color: #e5eefb !important;
+}
+
+.fusion-menu a:hover {
+  color: #ffffff !important;
+  background: rgba(255, 102, 0, .12);
+}
+
+.fusion-menu a.active {
+  background: #ff6600 !important;
+  color: #ffffff !important;
+  box-shadow: 0 10px 24px rgba(255, 102, 0, .22);
+}
+
+.fusion-sidebar-footer {
+  display: none !important;
+}
+
+@media (max-width: 768px) {
+  .fusion-menu-section {
+    margin-left: 6px;
+    margin-right: 6px;
+  }
+
+  .fusion-menu-group {
+    min-height: 42px;
+  }
+
+  .fusion-menu a {
+    min-height: 44px;
+  }
+}
+
+/* FUSION_NO_SIDEBAR_OVERRIDE */
+body.fusion-no-sidebar .fusion-ui-sidebar,body.fusion-no-sidebar .fusion-sidebar,body.fusion-no-sidebar aside.sidebar,body.fusion-no-sidebar .sidebar,body.fusion-no-sidebar .fusion-clean-sidebar,body.fusion-no-sidebar .fusion-mobile-final-bar,body.fusion-no-sidebar .fusion-mobile-final-overlay,body.fusion-no-sidebar .fusion-mobile-menu-button,body.fusion-no-sidebar .fusion-mobile-overlay,body.fusion-no-sidebar .fusion-mobile-backdrop,body.fusion-no-sidebar .fusion-ui-backdrop{display:none!important;visibility:hidden!important;pointer-events:none!important;}
+body.fusion-no-sidebar .fusion-shell{display:block!important;width:100%!important;}
+body.fusion-no-sidebar .fusion-main{width:100%!important;max-width:100%!important;margin-left:0!important;padding-left:0!important;}

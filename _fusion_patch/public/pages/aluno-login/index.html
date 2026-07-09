@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Login do Aluno - Treinos</title>
+  <link rel="stylesheet" href="/pages/aluno-login/style.css">
+  <link rel="manifest" href="/manifest-sistema.webmanifest">
+  <meta name="theme-color" content="#ff6600">
+</head>
+<body>
+  <main class="login-wrap">
+    <section class="login-card">
+      <div class="brand">Fusion ERP</div>
+      <h1>Acesso ao treino</h1>
+      <p>Entre com login e senha para visualizar apenas o treino prescrito para você.</p>
+
+      <label>Login
+        <input id="login" autocomplete="username" placeholder="CPF, matrícula, e-mail ou telefone">
+      </label>
+      <label>Senha
+        <input id="senha" type="password" autocomplete="current-password" placeholder="Senha do aluno">
+      </label>
+
+      <button id="entrar" class="btn primary" type="button">Entrar</button>
+      <div id="mensagem" class="msg"></div>
+
+      <small class="hint">Senha aceita: senha cadastrada no aluno. Se não existir, use CPF completo, 4 últimos dígitos do CPF ou data de nascimento no formato DDMMAAAA.</small>
+    </section>
+  </main>
+  <script src="/pages/aluno-login/index.js"></script>
+</body>
+</html>

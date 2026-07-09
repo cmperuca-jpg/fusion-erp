@@ -103,7 +103,7 @@ async function carregar(){
     estado.resumoApi=dados?.resumo || (dados && !Array.isArray(dados) ? dados : null);
     renderTabela();
     const base=obterBaseAtiva(); statusIntegracao(base ? `Integração ativa: ${base}` : "");
-    if(!estado.registros.length) aviso("A API respondeu, mas não retornou pagamentos para os filtros atuais.");
+    if(!estado.registros.length) aviso("");
   }catch(e){
     if(tbody)tbody.innerHTML=`<tr><td colspan="11" class="empty">${esc(erroAmigavel(e))}</td></tr>`;
     statusIntegracao(""); aviso("Não foi possível carregar a rota de pagamentos.");

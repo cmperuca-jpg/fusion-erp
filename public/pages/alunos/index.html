@@ -6,10 +6,22 @@
   <title>Fusion ERP - Alunos</title>
   <link rel="stylesheet" href="/assets/css/fusion-app.css">
   <link rel="stylesheet" href="/assets/css/fusion-menu-global.css">
+  <link rel="stylesheet" href="/assets/css/fusion-mobile-first.css">
+  <link rel="stylesheet" href="/assets/css/fusion-date.css">
   <link rel="stylesheet" href="./style.css">
   <script src="/assets/js/fusion-auth.js"></script>
   <script>FusionAuth.proteger();</script>
   <meta name="fusion-existing-pages" content="agenda,alunos,avaliacoes,bi,bi-academia,bi-academia-operacional,bi-financeiro,caixa,checkin,configuracoes,dashboard,estoque,exercicios,financeiro,login,matriculas,mensalidades,modalidades,modelos-treino,pagamentos,planos,presencas,professores,recebimentos,relatorios-caixa,treinos,turmas">
+
+<link rel="manifest" href="/manifest-sistema.webmanifest">
+<meta name="theme-color" content="#ff6600">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="/assets/pwa/icons/fusion-icon-180.png">
+<link rel="stylesheet" href="/assets/pwa/fusion-pwa-mobile.css">
+  <link rel="stylesheet" href="/assets/css/fusion-mobile-final.css">
+  <link rel="stylesheet" href="/assets/css/fusion-no-sidebar.css">
 </head>
 <body>
   <div class="fusion-shell">
@@ -48,6 +60,7 @@
 
         <div class="fusion-card alunos-table-card">
           <div class="table-top"><h3>Alunos cadastrados</h3><span id="contadorRegistros">0 registro(s)</span></div>
+          <div id="alunosMobileCards" class="alunos-mobile-cards" aria-live="polite"></div>
           <div class="table-wrap">
             <table class="alunos-table">
               <thead><tr><th>Nome</th><th>CPF</th><th>Telefone</th><th>Plano</th><th>Status</th><th class="text-right">Ações</th></tr></thead>
@@ -58,6 +71,13 @@
         </div>
       </section>
     </main>
+  </div>
+
+  <div class="alunos-bottom-nav" id="alunosBottomNav" aria-label="Atalhos do módulo alunos">
+    <button type="button" data-alunos-action="home">🏠<span>Home</span></button>
+    <button type="button" data-alunos-action="buscar">🔍<span>Buscar</span></button>
+    <button type="button" data-alunos-action="novo">＋<span>Novo</span></button>
+    <button type="button" data-alunos-action="topo">👤<span>Topo</span></button>
   </div>
 
   <div class="modal-backdrop hidden" id="modalAluno">
@@ -77,10 +97,10 @@
         <div class="tab-panel active" id="tab-cadastro">
           <div class="foto-box"><div class="foto-preview" id="fotoPreview">Foto</div><div class="field"><label for="foto_base64">Foto do aluno</label><input id="foto_base64" type="file" accept="image/*"><small>Imagem local em base64. Use arquivo pequeno.</small></div></div>
           <div class="grid-2"><div class="field"><label for="nome">Nome completo *</label><input id="nome" required></div><div class="field"><label for="cpf">CPF</label><input id="cpf" maxlength="14"></div></div>
-          <div class="grid-3"><div class="field"><label for="rg">RG</label><input id="rg"></div><div class="field"><label for="data_nascimento">Nascimento</label><input id="data_nascimento" type="date"></div><div class="field"><label for="sexo">Sexo</label><select id="sexo"><option value="">Não informado</option><option value="feminino">Feminino</option><option value="masculino">Masculino</option><option value="outro">Outro</option></select></div></div>
+          <div class="grid-3"><div class="field"><label for="rg">RG</label><input id="rg"></div><div class="field"><label for="data_nascimento">Nascimento</label><input id="data_nascimento" type="text" inputmode="numeric" autocomplete="off" placeholder="DD/MM/AAAA" data-fusion-date="1"></div><div class="field"><label for="sexo">Sexo</label><select id="sexo"><option value="">Não informado</option><option value="feminino">Feminino</option><option value="masculino">Masculino</option><option value="outro">Outro</option></select></div></div>
           <div class="grid-2"><div class="field"><label for="telefone">Telefone</label><input id="telefone" maxlength="15"></div><div class="field"><label for="whatsapp">WhatsApp</label><input id="whatsapp" maxlength="15"></div></div>
           <div class="grid-2"><div class="field"><label for="email">E-mail</label><input id="email" type="email"></div><div class="field"><label for="professor_responsavel">Professor responsável</label><input id="professor_responsavel"></div></div>
-          <div class="grid-3"><div class="field"><label for="plano">Plano cadastrado</label><div class="input-with-button"><select id="plano"><option value="">Carregando planos...</option></select><button type="button" id="btnRecarregarPlanos" title="Recarregar planos">↻</button></div><small>Lista carregada automaticamente dos planos cadastrados.</small></div><div class="field"><label for="data_matricula">Data matrícula</label><input id="data_matricula" type="date"></div><div class="field"><label for="status">Status</label><select id="status"><option value="ativo">Ativo</option><option value="pendente">Pendente</option><option value="inativo">Inativo</option><option value="cancelado">Cancelado</option></select></div></div>
+          <div class="grid-3"><div class="field"><label for="plano">Plano cadastrado</label><div class="input-with-button"><select id="plano"><option value="">Carregando planos...</option></select><button type="button" id="btnRecarregarPlanos" title="Recarregar planos">↻</button></div><small>Lista carregada automaticamente dos planos cadastrados.</small></div><div class="field"><label for="data_matricula">Data matrícula</label><input id="data_matricula" type="text" inputmode="numeric" autocomplete="off" placeholder="DD/MM/AAAA" data-fusion-date="1"></div><div class="field"><label for="status">Status</label><select id="status"><option value="ativo">Ativo</option><option value="pendente">Pendente</option><option value="inativo">Inativo</option><option value="cancelado">Cancelado</option></select></div></div>
           <div class="fusion-card painel-comercial-matricula" style="margin:12px 0;padding:14px;border:1px solid #e2e8f0;background:#f8fafc;border-radius:12px;">
             <h4 style="margin:0 0 10px;">Painel comercial da matrícula</h4>
             <div class="grid-3">
@@ -132,7 +152,6 @@
 
         <div class="tab-panel" id="tab-integracoes">
           <div class="integracoes-grid">
-            <button type="button" class="integration-card" id="btnAbrirTreinos"><strong>Treinos</strong><span>Abrir montagem de treino do aluno</span></button>
             <button type="button" class="integration-card" id="btnAbrirAvaliacoes"><strong>Avaliações</strong><span>Abrir avaliações físicas do aluno</span></button>
             <button type="button" class="integration-card" id="btnAbrirMensalidades"><strong>Mensalidades</strong><span>Consultar vínculo financeiro</span></button>
             <button type="button" class="integration-card" id="btnAbrirCheckin"><strong>Check-in</strong><span>Consultar presença e acessos</span></button>
@@ -144,9 +163,14 @@
       </form>
     </div>
   </div>
+<script src="/assets/js/fusion-date.js"></script>
 <script src="./index.js"></script>
   <script src="/assets/js/fusion-ciclo-professor-aluno.js"></script>
   <script src="/assets/js/fusion-menu-global.js"></script>
     <script src="/assets/js/fusion-layout.js"></script>
+
+<script src="/assets/pwa/fusion-pwa-install.js" defer></script>
+  <script src="/assets/js/fusion-mobile-final.js" defer></script>
+  <script src="/assets/js/fusion-no-sidebar.js" defer></script>
 </body>
 </html>

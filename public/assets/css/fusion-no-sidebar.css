@@ -1,0 +1,146 @@
+/* Fusion ERP — NO SIDEBAR MODE
+   Remove o menu lateral de todas as páginas sem alterar APIs/regras de negócio. */
+:root{
+  --fusion-page-bg:#eef8f5;
+  --fusion-topbar-bg:#ffffff;
+  --fusion-primary:#00b8b8;
+  --fusion-secondary:#ffd84d;
+  --fusion-text:#0f172a;
+  --fusion-border:#d7e3ea;
+}
+
+html,body{max-width:100%;overflow-x:hidden;}
+body.fusion-no-sidebar,
+body.fusion-ui-ready.fusion-no-sidebar{
+  margin:0!important;
+  padding:0!important;
+  background:var(--fusion-page-bg)!important;
+  color:var(--fusion-text)!important;
+}
+
+/* Esconde/remover visualmente todos os menus laterais conhecidos */
+body.fusion-no-sidebar .fusion-ui-sidebar,
+body.fusion-no-sidebar .fusion-sidebar,
+body.fusion-no-sidebar aside[data-fusion-sidebar],
+body.fusion-no-sidebar aside.sidebar,
+body.fusion-no-sidebar body > aside,
+body.fusion-no-sidebar .sidebar,
+body.fusion-no-sidebar .side-menu,
+body.fusion-no-sidebar .menu-lateral,
+body.fusion-no-sidebar .layout-sidebar,
+body.fusion-no-sidebar .app-sidebar,
+body.fusion-no-sidebar .fusion-clean-sidebar,
+body.fusion-no-sidebar .fusion-menu-global,
+body.fusion-no-sidebar .fusion-mobile-final-bar,
+body.fusion-no-sidebar .fusion-mobile-final-overlay,
+body.fusion-no-sidebar .fusion-mobile-menu-button,
+body.fusion-no-sidebar .fusion-mobile-overlay,
+body.fusion-no-sidebar .fusion-mobile-backdrop,
+body.fusion-no-sidebar .fusion-ui-backdrop,
+body.fusion-no-sidebar [data-fusion-ui-menu],
+body.fusion-no-sidebar [data-fusion-sidebar],
+body.fusion-no-sidebar [data-fusion-mobile-menu],
+body.fusion-no-sidebar [data-fusion-menu-toggle]{
+  display:none!important;
+  visibility:hidden!important;
+  pointer-events:none!important;
+}
+
+body.fusion-no-sidebar .fusion-shell{
+  display:block!important;
+  width:100%!important;
+  min-height:100vh!important;
+  margin:0!important;
+  padding:0!important;
+}
+body.fusion-no-sidebar .fusion-main,
+body.fusion-no-sidebar main.fusion-main,
+body.fusion-no-sidebar .main,
+body.fusion-no-sidebar .main-content,
+body.fusion-no-sidebar .page-content,
+body.fusion-no-sidebar main{
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  margin-left:0!important;
+  margin-right:0!important;
+  padding-left:0!important;
+  padding-right:0!important;
+  transform:none!important;
+}
+
+body.fusion-no-sidebar .fusion-ui-topbar,
+body.fusion-no-sidebar .fusion-topbar{
+  position:sticky!important;
+  top:0!important;
+  left:0!important;
+  right:0!important;
+  z-index:50!important;
+  width:100%!important;
+  min-height:64px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:14px!important;
+  padding:0 24px!important;
+  margin:0!important;
+  background:var(--fusion-topbar-bg)!important;
+  border-bottom:1px solid var(--fusion-border)!important;
+  box-shadow:0 8px 22px rgba(15,23,42,.05)!important;
+  box-sizing:border-box!important;
+}
+body.fusion-no-sidebar .fusion-ui-menu-button{display:none!important;}
+body.fusion-no-sidebar .fusion-ui-topbar-title strong,
+body.fusion-no-sidebar .fusion-title{
+  color:var(--fusion-text)!important;
+  font-size:20px!important;
+  font-weight:900!important;
+}
+body.fusion-no-sidebar .fusion-ui-topbar-title small{color:#64748b!important;font-weight:700!important;}
+body.fusion-no-sidebar .fusion-ui-userbar button,
+body.fusion-no-sidebar .fusion-topbar button{
+  border:1px solid var(--fusion-border)!important;
+  background:#fff!important;
+  color:#0f172a!important;
+  border-radius:12px!important;
+  min-height:38px!important;
+  padding:8px 14px!important;
+  cursor:pointer!important;
+  font-weight:800!important;
+}
+body.fusion-no-sidebar .fusion-content,
+body.fusion-no-sidebar section.fusion-content,
+body.fusion-no-sidebar .content,
+body.fusion-no-sidebar .container,
+body.fusion-no-sidebar .page,
+body.fusion-no-sidebar .dashboard{
+  width:100%!important;
+  max-width:1280px!important;
+  margin:0 auto!important;
+  padding:24px!important;
+  box-sizing:border-box!important;
+}
+body.fusion-no-sidebar .modal-backdrop,
+body.fusion-no-sidebar .modal-overlay,
+body.fusion-no-sidebar .popup-backdrop{
+  z-index:1000!important;
+}
+body.fusion-no-sidebar .modal,
+body.fusion-no-sidebar .modal-card,
+body.fusion-no-sidebar .modal-content,
+body.fusion-no-sidebar .modal-avaliacao,
+body.fusion-no-sidebar .popup,
+body.fusion-no-sidebar [role="dialog"]{
+  max-width:min(94vw,1100px)!important;
+}
+
+@media(max-width:900px){
+  body.fusion-no-sidebar .fusion-ui-topbar,
+  body.fusion-no-sidebar .fusion-topbar{padding:0 14px!important;min-height:58px!important;}
+  body.fusion-no-sidebar .fusion-content,
+  body.fusion-no-sidebar section.fusion-content,
+  body.fusion-no-sidebar .content,
+  body.fusion-no-sidebar .container,
+  body.fusion-no-sidebar .page,
+  body.fusion-no-sidebar .dashboard{padding:14px!important;max-width:100%!important;}
+}

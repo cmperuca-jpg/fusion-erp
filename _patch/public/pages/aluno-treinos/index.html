@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fusion ERP - Meu Treino</title>
+  <link rel="stylesheet" href="./style.css">
+  <link rel="manifest" href="/manifest-sistema.webmanifest">
+  <meta name="theme-color" content="#ff6600">
+</head>
+<body>
+  <main class="aluno-wrap">
+    <header class="aluno-topo">
+      <div>
+        <h1>Meu Treino</h1>
+        <p id="subtituloAluno">Visualização do treino prescrito.</p>
+      </div>
+      <div class="aluno-topo-acoes">
+        <button id="sair" class="btn" type="button">Sair</button>
+      </div>
+    </header>
+
+    <section class="painel-aluno painel-aluno-com-foto">
+      <div class="aluno-foto-card">
+        <img id="fotoAluno" alt="Foto do aluno">
+      </div>
+      <div>
+        <span>Aluno</span>
+        <strong id="alunoNome">-</strong>
+      </div>
+      <div>
+        <span>Professor</span>
+        <strong id="professorNome">-</strong>
+      </div>
+      <div>
+        <span>Objetivo</span>
+        <strong id="objetivoTreino">-</strong>
+      </div>
+      <div>
+        <span>Validade</span>
+        <strong id="validadeTreino">-</strong>
+      </div>
+    </section>
+
+    <section class="treino-box">
+      <div class="tabs-area">
+        <div id="tabsDivisoes" class="tabs-divisoes"></div>
+        <button id="atualizar" class="btn primary" type="button">Atualizar</button>
+      </div>
+
+      <div id="semTreino" class="sem-treino hidden">
+        Nenhum treino prescrito para este aluno.
+      </div>
+
+      <article id="cardExercicio" class="card-exercicio hidden">
+        <div class="card-head">
+          <div>
+            <span id="contadorExercicio" class="contador">0 / 0</span>
+            <h2 id="nomeExercicio">Exercício</h2>
+          </div>
+          <label class="check-finalizado">
+            <input id="checkConcluido" type="checkbox">
+            Concluído
+          </label>
+        </div>
+
+        <div class="imagem-stage">
+          <button id="anterior" class="seta seta-esq" type="button" aria-label="Exercício anterior">‹</button>
+          <img id="fotoExercicio" alt="Imagem do exercício">
+          <button id="proximo" class="seta seta-dir" type="button" aria-label="Próximo exercício">›</button>
+        </div>
+
+        <div class="info-prescricao">
+          <div><span>Séries</span><strong id="seriesExercicio">-</strong></div>
+          <div><span>Repetições</span><strong id="repsExercicio">-</strong></div>
+          <div><span>Carga</span><strong id="cargaExercicio">-</strong></div>
+          <div><span>Descanso</span><strong id="descansoExercicio">-</strong></div>
+          <div><span>Método</span><strong id="metodoExercicio">-</strong></div>
+          <div><span>Cadência</span><strong id="cadenciaExercicio">-</strong></div>
+        </div>
+
+        <section class="descricao-box">
+          <h3>Como executar</h3>
+          <p id="descricaoExercicio">Sem descrição cadastrada.</p>
+          <h3>Observação do professor</h3>
+          <p id="obsExercicio">Sem observação.</p>
+        </section>
+      </article>
+    </section>
+  </main>
+  <script src="./index.js"></script>
+</body>
+</html>

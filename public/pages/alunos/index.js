@@ -1,4 +1,5 @@
 const API_ALUNOS = "/api/alunos";
+const API_FINANCEIRO = "/api/financeiro";
 const API_MATRICULAS_INTEGRAR = "/api/matriculas/integrar";
 const API_MATRICULAS = "/api/matriculas";
 let matriculasAlunoAtual = [];
@@ -15,6 +16,24 @@ const $ = (sel) => document.querySelector(sel);
 
 function dataHojeISO() {
   return new Date().toISOString().slice(0, 10);
+}
+
+
+function dataParaCampo(valor) {
+  if (window.FusionDate && typeof window.FusionDate.toBR === "function") return window.FusionDate.toBR(valor || "");
+  const s = String(valor || "").slice(0, 10);
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : s;
+}
+
+function dataParaISO(valor) {
+  if (window.FusionDate && typeof window.FusionDate.toISO === "function") return window.FusionDate.toISO(valor || "");
+  const s = String(valor || "").trim();
+  const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
+  const n = s.replace(/\D/g, "");
+  if (n.length !== 8) return "";
+  return `${n.slice(4, 8)}-${n.slice(2, 4)}-${n.slice(0, 2)}`;
 }
 
 function normalizarTexto(valor) {
@@ -343,6 +362,8 @@ function renderizarTabela() {
   $("#btnAnterior").disabled = pagina <= 1;
   $("#btnProxima").disabled = pagina >= totalPaginas;
 
+  renderizarCardsMobileAlunos(itens, lista.length);
+
   if (!itens.length) {
     $("#tabelaAlunos").innerHTML = `<tr><td colspan="6">Nenhum aluno encontrado.</td></tr>`;
     return;
@@ -357,16 +378,123 @@ function renderizarTabela() {
       <td>${escapeHtml(formatarCpfVisual(alunoCpf(a)))}</td>
       <td>${escapeHtml(formatarTelefoneVisual(alunoTelefone(a)))}</td>
       <td>${escapeHtml(alunoPlano(a))}</td>
-      <td><span class="badge status-${escapeHtml(st)}">${escapeHtml(st)}</span></td>
+      <td>${statusAlunoHtml(id, st)}</td>
       <td class="text-right">
+        <button class="btn-row" type="button" onclick="abrirProntuarioAluno('${escapeAttr(id)}')">Abrir</button>
         <button class="btn-row" type="button" onclick="abrirEdicao('${escapeAttr(id)}')">Editar</button>
-        <button class="btn-row" type="button" onclick="abrirFluxoMatriculaAluno('${escapeAttr(id)}')">${st === "ativo" ? "Matrícula" : "Matricular"}</button>
-        <button class="btn-row" type="button" onclick="imprimirFichaPorId('${escapeAttr(id)}')">Ficha</button>
+        ${botaoStatusAluno(id, st)}
         <button class="btn-row danger" type="button" onclick="excluirAluno('${escapeAttr(id)}')">Excluir</button>
       </td>
     </tr>`;
   }).join("");
 }
+
+
+function alunoEstaInativoOperacional(status) {
+  return ["inativo", "cancelado", "encerrado", "desligado"].includes(String(status || "").toLowerCase());
+}
+
+function alunoEstaPreMatriculado(status) {
+  return ["pre-matriculado", "pre matriculado", "pre_matriculado", "pendente"].includes(normalizarTexto(status));
+}
+
+function statusAlunoHtml(id, status) {
+  const st = String(status || "").trim();
+
+  if (alunoEstaPreMatriculado(st)) {
+    return `<button class="badge badge-status-action status-pre-matriculado" type="button" title="Matrícula aguardando pagamento. Clique para regularizar." onclick="regularizarPreMatricula('${escapeAttr(id)}')">Regularizar</button>`;
+  }
+
+  return `<span class="badge status-${escapeHtml(st)}">${escapeHtml(st)}</span>`;
+}
+
+function botaoStatusAluno(id, status) {
+  if (alunoEstaPreMatriculado(status)) {
+    return `<button class="btn-row regularizar" type="button" onclick="regularizarPreMatricula('${escapeAttr(id)}')">Regularizar</button>`;
+  }
+  if (alunoEstaInativoOperacional(status)) {
+    return `<button class="btn-row success" type="button" onclick="reativarAluno('${escapeAttr(id)}')">Reativar</button>`;
+  }
+  return `<button class="btn-row warning" type="button" onclick="cancelarAluno('${escapeAttr(id)}')">Cancelar</button>`;
+}
+
+function botaoStatusAlunoMobile(id, status) {
+  if (alunoEstaPreMatriculado(status)) {
+    return `<button type="button" class="regularizar" onclick="regularizarPreMatricula('${escapeAttr(id)}')">Regularizar</button>`;
+  }
+  if (alunoEstaInativoOperacional(status)) {
+    return `<button type="button" class="success" onclick="reativarAluno('${escapeAttr(id)}')">Reativar</button>`;
+  }
+  return `<button type="button" class="warning" onclick="cancelarAluno('${escapeAttr(id)}')">Cancelar</button>`;
+}
+
+function renderizarCardsMobileAlunos(itens = [], total = 0) {
+  const box = $("#alunosMobileCards");
+  if (!box) return;
+  if (!itens.length) {
+    box.innerHTML = `<div class="aluno-mobile-empty">Nenhum aluno encontrado.</div>`;
+    return;
+  }
+  box.innerHTML = itens.map(a => {
+    const id = alunoId(a);
+    const st = alunoStatus(a);
+    return `<article class="aluno-mobile-card status-${escapeHtml(st)}">
+      <div class="aluno-mobile-head">
+        <div>
+          <strong>${escapeHtml(alunoNome(a))}</strong>
+          <small>${escapeHtml(alunoEmail(a) || alunoCpf(a) || '-')}</small>
+        </div>
+        ${statusAlunoHtml(id, st)}
+      </div>
+      <div class="aluno-mobile-info">
+        <div><span>Plano</span><b>${escapeHtml(alunoPlano(a) || '-')}</b></div>
+        <div><span>Telefone</span><b>${escapeHtml(formatarTelefoneVisual(alunoTelefone(a)) || '-')}</b></div>
+      </div>
+      <div class="aluno-mobile-actions">
+        <button type="button" onclick="abrirProntuarioAluno('${escapeAttr(id)}')">Abrir</button>
+        <button type="button" onclick="abrirEdicao('${escapeAttr(id)}')">Editar</button>
+        ${botaoStatusAlunoMobile(id, st)}
+        <button type="button" class="danger" onclick="excluirAluno('${escapeAttr(id)}')">Excluir</button>
+      </div>
+    </article>`;
+  }).join("");
+}
+
+window.abrirProntuarioAluno = function(id) {
+  if (!id) return mostrarAlerta("ID do aluno não encontrado.", "erro");
+  location.href = `/pages/alunos/prontuario.html?id=${encodeURIComponent(id)}`;
+};
+
+window.cancelarAluno = async function(id) {
+  if (!id) return mostrarAlerta("ID do aluno não encontrado.", "erro");
+
+  const a = alunos.find(x => String(alunoId(x)) === String(id));
+  const nome = a ? alunoNome(a) : "este aluno";
+
+  if (!confirm(`Confirma cancelar ${nome}? As cobranças abertas serão canceladas e o histórico pago será preservado.`)) return;
+
+  try {
+    const resp = await fetch(`${API_ALUNOS}/${encodeURIComponent(id)}/desligar`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        usuario: "operador",
+        motivo: "Cancelamento rápido pelo cadastro de alunos."
+      })
+    });
+    const payload = await safeJson(resp);
+
+    if (!resp.ok || payload.ok === false) {
+      throw new Error(payload.erro || payload.mensagem || `Erro HTTP ${resp.status}`);
+    }
+
+    registrarHistoricoLocal(id, "cancelamento", `Aluno cancelado: ${nome}`);
+    mostrarAlerta(payload.mensagem || "Aluno cancelado com sucesso.", "sucesso");
+    await carregarAlunos();
+  } catch (erro) {
+    mostrarAlerta(erro.message, "erro");
+  }
+};
 
 function atualizarKpis() {
   $("#kpiTotal").textContent = alunos.length;
@@ -392,7 +520,7 @@ async function abrirNovoAluno() {
   const taxaLivre = $("#valor_taxa_matricula"); if (taxaLivre) { delete taxaLivre.dataset.inicializado; delete taxaLivre.dataset.editado; taxaLivre.value = "0,00"; }
   $("#alunoId").value = "";
   $("#status").value = "ativo";
-  $("#data_matricula").value = dataHojeISO();
+  $("#data_matricula").value = dataParaCampo(dataHojeISO());
   fotoBase64Atual = "";
   atualizarPreviewFoto("");
   renderizarHistorico([]);
@@ -405,11 +533,14 @@ async function abrirNovoAluno() {
 
 function abrirModal(t) {
   $("#modalTitulo").textContent = t;
+  document.body.classList.add("modal-aluno-open");
   $("#modalAluno").classList.remove("hidden");
   setTimeout(() => $("#nome").focus(), 50);
+  if (typeof atualizarWizardAlunoMobile === "function") atualizarWizardAlunoMobile();
 }
 
 function fecharModal() {
+  document.body.classList.remove("modal-aluno-open");
   $("#modalAluno").classList.add("hidden");
   $("#formAluno").reset();
   const taxaLivre = $("#valor_taxa_matricula"); if (taxaLivre) { delete taxaLivre.dataset.inicializado; delete taxaLivre.dataset.editado; taxaLivre.value = "0,00"; }
@@ -438,14 +569,14 @@ function preencherFormulario(a) {
   $("#nome").value = alunoNome(a);
   $("#cpf").value = formatarCpfVisual(alunoCpf(a));
   $("#rg").value = a.rg ?? "";
-  $("#data_nascimento").value = (a.data_nascimento ?? a.dataNascimento ?? "").slice(0, 10);
+  $("#data_nascimento").value = dataParaCampo(a.data_nascimento ?? a.dataNascimento ?? "");
   $("#sexo").value = a.sexo ?? "";
   $("#telefone").value = formatarTelefoneVisual(alunoTelefone(a));
   $("#whatsapp").value = formatarTelefoneVisual(a.whatsapp ?? "");
   $("#email").value = alunoEmail(a);
   $("#professor_responsavel").value = a.professor_responsavel ?? "";
   preencherSelectPlanos(alunoPlanoId(a) || alunoPlano(a));
-  $("#data_matricula").value = (a.data_matricula ?? "").slice(0, 10) || dataHojeISO();
+  $("#data_matricula").value = dataParaCampo((a.data_matricula ?? "").slice(0, 10) || dataHojeISO());
   $("#status").value = alunoStatus(a);
   $("#responsavel").value = a.responsavel ?? "";
   $("#contato_emergencia").value = a.contato_emergencia ?? a.contatoEmergencia ?? "";
@@ -466,13 +597,213 @@ function preencherFormulario(a) {
   atualizarPreviewFoto(fotoBase64Atual);
 }
 
+
+function extrairLancamentosFinanceiro(payload) {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.lancamentos)) return payload.lancamentos;
+  if (Array.isArray(payload?.data)) return payload.data;
+  if (Array.isArray(payload?.dados)) return payload.dados;
+  if (Array.isArray(payload?.itens)) return payload.itens;
+  if (Array.isArray(payload?.registros)) return payload.registros;
+  return [];
+}
+
+function statusFinanceiroAberto(item = {}) {
+  const st = normalizarTexto(item.status || item.situacao || "aberto");
+  return !["pago", "recebido", "quitado", "baixado", "cancelado", "estornado"].includes(st);
+}
+
+function pareceCobrancaRegularizacao(item = {}) {
+  const alvo = normalizarTexto([
+    item.descricao,
+    item.categoria,
+    item.origem,
+    item.recorrencia,
+    item.tipoCobranca,
+    item.observacao,
+    item.observacoes
+  ].join(" "));
+
+  return alvo.includes("matricula") ||
+    alvo.includes("matrícula") ||
+    alvo.includes("pre-matricula") ||
+    alvo.includes("pré-matrícula") ||
+    alvo.includes("entrada") ||
+    alvo.includes("adesao") ||
+    alvo.includes("adesão") ||
+    alvo.includes("reativacao") ||
+    alvo.includes("reativação") ||
+    item.ativarMatriculaAoReceber === true;
+}
+
+function idsFinanceirosDoAluno(aluno = {}) {
+  return [
+    aluno.financeiroInicialId,
+    aluno.financeiroId,
+    aluno.lancamentoFinanceiroId,
+    aluno.lancamentoId,
+    aluno.matriculaFinanceiroId,
+    aluno.recebimentoId
+  ].filter(Boolean).map(v => String(v));
+}
+
+function idsMensalidadeDoAluno(aluno = {}) {
+  return [
+    aluno.mensalidadeInicialId,
+    aluno.mensalidadeId,
+    aluno.mensalidadePendenteId
+  ].filter(Boolean).map(v => String(v));
+}
+
+async function localizarCobrancaRegularizacao(aluno = {}) {
+  const idsFinanceiros = idsFinanceirosDoAluno(aluno);
+  if (idsFinanceiros.length) return { financeiroId: idsFinanceiros[0] };
+
+  const idsMensalidades = idsMensalidadeDoAluno(aluno);
+  if (idsMensalidades.length) return { mensalidadeId: idsMensalidades[0] };
+
+  const nome = alunoNome(aluno);
+  const id = alunoId(aluno);
+  const busca = encodeURIComponent(nome || id);
+  const resp = await fetch(`${API_FINANCEIRO}?busca=${busca}`, { cache: "no-store" });
+  const payload = await safeJson(resp);
+
+  if (!resp.ok) {
+    throw new Error(payload.erro || payload.mensagem || `Erro HTTP ${resp.status}`);
+  }
+
+  const lista = extrairLancamentosFinanceiro(payload)
+    .filter(item => normalizarTexto(item.tipo || "receber") === "receber")
+    .filter(statusFinanceiroAberto)
+    .filter(item => {
+      const mesmoId = id && String(item.alunoId || item.aluno_id || "") === String(id);
+      const mesmoNome = nome && normalizarTexto([item.aluno, item.pessoa, item.alunoFornecedor, item.pessoaFornecedor].join(" ")).includes(normalizarTexto(nome));
+      return mesmoId || mesmoNome;
+    })
+    .sort((a, b) => {
+      const prioridadeA = pareceCobrancaRegularizacao(a) ? 1 : 0;
+      const prioridadeB = pareceCobrancaRegularizacao(b) ? 1 : 0;
+      if (prioridadeA !== prioridadeB) return prioridadeB - prioridadeA;
+      return String(a.vencimento || "").localeCompare(String(b.vencimento || ""));
+    });
+
+  const pendencia = lista[0];
+  if (!pendencia) return null;
+
+  return {
+    financeiroId: pendencia.id || pendencia.financeiroId || pendencia.lancamentoFinanceiroId || "",
+    mensalidadeId: pendencia.mensalidadeId || pendencia.mensalidade_id || "",
+    alunoId: id
+  };
+}
+
+window.regularizarPreMatricula = async function(id) {
+  if (!id) return mostrarAlerta("ID do aluno não encontrado.", "erro");
+
+  const aluno = alunos.find(x => String(alunoId(x)) === String(id));
+  if (!aluno) return mostrarAlerta("Aluno não encontrado.", "erro");
+
+  try {
+    mostrarAlerta(`Localizando cobrança pendente de ${alunoNome(aluno)}...`, "info");
+    const pendencia = await localizarCobrancaRegularizacao(aluno);
+
+    if (!pendencia?.financeiroId && !pendencia?.mensalidadeId) {
+      mostrarAlerta("Nenhuma cobrança pendente encontrada para regularizar. Abra a matrícula do aluno e confira o lançamento financeiro.", "erro");
+      return;
+    }
+
+    const params = new URLSearchParams();
+    if (pendencia.financeiroId) params.set("financeiroId", pendencia.financeiroId);
+    if (pendencia.mensalidadeId) params.set("mensalidadeId", pendencia.mensalidadeId);
+    params.set("alunoId", id);
+    params.set("receberAgora", "1");
+    params.set("origem", "regularizacao_pre_matricula");
+
+    location.href = `/pages/financeiro/index.html?${params.toString()}`;
+  } catch (erro) {
+    mostrarAlerta(erro.message || "Erro ao localizar pendência financeira.", "erro");
+  }
+};
+
+window.reativarAluno = async function(id) {
+  if (!id) return mostrarAlerta("ID do aluno não encontrado.", "erro");
+
+  const a = alunos.find(x => String(alunoId(x)) === String(id));
+  const nome = a ? alunoNome(a) : "este aluno";
+  const valorPadrao = parseMoeda(a?.valorMensal || a?.valorPlano || a?.valorMensalTotal || "0");
+  const informado = prompt(
+    `Valor para reativar ${nome}:`,
+    valorPadrao > 0 ? formatarMoeda(valorPadrao) : "0,00"
+  );
+
+  if (informado === null) return;
+
+  const valor = parseMoeda(informado);
+  if (!(valor > 0)) {
+    mostrarAlerta("Informe um valor maior que zero para abrir a cobrança de reativação.", "erro");
+    return;
+  }
+
+  try {
+    const resp = await fetch(`${API_ALUNOS}/${encodeURIComponent(id)}/reativar-cobranca`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        valor,
+        usuario: "operador",
+        motivo: "Reativação pelo cadastro de alunos com cobrança no caixa."
+      })
+    });
+    const payload = await safeJson(resp);
+
+    if (!resp.ok || payload.ok === false) {
+      throw new Error(payload.erro || payload.mensagem || `Erro HTTP ${resp.status}`);
+    }
+
+    const resultado = payload?.resultado || payload || {};
+    const financeiroId =
+      resultado?.financeiro?.id ||
+      resultado?.financeiroId ||
+      resultado?.lancamentoFinanceiroId ||
+      resultado?.mensalidade?.lancamentoFinanceiroId ||
+      resultado?.recebimento?.lancamentoFinanceiroId ||
+      "";
+    const mensalidadeId =
+      resultado?.mensalidade?.id ||
+      resultado?.mensalidadeId ||
+      resultado?.recebimento?.mensalidadeId ||
+      "";
+
+    const mensagem = payload.mensagem || "Cobrança de reativação criada. Baixe no Financeiro para ativar o aluno.";
+    mostrarAlerta(mensagem, "sucesso");
+
+    await carregarAlunos();
+
+    const params = new URLSearchParams();
+    if (financeiroId) params.set("financeiroId", financeiroId);
+    else if (mensalidadeId) params.set("mensalidadeId", mensalidadeId);
+    params.set("receberAgora", "1");
+    params.set("origem", "reativacao_aluno");
+
+    const url = `/pages/financeiro/index.html?${params.toString()}`;
+
+    if (confirm(`${mensagem}
+
+Abrir o Financeiro para escolher a forma de pagamento e confirmar o recebimento agora?`)) {
+      location.href = url;
+    }
+  } catch (erro) {
+    mostrarAlerta(erro.message, "erro");
+  }
+};
+
 window.excluirAluno = async function(id) {
   if (!id) return mostrarAlerta("ID do aluno não encontrado.", "erro");
 
   const a = alunos.find(x => String(alunoId(x)) === String(id));
   const nome = a ? alunoNome(a) : "este aluno";
 
-  if (!confirm(`Confirma excluir ${nome}?`)) return;
+  if (!confirm(`Confirma excluir definitivamente ${nome}? Para apenas desativar, use o botão Cancelar.`)) return;
 
   try {
     const resp = await fetch(`${API_ALUNOS}/${encodeURIComponent(id)}`, { method: "DELETE" });
@@ -483,7 +814,7 @@ window.excluirAluno = async function(id) {
     }
 
     registrarHistoricoLocal(id, "exclusao", `Aluno excluído: ${nome}`);
-    mostrarAlerta("Aluno excluído com sucesso.", "sucesso");
+    mostrarAlerta(payload.mensagem || "Aluno excluído com sucesso.", "sucesso");
     await carregarAlunos();
   } catch (erro) {
     mostrarAlerta(erro.message, "erro");
@@ -620,6 +951,9 @@ function coletarDadosFormulario() {
   };
 
   ids.forEach(id => dados[id] = $(`#${id}`).value.trim());
+  dados.data_nascimento = dataParaISO(dados.data_nascimento);
+  dados.data_matricula = dataParaISO(dados.data_matricula) || dataHojeISO();
+  if (!dados.data_nascimento) delete dados.data_nascimento;
 
   const planoSelecionado = planosCadastrados.find((p) => planoId(p) === dados.plano);
   if (planoSelecionado) {
@@ -662,6 +996,7 @@ function setSalvarLoading(ativo) {
 function trocarTab(nome) {
   document.querySelectorAll(".tab").forEach(btn => btn.classList.toggle("active", btn.dataset.tab === nome));
   document.querySelectorAll(".tab-panel").forEach(panel => panel.classList.toggle("active", panel.id === `tab-${nome}`));
+  atualizarWizardAlunoMobile();
 }
 
 function obterHistorico(id) {
@@ -842,7 +1177,6 @@ function abrirIntegracao(destino) {
   if (!id) return mostrarAlerta("Selecione ou salve um aluno antes de abrir integrações.", "erro");
 
   const rotas = {
-    treinos: "/pages/treinos/index.html",
     avaliacoes: "/pages/avaliacoes/index.html",
     mensalidades: "/pages/mensalidades/index.html",
     checkin: "/pages/checkin/index.html"
@@ -965,7 +1299,74 @@ function escapeAttr(v) {
   return escapeHtml(v).replaceAll("`", "&#096;");
 }
 
+
+// Fusion ERP 2.9.3 — Mobile First Alunos
+const ALUNO_WIZARD_STEPS = ["cadastro", "medico", "historico", "matriculas", "integracoes"];
+
+function passoAtualAlunoMobile() {
+  const ativo = document.querySelector(".tab.active")?.dataset?.tab || "cadastro";
+  return Math.max(0, ALUNO_WIZARD_STEPS.indexOf(ativo));
+}
+
+function moverPassoAlunoMobile(delta) {
+  const atual = passoAtualAlunoMobile();
+  const proximo = Math.max(0, Math.min(ALUNO_WIZARD_STEPS.length - 1, atual + delta));
+  trocarTab(ALUNO_WIZARD_STEPS[proximo]);
+}
+
+function atualizarWizardAlunoMobile() {
+  const atual = passoAtualAlunoMobile();
+  const anterior = document.getElementById("btnAlunoStepAnterior");
+  const proximo = document.getElementById("btnAlunoStepProximo");
+  const salvar = document.getElementById("btnSalvarAluno");
+  const titulo = document.getElementById("modalTitulo");
+  if (anterior) anterior.disabled = atual <= 0;
+  if (proximo) proximo.textContent = atual >= ALUNO_WIZARD_STEPS.length - 1 ? "Revisar" : "Próximo";
+  if (salvar) salvar.classList.toggle("salvar-final", atual >= ALUNO_WIZARD_STEPS.length - 1);
+  if (titulo) titulo.dataset.step = `${atual + 1} de ${ALUNO_WIZARD_STEPS.length}`;
+}
+
+function prepararAlunosMobile() {
+  document.body.classList.add("alunos-mobile-ready");
+
+  const actions = document.querySelector(".modal-actions");
+  if (actions && !document.getElementById("btnAlunoStepAnterior")) {
+    const anterior = document.createElement("button");
+    anterior.type = "button";
+    anterior.id = "btnAlunoStepAnterior";
+    anterior.className = "btn-light aluno-step-btn";
+    anterior.textContent = "Anterior";
+    anterior.addEventListener("click", () => moverPassoAlunoMobile(-1));
+
+    const proximo = document.createElement("button");
+    proximo.type = "button";
+    proximo.id = "btnAlunoStepProximo";
+    proximo.className = "fusion-button aluno-step-btn aluno-step-next";
+    proximo.textContent = "Próximo";
+    proximo.addEventListener("click", () => moverPassoAlunoMobile(1));
+
+    const cancelar = document.getElementById("btnCancelar");
+    actions.insertBefore(anterior, cancelar || actions.firstChild);
+    actions.insertBefore(proximo, document.getElementById("btnSalvarAluno"));
+  }
+
+  document.querySelectorAll("[data-alunos-action]").forEach(btn => {
+    if (btn.dataset.bound) return;
+    btn.dataset.bound = "1";
+    btn.addEventListener("click", () => {
+      const act = btn.dataset.alunosAction;
+      if (act === "home") location.href = "/pages/dashboard/index.html";
+      if (act === "buscar") document.getElementById("buscaAluno")?.focus();
+      if (act === "novo") abrirNovoAluno();
+      if (act === "topo") window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  });
+
+  atualizarWizardAlunoMobile();
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
+  prepararAlunosMobile();
   $("#btnNovoAluno").addEventListener("click", abrirNovoAluno);
   $("#btnAtualizar").addEventListener("click", async () => { await carregarPlanos(); await carregarAlunos(); });
   $("#btnFecharModal").addEventListener("click", fecharModal);
@@ -978,7 +1379,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   $("#btnAddHistorico").addEventListener("click", adicionarHistoricoManual);
   $("#btnLimparHistorico").addEventListener("click", limparHistoricoLocal);
 
-  $("#btnAbrirTreinos").addEventListener("click", () => abrirIntegracao("treinos"));
   $("#btnAbrirAvaliacoes").addEventListener("click", () => abrirIntegracao("avaliacoes"));
   $("#btnAbrirMensalidades").addEventListener("click", () => abrirIntegracao("mensalidades"));
   $("#btnAbrirCheckin").addEventListener("click", () => abrirIntegracao("checkin"));

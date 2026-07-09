@@ -16,7 +16,24 @@ function nomeProfessor(p = {}) { return String(p.nome || p.professor || p.name |
 function contemProfessor(item = {}, professor) {
   const id = idProfessor(professor);
   const nome = normalizar(nomeProfessor(professor));
-  return String(item.professorId || item.professor_id || '') === id || normalizar(item.professor) === nome || normalizar(item.professorResponsavel) === nome;
+  const cref = normalizar(professor?.cref);
+
+  const ids = [
+    item.professorId, item.professor_id, item.idProfessor, item.professorResponsavelId,
+    item.professor_responsavel_id, item.professor_id_responsavel, item.professorResponsavel,
+    item.professor_responsavel, item.treinadorId, item.avaliadorId
+  ].filter(v => v !== undefined && v !== null).map(v => String(v));
+  if (id && ids.some(v => v === id)) return true;
+
+  const nomes = [
+    item.professor, item.professorNome, item.professor_nome, item.nomeProfessor,
+    item.professorResponsavel, item.professor_responsavel, item.professor_responsavel_nome,
+    item.avaliador, item.avaliadorNome, item.treinador, item.treinadorNome
+  ].map(normalizar).filter(Boolean);
+  if (nome && nomes.some(v => v === nome || v.includes(nome) || nome.includes(v))) return true;
+  if (cref && nomes.some(v => v.includes(cref))) return true;
+
+  return false;
 }
 
 export async function listar(filtros = {}) {
@@ -47,21 +64,53 @@ export async function excluir(id) { return await excluirProfessor(id); }
 export async function prontuario(id) {
   const professor = await buscarProfessorPorId(id);
   if (!professor) return null;
-  const [agenda, turmas, alunos, avaliacoes, treinos] = await Promise.all([
-    lerJson('agenda.json', []), lerJson('turmas.json', []), lerJson('alunos.json', []), lerJson('avaliacoes.json', []), lerJson('treinos.json', [])
+
+  const [agenda, turmas, alunos, avaliacoes, treinosPrescritos, treinosLegado] = await Promise.all([
+    lerJson('agenda.json', []),
+    lerJson('turmas.json', []),
+    lerJson('alunos.json', []),
+    lerJson('avaliacoes.json', []),
+    lerJson('treinos_prescritos.json', []),
+    lerJson('treinos.json', [])
   ]);
+
+  const treinosBase = [
+    ...(Array.isArray(treinosPrescritos) ? treinosPrescritos : []),
+    ...(Array.isArray(treinosLegado) ? treinosLegado : [])
+  ];
+
   const turmasVinculadas = Array.isArray(turmas) ? turmas.filter(t => contemProfessor(t, professor)) : [];
   const agendaVinculada = Array.isArray(agenda) ? agenda.filter(a => contemProfessor(a, professor)) : [];
   const alunosVinculados = Array.isArray(alunos) ? alunos.filter(a => contemProfessor(a, professor)) : [];
   const avaliacoesVinculadas = Array.isArray(avaliacoes) ? avaliacoes.filter(a => contemProfessor(a, professor)) : [];
-  const treinosVinculados = Array.isArray(treinos) ? treinos.filter(t => contemProfessor(t, professor)) : [];
+  const treinosVinculados = treinosBase.filter(t => contemProfessor(t, professor));
+
   const linhaTempo = [
-    ...agendaVinculada.map(a => ({ tipo:'agenda', data:a.data || a.criadoEm || '', descricao:a.titulo || a.turma || 'Agenda' })),
-    ...turmasVinculadas.map(t => ({ tipo:'turma', data:t.criadoEm || '', descricao:t.nome || t.turma || 'Turma vinculada' })),
-    ...avaliacoesVinculadas.map(a => ({ tipo:'avaliacao', data:a.data || a.criadoEm || '', descricao:`Avaliação ${a.aluno || a.alunoNome || ''}`.trim() })),
-    ...treinosVinculados.map(t => ({ tipo:'treino', data:t.criado_em || t.criadoEm || '', descricao:t.nome || 'Treino' }))
-  ].sort((a,b) => String(b.data).localeCompare(String(a.data))).slice(0, 50);
-  return { ok:true, professor, resumo:{ turmas:turmasVinculadas.length, agenda:agendaVinculada.length, alunos:alunosVinculados.length, avaliacoes:avaliacoesVinculadas.length, treinos:treinosVinculados.length }, turmas:turmasVinculadas, agenda:agendaVinculada, alunos:alunosVinculados, avaliacoes:avaliacoesVinculadas, treinos:treinosVinculados, linhaTempo };
+    ...agendaVinculada.map(a => ({ tipo:'agenda', data:a.data || a.inicio || a.criadoEm || '', descricao:a.titulo || a.turma || a.nome || 'Agenda vinculada' })),
+    ...turmasVinculadas.map(t => ({ tipo:'turma', data:t.criadoEm || t.atualizadoEm || '', descricao:t.nome || t.turma || 'Turma vinculada' })),
+    ...avaliacoesVinculadas.map(a => ({ tipo:'avaliacao', data:a.data || a.criadoEm || a.criado_em || '', descricao:`Avaliação ${a.aluno || a.alunoNome || ''}`.trim() })),
+    ...treinosVinculados.map(t => ({ tipo:'treino', data:t.dataPrescricao || t.criadoEm || t.criado_em || '', descricao:`Treino ${t.alunoNome || t.aluno || ''}`.trim() || t.nome || 'Treino prescrito' }))
+  ].sort((a,b) => String(b.data).localeCompare(String(a.data))).slice(0, 80);
+
+  return {
+    ok:true,
+    professor,
+    resumo:{
+      turmas: turmasVinculadas.length,
+      agenda: agendaVinculada.length,
+      alunos: alunosVinculados.length,
+      avaliacoes: avaliacoesVinculadas.length,
+      treinos: treinosVinculados.length,
+      documentos: Array.isArray(professor.documentos) ? professor.documentos.length : 0
+    },
+    turmas: turmasVinculadas,
+    agenda: agendaVinculada,
+    alunos: alunosVinculados,
+    avaliacoes: avaliacoesVinculadas,
+    treinos: treinosVinculados,
+    documentos: Array.isArray(professor.documentos) ? professor.documentos : [],
+    linhaTempo
+  };
 }
 
 

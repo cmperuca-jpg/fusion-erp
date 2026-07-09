@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Painel Administrativo - Fusion ERP</title>
+  <link rel="stylesheet" href="/assets/css/fusion-app.css">
+  <link rel="stylesheet" href="./style.css">
+  <script src="/assets/js/fusion-auth.js"></script>
+  <script>FusionAuth.proteger(["admin","administrador"]);</script>
+</head>
+<body>
+  <main class="main">
+    <section class="admin-grid">
+      <article class="fusion-card">
+        <div class="fusion-kpi-label">Usuários</div>
+        <div class="fusion-kpi-value" id="kpiUsuarios">0</div>
+        <small>Contas cadastradas</small>
+      </article>
+      <article class="fusion-card">
+        <div class="fusion-kpi-label">Ativos</div>
+        <div class="fusion-kpi-value" id="kpiAtivos">0</div>
+        <small>Podem acessar o sistema</small>
+      </article>
+      <article class="fusion-card">
+        <div class="fusion-kpi-label">Inativos</div>
+        <div class="fusion-kpi-value" id="kpiInativos">0</div>
+        <small>Acesso bloqueado</small>
+      </article>
+    </section>
+
+    <section class="fusion-card admin-form">
+      <h2 id="tituloForm">Novo usuário</h2>
+      <form id="formUsuario">
+        <input type="hidden" id="usuarioId">
+        <div class="form-grid">
+          <label>Nome
+            <input id="nome" required placeholder="Nome do usuário">
+          </label>
+          <label>E-mail
+            <input id="email" type="email" required placeholder="email@academia.com">
+          </label>
+          <label>Senha
+            <input id="senha" type="password" placeholder="Obrigatória no cadastro">
+          </label>
+          <label>Perfil
+            <select id="perfil">
+              <option>Administrador</option>
+              <option>Gerente</option>
+              <option>Recepcao</option>
+              <option>Comercial</option>
+              <option>Professor</option>
+              <option>Aluno</option>
+            </select>
+          </label>
+          <label>Status
+            <select id="status">
+              <option value="ativo">Ativo</option>
+              <option value="inativo">Inativo</option>
+            </select>
+          </label>
+        </div>
+
+        <h3>Permissões</h3>
+        <div id="permissoes" class="permissoes"></div>
+
+        <div class="acoes-form">
+          <button type="submit">Salvar usuário</button>
+          <button type="button" class="btn-light" id="btnLimpar">Limpar</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="fusion-card">
+      <div class="table-top">
+        <h2>Usuários do sistema</h2>
+        <button type="button" class="btn-light" id="btnAtualizar">Atualizar</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Nome</th><th>E-mail</th><th>Perfil</th><th>Status</th><th>Permissões</th><th>Ações</th></tr>
+          </thead>
+          <tbody id="tabelaUsuarios"><tr><td colspan="6">Carregando...</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+  <script src="/assets/js/fusion-layout.js"></script>
+  <script src="./index.js"></script>
+  <script>carregarLayout("Painel Administrativo");</script>
+</body>
+</html>

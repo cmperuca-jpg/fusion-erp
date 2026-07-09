@@ -12,6 +12,16 @@
   <style>
     .matricula-form-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:18px}.matricula-form-grid label{display:grid;gap:6px;font-weight:700;color:#334155;font-size:13px}.matricula-form-grid input,.matricula-form-grid select,.matricula-form-grid textarea{width:100%;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:10px;padding:11px;font:inherit;background:#fff}.matricula-form-grid .full{grid-column:1/-1}.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}.tab{border:0;border-radius:8px;padding:10px 18px;font-weight:700;cursor:pointer;background:#e5e7eb;color:#0f172a}.tab.active{background:#ff6600;color:#fff}.tab-content{display:none}.tab-content.active{display:block}.form-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}.form-actions button{border:0;border-radius:10px;padding:11px 18px;font-weight:700;cursor:pointer}.form-actions button[type="submit"]{background:#ff6600;color:#fff}.form-actions .secondary{background:#1e293b;color:#fff}.resumo-plano{background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:14px;margin-top:14px;color:#334155;line-height:1.55}.alerta-matricula{display:none;margin-top:14px;border-radius:10px;padding:12px;font-weight:700}.alerta-matricula.ok{display:block;background:#dcfce7;color:#166534;border:1px solid #bbf7d0}.alerta-matricula.erro{display:block;background:#fee2e2;color:#991b1b;border:1px solid #fecaca}.hint{color:#64748b;font-size:12px;font-weight:400}.matricula-existente{display:none;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;border-radius:12px;padding:14px;margin-top:14px;line-height:1.5}.matricula-existente.ativo{display:block}.matricula-existente strong{color:#7c2d12}.matricula-existente .acoes-existente{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.matricula-existente button{border:0;border-radius:9px;padding:9px 13px;font-weight:700;cursor:pointer}.matricula-existente .primary{background:#ff6600;color:#fff}.matricula-existente .dark{background:#1e293b;color:#fff}.hint{color:#64748b;font-size:12px;font-weight:400}@media(max-width:900px){.matricula-form-grid{grid-template-columns:1fr}.form-actions{justify-content:stretch}.form-actions button{width:100%}}
   </style>
+
+<link rel="manifest" href="/manifest-sistema.webmanifest">
+<meta name="theme-color" content="#ff6600">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="/assets/pwa/icons/fusion-icon-180.png">
+<link rel="stylesheet" href="/assets/pwa/fusion-pwa-mobile.css">
+  <link rel="stylesheet" href="/assets/css/fusion-mobile-final.css">
+  <link rel="stylesheet" href="/assets/css/fusion-no-sidebar.css">
 </head>
 <body>
 <main class="main">
@@ -128,5 +138,9 @@
 </main>
 <script src="/js/matriculas/cadastro.js"></script>
 <script src="/assets/js/fusion-layout.js"></script>
+
+<script src="/assets/pwa/fusion-pwa-install.js" defer></script>
+  <script src="/assets/js/fusion-mobile-final.js" defer></script>
+  <script src="/assets/js/fusion-no-sidebar.js" defer></script>
 </body>
 </html>

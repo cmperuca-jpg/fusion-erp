@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Matrícula Online - Fusion ERP</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <main class="page">
+    <section class="card">
+      <div class="topo">
+        <div>
+          <h1>Matrícula online</h1>
+          <p>Preencha todos os dados. A academia conferirá sua solicitação antes de liberar o pagamento e o acesso.</p>
+        </div>
+        <span class="tag">Aguardando aprovação</span>
+      </div>
+
+      <div id="alerta" class="alerta hidden"></div>
+
+      <form id="formMatricula" autocomplete="on">
+        <h2>Dados pessoais</h2>
+        <label for="foto">Foto obrigatória *</label>
+        <div class="foto-area">
+          <div id="fotoPreview" class="foto-preview">Sem foto</div>
+          <div>
+            <input id="foto" type="file" accept="image/*" capture="user" required>
+            <small>No celular, use a câmera frontal. A foto será enviada junto com a solicitação.</small>
+          </div>
+        </div>
+
+        <label for="nome">Nome completo *</label>
+        <input id="nome" required minlength="3" placeholder="Nome e sobrenome">
+
+        <div class="grid">
+          <div>
+            <label for="cpf">CPF *</label>
+            <input id="cpf" required inputmode="numeric" maxlength="14" placeholder="000.000.000-00">
+            <small id="cpfAjuda">O CPF será verificado para impedir cadastro duplicado.</small>
+          </div>
+          <div>
+            <label for="dataNascimento">Data de nascimento *</label>
+            <input id="dataNascimento" required inputmode="numeric" maxlength="10" placeholder="DD/MM/AAAA">
+          </div>
+        </div>
+
+        <div class="grid">
+          <div><label for="sexo">Sexo</label><select id="sexo"><option value="">Não informar</option><option>Feminino</option><option>Masculino</option><option>Outro</option></select></div>
+          <div><label for="rg">RG</label><input id="rg" placeholder="Opcional"></div>
+        </div>
+
+        <div class="grid">
+          <div><label for="telefone">WhatsApp / telefone *</label><input id="telefone" required inputmode="tel" maxlength="15" placeholder="(00) 00000-0000"></div>
+          <div><label for="email">E-mail</label><input id="email" type="email" placeholder="email@exemplo.com"></div>
+        </div>
+
+        <h2>Endereço</h2>
+        <div class="grid cep-grid">
+          <div><label for="cep">CEP *</label><input id="cep" required inputmode="numeric" maxlength="9" placeholder="00000-000"><small id="cepAjuda">Ao completar o CEP, rua, bairro, cidade e estado serão preenchidos automaticamente quando disponível.</small></div>
+          <div><label for="numero">Número *</label><input id="numero" required placeholder="Nº"></div>
+        </div>
+        <label for="endereco">Endereço *</label>
+        <input id="endereco" required placeholder="Rua, avenida, travessa">
+        <div class="grid">
+          <div><label for="bairro">Bairro *</label><input id="bairro" required></div>
+          <div><label for="complemento">Complemento</label><input id="complemento" placeholder="Apto, bloco, referência"></div>
+        </div>
+        <div class="grid">
+          <div><label for="cidade">Cidade *</label><input id="cidade" required></div>
+          <div><label for="estado">Estado *</label><input id="estado" required maxlength="2" placeholder="AL"></div>
+        </div>
+
+        <h2>Documentos</h2>
+        <p class="muted">Anexe os documentos pela câmera do celular ou selecione arquivos já salvos.</p>
+        <div class="grid docs-grid">
+          <div class="doc-box"><label for="rgFrente">RG frente *</label><input id="rgFrente" type="file" accept="image/*,.pdf" capture="environment" required><small id="rgFrentePreview">Nenhum arquivo.</small></div>
+          <div class="doc-box"><label for="rgVerso">RG verso</label><input id="rgVerso" type="file" accept="image/*,.pdf" capture="environment"><small id="rgVersoPreview">Opcional.</small></div>
+          <div class="doc-box"><label for="comprovanteResidencia">Comprovante de residência *</label><input id="comprovanteResidencia" type="file" accept="image/*,.pdf" capture="environment" required><small id="comprovanteResidenciaPreview">Nenhum arquivo.</small></div>
+          <div class="doc-box"><label for="atestadoMedico">Atestado médico</label><input id="atestadoMedico" type="file" accept="image/*,.pdf" capture="environment"><small id="atestadoMedicoPreview">Opcional, quando exigido.</small></div>
+        </div>
+
+        <h2>Plano e solicitações</h2>
+        <label for="planoId">Plano desejado *</label>
+        <select id="planoId" required><option value="">Carregando planos...</option></select>
+
+        <div class="grid">
+          <div><label for="horarioPreferido">Horário preferido</label><input id="horarioPreferido" placeholder="Ex.: manhã, noite, 18h"></div>
+          <div><label for="modalidade">Modalidade/serviço desejado</label><input id="modalidade" placeholder="Ex.: musculação, natação, funcional"></div>
+        </div>
+
+        <label for="objetivo">Objetivo</label>
+        <input id="objetivo" placeholder="Ex.: hipertrofia, emagrecimento, saúde">
+
+        <label for="restricoes">Restrições médicas ou observações de saúde</label>
+        <textarea id="restricoes" rows="3" placeholder="Informe lesões, alergias, limitações ou medicamentos importantes"></textarea>
+
+        <label for="observacao">Solicitações ou observações</label>
+        <textarea id="observacao" rows="3" placeholder="Dúvidas, horários, serviços extras, professor desejado"></textarea>
+
+        <h2>Assinatura digital</h2>
+        <p class="muted">Assine com o dedo no celular ou com o mouse no computador.</p>
+        <div class="assinatura-wrap">
+          <canvas id="assinaturaCanvas" width="700" height="210" aria-label="Campo de assinatura"></canvas>
+          <button type="button" id="btnLimparAssinatura" class="btn-secundario">Limpar assinatura</button>
+        </div>
+
+        <div class="termos">
+          <label><input id="aceiteTermos" type="checkbox" required> Declaro que as informações são verdadeiras e aceito ser contatado pela academia.</label>
+          <label><input id="aceiteImagem" type="checkbox" required> Autorizo o uso da foto enviada para identificação interna no sistema.</label>
+          <label><input id="aceiteLgpd" type="checkbox" required> Autorizo o tratamento dos meus dados para fins de matrícula, cobrança e controle de acesso.</label>
+          <label><input id="aceiteContrato" type="checkbox" required> Declaro ciência de que a matrícula só será efetivada após aprovação e pagamento na academia.</label>
+        </div>
+
+        <button id="btnEnviar" type="submit">Enviar solicitação</button>
+      </form>
+    </section>
+  </main>
+  <script src="./index.js"></script>
+</body>
+</html>

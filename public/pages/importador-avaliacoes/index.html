@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fusion ERP - Importador de Avaliações</title>
+  <link rel="stylesheet" href="/assets/css/fusion-app.css">
+  <link rel="stylesheet" href="/assets/css/fusion-menu-global.css">
+  <script src="/assets/js/fusion-auth.js"></script>
+  <script>FusionAuth.proteger();</script>
+  <link rel="manifest" href="/manifest-sistema.webmanifest">
+  <meta name="theme-color" content="#ff6600">
+  <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="/assets/css/fusion-no-sidebar.css">
+</head>
+<body>
+<div class="fusion-shell">
+  <main class="fusion-main">
+    <header class="fusion-topbar">
+      <div class="fusion-title">Importador de Avaliações Access</div>
+      <div><span data-fusion-user></span> <button onclick="FusionAuth.sair()">Sair</button></div>
+    </header>
+
+    <section class="fusion-content importador-avaliacoes">
+      <div class="fusion-card hero">
+        <h2>Migração de avaliações físicas</h2>
+        <p>Selecione os arquivos TXT exportados do Access. O importador cruza as avaliações pelo <strong>id_legado</strong> do aluno e grava em <code>data/avaliacoes.json</code>.</p>
+        <label class="campo-arquivo">
+          <span>Arquivos de avaliação do Access</span>
+          <input id="arquivos" type="file" multiple accept=".txt,text/plain">
+        </label>
+        <div class="dica">
+          Prioritário: <strong>Avaliacao.txt</strong>. Recomendado: Anamnese, PAR-Q, Composição, Perímetros, Bioimpedância, Risco, Postural, Cardiorrespiratória e Neuromotora.
+        </div>
+        <div class="acoes">
+          <button id="btnAnalisar" type="button">Analisar avaliações</button>
+          <button id="btnSimular" type="button">Simular importação</button>
+          <button id="btnImportar" type="button">Importar localmente</button>
+          <button id="btnAnalisarServidor" type="button">Analisar arquivos do servidor</button>
+          <button id="btnImportarServidor" type="button">Importar arquivos do servidor</button>
+        </div>
+        <div id="status" class="status">Selecione os TXT ou use os arquivos em data/importacao/avaliacoes-access/.</div>
+      </div>
+
+      <div class="fusion-grid resumo-grid">
+        <div class="fusion-card"><div class="fusion-kpi-label">Avaliações</div><div id="kpiAvaliacoes" class="fusion-kpi-value">0</div></div>
+        <div class="fusion-card"><div class="fusion-kpi-label">Importáveis</div><div id="kpiImportaveis" class="fusion-kpi-value">0</div></div>
+        <div class="fusion-card"><div class="fusion-kpi-label">Sem aluno</div><div id="kpiSemAluno" class="fusion-kpi-value">0</div></div>
+        <div class="fusion-card"><div class="fusion-kpi-label">Duplicadas</div><div id="kpiDuplicadas" class="fusion-kpi-value">0</div></div>
+      </div>
+
+      <div class="fusion-card">
+        <h2>Prévia</h2>
+        <div class="tabela-wrap">
+          <table>
+            <thead><tr><th>Aluno</th><th>ID legado</th><th>Data</th><th>Peso</th><th>Altura</th><th>IMC</th><th>Objetivo</th></tr></thead>
+            <tbody id="preview"><tr><td colspan="7">Nenhuma análise executada.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="fusion-card">
+        <h2>Relatório</h2>
+        <pre id="relatorio">Aguardando análise.</pre>
+      </div>
+    </section>
+  </main>
+</div>
+<script src="./index.js"></script>
+<script src="/assets/js/fusion-menu-global.js"></script>
+<script src="/assets/js/fusion-layout.js"></script>
+  <script src="/assets/js/fusion-no-sidebar.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fusion ERP - Importador Access</title>
+  <link rel="stylesheet" href="/assets/css/fusion-app.css">
+  <link rel="stylesheet" href="/assets/css/fusion-menu-global.css">
+  <script src="/assets/js/fusion-auth.js"></script>
+  <script>FusionAuth.proteger();</script>
+  <meta name="fusion-existing-pages" content="agenda,alunos,avaliacoes,biblioteca-inteligente,bi,bi-academia,bi-academia-operacional,bi-financeiro,caixa,checkin,configuracoes,dashboard,estoque,exercicios,financeiro,importador-access,login,matriculas,mensalidades,modalidades,modelos-treino,natacao-professor,natacao-aluno,pagamentos,planos,presencas,professores,recebimentos,relatorios-caixa,treinos,turmas">
+  <link rel="manifest" href="/manifest-sistema.webmanifest">
+  <meta name="theme-color" content="#ff6600">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="/assets/pwa/icons/fusion-icon-180.png">
+  <link rel="stylesheet" href="/assets/pwa/fusion-pwa-mobile.css">
+  <link rel="stylesheet" href="/assets/css/fusion-mobile-final.css">
+  <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="/assets/css/fusion-no-sidebar.css">
+</head>
+<body>
+<div class="fusion-shell">
+  <main class="fusion-main">
+    <header class="fusion-topbar">
+      <div class="fusion-title">Importador Access</div>
+      <div><span data-fusion-user></span> <button onclick="FusionAuth.sair()">Sair</button></div>
+    </header>
+
+    <section class="fusion-content importador-access">
+      <div class="fusion-card">
+        <h2>Migração de alunos do Access</h2>
+        <p>Use o arquivo exportado da tabela <strong>Alunos</strong> em TXT/CSV delimitado por ponto e vírgula. Serão importados somente nome, nascimento, celular e CPF quando existir. Todos entram como ativos, com matrícula promocional paga de R$ 0,01.</p>
+        <label class="campo-arquivo">
+          <span>Arquivo Alunos.txt ou Alunos.csv</span>
+          <input id="arquivo" type="file" accept=".txt,.csv,text/plain,text/csv">
+        </label>
+        <div class="acoes">
+          <button id="btnAnalisar" type="button">Analisar</button>
+          <button id="btnSimular" type="button">Simular importação</button>
+          <button id="btnLocal" type="button">Importar para ERP local</button>
+          <button id="btnSupabase" type="button">Importar para Supabase</button>
+        </div>
+        <div id="status" class="status">Selecione o arquivo exportado do Access.</div>
+      </div>
+
+      <div class="fusion-grid resumo-grid">
+        <div class="fusion-card"><div class="fusion-kpi-label">Linhas</div><div id="kpiLinhas" class="fusion-kpi-value">0</div></div>
+        <div class="fusion-card"><div class="fusion-kpi-label">Normalizados</div><div id="kpiNormalizados" class="fusion-kpi-value">0</div></div>
+        <div class="fusion-card"><div class="fusion-kpi-label">Duplicados</div><div id="kpiDuplicados" class="fusion-kpi-value">0</div></div>
+        <div class="fusion-card"><div class="fusion-kpi-label">Importáveis</div><div id="kpiImportaveis" class="fusion-kpi-value">0</div></div>
+      </div>
+
+      <div class="fusion-card">
+        <h2>Prévia dos alunos</h2>
+        <div class="tabela-wrap">
+          <table>
+            <thead><tr><th>Nome</th><th>CPF</th><th>Celular</th><th>Nascimento</th><th>Matrícula</th><th>Status</th></tr></thead>
+            <tbody id="preview"><tr><td colspan="6">Nenhum arquivo analisado.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="fusion-card">
+        <h2>Relatório</h2>
+        <pre id="relatorio">Aguardando análise.</pre>
+      </div>
+    </section>
+  </main>
+</div>
+<script src="./index.js"></script>
+<script src="/assets/js/fusion-menu-global.js"></script>
+<script src="/assets/js/fusion-layout.js"></script>
+<script src="/assets/pwa/fusion-pwa-install.js" defer></script>
+  <script src="/assets/js/fusion-no-sidebar.js" defer></script>
+</body>
+</html>

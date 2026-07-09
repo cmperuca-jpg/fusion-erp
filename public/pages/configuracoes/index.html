@@ -9,6 +9,16 @@
   <script src="/assets/js/fusion-auth.js"></script>
   <script>FusionAuth.proteger();</script>
   <meta name="fusion-existing-pages" content="agenda,alunos,avaliacoes,bi,bi-academia,bi-academia-operacional,bi-financeiro,caixa,checkin,configuracoes,dashboard,estoque,exercicios,financeiro,login,matriculas,mensalidades,modalidades,modelos-treino,pagamentos,planos,presencas,professores,recebimentos,relatorios-caixa,treinos,turmas">
+
+<link rel="manifest" href="/manifest-sistema.webmanifest">
+<meta name="theme-color" content="#ff6600">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="/assets/pwa/icons/fusion-icon-180.png">
+<link rel="stylesheet" href="/assets/pwa/fusion-pwa-mobile.css">
+  <link rel="stylesheet" href="/assets/css/fusion-mobile-final.css">
+  <link rel="stylesheet" href="/assets/css/fusion-no-sidebar.css">
 </head>
 <body>
   <div class="fusion-shell">
@@ -17,10 +27,37 @@
         <div class="fusion-title">Configurações</div>
         <div><span data-fusion-user></span> <button onclick="FusionAuth.sair()">Sair</button></div>
       </header>
-      <section class="fusion-content"><div class="fusion-card"><h2>Configurações</h2><p>Área reservada para usuários, permissões, parâmetros do sistema e dados da academia.</p></div></section>
+      <section class="fusion-content">
+        <div class="fusion-card">
+          <h2>Configurações</h2>
+          <p>Área reservada para usuários, permissões, parâmetros do sistema e dados da academia.</p>
+        </div>
+
+        <div class="fusion-grid">
+          <a class="fusion-card" href="/pages/migracao-dados/index.html" style="text-decoration:none;color:inherit;display:block">
+            <h2>Migração de Dados</h2>
+            <p>Centro fixo para importação, validação e manutenção dos dados migrados do Access.</p>
+          </a>
+          <a class="fusion-card" href="/pages/importador-access/index.html" style="text-decoration:none;color:inherit;display:block">
+            <h2>Importar Alunos</h2>
+            <p>Migrar alunos do Access para o Fusion ERP com regras de ativos, inativos, matrícula e financeiro.</p>
+          </a>
+          <a class="fusion-card" href="/pages/importador-fotos/index.html" style="text-decoration:none;color:inherit;display:block">
+            <h2>Importar Fotos</h2>
+            <p>Vincular Fotos.txt e Fotos.zip aos alunos importados pelo ID legado do Access.</p>
+          </a>
+          <a class="fusion-card" href="/pages/importador-avaliacoes/index.html" style="text-decoration:none;color:inherit;display:block">
+            <h2>Importar Avaliações</h2>
+            <p>Importar avaliações físicas do Access com diagnóstico, RCQ recalculado e proteção contra duplicidade.</p>
+          </a>
+        </div>
+      </section>
     </main>
   </div>
 <script src="/assets/js/fusion-menu-global.js"></script>
     <script src="/assets/js/fusion-layout.js"></script>
+
+<script src="/assets/pwa/fusion-pwa-install.js" defer></script>
+  <script src="/assets/js/fusion-no-sidebar.js" defer></script>
 </body>
 </html>

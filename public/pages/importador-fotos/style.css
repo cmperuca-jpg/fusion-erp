@@ -1,0 +1,67 @@
+.importador-fotos .grid-arquivos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin: 16px 0;
+}
+.importador-fotos .campo-arquivo {
+  display: grid;
+  gap: 8px;
+  font-weight: 700;
+}
+.importador-fotos input[type="file"] {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid rgba(0,0,0,.14);
+  border-radius: 12px;
+  background: #fff;
+}
+.importador-fotos .acoes {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 12px 0;
+}
+.importador-fotos .acoes button {
+  min-height: 42px;
+}
+.importador-fotos .status {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(0,0,0,.05);
+}
+.importador-fotos .tabela-wrap {
+  overflow-x: auto;
+}
+.importador-fotos table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 760px;
+}
+.importador-fotos th,
+.importador-fotos td {
+  padding: 10px;
+  border-bottom: 1px solid rgba(0,0,0,.08);
+  text-align: left;
+  vertical-align: top;
+}
+.importador-fotos pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 360px;
+  overflow: auto;
+  background: rgba(0,0,0,.04);
+  padding: 12px;
+  border-radius: 12px;
+}
+@media (max-width: 720px) {
+  .importador-fotos .grid-arquivos,
+  .importador-fotos .acoes {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+  .importador-fotos .acoes button {
+    width: 100%;
+  }
+}

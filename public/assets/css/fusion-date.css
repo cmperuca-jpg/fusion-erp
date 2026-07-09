@@ -1,0 +1,21 @@
+/* Fusion ERP 2.9.2 — Fusion Date */
+.fusion-date-input{
+  letter-spacing:.02em;
+  font-variant-numeric:tabular-nums;
+}
+.fusion-date-input::placeholder{color:#94a3b8;}
+.fusion-date-invalid{
+  border-color:#dc2626!important;
+  background:#fef2f2!important;
+  color:#991b1b!important;
+}
+.fusion-date-age{
+  display:block;
+  margin-top:5px;
+  color:#64748b;
+  font-size:12px;
+  font-weight:700;
+}
+@media(max-width:900px){
+  .fusion-date-input{font-size:16px!important;min-height:48px!important;}
+}

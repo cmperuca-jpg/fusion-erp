@@ -312,7 +312,7 @@ async function carregar(){
     renderTabela();
     const base=obterBaseAtiva();
     statusIntegracao(base?`Integração ativa: ${base}`:"");
-    if(!estado.registros.length)aviso("A API respondeu, mas não retornou pagamentos para os filtros atuais.");
+    if(!estado.registros.length)aviso("");
   }catch(e){
     const msg=erroAmigavel(e);
     tbody.innerHTML=`<tr><td colspan="12" class="empty">${esc(msg)}</td></tr>`;

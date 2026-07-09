@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fusion ERP - Importador de Fotos</title>
+  <link rel="stylesheet" href="/assets/css/fusion-app.css">
+  <link rel="stylesheet" href="/assets/css/fusion-menu-global.css">
+  <script src="/assets/js/fusion-auth.js"></script>
+  <script>FusionAuth.proteger();</script>
+  <link rel="manifest" href="/manifest-sistema.webmanifest">
+  <meta name="theme-color" content="#ff6600">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="/assets/pwa/icons/fusion-icon-180.png">
+  <link rel="stylesheet" href="/assets/pwa/fusion-pwa-mobile.css">
+  <link rel="stylesheet" href="/assets/css/fusion-mobile-final.css">
+  <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="/assets/css/fusion-no-sidebar.css">
+</head>
+<body>
+<div class="fusion-shell">
+  <main class="fusion-main">
+    <header class="fusion-topbar">
+      <div class="fusion-title">Importador de Fotos</div>
+      <div><span data-fusion-user></span> <button onclick="FusionAuth.sair()">Sair</button></div>
+    </header>
+
+    <section class="fusion-content importador-fotos">
+      <div class="fusion-card">
+        <h2>Migração de fotos dos alunos</h2>
+        <p>Use o <strong>Fotos.txt</strong> exportado do Access e o <strong>Fotos.zip</strong> com as imagens. A vinculação é feita pelo campo <code>id_legado</code> do aluno importado.</p>
+
+        <div class="grid-arquivos">
+          <label class="campo-arquivo">
+            <span>Arquivo Fotos.txt</span>
+            <input id="fotosTxt" type="file" accept=".txt,text/plain">
+          </label>
+          <label class="campo-arquivo">
+            <span>Arquivo Fotos.zip</span>
+            <input id="fotosZip" type="file" accept=".zip,application/zip,application/x-zip-compressed">
+          </label>
+        </div>
+
+        <div class="acoes">
+          <button id="btnAnalisar" type="button">Analisar por upload</button>
+          <button id="btnImportar" type="button">Importar por upload</button>
+          <button id="btnAnalisarServidor" type="button">Analisar arquivos do servidor</button>
+          <button id="btnImportarServidor" type="button">Importar arquivos do servidor</button>
+        </div>
+
+        <div id="status" class="status">Use os arquivos do servidor ou selecione Fotos.txt e Fotos.zip.</div>
+      </div>
+
+      <div class="fusion-grid resumo-grid">
+        <div class="fusion-card"><div class="fusion-kpi-label">Registros TXT</div><div id="kpiRegistros" class="fusion-kpi-value">0</div></div>
+        <div class="fusion-card"><div class="fusion-kpi-label">Imagens no ZIP</div><div id="kpiZip" class="fusion-kpi-value">0</div></div>
+        <div class="fusion-card"><div class="fusion-kpi-label">Vinculadas</div><div id="kpiVinculadas" class="fusion-kpi-value">0</div></div>
+        <div class="fusion-card"><div class="fusion-kpi-label">Pendências</div><div id="kpiPendencias" class="fusion-kpi-value">0</div></div>
+      </div>
+
+      <div class="fusion-card">
+        <h2>Prévia</h2>
+        <div class="tabela-wrap">
+          <table>
+            <thead>
+              <tr><th>ID legado</th><th>Aluno</th><th>Arquivo origem</th><th>Destino</th></tr>
+            </thead>
+            <tbody id="preview"><tr><td colspan="4">Nenhuma análise executada.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="fusion-card">
+        <h2>Relatório</h2>
+        <pre id="relatorio">Aguardando análise.</pre>
+      </div>
+    </section>
+  </main>
+</div>
+<script src="./index.js"></script>
+<script src="/assets/js/fusion-menu-global.js"></script>
+<script src="/assets/js/fusion-layout.js"></script>
+<script src="/assets/pwa/fusion-pwa-install.js" defer></script>
+  <script src="/assets/js/fusion-no-sidebar.js" defer></script>
+</body>
+</html>

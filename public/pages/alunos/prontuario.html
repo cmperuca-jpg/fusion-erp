@@ -12,6 +12,16 @@
   <script>FusionAuth.proteger();</script>
   <meta name="fusion-existing-pages" content="agenda,alunos,avaliacoes,bi,bi-academia,bi-academia-operacional,bi-financeiro,caixa,checkin,configuracoes,dashboard,estoque,exercicios,financeiro,login,matriculas,mensalidades,modalidades,modelos-treino,pagamentos,planos,presencas,professores,recebimentos,relatorios-caixa,treinos,turmas">
   <link rel="stylesheet" href="./central-comercial.css">
+
+<link rel="manifest" href="/manifest-sistema.webmanifest">
+<meta name="theme-color" content="#ff6600">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="/assets/pwa/icons/fusion-icon-180.png">
+<link rel="stylesheet" href="/assets/pwa/fusion-pwa-mobile.css">
+  <link rel="stylesheet" href="/assets/css/fusion-mobile-final.css">
+  <link rel="stylesheet" href="/assets/css/fusion-no-sidebar.css">
 </head>
 <body>
   <div class="fusion-shell">
@@ -46,22 +56,14 @@
         </div>
 
         <div class="prontuario-tabs fusion-card">
-          <button class="tab active" data-tab="resumo">Resumo</button>
           <button class="tab" data-tab="financeiro">Financeiro</button>
           <button class="tab" data-tab="matriculas">Matrículas</button>
           <button class="tab" data-tab="contrato-comercial">Contrato Comercial</button>
-          <button class="tab" data-tab="servicos-contratados">Serviços Contratados</button>
+          <button class="tab active" data-tab="servicos-contratados">Serviços Contratados</button>
           <button class="tab" data-tab="avaliacoes">Avaliações</button>
           <button class="tab" data-tab="treinos">Treinos</button>
           <button class="tab" data-tab="checkins">Check-ins</button>
           <button class="tab" data-tab="timeline">Linha do tempo</button>
-        </div>
-
-        <div class="tab-panel active" id="tab-resumo">
-          <div class="grid-2 prontuario-grid">
-            <div class="fusion-card"><h3>Dados cadastrais</h3><div id="dadosAluno" class="info-grid"></div></div>
-            <div class="fusion-card"><h3>Dados médicos</h3><div id="dadosMedicos" class="info-grid"></div></div>
-          </div>
         </div>
 
         <div class="tab-panel" id="tab-financeiro">
@@ -78,7 +80,7 @@
           </div>
         </div>
 
-        <div class="tab-panel" id="tab-servicos-contratados">
+        <div class="tab-panel active" id="tab-servicos-contratados">
           <div class="fusion-card comercial-card">
             <div class="comercial-head">
               <h3>Serviços Contratados</h3>
@@ -101,5 +103,9 @@
   <script src="/js/alunos/central-comercial.js"></script>
   <script src="/assets/js/fusion-menu-global.js"></script>
     <script src="/assets/js/fusion-layout.js"></script>
+
+<script src="/assets/pwa/fusion-pwa-install.js" defer></script>
+  <script src="/assets/js/fusion-mobile-final.js" defer></script>
+  <script src="/assets/js/fusion-no-sidebar.js" defer></script>
 </body>
 </html>

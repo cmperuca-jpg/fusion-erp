@@ -8,7 +8,6 @@ import { fileURLToPath } from "url";
 
 import alunosRoutes from "./modules/alunos/alunos.routes.mjs";
 import professoresRoutes from "./modules/professores/professores.routes.mjs";
-import professorPainelRoutes from "./modules/professor-painel/professor-painel.routes.mjs";
 import modalidadesRoutes from "./modules/modalidades/modalidades.routes.mjs";
 import planosRoutes from "./modules/planos/planos.routes.mjs";
 import turmasRoutes from "./modules/turmas/turmas.routes.mjs";
@@ -23,28 +22,20 @@ import caixaRoutes from "./modules/financeiro/caixa.routes.mjs";
 import recebimentosRoutes from "./modules/financeiro/recebimentos.routes.mjs";
 import pagamentosRoutes from "./modules/financeiro/pagamentos.routes.mjs";
 import avaliacoesRoutes from "./modules/avaliacoes/avaliacoes.routes.mjs";
-import exerciciosRoutes from "./modules/exercicios/exercicios.routes.mjs";
-import exerciciosBibliotecaRoutes from "./modules/exercicios-biblioteca/exercicios-biblioteca.routes.mjs";
-import bibliotecaInteligenteRoutes from "./modules/biblioteca-inteligente/biblioteca-inteligente.routes.mjs";
 import treinosRoutes from "./modules/treinos/treinos.routes.mjs";
-import treinosIntegradoRoutes from "./modules/treinos-integrado/treinos-integrado.routes.mjs";
-import treinosMontadorRoutes from "./modules/treinos-montador/treinos-montador.routes.mjs";
-import treinosEditorRoutes from "./modules/treinos-editor/treinos-editor.routes.mjs";
-import treinosOperacionalRoutes from "./modules/treinos-operacional/treinos-operacional.routes.mjs";
-import treinosCicloRoutes from "./modules/treinos-ciclo/treinos-ciclo.routes.mjs";
-import treinosConsolidacaoRoutes from "./modules/treinos-consolidacao/treinos-consolidacao.routes.mjs";
 import cobrancaRoutes from "./modules/cobranca/cobranca.routes.mjs";
 import authRoutes from "./modules/auth/auth.routes.mjs";
 import biRoutes from "./modules/bi/bi.routes.mjs";
-import modelosTreinoRoutes from "./modules/modelos-treino/modelos-treino.routes.mjs";
 import presencasRoutes from "./modules/presencas/presencas.routes.mjs";
 import frequenciaRoutes from "./modules/frequencia/frequencia.routes.mjs";
 import operacaoRoutes from "./modules/operacao/operacao.routes.mjs";
 import comercialRoutes from "./modules/comercial/comercial.routes.mjs";
+import natacaoRoutes from "./modules/natacao/natacao.routes.mjs";
+import backupRoutes from "./modules/backup/backup.routes.mjs";
+import importadorAccessRoutes from "./modules/importador-access/importador-access.routes.mjs";
+import matriculaOnlineRoutes from "./modules/matricula-online/matricula-online.routes.mjs";
+import leadsRoutes from "./modules/leads/leads.routes.mjs";
 
-import portalAlunoRoutes from './modules/portal-aluno/portal.routes.mjs';
-import portalProfessorRoutes from "./modules/portal-professor/portal-professor.routes.mjs";
-import portalAlunoOperacionalRoutes from "./modules/portal-aluno-operacional/portal-aluno-operacional.routes.mjs";
 
 dotenv.config();
 
@@ -52,6 +43,55 @@ const app = express();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+
+const isRender = Boolean(process.env.RENDER || process.env.RENDER_EXTERNAL_URL);
+const persistentRoot = process.env.FUSION_PERSISTENT_DIR || "/var/data/fusion";
+
+function garantirDiretorio(absPath) {
+  if (!fs.existsSync(absPath)) fs.mkdirSync(absPath, { recursive: true });
+}
+
+function copiarSeedsSeDiretorioVazio(origem, destino) {
+  if (!fs.existsSync(origem) || !fs.statSync(origem).isDirectory()) return;
+  garantirDiretorio(destino);
+  const destinoVazio = fs.readdirSync(destino).length === 0;
+  if (!destinoVazio) return;
+  fs.cpSync(origem, destino, { recursive: true, force: false, errorOnExist: false });
+}
+
+function prepararPersistenciaRender() {
+  const pastas = ["data", "uploads"];
+  for (const pasta of pastas) {
+    const localPath = path.join(__dirname, pasta);
+    const persistentePath = path.join(persistentRoot, pasta);
+
+    if (!isRender) {
+      garantirDiretorio(localPath);
+      continue;
+    }
+
+    garantirDiretorio(path.dirname(persistentePath));
+    copiarSeedsSeDiretorioVazio(localPath, persistentePath);
+
+    try {
+      if (fs.existsSync(localPath)) {
+        const stat = fs.lstatSync(localPath);
+        if (!stat.isSymbolicLink()) {
+          const backupPath = path.join(__dirname, `.${pasta}-repo-seed`);
+          if (!fs.existsSync(backupPath)) fs.renameSync(localPath, backupPath);
+          else fs.rmSync(localPath, { recursive: true, force: true });
+        }
+      }
+      if (!fs.existsSync(localPath)) fs.symlinkSync(persistentePath, localPath, "dir");
+    } catch (erro) {
+      console.warn(`[Render] Não foi possível vincular ${pasta} ao disco persistente: ${erro.message}`);
+      garantirDiretorio(localPath);
+    }
+  }
+}
+
+prepararPersistenciaRender();
 
 
 const pagamentosJsonCandidates = [
@@ -163,6 +203,26 @@ app.use(cors());
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
+
+app.get("/api/health", (req, res) => {
+  const dataPath = path.join(__dirname, "data");
+  const uploadsPath = path.join(__dirname, "uploads");
+  res.json({
+    ok: true,
+    sistema: "Fusion ERP",
+    versao: "2.7.4-render",
+    status: "online",
+    ambiente: process.env.NODE_ENV || "development",
+    render: isRender,
+    persistencia: {
+      root: isRender ? persistentRoot : __dirname,
+      data: fs.existsSync(dataPath),
+      uploads: fs.existsSync(uploadsPath)
+    },
+    timestamp: new Date().toISOString()
+  });
+});
+
 app.use(express.static(path.join(__dirname, "public")));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
@@ -173,31 +233,12 @@ app.get("/", (req, res) => {
 app.get("/api", (req, res) => {
   res.json({
     sistema: "Fusion ERP",
-    versao: "2.6.1-D",
+    versao: "2.7.4-render",
     status: "Online"
   });
 });
 
-app.post("/api/auth/login", (req, res) => {
-  const { email, senha } = req.body;
-
-  if (email === "admin@fusionerp.local" && senha === "admin123") {
-    return res.json({
-      ok: true,
-      token: "fusion-token-admin",
-      usuario: {
-        nome: "Administrador",
-        email: "admin@fusionerp.local",
-        perfil: "admin"
-      }
-    });
-  }
-
-  return res.status(401).json({
-    ok: false,
-    mensagem: "E-mail ou senha inválidos"
-  });
-});
+// Login administrado por modules/auth/auth.routes.mjs
 
 
 // Rotas diretas da Parte 4.2 - Pagamentos ZIP 13
@@ -365,7 +406,6 @@ app.get("/api/financeiro/pagamentos/:id/historico", async (req, res) => {
 
 app.use("/api/alunos", alunosRoutes);
 app.use("/api/professores", professoresRoutes);
-app.use("/api/professor-painel", professorPainelRoutes);
 app.use("/api/modalidades", modalidadesRoutes);
 app.use("/api/planos", planosRoutes);
 app.use("/api/turmas", turmasRoutes);
@@ -381,25 +421,20 @@ app.use("/api/financeiro/pagamentos", pagamentosRoutes);
 app.use("/api/pagamentos", pagamentosRoutes);
 app.use("/api/recebimentos", recebimentosRoutes);
 app.use("/api/avaliacoes", avaliacoesRoutes);
-app.use("/api/exercicios", exerciciosRoutes);
-app.use("/api/exercicios-biblioteca", exerciciosBibliotecaRoutes);
-app.use("/api/biblioteca-inteligente", bibliotecaInteligenteRoutes);
 app.use("/api/treinos", treinosRoutes);
-app.use("/api/treinos-integrado", treinosIntegradoRoutes);
-app.use("/api/treinos-montador", treinosMontadorRoutes);
-app.use("/api/treinos-editor", treinosEditorRoutes);
-app.use("/api/treinos-operacional", treinosOperacionalRoutes);
-app.use("/api/treinos-ciclo", treinosCicloRoutes);
-app.use("/api/treinos-consolidacao", treinosConsolidacaoRoutes);
 app.use("/api/cobranca", cobrancaRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/bi", biRoutes);
-app.use("/api/modelos-treino", modelosTreinoRoutes);
 app.use("/api/presencas", presencasRoutes);
 app.use("/api/frequencia", frequenciaRoutes);
 app.use("/api/operacao", operacaoRoutes);
 app.use(comercialRoutes);
 app.use("/api/comercial", comercialRoutes);
+app.use("/api/matricula-online", matriculaOnlineRoutes);
+app.use("/api/leads", leadsRoutes);
+app.use("/api/natacao", natacaoRoutes);
+app.use("/api/backup", backupRoutes);
+app.use("/api/importador-access", importadorAccessRoutes);
 
 
 // Aliases legados de páginas: evitam 404 em favoritos/menus antigos.
@@ -463,9 +498,6 @@ app.get("/api/sistema/diagnostico", async (req, res) => {
       rotasCriticas: [
         "/api/checkin/resumo",
         "/api/treinos",
-        "/api/treinos-operacional/status",
-        "/api/professor-painel/status",
-        "/api/portal-aluno/acessar",
         "/api/sistema/diagnostico"
       ]
     }
@@ -531,9 +563,6 @@ app.get("/api/sistema/performance", async (req, res) => {
       totalMB: Number((totalBytes / 1024 / 1024).toFixed(3)),
       rotasCriticas: [
         "/api/checkin/resumo",
-        "/api/treinos-operacional/status",
-        "/api/professor-painel/status",
-        "/api/portal-aluno/acessar",
         "/api/sistema/diagnostico",
         "/api/sistema/performance"
       ]
@@ -547,7 +576,6 @@ app.get("/api/sistema/seguranca", async (req, res) => {
     "GET /",
     "GET /api",
     "POST /api/auth/login",
-    "POST /api/portal-aluno/acessar",
     "GET /api/sistema/diagnostico",
     "GET /api/sistema/performance",
     "GET /api/sistema/seguranca"
@@ -580,8 +608,6 @@ app.get("/api/sistema/interface", async (req, res) => {
     "dashboard/index.html",
     "checkin/index.html",
     "treinos/index.html",
-    "professor-painel/index.html",
-    "portal-aluno/index.html",
     "alunos/index.html",
     "matriculas/index.html",
     "financeiro/index.html"
@@ -631,9 +657,6 @@ app.get("/api/sistema/interface", async (req, res) => {
 const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || "0.0.0.0";
 
-app.use("/api/portal-aluno", portalAlunoRoutes);
-app.use("/api/portal-professor", portalProfessorRoutes);
-app.use("/api/portal-aluno-operacional", portalAlunoOperacionalRoutes);
 
 app.listen(PORT, HOST, () => {
   console.log("====================================");

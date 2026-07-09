@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fusion ERP - Treino do Aluno</title>
+  <link rel="stylesheet" href="/pages/treinos/style.css">
+  <link rel="manifest" href="/manifest-sistema.webmanifest">
+  <meta name="theme-color" content="#ff6600">
+</head>
+<body>
+  <main class="wrap aluno-treinos-page">
+    <header class="top">
+      <div>
+        <h1>Meu Treino</h1>
+        <p id="subtituloAluno">Visualização segura do treino prescrito.</p>
+      </div>
+      <div class="top-actions">
+        <a class="btn ghost" href="/pages/aluno-login/index.html">Trocar aluno</a>
+        <button id="sair" class="btn" type="button">Sair</button>
+      </div>
+    </header>
+
+    <section class="card dados dados-compactos aluno-treino-filtro">
+      <div class="linha-form linha-form-2 aluno-linha-login">
+        <label>Aluno logado
+          <input id="alunoNome" readonly placeholder="Aluno não autenticado">
+        </label>
+        <label>ID
+          <input id="alunoId" readonly placeholder="-">
+        </label>
+        <label>Buscar no treino
+          <input id="busca" placeholder="Exercício, divisão, objetivo">
+        </label>
+        <button id="carregar" class="btn primary" type="button">Atualizar</button>
+      </div>
+    </section>
+
+    <section id="treinos"></section>
+  </main>
+  <script src="/pages/aluno-treinos/index.js"></script>
+</body>
+</html>

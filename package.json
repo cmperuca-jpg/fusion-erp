@@ -1,14 +1,14 @@
 {
   "name": "fusion-erp",
-  "version": "2.6.1-n",
-  "description": "Fusion ERP - Ativação segura de pré-matrícula",
+  "version": "2.7.4-render",
+  "description": "Fusion ERP - Otimização para Render",
   "private": true,
   "type": "module",
   "main": "server.mjs",
   "scripts": {
     "start": "node server.mjs",
     "dev": "node --watch server.mjs",
-    "check": "node --check server.mjs",
+    "check": "node --check server.mjs && node --check scripts/render-smoke-test.mjs && node --check modules/backup/backup.service.mjs && node --check modules/backup/backup.routes.mjs && node --check scripts/backup-supabase.mjs && node --check scripts/backup-local.mjs",
     "audit:261a": "node scripts/auditoria-261a.mjs",
     "perf:261b": "node scripts/performance-261b.mjs",
     "security:261c": "node scripts/seguranca-261c.mjs",
@@ -18,7 +18,11 @@
     "release": "npm run homologacao && npm run piloto && node scripts/release-261e.mjs",
     "reset:virgem": "node scripts/resetar-sistema-virgem.mjs",
     "homologar:ativacao-segura": "node scripts/homologar-ativacao-segura-261n.mjs",
-    "sync:ativacao-segura": "node scripts/sync-ativacao-segura-261n.mjs"
+    "sync:ativacao-segura": "node scripts/sync-ativacao-segura-261n.mjs",
+    "render:check": "node scripts/render-smoke-test.mjs",
+    "render:start": "NODE_ENV=production node server.mjs",
+    "backup:supabase": "node scripts/backup-supabase.mjs",
+    "backup:local": "node scripts/backup-local.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.53.0",

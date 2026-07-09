@@ -1,5 +1,455 @@
 [
   {
+    "id": "cob_log_1783587826011_344412",
+    "acao": "gerar_proxima_mensalidade",
+    "sucesso": true,
+    "gerada": true,
+    "alunoId": "9c5e6857-4040-46f8-849e-bf25a4e5717d",
+    "matriculaId": "mat_1783587749832_361003",
+    "mensalidadeAnteriorId": "men_auto_1783587755651_600165",
+    "mensalidadeId": "men_auto_1783587825995_649695",
+    "financeiroId": "fin_men_auto_1783587825995_649695",
+    "vencimento": "2026-09-09",
+    "valor": 65,
+    "creditoAplicado": 0,
+    "periodicidade": {
+      "nome": "Personalizado",
+      "meses": 1
+    },
+    "usuario": "financeiro",
+    "criadoEm": "2026-07-09T09:03:46.011Z"
+  },
+  {
+    "id": "cob_log_1783587755665_855694",
+    "acao": "gerar_proxima_mensalidade",
+    "sucesso": true,
+    "gerada": true,
+    "alunoId": "9c5e6857-4040-46f8-849e-bf25a4e5717d",
+    "matriculaId": "mat_1783587749832_361003",
+    "mensalidadeAnteriorId": "men_reat_1783587749833_253000",
+    "mensalidadeId": "men_auto_1783587755651_600165",
+    "financeiroId": "fin_men_auto_1783587755651_600165",
+    "vencimento": "2026-08-09",
+    "valor": 65,
+    "creditoAplicado": 0,
+    "periodicidade": {
+      "nome": "Mensal",
+      "meses": 1
+    },
+    "usuario": "financeiro",
+    "criadoEm": "2026-07-09T09:02:35.665Z"
+  },
+  {
+    "id": "cob_log_1783586846630_51299",
+    "acao": "gerar_proxima_mensalidade",
+    "sucesso": true,
+    "gerada": true,
+    "alunoId": "616e7d16-2184-4631-82d9-efb0ba867790",
+    "matriculaId": "mat_1783586792783_909692",
+    "mensalidadeAnteriorId": "men_reat_1783586792786_683356",
+    "mensalidadeId": "men_auto_1783586846615_361016",
+    "financeiroId": "fin_men_auto_1783586846615_361016",
+    "vencimento": "2026-08-09",
+    "valor": 65,
+    "creditoAplicado": 0,
+    "periodicidade": {
+      "nome": "Mensal",
+      "meses": 1
+    },
+    "usuario": "financeiro",
+    "criadoEm": "2026-07-09T08:47:26.630Z"
+  },
+  {
+    "id": "cob_log_1783520368346_888920",
+    "acao": "gerar_proxima_mensalidade",
+    "sucesso": true,
+    "gerada": false,
+    "motivo": "Competência futura já existe para este aluno.",
+    "alunoId": "81d3046c-2856-4b70-9bcd-96c2cf3a2cb5",
+    "matriculaId": "mat_1783520325863_887050",
+    "proximoVencimento": "2026-08-08",
+    "competencia": "2026-08",
+    "periodicidade": {
+      "nome": "Mensal",
+      "meses": 1
+    },
+    "usuario": "financeiro",
+    "criadoEm": "2026-07-08T14:19:28.347Z"
+  },
+  {
+    "id": "cob_log_1783519983408_584282",
+    "acao": "gerar_proxima_mensalidade",
+    "sucesso": true,
+    "gerada": true,
+    "alunoId": "94e45d3a-90d6-42cc-9096-57d0ca3db7cd",
+    "matriculaId": "mat_1783519962695_54306",
+    "mensalidadeAnteriorId": "men_reat_1783519962703_629387",
+    "mensalidadeId": "men_auto_1783519983281_979040",
+    "financeiroId": "fin_men_auto_1783519983281_979040",
+    "vencimento": "2026-08-08",
+    "valor": 65,
+    "creditoAplicado": 0,
+    "periodicidade": {
+      "nome": "Mensal",
+      "meses": 1
+    },
+    "usuario": "financeiro",
+    "criadoEm": "2026-07-08T14:13:03.408Z"
+  },
+  {
+    "id": "cob_log_1783518991471_477335",
+    "acao": "gerar_proxima_mensalidade",
+    "sucesso": true,
+    "gerada": true,
+    "alunoId": "8e71981d-135a-4089-be1b-df73568b124f",
+    "matriculaId": "mat_1783518927019_823820",
+    "mensalidadeAnteriorId": "men_reat_1783518927021_948503",
+    "mensalidadeId": "men_auto_1783518991405_937780",
+    "financeiroId": "fin_men_auto_1783518991405_937780",
+    "vencimento": "2026-08-08",
+    "valor": 65,
+    "creditoAplicado": 0,
+    "periodicidade": {
+      "nome": "Mensal",
+      "meses": 1
+    },
+    "usuario": "financeiro",
+    "criadoEm": "2026-07-08T13:56:31.472Z"
+  },
+  {
+    "id": "cob_log_1783518890365_371567",
+    "acao": "gerar_proxima_mensalidade",
+    "sucesso": true,
+    "gerada": true,
+    "alunoId": "5ce052de-bf9a-4f2f-948d-de87850b823a",
+    "matriculaId": "mat_1783516075198_535655",
+    "mensalidadeAnteriorId": "men_reat_1783516075201_44029",
+    "mensalidadeId": "men_auto_1783518890341_260981",
+    "financeiroId": "fin_men_auto_1783518890341_260981",
+    "vencimento": "2026-08-08",
+    "valor": 65,
+    "creditoAplicado": 0,
+    "periodicidade": {
+      "nome": "Mensal",
+      "meses": 1
+    },
+    "usuario": "financeiro",
+    "criadoEm": "2026-07-08T13:54:50.365Z"
+  },
+  {
+    "id": "cob_log_1783517527337_923354",
+    "acao": "gerar_proxima_mensalidade",
+    "sucesso": true,
+    "gerada": true,
+    "alunoId": "10246764-fe36-4ebf-bada-1744f452ffb8",
+    "matriculaId": "mat_1783517511064_281518",
+    "mensalidadeAnteriorId": "men_reat_1783517511068_793091",
+    "mensalidadeId": "men_auto_1783517527313_519133",
+    "financeiroId": "fin_men_auto_1783517527313_519133",
+    "vencimento": "2026-08-08",
+    "valor": 65,
+    "creditoAplicado": 0,
+    "periodicidade": {
+      "nome": "Mensal",
+      "meses": 1
+    },
+    "usuario": "financeiro",
+    "criadoEm": "2026-07-08T13:32:07.337Z"
+  },
+  {
+    "id": "cob_log_1783512338014_279220",
+    "acao": "gerar_proxima_mensalidade",
+    "sucesso": true,
+    "gerada": true,
+    "alunoId": "c73fbfd8-01ad-4546-a94b-e189087eb775",
+    "matriculaId": "mat_1783512318096_315692",
+    "mensalidadeAnteriorId": "men_reat_1783512318098_309397",
+    "mensalidadeId": "men_auto_1783512337996_638046",
+    "financeiroId": "fin_men_auto_1783512337996_638046",
+    "vencimento": "2026-08-08",
+    "valor": 65,
+    "creditoAplicado": 0,
+    "periodicidade": {
+      "nome": "Mensal",
+      "meses": 1
+    },
+    "usuario": "financeiro",
+    "criadoEm": "2026-07-08T12:05:38.014Z"
+  },
+  {
+    "id": "cob_log_1783512327092_13776",
+    "acao": "gerar_proxima_mensalidade",
+    "sucesso": false,
+    "motivo": "Matrícula ativa não encontrada.",
+    "alunoId": "c73fbfd8-01ad-4546-a94b-e189087eb775",
+    "mensalidadeId": "men_reat_1783512318098_309397",
+    "financeiroId": "fin_men_reat_1783512318098_309397",
+    "usuario": "financeiro",
+    "criadoEm": "2026-07-08T12:05:27.092Z"
+  },
+  {
+    "id": "cob_log_1783512262978_769820",
+    "acao": "gerar_proxima_mensalidade",
+    "sucesso": true,
+    "gerada": true,
+    "alunoId": "cd482dc0-b1c1-41a5-afbc-9eab19d8f920",
+    "matriculaId": "mat_1783512245262_462152",
+    "mensalidadeAnteriorId": "men_reat_1783512245262_29666",
+    "mensalidadeId": "men_auto_1783512262959_156822",
+    "financeiroId": "fin_men_auto_1783512262959_156822",
+    "vencimento": "2026-08-08",
+    "valor": 65,
+    "creditoAplicado": 0,
+    "periodicidade": {
+      "nome": "Mensal",
+      "meses": 1
+    },
+    "usuario": "financeiro",
+    "criadoEm": "2026-07-08T12:04:22.978Z"
+  },
+  {
+    "id": "cob_log_1783512251831_122608",
+    "acao": "gerar_proxima_mensalidade",
+    "sucesso": false,
+    "motivo": "Matrícula ativa não encontrada.",
+    "alunoId": "cd482dc0-b1c1-41a5-afbc-9eab19d8f920",
+    "mensalidadeId": "men_reat_1783512245262_29666",
+    "financeiroId": "fin_men_reat_1783512245262_29666",
+    "usuario": "financeiro",
+    "criadoEm": "2026-07-08T12:04:11.831Z"
+  },
+  {
+    "id": "cob_log_1783512162715_635155",
+    "acao": "gerar_proxima_mensalidade",
+    "sucesso": true,
+    "gerada": true,
+    "alunoId": "c0647bde-9fab-49b1-8ed8-114c439f0a36",
+    "matriculaId": "mat_1783511326261_3381",
+    "mensalidadeAnteriorId": "men_reat_1783511326263_383755",
+    "mensalidadeId": "men_auto_1783512162599_216368",
+    "financeiroId": "fin_men_auto_1783512162599_216368",
+    "vencimento": "2026-08-08",
+    "valor": 65,
+    "creditoAplicado": 0,
+    "periodicidade": {
+      "nome": "Mensal",
+      "meses": 1
+    },
+    "usuario": "financeiro",
+    "criadoEm": "2026-07-08T12:02:42.715Z"
+  },
+  {
+    "id": "cob_log_1783511457087_998063",
+    "acao": "gerar_proxima_mensalidade",
+    "sucesso": true,
+    "gerada": true,
+    "alunoId": "6331016c-b4bb-4df0-9e82-59d05c8b9e7c",
+    "matriculaId": "mat_1783511416441_601998",
+    "mensalidadeAnteriorId": "men_reat_1783511416445_210155",
+    "mensalidadeId": "men_auto_1783511457066_92756",
+    "financeiroId": "fin_men_auto_1783511457066_92756",
+    "vencimento": "2026-08-08",
+    "valor": 65,
+    "creditoAplicado": 0,
+    "periodicidade": {
+      "nome": "Mensal",
+      "meses": 1
+    },
+    "usuario": "financeiro",
+    "criadoEm": "2026-07-08T11:50:57.087Z"
+  },
+  {
+    "id": "cob_log_1783511194693_405327",
+    "acao": "gerar_proxima_mensalidade",
+    "sucesso": false,
+    "motivo": "Matrícula ativa não encontrada.",
+    "alunoId": "9c5e6857-4040-46f8-849e-bf25a4e5717d",
+    "mensalidadeId": "men_reat_1783510419258_968805",
+    "financeiroId": "fin_men_reat_1783510419258_968805",
+    "usuario": "Administrador",
+    "criadoEm": "2026-07-08T11:46:34.694Z"
+  },
+  {
+    "id": "cob_log_1783510982977_800377",
+    "acao": "gerar_proxima_mensalidade",
+    "sucesso": false,
+    "motivo": "Matrícula ativa não encontrada.",
+    "alunoId": "9c5e6857-4040-46f8-849e-bf25a4e5717d",
+    "mensalidadeId": "men_reat_1783510419258_968805",
+    "financeiroId": "fin_men_reat_1783510419258_968805",
+    "usuario": "financeiro",
+    "criadoEm": "2026-07-08T11:43:02.977Z"
+  },
+  {
+    "id": "cob_log_1783510347344_25435",
+    "acao": "gerar_proxima_mensalidade",
+    "sucesso": true,
+    "gerada": true,
+    "alunoId": "47800783-ce9f-4176-87cd-54863fce2ab3",
+    "matriculaId": "mat_1783510341157_59290",
+    "mensalidadeAnteriorId": "men_reat_1783510341188_791555",
+    "mensalidadeId": "men_auto_1783510347322_464844",
+    "financeiroId": "fin_men_auto_1783510347322_464844",
+    "vencimento": "2026-08-08",
+    "valor": 65,
+    "periodicidade": {
+      "nome": "Mensal",
+      "meses": 1
+    },
+    "usuario": "financeiro",
+    "criadoEm": "2026-07-08T11:32:27.344Z"
+  },
+  {
+    "id": "cob_log_1783510283656_876240",
+    "acao": "gerar_proxima_mensalidade",
+    "sucesso": true,
+    "gerada": true,
+    "alunoId": "7c49b23b-8f7f-4d84-9728-ad5715d4a38b",
+    "matriculaId": "mat_1783510227356_850529",
+    "mensalidadeAnteriorId": "men_reat_1783510227356_102240",
+    "mensalidadeId": "men_auto_1783510283639_639565",
+    "financeiroId": "fin_men_auto_1783510283639_639565",
+    "vencimento": "2026-08-08",
+    "valor": 65,
+    "periodicidade": {
+      "nome": "Mensal",
+      "meses": 1
+    },
+    "usuario": "financeiro",
+    "criadoEm": "2026-07-08T11:31:23.656Z"
+  },
+  {
+    "id": "cob_log_1783508829308_605862",
+    "acao": "gerar_proxima_mensalidade",
+    "sucesso": true,
+    "gerada": true,
+    "alunoId": "7c49b23b-8f7f-4d84-9728-ad5715d4a38b",
+    "matriculaId": "mat_imp_f1f2ba58-57d9-42b4-8de2-118e98db3744",
+    "mensalidadeAnteriorId": "men_reat_1783508824421_603664",
+    "mensalidadeId": "men_auto_1783508829291_809152",
+    "financeiroId": "fin_men_auto_1783508829291_809152",
+    "vencimento": "2026-08-10",
+    "valor": 65,
+    "periodicidade": {
+      "nome": "Mensal",
+      "meses": 1
+    },
+    "usuario": "financeiro",
+    "criadoEm": "2026-07-08T11:07:09.308Z"
+  },
+  {
+    "id": "cob_log_1783508797320_545320",
+    "acao": "gerar_proxima_mensalidade",
+    "sucesso": true,
+    "gerada": true,
+    "alunoId": "f1439882-c9ad-400d-a298-dbec7b734eb6",
+    "matriculaId": "mat_1783483712915_238862",
+    "mensalidadeAnteriorId": "men_reat_1783507265351_895266",
+    "mensalidadeId": "men_auto_1783508797307_150146",
+    "financeiroId": "fin_men_auto_1783508797307_150146",
+    "vencimento": "2026-08-08",
+    "valor": 65,
+    "periodicidade": {
+      "nome": "Mensal",
+      "meses": 1
+    },
+    "usuario": "financeiro",
+    "criadoEm": "2026-07-08T11:06:37.320Z"
+  },
+  {
+    "id": "cob_log_1783508578669_168100",
+    "acao": "gerar_proxima_mensalidade",
+    "sucesso": true,
+    "gerada": true,
+    "alunoId": "cf3f5963-7678-4cb8-8d98-64b4f8cf81f9",
+    "matriculaId": "mat_imp_1fa1973d-9c69-4250-a095-889c0d3b273d",
+    "mensalidadeAnteriorId": "men_reat_1783508555535_409598",
+    "mensalidadeId": "men_auto_1783508578656_975772",
+    "financeiroId": "fin_men_auto_1783508578656_975772",
+    "vencimento": "2026-08-10",
+    "valor": 65,
+    "periodicidade": {
+      "nome": "Mensal",
+      "meses": 1
+    },
+    "usuario": "financeiro",
+    "criadoEm": "2026-07-08T11:02:58.669Z"
+  },
+  {
+    "id": "cob_log_1783508532232_254995",
+    "acao": "gerar_proxima_mensalidade",
+    "sucesso": true,
+    "gerada": true,
+    "alunoId": "44f1af1b-a45f-4b54-b67f-f520070f33fa",
+    "matriculaId": "mat_1783506622342_619432",
+    "mensalidadeAnteriorId": "men_reat_1783506622343_439482",
+    "mensalidadeId": "men_auto_1783508532216_342432",
+    "financeiroId": "fin_men_auto_1783508532216_342432",
+    "vencimento": "2026-08-08",
+    "valor": 65,
+    "periodicidade": {
+      "nome": "Mensal",
+      "meses": 1
+    },
+    "usuario": "financeiro",
+    "criadoEm": "2026-07-08T11:02:12.232Z"
+  },
+  {
+    "id": "cob_log_1783506562369_105272",
+    "acao": "gerar_proxima_mensalidade",
+    "sucesso": true,
+    "gerada": true,
+    "alunoId": "91c7eb65-660b-4a98-abd9-d284772e0191",
+    "matriculaId": "mat_1783104576305_815417",
+    "mensalidadeAnteriorId": "men_reat_1783506388062_973191",
+    "mensalidadeId": "men_auto_1783506562357_180420",
+    "financeiroId": "fin_men_auto_1783506562357_180420",
+    "vencimento": "2026-08-08",
+    "valor": 65,
+    "periodicidade": {
+      "nome": "Personalizado",
+      "meses": 1
+    },
+    "usuario": "financeiro",
+    "criadoEm": "2026-07-08T10:29:22.369Z"
+  },
+  {
+    "id": "cob_log_1783504649842_446259",
+    "acao": "gerar_proxima_mensalidade",
+    "sucesso": true,
+    "gerada": false,
+    "motivo": "Competência futura já existe para este aluno.",
+    "alunoId": "91c7eb65-660b-4a98-abd9-d284772e0191",
+    "matriculaId": "mat_1783104576305_815417",
+    "proximoVencimento": "2026-08-08",
+    "competencia": "2026-08",
+    "periodicidade": {
+      "nome": "Personalizado",
+      "meses": 1
+    },
+    "usuario": "financeiro",
+    "criadoEm": "2026-07-08T09:57:29.842Z"
+  },
+  {
+    "id": "cob_log_1783504649811_540948",
+    "acao": "gerar_proxima_mensalidade",
+    "sucesso": true,
+    "gerada": true,
+    "alunoId": "91c7eb65-660b-4a98-abd9-d284772e0191",
+    "matriculaId": "mat_1783104576305_815417",
+    "mensalidadeAnteriorId": "men_1783502216522_445899",
+    "mensalidadeId": "men_auto_1783504649797_621821",
+    "financeiroId": "fin_men_auto_1783504649797_621821",
+    "vencimento": "2026-08-08",
+    "valor": 65,
+    "periodicidade": {
+      "nome": "Mensal",
+      "meses": 1
+    },
+    "usuario": "Administrador",
+    "criadoEm": "2026-07-08T09:57:29.811Z"
+  },
+  {
     "id": "cob_log_1783103702977_685929",
     "acao": "gerar_proxima_mensalidade",
     "sucesso": false,

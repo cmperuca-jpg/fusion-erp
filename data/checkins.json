@@ -4,8 +4,8 @@
     "tipo": "vinculo_matricula",
     "alunoId": "91c7eb65-660b-4a98-abd9-d284772e0191",
     "aluno": "marcos andre",
-    "matriculaId": "mat_1783104576305_815417",
-    "numeroMatricula": "MAT-202607-000002",
+    "matriculaId": "mat_1783103608764_965859",
+    "numeroMatricula": "MAT-202607-000001",
     "planoId": "6980ab38-5a58-4d8d-89eb-ce088e52255d",
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
@@ -13,8 +13,49 @@
     "turmas": [],
     "servicos": [],
     "status": "Ativo",
-    "atualizadoEm": "2026-07-03T19:57:44.215Z",
+    "atualizadoEm": "2026-07-08T10:29:22.293Z",
     "criadoEm": "2026-07-03T18:33:28.768Z",
-    "motivoBloqueio": ""
+    "motivoBloqueio": "",
+    "modalidade": "MUSCULAÇÃO",
+    "modalidades": [
+      "MUSCULAÇÃO"
+    ],
+    "professorId": "e1bdfb38-50bf-47fb-87ba-052ab6434f84",
+    "professorNome": "MARCOS ANDRE DE SOUZA"
+  },
+  {
+    "id": "chk_vinc_1783483662463_466326",
+    "tipo": "vinculo_matricula",
+    "alunoId": "f1439882-c9ad-400d-a298-dbec7b734eb6",
+    "aluno": "ADAM MIGUEL DE SANTANA",
+    "matriculaId": "mat_1783483712915_238862",
+    "numeroMatricula": "MAT-202607-000004",
+    "planoId": "6980ab38-5a58-4d8d-89eb-ce088e52255d",
+    "plano": "MUSCULAÇÃO",
+    "tipoPlano": "Mensal",
+    "turmaIds": [],
+    "turmas": [],
+    "servicos": [],
+    "status": "Ativo",
+    "atualizadoEm": "2026-07-08T11:06:37.237Z",
+    "criadoEm": "2026-07-08T04:07:42.463Z",
+    "motivoBloqueio": "Cancelamento rápido pelo cadastro de alunos."
+  },
+  {
+    "id": "chk_vinc_1783520325868_931375",
+    "tipo": "vinculo_matricula",
+    "alunoId": "81d3046c-2856-4b70-9bcd-96c2cf3a2cb5",
+    "aluno": "marcelo viana filho neves",
+    "matriculaId": "mat_1783520325863_887050",
+    "numeroMatricula": "MAT-202607-000022",
+    "planoId": "753f0de7-12f8-4740-99b7-830acf2743a4",
+    "plano": "PLANO DA CASA",
+    "tipoPlano": "Mensal",
+    "turmaIds": [],
+    "turmas": [],
+    "servicos": [],
+    "status": "Ativo",
+    "atualizadoEm": "2026-07-08T14:19:28.269Z",
+    "criadoEm": "2026-07-08T14:18:45.868Z"
   }
 ]

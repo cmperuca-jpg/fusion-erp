@@ -8,20 +8,26 @@
   <link rel="stylesheet" href="/assets/css/fusion-menu-global.css" data-admin-only>
   <link rel="stylesheet" href="./style.css">
   <script>
-    window.FUSION_EMBED = new URLSearchParams(location.search).get('embed') === '1';
-    if (!window.FUSION_EMBED) {
+    window.FUSION_PARAMS = new URLSearchParams(location.search);
+    window.FUSION_EMBED = window.FUSION_PARAMS.get('embed') === '1';
+    window.FUSION_PORTAL_PROFESSOR =
+      window.FUSION_PARAMS.get('origem') === 'professor' ||
+      window.FUSION_PARAMS.get('portal') === 'professor' ||
+      window.FUSION_PARAMS.has('professorId') ||
+      window.FUSION_PARAMS.has('professor_id') ||
+      !!localStorage.getItem('fusion_professor_sessao');
+
+    if (!window.FUSION_EMBED && !window.FUSION_PORTAL_PROFESSOR) {
       document.write('<script src="/assets/js/fusion-auth.js"><\/script><script>FusionAuth.proteger();<\/script>');
     }
   </script>
   <meta name="fusion-existing-pages" content="agenda,alunos,avaliacoes,bi,bi-academia,bi-academia-operacional,bi-financeiro,caixa,checkin,configuracoes,dashboard,estoque,exercicios,financeiro,login,matriculas,mensalidades,modalidades,modelos-treino,pagamentos,planos,presencas,professores,recebimentos,relatorios-caixa,treinos,turmas">
+  <link rel="stylesheet" href="/assets/css/fusion-mobile-final.css">
+  <link rel="stylesheet" href="/assets/css/fusion-no-sidebar.css">
 </head>
 <body class="aval-admin">
 <div class="fusion-shell">
 <main class="fusion-main">
-    <header class="fusion-topbar">
-      <div class="fusion-title">Avaliações</div>
-      <div><span data-fusion-user></span> <button onclick="FusionAuth.sair()">Sair</button></div>
-    </header>
 
     <section class="fusion-content aval-page">
       <div class="aval-header-card">
@@ -29,9 +35,9 @@
           <h2>Avaliações físicas</h2>
           <p>Anamnese, risco coronariano, perímetros, composição, cardio, neuromotores, postural e relatório.</p>
         </div>
-        <div class="aval-actions">
+        <div class="aval-actions aval-actions-historico">
           <button class="fusion-button secondary" id="btnAtualizar" type="button">Atualizar</button>
-          <button class="fusion-button" id="btnNova" type="button">Nova avaliação</button>
+          <button class="fusion-button" id="btnNovaMobile" type="button">Nova avaliação</button>
         </div>
       </div>
 
@@ -79,6 +85,12 @@
       <button id="btnFechar" type="button">×</button>
     </div>
 
+    <div class="avaliacao-mobile-resumo" id="avaliacaoMobileResumo" aria-live="polite">
+      <div><span>IMC</span><strong id="mobileResumoImc">-</strong></div>
+      <div><span>RCQ</span><strong id="mobileResumoRcq">-</strong></div>
+      <button id="btnMobileVozAvaliacao" type="button">🎙️ Voz</button>
+    </div>
+
     <form id="form" class="aval-form">
       <input type="hidden" id="id">
       <input type="hidden" id="professor_id">
@@ -96,6 +108,18 @@
         <div class="field hora-box"><label>Hora</label><input id="hora" type="time"></div>
       </div>
       <div class="professor-lock">Professor avaliador: <strong id="professorNomeDisplay">Definido pelo professor responsável do aluno</strong></div>
+
+      <div class="avaliacao-voz-box" id="avaliacaoVozBox">
+        <div>
+          <strong>IA de medidas por voz</strong>
+          <small id="avaliacaoVozStatus">Pronto para ouvir o professor.</small>
+        </div>
+        <div class="avaliacao-voz-actions">
+          <button class="fusion-button secondary" id="btnVozAvaliacao" type="button">🎙️ Iniciar voz</button>
+          <button class="fusion-button secondary" id="btnRepetirVozAvaliacao" type="button">Repetir instrução</button>
+        </div>
+        <div class="avaliacao-voz-transcript" id="avaliacaoVozTranscricao">Fale livremente: “peso 82 vírgula 4, altura 1 e 78, cintura 90, quadril 102”.</div>
+      </div>
 
       <div class="avaliacao-mode" id="modoAvaliacaoBox">
         <button class="modo-card active" type="button" data-avmodo="nova">
@@ -163,34 +187,76 @@
       </div>
 
       <div class="tab-panel" id="tab-perimetros">
-        <div class="sca-panel perimetros-layout">
-          <div class="perimetros-list">
+        <div class="sca-panel perimetros-layout perimetros-layout-lista-unica">
+          <div class="perimetros-list perimetros-lista-oficial">
             <h4>Perímetros</h4>
+
             <div class="measure-row single"><label>Pescoço</label><input id="pescoco" inputmode="decimal" placeholder="0,00"></div>
             <div class="measure-row single"><label>Punho</label><input id="punho" inputmode="decimal" placeholder="0,00"></div>
             <div class="measure-row single"><label>Ombro</label><input id="ombro" inputmode="decimal" placeholder="0,00"></div>
-            <div class="measure-row pair"><label>Braço relaxado</label><span>Direito</span><input id="braco_relaxado_direito" inputmode="decimal" placeholder="0,00"><span>Esquerdo</span><input id="braco_relaxado_esquerdo" inputmode="decimal" placeholder="0,00"></div>
-            <div class="measure-row pair"><label>Braço contraído</label><span>Direito</span><input id="braco_contraido_direito" inputmode="decimal" placeholder="0,00"><span>Esquerdo</span><input id="braco_contraido_esquerdo" inputmode="decimal" placeholder="0,00"></div>
-            <div class="measure-row pair"><label>Antebraço</label><span>Direito</span><input id="antebraco_direito" inputmode="decimal" placeholder="0,00"><span>Esquerdo</span><input id="antebraco_esquerdo" inputmode="decimal" placeholder="0,00"></div>
+
+            <div class="measure-row pair measure-row-stack">
+              <label>Braço relaxado</label>
+              <div class="measure-pair-values">
+                <span>Direito</span><input id="braco_relaxado_direito" inputmode="decimal" placeholder="0,00">
+                <span>Esquerdo</span><input id="braco_relaxado_esquerdo" inputmode="decimal" placeholder="0,00">
+              </div>
+            </div>
+            <div class="measure-row pair measure-row-stack">
+              <label>Braço contraído</label>
+              <div class="measure-pair-values">
+                <span>Direito</span><input id="braco_contraido_direito" inputmode="decimal" placeholder="0,00">
+                <span>Esquerdo</span><input id="braco_contraido_esquerdo" inputmode="decimal" placeholder="0,00">
+              </div>
+            </div>
+            <div class="measure-row pair measure-row-stack">
+              <label>Antebraço</label>
+              <div class="measure-pair-values">
+                <span>Direito</span><input id="antebraco_direito" inputmode="decimal" placeholder="0,00">
+                <span>Esquerdo</span><input id="antebraco_esquerdo" inputmode="decimal" placeholder="0,00">
+              </div>
+            </div>
+
             <div class="measure-row single"><label>Tórax relaxado</label><input id="torax_relaxado" inputmode="decimal" placeholder="0,00"></div>
             <div class="measure-row single"><label>Tórax inspirado</label><input id="torax_inspirado" inputmode="decimal" placeholder="0,00"></div>
             <div class="measure-row single req"><label>Cintura *</label><input id="cintura" inputmode="decimal" placeholder="0,00"></div>
             <div class="measure-row single"><label>Abdome</label><input id="abdomen" inputmode="decimal" placeholder="0,00"></div>
             <div class="measure-row single req"><label>Quadril *</label><input id="quadril" inputmode="decimal" placeholder="0,00"></div>
-            <div class="measure-row pair"><label>Coxa proximal</label><span>Direita</span><input id="coxa_proximal_direita" inputmode="decimal" placeholder="0,00"><span>Esquerda</span><input id="coxa_proximal_esquerda" inputmode="decimal" placeholder="0,00"></div>
-            <div class="measure-row pair"><label>Coxa medial</label><span>Direita</span><input id="coxa_medial_direita" inputmode="decimal" placeholder="0,00"><span>Esquerda</span><input id="coxa_medial_esquerda" inputmode="decimal" placeholder="0,00"></div>
-            <div class="measure-row pair"><label>Panturrilha</label><span>Direita</span><input id="panturrilha_direita" inputmode="decimal" placeholder="0,00"><span>Esquerda</span><input id="panturrilha_esquerda" inputmode="decimal" placeholder="0,00"></div>
-          </div>
-          <div class="resultado-card">
-            <h4>Relação cintura x quadril</h4>
-            <p>Determina risco cardiometabólico considerando gordura abdominal.</p>
-            <div class="avaliacao-corpo-wrap">
-              <div id="rcqFigura" class="avaliacao-corpo figura-neutral" aria-label="Figura corporal de referência">
-                <span class="head"></span><span class="torso"></span><span class="hip"></span><span class="arm left"></span><span class="arm right"></span><span class="leg left"></span><span class="leg right"></span>
+
+            <div class="measure-row pair measure-row-stack">
+              <label>Coxa proximal</label>
+              <div class="measure-pair-values">
+                <span>Direita</span><input id="coxa_proximal_direita" inputmode="decimal" placeholder="0,00">
+                <span>Esquerda</span><input id="coxa_proximal_esquerda" inputmode="decimal" placeholder="0,00">
               </div>
             </div>
+            <div class="measure-row pair measure-row-stack">
+              <label>Coxa medial</label>
+              <div class="measure-pair-values">
+                <span>Direita</span><input id="coxa_medial_direita" inputmode="decimal" placeholder="0,00">
+                <span>Esquerda</span><input id="coxa_medial_esquerda" inputmode="decimal" placeholder="0,00">
+              </div>
+            </div>
+            <div class="measure-row pair measure-row-stack">
+              <label>Panturrilha</label>
+              <div class="measure-pair-values">
+                <span>Direita</span><input id="panturrilha_direita" inputmode="decimal" placeholder="0,00">
+                <span>Esquerda</span><input id="panturrilha_esquerda" inputmode="decimal" placeholder="0,00">
+              </div>
+            </div>
+
+            <div class="measure-row single"><label>Biestilóide</label><input id="biestiloide" inputmode="decimal" placeholder="0,00"></div>
+            <div class="measure-row single"><label>Biepicôndilo Umeral</label><input id="biepicondilo_umeral" inputmode="decimal" placeholder="0,00"></div>
+            <div class="measure-row single"><label>Biepicôndilo Femural</label><input id="biepicondilo_femural" inputmode="decimal" placeholder="0,00"></div>
+            <div class="measure-row single"><label>Bimaleolar</label><input id="bimaleolar" inputmode="decimal" placeholder="0,00"></div>
+          </div>
+
+          <div class="resultado-card resultado-card-rcq compacto">
+            <h4>RCQ / Resumo</h4>
+            <p>Resultado calculado automaticamente por cintura ÷ quadril.</p>
             <div class="rcq-value"><span>RCQ</span><strong id="rcq">0,00</strong></div>
             <div id="rcq_classificacao" class="info">Preencha cintura e quadril.</div>
+            <div class="rcq-mini-grid"><span>Cintura</span><strong id="rcq_cintura_view">0,00</strong><span>Quadril</span><strong id="rcq_quadril_view">0,00</strong></div>
             <div class="sum-value"><span>Somatório dos perímetros</span><strong id="soma_perimetros">0,00</strong></div>
           </div>
         </div>
@@ -287,5 +353,7 @@
       document.write('<script src="/assets/js/fusion-layout.js"><\/script>');
     }
   </script>
+  <script src="/assets/js/fusion-mobile-final.js" defer></script>
+  <script src="/assets/js/fusion-no-sidebar.js" defer></script>
 </body>
 </html>

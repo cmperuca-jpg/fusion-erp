@@ -1,40 +1,52 @@
-
 (() => {
-  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  const path = location.pathname;
+  const isAluno = path.includes('/portal-aluno') || path.includes('/treinos-v3-aluno');
+  const isBiblioteca = path.includes('/biblioteca-inteligente') || path.includes('/exercicios');
+  const app = isAluno ? 'aluno' : isBiblioteca ? 'biblioteca' : 'sistema';
+  const colors = { aluno:'#16a34a', sistema:'#ff6600', biblioteca:'#dc2626' };
+  const names = { aluno:'Fusion Aluno', sistema:'Fusion ERP', biblioteca:'Fusion Biblioteca' };
+  document.documentElement.style.setProperty('--fusion-pwa-color', colors[app] || colors.sistema);
+  document.documentElement.classList.add('fusion-pwa-ready', `fusion-pwa-${app}`);
+
+  const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent || '');
-  const isAndroid = /android/i.test(navigator.userAgent || '');
-  document.documentElement.classList.add(isIOS ? 'fusion-ios' : isAndroid ? 'fusion-android' : 'fusion-desktop');
+
   if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => navigator.serviceWorker.register('/fusion-sw.js').catch(() => {}));
+    window.addEventListener('load', () => navigator.serviceWorker.register('/fusion-sw.js', { scope:'/' }).catch(() => {}));
   }
-  let promptEvent = null;
-  window.addEventListener('beforeinstallprompt', (event) => {
-    event.preventDefault();
-    promptEvent = event;
-    if (!isStandalone) showAndroidInstall();
+
+  let deferredPrompt = null;
+  window.addEventListener('beforeinstallprompt', ev => {
+    ev.preventDefault();
+    deferredPrompt = ev;
+    if (!standalone) showInstallBanner();
   });
-  function showAndroidInstall(){
-    if (document.querySelector('.fusion-pwa-banner')) return;
+
+  function showInstallBanner(){
+    if (standalone || document.querySelector('.fusion-pwa-banner')) return;
     const el = document.createElement('div');
-    el.className = 'fusion-pwa-banner show';
-    el.innerHTML = '<div><strong>Instalar Fusion ERP</strong><span>Adicionar à tela inicial deste celular.</span></div><button type="button">Instalar</button>';
+    el.className = 'fusion-pwa-banner';
+    el.innerHTML = `<div><strong>Instalar ${names[app]}</strong><span>Cria um ícone na tela inicial e abre em tela cheia.</span></div><button type="button">Instalar</button>`;
     el.querySelector('button').addEventListener('click', async () => {
       el.remove();
-      if (promptEvent) { promptEvent.prompt(); await promptEvent.userChoice.catch(() => {}); promptEvent = null; }
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      await deferredPrompt.userChoice.catch(() => {});
+      deferredPrompt = null;
     });
     document.body.appendChild(el);
-    setTimeout(() => el.remove(), 12000);
   }
+
   function showIOSHint(){
-    if (!isIOS || isStandalone || document.querySelector('.fusion-ios-hint')) return;
-    const key = 'fusion_ios_hint_seen_v274';
+    if (!isIOS || standalone || document.querySelector('.fusion-ios-hint')) return;
+    const key = `fusion_ios_hint_${app}_274`;
     if (localStorage.getItem(key)) return;
     const el = document.createElement('div');
-    el.className = 'fusion-ios-hint show';
-    el.innerHTML = '<button type="button">OK</button><strong>iPhone/iPad:</strong> toque em Compartilhar e depois em “Adicionar à Tela de Início”.';
+    el.className = 'fusion-ios-hint';
+    el.innerHTML = '<button type="button">OK</button><span><strong>iPhone/iPad:</strong> toque em Compartilhar e depois em “Adicionar à Tela de Início”.</span>';
     el.querySelector('button').addEventListener('click', () => { localStorage.setItem(key, '1'); el.remove(); });
     document.body.appendChild(el);
-    setTimeout(() => { localStorage.setItem(key, '1'); el.remove(); }, 14000);
   }
-  window.addEventListener('load', showIOSHint);
+
+  window.addEventListener('load', () => setTimeout(showIOSHint, 700));
 })();

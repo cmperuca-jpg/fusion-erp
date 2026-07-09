@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Academia - Planos e Matrícula</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <header class="hero">
+    <nav><strong>Fusion Academia</strong><a href="#planos">Planos</a><a href="#experimental">Aula experimental</a><a class="btn small" href="/pages/matricula-online/index.html">Matricule-se</a></nav>
+    <div class="hero-content">
+      <p class="tag">Matrícula online com análise da recepção</p>
+      <h1>Comece seu treino com acompanhamento profissional.</h1>
+      <p>Escolha um plano, agende uma aula experimental ou envie sua matrícula online. A equipe comercial acompanhará seu atendimento.</p>
+      <div class="actions"><a class="btn" href="/pages/matricula-online/index.html">Matricule-se agora</a><a class="btn secondary" href="#experimental">Agendar aula experimental</a></div>
+    </div>
+  </header>
+
+  <main>
+    <section id="planos" class="section">
+      <div class="section-head"><h2>Planos disponíveis</h2><p>Valores carregados diretamente do cadastro de planos do Fusion ERP.</p></div>
+      <div id="listaPlanos" class="planos"><div class="loading">Carregando planos...</div></div>
+    </section>
+
+    <section class="section grid-2">
+      <div class="card"><h2>Serviços oferecidos</h2><ul><li>Musculação</li><li>Avaliação física</li><li>Prescrição de treino</li><li>Acompanhamento pelo portal do aluno</li><li>Atendimento do professor</li></ul></div>
+      <div class="card"><h2>Como funciona</h2><ol><li>Preencha a matrícula online.</li><li>A recepção confere os dados.</li><li>O financeiro confirma o pagamento.</li><li>O portal do aluno e o professor são liberados.</li></ol></div>
+    </section>
+
+    <section id="experimental" class="section lead-card">
+      <div><h2>Agende uma aula experimental</h2><p>Deixe seus dados. A recepção entrará em contato pelo WhatsApp.</p></div>
+      <form id="formLead" class="lead-form">
+        <input id="leadNome" required placeholder="Nome completo">
+        <input id="leadTelefone" required inputmode="tel" placeholder="WhatsApp">
+        <input id="leadEmail" type="email" placeholder="E-mail">
+        <select id="leadPlano"><option value="">Plano de interesse</option></select>
+        <input id="leadHorario" placeholder="Melhor horário para contato/aula">
+        <textarea id="leadObjetivo" rows="3" placeholder="Objetivo ou observação"></textarea>
+        <button type="submit">Enviar interesse</button>
+      </form>
+      <div id="alertaLead" class="alerta hidden"></div>
+    </section>
+  </main>
+
+  <script src="./index.js"></script>
+</body>
+</html>

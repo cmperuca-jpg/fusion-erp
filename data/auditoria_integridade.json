@@ -1,1 +1,2022 @@
-[]
+[
+  {
+    "id": "aud_1783587749863_661217",
+    "tipo": "aluno_reativacao_cobranca_criada",
+    "alunoId": "9c5e6857-4040-46f8-849e-bf25a4e5717d",
+    "aluno": "ALINE IZABELLI CORDEIRO DE SOUZA",
+    "motivo": "Reativação pelo cadastro de alunos com cobrança no caixa.",
+    "usuario": "operador",
+    "resumo": {
+      "matriculaId": "mat_1783587749832_361003",
+      "mensalidadeId": "men_reat_1783587749833_253000",
+      "financeiroId": "fin_men_reat_1783587749833_253000",
+      "recebimentoId": "rec_men_reat_1783587749833_253000",
+      "valor": 65
+    },
+    "criadoEm": "2026-07-09T09:02:29.863Z"
+  },
+  {
+    "id": "aud_1783587740051_186433",
+    "tipo": "aluno_desligado",
+    "alunoId": "9c5e6857-4040-46f8-849e-bf25a4e5717d",
+    "aluno": "ALINE IZABELLI CORDEIRO DE SOUZA",
+    "motivo": "Exclusão/desligamento pelo cadastro de alunos.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 0,
+      "financeiroCancelado": 0,
+      "recebimentosCancelados": 1,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-09T09:02:20.051Z"
+  },
+  {
+    "id": "aud_1783586792825_563578",
+    "tipo": "aluno_reativacao_cobranca_criada",
+    "alunoId": "616e7d16-2184-4631-82d9-efb0ba867790",
+    "aluno": "DANIELA MORAIS TENÓRIO DE OLIVEIRA",
+    "motivo": "Reativação pelo cadastro de alunos com cobrança no caixa.",
+    "usuario": "operador",
+    "resumo": {
+      "matriculaId": "mat_1783586792783_909692",
+      "mensalidadeId": "men_reat_1783586792786_683356",
+      "financeiroId": "fin_men_reat_1783586792786_683356",
+      "recebimentoId": "rec_men_reat_1783586792786_683356",
+      "valor": 65
+    },
+    "criadoEm": "2026-07-09T08:46:32.825Z"
+  },
+  {
+    "id": "aud_1783519962832_935974",
+    "tipo": "aluno_reativacao_cobranca_criada",
+    "alunoId": "94e45d3a-90d6-42cc-9096-57d0ca3db7cd",
+    "aluno": "DANIEL FAUSTINO BEZERRA",
+    "motivo": "Reativação pelo cadastro de alunos com cobrança no caixa.",
+    "usuario": "operador",
+    "resumo": {
+      "matriculaId": "mat_1783519962695_54306",
+      "mensalidadeId": "men_reat_1783519962703_629387",
+      "financeiroId": "fin_men_reat_1783519962703_629387",
+      "recebimentoId": "rec_men_reat_1783519962703_629387",
+      "valor": 65
+    },
+    "criadoEm": "2026-07-08T14:12:42.832Z"
+  },
+  {
+    "id": "aud_1783518927059_104141",
+    "tipo": "aluno_reativacao_cobranca_criada",
+    "alunoId": "8e71981d-135a-4089-be1b-df73568b124f",
+    "aluno": "DANIEL DE SOUZA",
+    "motivo": "Reativação pelo cadastro de alunos com cobrança no caixa.",
+    "usuario": "operador",
+    "resumo": {
+      "matriculaId": "mat_1783518927019_823820",
+      "mensalidadeId": "men_reat_1783518927021_948503",
+      "financeiroId": "fin_men_reat_1783518927021_948503",
+      "recebimentoId": "rec_men_reat_1783518927021_948503",
+      "valor": 65
+    },
+    "criadoEm": "2026-07-08T13:55:27.059Z"
+  },
+  {
+    "id": "aud_1783517511111_511553",
+    "tipo": "aluno_reativacao_cobranca_criada",
+    "alunoId": "10246764-fe36-4ebf-bada-1744f452ffb8",
+    "aluno": "CRISTIANE SILVA DOS SANTOS",
+    "motivo": "Reativação pelo cadastro de alunos com cobrança no caixa.",
+    "usuario": "operador",
+    "resumo": {
+      "matriculaId": "mat_1783517511064_281518",
+      "mensalidadeId": "men_reat_1783517511068_793091",
+      "financeiroId": "fin_men_reat_1783517511068_793091",
+      "recebimentoId": "rec_men_reat_1783517511068_793091",
+      "valor": 65
+    },
+    "criadoEm": "2026-07-08T13:31:51.111Z"
+  },
+  {
+    "id": "aud_1783516726610_163878",
+    "tipo": "aluno_reativacao_cobranca_criada",
+    "alunoId": "261f86d7-78a9-4538-94ab-bc552d9ef258",
+    "aluno": "CLAUDIANE PEREIRA DA SILVA",
+    "motivo": "Reativação pelo cadastro de alunos com cobrança no caixa.",
+    "usuario": "operador",
+    "resumo": {
+      "matriculaId": "mat_1783516726554_799895",
+      "mensalidadeId": "men_reat_1783516726557_214582",
+      "financeiroId": "fin_men_reat_1783516726557_214582",
+      "recebimentoId": "rec_men_reat_1783516726557_214582",
+      "valor": 65
+    },
+    "criadoEm": "2026-07-08T13:18:46.610Z"
+  },
+  {
+    "id": "aud_1783516676089_990716",
+    "tipo": "aluno_reativacao_cobranca_criada",
+    "alunoId": "392be2fc-5483-4984-874a-c88926357fb8",
+    "aluno": "CLAUDEVANIA DA SILVA BARROS OLIVEIRA",
+    "motivo": "Reativação pelo cadastro de alunos com cobrança no caixa.",
+    "usuario": "operador",
+    "resumo": {
+      "matriculaId": "mat_1783516676019_994544",
+      "mensalidadeId": "men_reat_1783516676034_911161",
+      "financeiroId": "fin_men_reat_1783516676034_911161",
+      "recebimentoId": "rec_men_reat_1783516676034_911161",
+      "valor": 65
+    },
+    "criadoEm": "2026-07-08T13:17:56.089Z"
+  },
+  {
+    "id": "aud_1783516075239_66024",
+    "tipo": "aluno_reativacao_cobranca_criada",
+    "alunoId": "5ce052de-bf9a-4f2f-948d-de87850b823a",
+    "aluno": "CÍCERA FERREIRA DE ARAÚJO",
+    "motivo": "Reativação pelo cadastro de alunos com cobrança no caixa.",
+    "usuario": "operador",
+    "resumo": {
+      "matriculaId": "mat_1783516075198_535655",
+      "mensalidadeId": "men_reat_1783516075201_44029",
+      "financeiroId": "fin_men_reat_1783516075201_44029",
+      "recebimentoId": "rec_men_reat_1783516075201_44029",
+      "valor": 65
+    },
+    "criadoEm": "2026-07-08T13:07:55.239Z"
+  },
+  {
+    "id": "aud_1783516004305_874958",
+    "tipo": "aluno_reativacao_cobranca_criada",
+    "alunoId": "c3c8c026-51ff-40f3-aa65-5455e8c594d7",
+    "aluno": "BRUNO HENRIQUE SANTOS DA SILVA",
+    "motivo": "Reativação pelo cadastro de alunos com cobrança no caixa.",
+    "usuario": "operador",
+    "resumo": {
+      "matriculaId": "mat_1783516004237_373652",
+      "mensalidadeId": "men_reat_1783516004248_301816",
+      "financeiroId": "fin_men_reat_1783516004248_301816",
+      "recebimentoId": "rec_men_reat_1783516004248_301816",
+      "valor": 65
+    },
+    "criadoEm": "2026-07-08T13:06:44.305Z"
+  },
+  {
+    "id": "aud_1783512318145_527051",
+    "tipo": "aluno_reativacao_cobranca_criada",
+    "alunoId": "c73fbfd8-01ad-4546-a94b-e189087eb775",
+    "aluno": "BRUNA ALMEIDA DA SILVA SANTOS",
+    "motivo": "Reativação pelo cadastro de alunos com cobrança no caixa.",
+    "usuario": "operador",
+    "resumo": {
+      "matriculaId": "mat_1783512318096_315692",
+      "mensalidadeId": "men_reat_1783512318098_309397",
+      "financeiroId": "fin_men_reat_1783512318098_309397",
+      "recebimentoId": "rec_men_reat_1783512318098_309397",
+      "valor": 65
+    },
+    "criadoEm": "2026-07-08T12:05:18.145Z"
+  },
+  {
+    "id": "aud_1783512245312_996253",
+    "tipo": "aluno_reativacao_cobranca_criada",
+    "alunoId": "cd482dc0-b1c1-41a5-afbc-9eab19d8f920",
+    "aluno": "BEATRIZ RIBEIRO DA SILVA ARAÚJO",
+    "motivo": "Reativação pelo cadastro de alunos com cobrança no caixa.",
+    "usuario": "operador",
+    "resumo": {
+      "matriculaId": "mat_1783512245262_462152",
+      "mensalidadeId": "men_reat_1783512245262_29666",
+      "financeiroId": "fin_men_reat_1783512245262_29666",
+      "recebimentoId": "rec_men_reat_1783512245262_29666",
+      "valor": 65
+    },
+    "criadoEm": "2026-07-08T12:04:05.312Z"
+  },
+  {
+    "id": "aud_1783511416495_418913",
+    "tipo": "aluno_reativacao_cobranca_criada",
+    "alunoId": "6331016c-b4bb-4df0-9e82-59d05c8b9e7c",
+    "aluno": "ARICREMIS PEDRO DA SILVA",
+    "motivo": "Reativação pelo cadastro de alunos com cobrança no caixa.",
+    "usuario": "operador",
+    "resumo": {
+      "matriculaId": "mat_1783511416441_601998",
+      "mensalidadeId": "men_reat_1783511416445_210155",
+      "financeiroId": "fin_men_reat_1783511416445_210155",
+      "recebimentoId": "rec_men_reat_1783511416445_210155",
+      "valor": 65
+    },
+    "criadoEm": "2026-07-08T11:50:16.495Z"
+  },
+  {
+    "id": "aud_1783511326317_944601",
+    "tipo": "aluno_reativacao_cobranca_criada",
+    "alunoId": "c0647bde-9fab-49b1-8ed8-114c439f0a36",
+    "aluno": "ANA PAULA DOS SANTOS LIMA",
+    "motivo": "Reativação pelo cadastro de alunos com cobrança no caixa.",
+    "usuario": "operador",
+    "resumo": {
+      "matriculaId": "mat_1783511326261_3381",
+      "mensalidadeId": "men_reat_1783511326263_383755",
+      "financeiroId": "fin_men_reat_1783511326263_383755",
+      "recebimentoId": "rec_men_reat_1783511326263_383755",
+      "valor": 65
+    },
+    "criadoEm": "2026-07-08T11:48:46.318Z"
+  },
+  {
+    "id": "aud_1783510419303_666871",
+    "tipo": "aluno_reativacao_cobranca_criada",
+    "alunoId": "9c5e6857-4040-46f8-849e-bf25a4e5717d",
+    "aluno": "ALINE IZABELLI CORDEIRO DE SOUZA",
+    "motivo": "Reativação pelo cadastro de alunos com cobrança no caixa.",
+    "usuario": "operador",
+    "resumo": {
+      "matriculaId": "mat_1783510419253_155588",
+      "mensalidadeId": "men_reat_1783510419258_968805",
+      "financeiroId": "fin_men_reat_1783510419258_968805",
+      "recebimentoId": "rec_men_reat_1783510419258_968805",
+      "valor": 65
+    },
+    "criadoEm": "2026-07-08T11:33:39.304Z"
+  },
+  {
+    "id": "aud_1783510341270_952104",
+    "tipo": "aluno_reativacao_cobranca_criada",
+    "alunoId": "47800783-ce9f-4176-87cd-54863fce2ab3",
+    "aluno": "ALDO SILVA",
+    "motivo": "Reativação pelo cadastro de alunos com cobrança no caixa.",
+    "usuario": "operador",
+    "resumo": {
+      "matriculaId": "mat_1783510341157_59290",
+      "mensalidadeId": "men_reat_1783510341188_791555",
+      "financeiroId": "fin_men_reat_1783510341188_791555",
+      "recebimentoId": "rec_men_reat_1783510341188_791555",
+      "valor": 65
+    },
+    "criadoEm": "2026-07-08T11:32:21.270Z"
+  },
+  {
+    "id": "aud_1783510227394_112083",
+    "tipo": "aluno_reativacao_cobranca_criada",
+    "alunoId": "7c49b23b-8f7f-4d84-9728-ad5715d4a38b",
+    "aluno": "ANDREIA PATRICIA LOPES DOS SANTOS",
+    "motivo": "Reativação pelo cadastro de alunos com cobrança no caixa.",
+    "usuario": "operador",
+    "resumo": {
+      "matriculaId": "mat_1783510227356_850529",
+      "mensalidadeId": "men_reat_1783510227356_102240",
+      "financeiroId": "fin_men_reat_1783510227356_102240",
+      "recebimentoId": "rec_men_reat_1783510227356_102240",
+      "valor": 65
+    },
+    "criadoEm": "2026-07-08T11:30:27.394Z"
+  },
+  {
+    "id": "aud_1783508824458_420558",
+    "tipo": "aluno_reativacao_cobranca_criada",
+    "alunoId": "7c49b23b-8f7f-4d84-9728-ad5715d4a38b",
+    "aluno": "ANDREIA PATRICIA LOPES DOS SANTOS",
+    "motivo": "Reativação pelo cadastro de alunos com cobrança no caixa.",
+    "usuario": "operador",
+    "resumo": {
+      "matriculaId": "mat_imp_f1f2ba58-57d9-42b4-8de2-118e98db3744",
+      "mensalidadeId": "men_reat_1783508824421_603664",
+      "financeiroId": "fin_men_reat_1783508824421_603664",
+      "recebimentoId": "rec_men_reat_1783508824421_603664",
+      "valor": 30
+    },
+    "criadoEm": "2026-07-08T11:07:04.458Z"
+  },
+  {
+    "id": "aud_1783508555583_196378",
+    "tipo": "aluno_reativacao_cobranca_criada",
+    "alunoId": "cf3f5963-7678-4cb8-8d98-64b4f8cf81f9",
+    "aluno": "ADRIANA RODRIGUES RIBEIRO DA SILVA",
+    "motivo": "Reativação pelo cadastro de alunos com cobrança no caixa.",
+    "usuario": "operador",
+    "resumo": {
+      "matriculaId": "mat_imp_1fa1973d-9c69-4250-a095-889c0d3b273d",
+      "mensalidadeId": "men_reat_1783508555535_409598",
+      "financeiroId": "fin_men_reat_1783508555535_409598",
+      "recebimentoId": "rec_men_reat_1783508555535_409598",
+      "valor": 65
+    },
+    "criadoEm": "2026-07-08T11:02:35.584Z"
+  },
+  {
+    "id": "aud_1783507265403_196644",
+    "tipo": "aluno_reativacao_cobranca_criada",
+    "alunoId": "f1439882-c9ad-400d-a298-dbec7b734eb6",
+    "aluno": "ADAM MIGUEL DE SANTANA",
+    "motivo": "Reativação pelo cadastro de alunos com cobrança no caixa.",
+    "usuario": "operador",
+    "resumo": {
+      "matriculaId": "mat_1783483712915_238862",
+      "mensalidadeId": "men_reat_1783507265351_895266",
+      "financeiroId": "fin_men_reat_1783507265351_895266",
+      "recebimentoId": "rec_men_reat_1783507265351_895266",
+      "valor": 65
+    },
+    "criadoEm": "2026-07-08T10:41:05.403Z"
+  },
+  {
+    "id": "aud_1783506622380_805388",
+    "tipo": "aluno_reativacao_cobranca_criada",
+    "alunoId": "44f1af1b-a45f-4b54-b67f-f520070f33fa",
+    "aluno": "JEOVANE DA SILVA SOUZA",
+    "motivo": "Reativação pelo cadastro de alunos com cobrança no caixa.",
+    "usuario": "operador",
+    "resumo": {
+      "matriculaId": "mat_1783506622342_619432",
+      "mensalidadeId": "men_reat_1783506622343_439482",
+      "financeiroId": "fin_men_reat_1783506622343_439482",
+      "recebimentoId": "rec_men_reat_1783506622343_439482",
+      "valor": 65
+    },
+    "criadoEm": "2026-07-08T10:30:22.380Z"
+  },
+  {
+    "id": "aud_1783506388161_20187",
+    "tipo": "aluno_reativacao_cobranca_criada",
+    "alunoId": "91c7eb65-660b-4a98-abd9-d284772e0191",
+    "aluno": "marcos andre",
+    "motivo": "Reativação pelo cadastro de alunos com cobrança no caixa.",
+    "usuario": "operador",
+    "resumo": {
+      "matriculaId": "mat_1783104576305_815417",
+      "mensalidadeId": "men_reat_1783506388062_973191",
+      "financeiroId": "fin_men_reat_1783506388062_973191",
+      "recebimentoId": "rec_men_reat_1783506388062_973191",
+      "valor": 65
+    },
+    "criadoEm": "2026-07-08T10:26:28.161Z"
+  },
+  {
+    "id": "aud_1783506367825_351061",
+    "tipo": "aluno_desligado",
+    "alunoId": "91c7eb65-660b-4a98-abd9-d284772e0191",
+    "aluno": "marcos andre",
+    "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+    "usuario": "operador",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 1,
+      "checkinsBloqueados": 1
+    },
+    "criadoEm": "2026-07-08T10:26:07.826Z"
+  },
+  {
+    "id": "aud_1783505479028_205840",
+    "tipo": "aluno_reativacao_cobranca_criada",
+    "alunoId": "91c7eb65-660b-4a98-abd9-d284772e0191",
+    "aluno": "marcos andre",
+    "motivo": "Reativação pelo cadastro de alunos com cobrança no caixa.",
+    "usuario": "operador",
+    "resumo": {
+      "matriculaId": "mat_1783104576305_815417",
+      "mensalidadeId": "men_reat_1783505478991_612075",
+      "financeiroId": "fin_men_reat_1783505478991_612075",
+      "recebimentoId": "rec_men_reat_1783505478991_612075",
+      "valor": 65
+    },
+    "criadoEm": "2026-07-08T10:11:19.028Z"
+  },
+  {
+    "id": "aud_1783505002155_656023",
+    "tipo": "aluno_reativacao_cobranca_criada",
+    "alunoId": "cad3deb9-6275-4a04-8c41-f872f263355d",
+    "aluno": "SAMIA JAMILLI DE OLIVEIRA SILVA",
+    "motivo": "Reativação pelo cadastro de alunos com cobrança no caixa.",
+    "usuario": "operador",
+    "resumo": {
+      "matriculaId": "mat_1783505002036_82807",
+      "mensalidadeId": "men_reat_1783505002051_449066",
+      "financeiroId": "fin_men_reat_1783505002051_449066",
+      "recebimentoId": "rec_men_reat_1783505002051_449066",
+      "valor": 65
+    },
+    "criadoEm": "2026-07-08T10:03:22.155Z"
+  },
+  {
+    "id": "aud_1783504837506_606450",
+    "tipo": "aluno_desligado",
+    "alunoId": "36c862ac-1b79-4a85-9aae-e2d2188bd8e3",
+    "aluno": "ALESSANDRA DE OLIVEIRA SILVA",
+    "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+    "usuario": "operador",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 1,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T10:00:37.506Z"
+  },
+  {
+    "id": "aud_1783504834904_944192",
+    "tipo": "aluno_desligado",
+    "alunoId": "cad3deb9-6275-4a04-8c41-f872f263355d",
+    "aluno": "SAMIA JAMILLI DE OLIVEIRA SILVA",
+    "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+    "usuario": "operador",
+    "resumo": {
+      "matriculasCanceladas": 0,
+      "mensalidadesCanceladas": 0,
+      "financeiroCancelado": 0,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T10:00:34.904Z"
+  },
+  {
+    "id": "aud_1783504832712_549182",
+    "tipo": "aluno_desligado",
+    "alunoId": "3c3b79a4-97ef-4540-9e45-71432d098353",
+    "aluno": "LUZIANA DE ARAÚJO ALVES",
+    "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+    "usuario": "operador",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T10:00:32.712Z"
+  },
+  {
+    "id": "aud_1783504828743_613821",
+    "tipo": "aluno_desligado",
+    "alunoId": "54d06643-7980-4b8c-a8a4-4573f0202d66",
+    "aluno": "KELLY CRISTINA ANDRADE BATISTA",
+    "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+    "usuario": "operador",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T10:00:28.743Z"
+  },
+  {
+    "id": "aud_1783504826407_853174",
+    "tipo": "aluno_desligado",
+    "alunoId": "d039de7d-4ad2-4eca-b2cf-f6f58fbc42fc",
+    "aluno": "JOSIEL SILVA GOMES",
+    "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+    "usuario": "operador",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T10:00:26.407Z"
+  },
+  {
+    "id": "aud_1783504822939_467950",
+    "tipo": "aluno_desligado",
+    "alunoId": "a57ce742-4752-4b94-8f66-a813e4eab004",
+    "aluno": "JOSÉ JADSON DA SILVA SOBRAL",
+    "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+    "usuario": "operador",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T10:00:22.939Z"
+  },
+  {
+    "id": "aud_1783504820721_542759",
+    "tipo": "aluno_desligado",
+    "alunoId": "64e884f0-bab6-4af6-b880-32f2d29ffac2",
+    "aluno": "JOSÉ DAMIÃO DE OLIVEIRA SILVA",
+    "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+    "usuario": "operador",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T10:00:20.721Z"
+  },
+  {
+    "id": "aud_1783504817941_297879",
+    "tipo": "aluno_desligado",
+    "alunoId": "ecb6a86e-8ad4-4c32-a3ee-e8b8af183955",
+    "aluno": "JOSÉ ALISSON SOARES DE MELO",
+    "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+    "usuario": "operador",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T10:00:17.941Z"
+  },
+  {
+    "id": "aud_1783504815130_84859",
+    "tipo": "aluno_desligado",
+    "alunoId": "031e673f-175a-4149-9bba-82632c95dec2",
+    "aluno": "ELI DOS SANTOS SILVA",
+    "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+    "usuario": "operador",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T10:00:15.130Z"
+  },
+  {
+    "id": "aud_1783504808170_144885",
+    "tipo": "aluno_desligado",
+    "alunoId": "da7a0529-328c-4beb-ad17-117aa1eb588e",
+    "aluno": "JOÃO VICTOR NASCIMENTO ALVES DA SILVA",
+    "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+    "usuario": "operador",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T10:00:08.170Z"
+  },
+  {
+    "id": "aud_1783504805335_167578",
+    "tipo": "aluno_desligado",
+    "alunoId": "5f5e524d-1484-46e5-9a5f-390f2a828717",
+    "aluno": "GABRIEL DA SILVA SEVERO(LIBERDADE)",
+    "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+    "usuario": "operador",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T10:00:05.335Z"
+  },
+  {
+    "id": "aud_1783504802510_233677",
+    "tipo": "aluno_desligado",
+    "alunoId": "069a4611-b09d-49d7-b8ea-c477b62d7a72",
+    "aluno": "ELENILDO ELIAS DE LIMA",
+    "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+    "usuario": "operador",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T10:00:02.510Z"
+  },
+  {
+    "id": "aud_1783504797403_755561",
+    "tipo": "aluno_desligado",
+    "alunoId": "a32afd3b-5df1-4254-838f-c5cccc05ddf5",
+    "aluno": "EDVALDO GOMES DA SILVA",
+    "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+    "usuario": "operador",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T09:59:57.403Z"
+  },
+  {
+    "id": "aud_1783504794360_202111",
+    "tipo": "aluno_desligado",
+    "alunoId": "68d0a232-a80d-42aa-84dc-c7d57d69b762",
+    "aluno": "EDNALVA SOARES PINTO",
+    "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+    "usuario": "operador",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T09:59:54.361Z"
+  },
+  {
+    "id": "aud_1783504792002_266023",
+    "tipo": "aluno_desligado",
+    "alunoId": "9791c807-e66b-4970-ba32-7e19b61cd941",
+    "aluno": "EDMILSON ALVES DA SILVA",
+    "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+    "usuario": "operador",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T09:59:52.002Z"
+  },
+  {
+    "id": "aud_1783504789601_991886",
+    "tipo": "aluno_desligado",
+    "alunoId": "ad76390a-4b4e-425c-bdcd-3129cb574e73",
+    "aluno": "EDJA RIBEIRO DOS SANTOS",
+    "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+    "usuario": "operador",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T09:59:49.601Z"
+  },
+  {
+    "id": "aud_1783504787654_845274",
+    "tipo": "aluno_desligado",
+    "alunoId": "261f86d7-78a9-4538-94ab-bc552d9ef258",
+    "aluno": "CLAUDIANE PEREIRA DA SILVA",
+    "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+    "usuario": "operador",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T09:59:47.654Z"
+  },
+  {
+    "id": "aud_1783504775330_141887",
+    "tipo": "aluno_desligado",
+    "alunoId": "616e7d16-2184-4631-82d9-efb0ba867790",
+    "aluno": "DANIELA MORAIS TENÓRIO DE OLIVEIRA",
+    "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+    "usuario": "operador",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T09:59:35.330Z"
+  },
+  {
+    "id": "aud_1783504769782_284107",
+    "tipo": "aluno_desligado",
+    "alunoId": "91c7eb65-660b-4a98-abd9-d284772e0191",
+    "aluno": "marcos andre",
+    "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+    "usuario": "operador",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 1,
+      "checkinsBloqueados": 1
+    },
+    "criadoEm": "2026-07-08T09:59:29.782Z"
+  },
+  {
+    "id": "aud_1783504767360_182646",
+    "tipo": "aluno_desligado",
+    "alunoId": "f1439882-c9ad-400d-a298-dbec7b734eb6",
+    "aluno": "ADAM MIGUEL DE SANTANA",
+    "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+    "usuario": "operador",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 1,
+      "checkinsBloqueados": 1
+    },
+    "criadoEm": "2026-07-08T09:59:27.360Z"
+  },
+  {
+    "id": "aud_1783504765060_562545",
+    "tipo": "aluno_desligado",
+    "alunoId": "cf3f5963-7678-4cb8-8d98-64b4f8cf81f9",
+    "aluno": "ADRIANA RODRIGUES RIBEIRO DA SILVA",
+    "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+    "usuario": "operador",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 1,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T09:59:25.060Z"
+  },
+  {
+    "id": "aud_1783504762578_614285",
+    "tipo": "aluno_desligado",
+    "alunoId": "7c49b23b-8f7f-4d84-9728-ad5715d4a38b",
+    "aluno": "ANDREIA PATRICIA LOPES DOS SANTOS",
+    "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+    "usuario": "operador",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 1,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T09:59:22.579Z"
+  },
+  {
+    "id": "aud_1783504418309_766669",
+    "tipo": "aluno_reativacao_cobranca_criada",
+    "alunoId": "7c49b23b-8f7f-4d84-9728-ad5715d4a38b",
+    "aluno": "ANDREIA PATRICIA LOPES DOS SANTOS",
+    "motivo": "Reativação pelo cadastro de alunos com cobrança no caixa.",
+    "usuario": "operador",
+    "resumo": {
+      "matriculaId": "mat_imp_f1f2ba58-57d9-42b4-8de2-118e98db3744",
+      "mensalidadeId": "men_reat_1783504418268_114351",
+      "financeiroId": "fin_men_reat_1783504418268_114351",
+      "recebimentoId": "rec_men_reat_1783504418268_114351",
+      "valor": 30
+    },
+    "criadoEm": "2026-07-08T09:53:38.309Z"
+  },
+  {
+    "id": "aud_1783503762626_254268",
+    "tipo": "aluno_reativado",
+    "alunoId": "cf3f5963-7678-4cb8-8d98-64b4f8cf81f9",
+    "aluno": "ADRIANA RODRIGUES RIBEIRO DA SILVA",
+    "motivo": "Aluno marcado como ativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculaId": "mat_imp_1fa1973d-9c69-4250-a095-889c0d3b273d",
+      "mensalidadeId": "men_1783503762557_968652",
+      "financeiroId": "fin_men_1783503762557_968652",
+      "recebimentoId": "rec_men_1783503762557_968652",
+      "competencia": "2026-07",
+      "valor": 65
+    },
+    "criadoEm": "2026-07-08T09:42:42.626Z"
+  },
+  {
+    "id": "aud_1783502926079_301460",
+    "tipo": "aluno_reativado",
+    "alunoId": "f1439882-c9ad-400d-a298-dbec7b734eb6",
+    "aluno": "ADAM MIGUEL DE SANTANA",
+    "motivo": "Aluno marcado como ativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculaId": "mat_1783483712915_238862",
+      "mensalidadeId": "men_1783502926003_993221",
+      "financeiroId": "fin_men_1783502926003_993221",
+      "recebimentoId": "rec_men_1783502926003_993221",
+      "competencia": "2026-07",
+      "valor": 65
+    },
+    "criadoEm": "2026-07-08T09:28:46.079Z"
+  },
+  {
+    "id": "aud_1783502720220_267285",
+    "tipo": "aluno_reativado",
+    "alunoId": "36c862ac-1b79-4a85-9aae-e2d2188bd8e3",
+    "aluno": "ALESSANDRA DE OLIVEIRA SILVA",
+    "motivo": "Aluno marcado como ativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculaId": "mat_1783502720173_403925",
+      "mensalidadeId": "men_1783502720174_159340",
+      "financeiroId": "fin_men_1783502720174_159340",
+      "recebimentoId": "rec_men_1783502720174_159340",
+      "competencia": "2026-07",
+      "valor": 65
+    },
+    "criadoEm": "2026-07-08T09:25:20.220Z"
+  },
+  {
+    "id": "aud_1783502216563_914737",
+    "tipo": "aluno_reativado",
+    "alunoId": "91c7eb65-660b-4a98-abd9-d284772e0191",
+    "aluno": "marcos andre",
+    "motivo": "Aluno marcado como ativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculaId": "mat_1783104576305_815417",
+      "mensalidadeId": "men_1783502216522_445899",
+      "financeiroId": "fin_men_1783502216522_445899",
+      "recebimentoId": "rec_men_1783502216522_445899",
+      "competencia": "2026-07",
+      "valor": 65
+    },
+    "criadoEm": "2026-07-08T09:16:56.563Z"
+  },
+  {
+    "id": "aud_1783493629152_108479",
+    "tipo": "aluno_desligado",
+    "alunoId": "91c7eb65-660b-4a98-abd9-d284772e0191",
+    "aluno": "marcos andre",
+    "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+    "usuario": "operador",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 2,
+      "financeiroCancelado": 2,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 1
+    },
+    "criadoEm": "2026-07-08T06:53:49.152Z"
+  },
+  {
+    "id": "aud_1783493621518_533271",
+    "tipo": "aluno_desligado",
+    "alunoId": "5a9549d6-532c-4fb2-b844-fe004961d85b",
+    "aluno": "JOSEMAR GOUVEIA DE BRITO",
+    "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+    "usuario": "operador",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T06:53:41.518Z"
+  },
+  {
+    "id": "aud_1783493581393_164829",
+    "tipo": "aluno_desligado",
+    "alunoId": "0e1d1dac-eedd-4e94-999c-3937ff4fa648",
+    "aluno": "JOSIANE DOS SANTOS",
+    "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+    "usuario": "operador",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T06:53:01.393Z"
+  },
+  {
+    "id": "aud_1783492491266_532678",
+    "tipo": "aluno_desligado",
+    "alunoId": "fbacaacb-39cd-43d8-a409-cee40e315616",
+    "aluno": "IVSON CAIO MACIEL OLIVEIRA",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T06:34:51.266Z"
+  },
+  {
+    "id": "aud_1783492462319_591125",
+    "tipo": "aluno_desligado",
+    "alunoId": "62683767-8aca-4346-b84f-e663b70a9d35",
+    "aluno": "JOSÉ SEVERINO DA SILVA",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T06:34:22.320Z"
+  },
+  {
+    "id": "aud_1783492427988_374365",
+    "tipo": "aluno_desligado",
+    "alunoId": "e66d2a1d-8b96-4f39-bacb-8231b1781a2c",
+    "aluno": "ALESSANDRA YASMIM DIAS FREITAS",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 0,
+      "mensalidadesCanceladas": 0,
+      "financeiroCancelado": 0,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T06:33:47.988Z"
+  },
+  {
+    "id": "aud_1783492412718_513122",
+    "tipo": "aluno_desligado",
+    "alunoId": "e66d2a1d-8b96-4f39-bacb-8231b1781a2c",
+    "aluno": "ALESSANDRA YASMIM DIAS FREITAS",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 0,
+      "mensalidadesCanceladas": 0,
+      "financeiroCancelado": 0,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T06:33:32.718Z"
+  },
+  {
+    "id": "aud_1783492386842_613272",
+    "tipo": "aluno_desligado",
+    "alunoId": "c7e03a29-e382-4b29-addd-f4d86c41dc8a",
+    "aluno": "ALESSANDRA DA SILVA VENANCIO",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 0,
+      "mensalidadesCanceladas": 0,
+      "financeiroCancelado": 0,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T06:33:06.842Z"
+  },
+  {
+    "id": "aud_1783492369076_866825",
+    "tipo": "aluno_desligado",
+    "alunoId": "36c862ac-1b79-4a85-9aae-e2d2188bd8e3",
+    "aluno": "ALESSANDRA DE OLIVEIRA SILVA",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 0,
+      "mensalidadesCanceladas": 0,
+      "financeiroCancelado": 0,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T06:32:49.076Z"
+  },
+  {
+    "id": "aud_1783492288945_904430",
+    "tipo": "aluno_desligado",
+    "alunoId": "2b2e13df-4817-4ebb-9c93-e94a03c1adfb",
+    "aluno": "GRAZIELE MARIA DA SILVA",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T06:31:28.945Z"
+  },
+  {
+    "id": "aud_1783492264988_411035",
+    "tipo": "aluno_desligado",
+    "alunoId": "84f522b7-d99c-4c4e-a553-cf5544beb497",
+    "aluno": "JAILDA CLARINDO MACIEL",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T06:31:04.988Z"
+  },
+  {
+    "id": "aud_1783492195578_54285",
+    "tipo": "aluno_desligado",
+    "alunoId": "09e26d0b-df3a-4911-98ba-73036c0c0308",
+    "aluno": "LAYZA MAYRA LOPES DOS SANTOS",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T06:29:55.578Z"
+  },
+  {
+    "id": "aud_1783492159127_17730",
+    "tipo": "aluno_desligado",
+    "alunoId": "8eb857fe-a1c9-424b-97dc-73646b90c226",
+    "aluno": "JULIANA MAYARA FERREIRA PAULINO",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T06:29:19.127Z"
+  },
+  {
+    "id": "aud_1783492132467_738826",
+    "tipo": "aluno_desligado",
+    "alunoId": "d39582d9-6109-444d-8069-5489776318f0",
+    "aluno": "KAROLINE DE MOURA SILVA",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T06:28:52.467Z"
+  },
+  {
+    "id": "aud_1783492108665_426621",
+    "tipo": "aluno_desligado",
+    "alunoId": "1afb6723-dbfd-49a4-a9ee-71158de012cc",
+    "aluno": "JUCIARA DA SILVA FAGUNDES",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T06:28:28.665Z"
+  },
+  {
+    "id": "aud_1783492089341_949541",
+    "tipo": "aluno_desligado",
+    "alunoId": "64666881-3983-46e3-874c-dee8b888c93d",
+    "aluno": "JUAN CARLOS CORDEIRO DA SILVA ARAÚJO",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T06:28:09.341Z"
+  },
+  {
+    "id": "aud_1783492066459_547828",
+    "tipo": "aluno_desligado",
+    "alunoId": "9c063e26-ba3b-49cb-afec-513f7d6f38d9",
+    "aluno": "IZABELLA CRISTINA AMBRÓSIO DE LIMA",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T06:27:46.459Z"
+  },
+  {
+    "id": "aud_1783492044685_681560",
+    "tipo": "aluno_desligado",
+    "alunoId": "57b10e62-6dda-426c-a0b5-7bc57905ade6",
+    "aluno": "JOSÉ HILTON TERTO DA SILVA",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T06:27:24.685Z"
+  },
+  {
+    "id": "aud_1783492021790_928392",
+    "tipo": "aluno_desligado",
+    "alunoId": "7cde6711-2f1f-4be9-a931-a64e7a2918da",
+    "aluno": "JADIELSON NUNES FERREIRA",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T06:27:01.790Z"
+  },
+  {
+    "id": "aud_1783491993378_869991",
+    "tipo": "aluno_desligado",
+    "alunoId": "5bd78362-fa9a-40d1-af7d-5bedb9ff785c",
+    "aluno": "JACKSON MANUEL DOS SANTOS",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T06:26:33.378Z"
+  },
+  {
+    "id": "aud_1783491945770_865170",
+    "tipo": "aluno_desligado",
+    "alunoId": "920ee73d-9f30-4d7c-955c-828b4ddf8b3b",
+    "aluno": "LETICIA ESTEFANYS ALVES MESSIAS",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T06:25:45.770Z"
+  },
+  {
+    "id": "aud_1783491923550_469595",
+    "tipo": "aluno_desligado",
+    "alunoId": "d7bb4e7f-c76b-4049-8493-3c64edc3b560",
+    "aluno": "KETILI CRISTINA SANTOS LIMA",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T06:25:23.550Z"
+  },
+  {
+    "id": "aud_1783491905552_687892",
+    "tipo": "aluno_desligado",
+    "alunoId": "dd35a5fa-89a7-47dd-acf4-c3571bafb070",
+    "aluno": "KHRISLAYNE DA SILVA SANTOS",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T06:25:05.552Z"
+  },
+  {
+    "id": "aud_1783491884230_587632",
+    "tipo": "aluno_desligado",
+    "alunoId": "bf47c68e-2dc8-4a00-85a0-1dfd0e27f072",
+    "aluno": "LIDIANE DA CONCEIÇÃO SANTOS",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T06:24:44.230Z"
+  },
+  {
+    "id": "aud_1783491858897_279616",
+    "tipo": "aluno_desligado",
+    "alunoId": "206277b2-f217-4ce2-b66a-209c04b46fd0",
+    "aluno": "LINDACI MARIA DE OLIVEIRA",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T06:24:18.897Z"
+  },
+  {
+    "id": "aud_1783491827524_211989",
+    "tipo": "aluno_desligado",
+    "alunoId": "e8e02d6e-d622-4ff4-a52a-1a0db3a929d1",
+    "aluno": "LUSINETE SILVA DE LIMA",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 0,
+      "mensalidadesCanceladas": 0,
+      "financeiroCancelado": 0,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T06:23:47.524Z"
+  },
+  {
+    "id": "aud_1783491759903_271915",
+    "tipo": "aluno_desligado",
+    "alunoId": "f681a93c-7386-4d2f-abec-9ac989876d0e",
+    "aluno": "JOHNE JOSÉ BATISTA FERREIRA",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T06:22:39.903Z"
+  },
+  {
+    "id": "aud_1783491729169_85554",
+    "tipo": "aluno_desligado",
+    "alunoId": "7c339633-335f-4395-97b6-e03684fc8db8",
+    "aluno": "LUAN VITOR TENÓRIO DOS SANTOS",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T06:22:09.169Z"
+  },
+  {
+    "id": "aud_1783491700229_277410",
+    "tipo": "aluno_desligado",
+    "alunoId": "23c2c626-6274-4953-b5c0-3725f389e396",
+    "aluno": "LUCIANA MARIA SANTOS DE FRANÇA",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T06:21:40.230Z"
+  },
+  {
+    "id": "aud_1783491667370_740841",
+    "tipo": "aluno_desligado",
+    "alunoId": "f8cebe55-a5e1-42d8-b970-50bbfb118ba3",
+    "aluno": "LUCIENE ODETE IDELFONSO",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T06:21:07.370Z"
+  },
+  {
+    "id": "aud_1783491225633_20499",
+    "tipo": "aluno_desligado",
+    "alunoId": "e8e02d6e-d622-4ff4-a52a-1a0db3a929d1",
+    "aluno": "LUSINETE SILVA DE LIMA",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 0,
+      "mensalidadesCanceladas": 0,
+      "financeiroCancelado": 0,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T06:13:45.633Z"
+  },
+  {
+    "id": "aud_1783491189868_812111",
+    "tipo": "aluno_desligado",
+    "alunoId": "c6f4a642-c878-42a9-ae79-347b91ef3f97",
+    "aluno": "LUIZA BARBOSA DA SILVA",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T06:13:09.868Z"
+  },
+  {
+    "id": "aud_1783491118723_579556",
+    "tipo": "aluno_desligado",
+    "alunoId": "e8e02d6e-d622-4ff4-a52a-1a0db3a929d1",
+    "aluno": "LUSINETE SILVA DE LIMA",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 0,
+      "mensalidadesCanceladas": 0,
+      "financeiroCancelado": 0,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T06:11:58.723Z"
+  },
+  {
+    "id": "aud_1783491090820_803206",
+    "tipo": "aluno_desligado",
+    "alunoId": "e8e02d6e-d622-4ff4-a52a-1a0db3a929d1",
+    "aluno": "LUSINETE SILVA DE LIMA",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 0,
+      "mensalidadesCanceladas": 0,
+      "financeiroCancelado": 0,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T06:11:30.820Z"
+  },
+  {
+    "id": "aud_1783491080108_935395",
+    "tipo": "aluno_desligado",
+    "alunoId": "e8e02d6e-d622-4ff4-a52a-1a0db3a929d1",
+    "aluno": "LUSINETE SILVA DE LIMA",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T06:11:20.108Z"
+  },
+  {
+    "id": "aud_1783491032789_967068",
+    "tipo": "aluno_desligado",
+    "alunoId": "9b31225a-486b-4f8f-9655-7c9e9e925c42",
+    "aluno": "MANUELA FERREIRA DA SILVA",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T06:10:32.789Z"
+  },
+  {
+    "id": "aud_1783491004344_490351",
+    "tipo": "aluno_desligado",
+    "alunoId": "14cc54e9-4ea8-461b-aae9-ec6e01846f2a",
+    "aluno": "MARCOS ANDRÉ DE MELO",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T06:10:04.344Z"
+  },
+  {
+    "id": "aud_1783490906526_89480",
+    "tipo": "aluno_desligado",
+    "alunoId": "d6f7ff58-dda4-44ec-b726-00c145059f85",
+    "aluno": "GLICIA MAYARA LIRA DA SILVA",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T06:08:26.526Z"
+  },
+  {
+    "id": "aud_1783490881607_818173",
+    "tipo": "aluno_desligado",
+    "alunoId": "56297731-cbe4-4ad7-ac5b-cbd341ca6844",
+    "aluno": "JORGE JOSÉ DA SILVA",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T06:08:01.607Z"
+  },
+  {
+    "id": "aud_1783490857316_249821",
+    "tipo": "aluno_desligado",
+    "alunoId": "97f6d4c6-9592-4fef-89c0-9254c339d7df",
+    "aluno": "GERLANE FARIAS SILVA",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T06:07:37.316Z"
+  },
+  {
+    "id": "aud_1783490825516_681630",
+    "tipo": "aluno_desligado",
+    "alunoId": "603995fe-e7bf-42b7-a898-22bbf7811052",
+    "aluno": "GEISON BEZERRA DA SILVA",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T06:07:05.516Z"
+  },
+  {
+    "id": "aud_1783490794802_694119",
+    "tipo": "aluno_desligado",
+    "alunoId": "a1c8cc5e-b453-42b4-b15b-aba5348f956f",
+    "aluno": "JOÃO VICTOR DA COSTA SALES",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T06:06:34.802Z"
+  },
+  {
+    "id": "aud_1783490774073_124321",
+    "tipo": "aluno_desligado",
+    "alunoId": "6a63001f-07cf-4fdf-a215-0ccdcdbf1665",
+    "aluno": "JOÃO VICTOR SILVA DE SERQUEIRA",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T06:06:14.073Z"
+  },
+  {
+    "id": "aud_1783490750616_325684",
+    "tipo": "aluno_desligado",
+    "alunoId": "fcdaabb4-eca2-4a45-9813-1aeb1ebde04d",
+    "aluno": "JANAÍLSON DO NASCIMENTO SANTANA",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T06:05:50.616Z"
+  },
+  {
+    "id": "aud_1783490718842_356830",
+    "tipo": "aluno_desligado",
+    "alunoId": "c513ae91-c196-4edb-ae40-0f91be8c3a95",
+    "aluno": "GABRIELA MARQUES DE SOUZA",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T06:05:18.842Z"
+  },
+  {
+    "id": "aud_1783490691394_494354",
+    "tipo": "aluno_desligado",
+    "alunoId": "4dcdf31c-b929-4142-9de1-474a019b8b0b",
+    "aluno": "GABRIEL PETTERSON DE OLIVEIRA SILVA",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T06:04:51.394Z"
+  },
+  {
+    "id": "aud_1783490647767_895710",
+    "tipo": "aluno_desligado",
+    "alunoId": "520e0240-088c-46fe-8db0-3f6f4a349139",
+    "aluno": "EVELYN ARYANE XAVIER DA SILVA",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T06:04:07.767Z"
+  },
+  {
+    "id": "aud_1783490624232_859573",
+    "tipo": "aluno_desligado",
+    "alunoId": "530b6657-53ba-4ef5-a0f6-4429a1ea099f",
+    "aluno": "EMILLY GRAZIELLY TENÓRIO DE ARAÚJO",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T06:03:44.232Z"
+  },
+  {
+    "id": "aud_1783490605930_253530",
+    "tipo": "aluno_desligado",
+    "alunoId": "d906c026-7cf0-4721-b54a-1e4ea400e563",
+    "aluno": "EMERSON DA SILVA SANTOS",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T06:03:25.930Z"
+  },
+  {
+    "id": "aud_1783490570274_221588",
+    "tipo": "aluno_desligado",
+    "alunoId": "fdeb45e7-76b1-471f-833c-cf5dd3077dd3",
+    "aluno": "ELIS REGINA DOS SANTOS",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T06:02:50.274Z"
+  },
+  {
+    "id": "aud_1783490555910_223346",
+    "tipo": "aluno_desligado",
+    "alunoId": "2d812561-7408-4575-bc77-2782a8939134",
+    "aluno": "ELIANE MARIA DOS SANTOS",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T06:02:35.910Z"
+  },
+  {
+    "id": "aud_1783490511125_954801",
+    "tipo": "aluno_desligado",
+    "alunoId": "130366c6-6314-4f5f-91e0-399360894245",
+    "aluno": "EDILENE MIZAEL DE LIMA",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T06:01:51.125Z"
+  },
+  {
+    "id": "aud_1783490490671_876517",
+    "tipo": "aluno_desligado",
+    "alunoId": "ac7f8858-b35c-4c2f-8f61-f74afa8728c3",
+    "aluno": "DEBORA LAYNE PEREIRA DA SILVA",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T06:01:30.671Z"
+  },
+  {
+    "id": "aud_1783490455532_199449",
+    "tipo": "aluno_desligado",
+    "alunoId": "3f92f2bd-313d-46fc-a06f-26d519aeb10d",
+    "aluno": "EDNEIA DA SILVA",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T06:00:55.532Z"
+  },
+  {
+    "id": "aud_1783490432768_466377",
+    "tipo": "aluno_desligado",
+    "alunoId": "f1c7d68a-12c7-4806-9357-387a0b1c75f5",
+    "aluno": "DOUGLAS MARCELINO DE MELO",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T06:00:32.768Z"
+  },
+  {
+    "id": "aud_1783490414071_284361",
+    "tipo": "aluno_desligado",
+    "alunoId": "fe3ebe35-67f1-4357-878b-f4b0aa247b1a",
+    "aluno": "EDLENE GOMES DE LIMA",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T06:00:14.071Z"
+  },
+  {
+    "id": "aud_1783490386707_993506",
+    "tipo": "aluno_desligado",
+    "alunoId": "b1f480e1-e165-46da-a5b5-5c4190b5bc8e",
+    "aluno": "DAVI DE AMORIM MENDES",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T05:59:46.707Z"
+  },
+  {
+    "id": "aud_1783490352997_411482",
+    "tipo": "aluno_desligado",
+    "alunoId": "c5244b17-de8b-4f8e-a3dc-69d5ae3d0784",
+    "aluno": "DANIELE SANTOS CORREIA",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T05:59:12.997Z"
+  },
+  {
+    "id": "aud_1783490323845_916671",
+    "tipo": "aluno_desligado",
+    "alunoId": "94e45d3a-90d6-42cc-9096-57d0ca3db7cd",
+    "aluno": "DANIEL FAUSTINO BEZERRA",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T05:58:43.845Z"
+  },
+  {
+    "id": "aud_1783490306073_511444",
+    "tipo": "aluno_desligado",
+    "alunoId": "d85aeba1-9a72-46c9-b3fc-83f43ce1778c",
+    "aluno": "EDIMEIRE SANTOS DA SILVA",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T05:58:26.073Z"
+  },
+  {
+    "id": "aud_1783490267967_967324",
+    "tipo": "aluno_desligado",
+    "alunoId": "8e71981d-135a-4089-be1b-df73568b124f",
+    "aluno": "DANIEL DE SOUZA",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T05:57:47.967Z"
+  },
+  {
+    "id": "aud_1783490246921_162527",
+    "tipo": "aluno_desligado",
+    "alunoId": "10246764-fe36-4ebf-bada-1744f452ffb8",
+    "aluno": "CRISTIANE SILVA DOS SANTOS",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T05:57:26.922Z"
+  },
+  {
+    "id": "aud_1783490208525_511510",
+    "tipo": "aluno_desligado",
+    "alunoId": "5ce052de-bf9a-4f2f-948d-de87850b823a",
+    "aluno": "CÍCERA FERREIRA DE ARAÚJO",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T05:56:48.525Z"
+  },
+  {
+    "id": "aud_1783490185220_297892",
+    "tipo": "aluno_desligado",
+    "alunoId": "392be2fc-5483-4984-874a-c88926357fb8",
+    "aluno": "CLAUDEVANIA DA SILVA BARROS OLIVEIRA",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T05:56:25.221Z"
+  },
+  {
+    "id": "aud_1783490142240_706429",
+    "tipo": "aluno_desligado",
+    "alunoId": "c3c8c026-51ff-40f3-aa65-5455e8c594d7",
+    "aluno": "BRUNO HENRIQUE SANTOS DA SILVA",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T05:55:42.240Z"
+  },
+  {
+    "id": "aud_1783490107049_847389",
+    "tipo": "aluno_desligado",
+    "alunoId": "c73fbfd8-01ad-4546-a94b-e189087eb775",
+    "aluno": "BRUNA ALMEIDA DA SILVA SANTOS",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T05:55:07.049Z"
+  },
+  {
+    "id": "aud_1783490079631_861604",
+    "tipo": "aluno_desligado",
+    "alunoId": "cd482dc0-b1c1-41a5-afbc-9eab19d8f920",
+    "aluno": "BEATRIZ RIBEIRO DA SILVA ARAÚJO",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T05:54:39.631Z"
+  },
+  {
+    "id": "aud_1783490050169_243087",
+    "tipo": "aluno_desligado",
+    "alunoId": "6331016c-b4bb-4df0-9e82-59d05c8b9e7c",
+    "aluno": "ARICREMIS PEDRO DA SILVA",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T05:54:10.169Z"
+  },
+  {
+    "id": "aud_1783490002356_301640",
+    "tipo": "aluno_desligado",
+    "alunoId": "c0647bde-9fab-49b1-8ed8-114c439f0a36",
+    "aluno": "ANA PAULA DOS SANTOS LIMA",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T05:53:22.356Z"
+  },
+  {
+    "id": "aud_1783489976732_289329",
+    "tipo": "aluno_desligado",
+    "alunoId": "9c5e6857-4040-46f8-849e-bf25a4e5717d",
+    "aluno": "ALINE IZABELLI CORDEIRO DE SOUZA",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T05:52:56.732Z"
+  },
+  {
+    "id": "aud_1783489926096_763104",
+    "tipo": "aluno_desligado",
+    "alunoId": "cf3f5963-7678-4cb8-8d98-64b4f8cf81f9",
+    "aluno": "ADRIANA RODRIGUES RIBEIRO DA SILVA",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T05:52:06.096Z"
+  },
+  {
+    "id": "aud_1783489852226_612959",
+    "tipo": "aluno_desligado",
+    "alunoId": "47800783-ce9f-4176-87cd-54863fce2ab3",
+    "aluno": "ALDO SILVA",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 1,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T05:50:52.226Z"
+  },
+  {
+    "id": "aud_1783489778868_648589",
+    "tipo": "aluno_desligado",
+    "alunoId": "7c49b23b-8f7f-4d84-9728-ad5715d4a38b",
+    "aluno": "ANDREIA PATRICIA LOPES DOS SANTOS",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 1,
+      "financeiroCancelado": 0,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 0
+    },
+    "criadoEm": "2026-07-08T05:49:38.868Z"
+  },
+  {
+    "id": "aud_1783489629346_274078",
+    "tipo": "aluno_desligado",
+    "alunoId": "f1439882-c9ad-400d-a298-dbec7b734eb6",
+    "aluno": "ADAM MIGUEL DE SANTANA",
+    "motivo": "Aluno marcado como cancelado/inativo no cadastro.",
+    "usuario": "sistema",
+    "resumo": {
+      "matriculasCanceladas": 1,
+      "mensalidadesCanceladas": 5,
+      "financeiroCancelado": 0,
+      "recebimentosCancelados": 0,
+      "checkinsBloqueados": 1
+    },
+    "criadoEm": "2026-07-08T05:47:09.346Z"
+  }
+]

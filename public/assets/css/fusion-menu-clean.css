@@ -1,0 +1,287 @@
+/* Fusion ERP — menu limpo substituindo o menu antigo/accordion. */
+:root {
+  --fusion-sidebar-width: 292px;
+  --fusion-sidebar-bg: #101826;
+  --fusion-sidebar-border: rgba(255,255,255,.08);
+  --fusion-sidebar-text: #dbe4f0;
+  --fusion-sidebar-muted: #8f9bad;
+  --fusion-orange: #ff6600;
+  --fusion-page-bg: #f4f6f9;
+  --fusion-border: #d8dee8;
+  --fusion-text: #1f2937;
+}
+
+body.fusion-clean-menu-ready {
+  margin: 0 !important;
+  background: var(--fusion-page-bg) !important;
+  color: var(--fusion-text) !important;
+  overflow-x: hidden !important;
+}
+
+body.fusion-clean-menu-ready > .sidebar,
+body.fusion-clean-menu-ready > aside.sidebar,
+body.fusion-clean-menu-ready .menu-grupo,
+body.fusion-clean-menu-ready .menu-titulo,
+body.fusion-clean-menu-ready .fusion-menu-section,
+body.fusion-clean-menu-ready .fusion-menu-group,
+body.fusion-clean-menu-ready .fusion-menu-caret {
+  display: none !important;
+}
+
+body.fusion-clean-menu-ready .fusion-shell {
+  display: flex !important;
+  width: 100% !important;
+  min-height: 100vh !important;
+  align-items: stretch !important;
+}
+
+body.fusion-clean-menu-ready .fusion-clean-sidebar {
+  position: sticky !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: var(--fusion-sidebar-width) !important;
+  min-width: var(--fusion-sidebar-width) !important;
+  max-width: var(--fusion-sidebar-width) !important;
+  height: 100vh !important;
+  background: var(--fusion-sidebar-bg) !important;
+  color: #fff !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  z-index: 40 !important;
+}
+
+body.fusion-clean-menu-ready .fusion-clean-brand {
+  height: 74px !important;
+  min-height: 74px !important;
+  padding: 0 20px !important;
+  border-bottom: 1px solid var(--fusion-sidebar-border) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  gap: 4px !important;
+  text-decoration: none !important;
+  color: #fff !important;
+}
+
+body.fusion-clean-menu-ready .fusion-clean-brand strong {
+  color: var(--fusion-orange) !important;
+  font-size: 22px !important;
+  line-height: 1 !important;
+  font-weight: 800 !important;
+}
+
+body.fusion-clean-menu-ready .fusion-clean-brand small {
+  color: var(--fusion-sidebar-muted) !important;
+  font-size: 12px !important;
+  line-height: 1.2 !important;
+  font-weight: 700 !important;
+}
+
+body.fusion-clean-menu-ready .fusion-clean-menu {
+  flex: 1 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding: 14px 12px 22px !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(255,255,255,.22) transparent !important;
+}
+
+body.fusion-clean-menu-ready .fusion-clean-group {
+  display: block !important;
+  margin: 0 0 18px !important;
+}
+
+body.fusion-clean-menu-ready .fusion-clean-group-title {
+  display: block !important;
+  padding: 0 10px 8px !important;
+  color: var(--fusion-sidebar-muted) !important;
+  font-size: 11px !important;
+  line-height: 1.1 !important;
+  letter-spacing: .08em !important;
+  text-transform: uppercase !important;
+  font-weight: 900 !important;
+}
+
+body.fusion-clean-menu-ready .fusion-clean-menu a {
+  width: 100% !important;
+  min-height: 42px !important;
+  display: flex !important;
+  align-items: center !important;
+  padding: 10px 12px !important;
+  margin: 3px 0 !important;
+  border-radius: 10px !important;
+  color: var(--fusion-sidebar-text) !important;
+  background: transparent !important;
+  text-decoration: none !important;
+  font-size: 14px !important;
+  line-height: 1.2 !important;
+  font-weight: 700 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  box-sizing: border-box !important;
+}
+
+body.fusion-clean-menu-ready .fusion-clean-menu a:hover {
+  background: rgba(255,255,255,.08) !important;
+  color: #fff !important;
+}
+
+body.fusion-clean-menu-ready .fusion-clean-menu a.active,
+body.fusion-clean-menu-ready .fusion-clean-menu a[aria-current="page"] {
+  background: var(--fusion-orange) !important;
+  color: #fff !important;
+}
+
+body.fusion-clean-menu-ready .fusion-main {
+  flex: 1 !important;
+  min-width: 0 !important;
+  width: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: var(--fusion-page-bg) !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+body.fusion-clean-menu-ready .fusion-clean-topbar {
+  height: 64px !important;
+  min-height: 64px !important;
+  width: 100% !important;
+  background: #fff !important;
+  border-bottom: 1px solid var(--fusion-border) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 0 24px !important;
+  box-sizing: border-box !important;
+  margin: 0 !important;
+  position: relative !important;
+  z-index: 20 !important;
+}
+
+body.fusion-clean-menu-ready .fusion-clean-topbar-left {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  min-width: 0 !important;
+}
+
+body.fusion-clean-menu-ready .fusion-title {
+  font-size: 20px !important;
+  line-height: 1.2 !important;
+  font-weight: 800 !important;
+  color: var(--fusion-text) !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+body.fusion-clean-menu-ready .fusion-userbar {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  color: #64748b !important;
+  font-size: 14px !important;
+  white-space: nowrap !important;
+}
+
+body.fusion-clean-menu-ready .fusion-userbar button,
+body.fusion-clean-menu-ready .fusion-clean-mobile-toggle {
+  border: 1px solid #cbd5e1 !important;
+  background: #fff !important;
+  color: #0f172a !important;
+  border-radius: 10px !important;
+  padding: 8px 12px !important;
+  cursor: pointer !important;
+  font-weight: 800 !important;
+}
+
+body.fusion-clean-menu-ready .fusion-clean-mobile-toggle {
+  display: none !important;
+  min-width: 44px !important;
+  height: 44px !important;
+  padding: 0 !important;
+  background: var(--fusion-orange) !important;
+  color: #fff !important;
+  border: 0 !important;
+}
+
+body.fusion-clean-menu-ready .fusion-main > .main {
+  margin: 0 !important;
+  width: auto !important;
+  max-width: none !important;
+  padding: 24px !important;
+}
+
+@media (max-width: 900px) {
+  body.fusion-clean-menu-ready .fusion-shell {
+    display: block !important;
+  }
+
+  body.fusion-clean-menu-ready .fusion-clean-sidebar {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    bottom: 0 !important;
+    height: 100vh !important;
+    width: min(86vw, 320px) !important;
+    min-width: 0 !important;
+    max-width: 320px !important;
+    z-index: 9999 !important;
+    transform: translateX(-105%) !important;
+    transition: transform .2s ease !important;
+    box-shadow: 18px 0 42px rgba(15,23,42,.32) !important;
+  }
+
+  body.fusion-clean-menu-ready.fusion-menu-open .fusion-clean-sidebar {
+    transform: translateX(0) !important;
+  }
+
+  body.fusion-clean-menu-ready .fusion-clean-mobile-toggle {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  body.fusion-clean-menu-ready .fusion-clean-topbar {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: 64px !important;
+    min-height: 64px !important;
+    padding: 8px 12px !important;
+    box-shadow: 0 8px 22px rgba(15,23,42,.08) !important;
+  }
+
+  body.fusion-clean-menu-ready .fusion-main {
+    padding-top: 64px !important;
+  }
+
+  body.fusion-clean-menu-ready .fusion-main > .main {
+    padding: 16px 10px 22px !important;
+  }
+
+  body.fusion-clean-menu-ready .fusion-userbar [data-fusion-user] {
+    display: none !important;
+  }
+
+  body.fusion-clean-menu-ready .fusion-title {
+    font-size: 17px !important;
+  }
+
+  body.fusion-clean-menu-ready.fusion-menu-open .fusion-mobile-backdrop {
+    display: block !important;
+    position: fixed !important;
+    inset: 0 !important;
+    background: rgba(2,6,23,.56) !important;
+    z-index: 9998 !important;
+  }
+}
+
+/* FUSION_NO_SIDEBAR_OVERRIDE */
+body.fusion-no-sidebar .fusion-ui-sidebar,body.fusion-no-sidebar .fusion-sidebar,body.fusion-no-sidebar aside.sidebar,body.fusion-no-sidebar .sidebar,body.fusion-no-sidebar .fusion-clean-sidebar,body.fusion-no-sidebar .fusion-mobile-final-bar,body.fusion-no-sidebar .fusion-mobile-final-overlay,body.fusion-no-sidebar .fusion-mobile-menu-button,body.fusion-no-sidebar .fusion-mobile-overlay,body.fusion-no-sidebar .fusion-mobile-backdrop,body.fusion-no-sidebar .fusion-ui-backdrop{display:none!important;visibility:hidden!important;pointer-events:none!important;}
+body.fusion-no-sidebar .fusion-shell{display:block!important;width:100%!important;}
+body.fusion-no-sidebar .fusion-main{width:100%!important;max-width:100%!important;margin-left:0!important;padding-left:0!important;}

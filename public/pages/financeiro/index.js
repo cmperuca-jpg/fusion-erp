@@ -75,6 +75,38 @@ function numero(valor) { const n = Number(String(valor ?? "").replace(",", "."))
 function valor(id) { return document.getElementById(id).value; }
 function setValor(id, value) { const el = document.getElementById(id); if (el) el.value = value ?? ""; }
 function statusClasse(status) { return String(status || "").toLowerCase(); }
+
+function dataOrdenacaoLancamento(item = {}) {
+  const campos = [
+    item.atualizadoEm,
+    item.updatedAt,
+    item.baixadoEm,
+    item.dataPagamento,
+    item.pagamento,
+    item.recebidoEm,
+    item.criadoEm,
+    item.createdAt,
+    item.vencimento
+  ];
+
+  for (const campo of campos) {
+    const valorCampo = String(campo || '').trim();
+    if (!valorCampo) continue;
+    const data = new Date(valorCampo.length === 10 ? `${valorCampo}T12:00:00` : valorCampo);
+    if (!Number.isNaN(data.getTime())) return data.getTime();
+  }
+
+  return 0;
+}
+
+function ordenarLancamentosMaisRecentes(lista = []) {
+  return [...lista].sort((a, b) => {
+    const dataB = dataOrdenacaoLancamento(b);
+    const dataA = dataOrdenacaoLancamento(a);
+    if (dataB !== dataA) return dataB - dataA;
+    return String(b.id || '').localeCompare(String(a.id || ''));
+  });
+}
 function escapeHtml(v) { return String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
 async function obterMensagemErroResposta(resp, fallback = "Erro na operação.") {
   let texto = "";
@@ -128,6 +160,24 @@ function formaEhBoleto(forma) {
 
 function formaTemTaxaOperadora(forma) {
   return formaEhCartao(forma) || formaEhPix(forma) || formaEhBoleto(forma);
+}
+
+function formaEhDinheiro(forma) {
+  const f = normalizarTextoLocal(forma);
+  return f.includes("dinheiro") || f.includes("especie");
+}
+
+function normalizarTextoLocal(valor) {
+  return String(valor || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+function saldoAtualBaixa() {
+  return numero(valor("baixaValorDevido"));
+}
+
+function destinoDiferencaSelecionado() {
+  const marcado = document.querySelector('input[name="destinoDiferenca"]:checked');
+  return marcado?.value || "";
 }
 
 function normalizarModalidadePorForma(forma) {
@@ -218,12 +268,40 @@ function calcularPreviewCartao() {
   if (elBruto) elBruto.textContent = moeda(dados.bruto);
   if (elTaxa) elTaxa.textContent = moeda(dados.taxaValor);
   if (elLiquido) elLiquido.textContent = moeda(dados.liquido);
+  atualizarPainelDiferencaRecebimento();
+}
+
+function atualizarPainelDiferencaRecebimento() {
+  const painel = document.getElementById("painelDiferencaRecebimento");
+  if (!painel) return;
+
+  const pago = numero(valor("baixaValorPago"));
+  const devido = saldoAtualBaixa();
+  const diferenca = Math.max(0, Number((pago - devido).toFixed(2)));
+  const forma = valor("baixaFormaPagamento");
+  const dinheiro = formaEhDinheiro(forma);
+
+  painel.classList.toggle("hidden", !(diferenca > 0));
+  const texto = document.getElementById("textoDiferencaRecebimento");
+  if (texto) texto.textContent = `Valor recebido acima do saldo: ${moeda(diferenca)}.`;
+
+  const opcaoTroco = document.getElementById("opcaoTrocoRecebimento");
+  const radioTroco = document.getElementById("baixaDestinoTroco");
+  const radioCredito = document.getElementById("baixaDestinoCredito");
+
+  if (opcaoTroco) opcaoTroco.style.display = dinheiro ? "" : "none";
+
+  if (diferenca > 0) {
+    if (!dinheiro && radioCredito) radioCredito.checked = true;
+    if (dinheiro && radioTroco && radioCredito && !radioTroco.checked && !radioCredito.checked) radioTroco.checked = true;
+  }
 }
 
 function atualizarPainelCartao() {
   const forma = valor("baixaFormaPagamento");
   const ativo = formaTemTaxaOperadora(forma);
   if (els.painelCartao) els.painelCartao.hidden = !ativo;
+  atualizarPainelDiferencaRecebimento();
   if (!ativo) return;
   setValor("baixaModalidadeCartao", normalizarModalidadePorForma(forma));
   preencherBandeirasCartao();
@@ -390,7 +468,7 @@ async function carregarLancamentos() {
   if (els.filtroStatus.value) params.set("status", els.filtroStatus.value);
   const resp = await fetch(`${API}?${params.toString()}`, { cache: "no-store" });
   const json = await resp.json();
-  lancamentos = json.lancamentos || [];
+  lancamentos = ordenarLancamentosMaisRecentes(json.lancamentos || []);
   renderizarTabela();
   await carregarResumo();
   abrirBaixaPorUrlSeExistir();
@@ -470,6 +548,8 @@ async function confirmarBaixa(event) {
     const formaPagamento = valor("baixaFormaPagamento");
     const payload = {
       valorPago,
+      valorRecebido: valorPago,
+      valorBaixa: valorPago,
       valor: valorPago,
       pagamento: valor("baixaDataPagamento"),
       dataPagamento: valor("baixaDataPagamento"),
@@ -485,7 +565,9 @@ async function confirmarBaixa(event) {
       taxaOperadoraFixa: formaTemTaxaOperadora(formaPagamento) ? dadosCartao.taxaFixa : 0,
       taxaOperadoraValor: formaTemTaxaOperadora(formaPagamento) ? dadosCartao.taxaValor : 0,
       valorBrutoRecebido: valorPago,
-      valorLiquido: formaTemTaxaOperadora(formaPagamento) ? dadosCartao.liquido : valorPago
+      valorLiquido: formaTemTaxaOperadora(formaPagamento) ? dadosCartao.liquido : valorPago,
+      destinoDiferenca: valorPago > numero(valor("baixaValorDevido")) ? (destinoDiferencaSelecionado() || (formaEhDinheiro(formaPagamento) ? 'troco' : 'credito')) : '',
+      tratamentoDiferenca: valorPago > numero(valor("baixaValorDevido")) ? (destinoDiferencaSelecionado() || (formaEhDinheiro(formaPagamento) ? 'troco' : 'credito')) : ''
     };
     const resp = await fetch(`${API}/${encodeURIComponent(id)}/baixar`, {
       method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload)
@@ -591,6 +673,8 @@ document.getElementById("baixaParcelasCartao")?.addEventListener("change", aplic
 document.getElementById("baixaTaxaPercentual")?.addEventListener("input", calcularPreviewCartao);
 document.getElementById("baixaTaxaFixa")?.addEventListener("input", calcularPreviewCartao);
 document.getElementById("baixaValorPago")?.addEventListener("input", calcularPreviewCartao);
+document.getElementById("baixaDestinoTroco")?.addEventListener("change", atualizarPainelDiferencaRecebimento);
+document.getElementById("baixaDestinoCredito")?.addEventListener("change", atualizarPainelDiferencaRecebimento);
 document.getElementById("btnFecharModal")?.addEventListener("click", fecharModal);
 document.getElementById("btnCancelar")?.addEventListener("click", fecharModal);
 document.getElementById("btnFiltrar")?.addEventListener("click", carregarLancamentos);

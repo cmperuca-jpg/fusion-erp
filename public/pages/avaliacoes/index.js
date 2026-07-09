@@ -12,9 +12,59 @@ const MODO_EMBED = PARAMS_INICIAIS.get('embed') === '1';
 let professorIdUrl = PARAMS_INICIAIS.get('professorId') || PARAMS_INICIAIS.get('professor_id') || '';
 let professorNomeUrl = '';
 
+function sessaoProfessorPortal() {
+  const chaves = ['fusion_professor_sessao', 'fusion_professor_portal'];
+  for (const chave of chaves) {
+    try {
+      const dados = JSON.parse(localStorage.getItem(chave) || 'null');
+      if (dados?.professorId || dados?.id) {
+        return {
+          ...dados,
+          professorId: String(dados.professorId || dados.id),
+          professorNome: dados.professorNome || dados.nome || dados.name || dados.professor || 'Professor'
+        };
+      }
+    } catch {}
+  }
+  return null;
+}
+
+const SESSAO_PROFESSOR_PORTAL = sessaoProfessorPortal();
+const PORTAL_PROFESSOR = Boolean(
+  window.FUSION_PORTAL_PROFESSOR ||
+  PARAMS_INICIAIS.get('origem') === 'professor' ||
+  PARAMS_INICIAIS.get('portal') === 'professor' ||
+  PARAMS_INICIAIS.has('professorId') ||
+  PARAMS_INICIAIS.has('professor_id') ||
+  SESSAO_PROFESSOR_PORTAL?.professorId
+);
+
+if (PORTAL_PROFESSOR) {
+  document.documentElement.classList.add('modo-professor-avaliacao-html');
+  document.body?.classList.add('modo-professor-avaliacao');
+  document.documentElement.style.overflowY = 'auto';
+  document.documentElement.style.overflowX = 'hidden';
+  if (document.body) {
+    document.body.style.overflowY = 'auto';
+    document.body.style.overflowX = 'hidden';
+    document.body.style.height = 'auto';
+    document.body.style.position = 'static';
+  }
+}
+
+if (!professorIdUrl && SESSAO_PROFESSOR_PORTAL?.professorId) professorIdUrl = String(SESSAO_PROFESSOR_PORTAL.professorId);
+if (!professorNomeUrl && SESSAO_PROFESSOR_PORTAL?.professorNome) professorNomeUrl = String(SESSAO_PROFESSOR_PORTAL.professorNome);
+
+
 function texto(v, padrao = "") { return String(v ?? padrao).trim(); }
 function numero(v) { const n = Number(String(v ?? "").replace(/\./g, "").replace(",", ".")); return Number.isFinite(n) ? n : 0; }
 function normalizar(v) { return texto(v).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); }
+function soNumeros(v) { return String(v || '').replace(/\D/g, ''); }
+function idsIguais(a, b) {
+  const sa = texto(a);
+  const sb = texto(b);
+  return Boolean(sa && sb && sa === sb);
+}
 function esc(v) { return String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
 function dataHoje() { return new Date().toISOString().slice(0, 10); }
 function mesAtual() { return dataHoje().slice(0, 7); }
@@ -24,15 +74,102 @@ function idProfessor(p = {}) { return texto(p.id || p._id || p.professorId || p.
 function nomeProfessor(p = {}) { return texto(p.nome || p.professorNome || p.professor || p.name || ""); }
 function alunoPorId(id) { return alunos.find(a => idAluno(a) === texto(id)) || null; }
 function professorPorId(id) { return professores.find(p => idProfessor(p) === texto(id)) || null; }
+function statusAlunoAtivo(a = {}) {
+  const status = normalizar(a.status || a.situacao || 'ativo');
+  const statusMat = normalizar(a.statusMatricula || a.matriculaStatus || a.status_matricula || 'ativa');
+  const cadastroAtivo = !['inativo','inativa','cancelado','cancelada','excluido','excluida','excluído','excluída'].includes(status);
+  const matriculaAtiva = !['inativo','inativa','cancelado','cancelada','encerrado','encerrada','excluido','excluida','excluído','excluída'].includes(statusMat);
+  return cadastroAtivo && matriculaAtiva;
+}
+function professorLogadoRegistro() {
+  const id = texto(professorIdUrl || SESSAO_PROFESSOR_PORTAL?.professorId);
+  const nome = normalizar(professorNomeUrl || SESSAO_PROFESSOR_PORTAL?.professorNome);
+  return professores.find(p => idsIguais(idProfessor(p), id))
+    || professores.find(p => nome && normalizar(nomeProfessor(p)) === nome)
+    || professores.find(p => nome && (normalizar(nomeProfessor(p)).includes(nome) || nome.includes(normalizar(nomeProfessor(p)))) )
+    || null;
+}
+
+function professorAcessaTodosAlunos() {
+  const p = professorLogadoRegistro();
+  const mods = Array.isArray(p?.modalidades) ? p.modalidades.map(normalizar) : [];
+  return mods.includes('todas') || mods.includes('todos');
+}
+
+function alunoVinculadoAoProfessor(a = {}) {
+  if (!professorIdUrl && !professorNomeUrl && !SESSAO_PROFESSOR_PORTAL?.professorId) return true;
+
+  const professor = professorLogadoRegistro();
+  const idsProfessor = [
+    professorIdUrl,
+    SESSAO_PROFESSOR_PORTAL?.professorId,
+    professor?.id,
+    professor?.professorId,
+    professor?.professor_id
+  ].map(texto).filter(Boolean);
+
+  const idsAluno = [
+    a.professorId,
+    a.professor_id,
+    a.idProfessor,
+    a.professorResponsavelId,
+    a.professor_responsavel_id,
+    a.professor_responsavel
+  ].map(texto).filter(Boolean);
+
+  if (idsProfessor.some(pid => idsAluno.some(aid => aid === pid))) return true;
+
+  const nomesProfessor = [
+    professorNomeUrl,
+    SESSAO_PROFESSOR_PORTAL?.professorNome,
+    professor?.nome,
+    professor?.professorNome,
+    professor?.name
+  ].map(normalizar).filter(Boolean);
+
+  const nomesAluno = [
+    a.professorNome,
+    a.professor_nome,
+    a.professor,
+    a.professorResponsavel,
+    a.professor_responsavel_nome
+  ].map(normalizar).filter(Boolean);
+
+  if (nomesProfessor.some(pn => nomesAluno.some(an => an === pn || an.includes(pn) || pn.includes(an)))) return true;
+
+  return false;
+}
+function avaliacaoPertenceAoProfessor(av = {}) {
+  if (!PORTAL_PROFESSOR || (!professorIdUrl && !professorNomeUrl)) return true;
+  const ids = [av.professorId, av.professor_id, av.avaliadorId, av.avaliador_id].map(texto).filter(Boolean);
+  if (professorIdUrl && ids.some(id => id === texto(professorIdUrl))) return true;
+  const nomes = [av.professorNome, av.professor, av.avaliador].map(normalizar).filter(Boolean);
+  const alvo = normalizar(professorNomeUrl);
+  if (alvo && nomes.some(n => n === alvo || n.includes(alvo) || alvo.includes(n))) return true;
+  const aluno = alunoPorId(av.alunoId || av.aluno_id);
+  return aluno ? alunoVinculadoAoProfessor(aluno) : false;
+}
+
 function safeId(v){return String(v ?? '').replace(/[^a-zA-Z0-9_-]/g,'');}
 
 function extrairLista(payload, chave) {
   if (Array.isArray(payload)) return payload;
-  if (Array.isArray(payload?.[chave])) return payload[chave];
-  if (Array.isArray(payload?.dados)) return payload.dados;
-  if (Array.isArray(payload?.data)) return payload.data;
-  if (Array.isArray(payload?.itens)) return payload.itens;
-  if (Array.isArray(payload?.registros)) return payload.registros;
+  if (!payload || typeof payload !== 'object') return [];
+  if (chave && Array.isArray(payload?.[chave])) return payload[chave];
+  const chaves = [
+    'alunos', 'avaliacoes', 'professores', 'dados', 'data', 'itens',
+    'registros', 'items', 'resultado', 'resultados', 'lista', 'rows'
+  ];
+  for (const k of chaves) {
+    if (Array.isArray(payload?.[k])) return payload[k];
+  }
+  for (const k of chaves) {
+    const interno = payload?.[k];
+    if (interno && typeof interno === 'object') {
+      const lista = extrairLista(interno, chave);
+      if (lista.length) return lista;
+    }
+  }
   return [];
 }
 async function safeJson(resp) { try { return await resp.json(); } catch { return {}; } }
@@ -52,18 +189,73 @@ function mostrarAlerta(msg, tipo = "erro") {
   setTimeout(() => el.classList.add("hidden"), 9000);
 }
 
+async function carregarJsonLista(urls = [], chave = '') {
+  for (const url of urls) {
+    try {
+      const resp = await fetch(url, { cache: "no-store" });
+      const json = await safeJson(resp);
+      if (!resp.ok) continue;
+      const lista = extrairLista(json, chave);
+      if (Array.isArray(lista) && lista.length) return lista;
+    } catch {}
+  }
+  return [];
+}
+
 async function carregarBases() {
-  const [ra, rp, rv] = await Promise.allSettled([
-    fetch(API_ALUNOS, { cache: "no-store" }),
-    fetch(API_PROFESSORES, { cache: "no-store" }),
-    fetch(API_AVALIACOES, { cache: "no-store" })
-  ]);
-  if (ra.status === "fulfilled") alunos = extrairLista(await safeJson(ra.value), "alunos");
-  if (rp.status === "fulfilled") professores = extrairLista(await safeJson(rp.value), "professores");
-  if (rv.status === "fulfilled") avaliacoes = extrairLista(await safeJson(rv.value), "avaliacoes");
+  alunos = await carregarJsonLista([
+    API_ALUNOS,
+    "/api/alunos?status=ativo",
+    "/data/alunos.json",
+    "/alunos.json"
+  ], "alunos");
+
+  professores = await carregarJsonLista([
+    API_PROFESSORES,
+    "/data/professores.json",
+    "/professores.json"
+  ], "professores");
+
+  avaliacoes = await carregarJsonLista([
+    API_AVALIACOES,
+    "/data/avaliacoes.json",
+    "/avaliacoes.json"
+  ], "avaliacoes");
+
+  if (PORTAL_PROFESSOR) {
+    document.body.classList.add('modo-professor-avaliacao');
+
+    const p = professorLogadoRegistro() || professorPorId(professorIdUrl);
+    professorIdUrl = professorIdUrl || texto(SESSAO_PROFESSOR_PORTAL?.professorId || idProfessor(p || {}));
+    professorNomeUrl = professorNomeUrl || nomeProfessor(p || {}) || SESSAO_PROFESSOR_PORTAL?.professorNome || '';
+
+    // Regra prática para o Portal Professor:
+    // a tela de avaliação precisa encontrar aluno ativo sempre.
+    // O professor fica fixo no salvamento, mas a lista não pode sumir por falha de vínculo importado.
+    alunos = alunos.filter(statusAlunoAtivo);
+
+    // Histórico: mostra avaliações do professor quando houver vínculo; se não houver, mantém histórico dos alunos ativos.
+    const avaliacoesProfessor = avaliacoes.filter(av => avaliacaoPertenceAoProfessor(av));
+    if (avaliacoesProfessor.length) {
+      avaliacoes = avaliacoesProfessor;
+    } else {
+      const idsAtivos = new Set(alunos.map(idAluno).filter(Boolean));
+      avaliacoes = avaliacoes.filter(av => {
+        const aid = texto(av.alunoId || av.aluno_id);
+        return !aid || idsAtivos.has(aid);
+      });
+    }
+  } else {
+    alunos = alunos.filter(statusAlunoAtivo);
+  }
+
   preencherSelectAlunos();
   aplicarParametrosUrl();
   renderizar();
+
+  if (!alunos.length) {
+    mostrarAlerta("Nenhum aluno ativo foi carregado para avaliação. Verifique /api/alunos e os status dos cadastros.", "erro");
+  }
 }
 
 function preencherSelectAlunos() {
@@ -71,9 +263,11 @@ function preencherSelectAlunos() {
     const el = $(sel); if (!el) continue;
     const atual = el.value;
     const primeira = sel === "#filtroAluno" ? '<option value="">Todos</option>' : '<option value="">Selecione um aluno</option>';
-    el.innerHTML = primeira + alunos.slice().sort((a,b)=>nomeAluno(a).localeCompare(nomeAluno(b), "pt-BR"))
-      .map(a => `<option value="${esc(idAluno(a))}">${esc(nomeAluno(a))}</option>`).join("");
-    if (atual) el.value = atual;
+    const lista = alunos.slice().sort((a,b)=>nomeAluno(a).localeCompare(nomeAluno(b), "pt-BR"));
+    const opcoes = lista.map(a => `<option value="${esc(idAluno(a))}">${esc(nomeAluno(a))}</option>`).join("");
+    el.innerHTML = primeira + (opcoes || '<option value="" disabled>Nenhum aluno ativo encontrado</option>');
+    if (atual && Array.from(el.options).some(opt => opt.value === atual)) el.value = atual;
+    else el.value = '';
   }
 }
 
@@ -200,8 +394,31 @@ function trocarTab(tab) {
   atualizarFiguraSexo();
   atualizarRelatorio();
 }
-function abrirModal(titulo = "Nova avaliação") { $("#modal")?.classList.remove("hidden"); setModoAvaliacao(titulo.includes("Editar") ? "editar" : "nova"); setTimeout(()=>$("#aluno_id")?.focus(), 60); }
-function fecharModal() { $("#modal")?.classList.add("hidden"); avaliacaoAtual = null; $("#form")?.reset(); ["foto_frente","foto_costas","foto_lateral_direita","foto_lateral_esquerda"].forEach(id=>renderFoto(id, "")); setModoAvaliacao("nova"); trocarTab("anamnese"); setText("professorNomeDisplay", "Definido pelo professor responsável do aluno"); }
+function abrirModal(titulo = "Nova avaliação") {
+  const modal = $("#modal");
+  modal?.classList.remove("hidden");
+  if (PORTAL_PROFESSOR) {
+    document.documentElement.style.overflowY = 'hidden';
+    document.body.style.overflowY = 'hidden';
+    const card = document.querySelector('.modal-avaliacao');
+    if (card) card.scrollTop = 0;
+  }
+  setModoAvaliacao(titulo.includes("Editar") ? "editar" : "nova");
+  setTimeout(()=>$("#aluno_id")?.focus(), 60);
+}
+function fecharModal() {
+  $("#modal")?.classList.add("hidden");
+  if (PORTAL_PROFESSOR) {
+    document.documentElement.style.overflowY = 'auto';
+    document.body.style.overflowY = 'auto';
+  }
+  avaliacaoAtual = null;
+  $("#form")?.reset();
+  ["foto_frente","foto_costas","foto_lateral_direita","foto_lateral_esquerda"].forEach(id=>renderFoto(id, ""));
+  setModoAvaliacao("nova");
+  trocarTab("anamnese");
+  setText("professorNomeDisplay", "Definido pelo professor responsável do aluno");
+}
 function novaAvaliacao() { $("#form")?.reset(); avaliacaoAtual = null; setCampo("id", ""); setCampo("data", dataHoje()); setCampo("hora", new Date().toTimeString().slice(0,5)); const alunoFiltro = valorCampo("filtroAluno") || PARAMS_INICIAIS.get('alunoId') || PARAMS_INICIAIS.get('aluno_id'); if (alunoFiltro) setCampo("aluno_id", alunoFiltro); sincronizarAlunoProfessor(); setCampo("avaliacaoNumero", "nova"); setModoAvaliacao("nova"); if (!valorCampo('professor_id') && professorIdUrl) { const p = professorPorId(professorIdUrl); setCampo('professor_id', professorIdUrl); setCampo('professorNome', nomeProfessor(p || {}) || professorNomeUrl); setText('professorNomeDisplay', nomeProfessor(p || {}) || professorNomeUrl || 'Professor informado pela tela anterior'); } abrirModal("Nova avaliação"); trocarTab("anamnese"); }
 
 
@@ -271,14 +488,16 @@ function calcular() {
   setCampo("tmb", peso > 0 ? Math.round(22 * peso) : "");
   const cintura = numero(valorCampo("cintura")); const quadril = numero(valorCampo("quadril")); const rcq = cintura > 0 && quadril > 0 ? cintura / quadril : 0; setText("rcq", rcq ? rcq.toFixed(2).replace('.',',') : "0,00"); setCampo("rcq_hidden", rcq ? rcq.toFixed(2) : "");
   setText("rcq_classificacao", classificarRCQValor(rcq, valorCampo("risco_sexo")));
-  const perims = ["ombro","braco_relaxado_direito","braco_relaxado_esquerdo","braco_contraido_direito","braco_contraido_esquerdo","antebraco_direito","antebraco_esquerdo","torax_relaxado","torax_inspirado","cintura","abdomen","quadril","coxa_proximal_direita","coxa_proximal_esquerda","coxa_medial_direita","coxa_medial_esquerda","panturrilha_direita","panturrilha_esquerda","pescoco","punho"];
+  const perims = ["ombro","braco_relaxado_direito","braco_relaxado_esquerdo","braco_contraido_direito","braco_contraido_esquerdo","antebraco_direito","antebraco_esquerdo","torax_relaxado","torax_inspirado","cintura","abdomen","quadril","coxa_proximal_direita","coxa_proximal_esquerda","coxa_medial_direita","coxa_medial_esquerda","panturrilha_direita","panturrilha_esquerda","pescoco","punho","biestiloide","biepicondilo_umeral","biepicondilo_femural","bimaleolar"];
   const soma = perims.reduce((s,id)=>s+numero(valorCampo(id)),0); setText("soma_perimetros", soma.toFixed(2).replace('.',','));
+  setText("rcq_cintura_view", valorCampo("cintura") || "0,00");
+  setText("rcq_quadril_view", valorCampo("quadril") || "0,00");
   const risco = ["risco_idade","risco_sexo","risco_peso","risco_exercicio","risco_historico","risco_tabagismo","risco_colesterol","risco_pas"].reduce((s,id)=>s+numero(valorCampo(id)),0); setText("risco_pontuacao", risco); const pct = Math.min(100, risco / 62 * 100); const rb = $("#riscoBarra"); if (rb) rb.style.height = `${Math.max(4,pct)}%`; setText("risco_classificacao", risco <= 0 ? "Informações insuficientes" : risco <= 11 ? "Risco bem abaixo da média" : risco <= 17 ? "Risco abaixo da média" : risco <= 24 ? "Risco médio" : risco <= 31 ? "Risco moderado" : risco <= 40 ? "Risco alto" : "Risco muito alto");
   const vo2 = numero(valorCampo("vo2_obtido")); const previsto = peso > 0 ? (50 - Math.max(0, imc - 22)).toFixed(2) : ""; setCampo("vo2_previsto", previsto); setCampo("deficit_aerobico", vo2 && previsto ? Math.max(0, Number(previsto) - vo2).toFixed(2) : "");
   atualizarRelatorio();
 }
 
-function camposTexto() { return ["data","hora","objetivo","pratica_atividade","medicamentos","cirurgias","doencas_familia","observacoes","risco_idade","risco_sexo","risco_peso","risco_exercicio","risco_historico","risco_tabagismo","risco_colesterol","risco_pas","peso","altura","imc","classificacao_imc","percentual_gordura","percentual_ideal","agua_corporal","massa_magra","massa_gorda","tmb","protocolo_dobras","subescapular","bicipital","tricipital","axilar_media","supra_iliaca","peitoral","dobra_abdominal","dobra_coxa","dobra_panturrilha","massa_magra_manual","massa_gorda_manual","gordura_visceral","idade_metabolica","ombro","braco_relaxado_direito","braco_relaxado_esquerdo","braco_contraido_direito","braco_contraido_esquerdo","antebraco_direito","antebraco_esquerdo","torax_relaxado","torax_inspirado","cintura","abdomen","quadril","coxa_proximal_direita","coxa_proximal_esquerda","coxa_medial_direita","coxa_medial_esquerda","panturrilha_direita","panturrilha_esquerda","pescoco","punho","vo2_obtido","vo2_previsto","deficit_aerobico","flexao_bracos","abdominal_repeticoes","banco_wells"]; }
+function camposTexto() { return ["data","hora","objetivo","pratica_atividade","medicamentos","cirurgias","doencas_familia","observacoes","risco_idade","risco_sexo","risco_peso","risco_exercicio","risco_historico","risco_tabagismo","risco_colesterol","risco_pas","peso","altura","imc","classificacao_imc","percentual_gordura","percentual_ideal","agua_corporal","massa_magra","massa_gorda","tmb","protocolo_dobras","subescapular","bicipital","tricipital","axilar_media","supra_iliaca","peitoral","dobra_abdominal","dobra_coxa","dobra_panturrilha","massa_magra_manual","massa_gorda_manual","gordura_visceral","idade_metabolica","ombro","braco_relaxado_direito","braco_relaxado_esquerdo","braco_contraido_direito","braco_contraido_esquerdo","antebraco_direito","antebraco_esquerdo","torax_relaxado","torax_inspirado","cintura","abdomen","quadril","coxa_proximal_direita","coxa_proximal_esquerda","coxa_medial_direita","coxa_medial_esquerda","panturrilha_direita","panturrilha_esquerda","pescoco","punho","biestiloide","biepicondilo_umeral","biepicondilo_femural","bimaleolar","vo2_obtido","vo2_previsto","deficit_aerobico","flexao_bracos","abdominal_repeticoes","banco_wells"]; }
 function coletar() {
   const alunoId = valorCampo("aluno_id"); const aluno = alunoPorId(alunoId); const profId = valorCampo("professor_id");
   const dados = { aluno_id: alunoId, alunoId, alunoNome: nomeAluno(aluno || {}), professor_id: profId, professorId: profId, professorNome: valorCampo("professorNome") };
@@ -386,12 +605,258 @@ function renderParq() { const perguntas = ["Alguma vez um médico lhe disse que 
 function renderFoto(id, base64) { const prev = $(`#prev_${id}`); if (!prev) return; const rotulo = prev.dataset.rotulo || prev.textContent || "Foto postural"; prev.dataset.rotulo = rotulo; prev.innerHTML = base64 ? `<img src="${base64}" alt="Foto">` : `<span>${esc(rotulo)}</span>`; }
 function lerFoto(input) { const arq = input.files?.[0]; if (!arq) return; const reader = new FileReader(); reader.onload = () => { setCampo(`${input.id}_base64`, reader.result); renderFoto(input.id, reader.result); }; reader.readAsDataURL(arq); }
 
+
+/* Fusion ERP 2.7.6 P1 — IA de Avaliação Física por Voz */
+const AVAL_VOZ_KEY = 'fusion_avaliacao_voz_ativa';
+let avaliacaoVozAtiva = false;
+let avaliacaoReconhecimento = null;
+let avaliacaoReconhecimentoRodando = false;
+let avaliacaoUltimaInstrucao = 'Fale uma medida, por exemplo: peso oitenta e dois vírgula quatro, cintura noventa, quadril cento e dois.';
+
+function suporteVozAvaliacao(){
+  return typeof window !== 'undefined' && Boolean(window.SpeechRecognition || window.webkitSpeechRecognition);
+}
+
+function falarAvaliacao(texto){
+  avaliacaoUltimaInstrucao = texto || avaliacaoUltimaInstrucao;
+  try{
+    if(!('speechSynthesis' in window) || !texto) return;
+    window.speechSynthesis.cancel();
+    const fala = new SpeechSynthesisUtterance(texto);
+    fala.lang = 'pt-BR';
+    fala.rate = 0.95;
+    fala.pitch = 1;
+    window.speechSynthesis.speak(fala);
+  }catch{}
+}
+
+function setStatusVozAvaliacao(texto, tipo=''){
+  const st = document.getElementById('avaliacaoVozStatus');
+  const box = document.getElementById('avaliacaoVozBox');
+  const btn = document.getElementById('btnVozAvaliacao');
+  if(st) st.textContent = texto || (avaliacaoVozAtiva ? 'Ouvindo medidas.' : 'Pronto para ouvir o professor.');
+  if(box){
+    box.classList.toggle('ouvindo', avaliacaoVozAtiva);
+    box.classList.toggle('erro', tipo === 'erro');
+  }
+  if(btn){
+    btn.textContent = avaliacaoVozAtiva ? '■ Parar voz' : '🎙️ Iniciar voz';
+    btn.classList.toggle('danger', avaliacaoVozAtiva);
+  }
+}
+
+function setTranscricaoAvaliacao(texto){
+  const el = document.getElementById('avaliacaoVozTranscricao');
+  if(el) el.textContent = texto || '';
+}
+
+function numeroPorExtensoPT(textoOriginal){
+  let s = normalizar(textoOriginal)
+    .replace(/\bvirgula\b|\bponto\b/g, ',')
+    .replace(/\bmetro[s]?\b|\bquilo[s]?\b|\bquilos\b|\bkg\b|\bcentimetro[s]?\b|\bcm\b/g, ' ')
+    .replace(/\be\b/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  const direto = s.match(/\d+(?:[\.,]\d+)?/);
+  if(direto) return Number(direto[0].replace(',', '.'));
+
+  const unidades = {zero:0,um:1,uma:1,dois:2,duas:2,tres:3,quatro:4,cinco:5,seis:6,sete:7,oito:8,nove:9};
+  const especiais = {dez:10,onze:11,doze:12,treze:13,catorze:14,quatorze:14,quinze:15,dezesseis:16,dezassseis:16,dezessete:17,dezoito:18,dezenove:19};
+  const dezenas = {vinte:20,trinta:30,quarenta:40,cinquenta:50,sessenta:60,setenta:70,oitenta:80,noventa:90};
+  const centenas = {cem:100,cento:100,duzentos:200,trezentos:300,quatrocentos:400,quinhentos:500,seiscentos:600,setecentos:700,oitocentos:800,novecentos:900};
+
+  function parseParte(parte){
+    let total = 0;
+    for(const token of parte.split(/\s+/).filter(Boolean)){
+      if(centenas[token] !== undefined) total += centenas[token];
+      else if(dezenas[token] !== undefined) total += dezenas[token];
+      else if(especiais[token] !== undefined) total += especiais[token];
+      else if(unidades[token] !== undefined) total += unidades[token];
+    }
+    return total;
+  }
+
+  const partes = s.split(',').map(x => x.trim()).filter(Boolean);
+  if(!partes.length) return NaN;
+  const inteiro = parseParte(partes[0]);
+  if(partes.length === 1) return inteiro || NaN;
+  const dec = parseParte(partes[1]);
+  const casas = dec < 10 ? 10 : 100;
+  return inteiro + (dec / casas);
+}
+
+function formatarNumeroAvaliacao(n, campo=''){
+  if(!Number.isFinite(n)) return '';
+  if(campo === 'altura'){
+    if(n > 3) n = n / 100;
+    return String(Number(n.toFixed(2))).replace('.', ',');
+  }
+  return String(Number(n.toFixed(2))).replace('.', ',');
+}
+
+const MAPA_MEDIDAS_VOZ = [
+  {rx:/\bpeso\b/, campo:'peso', rotulo:'Peso'},
+  {rx:/\baltura\b|\bestatura\b/, campo:'altura', rotulo:'Altura'},
+  {rx:/\bpesco[cç]o\b/, campo:'pescoco', rotulo:'Pescoço'},
+  {rx:/\bpunho\b/, campo:'punho', rotulo:'Punho'},
+  {rx:/\bombr[oo]s?\b/, campo:'ombro', rotulo:'Ombro'},
+  {rx:/\bbra[cç]o\s+relaxado\s+direit[oa]\b/, campo:'braco_relaxado_direito', rotulo:'Braço relaxado direito'},
+  {rx:/\bbra[cç]o\s+relaxado\s+esquerd[oa]\b/, campo:'braco_relaxado_esquerdo', rotulo:'Braço relaxado esquerdo'},
+  {rx:/\bbra[cç]o\s+contra[ií]do\s+direit[oa]\b/, campo:'braco_contraido_direito', rotulo:'Braço contraído direito'},
+  {rx:/\bbra[cç]o\s+contra[ií]do\s+esquerd[oa]\b/, campo:'braco_contraido_esquerdo', rotulo:'Braço contraído esquerdo'},
+  {rx:/\bbra[cç]o\s+direit[oa]\b/, campo:'braco_relaxado_direito', rotulo:'Braço direito'},
+  {rx:/\bbra[cç]o\s+esquerd[oa]\b/, campo:'braco_relaxado_esquerdo', rotulo:'Braço esquerdo'},
+  {rx:/\bantebra[cç]o\s+direit[oa]\b/, campo:'antebraco_direito', rotulo:'Antebraço direito'},
+  {rx:/\bantebra[cç]o\s+esquerd[oa]\b/, campo:'antebraco_esquerdo', rotulo:'Antebraço esquerdo'},
+  {rx:/\bt[oó]rax\s+inspirado\b/, campo:'torax_inspirado', rotulo:'Tórax inspirado'},
+  {rx:/\bt[oó]rax\s+relaxado\b|\bt[oó]rax\b/, campo:'torax_relaxado', rotulo:'Tórax'},
+  {rx:/\bcintura\b/, campo:'cintura', rotulo:'Cintura'},
+  {rx:/\babd[oô]men\b|\babdominal\b/, campo:'abdomen', rotulo:'Abdômen'},
+  {rx:/\bquadril\b/, campo:'quadril', rotulo:'Quadril'},
+  {rx:/\bcoxa\s+proximal\s+direit[oa]\b/, campo:'coxa_proximal_direita', rotulo:'Coxa proximal direita'},
+  {rx:/\bcoxa\s+proximal\s+esquerd[oa]\b/, campo:'coxa_proximal_esquerda', rotulo:'Coxa proximal esquerda'},
+  {rx:/\bcoxa\s+medial\s+direit[oa]\b|\bcoxa\s+direit[oa]\b/, campo:'coxa_medial_direita', rotulo:'Coxa direita'},
+  {rx:/\bcoxa\s+medial\s+esquerd[oa]\b|\bcoxa\s+esquerd[oa]\b/, campo:'coxa_medial_esquerda', rotulo:'Coxa esquerda'},
+  {rx:/\bpanturrilha\s+direit[oa]\b/, campo:'panturrilha_direita', rotulo:'Panturrilha direita'},
+  {rx:/\bpanturrilha\s+esquerd[oa]\b/, campo:'panturrilha_esquerda', rotulo:'Panturrilha esquerda'},
+  {rx:/\bgordura\b|\bpercentual\s+de\s+gordura\b/, campo:'percentual_gordura', rotulo:'Percentual de gordura'},
+  {rx:/\bdobra\s+abdominal\b/, campo:'dobra_abdominal', rotulo:'Dobra abdominal'},
+  {rx:/\bdobra\s+coxa\b/, campo:'dobra_coxa', rotulo:'Dobra da coxa'},
+  {rx:/\bdobra\s+panturrilha\b/, campo:'dobra_panturrilha', rotulo:'Dobra da panturrilha'},
+  {rx:/\bpeitoral\b/, campo:'peitoral', rotulo:'Peitoral'}
+];
+
+function extrairMedidasDaFala(fala){
+  const original = texto(fala);
+  const n = normalizar(original);
+  const encontrados = [];
+  for(const item of MAPA_MEDIDAS_VOZ){
+    const match = n.match(item.rx);
+    if(!match) continue;
+    const inicio = match.index + match[0].length;
+    const depois = n.slice(inicio, inicio + 70)
+      .replace(/^\s*(de|com|igual|mede|medindo|valor|foi|e|eh|é)\s+/, '')
+      .trim();
+    const valor = numeroPorExtensoPT(depois);
+    if(Number.isFinite(valor) && valor > 0){
+      encontrados.push({ ...item, valor, textoValor: depois });
+    }
+  }
+  return encontrados;
+}
+
+function aplicarMedidasPorVoz(fala){
+  const medidas = extrairMedidasDaFala(fala);
+  if(!medidas.length){
+    setStatusVozAvaliacao('Não entendi nenhuma medida. Repita informando o nome e o valor.', 'erro');
+    falarAvaliacao('Não entendi nenhuma medida. Repita informando o nome e o valor.');
+    return;
+  }
+  const aplicadas = [];
+  for(const m of medidas){
+    const el = document.getElementById(m.campo);
+    if(!el) continue;
+    const valor = formatarNumeroAvaliacao(m.valor, m.campo);
+    setCampo(m.campo, valor);
+    el.classList.add('campo-preenchido-voz');
+    setTimeout(() => el.classList.remove('campo-preenchido-voz'), 1800);
+    aplicadas.push(`${m.rotulo}: ${valor}`);
+  }
+  calcular();
+  atualizarRelatorio();
+  if(aplicadas.length){
+    const msg = `Registrado: ${aplicadas.join(', ')}.`;
+    setStatusVozAvaliacao(msg);
+    setTranscricaoAvaliacao(`${fala}\n→ ${msg}`);
+    falarAvaliacao(msg);
+  }else{
+    setStatusVozAvaliacao('As medidas foram entendidas, mas os campos não foram encontrados.', 'erro');
+  }
+}
+
+function tratarComandoAvaliacaoVoz(fala){
+  const n = normalizar(fala);
+  if(!n) return;
+  setTranscricaoAvaliacao(fala);
+  if(/\b(parar|encerrar|desligar microfone|finalizar voz)\b/.test(n)){ alternarVozAvaliacao(false); return; }
+  if(/\b(repetir|repete|instru[cç][aã]o)\b/.test(n)){ falarAvaliacao(avaliacaoUltimaInstrucao); return; }
+  if(/\bproxima aba\b|\bpr[oó]xima\b/.test(n)){ navegarAbaAvaliacao(1); return; }
+  if(/\baba anterior\b|\bvoltar aba\b/.test(n)){ navegarAbaAvaliacao(-1); return; }
+  aplicarMedidasPorVoz(fala);
+}
+
+function navegarAbaAvaliacao(delta){
+  const abas = Array.from(document.querySelectorAll('.sca-tabs .tab'));
+  const idx = abas.findIndex(b => b.classList.contains('active'));
+  const prox = abas[Math.max(0, Math.min(abas.length - 1, idx + delta))];
+  if(prox){
+    trocarTab(prox.dataset.tab);
+    falarAvaliacao(`Aba ${prox.textContent.trim()}.`);
+  }
+}
+
+function iniciarReconhecimentoAvaliacao(){
+  if(!avaliacaoVozAtiva || avaliacaoReconhecimentoRodando || !suporteVozAvaliacao()) return;
+  try{
+    const Ctor = window.SpeechRecognition || window.webkitSpeechRecognition;
+    avaliacaoReconhecimento = avaliacaoReconhecimento || new Ctor();
+    avaliacaoReconhecimento.lang = 'pt-BR';
+    avaliacaoReconhecimento.continuous = true;
+    avaliacaoReconhecimento.interimResults = false;
+    avaliacaoReconhecimento.maxAlternatives = 1;
+    avaliacaoReconhecimento.onstart = () => { avaliacaoReconhecimentoRodando = true; setStatusVozAvaliacao('Ouvindo medidas do professor.'); };
+    avaliacaoReconhecimento.onend = () => {
+      avaliacaoReconhecimentoRodando = false;
+      if(avaliacaoVozAtiva) setTimeout(iniciarReconhecimentoAvaliacao, 450);
+      else setStatusVozAvaliacao('Voz desligada.');
+    };
+    avaliacaoReconhecimento.onerror = () => { avaliacaoReconhecimentoRodando = false; setStatusVozAvaliacao('Microfone indisponível ou bloqueado.', 'erro'); };
+    avaliacaoReconhecimento.onresult = ev => {
+      const fala = ev.results?.[ev.results.length - 1]?.[0]?.transcript || '';
+      tratarComandoAvaliacaoVoz(fala);
+    };
+    avaliacaoReconhecimento.start();
+  }catch{
+    avaliacaoReconhecimentoRodando = false;
+    setStatusVozAvaliacao('Não foi possível iniciar o microfone.', 'erro');
+  }
+}
+
+function pararReconhecimentoAvaliacao(){
+  try{ avaliacaoReconhecimento?.stop?.(); }catch{}
+  avaliacaoReconhecimentoRodando = false;
+}
+
+function alternarVozAvaliacao(forcar){
+  const novo = typeof forcar === 'boolean' ? forcar : !avaliacaoVozAtiva;
+  if(novo && !suporteVozAvaliacao()){
+    mostrarAlerta('Reconhecimento de voz indisponível neste navegador. Use Chrome no Android ou desktop.', 'erro');
+    return;
+  }
+  avaliacaoVozAtiva = novo;
+  localStorage.setItem(AVAL_VOZ_KEY, avaliacaoVozAtiva ? '1' : '0');
+  setStatusVozAvaliacao(avaliacaoVozAtiva ? 'Ouvindo medidas do professor.' : 'Voz desligada.');
+  if(avaliacaoVozAtiva){
+    falarAvaliacao('Avaliação por voz ativada. Fale o nome da medida e o valor.');
+    iniciarReconhecimentoAvaliacao();
+  }else{
+    pararReconhecimentoAvaliacao();
+    falarAvaliacao('Avaliação por voz encerrada.');
+  }
+}
+
 function inicializar() {
   if (MODO_EMBED) document.body.classList.add('modo-embed-avaliacao');
   renderParq();
+  document.getElementById("btnVozAvaliacao")?.addEventListener("click", () => alternarVozAvaliacao());
+  document.getElementById("btnRepetirVozAvaliacao")?.addEventListener("click", () => falarAvaliacao(avaliacaoUltimaInstrucao));
+  setStatusVozAvaliacao("Pronto para ouvir o professor.");
   document.querySelectorAll(".tab").forEach(b => b.addEventListener("click", () => trocarTab(b.dataset.tab)));
   document.querySelectorAll(".subtab").forEach(b => b.addEventListener("click", () => { document.querySelectorAll(".subtab").forEach(x=>x.classList.toggle("active", x === b)); document.querySelectorAll(".subpanel").forEach(p=>p.classList.toggle("active", p.id === b.dataset.sub)); }));
-  $("#btnNova")?.addEventListener("click", novaAvaliacao); $("#btnAtualizar")?.addEventListener("click", carregarBases); $("#btnFechar")?.addEventListener("click", fecharModal); $("#btnCancelar")?.addEventListener("click", fecharModal); $("#btnImprimir")?.addEventListener("click", () => window.imprimirAvaliacao(avaliacaoAtual?.id)); $("#form")?.addEventListener("submit", salvar);
+  // Página administrativa de avaliações: histórico/consulta.
+  // A criação de nova avaliação deve ocorrer pelo Portal do Professor.
+  $("#btnAtualizar")?.addEventListener("click", carregarBases); $("#btnFechar")?.addEventListener("click", fecharModal); $("#btnCancelar")?.addEventListener("click", fecharModal); $("#btnImprimir")?.addEventListener("click", () => window.imprimirAvaliacao(avaliacaoAtual?.id)); $("#form")?.addEventListener("submit", salvar);
   $("#aluno_id")?.addEventListener("change", () => { sincronizarAlunoProfessor(); setCampo("avaliacaoNumero", "nova"); setModoAvaliacao("nova"); calcular(); });
   $("#avaliacaoNumero")?.addEventListener("change", selecionarAvaliacaoNumero);
   document.querySelectorAll("[data-avmodo]").forEach(btn => btn.addEventListener("click", () => {
@@ -412,3 +877,95 @@ function inicializar() {
   carregarBases().catch(e => mostrarAlerta(e.message || "Erro ao carregar avaliações.", "erro"));
 }
 inicializar();
+
+
+/* Fusion ERP 2.7.6 P2B — Avaliação Física Mobile */
+(function(){
+  const $m = (s) => document.querySelector(s);
+  const $$m = (s) => Array.from(document.querySelectorAll(s));
+
+  function isMobileAvaliacao(){
+    return window.matchMedia && window.matchMedia('(max-width: 860px)').matches;
+  }
+
+  function atualizarResumoMobileAvaliacao(){
+    const imc = $m('#imc')?.value || '-';
+    const rcq = ($m('#rcq')?.textContent || '').trim() || '-';
+    const imcEl = $m('#mobileResumoImc');
+    const rcqEl = $m('#mobileResumoRcq');
+    if(imcEl) imcEl.textContent = imc || '-';
+    if(rcqEl) rcqEl.textContent = rcq || '-';
+  }
+
+  function ativarTecladoNumericoAvaliacao(){
+    const idsDecimal = [
+      'peso','altura','percentual_gordura','percentual_ideal','agua_corporal','massa_magra','massa_gorda','massa_magra_manual','massa_gorda_manual',
+      'pescoco','punho','ombro','braco_relaxado_direito','braco_relaxado_esquerdo','braco_contraido_direito','braco_contraido_esquerdo',
+      'antebraco_direito','antebraco_esquerdo','torax_relaxado','torax_inspirado','cintura','abdomen','quadril',
+      'coxa_proximal_direita','coxa_proximal_esquerda','coxa_medial_direita','coxa_medial_esquerda','panturrilha_direita','panturrilha_esquerda',
+      'subescapular','bicipital','tricipital','axilar_media','supra_iliaca','peitoral','dobra_abdominal','dobra_coxa','dobra_panturrilha',
+      'vo2_obtido','banco_wells','gordura_visceral'
+    ];
+    idsDecimal.forEach(id => {
+      const el = document.getElementById(id);
+      if(!el) return;
+      el.setAttribute('inputmode', 'decimal');
+      el.setAttribute('autocomplete', 'off');
+    });
+    ['idade_metabolica','flexao_bracos','abdominal_repeticoes'].forEach(id => {
+      const el = document.getElementById(id);
+      if(!el) return;
+      el.setAttribute('inputmode', 'numeric');
+      el.setAttribute('autocomplete', 'off');
+    });
+  }
+
+  function prepararAbasMobileAvaliacao(){
+    $$m('.sca-tabs .tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if(isMobileAvaliacao()) setTimeout(() => btn.scrollIntoView({behavior:'smooth', inline:'center', block:'nearest'}), 40);
+      });
+    });
+  }
+
+  function ligarBotaoVozMobile(){
+    const btn = $m('#btnMobileVozAvaliacao');
+    if(!btn) return;
+    btn.addEventListener('click', () => {
+      const original = $m('#btnVozAvaliacao');
+      if(original) original.click();
+    });
+  }
+
+  function observarFormularioMobile(){
+    const form = $m('#form');
+    if(!form) return;
+    form.addEventListener('input', () => setTimeout(atualizarResumoMobileAvaliacao, 20));
+    form.addEventListener('change', () => setTimeout(atualizarResumoMobileAvaliacao, 20));
+  }
+
+  function inicializarMobileAvaliacaoP2B(){
+    document.body.classList.add('avaliacao-mobile-p2b-ready');
+    ativarTecladoNumericoAvaliacao();
+    prepararAbasMobileAvaliacao();
+    ligarBotaoVozMobile();
+    observarFormularioMobile();
+    atualizarResumoMobileAvaliacao();
+    setInterval(atualizarResumoMobileAvaliacao, 1200);
+  }
+
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', inicializarMobileAvaliacaoP2B);
+  else setTimeout(inicializarMobileAvaliacaoP2B, 0);
+})();
+
+
+// Fusion ERP — proteção visual extra para avaliação no Portal Professor
+if (PORTAL_PROFESSOR) {
+  document.addEventListener('DOMContentLoaded', () => document.body.classList.add('modo-professor-avaliacao'));
+}
+
+// Fusion ERP v5 — liga botões após carregar a tela sem quebrar o script principal.
+document.addEventListener('DOMContentLoaded', () => {
+  const btnNovaMobile = document.getElementById('btnNovaMobile');
+  if (btnNovaMobile) btnNovaMobile.addEventListener('click', novaAvaliacao);
+});

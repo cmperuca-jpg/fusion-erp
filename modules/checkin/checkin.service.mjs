@@ -6,7 +6,6 @@ import {
   buscarCheckinPorId
 } from "./checkin.repository.mjs";
 import { listarFrequencias, salvarFrequencias } from "../frequencia/frequencia.repository.mjs";
-import { portalTreinosAluno, iniciarExecucaoTreino } from "../treinos-operacional/treinos-operacional.service.mjs";
 
 const DATA_DIR = path.resolve(process.cwd(), "data");
 const COMERCIAL_DIR = path.join(DATA_DIR, "comercial");
@@ -269,9 +268,38 @@ async function registrarFrequenciaMusculacao({ aluno, contrato, matricula, servi
 }
 
 async function localizarTreinoAtivoAluno(alunoId) {
-  const portal = await portalTreinosAluno(alunoId, { apenasAtivos: true });
-  const treinos = Array.isArray(portal.treinos) ? portal.treinos : [];
-  return treinos.find((t) => t.statusCalculado === "Ativo" || statusMatriculaAtiva(t.status)) || null;
+  const arquivosTreino = [
+    path.join(DATA_DIR, "treinos.json"),
+    path.join(DATA_DIR, "treinos-interno.json"),
+    path.join(DATA_DIR, "treinos_operacional.json")
+  ];
+
+  const treinos = await lerPrimeiroJson(arquivosTreino, []);
+  if (!Array.isArray(treinos)) return null;
+
+  return treinos
+    .filter((treino) => String(treino.alunoId || treino.aluno_id || "") === String(alunoId))
+    .filter((treino) => {
+      const status = normalizar(treino.status || "Ativo");
+      const validade = texto(treino.dataValidade || treino.validade || treino.dataFim || treino.data_fim);
+      return statusMatriculaAtiva(status) && (!validade || validade.slice(0, 10) >= hojeISO());
+    })
+    .sort((a, b) => String(b.criadoEm || b.dataInicio || b.data || "").localeCompare(String(a.criadoEm || a.dataInicio || a.data || "")))[0] || null;
+}
+
+async function iniciarExecucaoTreinoInterno(treinoId, dados = {}) {
+  return {
+    ok: true,
+    dados: {
+      id: `exec_${Date.now()}_${Math.random().toString(16).slice(2, 8)}`,
+      treinoId,
+      data: dados.data || hojeISO(),
+      origem: dados.origem || "checkin",
+      usuario: dados.usuario || "Sistema",
+      status: "Iniciada",
+      criadoEm: new Date().toISOString()
+    }
+  };
 }
 
 export async function autorizarCheckinMusculacao(dados = {}) {
@@ -383,7 +411,7 @@ export async function registrarCheckinMusculacaoInteligente(dados = {}) {
     registro.frequenciaId = frequencia.id;
 
     if (autorizacao.treinoAtivo?.id) {
-      const inicio = await iniciarExecucaoTreino(autorizacao.treinoAtivo.id, {
+      const inicio = await iniciarExecucaoTreinoInterno(autorizacao.treinoAtivo.id, {
         data: registro.data,
         origem: "checkin_musculacao_inteligente",
         usuario: dados.usuario || "Check-in"

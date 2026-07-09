@@ -1,0 +1,179 @@
+/* Fusion ERP 2.7.4 - ZIP 1 Responsividade Global
+   Camada global segura: ajusta layout, tabelas, cards, formulários e navegação sem alterar APIs. */
+
+:root{
+  --fusion-mobile-gap: 14px;
+  --fusion-touch: 44px;
+  --fusion-content-max: 1280px;
+}
+
+html{box-sizing:border-box;-webkit-text-size-adjust:100%;text-size-adjust:100%;}
+*,*::before,*::after{box-sizing:inherit;}
+body{min-width:0;overflow-x:hidden;}
+img,video,canvas,svg{max-width:100%;height:auto;}
+iframe{max-width:100%;}
+
+/* Containers e painéis */
+.container,.conteudo,.content,.main,.main-content,.page,.page-content,.dashboard,.painel,.wrap,.wrapper,main{
+  max-width:100%;
+}
+.container,.conteudo,.content,.main-content,.page-content,main{
+  width:100%;
+}
+.card,.box,.panel,.painel,.widget,.summary-card,.dashboard-card,.modulo-card,.exercise-card,.treino-card,.avaliacao-card{
+  min-width:0;
+  overflow-wrap:anywhere;
+}
+
+/* Grids flexíveis */
+.grid,.cards,.dashboard-grid,.painel-grid,.stats-grid,.modulos-grid,.kpi-grid,.form-grid,.row,.linha{
+  max-width:100%;
+}
+.grid,.cards,.dashboard-grid,.painel-grid,.stats-grid,.modulos-grid,.kpi-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr));
+  gap:var(--fusion-mobile-gap);
+}
+.row,.linha,.form-row,.actions,.acoes,.toolbar,.topbar-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+
+/* Formulários e toque */
+input,select,textarea,button,.btn,a.button,[role="button"]{
+  max-width:100%;
+}
+input,select,textarea{
+  width:100%;
+  min-height:40px;
+}
+button,.btn,a.button,[role="button"],input[type="button"],input[type="submit"]{
+  min-height:var(--fusion-touch);
+  min-width:var(--fusion-touch);
+  touch-action:manipulation;
+}
+textarea{min-height:92px;resize:vertical;}
+label{max-width:100%;}
+
+/* Tabelas */
+table{max-width:100%;border-collapse:collapse;}
+.table-responsive,.tabela-scroll,.table-wrap{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+main table,.content table,.conteudo table,.page-content table,.card table,.painel table{
+  display:block;
+  width:100%;
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+}
+th,td{white-space:nowrap;}
+td .btn,td button{white-space:normal;}
+
+/* Menu global mobile */
+.fusion-mobile-menu-button{
+  display:none;
+  align-items:center;
+  justify-content:center;
+  position:fixed;
+  top:12px;
+  left:12px;
+  z-index:10001;
+  width:46px;
+  height:46px;
+  border:0;
+  border-radius:12px;
+  background:#ff6600;
+  color:#fff;
+  font-size:26px;
+  font-weight:700;
+  box-shadow:0 8px 24px rgba(0,0,0,.22);
+}
+.fusion-mobile-overlay{
+  display:none;
+  position:fixed;
+  inset:0;
+  z-index:9998;
+  background:rgba(0,0,0,.45);
+}
+body.fusion-menu-open .fusion-mobile-overlay{display:block;}
+
+/* Quebras principais */
+@media (max-width:1024px){
+  body{font-size:15px;}
+  .container,.conteudo,.content,.main-content,.page-content,main{padding-left:16px;padding-right:16px;}
+  .dashboard-grid,.painel-grid,.stats-grid,.modulos-grid,.kpi-grid{grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr));}
+}
+
+@media (max-width:768px){
+  body{font-size:15px;line-height:1.45;}
+  h1{font-size:clamp(1.45rem,6vw,2rem);}
+  h2{font-size:clamp(1.25rem,5vw,1.65rem);}
+  h3{font-size:clamp(1.05rem,4.5vw,1.35rem);}
+
+  .fusion-mobile-menu-button{display:flex;}
+  body{padding-top:0;}
+
+  .container,.conteudo,.content,.main,.main-content,.page,.page-content,main{
+    width:100%;
+    padding-left:12px;
+    padding-right:12px;
+  }
+
+  .grid,.cards,.dashboard-grid,.painel-grid,.stats-grid,.modulos-grid,.kpi-grid,.form-grid{
+    grid-template-columns:1fr !important;
+    gap:12px;
+  }
+  .row,.linha,.form-row,.actions,.acoes,.toolbar,.topbar-actions{
+    flex-direction:column;
+    align-items:stretch;
+  }
+  .actions button,.acoes button,.toolbar button,.actions .btn,.acoes .btn,.toolbar .btn{
+    width:100%;
+  }
+
+  .card,.box,.panel,.painel,.widget,.summary-card,.dashboard-card,.modulo-card,.exercise-card,.treino-card,.avaliacao-card{
+    width:100%;
+    padding:14px;
+    border-radius:14px;
+  }
+
+  input,select,textarea,button,.btn,a.button,[role="button"]{font-size:16px;}
+  button,.btn,a.button,[role="button"],input[type="button"],input[type="submit"]{width:100%;}
+
+  /* Captura laterais comuns do projeto */
+  .sidebar,.side-menu,.menu-lateral,aside,.fusion-sidebar{
+    position:fixed !important;
+    top:0;
+    left:0;
+    bottom:0;
+    width:min(86vw,320px) !important;
+    max-width:320px;
+    height:100vh !important;
+    overflow-y:auto;
+    z-index:10000;
+    transform:translateX(-105%);
+    transition:transform .22s ease;
+    box-shadow:18px 0 40px rgba(0,0,0,.28);
+  }
+  body.fusion-menu-open .sidebar,
+  body.fusion-menu-open .side-menu,
+  body.fusion-menu-open .menu-lateral,
+  body.fusion-menu-open aside,
+  body.fusion-menu-open .fusion-sidebar{
+    transform:translateX(0);
+  }
+
+  .layout,.app-layout,.page-layout,.shell,.dashboard-layout{
+    display:block !important;
+  }
+  .content,.main,.main-content,.page-content,main{
+    margin-left:0 !important;
+    padding-top:70px;
+  }
+}
+
+@media (max-width:480px){
+  .container,.conteudo,.content,.main-content,.page-content,main{padding-left:10px;padding-right:10px;}
+  .card,.box,.panel,.painel,.widget{padding:12px;}
+  th,td{font-size:13px;padding:8px;}
+  .fusion-mobile-menu-button{top:10px;left:10px;width:44px;height:44px;}
+}

@@ -11,6 +11,16 @@
   <script src="/assets/js/fusion-auth.js"></script>
   <script>FusionAuth.proteger();</script>
   <meta name="fusion-existing-pages" content="agenda,alunos,avaliacoes,bi,bi-academia,bi-academia-operacional,bi-financeiro,caixa,checkin,configuracoes,dashboard,estoque,exercicios,financeiro,login,matriculas,mensalidades,modalidades,modelos-treino,pagamentos,planos,presencas,professores,recebimentos,relatorios-caixa,treinos,turmas">
+
+<link rel="manifest" href="/manifest-sistema.webmanifest">
+<meta name="theme-color" content="#ff6600">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="/assets/pwa/icons/fusion-icon-180.png">
+<link rel="stylesheet" href="/assets/pwa/fusion-pwa-mobile.css">
+  <link rel="stylesheet" href="/assets/css/fusion-mobile-final.css">
+  <link rel="stylesheet" href="/assets/css/fusion-no-sidebar.css">
 </head>
 <body>
   <main class="main">
@@ -216,6 +226,20 @@
           <input id="baixaValorPago" type="number" step="0.01" min="0.01" required />
         </label>
 
+        <div class="full painel-diferenca hidden" id="painelDiferencaRecebimento" style="border:1px solid #fed7aa;background:#fff7ed;border-radius:12px;padding:12px;display:grid;gap:8px;">
+          <strong>Diferença no recebimento</strong>
+          <span id="textoDiferencaRecebimento">Valor recebido acima do saldo.</span>
+          <label id="opcaoTrocoRecebimento" style="display:flex;align-items:center;gap:8px;margin:0;">
+            <input type="radio" name="destinoDiferenca" id="baixaDestinoTroco" value="troco" />
+            Devolver troco em dinheiro
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;margin:0;">
+            <input type="radio" name="destinoDiferenca" id="baixaDestinoCredito" value="credito" />
+            Gerar crédito para a próxima mensalidade
+          </label>
+          <small>Troco só é permitido para pagamento em dinheiro. PIX, cartão, boleto e transferência geram crédito automaticamente.</small>
+        </div>
+
         <label>
           Data do pagamento
           <input id="baixaDataPagamento" type="date" required />
@@ -335,5 +359,9 @@
   </div>
   <script src="/pages/financeiro/financeiro.js"></script>
     <script src="/assets/js/fusion-layout.js"></script>
+
+<script src="/assets/pwa/fusion-pwa-install.js" defer></script>
+  <script src="/assets/js/fusion-mobile-final.js" defer></script>
+  <script src="/assets/js/fusion-no-sidebar.js" defer></script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-carregarLayout("Professores");
+if (typeof window.carregarLayout === "function") window.carregarLayout("Professores");
 
 const API_URL = "/api/professores";
 let professores = [];

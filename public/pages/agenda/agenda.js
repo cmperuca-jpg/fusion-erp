@@ -1,4 +1,4 @@
-carregarLayout("Agenda");
+if (typeof window.carregarLayout === "function") window.carregarLayout("Agenda");
 
 const API = "/api/agenda";
 

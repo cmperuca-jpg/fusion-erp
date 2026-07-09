@@ -1,0 +1,254 @@
+/* Fusion ERP — Consolidação Mobile Final Etapa 1
+   Camada global segura. Não altera APIs. Corrige largura, toque, cards, tabelas, menus e modais em celular. */
+
+:root{
+  --fusion-mobile-bg:#f6f7fb;
+  --fusion-mobile-card:#ffffff;
+  --fusion-mobile-text:#172033;
+  --fusion-mobile-muted:#667085;
+  --fusion-mobile-border:rgba(15,23,42,.12);
+  --fusion-mobile-brand:#ff6600;
+  --fusion-mobile-radius:16px;
+  --fusion-mobile-gap:12px;
+  --fusion-mobile-touch:48px;
+}
+
+html{box-sizing:border-box;-webkit-text-size-adjust:100%;text-size-adjust:100%;max-width:100vw;overflow-x:hidden;}
+*,*::before,*::after{box-sizing:inherit;}
+body{min-width:0;max-width:100vw;overflow-x:hidden;}
+img,video,canvas,svg,iframe{max-width:100%;height:auto;}
+input,select,textarea,button{font:inherit;}
+input,select,textarea{max-width:100%;}
+button,.btn,a.button,[role="button"],input[type="button"],input[type="submit"]{touch-action:manipulation;}
+
+/* Containers */
+main,.main,.content,.conteudo,.container,.wrapper,.wrap,.page,.page-content,.main-content,.fusion-main,.fusion-content,.painel,.dashboard{
+  min-width:0;
+  max-width:100%;
+}
+.card,.box,.panel,.widget,.dashboard-card,.modulo-card,.kpi,.metric,.summary-card,.exercise-card,.treino-card,.avaliacao-card,.aluno-card,.professor-card{
+  min-width:0;
+  overflow-wrap:anywhere;
+}
+
+/* Tabelas */
+.table-wrap,.tabela-wrap,.table-responsive,.tabela-scroll,.lista-tabela,.grid-table-wrap{
+  width:100%;
+  max-width:100%;
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+}
+main table,.content table,.conteudo table,.page-content table,.fusion-main table,.card table,.box table,.panel table{
+  max-width:100%;
+}
+
+/* Modais */
+.modal,.modal-content,.modal-card,.popup,.popup-content,.dialog,.dialog-content,[role="dialog"]{
+  max-width:calc(100vw - 24px);
+}
+
+@media (max-width:900px){
+  body{background:var(--fusion-mobile-bg);color:var(--fusion-mobile-text);}
+
+  body.fusion-mobile-ready{padding-top:0;}
+  body.fusion-menu-open{overflow:hidden;}
+
+  .fusion-shell,.shell,.layout,.app-layout,.page-layout,.dashboard-layout{
+    display:block!important;
+    width:100%!important;
+    min-width:0!important;
+  }
+
+  main,.main,.content,.conteudo,.container,.wrapper,.wrap,.page,.page-content,.main-content,.fusion-main,.fusion-content,.painel,.dashboard{
+    width:100%!important;
+    max-width:100vw!important;
+    margin-left:0!important;
+    margin-right:0!important;
+    padding-left:10px!important;
+    padding-right:10px!important;
+  }
+
+  .fusion-main,.main-content,.page-content,main.content,main.conteudo{
+    padding-top:72px!important;
+  }
+
+  h1{font-size:clamp(22px,6vw,30px);line-height:1.15;margin:0 0 12px;}
+  h2{font-size:clamp(19px,5vw,24px);line-height:1.2;}
+  h3{font-size:clamp(17px,4.3vw,21px);line-height:1.25;}
+  p,li,label,td,th{font-size:15px;line-height:1.45;}
+
+  .grid,.cards,.dashboard-grid,.painel-grid,.stats-grid,.modulos-grid,.kpi-grid,.metrics-grid,.form-grid,.row,.linha,.form-row,.campo-duplo,.campo-triplo,.atalhos,.actions-grid{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    gap:var(--fusion-mobile-gap)!important;
+    width:100%!important;
+    max-width:100%!important;
+  }
+
+  .card,.box,.panel,.widget,.dashboard-card,.modulo-card,.kpi,.metric,.summary-card,.exercise-card,.treino-card,.avaliacao-card,.aluno-card,.professor-card,form,fieldset{
+    width:100%!important;
+    max-width:100%!important;
+    border-radius:var(--fusion-mobile-radius)!important;
+  }
+
+  .card,.box,.panel,.widget,.dashboard-card,.modulo-card,.kpi,.metric,.summary-card,.exercise-card,.treino-card,.avaliacao-card,.aluno-card,.professor-card{
+    padding:14px!important;
+  }
+
+  label{display:block;margin-bottom:6px;font-weight:700;}
+  input,select,textarea{
+    width:100%!important;
+    min-height:var(--fusion-mobile-touch)!important;
+    border-radius:12px!important;
+    padding:11px 12px!important;
+    font-size:16px!important;
+  }
+  textarea{min-height:96px!important;resize:vertical;}
+
+  .actions,.acoes,.botoes,.buttons,.toolbar,.top-actions,.page-actions,.form-actions,.modal-actions,.footer-actions{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    gap:10px!important;
+    width:100%!important;
+  }
+  .actions button,.actions a,.acoes button,.acoes a,.botoes button,.botoes a,.buttons button,.buttons a,.toolbar button,.toolbar a,.top-actions button,.top-actions a,.page-actions button,.page-actions a,.form-actions button,.form-actions a,.modal-actions button,.modal-actions a,.footer-actions button,.footer-actions a,.btn,a.button,[role="button"],input[type="button"],input[type="submit"]{
+    width:100%;
+    min-height:var(--fusion-mobile-touch)!important;
+    border-radius:12px!important;
+    justify-content:center;
+    text-align:center;
+  }
+
+  table{min-width:720px;}
+  .table-wrap,.tabela-wrap,.table-responsive,.tabela-scroll,.lista-tabela,.grid-table-wrap{
+    border-radius:14px;
+    border:1px solid var(--fusion-mobile-border);
+    background:#fff;
+  }
+  main table,.content table,.conteudo table,.page-content table,.fusion-main table,.card > table,.box > table,.panel > table{
+    display:block!important;
+    width:100%!important;
+    overflow-x:auto!important;
+    -webkit-overflow-scrolling:touch;
+  }
+  th,td{white-space:nowrap;}
+  td button,td .btn{white-space:normal;}
+
+  .desktop-only,.hide-mobile{display:none!important;}
+  .mobile-only{display:initial!important;}
+
+  /* Menu lateral genérico */
+  .sidebar,.side-menu,.menu-lateral,aside.fusion-sidebar,.fusion-sidebar,.app-sidebar,.layout-sidebar,.menu-global,.nav-sidebar{
+    position:fixed!important;
+    top:0!important;
+    left:0!important;
+    bottom:0!important;
+    width:min(86vw,340px)!important;
+    max-width:340px!important;
+    height:100dvh!important;
+    overflow-y:auto!important;
+    z-index:10000!important;
+    transform:translateX(-105%);
+    transition:transform .22s ease;
+    box-shadow:18px 0 40px rgba(15,23,42,.32);
+  }
+  body.fusion-menu-open .sidebar,
+  body.fusion-menu-open .side-menu,
+  body.fusion-menu-open .menu-lateral,
+  body.fusion-menu-open aside.fusion-sidebar,
+  body.fusion-menu-open .fusion-sidebar,
+  body.fusion-menu-open .app-sidebar,
+  body.fusion-menu-open .layout-sidebar,
+  body.fusion-menu-open .menu-global,
+  body.fusion-menu-open .nav-sidebar{
+    transform:translateX(0)!important;
+  }
+
+  .fusion-mobile-final-bar{
+    position:fixed;
+    top:0;
+    left:0;
+    right:0;
+    z-index:9990;
+    height:62px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:9px 10px;
+    background:#fff;
+    border-bottom:1px solid var(--fusion-mobile-border);
+    box-shadow:0 8px 24px rgba(15,23,42,.08);
+  }
+  .fusion-mobile-final-menu-btn{
+    width:44px;
+    height:44px;
+    min-width:44px;
+    border:0;
+    border-radius:12px;
+    background:var(--fusion-mobile-brand);
+    color:#fff;
+    font-size:24px;
+    font-weight:900;
+    line-height:1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .fusion-mobile-final-title{
+    min-width:0;
+    overflow:hidden;
+    white-space:nowrap;
+    text-overflow:ellipsis;
+    font-weight:900;
+    font-size:16px;
+  }
+  .fusion-mobile-final-overlay{
+    display:none;
+    position:fixed;
+    inset:0;
+    z-index:9995;
+    background:rgba(15,23,42,.55);
+  }
+  body.fusion-menu-open .fusion-mobile-final-overlay{display:block;}
+
+  /* Modais e popups em celular */
+  .modal,.popup,.dialog,[role="dialog"]{
+    position:fixed!important;
+    inset:0!important;
+    width:100vw!important;
+    max-width:100vw!important;
+    height:100dvh!important;
+    max-height:100dvh!important;
+    overflow:hidden!important;
+    padding:0!important;
+    border-radius:0!important;
+  }
+  .modal-content,.modal-card,.popup-content,.dialog-content,[role="dialog"] > *{
+    width:100%!important;
+    max-width:100%!important;
+    max-height:100dvh!important;
+    overflow-y:auto!important;
+    border-radius:0!important;
+    margin:0!important;
+    padding:16px!important;
+  }
+}
+
+@media (max-width:520px){
+  .fusion-main,.main-content,.page-content,main,.content,.conteudo,.container{padding-left:8px!important;padding-right:8px!important;}
+  .card,.box,.panel,.widget,.dashboard-card,.modulo-card,.kpi,.metric,.summary-card,.exercise-card,.treino-card,.avaliacao-card{padding:12px!important;}
+  .fusion-mobile-final-bar{height:60px;}
+  .fusion-mobile-final-title{font-size:15px;}
+}
+
+
+/* Fusion ERP Mobile Etapa 3 — compatibilidade professor-painel */
+@media(max-width:900px){
+  .professor-avaliacoes-v3-shell,.professor-treinos-v3-shell,.professor-natacao-shell{max-width:100vw!important;overflow:hidden!important;}
+  .professor-avaliacoes-v3-frame,.professor-treinos-v3-frame,.professor-natacao-frame{max-width:100%!important;}
+}
+
+/* FUSION_NO_SIDEBAR_OVERRIDE */
+body.fusion-no-sidebar .fusion-ui-sidebar,body.fusion-no-sidebar .fusion-sidebar,body.fusion-no-sidebar aside.sidebar,body.fusion-no-sidebar .sidebar,body.fusion-no-sidebar .fusion-clean-sidebar,body.fusion-no-sidebar .fusion-mobile-final-bar,body.fusion-no-sidebar .fusion-mobile-final-overlay,body.fusion-no-sidebar .fusion-mobile-menu-button,body.fusion-no-sidebar .fusion-mobile-overlay,body.fusion-no-sidebar .fusion-mobile-backdrop,body.fusion-no-sidebar .fusion-ui-backdrop{display:none!important;visibility:hidden!important;pointer-events:none!important;}
+body.fusion-no-sidebar .fusion-shell{display:block!important;width:100%!important;}
+body.fusion-no-sidebar .fusion-main{width:100%!important;max-width:100%!important;margin-left:0!important;padding-left:0!important;}

@@ -25,5 +25,32 @@
     "status": "Ativo",
     "criadoEm": "2026-07-03T18:26:13.295Z",
     "atualizadoEm": "2026-07-03T18:26:13.295Z"
+  },
+  {
+    "id": "753f0de7-12f8-4740-99b7-830acf2743a4",
+    "nome": "PLANO DA CASA",
+    "tipo": "Mensal",
+    "tipoPlano": "Mensal",
+    "descricao": "PAGAMENTO A VISTA DOS 3 MESES",
+    "valorMatricula": 0,
+    "valorMensal": 150,
+    "taxaMatricula": 0,
+    "cobraMatricula": true,
+    "geraMensalidade": true,
+    "recorrenciaMeses": 3,
+    "renovacaoAutomatica": true,
+    "bloquearAoVencer": false,
+    "permiteServicosExtras": true,
+    "fidelidadeMeses": 3,
+    "descontoPercentual": 0,
+    "multaAtrasoPercentual": 0,
+    "limiteSemanal": 0,
+    "modalidadesIncluidas": [
+      "MUSCULAÇÃO"
+    ],
+    "horariosPermitidos": "Livre",
+    "status": "Ativo",
+    "criadoEm": "2026-07-08T03:34:49.080Z",
+    "atualizadoEm": "2026-07-08T03:34:49.080Z"
   }
 ]
