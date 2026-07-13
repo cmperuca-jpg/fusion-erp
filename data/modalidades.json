@@ -13,5 +13,35 @@
     "status": "Ativa",
     "criadoEm": "2026-07-03T18:32:00.041Z",
     "atualizadoEm": "2026-07-03T18:32:00.041Z"
+  },
+  {
+    "id": "bf8c5d2a-72ee-43c8-9617-d6903cbc9a8b",
+    "nome": "CAPOEIRA",
+    "categoria": "FUNCIONAL",
+    "descricao": "",
+    "professorResponsavel": "TODOS",
+    "duracaoMinutos": 60,
+    "capacidadeMaxima": 20,
+    "valorSugerido": 40,
+    "cor": "#ff6b00",
+    "icone": "🏋️",
+    "status": "Ativa",
+    "criadoEm": "2026-07-08T03:32:24.853Z",
+    "atualizadoEm": "2026-07-08T03:32:24.853Z"
+  },
+  {
+    "id": "bfe2a51b-07d3-433d-9a7a-ddb47724d34a",
+    "nome": "NATAÇÃO",
+    "categoria": "FUNCIONAL",
+    "descricao": "",
+    "professorResponsavel": "TODOS",
+    "duracaoMinutos": 60,
+    "capacidadeMaxima": 20,
+    "valorSugerido": 120,
+    "cor": "#ff6b00",
+    "icone": "🏋️",
+    "status": "Ativa",
+    "criadoEm": "2026-07-08T03:33:05.693Z",
+    "atualizadoEm": "2026-07-08T03:33:05.693Z"
   }
 ]

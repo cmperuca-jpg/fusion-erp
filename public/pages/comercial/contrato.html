@@ -6,6 +6,11 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="/assets/pwa/icons/fusion-icon-180.png">
 <link rel="stylesheet" href="/assets/pwa/fusion-pwa-mobile.css">
+  <link rel="stylesheet" href="/assets/css/fusion-mobile-final.css">
+  <link rel="stylesheet" href="/assets/css/fusion-no-sidebar.css">
 </head><body><main class="wrap"><h2>Contrato Comercial</h2><div id="msg"></div><div class="card"><label class="field">Contrato<select id="contratoId"></select></label><button id="btnCarregar">Carregar</button></div><div class="grid"><section class="card"><h3>Resumo</h3><p><b>Aluno:</b> <span id="aluno">-</span></p><p><b>Status:</b> <span id="status">-</span></p><label class="field">Valor da matrícula/base<input id="valorMatricula" inputmode="decimal"></label><button id="btnSalvarMatricula">Salvar valor da matrícula</button><p>Total atual</p><div class="total" id="total">R$ 0,00</div></section><section class="card"><h3>Adicionar serviço/turma</h3><label class="field">Serviço<select id="servicoId"><option value="">Selecione</option></select></label><label class="field">Turma<select id="turmaId"><option value="">Opcional</option></select></label><label class="field">Valor<input id="valorServico" inputmode="decimal" placeholder="usar valor padrão"></label><button id="btnAdicionar">Adicionar</button></section></div><section class="card" style="margin-top:16px"><h3>Serviços contratados</h3><table class="table"><thead><tr><th>Serviço</th><th>Turma</th><th>Professor/Horário</th><th>Valor</th><th>Ações</th></tr></thead><tbody id="servicos"><tr><td colspan="5">Carregue um contrato.</td></tr></tbody></table></section></main><script src="/js/comercial/contrato.js"></script>
 <script src="/assets/pwa/fusion-pwa-install.js" defer></script>
+  <script src="/assets/js/fusion-mobile-final.js" defer></script>
+  <script src="/assets/js/fusion-layout.js" defer></script>
+  <script src="/assets/js/fusion-no-sidebar.js" defer></script>
 </body></html>

@@ -1,1 +1,34 @@
-[]
+[
+  {
+    "id": "aud_1783888914189_149274",
+    "tipo": "aluno_reativacao_cobranca_criada",
+    "alunoId": "5d20bd81-8df1-410d-b6e4-46b2ee3e77bc",
+    "aluno": "marcos andre de souza teste 2",
+    "motivo": "Reativação pelo cadastro de alunos com cobrança no caixa.",
+    "usuario": "operador",
+    "resumo": {
+      "matriculaId": "mat_1783888914174_51717",
+      "mensalidadeId": "men_reat_1783888914174_569440",
+      "financeiroId": "fin_men_reat_1783888914174_569440",
+      "recebimentoId": "rec_men_reat_1783888914174_569440",
+      "valor": 65
+    },
+    "criadoEm": "2026-07-12T20:41:54.189Z"
+  },
+  {
+    "id": "aud_1783703534174_178664",
+    "tipo": "aluno_reativacao_cobranca_criada",
+    "alunoId": "1d61ff90-2578-4b4f-9c70-fe1b36542507",
+    "aluno": "MARCOS ANDRE DE SOUZA",
+    "motivo": "Reativação pelo cadastro de alunos com cobrança no caixa.",
+    "usuario": "operador",
+    "resumo": {
+      "matriculaId": "mat_1783703534152_200149",
+      "mensalidadeId": "men_reat_1783703534155_478618",
+      "financeiroId": "fin_men_reat_1783703534155_478618",
+      "recebimentoId": "rec_men_reat_1783703534155_478618",
+      "valor": 65
+    },
+    "criadoEm": "2026-07-10T17:12:14.174Z"
+  }
+]

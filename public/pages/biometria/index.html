@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Fusion Biometria</title>
+  <link rel="stylesheet" href="/assets/css/fusion-app.css">
+  <link rel="stylesheet" href="/pages/biometria/style.css">
+</head>
+<body>
+  <main class="bio-page">
+    <section class="bio-card acesso-card">
+      <header>
+        <h1>Acesso biométrico da academia</h1>
+        <p id="acessoStatus" class="bio-status">Leitor parado. Clique em iniciar.</p>
+      </header>
+
+      <div class="bio-grid acesso-config">
+        <label>Sentido
+          <select id="direcao">
+            <option value="entrada">Entrada</option>
+            <option value="saida">Saída</option>
+          </select>
+        </label>
+        <label>Equipamento
+          <input value="Catraca Henry 7X · 10.0.0.236:3000" readonly>
+        </label>
+      </div>
+
+      <div class="bio-actions">
+        <button id="btnIniciarAcesso" type="button">Iniciar leitura contínua</button>
+        <button id="btnPararAcesso" type="button" class="secondary" disabled>Parar</button>
+        <button id="btnTestarLeitor" type="button" class="secondary">Testar leitor</button>
+      </div>
+
+      <div id="acessoResultado" class="acesso-resultado neutro">
+        <strong>Aguardando operação</strong>
+        <span>A identificação validará o aluno e liberará a Henry 7X automaticamente.</span>
+      </div>
+    </section>
+
+    <section class="bio-card">
+      <header>
+        <h2>Cadastro biométrico Futronic</h2>
+        <p id="status" class="bio-status">Informe o aluno para cadastrar ou atualizar a digital.</p>
+      </header>
+
+      <div class="bio-grid">
+        <label>Aluno ID<input id="alunoId" placeholder="ID do aluno" autocomplete="off"></label>
+        <label>Nome<input id="alunoNome" placeholder="Nome do aluno" autocomplete="off"></label>
+      </div>
+
+      <div class="bio-actions">
+        <button id="btnCadastrar" type="button">Cadastrar biometria</button>
+        <button id="btnExcluir" type="button" class="danger">Excluir biometria</button>
+      </div>
+    </section>
+  </main>
+  <script src="/pages/biometria/index.js"></script>
+</body>
+</html>

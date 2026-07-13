@@ -1,0 +1,60 @@
+.importador-access .campo-arquivo {
+  display: grid;
+  gap: 8px;
+  margin: 16px 0;
+  font-weight: 700;
+}
+.importador-access input[type="file"] {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid rgba(0,0,0,.14);
+  border-radius: 12px;
+  background: #fff;
+}
+.importador-access .acoes {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 12px 0;
+}
+.importador-access .acoes button {
+  min-height: 42px;
+}
+.importador-access .status {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(0,0,0,.05);
+}
+.importador-access .tabela-wrap {
+  overflow-x: auto;
+}
+.importador-access table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 760px;
+}
+.importador-access th,
+.importador-access td {
+  padding: 10px;
+  border-bottom: 1px solid rgba(0,0,0,.08);
+  text-align: left;
+  vertical-align: top;
+}
+.importador-access pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 360px;
+  overflow: auto;
+  background: rgba(0,0,0,.04);
+  padding: 12px;
+  border-radius: 12px;
+}
+@media (max-width: 720px) {
+  .importador-access .acoes {
+    display: grid;
+  }
+  .importador-access .acoes button {
+    width: 100%;
+  }
+}

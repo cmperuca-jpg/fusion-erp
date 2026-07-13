@@ -1,4 +1,4 @@
-carregarLayout("Dashboard Executivo");
+if (typeof window.carregarLayout === "function") window.carregarLayout("Dashboard Executivo");
 
 const dadosDashboard = {
   alunosAtivos: 524,

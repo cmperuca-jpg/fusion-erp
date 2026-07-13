@@ -1,0 +1,10 @@
+[
+  {
+    "id": "regra_padrao_01",
+    "nome": "Regra padrão academia",
+    "status": "ativo",
+    "validarMatriculaAtiva": true,
+    "validarMensalidade": true,
+    "permitirSimulador": true
+  }
+]

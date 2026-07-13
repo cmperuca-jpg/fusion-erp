@@ -86,5 +86,28 @@
     "origem": "migracao_matricula",
     "criadoEm": "2026-07-02T17:23:54.582Z",
     "atualizadoEm": "2026-07-02T17:23:54.582Z"
+  },
+  {
+    "id": "sc_1783460023615_cf3990",
+    "contratoId": "ctr_1783013034580_96d6e4",
+    "alunoId": "5c5b1a95-1f4f-46bb-8ff2-2211247461c1",
+    "aluno": "marcos andre",
+    "matriculaId": "mat_1782955463779_727903",
+    "servicoId": "srv_musculacao",
+    "servico": "Musculação",
+    "modalidade": "Musculação",
+    "turmaId": "",
+    "turma": "",
+    "professor": "",
+    "diasSemana": "",
+    "horario": "",
+    "sala": "",
+    "tipoCobranca": "Mensal",
+    "valor": 65,
+    "valorOriginal": 65,
+    "status": "Ativo",
+    "observacao": "",
+    "criadoEm": "2026-07-07T21:33:43.615Z",
+    "atualizadoEm": "2026-07-07T21:33:43.615Z"
   }
 ]

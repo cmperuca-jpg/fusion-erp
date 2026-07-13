@@ -1,0 +1,175 @@
+.fusion-site-chat{
+  position:fixed;
+  right:18px;
+  bottom:18px;
+  z-index:9999;
+  font-family:Arial,Helvetica,sans-serif;
+  color:#101828;
+}
+
+.fusion-chat-toggle{
+  border:0;
+  border-radius:999px;
+  background:#111827;
+  color:#fff;
+  padding:13px 18px;
+  font-weight:900;
+  box-shadow:0 14px 32px rgba(15,23,42,.24);
+  cursor:pointer;
+}
+
+.fusion-chat-panel{
+  width:min(360px,calc(100vw - 24px));
+  height:min(560px,calc(100vh - 96px));
+  background:#fff;
+  border:1px solid #d9e2ef;
+  border-radius:18px;
+  box-shadow:0 18px 50px rgba(15,23,42,.24);
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+}
+
+.fusion-chat-panel[hidden]{
+  display:none;
+}
+
+.fusion-chat-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:13px 14px;
+  background:#111827;
+  color:#fff;
+}
+
+.fusion-chat-head strong{
+  display:block;
+  font-size:15px;
+}
+
+.fusion-chat-head span{
+  display:block;
+  margin-top:2px;
+  font-size:12px;
+  opacity:.76;
+}
+
+.fusion-chat-close{
+  width:34px;
+  height:34px;
+  border:1px solid rgba(255,255,255,.3);
+  border-radius:10px;
+  background:transparent;
+  color:#fff;
+  font-size:20px;
+  cursor:pointer;
+}
+
+.fusion-chat-messages{
+  flex:1;
+  overflow:auto;
+  padding:12px;
+  background:#f6f8fb;
+}
+
+.fusion-chat-msg{
+  max-width:88%;
+  margin:0 0 9px;
+  padding:10px 11px;
+  border-radius:14px;
+  background:#fff;
+  border:1px solid #e2e8f0;
+  line-height:1.35;
+  font-size:14px;
+  box-shadow:0 4px 12px rgba(15,23,42,.05);
+}
+
+.fusion-chat-msg.user{
+  margin-left:auto;
+  background:#dcfce7;
+  border-color:#bbf7d0;
+}
+
+.fusion-chat-msg.staff,
+.fusion-chat-msg.system{
+  margin-right:auto;
+}
+
+.fusion-chat-msg small{
+  display:block;
+  margin-bottom:4px;
+  color:#64748b;
+  font-size:11px;
+  font-weight:900;
+  text-transform:uppercase;
+}
+
+.fusion-chat-form{
+  display:grid;
+  gap:8px;
+  padding:10px;
+  border-top:1px solid #e2e8f0;
+  background:#fff;
+}
+
+.fusion-chat-form input,
+.fusion-chat-form textarea{
+  width:100%;
+  border:1px solid #cbd5e1;
+  border-radius:11px;
+  padding:10px;
+  font:inherit;
+  resize:none;
+}
+
+.fusion-chat-form textarea{
+  min-height:74px;
+}
+
+.fusion-chat-form button{
+  border:0;
+  border-radius:11px;
+  padding:11px 13px;
+  background:#15803d;
+  color:#fff;
+  font-weight:900;
+  cursor:pointer;
+}
+
+.fusion-chat-form button:disabled{
+  opacity:.65;
+  cursor:not-allowed;
+}
+
+.fusion-chat-status{
+  min-height:18px;
+  color:#64748b;
+  font-size:12px;
+  font-weight:800;
+}
+
+@media(max-width:560px){
+  .fusion-site-chat{
+    right:10px;
+    bottom:10px;
+    left:10px;
+  }
+  .fusion-chat-toggle{
+    width:100%;
+  }
+  .fusion-chat-panel{
+    width:100%;
+    height:calc(100vh - 86px);
+  }
+}
+
+.fusion-chat-identificacao{
+  padding:9px 12px;
+  border-bottom:1px solid #e2e8f0;
+  background:#f8fafc;
+  color:#334155;
+  font-size:12px;
+  font-weight:800;
+}

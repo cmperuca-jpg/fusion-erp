@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="/assets/css/fusion-app.css">
   <script src="/assets/js/fusion-auth.js"></script>
   <script>FusionAuth.proteger();</script>
-  <meta name="fusion-existing-pages" content="agenda,alunos,avaliacoes,bi,bi-academia,bi-academia-operacional,bi-financeiro,caixa,checkin,configuracoes,dashboard,estoque,exercicios,financeiro,login,matriculas,mensalidades,modalidades,modelos-treino,pagamentos,planos,presencas,professores,recebimentos,relatorios-caixa,treinos,turmas">
+  <meta name="fusion-existing-pages" content="access-engine,admin,agenda,aluno-avaliacao,aluno-login,aluno-treinos,alunos,avaliacoes,bi-academia,bi-academia-operacional,bi-financeiro,caixa,checkin,comercial,comercial-painel,configuracoes,dashboard,financeiro,matricula-online,matriculas,matriculas-pendentes,mensalidades,modalidades,natacao-professor,planos,professor-area,professor-login,professores,recebimentos,relatorios-caixa,treinos,turmas">
 
 <link rel="manifest" href="/manifest-sistema.webmanifest">
 <meta name="theme-color" content="#ff6600">
@@ -18,6 +18,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="/assets/pwa/icons/fusion-icon-180.png">
 <link rel="stylesheet" href="/assets/pwa/fusion-pwa-mobile.css">
+  <link rel="stylesheet" href="/assets/css/fusion-mobile-final.css">
+  <link rel="stylesheet" href="/assets/css/fusion-no-sidebar.css">
 </head>
 <body>
   <main class="main">
@@ -34,14 +36,14 @@
 
     <section class="card">
       <div class="filters-row">
-        <input id="buscaPlano" type="text" placeholder="Buscar por nome, tipo, modalidade ou descrição" />
+        <input id="buscaPlano" type="text" placeholder="Buscar por nome, tipo, modalidade ou descriÃ§Ã£o" />
         <select id="filtroTipo">
           <option value="Todos">Todos os tipos</option>
           <option value="Mensal">Mensal</option>
           <option value="Trimestral">Trimestral</option>
           <option value="Semestral">Semestral</option>
           <option value="Anual">Anual</option>
-          <option value="Diária">Diária</option>
+          <option value="DiÃ¡ria">DiÃ¡ria</option>
         </select>
         <select id="filtroStatus">
           <option value="Todos">Todos os status</option>
@@ -57,12 +59,12 @@
               <th>Plano</th>
               <th>Tipo</th>
               <th>Valor</th>
-              <th>Matrícula</th>
+              <th>MatrÃ­cula</th>
               <th>Modalidades</th>
               <th>Limite</th>
               <th>Fidelidade</th>
               <th>Status</th>
-              <th>Ações</th>
+              <th>AÃ§Ãµes</th>
             </tr>
           </thead>
           <tbody id="tabelaPlanos"></tbody>
@@ -75,7 +77,7 @@
     <div class="modal-card">
       <div class="modal-header">
         <h2 id="modalTitulo">Novo Plano</h2>
-        <button class="btn-icon" id="btnFecharModal">×</button>
+        <button class="btn-icon" id="btnFecharModal">Ã—</button>
       </div>
 
       <form id="formPlano" class="form-grid">
@@ -91,7 +93,7 @@
             <option value="Trimestral">Trimestral</option>
             <option value="Semestral">Semestral</option>
             <option value="Anual">Anual</option>
-            <option value="Diária">Diária</option>
+            <option value="DiÃ¡ria">DiÃ¡ria</option>
           </select>
         </label>
 
@@ -106,7 +108,7 @@
           <input id="valorMensal" type="number" min="0" step="0.01" value="0" />
         </label>
 
-        <label>Taxa de matrícula
+        <label>Taxa de matrÃ­cula
           <input id="taxaMatricula" type="number" min="0" step="0.01" value="0" />
         </label>
 
@@ -126,16 +128,16 @@
           <input id="limiteSemanal" type="number" min="0" value="0" placeholder="0 = ilimitado" />
         </label>
 
-        <label class="full">Modalidades incluídas
-          <input id="modalidadesIncluidas" placeholder="Ex.: Musculação, Natação, Funcional" />
+        <label class="full">Modalidades incluÃ­das
+          <input id="modalidadesIncluidas" placeholder="Ex.: MusculaÃ§Ã£o, NataÃ§Ã£o, Funcional" />
         </label>
 
-        <label>Horários permitidos
-          <input id="horariosPermitidos" placeholder="Ex.: Livre, manhã, noite" value="Livre" />
+        <label>HorÃ¡rios permitidos
+          <input id="horariosPermitidos" placeholder="Ex.: Livre, manhÃ£, noite" value="Livre" />
         </label>
 
-        <label class="full">Descrição
-          <textarea id="descricao" rows="3" placeholder="Regras e observações do plano"></textarea>
+        <label class="full">DescriÃ§Ã£o
+          <textarea id="descricao" rows="3" placeholder="Regras e observaÃ§Ãµes do plano"></textarea>
         </label>
 
         <div class="modal-actions full">
@@ -149,5 +151,7 @@
     <script src="/assets/js/fusion-layout.js"></script>
 
 <script src="/assets/pwa/fusion-pwa-install.js" defer></script>
+  <script src="/assets/js/fusion-mobile-final.js" defer></script>
+  <script src="/assets/js/fusion-no-sidebar.js" defer></script>
 </body>
 </html>

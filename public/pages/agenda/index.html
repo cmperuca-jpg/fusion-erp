@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="/assets/css/fusion-app.css">
   <script src="/assets/js/fusion-auth.js"></script>
   <script>FusionAuth.proteger();</script>
-  <meta name="fusion-existing-pages" content="agenda,alunos,avaliacoes,bi,bi-academia,bi-academia-operacional,bi-financeiro,caixa,checkin,configuracoes,dashboard,estoque,exercicios,financeiro,login,matriculas,mensalidades,modalidades,modelos-treino,pagamentos,planos,presencas,professores,recebimentos,relatorios-caixa,treinos,turmas">
+  <meta name="fusion-existing-pages" content="access-engine,admin,agenda,aluno-avaliacao,aluno-login,aluno-treinos,alunos,avaliacoes,bi-academia,bi-academia-operacional,bi-financeiro,caixa,checkin,comercial,comercial-painel,configuracoes,dashboard,financeiro,matricula-online,matriculas,matriculas-pendentes,mensalidades,modalidades,natacao-professor,planos,professor-area,professor-login,professores,recebimentos,relatorios-caixa,treinos,turmas">
 
 <link rel="manifest" href="/manifest-sistema.webmanifest">
 <meta name="theme-color" content="#ff6600">
@@ -18,13 +18,15 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="/assets/pwa/icons/fusion-icon-180.png">
 <link rel="stylesheet" href="/assets/pwa/fusion-pwa-mobile.css">
+  <link rel="stylesheet" href="/assets/css/fusion-mobile-final.css">
+  <link rel="stylesheet" href="/assets/css/fusion-no-sidebar.css">
 </head>
 <body>
   <main class="main">
     <section class="page-actions">
       <div>
         <h2>Agenda de Aulas</h2>
-        <p>Controle diário, semanal e mensal das aulas, turmas e professores.</p>
+        <p>Controle diÃ¡rio, semanal e mensal das aulas, turmas e professores.</p>
       </div>
 
       <button class="btn-primary" id="btnNovaAula">
@@ -48,7 +50,7 @@
       <div class="card kpi">
         <span>Ativas</span>
         <strong id="kpiAtivas">0</strong>
-        <small>Aulas disponíveis</small>
+        <small>Aulas disponÃ­veis</small>
       </div>
 
       <div class="card kpi">
@@ -65,7 +67,7 @@
         <option value="">Todos os status</option>
         <option value="Ativa">Ativa</option>
         <option value="Cancelada">Cancelada</option>
-        <option value="Concluída">Concluída</option>
+        <option value="ConcluÃ­da">ConcluÃ­da</option>
       </select>
 
       <input id="filtroData" type="date" />
@@ -75,7 +77,7 @@
     </section>
 
     <section class="card">
-      <h2>Calendário Operacional</h2>
+      <h2>CalendÃ¡rio Operacional</h2>
 
       <div class="agenda-lista" id="listaAgenda"></div>
     </section>
@@ -85,20 +87,20 @@
     <div class="modal">
       <header class="modal-header">
         <h2 id="modalTitulo">Nova Aula</h2>
-        <button id="btnFecharModal">×</button>
+        <button id="btnFecharModal">Ã—</button>
       </header>
 
       <form id="formAula" class="form-grid">
         <input type="hidden" id="aulaId" />
 
         <label>
-          Título
-          <input id="titulo" required placeholder="Ex: Natação Infantil" />
+          TÃ­tulo
+          <input id="titulo" required placeholder="Ex: NataÃ§Ã£o Infantil" />
         </label>
 
         <label>
           Modalidade
-          <input id="modalidade" required placeholder="Ex: Natação" />
+          <input id="modalidade" required placeholder="Ex: NataÃ§Ã£o" />
         </label>
 
         <label>
@@ -122,7 +124,7 @@
         </label>
 
         <label>
-          Início
+          InÃ­cio
           <input id="horaInicio" type="time" required />
         </label>
 
@@ -146,12 +148,12 @@
           <select id="status">
             <option value="Ativa">Ativa</option>
             <option value="Cancelada">Cancelada</option>
-            <option value="Concluída">Concluída</option>
+            <option value="ConcluÃ­da">ConcluÃ­da</option>
           </select>
         </label>
 
         <label class="full">
-          Observações
+          ObservaÃ§Ãµes
           <textarea id="observacoes" rows="3"></textarea>
         </label>
 
@@ -166,5 +168,7 @@
     <script src="/assets/js/fusion-layout.js"></script>
 
 <script src="/assets/pwa/fusion-pwa-install.js" defer></script>
+  <script src="/assets/js/fusion-mobile-final.js" defer></script>
+  <script src="/assets/js/fusion-no-sidebar.js" defer></script>
 </body>
 </html>

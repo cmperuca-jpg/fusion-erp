@@ -61,6 +61,27 @@ export async function buscarProfessorPorEmail(email) {
   return lista.find(p => normalizar(p.email) === alvo) || null;
 }
 
+export async function buscarProfessorPorIdentificador(identificador) {
+  const alvo = normalizar(identificador);
+  const alvoNumeros = limparCpf(identificador);
+  if (!alvo && !alvoNumeros) return null;
+
+  const lista = await ler();
+  return lista.find((p = {}) => {
+    const textos = [
+      p.login, p.email, p.nome, p.cref, p.id
+    ].map(normalizar).filter(Boolean);
+
+    const numeros = [
+      p.cpf, p.telefone, p.whatsapp, p.celular
+    ].map(limparCpf).filter(Boolean);
+
+    return textos.includes(alvo) ||
+      textos.some(v => v.includes(alvo) || alvo.includes(v)) ||
+      Boolean(alvoNumeros && numeros.includes(alvoNumeros));
+  }) || null;
+}
+
 export async function criarProfessor(dados) {
   const lista = await ler();
   const cpf = limparCpf(dados.cpf);
@@ -104,4 +125,21 @@ export async function excluirProfessor(id) {
   lista.splice(idx, 1);
   await salvar(lista);
   return removido;
+}
+
+
+export async function alterarStatusProfessor(id, status) {
+  const lista = await ler();
+  const idx = lista.findIndex(p => String(p.id) === String(id));
+  if (idx < 0) return null;
+  const statusNormalizado = String(status || '').trim().toLowerCase();
+  const novoStatus = ['ativo', 'desbloqueado'].includes(statusNormalizado) ? 'Ativo' : 'Bloqueado';
+  lista[idx] = {
+    ...lista[idx],
+    status: novoStatus,
+    bloqueado: novoStatus === 'Bloqueado',
+    atualizadoEm: new Date().toISOString()
+  };
+  await salvar(lista);
+  return lista[idx];
 }

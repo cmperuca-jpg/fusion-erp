@@ -1,0 +1,9 @@
+[
+  { "fabricante": "Control iD", "driver": "controlid", "status": "planejado", "referencias": ["scaControliD.exe", "libcidbio.dll"] },
+  { "fabricante": "Henry", "driver": "henry", "status": "planejado", "referencias": ["scaHenry.exe", "HenryOn.dll"] },
+  { "fabricante": "TopData", "driver": "topdata", "status": "planejado", "referencias": ["scaTopdata.exe", "EasyInner.dll", "InnerTCP.dll"] },
+  { "fabricante": "Dimep", "driver": "dimep", "status": "planejado", "referencias": ["scaDimep.exe"] },
+  { "fabricante": "Tecnibra", "driver": "tecnibra", "status": "planejado", "referencias": ["scaTecnibra.exe"] },
+  { "fabricante": "Proveu", "driver": "proveu", "status": "planejado", "referencias": ["scaProveu.exe", "FMKProveu.dll"] },
+  { "fabricante": "Face/Biometria", "driver": "face", "status": "planejado", "referencias": ["scaFace.exe", "scaBiometria.exe", "facesdk.dll"] }
+]

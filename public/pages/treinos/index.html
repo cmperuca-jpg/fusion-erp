@@ -3,39 +3,70 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Fusion ERP - Treinos</title>
-  <meta http-equiv="refresh" content="0;url=/pages/treinos-v3/">
-  <link rel="stylesheet" href="/assets/css/fusion-app.css">
-  <script src="/assets/js/fusion-auth.js"></script>
-  <script>
-    window.FUSION_EMBED = new URLSearchParams(location.search).get('embed') === '1';
-    if (!window.FUSION_EMBED && window.FusionAuth) FusionAuth.proteger();
-
-    const params = new URLSearchParams(location.search);
-    const destino = new URL('/pages/treinos-v3/', location.origin);
-    for (const [k, v] of params.entries()) destino.searchParams.set(k, v);
-    location.replace(destino.pathname + destino.search);
-  </script>
-
-<link rel="manifest" href="/manifest-sistema.webmanifest">
-<meta name="theme-color" content="#ff6600">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="apple-touch-icon" href="/assets/pwa/icons/fusion-icon-180.png">
-<link rel="stylesheet" href="/assets/pwa/fusion-pwa-mobile.css">
+  <title>Montador de Treinos</title>
+  <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="/assets/css/fusion-no-sidebar.css">
 </head>
 <body>
-  <main class="fusion-shell">
-    <section class="fusion-content">
-      <div class="fusion-card">
-        <h2>Redirecionando para Treinos V3...</h2>
-        <p>O módulo antigo de criação de treinos foi substituído pelo Montador Treinos V3.</p>
-        <p><a href="/pages/treinos-v3/">Abrir Treinos V3</a></p>
+  <main class="wrap">
+    <header class="top">
+      <div>
+        <h1>Montador de Treinos</h1>
+        <p>Prescrição interna com aluno, professor, foto do exercício e divisões A/B/C.</p>
+      </div>
+      <a id="verPaginaAluno" class="btn ghost" href="/pages/aluno-treinos/index.html">Ver página do aluno</a>
+    </header>
+
+    <section class="card dados dados-compactos">
+      <div class="linha-form linha-form-1">
+        <label class="campo-busca">Buscar aluno
+          <input id="buscaAluno" placeholder="Digite nome, CPF, telefone ou matrícula">
+        </label>
+        <label>Aluno selecionado
+          <select id="alunoSelect"><option value="">Carregando alunos...</option></select>
+        </label>
+        <label>Professor responsável
+          <select id="professorSelect"><option value="">Carregando professores...</option></select>
+        </label>
+      </div>
+      <div class="linha-form linha-form-2">
+        <label>Objetivo
+          <select id="objetivo"></select>
+        </label>
+        <label>Validade
+          <input id="validade" type="date">
+        </label>
+        <label>Data da prescrição
+          <input id="dataPrescricao" type="date">
+        </label>
+        <button id="salvarTreino" class="btn primary salvar-topo" type="button">Salvar treino</button>
       </div>
     </section>
-  </main>
 
-<script src="/assets/pwa/fusion-pwa-install.js" defer></script>
+    <section class="layout">
+      <aside class="card biblioteca">
+        <h2>Biblioteca</h2>
+        <input id="busca" placeholder="Buscar exercício">
+        <select id="grupoFiltro"></select>
+        <div id="listaExercicios" class="lista"></div>
+      </aside>
+
+      <section class="card treino">
+        <div class="bar">
+          <h2>Divisões</h2>
+        </div>
+        <div id="abasDivisoes" class="abas-divisoes"></div>
+        <div id="divisoes"></div>
+        <label>Observações gerais
+          <textarea id="observacoes" rows="3" placeholder="Orientações gerais para o aluno"></textarea>
+        </label>
+        <div class="actions actions-rodape">
+          <button id="salvarTreinoRodape" class="btn primary" type="button">Salvar treino prescrito</button>
+        </div>
+      </section>
+    </section>
+  </main>
+  <script src="./index.js"></script>
+  <script src="/assets/js/fusion-no-sidebar.js" defer></script>
 </body>
 </html>

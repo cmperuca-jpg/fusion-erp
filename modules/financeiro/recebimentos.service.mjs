@@ -1,5 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { desbloquearAlunoAposPagamento } from './desbloqueio.service.mjs';
 
 const ROOT = process.cwd();
 const DATA_DIR = path.join(ROOT, 'data');
@@ -11,6 +12,7 @@ const MENSALIDADES_FILE = path.join(DATA_DIR, 'mensalidades.json');
 const MATRICULAS_FILE = path.join(DATA_DIR, 'matriculas.json');
 const ALUNOS_FILE = path.join(DATA_DIR, 'alunos.json');
 const CHECKINS_FILE = path.join(DATA_DIR, 'checkins.json');
+const CREDITOS_FILE = path.join(DATA_DIR, 'creditos.json');
 
 async function garantirArquivo(arquivo, conteudoPadrao = []) {
   try {
@@ -102,6 +104,69 @@ async function salvarCaixa(dados) {
 
 function caixaAberto(dados) {
   return dados.caixas.find(c => c.status === 'aberto') || null;
+}
+
+function formaEhDinheiro(forma) {
+  const f = normalizar(forma).normalize('NFD').replace(/[̀-ͯ]/g, '');
+  return f.includes('dinheiro') || f.includes('especie');
+}
+
+async function criarSaidaTrocoCaixa({ caixaId, recebimento, valorTroco }) {
+  const dados = await lerCaixa();
+  const caixa = dados.caixas.find(c => String(c.id) === String(caixaId)) || caixaAberto(dados);
+  if (!caixa || !(valorTroco > 0)) return null;
+
+  const movimento = {
+    id: gerarId('mov_troco'),
+    caixaId: caixa.id,
+    tipo: 'saida',
+    descricao: `Troco - ${recebimento.pessoa || recebimento.descricao || 'Recebimento'}`,
+    categoria: 'Troco',
+    pessoa: recebimento.pessoa || '',
+    formaPagamento: 'Dinheiro',
+    valor: numero(valorTroco, 0),
+    valorBruto: numero(valorTroco, 0),
+    valorLiquido: numero(valorTroco, 0),
+    data: recebimento.dataRecebimento || hojeISO(),
+    status: 'ativo',
+    origem: 'troco_recebimento',
+    recebimentoId: recebimento.id,
+    mensalidadeId: recebimento.mensalidadeId || '',
+    lancamentoFinanceiroId: recebimento.lancamentoFinanceiroId || '',
+    observacao: `Troco devolvido no recebimento ${recebimento.id}.`,
+    criadoEm: agoraISO(),
+    atualizadoEm: agoraISO()
+  };
+
+  dados.movimentos.push(movimento);
+  await salvarCaixa(dados);
+  return movimento;
+}
+
+async function criarCreditoAluno({ recebimento, valorCredito }) {
+  if (!(valorCredito > 0)) return null;
+  const creditos = await lerJson(CREDITOS_FILE, []);
+  const credito = {
+    id: gerarId('cred'),
+    alunoId: recebimento.alunoId || '',
+    aluno: recebimento.aluno || recebimento.pessoa || recebimento.cliente || '',
+    pessoa: recebimento.pessoa || recebimento.aluno || '',
+    recebimentoId: recebimento.id,
+    lancamentoFinanceiroId: recebimento.lancamentoFinanceiroId || '',
+    mensalidadeId: recebimento.mensalidadeId || '',
+    origem: 'pagamento_maior_que_saldo',
+    descricao: `Crédito gerado por pagamento acima do saldo - ${recebimento.descricao || 'Recebimento'}`,
+    valorOriginal: numero(valorCredito, 0),
+    saldo: numero(valorCredito, 0),
+    valorUtilizado: 0,
+    status: 'Ativo',
+    data: recebimento.dataRecebimento || hojeISO(),
+    criadoEm: agoraISO(),
+    atualizadoEm: agoraISO()
+  };
+  creditos.unshift(credito);
+  await salvarJson(CREDITOS_FILE, creditos);
+  return credito;
 }
 
 async function criarMovimentoCaixa(recebimento) {
@@ -274,8 +339,11 @@ async function atualizarMensalidadeAposRecebimento(recebimento) {
     valorRecebido: valorPago,
     valorBrutoRecebido: valorPago,
     valorRestante,
+    saldoRestante: valorRestante,
     valorLiquido: numero(recebimento.valorLiquido ?? valorPago, 0),
     status: valorRestante <= 0 ? 'pago' : 'parcial',
+    statusPagamento: valorRestante <= 0 ? 'Pago' : 'Parcial',
+    situacao: valorRestante <= 0 ? 'pago' : 'parcial',
     dataPagamento: recebimento.dataRecebimento || hojeISO(),
     pagamento: recebimento.dataRecebimento || hojeISO(),
     formaPagamento: recebimento.formaPagamento || '',
@@ -450,10 +518,18 @@ async function ativarMatriculaAposRecebimento(recebimento) {
   matriculas[idx] = {
     ...matricula,
     status: 'Ativa',
+    statusPagamento: 'Pago',
     statusFinanceiroInicial: 'Pago',
+    bloqueada: false,
+    bloqueioCheckin: false,
+    motivoBloqueio: '',
+    motivoBloqueioCheckin: '',
     formaPagamento: recebimento.formaPagamento || matricula.formaPagamento || '',
     dataAtivacao: recebimento.dataRecebimento || hojeISO(),
     pagamentoInicialId: recebimento.id,
+    liberadaAcessoEm: agoraISO(),
+    liberadaPorPagamentoEm: agoraISO(),
+    cacheAcessoLimpoEm: agoraISO(),
     atualizadoEm: agoraISO(),
     historico: [
       ...(Array.isArray(matricula.historico) ? matricula.historico : []),
@@ -478,9 +554,24 @@ async function ativarMatriculaAposRecebimento(recebimento) {
     alunos[alunoIdx] = {
       ...alunos[alunoIdx],
       status: 'ativo',
+      ativo: true,
+      situacao: 'ativo',
+      status_legado_access: 'ativo',
       statusMatricula: 'Ativa',
+      matriculaStatus: 'Ativa',
+      bloqueado: false,
+      bloqueioCheckin: false,
+      inadimplente: false,
+      emAtraso: false,
+      motivoBloqueio: '',
+      motivoBloqueioCheckin: '',
+      reativacaoPendenteEm: '',
+      recebimentoReativacaoId: '',
       matriculaId: matricula.id,
       numeroMatricula: matricula.numero,
+      liberadoAcessoEm: agoraISO(),
+      liberadoPorPagamentoEm: agoraISO(),
+      cacheAcessoLimpoEm: agoraISO(),
       atualizadoEm: agoraISO()
     };
   }
@@ -490,6 +581,11 @@ async function ativarMatriculaAposRecebimento(recebimento) {
     checkins[chkIdx] = {
       ...checkins[chkIdx],
       status: 'Ativo',
+      bloqueado: false,
+      bloqueioCheckin: false,
+      motivoBloqueio: '',
+      motivoBloqueioCheckin: '',
+      cacheAcessoLimpoEm: agoraISO(),
       atualizadoEm: agoraISO()
     };
   }
@@ -667,15 +763,23 @@ export async function confirmarRecebimento(id, dados = {}) {
     throw erro;
   }
 
-  if (valorBaixa > saldoAtual + 0.009) {
-    const erro = new Error(`Valor recebido não pode ser maior que o saldo em aberto (${saldoAtual.toFixed(2)}).`);
-    erro.status = 400;
-    throw erro;
+  const diferencaRecebida = Math.max(0, Number((valorBaixa - saldoAtual).toFixed(2)));
+  const destinoDiferencaBruto = normalizar(dados.destinoDiferenca || dados.tratamentoDiferenca || dados.destinoTrocoCredito || '');
+  const pagamentoEmDinheiro = formaEhDinheiro(dados.formaPagamento || dados.forma || atual.formaPagamento || 'Dinheiro');
+  let destinoDiferenca = diferencaRecebida > 0 ? destinoDiferencaBruto : '';
+
+  if (diferencaRecebida > 0) {
+    if (!pagamentoEmDinheiro) {
+      destinoDiferenca = 'credito';
+    } else if (!['troco', 'credito'].includes(destinoDiferenca)) {
+      destinoDiferenca = 'troco';
+    }
   }
 
-  const valorRecebidoTotal = Number((valorJaRecebido + valorBaixa).toFixed(2));
+  const valorAplicadoNaDivida = Math.min(valorBaixa, saldoAtual);
+  const valorRecebidoTotal = Number((valorJaRecebido + valorAplicadoNaDivida).toFixed(2));
   const valorRestante = Math.max(0, Number((valorDevido - valorRecebidoTotal).toFixed(2)));
-  const valorLiquido = calcularLiquido(valorBaixa, taxaValor, taxaPercentual);
+  const valorLiquido = calcularLiquido(valorAplicadoNaDivida, taxaValor, taxaPercentual);
   const statusFinal = valorRestante <= 0 ? 'recebido' : 'parcial';
 
   const confirmado = {
@@ -692,6 +796,11 @@ export async function confirmarRecebimento(id, dados = {}) {
     taxaOperadoraValor: taxaValor,
     taxaOperadoraPercentual: taxaPercentual,
     valorBaixa,
+    valorAplicadoNaDivida,
+    diferencaRecebida,
+    destinoDiferenca,
+    valorTroco: destinoDiferenca === 'troco' ? diferencaRecebida : 0,
+    valorCreditoGerado: destinoDiferenca === 'credito' ? diferencaRecebida : 0,
     valorLiquido,
     valorRecebido: valorRecebidoTotal,
     valorRestante,
@@ -707,9 +816,24 @@ export async function confirmarRecebimento(id, dados = {}) {
 
   confirmado.caixaId = vinculosCaixa.caixaId;
   confirmado.movimentoCaixaId = vinculosCaixa.movimentoCaixaId;
+
+  let movimentoTroco = null;
+  let creditoGerado = null;
+  if (diferencaRecebida > 0 && destinoDiferenca === 'troco') {
+    movimentoTroco = await criarSaidaTrocoCaixa({ caixaId: vinculosCaixa.caixaId, recebimento: confirmado, valorTroco: diferencaRecebida });
+    confirmado.movimentoTrocoId = movimentoTroco?.id || '';
+  }
+  if (diferencaRecebida > 0 && destinoDiferenca === 'credito') {
+    creditoGerado = await criarCreditoAluno({ recebimento: confirmado, valorCredito: diferencaRecebida });
+    confirmado.creditoId = creditoGerado?.id || '';
+  }
+
   confirmado.lancamentoFinanceiroId = await upsertFinanceiro(confirmado);
   const mensalidadeAtualizada = await atualizarMensalidadeAposRecebimento(confirmado);
   const matriculaAtivada = await ativarMatriculaAposRecebimento(confirmado);
+  const desbloqueioAcesso = await desbloquearAlunoAposPagamento(confirmado, {
+    origem: "recebimento_confirmado"
+  });
 
   recebimentos[idx] = confirmado;
   await salvarJson(RECEBIMENTOS_FILE, recebimentos);
@@ -720,7 +844,10 @@ export async function confirmarRecebimento(id, dados = {}) {
     recebimento: confirmado,
     mensalidade: mensalidadeAtualizada,
     matricula: matriculaAtivada,
+    desbloqueioAcesso,
     caixa: vinculosCaixa,
+    troco: movimentoTroco,
+    credito: creditoGerado,
     mensagem: statusFinal === 'recebido'
       ? 'Recebimento confirmado, caixa movimentado e financeiro atualizado.'
       : 'Recebimento parcial confirmado, caixa movimentado e financeiro atualizado.'

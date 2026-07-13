@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="/assets/css/fusion-app.css">
   <script src="/assets/js/fusion-auth.js"></script>
   <script>FusionAuth.proteger();</script>
-  <meta name="fusion-existing-pages" content="agenda,alunos,avaliacoes,bi,bi-academia,bi-academia-operacional,bi-financeiro,caixa,checkin,configuracoes,dashboard,estoque,exercicios,financeiro,login,matriculas,mensalidades,modalidades,modelos-treino,pagamentos,planos,presencas,professores,recebimentos,relatorios-caixa,treinos,turmas">
+  <meta name="fusion-existing-pages" content="access-engine,admin,agenda,aluno-avaliacao,aluno-login,aluno-treinos,alunos,avaliacoes,bi-academia,bi-academia-operacional,bi-financeiro,caixa,checkin,comercial,comercial-painel,configuracoes,dashboard,financeiro,matricula-online,matriculas,matriculas-pendentes,mensalidades,modalidades,natacao-professor,planos,professor-area,professor-login,professores,recebimentos,relatorios-caixa,treinos,turmas">
 
 <link rel="manifest" href="/manifest-sistema.webmanifest">
 <meta name="theme-color" content="#ff6600">
@@ -19,13 +19,15 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="/assets/pwa/icons/fusion-icon-180.png">
 <link rel="stylesheet" href="/assets/pwa/fusion-pwa-mobile.css">
+  <link rel="stylesheet" href="/assets/css/fusion-mobile-final.css">
+  <link rel="stylesheet" href="/assets/css/fusion-no-sidebar.css">
 </head>
 <body>
   <main class="main">
     <section class="page-actions">
       <div>
         <h2>Check-in</h2>
-        <p>Controle de entrada, saída, presença, bloqueios de acesso e início automático do treino de musculação.</p>
+        <p>Controle de entrada, saÃ­da, presenÃ§a, bloqueios de acesso e inÃ­cio automÃ¡tico do treino de musculaÃ§Ã£o.</p>
       </div>
 
       <button class="btn-primary" id="btnNovoCheckin">
@@ -61,18 +63,18 @@
 
     <section class="card painel-checkin">
       <div>
-        <h2>Entrada rápida</h2>
-        <p>Check-in inteligente por matrícula, CPF, QR Code ou código do aluno, validando matrícula, financeiro, frequência e treino ativo.</p>
+        <h2>Entrada rÃ¡pida</h2>
+        <p>Check-in inteligente por matrÃ­cula, CPF, QR Code ou cÃ³digo do aluno, validando matrÃ­cula, financeiro, frequÃªncia e treino ativo.</p>
       </div>
 
       <div class="entrada-rapida">
-        <input id="entradaCodigo" placeholder="Digite matrícula, CPF, QR Code ou código do aluno" />
+        <input id="entradaCodigo" placeholder="Digite matrÃ­cula, CPF, QR Code ou cÃ³digo do aluno" />
         <button class="btn-secondary" id="btnEntradaRapida">Registrar</button>
       </div>
     </section>
 
     <section class="card filtros-checkin">
-      <input id="busca" placeholder="Buscar aluno, matrícula, plano, modalidade ou professor" />
+      <input id="busca" placeholder="Buscar aluno, matrÃ­cula, plano, modalidade ou professor" />
 
       <select id="filtroStatus">
         <option value="">Todos os status</option>
@@ -87,21 +89,21 @@
     </section>
 
     <section class="card">
-      <h2>Histórico de Check-in</h2>
+      <h2>HistÃ³rico de Check-in</h2>
 
       <div class="tabela-container">
         <table>
           <thead>
             <tr>
               <th>Aluno</th>
-              <th>Matrícula</th>
+              <th>MatrÃ­cula</th>
               <th>Plano</th>
               <th>Modalidade</th>
               <th>Data</th>
               <th>Entrada</th>
-              <th>Saída</th>
+              <th>SaÃ­da</th>
               <th>Status</th>
-              <th>Ações</th>
+              <th>AÃ§Ãµes</th>
             </tr>
           </thead>
 
@@ -115,7 +117,7 @@
     <div class="modal">
       <header class="modal-header">
         <h2 id="modalTitulo">Novo Check-in</h2>
-        <button id="btnFecharModal">×</button>
+        <button id="btnFecharModal">Ã—</button>
       </header>
 
       <form id="formCheckin" class="form-grid">
@@ -129,7 +131,7 @@
         </label>
 
         <label>
-          Matrícula
+          MatrÃ­cula
           <select id="matricula" required>
             <option value="">Selecione o aluno</option>
           </select>
@@ -145,7 +147,7 @@
         <label>
           Modalidade
           <select id="modalidade">
-            <option value="Musculação">Musculação</option>
+            <option value="MusculaÃ§Ã£o">MusculaÃ§Ã£o</option>
           </select>
         </label>
 
@@ -174,7 +176,7 @@
         </label>
 
         <label>
-          Hora de saída
+          Hora de saÃ­da
           <input id="horaSaida" type="time" />
         </label>
 
@@ -184,7 +186,7 @@
             <option value="Manual">Manual</option>
             <option value="QR Code">QR Code</option>
             <option value="Senha">Senha</option>
-            <option value="Cartão">Cartão</option>
+            <option value="CartÃ£o">CartÃ£o</option>
             <option value="Biometria">Biometria</option>
           </select>
         </label>
@@ -198,7 +200,7 @@
         </label>
 
         <label class="full">
-          Observações
+          ObservaÃ§Ãµes
           <textarea id="observacoes" rows="3"></textarea>
         </label>
 
@@ -213,5 +215,7 @@
   <script src="/pages/checkin/checkin.js"></script>
 
 <script src="/assets/pwa/fusion-pwa-install.js" defer></script>
+  <script src="/assets/js/fusion-mobile-final.js" defer></script>
+  <script src="/assets/js/fusion-no-sidebar.js" defer></script>
 </body>
 </html>

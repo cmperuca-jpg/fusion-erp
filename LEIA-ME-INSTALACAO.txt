@@ -1,0 +1,29 @@
+MÓDULO FUSION REWARDS - 90 DIAS
+
+Substitua/copiei os arquivos mantendo exatamente estas pastas:
+
+server.mjs
+modules/fidelidade/fidelidade.routes.mjs
+modules/fidelidade/fidelidade.service.mjs
+modules/financeiro/mensalidades.service.mjs
+public/pages/promocao-90-dias/index.html
+public/pages/promocao-90-dias/index.js
+public/pages/promocao-90-dias/style.css
+public/pages/aluno-treinos/index.html
+
+O arquivo data/fidelidade_90_dias.json será criado automaticamente.
+
+REGRAS:
+- Apenas 1 check-in LIBERADO por aluno por dia.
+- Acessos repetidos no mesmo dia não aumentam o contador.
+- Ao completar 90 presenças, cria prêmio de 40%.
+- O contador reinicia automaticamente para novo ciclo.
+- O prêmio é aplicado na próxima mensalidade criada.
+- Premiados do mês aparecem com nome parcialmente protegido.
+
+Página:
+http://localhost:3000/pages/promocao-90-dias/index.html
+
+API:
+GET /api/fidelidade/aluno/:alunoId
+GET /api/fidelidade/premiados

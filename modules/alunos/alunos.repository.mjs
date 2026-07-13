@@ -58,7 +58,7 @@ export async function criarAluno(aluno) {
 
   const novoAluno = {
     id: crypto.randomUUID(),
-    status: aluno.status || "ativo",
+    status: aluno.status || "inativo",
     criado_em: new Date().toISOString(),
     ...aluno,
     cpf: cpfNovo || aluno.cpf || ""

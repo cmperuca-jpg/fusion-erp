@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Matrículas Online Pendentes - Fusion ERP</title>
+  <link rel="stylesheet" href="/assets/css/fusion-app.css">
+  <link rel="stylesheet" href="./style.css">
+  <script src="/assets/js/fusion-auth.js"></script>
+  <script>FusionAuth.proteger();</script>
+</head>
+<body>
+  <main class="main">
+    <section class="topo">
+      <div>
+        <h1>Matrículas aguardando aprovação</h1>
+        <p>Solicitações enviadas pela página pública de matrícula online.</p>
+      </div>
+      <button id="btnAtualizar" type="button">Atualizar</button>
+    </section>
+
+    <section class="kpis">
+      <div><span>Aguardando</span><strong id="kpiAguardando">0</strong></div>
+      <div><span>Correção</span><strong id="kpiCorrecao">0</strong></div>
+      <div><span>Aprovadas</span><strong id="kpiAprovadas">0</strong></div>
+      <div><span>Receita prevista</span><strong id="kpiReceita">R$ 0,00</strong></div>
+    </section>
+
+    <section class="filtros">
+      <input id="busca" placeholder="Buscar por nome, CPF, telefone ou protocolo">
+      <select id="status">
+        <option value="aguardando">Aguardando</option>
+        <option value="correcao_solicitada">Correção solicitada</option>
+        <option value="aprovada">Aprovadas</option>
+        <option value="rejeitada">Rejeitadas</option>
+        <option value="todos">Todos</option>
+      </select>
+      <button id="btnFiltrar" type="button">Filtrar</button>
+    </section>
+
+    <section class="card">
+      <div class="table-top"><h2>Solicitações</h2><span id="total">0 registro(s)</span></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Data</th><th>Aluno</th><th>Contato</th><th>Plano</th><th>Status</th><th>Ações</th></tr></thead>
+          <tbody id="tabela"><tr><td colspan="6">Carregando...</td></tr></tbody>
+        </table>
+      </div>
+      <div id="cards" class="cards"></div>
+    </section>
+  </main>
+
+  <div id="modalDetalhes" class="modal hidden">
+    <div class="modal-card">
+      <div class="modal-head"><h2>Detalhes da solicitação</h2><button type="button" id="btnFecharDetalhes">×</button></div>
+      <div id="detalhesConteudo"></div>
+    </div>
+  </div>
+
+  <script src="./index.js"></script>
+</body>
+</html>

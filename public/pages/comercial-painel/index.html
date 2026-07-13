@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>CRM Comercial - Fusion ERP</title>
+  <link rel="stylesheet" href="/assets/css/fusion-app.css">
+  <link rel="stylesheet" href="./style.css">
+  <script src="/assets/js/fusion-auth.js"></script>
+  <script>FusionAuth.proteger();</script>
+</head>
+<body>
+  <main class="crm">
+    <section class="topo"><div><h1>CRM Comercial</h1><p>Leads, aula experimental, matrícula online e conversão.</p></div><button id="btnNovo">Novo lead</button></section>
+    <section class="kpis"><div><span>Leads hoje</span><strong id="kpiHoje">0</strong></div><div><span>Leads mês</span><strong id="kpiMes">0</strong></div><div><span>Conversão</span><strong id="kpiConversao">0%</strong></div><div><span>Receita prevista</span><strong id="kpiReceita">R$ 0,00</strong></div><div><span>Matrículas pendentes</span><strong id="kpiPendentes">0</strong></div></section>
+    <section class="filtros"><input id="busca" placeholder="Buscar por nome, telefone, CPF, plano"><button id="btnBuscar">Buscar</button><a href="/pages/matriculas-pendentes/index.html">Ver matrículas pendentes</a></section>
+    <section id="pipeline" class="pipeline"></section>
+  </main>
+
+  <div id="modalLead" class="modal hidden">
+    <form id="formLead" class="modal-card"><div class="modal-head"><h2 id="modalTitulo">Novo lead</h2><button type="button" id="btnFechar">×</button></div>
+      <input type="hidden" id="leadId">
+      <label>Nome *</label><input id="nome" required>
+      <div class="grid"><div><label>WhatsApp *</label><input id="telefone" required></div><div><label>E-mail</label><input id="email" type="email"></div></div>
+      <div class="grid"><div><label>CPF</label><input id="cpf"></div><div><label>Origem</label><select id="origem"><option>site</option><option>instagram</option><option>indicacao</option><option>recepcao</option><option>whatsapp</option></select></div></div>
+      <div class="grid"><div><label>Etapa</label><select id="etapa"></select></div><div><label>Valor previsto</label><input id="valorPrevisto" inputmode="decimal"></div></div>
+      <label>Plano</label><input id="plano">
+      <div class="grid"><div><label>Data aula/retorno</label><input id="dataAgendada" type="date"></div><div><label>Horário</label><input id="horarioAgendado"></div></div>
+      <label>Objetivo/observação</label><textarea id="observacao" rows="3"></textarea>
+      <div class="actions"><button type="button" id="btnContato">Registrar contato</button><button type="submit">Salvar</button></div>
+    </form>
+  </div>
+  <script src="./index.js"></script>
+</body>
+</html>

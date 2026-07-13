@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Fusion ERP - Meu Treino</title>
+  <link rel="stylesheet" href="./style.css">
+  <link rel="manifest" href="/manifest-sistema.webmanifest">
+  <meta name="theme-color" content="#ff6600">
+  <link rel="stylesheet" href="/assets/css/fusion-no-sidebar.css">
+  <link rel="stylesheet" href="/assets/css/fusion-site-chat.css">
+</head>
+<body>
+  <main class="aluno-app">
+    <header class="aluno-hero">
+      <div class="perfil-card">
+        <img id="fotoAluno" alt="Foto do aluno">
+        <div class="perfil-texto">
+          <span>Meu treino</span>
+          <h1 id="alunoNomeTitulo">Aluno</h1>
+          <p id="subtituloAluno">Treino prescrito.</p>
+        </div>
+      </div>
+      <div class="aluno-topo-acoes">
+        <button id="btnLiberarCatraca" class="btn access" type="button">Liberar catraca</button>
+        <button id="btnAvaliacao" class="btn ghost" type="button">Avaliação física</button>
+        <button class="btn ghost" type="button" onclick="location.href='/pages/promocao-90-dias/index.html'">Promoção 90 dias</button>
+        <button id="btnInstalar" class="btn ghost hidden" type="button">Instalar app</button>
+        <button id="sair" class="btn" type="button">Sair</button>
+      </div>
+    </header>
+
+    <section class="painel-aluno">
+      <div><span>Professor</span><strong id="professorNome">-</strong></div>
+      <div><span>Objetivo</span><strong id="objetivoTreino">-</strong></div>
+      <div><span>Próximo pagamento</span><strong id="proximoPagamento">-</strong><small id="statusPagamento"></small></div>
+      <div><span>Próxima avaliação</span><strong id="proximaAvaliacao">-</strong><small id="statusAvaliacao"></small></div>
+      <div><span>Validade do treino</span><strong id="validadeTreino">-</strong></div>
+      <div><span>Acessos hoje</span><strong id="acessosCatraca">0 / 3</strong><small id="statusAcessosCatraca">Disponivel</small></div>
+    </section>
+
+    <div id="alertaAvaliacao" class="alerta hidden"></div>
+    <div id="alertaPagamento" class="alerta pagamento hidden"></div>
+    <div id="statusCatraca" class="alerta acesso hidden" role="status"></div>
+
+    <section class="treino-box">
+      <div class="tabs-area">
+        <div id="tabsDivisoes" class="tabs-divisoes" aria-label="Divisões do treino"></div>
+        <button id="atualizar" class="btn primary" type="button">Atualizar</button>
+      </div>
+
+      <div id="semTreino" class="sem-treino hidden">Nenhum treino prescrito para este aluno.</div>
+
+      <article id="cardExercicio" class="card-exercicio hidden">
+        <div class="imagem-stage" id="areaSwipe">
+          <button id="anterior" class="seta seta-esq" type="button" aria-label="Exercício anterior">‹</button>
+          <img id="fotoExercicio" alt="Imagem do exercício">
+          <button id="proximo" class="seta seta-dir" type="button" aria-label="Próximo exercício">›</button>
+        </div>
+
+        <div class="exercicio-info-principal">
+          <span id="contadorExercicio" class="contador">0 / 0</span>
+          <h2 id="nomeExercicio">Exercício</h2>
+          <label class="check-finalizado">
+            <input id="checkConcluido" type="checkbox">
+            Concluído
+          </label>
+        </div>
+
+        <div class="info-prescricao">
+          <div><span>Séries</span><strong id="seriesExercicio">-</strong></div>
+          <div><span>Repetições</span><strong id="repsExercicio">-</strong></div>
+          <div><span>Carga</span><strong id="cargaExercicio">-</strong></div>
+          <div><span>Descanso</span><strong id="descansoExercicio">-</strong></div>
+          <div><span>Método</span><strong id="metodoExercicio">-</strong></div>
+          <div><span>Cadência</span><strong id="cadenciaExercicio">-</strong></div>
+        </div>
+
+        <section class="descricao-box">
+          <h3>Como executar</h3>
+          <p id="descricaoExercicio">Sem descrição cadastrada.</p>
+          <h3>Observação do professor</h3>
+          <p id="obsExercicio">Sem observação.</p>
+        </section>
+      </article>
+    </section>
+  </main>
+  <script src="./index.js"></script>
+  <script src="/assets/js/fusion-site-chat.js" data-chat-origem="portal_aluno"></script>
+</body>
+</html>

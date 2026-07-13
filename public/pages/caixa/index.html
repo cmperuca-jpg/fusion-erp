@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
@@ -7,7 +7,7 @@
   <script src="/assets/js/fusion-auth.js"></script>
   <link rel="stylesheet" href="./style.css">
   <link rel="stylesheet" href="/assets/css/fusion-app.css">
-  <meta name="fusion-existing-pages" content="agenda,alunos,avaliacoes,bi,bi-academia,bi-academia-operacional,bi-financeiro,caixa,checkin,configuracoes,dashboard,estoque,exercicios,financeiro,login,matriculas,mensalidades,modalidades,modelos-treino,pagamentos,planos,presencas,professores,recebimentos,relatorios-caixa,treinos,turmas">
+  <meta name="fusion-existing-pages" content="access-engine,admin,agenda,aluno-avaliacao,aluno-login,aluno-treinos,alunos,avaliacoes,bi-academia,bi-academia-operacional,bi-financeiro,caixa,checkin,comercial,comercial-painel,configuracoes,dashboard,financeiro,matricula-online,matriculas,matriculas-pendentes,mensalidades,modalidades,natacao-professor,planos,professor-area,professor-login,professores,recebimentos,relatorios-caixa,treinos,turmas">
 
 <link rel="manifest" href="/manifest-sistema.webmanifest">
 <meta name="theme-color" content="#ff6600">
@@ -16,6 +16,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="/assets/pwa/icons/fusion-icon-180.png">
 <link rel="stylesheet" href="/assets/pwa/fusion-pwa-mobile.css">
+  <link rel="stylesheet" href="/assets/css/fusion-mobile-final.css">
+  <link rel="stylesheet" href="/assets/css/fusion-no-sidebar.css">
 </head>
 <body>
   <main>
@@ -30,7 +32,7 @@
     <section class="hero">
       <div>
         <h2>Caixa</h2>
-        <p>Abertura, fechamento, entradas, saídas, sangrias e suprimentos.</p>
+        <p>Abertura, fechamento, entradas, saÃ­das, sangrias e suprimentos.</p>
       </div>
       <div class="top-actions">
         <button type="button" id="btnAbrir">Abrir Caixa</button>
@@ -42,29 +44,29 @@
     <section class="cards">
       <div class="card"><span>Status</span><strong id="cStatus">Fechado</strong></div>
       <div class="card"><span>Entradas</span><strong id="cEntradas">R$ 0,00</strong></div>
-      <div class="card"><span>Saídas</span><strong id="cSaidas">R$ 0,00</strong></div>
+      <div class="card"><span>SaÃ­das</span><strong id="cSaidas">R$ 0,00</strong></div>
       <div class="card"><span>Saldo Atual</span><strong id="cSaldo">R$ 0,00</strong></div>
     </section>
 
     <section class="cards menores">
       <div class="card"><span>Dinheiro</span><strong id="cDinheiro">R$ 0,00</strong></div>
       <div class="card"><span>PIX</span><strong id="cPix">R$ 0,00</strong></div>
-      <div class="card"><span>Cartão</span><strong id="cCartao">R$ 0,00</strong></div>
+      <div class="card"><span>CartÃ£o</span><strong id="cCartao">R$ 0,00</strong></div>
       <div class="card"><span>Outros</span><strong id="cOutros">R$ 0,00</strong></div>
     </section>
 
     <section class="filtros">
-      <input id="fBusca" placeholder="Buscar descrição, categoria, pessoa ou forma">
+      <input id="fBusca" placeholder="Buscar descriÃ§Ã£o, categoria, pessoa ou forma">
       <select id="fTipo">
         <option value="todos">Todos os tipos</option>
         <option value="entrada">Entrada</option>
-        <option value="saida">Saída</option>
+        <option value="saida">SaÃ­da</option>
       </select>
       <select id="fForma">
         <option value="todos">Todas as formas</option>
         <option value="Dinheiro">Dinheiro</option>
         <option value="PIX">PIX</option>
-        <option value="Cartão">Cartão</option>
+        <option value="CartÃ£o">CartÃ£o</option>
         <option value="Outros">Outros</option>
       </select>
       <button type="button" id="btnFiltrar">Filtrar</button>
@@ -78,13 +80,13 @@
           <thead>
             <tr>
               <th>Tipo</th>
-              <th>Descrição</th>
+              <th>DescriÃ§Ã£o</th>
               <th>Categoria</th>
               <th>Pessoa</th>
               <th>Forma</th>
               <th>Data</th>
               <th>Valor</th>
-              <th>Ações</th>
+              <th>AÃ§Ãµes</th>
             </tr>
           </thead>
           <tbody id="lista"></tbody>
@@ -100,10 +102,10 @@
       <label for="valorAbertura">Valor de abertura</label>
       <input id="valorAbertura" type="number" step="0.01" min="0" value="0">
 
-      <label for="responsavelAbertura">Responsável</label>
+      <label for="responsavelAbertura">ResponsÃ¡vel</label>
       <input id="responsavelAbertura" value="Administrador">
 
-      <label for="obsAbertura">Observação</label>
+      <label for="obsAbertura">ObservaÃ§Ã£o</label>
       <textarea id="obsAbertura" rows="3"></textarea>
 
       <div class="acoes-modal">
@@ -120,10 +122,10 @@
       <label for="tipo">Tipo</label>
       <select id="tipo">
         <option value="entrada">Entrada</option>
-        <option value="saida">Saída</option>
+        <option value="saida">SaÃ­da</option>
       </select>
 
-      <label for="descricao">Descrição</label>
+      <label for="descricao">DescriÃ§Ã£o</label>
       <input id="descricao" required>
 
       <label for="categoria">Categoria</label>
@@ -136,14 +138,14 @@
       <select id="formaPagamento">
         <option>Dinheiro</option>
         <option>PIX</option>
-        <option>Cartão</option>
+        <option>CartÃ£o</option>
         <option>Outros</option>
       </select>
 
       <label for="valor">Valor</label>
       <input id="valor" type="number" step="0.01" min="0" required>
 
-      <label for="observacao">Observação</label>
+      <label for="observacao">ObservaÃ§Ã£o</label>
       <textarea id="observacao" rows="3"></textarea>
 
       <div class="acoes-modal">
@@ -161,7 +163,7 @@
       <label for="valorFechamento">Valor informado no caixa</label>
       <input id="valorFechamento" type="number" step="0.01" min="0" required>
 
-      <label for="obsFechamento">Observação</label>
+      <label for="obsFechamento">ObservaÃ§Ã£o</label>
       <textarea id="obsFechamento" rows="3"></textarea>
 
       <div class="acoes-modal">
@@ -175,5 +177,7 @@
     <script src="/assets/js/fusion-layout.js"></script>
 
 <script src="/assets/pwa/fusion-pwa-install.js" defer></script>
+  <script src="/assets/js/fusion-mobile-final.js" defer></script>
+  <script src="/assets/js/fusion-no-sidebar.js" defer></script>
 </body>
 </html>

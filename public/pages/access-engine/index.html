@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Fusion Access Engine</title>
+  <link rel="stylesheet" href="/assets/css/fusion-menu-global.css">
+  <link rel="stylesheet" href="/pages/access-engine/style.css">
+  <script src="/assets/js/fusion-auth.js"></script>
+  <script src="/assets/js/fusion-layout.js"></script>
+</head>
+<body>
+  <main class="main fusion-main">
+    <section class="access-hero">
+      <div>
+        <span class="access-pill">Fusion Access Engine v1.1</span>
+        <h1>Controle de Catracas</h1>
+        <p>Simulador genérico com arquitetura de drivers para Control iD, Henry, TopData, Dimep, Tecnibra, Proveu, biometria/facial e integrações HTTP/TCP futuras.</p>
+      </div>
+      <button id="btnAtualizar" type="button">Atualizar painel</button>
+    </section>
+
+    <section class="access-card access-biometria-card">
+      <div class="access-biometria-head">
+        <div>
+          <span class="access-pill">Futronic FTRAPI 1:N</span>
+          <h2>Monitor biométrico contínuo</h2>
+          <p>Ative o leitor para identificar alunos e liberar a catraca automaticamente após a validação do acesso.</p>
+        </div>
+        <div class="access-biometria-status" id="biometriaStatus" data-status="desativada">
+          <span></span>
+          <strong>Biometria desativada</strong>
+        </div>
+      </div>
+      <div class="access-biometria-actions">
+        <button id="btnAtivarBiometria" type="button">Ativar biometria</button>
+        <button id="btnDesativarBiometria" type="button" class="access-secondary" disabled>Desativar biometria</button>
+      </div>
+      <div id="biometriaResultado" class="access-result access-muted">Serviço local ainda não verificado.</div>
+    </section>
+
+    <section class="access-grid access-kpis">
+      <div class="access-card"><small>Equipamentos</small><strong id="kpiDispositivos">0</strong></div>
+      <div class="access-card"><small>Online</small><strong id="kpiOnline">0</strong></div>
+      <div class="access-card"><small>Pessoas dentro</small><strong id="kpiDentro">0</strong></div>
+      <div class="access-card"><small>Acessos hoje</small><strong id="kpiHoje">0</strong></div>
+      <div class="access-card"><small>Liberados</small><strong id="kpiLiberados">0</strong></div>
+      <div class="access-card"><small>Bloqueados</small><strong id="kpiBloqueados">0</strong></div>
+    </section>
+
+    <section class="access-layout">
+      <div class="access-card">
+        <h2>Simular acesso</h2>
+        <label>Aluno, CPF, matrícula, cartão ou RFID</label>
+        <input id="identificador" placeholder="Ex.: MAT-202607-000002 ou CPF">
+        <label>Equipamento</label>
+        <select id="dispositivoId"></select>
+        <label>Direção</label>
+        <select id="direcao">
+          <option value="entrada">Entrada</option>
+          <option value="saida">Saída</option>
+        </select>
+        <div class="access-actions">
+          <button id="btnSimular" type="button">Simular liberação</button>
+          <button id="btnLimpar" type="button" class="access-secondary">Limpar</button>
+        </div>
+        <div id="resultado" class="access-result access-muted">Aguardando simulação.</div>
+      </div>
+
+      <div class="access-card">
+        <h2>Novo equipamento genérico</h2>
+        <label>Nome</label>
+        <input id="eqNome" value="Catraca Simulador 01">
+        <label>Fabricante</label>
+        <select id="eqFabricante">
+          <option>Simulador</option>
+          <option>Control iD</option>
+          <option>Henry</option>
+          <option>TopData</option>
+          <option>Dimep</option>
+          <option>Tecnibra</option>
+          <option>Proveu</option>
+          <option>Biometria/Face</option>
+          <option>Intelbras</option>
+          <option>Hikvision</option>
+          <option>Genérica API</option>
+          <option>Genérica TCP</option>
+        </select>
+        <label>Driver</label>
+        <select id="eqDriver">
+          <option value="simulador">simulador</option>
+          <option value="generic">generic</option>
+          <option value="controlid">controlid</option>
+          <option value="henry">henry</option>
+          <option value="topdata">topdata</option>
+          <option value="dimep">dimep</option>
+          <option value="tecnibra">tecnibra</option>
+          <option value="proveu">proveu</option>
+          <option value="face">face</option>
+        </select>
+        <small class="access-help">Drivers reais ficam como planejados até obter SDK/API oficial do fabricante. Para teste imediato use simulador ou generic.</small>
+        <div class="access-row">
+          <div><label>IP</label><input id="eqIp" placeholder="Opcional"></div>
+          <div><label>Porta</label><input id="eqPorta" placeholder="Opcional"></div>
+        </div>
+        <button id="btnSalvarEquipamento" type="button">Salvar equipamento</button>
+      </div>
+    </section>
+
+    <section class="access-layout">
+      <div class="access-card">
+        <h2>Equipamentos</h2>
+        <div class="access-table-wrap">
+          <table>
+            <thead><tr><th>Nome</th><th>Fabricante</th><th>Driver</th><th>Status</th></tr></thead>
+            <tbody id="tabelaDispositivos"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="access-card">
+        <h2>Pessoas dentro</h2>
+        <div id="listaPresentes" class="access-list"></div>
+      </div>
+    </section>
+
+    <section class="access-card">
+      <h2>Drivers e compatibilidade</h2>
+      <div id="listaDrivers" class="access-driver-grid"></div>
+    </section>
+
+    <section class="access-card">
+      <h2>Últimos acessos</h2>
+      <div class="access-table-wrap">
+        <table>
+          <thead><tr><th>Hora</th><th>Aluno</th><th>Direção</th><th>Resultado</th><th>Motivo</th><th>Equipamento</th></tr></thead>
+          <tbody id="tabelaLogs"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+  <script src="/pages/access-engine/index.js"></script>
+</body>
+</html>

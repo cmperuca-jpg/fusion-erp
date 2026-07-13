@@ -1,42 +1,19 @@
 {
-  "id": "/pages/professor-painel/",
-  "name": "Fusion ERP Professor",
-  "short_name": "Fusion Prof",
-  "description": "Fusion ERP instalado como aplicativo PWA.",
-  "start_url": "/pages/professor-painel/",
-  "scope": "/",
+  "id": "/fusion-professor-pwa",
+  "name": "Fusion Professor",
+  "short_name": "Professor",
+  "description": "Acesso do professor a avaliações e treinos.",
+  "start_url": "/pages/professor-area/index.html",
+  "scope": "/pages/",
   "display": "standalone",
-  "display_override": [
-    "standalone",
-    "minimal-ui",
-    "browser"
-  ],
   "background_color": "#111827",
   "theme_color": "#2563eb",
   "orientation": "portrait-primary",
-  "categories": [
-    "business",
-    "productivity"
-  ],
+  "categories": ["health", "fitness", "productivity"],
   "lang": "pt-BR",
   "icons": [
-    {
-      "src": "/assets/pwa/icons/fusion-professor-180.png",
-      "sizes": "180x180",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/assets/pwa/icons/fusion-professor-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/assets/pwa/icons/fusion-professor-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
-    }
+    { "src": "/assets/pwa/icons/fusion-icon-180.png", "sizes": "180x180", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/pwa/icons/fusion-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/assets/pwa/icons/fusion-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ]
 }

@@ -4,52 +4,29 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Fusion ERP - Login</title>
-  <script src="/assets/js/fusion-auth.js"></script>
-  <style>
-    body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#101826;display:flex;align-items:center;justify-content:center;min-height:100vh}.card{width:320px;background:#fff;border-radius:10px;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.25)}h1{color:#ff6600;text-align:center;margin:0 0 8px}.sub{text-align:center;color:#555;margin-bottom:20px}input{width:100%;box-sizing:border-box;padding:12px;margin:6px 0;border:1px solid #cfd6df;border-radius:7px}button{width:100%;padding:12px;border:0;border-radius:7px;background:#ff6600;color:#fff;font-weight:700;margin-top:6px;cursor:pointer}.erro{color:#b91c1c;font-size:13px;min-height:18px;margin-top:10px;text-align:center}.versao{text-align:center;font-size:12px;color:#777;margin-top:18px}
-  </style>
   <link rel="stylesheet" href="/assets/css/fusion-app.css">
-
-<meta name="theme-color" content="#ff6600">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Fusion Sistema">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<link rel="apple-touch-icon" href="/assets/pwa/icons/fusion-sistema-180.png">
-
-<link rel="manifest" href="/manifest-sistema.webmanifest">
-<meta name="theme-color" content="#ff6600">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="apple-touch-icon" href="/assets/pwa/icons/fusion-icon-180.png">
-<link rel="stylesheet" href="/assets/pwa/fusion-pwa-mobile.css">
+  <link rel="stylesheet" href="/pages/login/style.css">
+  <script src="/assets/js/fusion-auth.js" defer></script>
+  <script src="/pages/login/index.js" defer></script>
+  <link rel="manifest" href="/manifest-sistema.webmanifest">
+  <meta name="theme-color" content="#ff6600">
+  <link rel="apple-touch-icon" href="/assets/pwa/icons/fusion-sistema-180.png">
 </head>
-<body>
-  <form class="card" id="loginForm">
+<body class="login-page">
+  <form class="login-card" id="loginForm" autocomplete="on">
     <h1>Fusion ERP</h1>
     <div class="sub">Entrar no sistema</div>
-    <input id="email" type="email" placeholder="E-mail" value="admin@fusionerp.local" required>
-    <input id="senha" type="password" placeholder="Senha" value="admin123" required>
-    <button type="submit">Entrar</button>
-    <div id="erro" class="erro"></div>
-    <div class="versao">Versão 1.0</div>
-  </form>
-  <script>
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const erro = document.getElementById('erro');
-      erro.textContent = '';
-      try {
-        const resp = await fetch('/api/auth/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email: email.value, senha: senha.value }) });
-        const json = await resp.json();
-        if (!resp.ok || !json.ok) throw new Error(json.mensagem || 'Falha no login');
-        FusionAuth.salvarSessao(json.token, json.usuario);
-        window.location.href = '/pages/dashboard/index.html';
-      } catch (err) { erro.textContent = err.message; }
-    });
-  </script>
 
-<script src="/assets/pwa/fusion-pwa-install.js" defer></script>
+    <label class="sr-only" for="email">E-mail</label>
+    <input id="email" name="email" type="email" placeholder="E-mail"autocomplete="username" required>
+
+    <label class="sr-only" for="senha">Senha</label>
+    <input id="senha" name="senha" type="password" placeholder="Senha" autocomplete="current-password" required>
+
+    <button id="btnEntrar" type="submit">Entrar</button>
+    <div id="erro" class="erro" role="alert"></div>
+    <div class="versao">Fusion ERP 2.8.0 · Login estabilizado</div>
+  </form>
+  <script src="/assets/pwa/fusion-pwa-install.js" defer></script>
 </body>
 </html>

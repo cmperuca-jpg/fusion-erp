@@ -97,3 +97,8 @@
     min-height: 44px;
   }
 }
+
+/* FUSION_NO_SIDEBAR_OVERRIDE */
+body.fusion-no-sidebar .fusion-ui-sidebar,body.fusion-no-sidebar .fusion-sidebar,body.fusion-no-sidebar aside.sidebar,body.fusion-no-sidebar .sidebar,body.fusion-no-sidebar .fusion-clean-sidebar,body.fusion-no-sidebar .fusion-mobile-final-bar,body.fusion-no-sidebar .fusion-mobile-final-overlay,body.fusion-no-sidebar .fusion-mobile-menu-button,body.fusion-no-sidebar .fusion-mobile-overlay,body.fusion-no-sidebar .fusion-mobile-backdrop,body.fusion-no-sidebar .fusion-ui-backdrop{display:none!important;visibility:hidden!important;pointer-events:none!important;}
+body.fusion-no-sidebar .fusion-shell{display:block!important;width:100%!important;}
+body.fusion-no-sidebar .fusion-main{width:100%!important;max-width:100%!important;margin-left:0!important;padding-left:0!important;}

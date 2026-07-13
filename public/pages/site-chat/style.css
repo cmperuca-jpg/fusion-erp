@@ -1,0 +1,36 @@
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f4f7fb;color:#101828}
+.chat-admin{max-width:1260px;margin:0 auto;padding:18px}
+.topo{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:14px}
+.topo span{display:block;color:#667085;font-weight:900;text-transform:uppercase;font-size:12px}
+.topo h1{margin:2px 0 0;font-size:30px}
+button{border:0;border-radius:10px;background:#111827;color:#fff;padding:11px 15px;font-weight:900;cursor:pointer}
+button:disabled{opacity:.6;cursor:not-allowed}
+.layout{display:grid;grid-template-columns:360px 1fr;gap:14px;min-height:calc(100vh - 110px)}
+.conversas,.janela{background:#fff;border:1px solid #d9e2ef;border-radius:16px;overflow:hidden;box-shadow:0 10px 26px rgba(15,23,42,.06)}
+.filtros{display:grid;gap:8px;padding:12px;border-bottom:1px solid #e2e8f0}
+input,select,textarea{width:100%;border:1px solid #cbd5e1;border-radius:10px;padding:10px;font:inherit}
+.lista{overflow:auto;max-height:calc(100vh - 202px)}
+.conversa-item{width:100%;display:block;text-align:left;border:0;border-radius:0;background:#fff;color:#111827;padding:12px;border-bottom:1px solid #eef2f7;box-shadow:none}
+.conversa-item.ativa{background:#eef6ff}
+.conversa-item strong{display:block;font-size:14px}
+.conversa-item span{display:block;margin-top:4px;color:#667085;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.conversa-meta{display:flex;justify-content:space-between;gap:8px;margin-top:8px;color:#475569;font-size:11px;font-weight:900;text-transform:uppercase}
+.cabecalho{padding:13px 14px;border-bottom:1px solid #e2e8f0;background:#111827;color:#fff}
+.cabecalho strong{display:block}
+.cabecalho span{display:block;margin-top:4px;opacity:.75;font-size:12px}
+.mensagens{height:calc(100vh - 250px);overflow:auto;padding:14px;background:#f8fafc}
+.msg{max-width:76%;margin:0 0 10px;padding:10px 12px;border-radius:14px;border:1px solid #e2e8f0;background:#fff;line-height:1.35}
+.msg.usuario{margin-left:auto;background:#dcfce7;border-color:#bbf7d0}
+.msg.sistema{background:#eef2ff}
+.msg.atendimento{background:#fff;border-color:#c7d2fe}
+.msg small{display:block;margin-bottom:5px;color:#64748b;font-size:11px;font-weight:900;text-transform:uppercase}
+.resposta{display:grid;grid-template-columns:1fr auto;gap:10px;padding:12px;border-top:1px solid #e2e8f0}
+.resposta textarea{min-height:76px;resize:none}
+.empty{padding:16px;color:#64748b;font-weight:800}
+@media(max-width:900px){
+  .layout{grid-template-columns:1fr}
+  .lista{max-height:320px}
+  .mensagens{height:420px}
+  .resposta{grid-template-columns:1fr}
+}

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="/pages/bi-financeiro/style.css">
   <script src="/assets/js/fusion-auth.js"></script>
   <script>FusionAuth.proteger();</script>
-  <meta name="fusion-existing-pages" content="agenda,alunos,avaliacoes,bi,bi-academia,bi-academia-operacional,bi-financeiro,caixa,checkin,configuracoes,dashboard,estoque,exercicios,financeiro,login,matriculas,mensalidades,modalidades,modelos-treino,pagamentos,planos,presencas,professores,recebimentos,relatorios-caixa,treinos,turmas">
+  <meta name="fusion-existing-pages" content="access-engine,admin,agenda,aluno-avaliacao,aluno-login,aluno-treinos,alunos,avaliacoes,bi-academia,bi-academia-operacional,bi-financeiro,caixa,checkin,comercial,comercial-painel,configuracoes,dashboard,financeiro,matricula-online,matriculas,matriculas-pendentes,mensalidades,modalidades,natacao-professor,planos,professor-area,professor-login,professores,recebimentos,relatorios-caixa,treinos,turmas">
 
 <link rel="manifest" href="/manifest-sistema.webmanifest">
 <meta name="theme-color" content="#ff6600">
@@ -18,20 +18,22 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="/assets/pwa/icons/fusion-icon-180.png">
 <link rel="stylesheet" href="/assets/pwa/fusion-pwa-mobile.css">
+  <link rel="stylesheet" href="/assets/css/fusion-mobile-final.css">
+  <link rel="stylesheet" href="/assets/css/fusion-no-sidebar.css">
 </head>
 <body>
 <main class="main bi-financeiro-page">
   <section class="card bi-hero">
     <div>
       <h2>BI Financeiro</h2>
-      <p>Análise financeira de receitas, despesas, vencidos e fluxo de caixa.</p>
+      <p>AnÃ¡lise financeira de receitas, despesas, vencidos e fluxo de caixa.</p>
     </div>
     <div class="bi-actions">
       <button id="btnAtualizarBI" type="button">Atualizar</button>
       <button id="btnExportarCSV" type="button">Exportar CSV</button>
     </div>
     <div class="filtros bi-filtros">
-      <label>Início<input id="filtroInicio" type="date"></label>
+      <label>InÃ­cio<input id="filtroInicio" type="date"></label>
       <label>Fim<input id="filtroFim" type="date"></label>
       <label>Tipo<select id="filtroTipo"><option value="">Todos</option><option value="receita">Receitas</option><option value="despesa">Despesas</option></select></label>
       <label>Status<select id="filtroStatus"><option value="">Todos</option><option value="realizado">Realizados</option><option value="aberto">Abertos</option><option value="vencido">Vencidos</option></select></label>
@@ -42,24 +44,24 @@
   <section class="bi-kpis">
     <div class="card"><span>Recebido</span><strong id="kpiRecebido">R$ 0,00</strong><small>Entradas realizadas</small></div>
     <div class="card"><span>A receber</span><strong id="kpiReceber">R$ 0,00</strong><small>Receitas em aberto</small></div>
-    <div class="card"><span>Pago</span><strong id="kpiPago">R$ 0,00</strong><small>Saídas realizadas</small></div>
+    <div class="card"><span>Pago</span><strong id="kpiPago">R$ 0,00</strong><small>SaÃ­das realizadas</small></div>
     <div class="card"><span>A pagar</span><strong id="kpiPagar">R$ 0,00</strong><small>Despesas em aberto</small></div>
-    <div class="card"><span>Vencido a receber</span><strong id="kpiVencidoReceber">R$ 0,00</strong><small>Inadimplência</small></div>
+    <div class="card"><span>Vencido a receber</span><strong id="kpiVencidoReceber">R$ 0,00</strong><small>InadimplÃªncia</small></div>
     <div class="card"><span>Vencido a pagar</span><strong id="kpiVencidoPagar">R$ 0,00</strong><small>Compromissos vencidos</small></div>
     <div class="card"><span>Saldo realizado</span><strong id="kpiSaldoRealizado">R$ 0,00</strong><small>Recebido menos pago</small></div>
     <div class="card"><span>Saldo previsto</span><strong id="kpiSaldoPrevisto">R$ 0,00</strong><small>Realizado + aberto</small></div>
   </section>
 
   <section class="bi-kpis bi-kpis-secundarios">
-    <div class="card"><span>Ticket médio recebido</span><strong id="kpiTicketMedio">R$ 0,00</strong><small>Média dos recebimentos</small></div>
-    <div class="card"><span>Taxas financeiras</span><strong id="kpiTaxas">R$ 0,00</strong><small>Cartão, PIX e boleto</small></div>
-    <div class="card"><span>Qtd. receitas</span><strong id="kpiQtdReceitas">0</strong><small>Lançamentos de entrada</small></div>
-    <div class="card"><span>Qtd. despesas</span><strong id="kpiQtdDespesas">0</strong><small>Lançamentos de saída</small></div>
+    <div class="card"><span>Ticket mÃ©dio recebido</span><strong id="kpiTicketMedio">R$ 0,00</strong><small>MÃ©dia dos recebimentos</small></div>
+    <div class="card"><span>Taxas financeiras</span><strong id="kpiTaxas">R$ 0,00</strong><small>CartÃ£o, PIX e boleto</small></div>
+    <div class="card"><span>Qtd. receitas</span><strong id="kpiQtdReceitas">0</strong><small>LanÃ§amentos de entrada</small></div>
+    <div class="card"><span>Qtd. despesas</span><strong id="kpiQtdDespesas">0</strong><small>LanÃ§amentos de saÃ­da</small></div>
   </section>
 
   <section class="bi-grid-2">
-    <div class="card bi-chart"><h2>Receitas por mês</h2><canvas id="graficoReceitas"></canvas></div>
-    <div class="card bi-chart"><h2>Despesas por mês</h2><canvas id="graficoDespesas"></canvas></div>
+    <div class="card bi-chart"><h2>Receitas por mÃªs</h2><canvas id="graficoReceitas"></canvas></div>
+    <div class="card bi-chart"><h2>Despesas por mÃªs</h2><canvas id="graficoDespesas"></canvas></div>
     <div class="card bi-chart"><h2>Fluxo de caixa</h2><canvas id="graficoFluxo"></canvas></div>
     <div class="card bi-chart"><h2>Status financeiro</h2><canvas id="graficoStatus"></canvas></div>
     <div class="card bi-chart"><h2>Receita por categoria</h2><canvas id="graficoReceitaCategoria"></canvas></div>
@@ -82,5 +84,7 @@
 <script src="/assets/js/fusion-layout.js"></script>
 
 <script src="/assets/pwa/fusion-pwa-install.js" defer></script>
+  <script src="/assets/js/fusion-mobile-final.js" defer></script>
+  <script src="/assets/js/fusion-no-sidebar.js" defer></script>
 </body>
 </html>

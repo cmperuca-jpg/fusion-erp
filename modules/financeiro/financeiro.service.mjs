@@ -6,6 +6,8 @@ import {
   buscarLancamentoPorId
 } from "./financeiro.repository.mjs";
 import { baixarMensalidade } from "./mensalidades.service.mjs";
+import { confirmarRecebimento } from "./recebimentos.service.mjs";
+import { desbloquearAlunoAposPagamento } from "./desbloqueio.service.mjs";
 
 const TAXAS_CARTAO_PATH = path.resolve(process.cwd(), "data", "taxas_cartao.json");
 
@@ -91,9 +93,16 @@ async function ativarAlunoMatriculaAposBaixaFinanceira(lancamento = {}) {
       matriculaAlvo.status = "Ativa";
       matriculaAlvo.statusPagamento = "Pago";
       matriculaAlvo.statusFinanceiroInicial = "Pago";
+      matriculaAlvo.bloqueada = false;
+      matriculaAlvo.bloqueioCheckin = false;
+      matriculaAlvo.motivoBloqueio = "";
+      matriculaAlvo.motivoBloqueioCheckin = "";
       matriculaAlvo.financeiroInicialId = matriculaAlvo.financeiroInicialId || lancamento.id || "";
       matriculaAlvo.mensalidadeInicialId = matriculaAlvo.mensalidadeInicialId || lancamento.mensalidadeId || "";
       matriculaAlvo.ativadaEm = matriculaAlvo.ativadaEm || agora;
+      matriculaAlvo.liberadaAcessoEm = agora;
+      matriculaAlvo.liberadaPorPagamentoEm = agora;
+      matriculaAlvo.cacheAcessoLimpoEm = agora;
       delete matriculaAlvo.encerradaEm;
       delete matriculaAlvo.canceladaEm;
       delete matriculaAlvo.motivoEncerramento;
@@ -121,7 +130,19 @@ async function ativarAlunoMatriculaAposBaixaFinanceira(lancamento = {}) {
     if (["inativo", "cancelado", "desligado"].includes(String(aluno.status || "").toLowerCase())) continue;
 
     aluno.status = "ativo";
+    aluno.ativo = true;
+    aluno.situacao = "ativo";
+    aluno.status_legado_access = "ativo";
     aluno.statusMatricula = "Ativa";
+    aluno.matriculaStatus = "Ativa";
+    aluno.bloqueado = false;
+    aluno.bloqueioCheckin = false;
+    aluno.inadimplente = false;
+    aluno.emAtraso = false;
+    aluno.motivoBloqueio = "";
+    aluno.motivoBloqueioCheckin = "";
+    aluno.reativacaoPendenteEm = "";
+    aluno.recebimentoReativacaoId = "";
     if (matriculaAtualizada?.id) {
       aluno.matriculaId = matriculaAtualizada.id;
       aluno.numeroMatricula = matriculaAtualizada.numero || aluno.numeroMatricula || "";
@@ -129,6 +150,9 @@ async function ativarAlunoMatriculaAposBaixaFinanceira(lancamento = {}) {
       aluno.plano = matriculaAtualizada.plano || aluno.plano || "";
     }
     aluno.ativadoEm = aluno.ativadoEm || agora;
+    aluno.liberadoAcessoEm = agora;
+    aluno.liberadoPorPagamentoEm = agora;
+    aluno.cacheAcessoLimpoEm = agora;
     aluno.atualizadoEm = agora;
     alunoAtualizado = aluno;
   }
@@ -138,7 +162,11 @@ async function ativarAlunoMatriculaAposBaixaFinanceira(lancamento = {}) {
     const mesmaMatricula = matriculaId && String(vinculo.matriculaId) === String(matriculaId);
     if (!mesmoAluno && !mesmaMatricula) continue;
     vinculo.status = "Ativo";
+    vinculo.bloqueado = false;
+    vinculo.bloqueioCheckin = false;
     vinculo.motivoBloqueio = "";
+    vinculo.motivoBloqueioCheckin = "";
+    vinculo.cacheAcessoLimpoEm = agora;
     vinculo.atualizadoEm = agora;
   }
 
@@ -258,6 +286,29 @@ function estaPago(item = {}) {
   return ["Pago", "Recebido", "Quitado"].includes(String(item.status || ""));
 }
 
+function dataOrdenacaoFinanceiro(item = {}) {
+  const campos = [
+    item.atualizadoEm,
+    item.updatedAt,
+    item.baixadoEm,
+    item.dataPagamento,
+    item.pagamento,
+    item.recebidoEm,
+    item.criadoEm,
+    item.createdAt,
+    item.vencimento
+  ];
+
+  for (const campo of campos) {
+    const valor = String(campo || '').trim();
+    if (!valor) continue;
+    const data = new Date(valor.length === 10 ? `${valor}T12:00:00` : valor);
+    if (!Number.isNaN(data.getTime())) return data.getTime();
+  }
+
+  return 0;
+}
+
 export async function listarFinanceiro(filtros = {}) {
   let lancamentos = await listarLancamentos();
 
@@ -292,7 +343,12 @@ export async function listarFinanceiro(filtros = {}) {
     );
   }
 
-  return lancamentos.sort((a, b) => String(a.vencimento).localeCompare(String(b.vencimento)));
+  return lancamentos.sort((a, b) => {
+    const dataB = dataOrdenacaoFinanceiro(b);
+    const dataA = dataOrdenacaoFinanceiro(a);
+    if (dataB !== dataA) return dataB - dataA;
+    return String(b.id || '').localeCompare(String(a.id || ''));
+  });
 }
 
 export async function obterResumoFinanceiro() {
@@ -378,7 +434,15 @@ export async function atualizarLancamento(id, dados) {
   };
 
   await salvarLancamentos(lancamentos);
-  return lancamentos[index];
+
+  const desbloqueioAcesso = await desbloquearAlunoAposPagamento(lancamentos[index], {
+    origem: "financeiro_atualizacao_manual"
+  });
+
+  return {
+    ...lancamentos[index],
+    desbloqueioAcesso
+  };
 }
 
 export async function baixarLancamento(id, dados = {}) {
@@ -396,6 +460,37 @@ export async function baixarLancamento(id, dados = {}) {
   const acrescimo = normalizarValor(dados.acrescimo ?? dados.juros ?? 0);
   const valorBaseBaixa = normalizarValor(atual.valorRestante ?? atual.saldo ?? atual.valor ?? 0);
   const valorPago = normalizarValor(dados.valorPago ?? dados.valor ?? Math.max(0, valorBaseBaixa + acrescimo - desconto));
+
+  // Fluxo único de recebimento:
+  // Todo lançamento do tipo RECEBER deve passar pelo motor de recebimentos,
+  // que grava recebimentos.json, movimenta caixa.json e sincroniza mensalidade/financeiro.
+  // Isso impede pagamento marcado como Pago sem dinheiro registrado no caixa do dia.
+  if (String(atual.tipo || '').toLowerCase() === 'receber' && dados.fluxoRecebimentoUnico !== false && !dados._viaRecebimentos) {
+    const resultadoRecebimento = await confirmarRecebimento(id, {
+      ...dados,
+      valorRecebido: valorPago,
+      valorPago,
+      valorBaixa: valorPago,
+      dataRecebimento: dataPagamento,
+      dataPagamento,
+      formaPagamento,
+      usuario: dados.usuario || 'Administrador'
+    });
+
+    const atualizados = await listarLancamentos();
+    const lancamentoAtualizado = atualizados.find((item) => String(item.id) === String(id)) || atual;
+
+    return {
+      ...lancamentoAtualizado,
+      recebimento: resultadoRecebimento?.recebimento || null,
+      caixa: resultadoRecebimento?.caixa || null,
+      mensalidade: resultadoRecebimento?.mensalidade || null,
+      matricula: resultadoRecebimento?.matricula || null,
+      desbloqueioAcesso: resultadoRecebimento?.desbloqueioAcesso || null,
+      cobrancaAutomatica: resultadoRecebimento?.cobrancaAutomatica || null,
+      mensagem: 'Recebimento confirmado pelo fluxo único: recebimento do dia, caixa e financeiro sincronizados.'
+    };
+  }
   const taxaCartao = calcularTaxaOperadora(dados, valorPago);
   const formaNormalizada = String(formaPagamento || "").toLowerCase();
   const temTaxaOperadora = formaNormalizada.includes("cart") || formaNormalizada.includes("pix") || formaNormalizada.includes("boleto");
@@ -463,7 +558,14 @@ export async function baixarLancamento(id, dados = {}) {
         }
       }
 
-      return lancamentoBaixado;
+      const desbloqueioAcesso = await desbloquearAlunoAposPagamento(lancamentoBaixado, {
+        origem: "financeiro_baixa"
+      });
+
+      return {
+        ...lancamentoBaixado,
+        desbloqueioAcesso
+      };
     } catch (erro) {
       if (!String(erro.message || "").toLowerCase().includes("já está paga")) {
         throw erro;
@@ -507,7 +609,64 @@ export async function baixarLancamento(id, dados = {}) {
   }
 
   await salvarLancamentos(lancamentos);
-  return lancamentos[index];
+
+  const desbloqueioAcesso = valorRestante <= 0
+    ? await desbloquearAlunoAposPagamento(lancamentos[index], { origem: "financeiro_baixa" })
+    : { ok: true, desbloqueado: false, motivo: "Pagamento parcial." };
+
+  return {
+    ...lancamentos[index],
+    desbloqueioAcesso
+  };
+}
+
+function statusPagoOuBaixadoFinanceiro(status = "") {
+  return ["pago", "paga", "recebido", "recebida", "quitado", "quitada", "baixado", "baixada"].includes(
+    String(status || "").trim().toLowerCase()
+  );
+}
+
+function mesmoRegistroFinanceiro(a, b) {
+  return String(a || "") && String(a || "") === String(b || "");
+}
+
+async function removerVinculosAbertosDoLancamento(lancamento = {}) {
+  const agora = new Date().toISOString();
+  const mensalidades = await lerJsonFinanceiro("mensalidades.json", []);
+  const recebimentos = await lerJsonFinanceiro("recebimentos.json", []);
+
+  if (Array.isArray(mensalidades)) {
+    const mensalidadesFiltradas = mensalidades.filter((m) => {
+      const vinculado =
+        mesmoRegistroFinanceiro(m.id, lancamento.mensalidadeId) ||
+        mesmoRegistroFinanceiro(m.lancamentoFinanceiroId, lancamento.id) ||
+        mesmoRegistroFinanceiro(m.financeiroInicialId, lancamento.id) ||
+        mesmoRegistroFinanceiro(m.financeiroId, lancamento.id);
+
+      if (!vinculado) return true;
+      return statusPagoOuBaixadoFinanceiro(m.status) || Number(m.valorPago || m.valorRecebido || 0) > 0;
+    });
+
+    await salvarJsonFinanceiro("mensalidades.json", mensalidadesFiltradas);
+  }
+
+  if (Array.isArray(recebimentos)) {
+    const recebimentosFiltrados = recebimentos.filter((r) => {
+      const vinculado =
+        mesmoRegistroFinanceiro(r.id, lancamento.recebimentoId) ||
+        mesmoRegistroFinanceiro(r.financeiroId, lancamento.id) ||
+        mesmoRegistroFinanceiro(r.financeiro_id, lancamento.id) ||
+        mesmoRegistroFinanceiro(r.lancamentoFinanceiroId, lancamento.id) ||
+        mesmoRegistroFinanceiro(r.mensalidadeId, lancamento.mensalidadeId);
+
+      if (!vinculado) return true;
+      return statusPagoOuBaixadoFinanceiro(r.status || r.situacao) || Number(r.valorPago || r.valorRecebido || r.valor_pago || 0) > 0;
+    });
+
+    await salvarJsonFinanceiro("recebimentos.json", recebimentosFiltrados);
+  }
+
+  return { sincronizadoEm: agora };
 }
 
 export async function excluirLancamento(id) {
@@ -518,6 +677,7 @@ export async function excluirLancamento(id) {
     return null;
   }
 
+  await removerVinculosAbertosDoLancamento(lancamento);
   await salvarLancamentos(lancamentos.filter((item) => String(item.id) !== String(id)));
   return lancamento;
 }

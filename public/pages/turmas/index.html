@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="/assets/css/fusion-app.css">
   <script src="/assets/js/fusion-auth.js"></script>
   <script>FusionAuth.proteger();</script>
-  <meta name="fusion-existing-pages" content="agenda,alunos,avaliacoes,bi,bi-academia,bi-academia-operacional,bi-financeiro,caixa,checkin,configuracoes,dashboard,estoque,exercicios,financeiro,login,matriculas,mensalidades,modalidades,modelos-treino,pagamentos,planos,presencas,professores,recebimentos,relatorios-caixa,treinos,turmas">
+  <meta name="fusion-existing-pages" content="access-engine,admin,agenda,aluno-avaliacao,aluno-login,aluno-treinos,alunos,avaliacoes,bi-academia,bi-academia-operacional,bi-financeiro,caixa,checkin,comercial,comercial-painel,configuracoes,dashboard,financeiro,matricula-online,matriculas,matriculas-pendentes,mensalidades,modalidades,natacao-professor,planos,professor-area,professor-login,professores,recebimentos,relatorios-caixa,treinos,turmas">
 
 <link rel="manifest" href="/manifest-sistema.webmanifest">
 <meta name="theme-color" content="#ff6600">
@@ -18,13 +18,15 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="/assets/pwa/icons/fusion-icon-180.png">
 <link rel="stylesheet" href="/assets/pwa/fusion-pwa-mobile.css">
+  <link rel="stylesheet" href="/assets/css/fusion-mobile-final.css">
+  <link rel="stylesheet" href="/assets/css/fusion-no-sidebar.css">
 </head>
 <body>
   <main class="main">
     <section class="modulo-header">
       <div>
         <h2>Turmas</h2>
-        <p>Controle de turmas, vagas, professores, modalidades e horários.</p>
+        <p>Controle de turmas, vagas, professores, modalidades e horÃ¡rios.</p>
       </div>
       <button class="btn-primary" id="btnNovaTurma">Nova Turma</button>
     </section>
@@ -65,10 +67,10 @@
             <th>Modalidade</th>
             <th>Professor</th>
             <th>Dias</th>
-            <th>Horário</th>
+            <th>HorÃ¡rio</th>
             <th>Vagas</th>
             <th>Status</th>
-            <th>Ações</th>
+            <th>AÃ§Ãµes</th>
           </tr>
         </thead>
         <tbody id="tabelaTurmas"></tbody>
@@ -82,7 +84,7 @@
 
       <header class="modal-header">
         <h2 id="modalTitulo">Nova Turma</h2>
-        <button type="button" class="btn-icon" id="btnFecharModal">×</button>
+        <button type="button" class="btn-icon" id="btnFecharModal">Ã—</button>
       </header>
 
       <div class="form-grid">
@@ -93,7 +95,7 @@
 
         <label>
           Modalidade
-          <input id="modalidade" required placeholder="Ex.: Natação" />
+          <input id="modalidade" required placeholder="Ex.: NataÃ§Ã£o" />
         </label>
 
         <label>
@@ -112,8 +114,8 @@
         </label>
 
         <label>
-          Horário
-          <input id="horario" required placeholder="Ex.: 07:00 às 08:00" />
+          HorÃ¡rio
+          <input id="horario" required placeholder="Ex.: 07:00 Ã s 08:00" />
         </label>
 
         <label>
@@ -136,7 +138,7 @@
       </div>
 
       <label>
-        Observações
+        ObservaÃ§Ãµes
         <textarea id="observacoes" rows="3"></textarea>
       </label>
 
@@ -150,5 +152,7 @@
     <script src="/assets/js/fusion-layout.js"></script>
 
 <script src="/assets/pwa/fusion-pwa-install.js" defer></script>
+  <script src="/assets/js/fusion-mobile-final.js" defer></script>
+  <script src="/assets/js/fusion-no-sidebar.js" defer></script>
 </body>
 </html>

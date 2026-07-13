@@ -169,7 +169,7 @@
     $('#btnRecalcularRecordes')?.addEventListener('click',recalcularRecordes);
     $('#filtroRecordeDistancia')?.addEventListener('change',carregarRecordes);
     $('#filtroRecordeEstilo')?.addEventListener('change',carregarRecordes);
-    $('#btnPainel')?.addEventListener('click',()=>{if(EMBED&&window.parent!==window) window.parent.postMessage({tipo:'fusion_natacao_voltar_painel'}, location.origin); else location.href='/pages/professor-painel/';});
+    $('#btnPainel')?.addEventListener('click',()=>{if(EMBED&&window.parent!==window) window.parent.postMessage({tipo:'fusion_natacao_voltar_painel'}, location.origin); else location.href='/pages/dashboard/index.html';});
   }
   window.addEventListener('message',ev=>{if(ev.origin!==location.origin)return; if(ev.data?.tipo==='fusion_natacao_contexto'){contexto=ev.data.contexto; try{localStorage.setItem('fusion_natacao_professor_contexto',JSON.stringify(contexto));}catch{} alunos=contexto.alunos||alunos; renderAlunos();}});
   async function init(){bind(); $('#btnPreparar').disabled=true; await carregarAlunos(); await carregarHistorico();}

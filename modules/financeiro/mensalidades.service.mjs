@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { gerarProximaMensalidadeAposPagamento } from '../cobranca/cobranca.service.mjs';
+import { aplicarPremioNaMensalidade, vincularMensalidadePremio } from '../fidelidade/fidelidade.service.mjs';
 
 const ROOT = process.cwd();
 const DATA_DIR = path.join(ROOT, 'data');
@@ -155,9 +156,13 @@ function ehMatriculaInicial(mensalidade = {}) {
 
 function valorPrincipalMensalidade(mensalidade = {}) {
   // Matrícula inicial é cobrança única: o valor financeiro precisa ser o total
-  // inicial, não apenas a mensalidade pura. Mensalidade recorrente usa valor.
+  // inicial, não apenas a mensalidade pura. Mensalidade recorrente premiada
+  // usa o valor final depois do desconto de fidelidade.
   if (ehMatriculaInicial(mensalidade)) {
     return numero(mensalidade.total ?? mensalidade.valorTotalInicial ?? mensalidade.valorOriginal ?? mensalidade.valor, 0);
+  }
+  if (mensalidade.premioFidelidadeId || numero(mensalidade.descontoFidelidadePercentual, 0) > 0) {
+    return numero(mensalidade.valor, 0);
   }
   return numero(mensalidade.valorOriginal ?? mensalidade.valor, 0);
 }
@@ -500,15 +505,21 @@ export async function criarMensalidade(dados = {}) {
     throw erro;
   }
 
+  const mensalidadeId = gerarId('men');
+  const beneficio = await aplicarPremioNaMensalidade({ alunoId: dados.alunoId, valor, mensalidadeId });
   const mensalidade = {
-    id: gerarId('men'),
+    id: mensalidadeId,
     alunoId: dados.alunoId || '',
     alunoNome: dados.alunoNome || aluno?.nome || aluno?.name || '',
     planoId: dados.planoId || '',
     planoNome: dados.planoNome || plano?.nome || plano?.name || '',
     competencia,
     vencimento,
-    valor,
+    valor: beneficio.valor,
+    valorOriginal: beneficio.valorOriginal,
+    desconto: beneficio.desconto,
+    descontoFidelidadePercentual: beneficio.premio?.percentual || 0,
+    premioFidelidadeId: beneficio.premio?.id || '',
     status: statusInterno(dados.status || 'aberto'),
     descricao: dados.descricao || 'Mensalidade',
     observacao: dados.observacao || '',
@@ -520,6 +531,7 @@ export async function criarMensalidade(dados = {}) {
   mensalidade.lancamentoFinanceiroId = await upsertLancamentoFinanceiro(mensalidade);
   mensalidades.push(mensalidade);
   await salvarJson(MENSALIDADES_FILE, mensalidades);
+  if (beneficio.premio?.id) await vincularMensalidadePremio(beneficio.premio.id, mensalidade.id);
 
   return mensalidade;
 }

@@ -45,7 +45,7 @@ export const alunoSchema = z.object({
   professorNome: opcionalTexto,
   data_matricula: opcionalTexto,
   objetivo: opcionalTexto,
-  status: z.string().optional().default("ativo"),
+  status: z.string().optional().default("inativo"),
 
   foto: opcionalTexto,
   foto_base64: opcionalTexto,
@@ -58,6 +58,12 @@ export const alunoSchema = z.object({
       arquivo_base64: opcionalTexto
     })
   ).optional(),
+
+  possuiBiometria: z.boolean().optional(),
+  biometriaId: opcionalTexto,
+  biometriaStatus: opcionalTexto,
+  biometriaCadastradaEm: opcionalTexto,
+  biometriaAtualizadaEm: opcionalTexto,
 
   observacoes: opcionalTexto
 });

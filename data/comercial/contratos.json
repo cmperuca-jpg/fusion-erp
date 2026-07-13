@@ -12,16 +12,31 @@
     "dataFim": "",
     "periodicidadeMeses": 1,
     "cobraMatricula": true,
-    "valorMatricula": 120,
+    "valorMatricula": 40,
     "renovacaoAutomatica": true,
     "bloquearAoVencer": false,
     "origem": "migracao_matricula",
     "criadoEm": "2026-07-02T01:24:23.779Z",
-    "atualizadoEm": "2026-07-02T21:58:27.884Z",
-    "valorServicos": 0,
-    "valorTotal": 120,
-    "totalMensal": 120,
-    "quantidadeServicos": 0
+    "atualizadoEm": "2026-07-07T21:33:43.660Z",
+    "valorServicos": 65,
+    "valorTotal": 105,
+    "totalMensal": 105,
+    "quantidadeServicos": 1,
+    "observacaoValorMatricula": "",
+    "historico": [
+      {
+        "id": "hist_ctr_1783459998928_1bd624",
+        "acao": "alterar_valor_matricula",
+        "anterior": 120,
+        "atual": 40,
+        "usuario": "Administrador",
+        "criadoEm": "2026-07-07T21:33:18.928Z"
+      }
+    ],
+    "ultimaSincronizacaoFinanceira": "2026-07-07T21:33:43.660Z",
+    "ultimaMensalidadeId": "men_ctr_1783459999093_693884",
+    "ultimoFinanceiroId": "fin_men_ctr_1783459999093_693884",
+    "proximoVencimento": "2026-08-01"
   },
   {
     "id": "ctr_1783013034581_cbb4ae",

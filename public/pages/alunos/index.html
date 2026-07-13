@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
@@ -6,10 +6,12 @@
   <title>Fusion ERP - Alunos</title>
   <link rel="stylesheet" href="/assets/css/fusion-app.css">
   <link rel="stylesheet" href="/assets/css/fusion-menu-global.css">
+  <link rel="stylesheet" href="/assets/css/fusion-mobile-first.css">
+  <link rel="stylesheet" href="/assets/css/fusion-date.css">
   <link rel="stylesheet" href="./style.css">
   <script src="/assets/js/fusion-auth.js"></script>
   <script>FusionAuth.proteger();</script>
-  <meta name="fusion-existing-pages" content="agenda,alunos,avaliacoes,bi,bi-academia,bi-academia-operacional,bi-financeiro,caixa,checkin,configuracoes,dashboard,estoque,exercicios,financeiro,login,matriculas,mensalidades,modalidades,modelos-treino,pagamentos,planos,presencas,professores,recebimentos,relatorios-caixa,treinos,turmas">
+  <meta name="fusion-existing-pages" content="access-engine,admin,agenda,aluno-avaliacao,aluno-login,aluno-treinos,alunos,avaliacoes,bi-academia,bi-academia-operacional,bi-financeiro,caixa,checkin,comercial,comercial-painel,configuracoes,dashboard,financeiro,matricula-online,matriculas,matriculas-pendentes,mensalidades,modalidades,natacao-professor,planos,professor-area,professor-login,professores,recebimentos,relatorios-caixa,treinos,turmas">
 
 <link rel="manifest" href="/manifest-sistema.webmanifest">
 <meta name="theme-color" content="#ff6600">
@@ -18,6 +20,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="/assets/pwa/icons/fusion-icon-180.png">
 <link rel="stylesheet" href="/assets/pwa/fusion-pwa-mobile.css">
+  <link rel="stylesheet" href="/assets/css/fusion-mobile-final.css">
+  <link rel="stylesheet" href="/assets/css/fusion-no-sidebar.css">
 </head>
 <body>
   <div class="fusion-shell">
@@ -30,8 +34,8 @@
       <section class="fusion-content alunos-page">
         <div class="alunos-header-card">
           <div>
-            <h2>Gestão de Alunos</h2>
-            <p>Cadastro, ficha completa, histórico e atalhos operacionais.</p>
+            <h2>GestÃ£o de Alunos</h2>
+            <p>Cadastro, ficha completa, histÃ³rico e atalhos operacionais.</p>
           </div>
           <div class="alunos-actions">
             <button class="fusion-button secondary" id="btnAtualizar" type="button">Atualizar</button>
@@ -56,27 +60,36 @@
 
         <div class="fusion-card alunos-table-card">
           <div class="table-top"><h3>Alunos cadastrados</h3><span id="contadorRegistros">0 registro(s)</span></div>
+          <div id="alunosMobileCards" class="alunos-mobile-cards" aria-live="polite"></div>
           <div class="table-wrap">
             <table class="alunos-table">
-              <thead><tr><th>Nome</th><th>CPF</th><th>Telefone</th><th>Plano</th><th>Status</th><th class="text-right">Ações</th></tr></thead>
+              <thead><tr><th>Nome</th><th>CPF</th><th>Telefone</th><th>Plano</th><th>Status</th><th class="text-right">AÃ§Ãµes</th></tr></thead>
               <tbody id="tabelaAlunos"><tr><td colspan="6">Carregando alunos...</td></tr></tbody>
             </table>
           </div>
-          <div class="alunos-pagination"><button id="btnAnterior" type="button">Anterior</button><span id="paginaAtual">Página 1</span><button id="btnProxima" type="button">Próxima</button></div>
+          <div class="alunos-pagination"><button id="btnAnterior" type="button">Anterior</button><span id="paginaAtual">PÃ¡gina 1</span><button id="btnProxima" type="button">PrÃ³xima</button></div>
         </div>
       </section>
     </main>
   </div>
 
+  <div class="alunos-bottom-nav" id="alunosBottomNav" aria-label="Atalhos do mÃ³dulo alunos">
+    <button type="button" data-alunos-action="home">ðŸ <span>Home</span></button>
+    <button type="button" data-alunos-action="buscar">ðŸ”<span>Buscar</span></button>
+    <button type="button" data-alunos-action="novo">ï¼‹<span>Novo</span></button>
+    <button type="button" data-alunos-action="topo">ðŸ‘¤<span>Topo</span></button>
+  </div>
+
   <div class="modal-backdrop hidden" id="modalAluno">
     <div class="modal-card modal-large">
-      <div class="modal-head"><h3 id="modalTitulo">Novo aluno</h3><button type="button" id="btnFecharModal">×</button></div>
+      <div class="modal-head"><h3 id="modalTitulo">Novo aluno</h3><button type="button" id="btnFecharModal">Ã—</button></div>
       <div class="tabs">
         <button type="button" class="tab active" data-tab="cadastro">Cadastro</button>
-        <button type="button" class="tab" data-tab="medico">Dados médicos</button>
-        <button type="button" class="tab" data-tab="historico">Histórico</button>
-        <button type="button" class="tab" data-tab="matriculas">Matrículas</button>
-        <button type="button" class="tab" data-tab="integracoes">Integrações</button>
+        <button type="button" class="tab" data-tab="medico">Dados mÃ©dicos</button>
+        <button type="button" class="tab" data-tab="historico">HistÃ³rico</button>
+        <button type="button" class="tab" data-tab="matriculas">MatrÃ­culas</button>
+        <button type="button" class="tab" data-tab="integracoes">IntegraÃ§Ãµes</button>
+        <button type="button" class="tab" data-tab="biometria">Biometria</button>
       </div>
 
       <form id="formAluno" class="aluno-form">
@@ -85,78 +98,118 @@
         <div class="tab-panel active" id="tab-cadastro">
           <div class="foto-box"><div class="foto-preview" id="fotoPreview">Foto</div><div class="field"><label for="foto_base64">Foto do aluno</label><input id="foto_base64" type="file" accept="image/*"><small>Imagem local em base64. Use arquivo pequeno.</small></div></div>
           <div class="grid-2"><div class="field"><label for="nome">Nome completo *</label><input id="nome" required></div><div class="field"><label for="cpf">CPF</label><input id="cpf" maxlength="14"></div></div>
-          <div class="grid-3"><div class="field"><label for="rg">RG</label><input id="rg"></div><div class="field"><label for="data_nascimento">Nascimento</label><input id="data_nascimento" type="date"></div><div class="field"><label for="sexo">Sexo</label><select id="sexo"><option value="">Não informado</option><option value="feminino">Feminino</option><option value="masculino">Masculino</option><option value="outro">Outro</option></select></div></div>
+          <div class="grid-3"><div class="field"><label for="rg">RG</label><input id="rg"></div><div class="field"><label for="data_nascimento">Nascimento</label><input id="data_nascimento" type="text" inputmode="numeric" autocomplete="off" placeholder="DD/MM/AAAA" data-fusion-date="1"></div><div class="field"><label for="sexo">Sexo</label><select id="sexo"><option value="">NÃ£o informado</option><option value="feminino">Feminino</option><option value="masculino">Masculino</option><option value="outro">Outro</option></select></div></div>
           <div class="grid-2"><div class="field"><label for="telefone">Telefone</label><input id="telefone" maxlength="15"></div><div class="field"><label for="whatsapp">WhatsApp</label><input id="whatsapp" maxlength="15"></div></div>
-          <div class="grid-2"><div class="field"><label for="email">E-mail</label><input id="email" type="email"></div><div class="field"><label for="professor_responsavel">Professor responsável</label><input id="professor_responsavel"></div></div>
-          <div class="grid-3"><div class="field"><label for="plano">Plano cadastrado</label><div class="input-with-button"><select id="plano"><option value="">Carregando planos...</option></select><button type="button" id="btnRecarregarPlanos" title="Recarregar planos">↻</button></div><small>Lista carregada automaticamente dos planos cadastrados.</small></div><div class="field"><label for="data_matricula">Data matrícula</label><input id="data_matricula" type="date"></div><div class="field"><label for="status">Status</label><select id="status"><option value="ativo">Ativo</option><option value="pendente">Pendente</option><option value="inativo">Inativo</option><option value="cancelado">Cancelado</option></select></div></div>
-          <div class="fusion-card painel-comercial-matricula" style="margin:12px 0;padding:14px;border:1px solid #e2e8f0;background:#f8fafc;border-radius:12px;">
-            <h4 style="margin:0 0 10px;">Painel comercial da matrícula</h4>
-            <div class="grid-3">
-              <div class="field"><label>Mensalidade do plano</label><input id="valor_mensal_preview" readonly placeholder="R$ 0,00"></div>
-              <div class="field"><label for="cobrar_taxa_matricula">Taxa de matrícula</label><select id="cobrar_taxa_matricula"><option value="sim">Cobrar taxa</option><option value="nao">Não cobrar taxa</option></select></div>
-              <div class="field"><label for="valor_taxa_matricula">Valor da taxa</label><input id="valor_taxa_matricula" inputmode="decimal" placeholder="0,00"></div>
-            </div>
-            <div class="grid-3">
-              <div class="field"><label for="desconto_matricula">Desconto</label><input id="desconto_matricula" inputmode="decimal" placeholder="0,00"></div>
-              <div class="field"><label>Total inicial</label><input id="total_matricula_preview" readonly placeholder="R$ 0,00"></div>
-              <div class="field"><label for="receber_agora_padrao">Após salvar</label><select id="receber_agora_padrao"><option value="perguntar">Perguntar se deseja receber</option><option value="sim">Abrir recebimento</option><option value="nao">Receber depois</option></select></div>
-            </div>
-            <small>Use esta área para isentar a taxa, conceder desconto ou cobrar a taxa de matrícula conforme a negociação comercial.</small>
+          <div class="grid-2"><div class="field"><label for="email">E-mail</label><input id="email" type="email"></div><div class="field"><label for="professor_responsavel">Professor responsÃ¡vel</label><input id="professor_responsavel"></div></div>
+          <div class="fusion-card cadastro-matricula-vinculada">
+            <strong>Matricula vinculada ao plano</strong>
+            <p>Todo novo aluno precisa de plano. A matricula e o financeiro inicial sao gerados pelo plano; turma e apenas vinculo operacional.</p>
           </div>
-          <div class="grid-2"><div class="field"><label for="responsavel">Responsável</label><input id="responsavel"></div><div class="field"><label for="contato_emergencia">Contato de emergência</label><input id="contato_emergencia"></div></div>
+
+          <div class="grid-3">
+            <div class="field"><label for="plano">Plano *</label><select id="plano" required><option value="">Selecione um plano</option></select></div>
+            <div class="field"><label for="data_matricula">Data da matricula</label><input id="data_matricula" type="text" inputmode="numeric" autocomplete="off" placeholder="DD/MM/AAAA" data-fusion-date="1"></div>
+            <div class="field"><label for="valor_mensal_preview">Mensalidade do plano</label><input id="valor_mensal_preview" readonly></div>
+          </div>
+          <div class="grid-3">
+            <div class="field"><label for="cobrar_taxa_matricula">Cobrar taxa de matricula</label><select id="cobrar_taxa_matricula"><option value="sim">Sim</option><option value="nao">Nao</option></select></div>
+            <div class="field"><label for="valor_taxa_matricula">Taxa de matricula</label><input id="valor_taxa_matricula" value="0,00" inputmode="decimal"></div>
+            <div class="field"><label for="desconto_matricula">Desconto inicial</label><input id="desconto_matricula" value="0,00" inputmode="decimal"></div>
+          </div>
+          <div class="grid-2">
+            <div class="field"><label for="total_matricula_preview">Total inicial</label><input id="total_matricula_preview" readonly></div>
+            <div class="field"><label>&nbsp;</label><button type="button" class="btn-light" id="btnRecarregarPlanos">Recarregar planos</button></div>
+          </div>
+          <div class="hidden" aria-hidden="true">
+            <select id="status"><option value="pre-matriculado">Pre-matriculado</option><option value="ativo">Ativo</option><option value="inativo">Inativo</option><option value="cancelado">Cancelado</option></select>
+            <select id="receber_agora_padrao"><option value="nao">Receber depois</option></select>
+          </div>
+          <div class="grid-2"><div class="field"><label for="responsavel">ResponsÃ¡vel</label><input id="responsavel"></div><div class="field"><label for="contato_emergencia">Contato de emergÃªncia</label><input id="contato_emergencia"></div></div>
           <div class="grid-3"><div class="field"><label for="cep">CEP</label><input id="cep"></div><div class="field"><label for="cidade">Cidade</label><input id="cidade"></div><div class="field"><label for="estado">Estado</label><input id="estado" maxlength="2"></div></div>
-          <div class="field"><label for="endereco">Endereço</label><input id="endereco"></div>
+          <div class="field"><label for="endereco">EndereÃ§o</label><input id="endereco"></div>
           <div class="field"><label for="objetivo">Objetivo</label><input id="objetivo"></div>
-          <div class="field"><label for="observacoes">Observações</label><textarea id="observacoes" rows="3"></textarea></div>
+          <div class="field"><label for="observacoes">ObservaÃ§Ãµes</label><textarea id="observacoes" rows="3"></textarea></div>
         </div>
 
         <div class="tab-panel" id="tab-medico">
-          <div class="grid-3"><div class="field"><label for="tipo_sanguineo">Tipo sanguíneo</label><input id="tipo_sanguineo"></div><div class="field"><label for="peso">Peso</label><input id="peso"></div><div class="field"><label for="altura">Altura</label><input id="altura"></div></div>
+          <div class="grid-3"><div class="field"><label for="tipo_sanguineo">Tipo sanguÃ­neo</label><input id="tipo_sanguineo"></div><div class="field"><label for="peso">Peso</label><input id="peso"></div><div class="field"><label for="altura">Altura</label><input id="altura"></div></div>
           <div class="field"><label for="alergias">Alergias</label><textarea id="alergias" rows="3"></textarea></div>
-          <div class="field"><label for="restricoes_medicas">Restrições médicas</label><textarea id="restricoes_medicas" rows="3"></textarea></div>
+          <div class="field"><label for="restricoes_medicas">RestriÃ§Ãµes mÃ©dicas</label><textarea id="restricoes_medicas" rows="3"></textarea></div>
           <div class="field"><label for="medicamentos">Medicamentos</label><textarea id="medicamentos" rows="3"></textarea></div>
-          <div class="field"><label for="lesoes">Lesões</label><textarea id="lesoes" rows="3"></textarea></div>
+          <div class="field"><label for="lesoes">LesÃµes</label><textarea id="lesoes" rows="3"></textarea></div>
         </div>
 
         <div class="tab-panel" id="tab-historico">
-          <div class="historico-top"><button type="button" class="btn-light" id="btnAddHistorico">Adicionar registro</button><button type="button" class="btn-light" id="btnLimparHistorico">Limpar histórico local</button></div>
-          <div id="historicoLista" class="timeline"><div class="timeline-empty">Selecione ou salve um aluno para visualizar o histórico.</div></div>
+          <div class="historico-top"><button type="button" class="btn-light" id="btnAddHistorico">Adicionar registro</button><button type="button" class="btn-light" id="btnLimparHistorico">Limpar histÃ³rico local</button></div>
+          <div id="historicoLista" class="timeline"><div class="timeline-empty">Selecione ou salve um aluno para visualizar o histÃ³rico.</div></div>
         </div>
 
 
 
         <div class="tab-panel" id="tab-matriculas">
           <div class="historico-top">
-            <button type="button" class="btn-light" id="btnNovaMatriculaAluno">Nova matrícula / turma</button>
-            <button type="button" class="btn-light" id="btnAbrirMatriculaAtiva">Abrir matrícula ativa</button>
+            <button type="button" class="btn-light" id="btnNovaMatriculaAluno">Nova matrÃ­cula / turma</button>
+            <button type="button" class="btn-light" id="btnAbrirMatriculaAtiva">Abrir matrÃ­cula ativa</button>
             <button type="button" class="btn-light" id="btnAtualizarMatriculasAluno">Atualizar</button>
           </div>
           <div class="fusion-card" style="padding:14px;border:1px solid #e2e8f0;background:#f8fafc;border-radius:12px;">
-            <strong>Vínculo acadêmico</strong>
-            <p class="hint" style="margin:6px 0 0;">A turma do aluno deve ser definida pela matrícula. Use esta área para matricular, trocar turma ou alterar plano sem duplicar regra no cadastro do aluno.</p>
+            <strong>VÃ­nculo acadÃªmico</strong>
+            <p class="hint" style="margin:6px 0 0;">A turma do aluno deve ser definida pela matrÃ­cula. Use esta Ã¡rea para matricular, trocar turma ou alterar plano sem duplicar regra no cadastro do aluno.</p>
           </div>
-          <div id="matriculasAlunoLista" class="cards-list"><div class="timeline-empty">Selecione um aluno para visualizar as matrículas.</div></div>
+          <div id="matriculasAlunoLista" class="cards-list"><div class="timeline-empty">Selecione um aluno para visualizar as matrÃ­culas.</div></div>
         </div>
 
         <div class="tab-panel" id="tab-integracoes">
           <div class="integracoes-grid">
-            <button type="button" class="integration-card" id="btnAbrirTreinos"><strong>Treinos</strong><span>Abrir montagem de treino do aluno</span></button>
-            <button type="button" class="integration-card" id="btnAbrirAvaliacoes"><strong>Avaliações</strong><span>Abrir avaliações físicas do aluno</span></button>
-            <button type="button" class="integration-card" id="btnAbrirMensalidades"><strong>Mensalidades</strong><span>Consultar vínculo financeiro</span></button>
-            <button type="button" class="integration-card" id="btnAbrirCheckin"><strong>Check-in</strong><span>Consultar presença e acessos</span></button>
+            <button type="button" class="integration-card" id="btnAbrirAvaliacoes"><strong>AvaliaÃ§Ãµes</strong><span>Abrir avaliaÃ§Ãµes fÃ­sicas do aluno</span></button>
+            <button type="button" class="integration-card" id="btnAbrirMensalidades"><strong>Mensalidades</strong><span>Consultar vÃ­nculo financeiro</span></button>
+            <button type="button" class="integration-card" id="btnAbrirCheckin"><strong>Check-in</strong><span>Consultar presenÃ§a e acessos</span></button>
           </div>
-          <p class="hint">Os atalhos enviam o parâmetro <code>?alunoId=</code> para a página de destino.</p>
+          <p class="hint">Os atalhos enviam o parÃ¢metro <code>?alunoId=</code> para a pÃ¡gina de destino.</p>
+        </div>
+
+
+        <div class="tab-panel" id="tab-biometria">
+          <section class="biometria-painel">
+            <div class="biometria-cabecalho">
+              <div><h4>Biometria Futronic</h4><p>O aluno jÃ¡ estÃ¡ vinculado automaticamente pelo cadastro aberto.</p></div>
+              <span id="biometriaModo" class="biometria-badge">Modo acesso</span>
+            </div>
+            <div class="biometria-identificacao">
+              <div><span>Aluno</span><strong id="biometriaAlunoNome">Nenhum aluno selecionado</strong></div>
+              <div><span>ID vinculado</span><code id="biometriaAlunoId">-</code></div>
+              <div><span>Status</span><strong id="biometriaStatus">NÃ£o cadastrada</strong></div>
+              <div><span>Leitor</span><strong id="biometriaLeitor">Verificando...</strong></div>
+            </div>
+            <div id="biometriaMensagem" class="biometria-mensagem">Abra um aluno salvo e entre nesta aba.</div>
+            <div class="biometria-capturas" id="biometriaCapturas">
+              <div data-captura="0"><span>Captura 1</span><strong>Aguardando</strong></div>
+              <div data-captura="1"><span>Captura 2</span><strong>Aguardando</strong></div>
+              <div data-captura="2"><span>Captura 3</span><strong>Aguardando</strong></div>
+            </div>
+            <div class="biometria-acoes">
+              <button type="button" class="btn-light" id="btnBiometriaTestar">Testar leitor</button>
+              <button type="button" class="fusion-button" id="btnBiometriaCapturar">Capturar digital</button>
+              <button type="button" class="fusion-button" id="btnBiometriaSalvar" disabled>Salvar biometria</button>
+              <button type="button" class="btn-light" id="btnBiometriaRepetir">Repetir capturas</button>
+              <button type="button" class="btn-light biometria-danger" id="btnBiometriaApagar">Apagar biometria</button>
+            </div>
+            <small>O botÃ£o Capturar pode ser acionado antes de colocar o dedo. O leitor aguardarÃ¡ e aceitarÃ¡ somente capturas com qualidade mÃ­nima de 70%.</small>
+          </section>
         </div>
 
         <div class="modal-actions"><button type="button" class="btn-light" id="btnFicha">Imprimir ficha completa</button><button type="button" class="btn-light" id="btnCancelar">Cancelar</button><button type="submit" class="fusion-button" id="btnSalvarAluno">Salvar aluno</button></div>
       </form>
     </div>
   </div>
+<script src="/assets/js/fusion-date.js"></script>
 <script src="./index.js"></script>
   <script src="/assets/js/fusion-ciclo-professor-aluno.js"></script>
   <script src="/assets/js/fusion-menu-global.js"></script>
     <script src="/assets/js/fusion-layout.js"></script>
 
 <script src="/assets/pwa/fusion-pwa-install.js" defer></script>
+  <script src="/assets/js/fusion-mobile-final.js" defer></script>
+  <script src="/assets/js/fusion-no-sidebar.js" defer></script>
 </body>
 </html>

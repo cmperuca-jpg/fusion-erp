@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fusion ERP - Migração de Dados</title>
+  <link rel="stylesheet" href="/assets/css/fusion-app.css">
+  <link rel="stylesheet" href="/assets/css/fusion-menu-global.css">
+  <link rel="stylesheet" href="/pages/migracao-dados/style.css">
+  <script src="/assets/js/fusion-auth.js"></script>
+  <script>FusionAuth.proteger();</script>
+  <link rel="manifest" href="/manifest-sistema.webmanifest">
+  <meta name="theme-color" content="#ff6600">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="/assets/pwa/icons/fusion-icon-180.png">
+  <link rel="stylesheet" href="/assets/pwa/fusion-pwa-mobile.css">
+  <link rel="stylesheet" href="/assets/css/fusion-mobile-final.css">
+  <link rel="stylesheet" href="/assets/css/fusion-no-sidebar.css">
+</head>
+<body>
+  <div class="fusion-shell">
+    <main class="fusion-main">
+      <header class="fusion-topbar">
+        <div class="fusion-title">Migração de Dados</div>
+        <div><span data-fusion-user></span> <button onclick="FusionAuth.sair()">Sair</button></div>
+      </header>
+
+      <section class="fusion-content migration-page">
+        <div class="fusion-card migration-hero">
+          <div>
+            <span class="migration-eyebrow">Configurações · Administração</span>
+            <h2>Centro de Migração e Integridade</h2>
+            <p>Área fixa para importar, validar e manter dados migrados do Access sem depender de links provisórios.</p>
+          </div>
+          <div class="migration-status" id="migrationStatus">Base consolidada</div>
+        </div>
+
+        <div class="migration-grid">
+          <a class="fusion-card migration-card" href="/pages/importador-access/index.html">
+            <strong>Importar Alunos</strong>
+            <span>Alunos.txt, ativos/inativos, matrícula, mensalidade e financeiro.</span>
+          </a>
+          <a class="fusion-card migration-card" href="/pages/importador-fotos/index.html">
+            <strong>Importar Fotos</strong>
+            <span>Fotos.txt + Fotos.zip vinculados pelo ID legado do aluno.</span>
+          </a>
+          <a class="fusion-card migration-card" href="/pages/importador-avaliacoes/index.html">
+            <strong>Importar Avaliações</strong>
+            <span>Avaliações físicas, anamnese, PAR-Q, perímetros, bioimpedância e diagnóstico.</span>
+          </a>
+        </div>
+
+        <div class="migration-grid secondary">
+          <div class="fusion-card migration-info">
+            <h3>Regras consolidadas</h3>
+            <ul>
+              <li>Registros excluídos do Access não são importados.</li>
+              <li>Duplicados são bloqueados por chave de origem.</li>
+              <li>RCQ é recalculado por cintura ÷ quadril.</li>
+              <li>Menores de 20 anos não usam classificação adulta de RCQ ou gordura.</li>
+            </ul>
+          </div>
+          <div class="fusion-card migration-info">
+            <h3>Próximas funções</h3>
+            <ul>
+              <li>Reprocessar diagnósticos sem reimportar dados.</li>
+              <li>Validar integridade da base.</li>
+              <li>Histórico das execuções de importação.</li>
+              <li>Relatório de inconsistências.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="/assets/js/fusion-menu-global.js"></script>
+  <script src="/assets/js/fusion-layout.js"></script>
+  <script src="/pages/migracao-dados/index.js"></script>
+  <script src="/assets/pwa/fusion-pwa-install.js" defer></script>
+  <script src="/assets/js/fusion-no-sidebar.js" defer></script>
+</body>
+</html>

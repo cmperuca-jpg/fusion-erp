@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Chat do Site - Fusion ERP</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <main class="chat-admin">
+    <header class="topo">
+      <div>
+        <span>Atendimento</span>
+        <h1>Chat do site</h1>
+      </div>
+      <button id="btnAtualizar" type="button">Atualizar</button>
+    </header>
+
+    <section class="layout">
+      <aside class="conversas">
+        <div class="filtros">
+          <input id="busca" placeholder="Buscar conversa">
+          <select id="origem">
+            <option value="">Todas as origens</option>
+            <option value="portal_aluno">Portal do aluno</option>
+            <option value="matricula_online">Matricula online</option>
+            <option value="site">Site</option>
+          </select>
+        </div>
+        <div id="listaConversas" class="lista"></div>
+      </aside>
+
+      <section class="janela">
+        <div id="cabecalhoConversa" class="cabecalho">
+          <strong>Selecione uma conversa</strong>
+          <span>As mensagens de alunos e visitantes aparecem aqui.</span>
+        </div>
+        <div id="mensagens" class="mensagens"></div>
+        <form id="formResposta" class="resposta">
+          <textarea id="textoResposta" placeholder="Digite a resposta da recepcao"></textarea>
+          <button type="submit">Responder</button>
+        </form>
+      </section>
+    </section>
+  </main>
+  <script src="./index.js"></script>
+</body>
+</html>

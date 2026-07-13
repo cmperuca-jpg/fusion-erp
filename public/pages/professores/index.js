@@ -101,7 +101,7 @@ function render(){
   if(!lista.length){$('#tabela').innerHTML='<tr><td colspan="6">Nenhum professor encontrado.</td></tr>';return;}
   $('#tabela').innerHTML=lista.map(p=>{
     const vinculados = alunosDoProfessor(p).length;
-    return `<tr><td><strong>${esc(nome(p))}</strong><small>${esc(p.email||'')}</small></td><td>${esc(p.cref||'-')}</td><td>${esc(p.telefone||p.whatsapp||'-')}</td><td>${esc(joinLista(p.especialidades)||p.especialidade||joinLista(p.modalidades)||'-')}</td><td><span class="badge status-${esc(status(p))}">${esc(p.status||'Ativo')}</span><small>${vinculados} aluno(s)</small></td><td class="text-right"><button class="btn-row" onclick="editar('${esc(idProfessor(p))}')">Editar</button><button class="btn-row" onclick="abrirProntuario('${esc(idProfessor(p))}')">Alunos / Prontuário</button><button class="btn-row danger" onclick="excluir('${esc(idProfessor(p))}')">Excluir</button></td></tr>`;
+    return `<tr><td><strong>${esc(nome(p))}</strong><small>${esc(p.email||'')}</small></td><td>${esc(p.cref||'-')}</td><td>${esc(p.telefone||p.whatsapp||'-')}</td><td>${esc(joinLista(p.especialidades)||p.especialidade||joinLista(p.modalidades)||'-')}</td><td><span class="badge status-${esc(status(p))}">${esc(p.status||'Ativo')}</span><small>${vinculados} aluno(s)</small></td><td class="text-right"><button class="btn-row" onclick="editar('${esc(idProfessor(p))}')">Editar</button><button class="btn-row" onclick="abrirProntuario('${esc(idProfessor(p))}')">Prontuário</button><button class="btn-row danger" onclick="excluir('${esc(idProfessor(p))}')">Excluir</button></td></tr>`;
   }).join('');
 }
 
@@ -219,31 +219,76 @@ function renderAlunosVinculados(professor){
   </details>`;
 }
 
+function contarExerciciosTreino(t = {}){
+  if (Array.isArray(t.exercicios)) return t.exercicios.length;
+  if (Array.isArray(t.divisoes)) return t.divisoes.reduce((s,d)=>s+(Array.isArray(d.itens)?d.itens.length:(Array.isArray(d.exercicios)?d.exercicios.length:0)),0);
+  if (Array.isArray(t.grupos)) return t.grupos.reduce((s,g)=>s+(Array.isArray(g.itens)?g.itens.length:(Array.isArray(g.exercicios)?g.exercicios.length:0)),0);
+  return 0;
+}
+function dataCurta(v){ const s=String(v||'').slice(0,10); if(!s) return '-'; const [a,m,d]=s.split('-'); return a&&m&&d ? `${d}/${m}/${a}` : s; }
+function blocoListaProntuario(titulo, itens, vazio, renderItem){
+  return `<details class="prof-accordion" open><summary>${esc(titulo)} <strong>${itens.length}</strong></summary><div class="prof-prontuario-lista">${itens.length?itens.map(renderItem).join(''):`<div class="mini-panel">${esc(vazio)}</div>`}</div></details>`;
+}
+function renderTurmasProntuario(lista=[]){
+  return blocoListaProntuario('Turmas vinculadas', lista, 'Nenhuma turma vinculada.', t=>`<div class="prof-vinculo-card"><strong>${esc(t.nome||t.turma||'-')}</strong><small>Modalidade: ${esc(t.modalidade||'-')} · Dias: ${esc(t.diasSemana||'-')} · Horário: ${esc(t.horario||'-')}</small></div>`);
+}
+function renderAvaliacoesProntuario(lista=[]){
+  return blocoListaProntuario('Avaliações realizadas', lista, 'Nenhuma avaliação realizada por este professor.', a=>`<div class="prof-vinculo-card"><strong>${esc(a.alunoNome||a.aluno||'Aluno')}</strong><small>Data: ${dataCurta(a.data||a.criadoEm||a.criado_em)} · Objetivo: ${esc(a.objetivo||'-')} · IMC: ${esc(a.imc||'-')}</small></div>`);
+}
+function renderTreinosProntuario(lista=[]){
+  return blocoListaProntuario('Treinos prescritos', lista, 'Nenhum treino prescrito por este professor.', t=>`<div class="prof-vinculo-card"><strong>${esc(t.alunoNome||t.aluno||'Aluno')}</strong><small>Objetivo: ${esc(t.objetivo||'-')} · Exercícios: ${contarExerciciosTreino(t)} · Validade: ${dataCurta(t.validade||t.dataValidade||t.data_validade)}</small></div>`);
+}
+function renderDocumentosProntuario(lista=[]){
+  return blocoListaProntuario('Documentos', lista, 'Nenhum documento cadastrado.', d=>`<div class="prof-vinculo-card"><strong>${esc(d.nome||'Documento')}</strong><small>Tipo: ${esc(d.tipo||'-')}</small></div>`);
+}
+function renderAgendaProntuario(lista=[]){
+  return blocoListaProntuario('Agenda', lista, 'Nenhuma agenda vinculada.', a=>`<div class="prof-vinculo-card"><strong>${esc(a.titulo||a.nome||a.turma||'Agenda')}</strong><small>Data: ${dataCurta(a.data||a.inicio)} · Horário: ${esc(a.horario||a.hora||'-')}</small></div>`);
+}
+
 async function carregarProntuario(id){
   const el=$('#prontuario');
   const professor = professores.find(x=>String(idProfessor(x))===String(id));
   if(!professor){ el.textContent='Professor não encontrado.'; return; }
   el.textContent='Carregando prontuário...';
-  let resumo = {turmas:0,agenda:0,alunos:alunosDoProfessor(professor).length,avaliacoes:0,treinos:0};
-  let linhaTempo = [];
+  let dados = { resumo:{}, turmas:[], agenda:[], alunos:alunosDoProfessor(professor), avaliacoes:[], treinos:[], documentos:professor.documentos||[], linhaTempo:[] };
   try{
     const resp=await fetch(`${API}/${encodeURIComponent(id)}/prontuario`,{cache:'no-store'});
     const j=await safeJson(resp);
-    if(resp.ok && j.ok!==false){
-      resumo = {...resumo, ...(j.resumo||{})};
-      linhaTempo = Array.isArray(j.linhaTempo)?j.linhaTempo:[];
-    }
+    if(resp.ok && j.ok!==false) dados = {...dados, ...j, resumo:{...dados.resumo, ...(j.resumo||{})}};
   } catch{}
-  resumo.alunos = alunosDoProfessor(professor).length;
+  const alunosVinculados = Array.isArray(dados.alunos) && dados.alunos.length ? dados.alunos : alunosDoProfessor(professor);
+  const resumo = {
+    turmas: (dados.turmas||[]).length,
+    agenda: (dados.agenda||[]).length,
+    alunos: alunosVinculados.length,
+    avaliacoes: (dados.avaliacoes||[]).length,
+    treinos: (dados.treinos||[]).length,
+    documentos: (dados.documentos||professor.documentos||[]).length,
+    ...(dados.resumo||{})
+  };
+  resumo.alunos = alunosVinculados.length;
   el.innerHTML=`
     <div class="prof-prontuario-head">
       <div><h3>${esc(nome(professor))}</h3><p>${esc(professor.cref||'CREF não informado')} · ${esc(professor.especialidade||joinLista(professor.especialidades)||'Sem especialidade')}</p></div>
+      <div class="prof-prontuario-status"><span class="badge status-${esc(status(professor))}">${esc(professor.status||'Ativo')}</span></div>
     </div>
-    <div class="pront-kpis"><div><span>Turmas</span><strong>${resumo.turmas||0}</strong></div><div><span>Agenda</span><strong>${resumo.agenda||0}</strong></div><div><span>Alunos</span><strong>${resumo.alunos||0}</strong></div><div><span>Avaliações</span><strong>${resumo.avaliacoes||0}</strong></div><div><span>Treinos</span><strong>${resumo.treinos||0}</strong></div></div>
+    <div class="prof-info-grid">
+      <div><span>Modalidades</span><strong>${esc(joinLista(professor.modalidades)||'-')}</strong></div>
+      <div><span>Especialidades</span><strong>${esc(joinLista(professor.especialidades)||professor.especialidade||'-')}</strong></div>
+      <div><span>Horário</span><strong>${esc((professor.horarioInicio||'-')+' às '+(professor.horarioFim||'-'))}</strong></div>
+      <div><span>Contrato</span><strong>${esc(professor.tipoContrato||'-')}</strong></div>
+    </div>
+    <div class="pront-kpis"><div><span>Turmas</span><strong>${resumo.turmas||0}</strong></div><div><span>Agenda</span><strong>${resumo.agenda||0}</strong></div><div><span>Alunos</span><strong>${resumo.alunos||0}</strong></div><div><span>Avaliações</span><strong>${resumo.avaliacoes||0}</strong></div><div><span>Treinos</span><strong>${resumo.treinos||0}</strong></div><div><span>Documentos</span><strong>${resumo.documentos||0}</strong></div></div>
     ${renderAlunosVinculados(professor)}
+    ${renderTurmasProntuario(dados.turmas||[])}
+    ${renderAgendaProntuario(dados.agenda||[])}
+    ${renderAvaliacoesProntuario(dados.avaliacoes||[])}
+    ${renderTreinosProntuario(dados.treinos||[])}
+    ${renderDocumentosProntuario(dados.documentos||professor.documentos||[])}
     <h4>Linha do tempo</h4>
-    ${(linhaTempo||[]).length?(linhaTempo||[]).map(i=>`<div class="timeline-item"><strong>${esc(i.tipo)}</strong> — ${esc(i.descricao)}<br><small>${esc(i.data||'')}</small></div>`).join(''):'<p>Nenhum vínculo encontrado além dos alunos direcionados.</p>'}`;
+    ${(dados.linhaTempo||[]).length?(dados.linhaTempo||[]).map(i=>`<div class="timeline-item"><strong>${esc(i.tipo)}</strong> — ${esc(i.descricao)}<br><small>${esc(dataCurta(i.data))}</small></div>`).join(''):'<p>Nenhum evento registrado.</p>'}`;
 }
+
 
 window.excluir=async function(id){const p=professores.find(x=>String(idProfessor(x))===String(id));if(!confirm(`Excluir ${nome(p)||'professor'}?`))return;try{const resp=await fetch(`${API}/${encodeURIComponent(id)}`,{method:'DELETE'});const j=await safeJson(resp);if(!resp.ok||j.ok===false)throw new Error(j.mensagem||`HTTP ${resp.status}`);mostrar('Professor excluído.','sucesso');await carregar();}catch(e){mostrar(e.message,'erro');}}
 async function salvar(ev){ev.preventDefault();const id=$('#id').value;const dados=coletar();if(!dados.nome||dados.nome.length<3)return mostrar('Informe o nome completo.','erro');try{const resp=await fetch(id?`${API}/${encodeURIComponent(id)}`:API,{method:id?'PUT':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(dados)});const j=await safeJson(resp);if(!resp.ok||j.ok===false)throw new Error(j.mensagem||`HTTP ${resp.status}`);fechar();mostrar(id?'Professor atualizado.':'Professor cadastrado.','sucesso');await carregar();}catch(e){mostrar(e.message,'erro');}}

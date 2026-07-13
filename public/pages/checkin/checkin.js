@@ -348,11 +348,46 @@
         return;
       }
 
+      let catraca = null;
+      if (json.autorizado) {
+        try {
+          const respostaCatraca = await fetch("/api/henry7x/liberar", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              host: "10.0.0.236",
+              port: 3000,
+              tempoSegundos: 5,
+              alunoId: json?.registro?.alunoId || "",
+              alunoNome: json?.registro?.aluno || codigo,
+              origem: "checkin"
+            })
+          });
+
+          catraca = await respostaCatraca.json().catch(() => ({}));
+          if (!respostaCatraca.ok || catraca.ok === false || catraca.respostasValidas === false) {
+            throw new Error(catraca.mensagem || catraca.erro || "A catraca não confirmou a liberação.");
+          }
+        } catch (erroCatraca) {
+          console.error("Check-in aprovado, mas houve falha ao liberar a catraca:", erroCatraca);
+          catraca = {
+            ok: false,
+            erro: erroCatraca?.message || "Falha de comunicação com a catraca."
+          };
+        }
+      }
+
       const nome = json?.registro?.aluno || codigo;
       const status = json?.status || (json?.autorizado ? "Liberado" : "Bloqueado");
       const treino = json?.execucaoTreino?.id ? `\nTreino iniciado: ${json.execucaoTreino.id}` : "";
       const frequencia = json?.frequencia?.id ? `\nFrequência: ${json.frequencia.id}` : "";
-      alert(`${status}: ${nome}\n${json.mensagem || "Check-in processado."}${frequencia}${treino}`);
+      const resultadoCatraca = !json.autorizado
+        ? ""
+        : catraca?.ok
+          ? "\nCatraca: liberada por 5 segundos."
+          : `\nCatraca: não liberada (${catraca?.erro || "falha desconhecida"}).`;
+
+      alert(`${status}: ${nome}\n${json.mensagem || "Check-in processado."}${frequencia}${treino}${resultadoCatraca}`);
       els.entradaCodigo.value = "";
       await carregarRegistros();
     }

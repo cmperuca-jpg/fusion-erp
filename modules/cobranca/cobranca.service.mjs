@@ -10,7 +10,8 @@ const FILES = {
   matriculas: path.join(DATA_DIR, "matriculas.json"),
   alunos: path.join(DATA_DIR, "alunos.json"),
   planos: path.join(DATA_DIR, "planos.json"),
-  cobrancaLog: path.join(DATA_DIR, "cobranca_log.json")
+  cobrancaLog: path.join(DATA_DIR, "cobranca_log.json"),
+  creditos: path.join(DATA_DIR, "creditos.json")
 };
 
 async function garantirArquivo(arquivo, padrao = []) {
@@ -146,16 +147,28 @@ function diaMes(dataISO) {
 }
 
 function dataReferenciaParaProximaCobranca(mensalidadeAtual = {}, matricula = {}, aluno = {}) {
-  // Para mensalidade recorrente, a base é sempre o vencimento da própria mensalidade paga.
-  // A data da baixa/pagamento nunca deve alterar a próxima competência.
+  // Reativação cria um novo ciclo. A primeira mensalidade futura deve nascer
+  // exatamente um mês após a data do pagamento/recebimento da reativação.
+  // Não herda dia de vencimento antigo importado nem data de matrícula anterior.
+  if (ehReativacao(mensalidadeAtual) || ehReativacao(matricula)) {
+    return (
+      mensalidadeAtual.dataPagamento ||
+      mensalidadeAtual.pagamento ||
+      mensalidadeAtual.dataRecebimento ||
+      mensalidadeAtual.vencimento ||
+      mensalidadeAtual.dataVencimento ||
+      matricula.dataInicio ||
+      matricula.dataMatricula ||
+      hojeISO()
+    );
+  }
+
+  // Para mensalidade recorrente comum, a base é sempre o vencimento da própria mensalidade paga.
   if (ehMensalidadeRecorrente(mensalidadeAtual)) {
     return mensalidadeAtual.vencimento || mensalidadeAtual.dataVencimento || hojeISO();
   }
 
-  // Para matrícula inicial/taxa única paga, a primeira mensalidade recorrente deve nascer
-  // a partir da data da matrícula, preservando o dia de vencimento comercial do aluno.
-  // Ex.: matrícula em 2026-07-01 + plano mensal => próxima em 2026-08-01,
-  // mesmo que o pagamento tenha sido registrado em 2026-08-10.
+  // Para matrícula inicial/taxa única comum, mantém a regra comercial da matrícula.
   return (
     matricula.dataMatricula ||
     matricula.matriculaEm ||
@@ -196,10 +209,16 @@ function textoLancamento(obj = {}) {
   ].map(v => String(v || "").toLowerCase()).join(" ");
 }
 
+function ehReativacao(obj = {}) {
+  const txt = textoLancamento(obj);
+  return txt.includes("reativacao") || txt.includes("reativação") || txt.includes("reativar");
+}
+
 function ehCobrancaInicialOuTaxa(obj = {}) {
   const txt = textoLancamento(obj);
   if (obj.taxaMatricula && numero(obj.taxaMatricula) > 0 && !txt.includes("mensalidade")) return true;
   return (
+    ehReativacao(obj) ||
     txt.includes("matrícula inicial") ||
     txt.includes("matricula inicial") ||
     txt.includes("taxa de matrícula") ||
@@ -335,6 +354,75 @@ function valorCicloPlano(plano = {}, matricula = {}, aluno = {}) {
   return valorMensalidadePura(plano, matricula, aluno);
 }
 
+function creditoAtivoAluno(credito = {}, alunoId = '') {
+  const st = String(credito.status || 'Ativo').trim().toLowerCase();
+  const saldo = numero(credito.saldo ?? credito.valorRestante ?? credito.valorOriginal, 0);
+  return String(credito.alunoId || '') === String(alunoId || '') && saldo > 0 && !['cancelado', 'estornado', 'usado', 'utilizado', 'inativo'].includes(st);
+}
+
+function aplicarCreditosNaMensalidade(mensalidade, creditos = [], usuario = 'sistema') {
+  const disponiveis = creditos
+    .filter(c => creditoAtivoAluno(c, mensalidade.alunoId))
+    .sort((a, b) => String(a.criadoEm || a.dataCredito || '').localeCompare(String(b.criadoEm || b.dataCredito || '')));
+
+  let restante = numero(mensalidade.total ?? mensalidade.valor, 0);
+  let aplicado = 0;
+  const usos = [];
+
+  for (const credito of disponiveis) {
+    if (restante <= 0) break;
+    const saldo = numero(credito.saldo ?? credito.valorRestante ?? credito.valorOriginal, 0);
+    if (saldo <= 0) continue;
+    const usar = Math.min(saldo, restante);
+    credito.saldo = Number((saldo - usar).toFixed(2));
+    credito.valorUtilizado = Number((numero(credito.valorUtilizado, 0) + usar).toFixed(2));
+    credito.status = credito.saldo <= 0 ? 'Utilizado' : 'Ativo';
+    credito.atualizadoEm = agoraISO();
+    credito.historico = Array.isArray(credito.historico) ? credito.historico : [];
+    credito.historico.push({
+      id: gerarId('hist_cred'),
+      acao: 'credito_utilizado',
+      descricao: `Crédito utilizado automaticamente na mensalidade ${mensalidade.competencia}.`,
+      mensalidadeId: mensalidade.id,
+      valor: usar,
+      usuario,
+      criadoEm: agoraISO()
+    });
+    usos.push({ creditoId: credito.id, valor: usar });
+    aplicado = Number((aplicado + usar).toFixed(2));
+    restante = Number((restante - usar).toFixed(2));
+  }
+
+  if (aplicado > 0) {
+    mensalidade.creditoAplicado = aplicado;
+    mensalidade.creditosUtilizados = usos;
+    mensalidade.valorAntesCredito = numero(mensalidade.total ?? mensalidade.valor, 0);
+    mensalidade.valorRestante = restante;
+    mensalidade.saldoRestante = restante;
+    mensalidade.total = restante;
+    mensalidade.valorDevido = restante;
+    mensalidade.status = restante <= 0 ? 'pago' : 'aberto';
+    if (restante <= 0) {
+      mensalidade.valorPago = mensalidade.valorAntesCredito;
+      mensalidade.dataPagamento = hojeISO();
+      mensalidade.pagamento = hojeISO();
+      mensalidade.formaPagamento = 'Crédito do aluno';
+      mensalidade.observacao = [mensalidade.observacao, 'Mensalidade quitada automaticamente com crédito do aluno.'].filter(Boolean).join(' ');
+    }
+    mensalidade.historico = Array.isArray(mensalidade.historico) ? mensalidade.historico : [];
+    mensalidade.historico.push({
+      id: gerarId('hist_men'),
+      acao: 'credito_aplicado',
+      descricao: `Crédito do aluno aplicado automaticamente: R$ ${aplicado.toFixed(2)}.`,
+      valor: aplicado,
+      usos,
+      criadoEm: agoraISO()
+    });
+  }
+
+  return { valorAplicado: aplicado, usos, restante };
+}
+
 function montarMensalidade({ aluno, matricula, plano, vencimento, periodicidade }) {
   const valorPlano = valorCicloPlano(plano, matricula, aluno);
   const comp = competencia(vencimento);
@@ -392,14 +480,14 @@ function montarLancamentoFinanceiro(mensalidade) {
     mensalidadeId: mensalidade.id,
     valor: numero(mensalidade.total ?? mensalidade.valor),
     valorBruto: numero(mensalidade.total ?? mensalidade.valor),
-    valorPago: 0,
-    valorLiquido: 0,
+    valorPago: mensalidade.status === "pago" ? numero(mensalidade.valorAntesCredito ?? mensalidade.valor ?? 0) : 0,
+    valorLiquido: mensalidade.status === "pago" ? numero(mensalidade.valorAntesCredito ?? mensalidade.valor ?? 0) : 0,
     valorRestante: numero(mensalidade.total ?? mensalidade.valor),
     vencimento: mensalidade.vencimento,
-    pagamento: "",
-    dataPagamento: "",
-    formaPagamento: "",
-    status: "Aberto",
+    pagamento: mensalidade.pagamento || "",
+    dataPagamento: mensalidade.dataPagamento || "",
+    formaPagamento: mensalidade.formaPagamento || "",
+    status: mensalidade.status === "pago" ? "Pago" : "Aberto",
     origem: "mensalidade_automatica",
     periodicidade: mensalidade.periodicidade,
     periodicidadeMeses: mensalidade.periodicidadeMeses,
@@ -409,12 +497,13 @@ function montarLancamentoFinanceiro(mensalidade) {
 }
 
 export async function gerarProximaMensalidadeAposPagamento({ mensalidadeId = "", financeiroId = "", alunoId = "", usuario = "sistema" } = {}) {
-  const [mensalidades, financeiro, matriculas, alunos, planos] = await Promise.all([
+  const [mensalidades, financeiro, matriculas, alunos, planos, creditos] = await Promise.all([
     lerJson(FILES.mensalidades, []),
     lerJson(FILES.financeiro, []),
     lerJson(FILES.matriculas, []),
     lerJson(FILES.alunos, []),
-    lerJson(FILES.planos, [])
+    lerJson(FILES.planos, []),
+    lerJson(FILES.creditos, [])
   ]);
 
   let mensalidadeAtual = null;
@@ -480,14 +569,18 @@ export async function gerarProximaMensalidadeAposPagamento({ mensalidadeId = "",
     vencimentoAtual = mensalidadeAtual.vencimento || mensalidadeAtual.dataVencimento || vencimentoAtual;
   }
 
-  const diaVencimento =
-    matricula.diaVencimento ||
-    aluno.diaVencimento ||
-    diaMes(vencimentoAtual) ||
-    diaMes(matricula.vencimentoInicial) ||
-    diaMes(matricula.dataMatricula) ||
-    diaMes(aluno.dataMatricula) ||
-    null;
+  const cicloReativacao = ehReativacao(mensalidadeAtual || {}) || ehReativacao(lancamentoAtual || {}) || ehReativacao(matricula || {});
+  const diaVencimento = cicloReativacao
+    ? diaMes(vencimentoAtual)
+    : (
+      matricula.diaVencimento ||
+      aluno.diaVencimento ||
+      diaMes(vencimentoAtual) ||
+      diaMes(matricula.vencimentoInicial) ||
+      diaMes(matricula.dataMatricula) ||
+      diaMes(aluno.dataMatricula) ||
+      null
+    );
 
   const proximoVencimento = adicionarMeses(vencimentoAtual, periodicidade.meses, diaVencimento);
   const proximaCompetencia = competencia(proximoVencimento);
@@ -509,6 +602,7 @@ export async function gerarProximaMensalidadeAposPagamento({ mensalidadeId = "",
   }
 
   const novaMensalidade = montarMensalidade({ aluno, matricula, plano, vencimento: proximoVencimento, periodicidade });
+  const creditoAplicado = aplicarCreditosNaMensalidade(novaMensalidade, creditos, usuario);
   const novoLancamento = montarLancamentoFinanceiro(novaMensalidade);
 
   novaMensalidade.lancamentoFinanceiroId = novoLancamento.id;
@@ -516,7 +610,7 @@ export async function gerarProximaMensalidadeAposPagamento({ mensalidadeId = "",
   mensalidades.push(novaMensalidade);
   financeiro.push(novoLancamento);
 
-  matricula.ultimoPagamentoEm = hojeISO();
+  matricula.ultimoPagamentoEm = vencimentoAtual || hojeISO();
   matricula.ultimaMensalidadeGeradaId = novaMensalidade.id;
   matricula.proximoVencimento = proximoVencimento;
   matricula.periodicidade = periodicidade.nome;
@@ -540,6 +634,7 @@ export async function gerarProximaMensalidadeAposPagamento({ mensalidadeId = "",
   await salvarJson(FILES.mensalidades, mensalidades);
   await salvarJson(FILES.financeiro, financeiro);
   await salvarJson(FILES.matriculas, matriculas);
+  await salvarJson(FILES.creditos, creditos);
 
   await registrarLog({
     acao: "gerar_proxima_mensalidade",
@@ -552,6 +647,7 @@ export async function gerarProximaMensalidadeAposPagamento({ mensalidadeId = "",
     financeiroId: novoLancamento.id,
     vencimento: proximoVencimento,
     valor: novaMensalidade.total,
+    creditoAplicado: creditoAplicado.valorAplicado,
     periodicidade,
     usuario
   });
@@ -563,7 +659,8 @@ export async function gerarProximaMensalidadeAposPagamento({ mensalidadeId = "",
     financeiro: novoLancamento,
     proximoVencimento,
     periodicidade,
-    mensagem: "Próxima mensalidade gerada automaticamente."
+    creditoAplicado,
+    mensagem: creditoAplicado.valorAplicado > 0 ? "Próxima mensalidade gerada com crédito do aluno aplicado." : "Próxima mensalidade gerada automaticamente."
   };
 }
 
@@ -595,7 +692,8 @@ export async function previsaoCobrancaAluno(alunoId) {
     lerJson(FILES.mensalidades, []),
     lerJson(FILES.matriculas, []),
     lerJson(FILES.alunos, []),
-    lerJson(FILES.planos, [])
+    lerJson(FILES.planos, []),
+    lerJson(FILES.creditos, [])
   ]);
 
   const aluno = alunos.find(a => String(a.id) === String(alunoId)) || null;

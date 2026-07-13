@@ -1,0 +1,9 @@
+.admin-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:16px}
+.admin-form{margin-bottom:16px}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.form-grid label{display:grid;gap:6px;font-weight:800}
+.permissoes{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;margin-top:10px}
+.check-permissao{border:1px solid #e5e7eb;border-radius:12px;padding:10px;display:flex;gap:8px;align-items:center;background:#f8fafc}
+.acoes-form{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.table-top{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.table-wrap{overflow:auto}

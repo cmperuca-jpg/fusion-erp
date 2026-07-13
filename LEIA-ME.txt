@@ -1,0 +1,26 @@
+FUSION ERP — EVOLUÇÃO DA BIOMETRIA ESTÁVEL
+
+Base comprovada:
+- o executável anterior permaneceu ativo;
+- /status respondeu após a captura;
+- /sdk/enroll gerou template real de 2001 bytes.
+
+Instalação:
+1. Pare o servidor com Ctrl+C.
+2. Faça backup da pasta atual.
+3. Extraia este ZIP na raiz e substitua os arquivos.
+4. Execute INICIAR-FUSION-BIOMETRIA-ESTAVEL.bat.
+
+Não execute em paralelo:
+- iniciar-sdk.bat;
+- FusionBiometriaLocal.ps1;
+- FusionBiometriaWatchdog.vbs;
+- compilar-x86.bat.
+
+Log esperado:
+Biometria Futronic: executável homologado ativo na porta 3041
+[Biometria] Inicialização: 1 template(s) válido(s) encontrado(s).
+Motor de acesso biométrico: ativo e aguardando digital
+[Biometria] Leitor armado. Coloque o dedo.
+
+Se aparecer 0 templates, recadastre a digital pela tela do aluno.

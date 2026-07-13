@@ -28,7 +28,10 @@ export const professorSchema = z.object({
   observacoes: texto,
   documentos: z.array(z.object({ nome: texto, tipo: texto, arquivo_base64: texto })).optional().default([]),
   status: z.string().optional().default('Ativo'),
-  senha: texto
+  senha: texto,
+  login: texto,
+  perfil: texto,
+  acessoTodosAlunos: z.boolean().optional().default(false)
 });
 
 export const professorUpdateSchema = professorSchema.partial();

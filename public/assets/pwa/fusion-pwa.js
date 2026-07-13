@@ -1,11 +1,10 @@
 (() => {
   const path = location.pathname;
-  const isAluno = path.includes('/portal-aluno') || path.includes('/treinos-v3-aluno');
-  const isProfessor = path.includes('/professor-painel') || path.includes('/portal-professor') || path.includes('/treinos-v3') || path.includes('/avaliacoes');
-  const isBiblioteca = path.includes('/biblioteca-inteligente') || path.includes('/exercicios');
-  const app = isAluno ? 'aluno' : isProfessor ? 'professor' : isBiblioteca ? 'biblioteca' : 'sistema';
-  const colors = { aluno:'#16a34a', professor:'#2563eb', sistema:'#ff6600', biblioteca:'#dc2626' };
-  const names = { aluno:'Fusion Aluno', professor:'Fusion Professor', sistema:'Fusion ERP', biblioteca:'Fusion Biblioteca' };
+  const isAluno = path.includes('/aluno-login') || path.includes('/aluno-treinos') || path.includes('/aluno-avaliacao');
+  const isBiblioteca = path.includes('/treinos');
+  const app = isAluno ? 'aluno' : isBiblioteca ? 'biblioteca' : 'sistema';
+  const colors = { aluno:'#16a34a', sistema:'#ff6600', biblioteca:'#dc2626' };
+  const names = { aluno:'Fusion Aluno', sistema:'Fusion ERP', biblioteca:'Fusion Biblioteca' };
   document.documentElement.style.setProperty('--fusion-pwa-color', colors[app] || colors.sistema);
   document.documentElement.classList.add('fusion-pwa-ready', `fusion-pwa-${app}`);
 

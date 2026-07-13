@@ -1,14 +1,14 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fusion ERP - Matrículas</title>
+  <title>Fusion ERP - MatrÃ­culas</title>
   <link rel="stylesheet" href="/css/dashboard.css">
   <link rel="stylesheet" href="/assets/css/fusion-app.css">
   <script src="/assets/js/fusion-auth.js"></script>
   <script>FusionAuth.proteger();</script>
-  <meta name="fusion-existing-pages" content="agenda,alunos,avaliacoes,bi,bi-academia,bi-academia-operacional,bi-financeiro,caixa,checkin,configuracoes,dashboard,estoque,exercicios,financeiro,login,matriculas,mensalidades,modalidades,modelos-treino,pagamentos,planos,presencas,professores,recebimentos,relatorios-caixa,treinos,turmas">
+  <meta name="fusion-existing-pages" content="access-engine,admin,agenda,aluno-avaliacao,aluno-login,aluno-treinos,alunos,avaliacoes,bi-academia,bi-academia-operacional,bi-financeiro,caixa,checkin,comercial,comercial-painel,configuracoes,dashboard,financeiro,matricula-online,matriculas,matriculas-pendentes,mensalidades,modalidades,natacao-professor,planos,professor-area,professor-login,professores,recebimentos,relatorios-caixa,treinos,turmas">
 
 <link rel="manifest" href="/manifest-sistema.webmanifest">
 <meta name="theme-color" content="#ff6600">
@@ -17,6 +17,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="/assets/pwa/icons/fusion-icon-180.png">
 <link rel="stylesheet" href="/assets/pwa/fusion-pwa-mobile.css">
+  <link rel="stylesheet" href="/assets/css/fusion-mobile-final.css">
+  <link rel="stylesheet" href="/assets/css/fusion-no-sidebar.css">
 </head>
 <body>
 
@@ -26,12 +28,12 @@
 
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
     <div>
-      <h2>Matrículas</h2>
-      <p>Vincule alunos às turmas e controle situação de matrícula.</p>
+      <h2>MatrÃ­culas</h2>
+      <p>Controle matriculas vinculadas ao plano. Turmas ficam separadas do financeiro.</p>
     </div>
 
     <a href="/pages/matriculas/cadastro.html">
-      <button>Nova Matrícula</button>
+      <button>Nova MatrÃ­cula</button>
     </a>
   </div>
 
@@ -58,10 +60,10 @@
         <th>Turma</th>
         <th>Plano</th>
         <th>Valor</th>
-        <th>Início</th>
+        <th>InÃ­cio</th>
         <th>Fim</th>
         <th>Status</th>
-        <th width="240">Ações</th>
+        <th width="240">AÃ§Ãµes</th>
       </tr>
     </thead>
     <tbody id="tabelaMatriculas"></tbody>
@@ -76,5 +78,7 @@
     <script src="/assets/js/fusion-layout.js"></script>
 
 <script src="/assets/pwa/fusion-pwa-install.js" defer></script>
+  <script src="/assets/js/fusion-mobile-final.js" defer></script>
+  <script src="/assets/js/fusion-no-sidebar.js" defer></script>
 </body>
 </html>

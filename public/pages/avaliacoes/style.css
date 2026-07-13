@@ -535,3 +535,472 @@ body.modo-embed-avaliacao .foto-postural img{width:100%;height:100%;object-fit:c
   .modal-actions{position:sticky!important;}
 }
 /* === Fusion ERP 2.7.6 P2D — Finalização Mobile Avaliação END === */
+
+/* Fusion Avaliação V3.1 - Perímetros no padrão lista do sistema original */
+.perimetros-layout.perimetros-layout-lista-unica{
+  grid-template-columns:minmax(520px,1fr) 230px!important;
+  gap:16px!important;
+  align-items:start!important;
+}
+.perimetros-lista-oficial{
+  max-height:none!important;
+  overflow:visible!important;
+  padding-right:0!important;
+  display:grid!important;
+  gap:6px!important;
+}
+.perimetros-lista-oficial h4{margin:0 0 6px!important;color:#0f172a!important;font-size:16px!important;}
+.perimetros-lista-oficial .measure-row{
+  min-height:36px!important;
+  border:1px solid #e5edf7!important;
+  border-radius:8px!important;
+  background:#f8fafc!important;
+  padding:7px 10px!important;
+  box-sizing:border-box!important;
+}
+.perimetros-lista-oficial .measure-row.single{
+  display:grid!important;
+  grid-template-columns:1fr 96px!important;
+  gap:12px!important;
+  align-items:center!important;
+}
+.perimetros-lista-oficial .measure-row.single label,
+.perimetros-lista-oficial .measure-row-stack>label{
+  text-align:left!important;
+  font-size:13px!important;
+  font-weight:800!important;
+  color:#26344d!important;
+  margin:0!important;
+}
+.perimetros-lista-oficial .measure-row.req label{color:#005bbb!important;}
+.perimetros-lista-oficial .measure-row input{
+  height:32px!important;
+  min-height:32px!important;
+  border-radius:7px!important;
+  border:1px solid #cbd8eb!important;
+  padding:5px 8px!important;
+  font-size:14px!important;
+  font-weight:800!important;
+  text-align:right!important;
+  background:#fff!important;
+}
+.perimetros-lista-oficial .measure-row-stack{
+  display:grid!important;
+  grid-template-columns:1fr auto!important;
+  gap:12px!important;
+  align-items:center!important;
+}
+.perimetros-lista-oficial .measure-pair-values{
+  display:grid!important;
+  grid-template-columns:auto 72px auto 72px!important;
+  gap:7px!important;
+  align-items:center!important;
+  justify-content:end!important;
+}
+.perimetros-lista-oficial .measure-pair-values span{
+  font-size:11px!important;
+  font-weight:700!important;
+  color:#1f2a44!important;
+}
+.resultado-card-rcq.compacto{
+  position:sticky!important;
+  top:12px!important;
+  min-height:auto!important;
+  padding:14px 12px!important;
+  border-radius:12px!important;
+}
+.resultado-card-rcq.compacto h4{font-size:14px!important;margin:0 0 6px!important;color:#0f172a!important;}
+.resultado-card-rcq.compacto p{font-size:11px!important;line-height:1.25!important;margin:0 0 10px!important;color:#334155!important;}
+.resultado-card-rcq.compacto .rcq-value,
+.resultado-card-rcq.compacto .sum-value{
+  margin:8px 0!important;
+  border:1px solid #e2e8f0!important;
+  border-radius:9px!important;
+  padding:9px 8px!important;
+  background:#fff!important;
+}
+.resultado-card-rcq.compacto .rcq-value strong,
+.resultado-card-rcq.compacto .sum-value strong{font-size:24px!important;}
+.resultado-card-rcq.compacto .info{
+  border:1px solid #e2e8f0!important;
+  border-radius:8px!important;
+  background:#f8fafc!important;
+  padding:8px!important;
+  margin:8px 0!important;
+  font-weight:800!important;
+}
+.rcq-mini-grid{
+  display:grid!important;
+  grid-template-columns:1fr auto!important;
+  gap:6px 10px!important;
+  border:1px solid #e2e8f0!important;
+  border-radius:8px!important;
+  padding:8px!important;
+  background:#fff!important;
+  font-size:12px!important;
+}
+.rcq-mini-grid span{color:#64748b!important;}
+.rcq-mini-grid strong{color:#0f172a!important;}
+@media(max-width:980px){
+  .perimetros-layout.perimetros-layout-lista-unica{grid-template-columns:1fr!important;}
+  .resultado-card-rcq.compacto{position:static!important;}
+  .perimetros-lista-oficial .measure-row.single{grid-template-columns:1fr 86px!important;}
+  .perimetros-lista-oficial .measure-row-stack{grid-template-columns:1fr!important;}
+  .perimetros-lista-oficial .measure-pair-values{justify-content:stretch!important;grid-template-columns:auto 1fr auto 1fr!important;}
+}
+
+/* Fusion Auditoria — página Avaliações como histórico administrativo */
+.aval-actions-historico{
+  display:flex!important;
+  justify-content:flex-end!important;
+  align-items:center!important;
+  gap:10px!important;
+}
+#btnNova{
+  display:none!important;
+}
+
+
+/* Fusion ERP — Avaliações Mobile Professor v2: correção de largura e usabilidade */
+html.modo-professor-avaliacao-html,
+html.modo-professor-avaliacao-html body,
+body.modo-professor-avaliacao{
+  width:100%!important;
+  max-width:100%!important;
+  overflow-x:hidden!important;
+  background:#f5f7fb!important;
+}
+body.modo-professor-avaliacao .fusion-topbar,
+body.modo-professor-avaliacao .fusion-ui-topbar,
+body.modo-professor-avaliacao [data-fusion-user]{display:none!important;}
+body.modo-professor-avaliacao .fusion-shell,
+body.modo-professor-avaliacao .fusion-main,
+body.modo-professor-avaliacao main{
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  margin:0!important;
+  padding:0!important;
+  overflow-x:hidden!important;
+}
+body.modo-professor-avaliacao .fusion-content.aval-page,
+body.modo-professor-avaliacao .aval-page{
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  margin:0!important;
+  padding:12px!important;
+  box-sizing:border-box!important;
+  display:grid!important;
+  gap:12px!important;
+  overflow-x:hidden!important;
+}
+body.modo-professor-avaliacao .aval-page > *,
+body.modo-professor-avaliacao .fusion-card,
+body.modo-professor-avaliacao .aval-header-card,
+body.modo-professor-avaliacao .aval-toolbar,
+body.modo-professor-avaliacao .aval-kpis{
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  box-sizing:border-box!important;
+}
+body.modo-professor-avaliacao .aval-header-card{
+  display:grid!important;
+  grid-template-columns:1fr!important;
+  gap:12px!important;
+  border-radius:18px!important;
+  padding:18px!important;
+  overflow:hidden!important;
+}
+body.modo-professor-avaliacao .aval-header-card h2{
+  font-size:clamp(24px,7vw,34px)!important;
+  line-height:1.05!important;
+  margin:0 0 8px!important;
+  max-width:100%!important;
+  overflow-wrap:anywhere!important;
+}
+body.modo-professor-avaliacao .aval-header-card p{
+  display:block!important;
+  max-width:100%!important;
+  font-size:15px!important;
+  line-height:1.3!important;
+  white-space:normal!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  overflow-wrap:anywhere!important;
+}
+body.modo-professor-avaliacao .aval-actions-historico{
+  display:grid!important;
+  grid-template-columns:1fr!important;
+  gap:8px!important;
+}
+body.modo-professor-avaliacao .aval-actions-historico #btnAtualizar{display:none!important;}
+body.modo-professor-avaliacao .aval-actions-historico #btnNovaMobile{
+  display:block!important;
+  width:100%!important;
+  min-height:52px!important;
+  border-radius:14px!important;
+  font-size:16px!important;
+}
+body.modo-professor-avaliacao .aval-kpis{
+  display:grid!important;
+  grid-template-columns:1fr 1fr!important;
+  gap:10px!important;
+}
+body.modo-professor-avaliacao .aval-kpis > div{
+  border-radius:16px!important;
+  padding:14px!important;
+  min-height:88px!important;
+}
+body.modo-professor-avaliacao .aval-kpis > div:nth-child(2),
+body.modo-professor-avaliacao .aval-kpis > div:nth-child(4){display:none!important;}
+body.modo-professor-avaliacao .aval-toolbar{
+  display:grid!important;
+  grid-template-columns:1fr!important;
+  gap:12px!important;
+  border-radius:18px!important;
+  padding:16px!important;
+  overflow:hidden!important;
+}
+body.modo-professor-avaliacao .field,
+body.modo-professor-avaliacao .field input,
+body.modo-professor-avaliacao .field select,
+body.modo-professor-avaliacao .field button{
+  width:100%!important;
+  max-width:100%!important;
+  box-sizing:border-box!important;
+}
+body.modo-professor-avaliacao .field input,
+body.modo-professor-avaliacao .field select{
+  min-height:54px!important;
+  border-radius:14px!important;
+  font-size:16px!important;
+  padding:12px 14px!important;
+}
+body.modo-professor-avaliacao .btn-field .fusion-button{
+  min-height:54px!important;
+  border-radius:14px!important;
+}
+body.modo-professor-avaliacao .fusion-card{
+  border-radius:18px!important;
+  padding:16px!important;
+  overflow:hidden!important;
+}
+body.modo-professor-avaliacao .table-wrap{
+  width:100%!important;
+  max-width:100%!important;
+  overflow-x:auto!important;
+  -webkit-overflow-scrolling:touch!important;
+}
+body.modo-professor-avaliacao table{min-width:760px!important;}
+
+@media(max-width:768px){
+  body:not(.modo-professor-avaliacao) .fusion-content.aval-page{max-width:100%!important;overflow-x:hidden!important;}
+  body:not(.modo-professor-avaliacao) .aval-header-card,
+  body:not(.modo-professor-avaliacao) .aval-toolbar,
+  body:not(.modo-professor-avaliacao) .fusion-card{max-width:100%!important;min-width:0!important;overflow:hidden!important;}
+  body:not(.modo-professor-avaliacao) .aval-header-card p{white-space:normal!important;overflow-wrap:anywhere!important;}
+}
+
+@media(max-width:420px){
+  body.modo-professor-avaliacao .fusion-content.aval-page{padding:10px!important;}
+  body.modo-professor-avaliacao .aval-header-card{padding:16px!important;}
+  body.modo-professor-avaliacao .aval-header-card p{
+    max-height:42px!important;
+  }
+  body.modo-professor-avaliacao .aval-kpis{grid-template-columns:1fr!important;}
+}
+
+
+/* Fusion ERP — Avaliações Professor Mobile v5: destrava rolagem e lista de alunos */
+html.modo-professor-avaliacao-html,
+html.modo-professor-avaliacao-html body,
+body.modo-professor-avaliacao{
+  height:auto!important;
+  min-height:100dvh!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  touch-action:auto!important;
+}
+body.modo-professor-avaliacao .fusion-shell,
+body.modo-professor-avaliacao .fusion-main,
+body.modo-professor-avaliacao main,
+body.modo-professor-avaliacao .fusion-content.aval-page,
+body.modo-professor-avaliacao .aval-page{
+  height:auto!important;
+  min-height:0!important;
+  overflow-y:visible!important;
+  overscroll-behavior:auto!important;
+}
+body.modo-professor-avaliacao .aval-header-card,
+body.modo-professor-avaliacao .fusion-card,
+body.modo-professor-avaliacao .aval-toolbar{
+  overflow:visible!important;
+}
+body.modo-professor-avaliacao select,
+body.modo-professor-avaliacao input,
+body.modo-professor-avaliacao button{
+  pointer-events:auto!important;
+  touch-action:manipulation!important;
+}
+body.modo-professor-avaliacao .modal-backdrop.hidden{
+  display:none!important;
+}
+@media(max-width:768px){
+  body.modo-professor-avaliacao .fusion-content.aval-page,
+  body.modo-professor-avaliacao .aval-page{
+    padding:12px!important;
+    padding-bottom:96px!important;
+  }
+  body.modo-professor-avaliacao .table-wrap{
+    max-height:none!important;
+    overflow-x:auto!important;
+    overflow-y:visible!important;
+  }
+}
+
+
+/* Fusion ERP — Avaliações Mobile v6: libera rolagem no Portal Professor */
+html.modo-professor-avaliacao-html,
+html.modo-professor-avaliacao-html body,
+body.modo-professor-avaliacao{
+  height:auto!important;
+  min-height:100%!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  position:static!important;
+  touch-action:auto!important;
+  -webkit-overflow-scrolling:touch!important;
+}
+
+body.modo-professor-avaliacao .fusion-shell,
+body.modo-professor-avaliacao .fusion-main,
+body.modo-professor-avaliacao .fusion-content,
+body.modo-professor-avaliacao .aval-page{
+  height:auto!important;
+  min-height:auto!important;
+  max-height:none!important;
+  overflow:visible!important;
+  position:relative!important;
+}
+
+body.modo-professor-avaliacao .modal-backdrop{
+  position:fixed!important;
+  inset:0!important;
+  display:flex!important;
+  align-items:stretch!important;
+  justify-content:stretch!important;
+  padding:0!important;
+  background:rgba(15,23,42,.55)!important;
+  overflow:auto!important;
+  -webkit-overflow-scrolling:touch!important;
+  z-index:1000!important;
+}
+
+body.modo-professor-avaliacao .modal-backdrop.hidden{
+  display:none!important;
+}
+
+body.modo-professor-avaliacao .modal-avaliacao{
+  width:100vw!important;
+  max-width:100vw!important;
+  height:100dvh!important;
+  max-height:100dvh!important;
+  min-height:100dvh!important;
+  border-radius:0!important;
+  border:0!important;
+  overflow:auto!important;
+  -webkit-overflow-scrolling:touch!important;
+  box-shadow:none!important;
+}
+
+body.modo-professor-avaliacao .aval-form{
+  height:auto!important;
+  min-height:auto!important;
+  max-height:none!important;
+  overflow:visible!important;
+  padding-bottom:120px!important;
+}
+
+body.modo-professor-avaliacao .sca-titlebar{
+  position:sticky!important;
+  top:0!important;
+  z-index:20!important;
+}
+
+body.modo-professor-avaliacao .sca-tabs{
+  position:sticky!important;
+  top:58px!important;
+  z-index:18!important;
+  overflow-x:auto!important;
+  overflow-y:hidden!important;
+}
+
+body.modo-professor-avaliacao .modal-actions{
+  position:sticky!important;
+  bottom:0!important;
+  z-index:22!important;
+}
+
+@media(max-width:760px){
+  body.modo-professor-avaliacao .aval-page{
+    padding:12px!important;
+    gap:12px!important;
+  }
+  body.modo-professor-avaliacao .aval-header-card{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    gap:14px!important;
+    border-radius:22px!important;
+    padding:22px!important;
+  }
+  body.modo-professor-avaliacao .aval-header-card p{
+    white-space:normal!important;
+    overflow:visible!important;
+  }
+  body.modo-professor-avaliacao .aval-actions,
+  body.modo-professor-avaliacao .aval-actions-historico{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    width:100%!important;
+  }
+  body.modo-professor-avaliacao #btnAtualizar{
+    display:none!important;
+  }
+  body.modo-professor-avaliacao .aval-kpis{
+    grid-template-columns:1fr 1fr!important;
+    gap:10px!important;
+  }
+  body.modo-professor-avaliacao .aval-kpis>div{
+    min-height:104px!important;
+    border-radius:20px!important;
+  }
+  body.modo-professor-avaliacao .aval-toolbar{
+    grid-template-columns:1fr!important;
+    border-radius:22px!important;
+    padding:20px!important;
+  }
+  body.modo-professor-avaliacao .field input,
+  body.modo-professor-avaliacao .field select{
+    min-height:62px!important;
+    border-radius:16px!important;
+    font-size:18px!important;
+  }
+  body.modo-professor-avaliacao .fusion-button,
+  body.modo-professor-avaliacao .btn-row,
+  body.modo-professor-avaliacao .btn-light{
+    min-height:56px!important;
+    border-radius:16px!important;
+    font-size:16px!important;
+    font-weight:900!important;
+  }
+  body.modo-professor-avaliacao .table-wrap{
+    max-width:100%!important;
+    overflow-x:auto!important;
+    -webkit-overflow-scrolling:touch!important;
+  }
+  body.modo-professor-avaliacao table{
+    min-width:820px!important;
+  }
+}

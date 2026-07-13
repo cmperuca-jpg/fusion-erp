@@ -1,14 +1,14 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fusion ERP - Cadastro de Matrícula</title>
+  <title>Fusion ERP - Cadastro de MatrÃ­cula</title>
   <link rel="stylesheet" href="/css/dashboard.css">
   <link rel="stylesheet" href="/assets/css/fusion-app.css">
   <script src="/assets/js/fusion-auth.js"></script>
   <script>FusionAuth.proteger();</script>
-  <meta name="fusion-existing-pages" content="agenda,alunos,avaliacoes,bi,bi-academia,bi-academia-operacional,bi-financeiro,caixa,checkin,configuracoes,dashboard,estoque,exercicios,financeiro,login,matriculas,mensalidades,modalidades,modelos-treino,pagamentos,planos,presencas,professores,recebimentos,relatorios-caixa,treinos,turmas">
+  <meta name="fusion-existing-pages" content="access-engine,admin,agenda,aluno-avaliacao,aluno-login,aluno-treinos,alunos,avaliacoes,bi-academia,bi-academia-operacional,bi-financeiro,caixa,checkin,comercial,comercial-painel,configuracoes,dashboard,financeiro,matricula-online,matriculas,matriculas-pendentes,mensalidades,modalidades,natacao-professor,planos,professor-area,professor-login,professores,recebimentos,relatorios-caixa,treinos,turmas">
   <style>
     .matricula-form-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:18px}.matricula-form-grid label{display:grid;gap:6px;font-weight:700;color:#334155;font-size:13px}.matricula-form-grid input,.matricula-form-grid select,.matricula-form-grid textarea{width:100%;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:10px;padding:11px;font:inherit;background:#fff}.matricula-form-grid .full{grid-column:1/-1}.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}.tab{border:0;border-radius:8px;padding:10px 18px;font-weight:700;cursor:pointer;background:#e5e7eb;color:#0f172a}.tab.active{background:#ff6600;color:#fff}.tab-content{display:none}.tab-content.active{display:block}.form-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}.form-actions button{border:0;border-radius:10px;padding:11px 18px;font-weight:700;cursor:pointer}.form-actions button[type="submit"]{background:#ff6600;color:#fff}.form-actions .secondary{background:#1e293b;color:#fff}.resumo-plano{background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:14px;margin-top:14px;color:#334155;line-height:1.55}.alerta-matricula{display:none;margin-top:14px;border-radius:10px;padding:12px;font-weight:700}.alerta-matricula.ok{display:block;background:#dcfce7;color:#166534;border:1px solid #bbf7d0}.alerta-matricula.erro{display:block;background:#fee2e2;color:#991b1b;border:1px solid #fecaca}.hint{color:#64748b;font-size:12px;font-weight:400}.matricula-existente{display:none;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;border-radius:12px;padding:14px;margin-top:14px;line-height:1.5}.matricula-existente.ativo{display:block}.matricula-existente strong{color:#7c2d12}.matricula-existente .acoes-existente{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.matricula-existente button{border:0;border-radius:9px;padding:9px 13px;font-weight:700;cursor:pointer}.matricula-existente .primary{background:#ff6600;color:#fff}.matricula-existente .dark{background:#1e293b;color:#fff}.hint{color:#64748b;font-size:12px;font-weight:400}@media(max-width:900px){.matricula-form-grid{grid-template-columns:1fr}.form-actions{justify-content:stretch}.form-actions button{width:100%}}
   </style>
@@ -20,14 +20,16 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="/assets/pwa/icons/fusion-icon-180.png">
 <link rel="stylesheet" href="/assets/pwa/fusion-pwa-mobile.css">
+  <link rel="stylesheet" href="/assets/css/fusion-mobile-final.css">
+  <link rel="stylesheet" href="/assets/css/fusion-no-sidebar.css">
 </head>
 <body>
 <main class="main">
 <section class="card">
   <div class="cadastro-header">
     <div>
-      <h2 id="tituloCadastro">Nova Matrícula</h2>
-      <p>Vincule um aluno, defina turma, plano e gere o financeiro inicial integrado.</p>
+      <h2 id="tituloCadastro">Nova MatrÃ­cula</h2>
+      <p>Vincule aluno e plano para gerar o financeiro inicial. Turma e apenas organizacao operacional.</p>
     </div>
   </div>
 
@@ -36,8 +38,8 @@
 
   <div class="tabs" role="tablist">
     <button type="button" class="tab active" data-tab="dados">Dados</button>
-    <button type="button" class="tab" data-tab="financeiro">Financeiro</button>
-    <button type="button" class="tab" data-tab="observacoes">Observações</button>
+    <button type="button" class="tab" data-tab="financeiro">Plano e financeiro</button>
+    <button type="button" class="tab" data-tab="observacoes">ObservaÃ§Ãµes</button>
   </div>
 
   <form id="formMatricula" autocomplete="off">
@@ -60,10 +62,10 @@
             <option value="Cancelada">Cancelada</option>
           </select>
         </label>
-        <label>Data da matrícula
+        <label>Data da matrÃ­cula
           <input id="data_matricula" type="date">
         </label>
-        <label>Data de início
+        <label>Data de inÃ­cio
           <input id="data_inicio" type="date">
         </label>
         <label>Data fim
@@ -80,7 +82,7 @@
         <label>Valor mensal
           <input id="valor" type="number" min="0" step="0.01" readonly>
         </label>
-        <label>Taxa de matrícula
+        <label>Taxa de matrÃ­cula
           <input id="taxa_matricula" type="number" min="0" step="0.01">
         </label>
         <label>Desconto inicial
@@ -94,25 +96,25 @@
           <select id="forma_pagamento">
             <option value="Dinheiro">Dinheiro</option>
             <option value="PIX">PIX</option>
-            <option value="Cartão de Crédito">Cartão de Crédito</option>
-            <option value="Cartão de Débito">Cartão de Débito</option>
+            <option value="CartÃ£o de CrÃ©dito">CartÃ£o de CrÃ©dito</option>
+            <option value="CartÃ£o de DÃ©bito">CartÃ£o de DÃ©bito</option>
             <option value="Boleto">Boleto</option>
-            <option value="Transferência">Transferência</option>
+            <option value="TransferÃªncia">TransferÃªncia</option>
           </select>
         </label>
         <label>Primeiro vencimento
           <input id="vencimento" type="date">
         </label>
-        <label>Cobrar taxa de matrícula
+        <label>Cobrar taxa de matrÃ­cula
           <select id="cobrar_taxa_matricula">
             <option value="true">Sim</option>
-            <option value="false">Não</option>
+            <option value="false">NÃ£o</option>
           </select>
         </label>
         <label>Gerar mensalidade inicial
           <select id="gerar_mensalidade">
             <option value="true">Sim</option>
-            <option value="false">Não</option>
+            <option value="false">NÃ£o</option>
           </select>
         </label>
         <div class="full resumo-plano" id="resumoPlano">Selecione um plano para visualizar valores e modalidades.</div>
@@ -121,15 +123,15 @@
 
     <div class="tab-content" id="tab-observacoes">
       <div class="matricula-form-grid">
-        <label class="full">Observações
-          <textarea id="observacoes" rows="5" placeholder="Observações internas da matrícula"></textarea>
+        <label class="full">ObservaÃ§Ãµes
+          <textarea id="observacoes" rows="5" placeholder="ObservaÃ§Ãµes internas da matrÃ­cula"></textarea>
         </label>
       </div>
     </div>
 
     <div class="form-actions">
       <button type="button" class="secondary" id="btnCancelar">Cancelar</button>
-      <button type="submit" id="btnSalvar">Salvar matrícula</button>
+      <button type="submit" id="btnSalvar">Salvar matrÃ­cula</button>
     </div>
   </form>
 </section>
@@ -138,5 +140,7 @@
 <script src="/assets/js/fusion-layout.js"></script>
 
 <script src="/assets/pwa/fusion-pwa-install.js" defer></script>
+  <script src="/assets/js/fusion-mobile-final.js" defer></script>
+  <script src="/assets/js/fusion-no-sidebar.js" defer></script>
 </body>
 </html>

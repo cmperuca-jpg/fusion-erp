@@ -1,0 +1,30 @@
+:root{--access-orange:#ff6600;--access-dark:#101826;--access-bg:#f4f7fb;--access-card:#fff;--access-border:#dbe3ef;--access-muted:#64748b;--access-green:#16a34a;--access-red:#dc2626}
+body{background:var(--access-bg);color:#111827;font-family:Arial,Helvetica,sans-serif}
+.access-hero{display:flex;align-items:center;justify-content:space-between;gap:16px;background:linear-gradient(135deg,#101826,#1f2937);color:#fff;border-radius:20px;padding:22px;margin-bottom:18px;box-shadow:0 16px 40px rgba(15,23,42,.14)}
+.access-hero h1{margin:8px 0 6px;font-size:30px}.access-hero p{margin:0;color:#cbd5e1}.access-pill{display:inline-flex;background:rgba(255,102,0,.18);color:#ffb37a;border:1px solid rgba(255,102,0,.34);border-radius:999px;padding:6px 10px;font-size:12px;font-weight:900;text-transform:uppercase}
+.access-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px}.access-kpis{margin-bottom:18px}.access-card{background:var(--access-card);border:1px solid var(--access-border);border-radius:18px;padding:18px;box-shadow:0 10px 28px rgba(15,23,42,.06)}.access-card small{display:block;color:var(--access-muted);font-weight:900;text-transform:uppercase;font-size:12px}.access-card strong{display:block;font-size:32px;margin-top:8px}.access-card h2{margin:0 0 14px;font-size:20px}.access-layout{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(420px,100%),1fr));gap:16px;margin-bottom:16px}.access-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}label{display:block;margin:10px 0 6px;font-weight:800;color:#334155}input,select{width:100%;border:1px solid #cbd5e1;border-radius:12px;padding:11px;font:inherit;background:#fff}button{border:0;border-radius:12px;background:var(--access-orange);color:#fff;padding:11px 14px;font-weight:900;cursor:pointer}button:hover{filter:brightness(.95)}.access-secondary{background:#111827}.access-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}.access-result{margin-top:14px;border-radius:14px;padding:13px;font-weight:800}.access-muted{background:#f1f5f9;color:#475569}.access-ok{background:#dcfce7;color:#166534}.access-no{background:#fee2e2;color:#991b1b}.access-table-wrap{width:100%;overflow-x:auto}table{width:100%;border-collapse:collapse}th,td{padding:11px;border-bottom:1px solid #e5e7eb;text-align:left;vertical-align:top}th{font-size:12px;text-transform:uppercase;color:#475569}.badge{display:inline-flex;border-radius:999px;padding:5px 9px;font-size:12px;font-weight:900}.badge-ok{background:#dcfce7;color:#166534}.badge-no{background:#fee2e2;color:#991b1b}.access-list{display:grid;gap:8px}.access-person{border:1px solid #e5e7eb;border-radius:12px;padding:10px}.access-person strong{font-size:15px;margin:0}.access-person small{text-transform:none;font-weight:700}
+@media(max-width:900px){.access-hero{display:grid;padding:16px}.access-row{grid-template-columns:1fr}.access-actions{display:grid}.access-actions button,button{width:100%;min-height:48px}.access-card{padding:14px}}
+
+.access-help{display:block;margin:6px 0 12px;color:#64748b;font-size:12px;font-weight:700;line-height:1.35}.access-driver-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}.access-driver-card{border:1px solid #e2e8f0;border-radius:14px;padding:12px;background:#fff}.access-driver-card strong{display:block}.access-driver-card small{display:block;color:#64748b;margin:4px 0 8px}.access-driver-card p{margin:8px 0 0;color:#475569;font-size:12px;line-height:1.35}.badge-warn{background:#fef3c7;color:#92400e}
+
+.access-biometria-card{margin-bottom:18px}
+.access-biometria-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px}
+.access-biometria-head h2{margin:10px 0 6px}
+.access-biometria-head p{margin:0;color:var(--access-muted);line-height:1.45}
+.access-biometria-status{display:flex;align-items:center;gap:9px;border:1px solid var(--access-border);border-radius:999px;padding:9px 13px;white-space:nowrap;background:#f8fafc}
+.access-biometria-status span{width:11px;height:11px;border-radius:50%;background:#64748b;box-shadow:0 0 0 4px rgba(100,116,139,.12)}
+.access-biometria-status strong{font-size:13px;margin:0}
+.access-biometria-status[data-status="ativa"]{color:#166534;background:#f0fdf4;border-color:#bbf7d0}
+.access-biometria-status[data-status="ativa"] span{background:#16a34a;box-shadow:0 0 0 4px rgba(22,163,74,.13)}
+.access-biometria-status[data-status="processando"]{color:#92400e;background:#fffbeb;border-color:#fde68a}
+.access-biometria-status[data-status="processando"] span{background:#f59e0b;box-shadow:0 0 0 4px rgba(245,158,11,.14)}
+.access-biometria-status[data-status="erro"]{color:#991b1b;background:#fef2f2;border-color:#fecaca}
+.access-biometria-status[data-status="erro"] span{background:#dc2626;box-shadow:0 0 0 4px rgba(220,38,38,.13)}
+.access-biometria-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.access-biometria-actions button:disabled{opacity:.45;cursor:not-allowed}
+@media(max-width:760px){
+  .access-biometria-head{display:grid}
+  .access-biometria-status{justify-content:center}
+  .access-biometria-actions{display:grid}
+}
+

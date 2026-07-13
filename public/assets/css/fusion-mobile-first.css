@@ -78,3 +78,24 @@ body.fusion-menu-open .fusion-mobile-backdrop{display:block;}
   .card,.box,.panel,.dashboard-card,.kpi,.metric,.widget{padding:14px!important;}
   .fusion-mobile-bottom-actions{position:sticky;bottom:0;z-index:700;display:grid;grid-template-columns:1fr;gap:8px;padding:10px;background:linear-gradient(180deg,rgba(246,247,251,0),#f6f7fb 25%);}
 }
+
+
+/* Fusion ERP 2.9.3B — ajuste global para evitar largura extra em mobile */
+@media (max-width:900px){
+  html,body{max-width:100vw!important;overflow-x:hidden!important;}
+  .fusion-shell,.fusion-main,.fusion-content{max-width:100vw!important;overflow-x:hidden;}
+  .fusion-main{padding-left:8px!important;padding-right:8px!important;}
+  .fusion-topbar{padding-left:10px!important;padding-right:10px!important;}
+}
+
+
+/* Fusion ERP Mobile Etapa 3 - compatibilidade area do professor */
+@media(max-width:900px){
+  .professor-avaliacoes-v3-shell,.professor-treinos-v3-shell,.professor-natacao-shell{max-width:100vw!important;overflow:hidden!important;}
+  .professor-avaliacoes-v3-frame,.professor-treinos-v3-frame,.professor-natacao-frame{max-width:100%!important;}
+}
+
+/* FUSION_NO_SIDEBAR_OVERRIDE */
+body.fusion-no-sidebar .fusion-ui-sidebar,body.fusion-no-sidebar .fusion-sidebar,body.fusion-no-sidebar aside.sidebar,body.fusion-no-sidebar .sidebar,body.fusion-no-sidebar .fusion-clean-sidebar,body.fusion-no-sidebar .fusion-mobile-final-bar,body.fusion-no-sidebar .fusion-mobile-final-overlay,body.fusion-no-sidebar .fusion-mobile-menu-button,body.fusion-no-sidebar .fusion-mobile-overlay,body.fusion-no-sidebar .fusion-mobile-backdrop,body.fusion-no-sidebar .fusion-ui-backdrop{display:none!important;visibility:hidden!important;pointer-events:none!important;}
+body.fusion-no-sidebar .fusion-shell{display:block!important;width:100%!important;}
+body.fusion-no-sidebar .fusion-main{width:100%!important;max-width:100%!important;margin-left:0!important;padding-left:0!important;}

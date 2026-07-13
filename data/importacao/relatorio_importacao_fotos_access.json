@@ -1,0 +1,185 @@
+{
+  "ok": true,
+  "destino": "uploads/alunos + data/alunos.json",
+  "arquivo_fotos_txt": "Fotos.txt",
+  "arquivo_zip": "Fotos.zip",
+  "modo_arquivos": "upload",
+  "total_linhas_txt": 193,
+  "registros_txt_validos": 193,
+  "imagens_no_zip": 193,
+  "alunos_na_base": 393,
+  "vinculadas": 193,
+  "sem_aluno": 0,
+  "sem_arquivo": 0,
+  "ignorados_txt": 0,
+  "erros": 0,
+  "gerado_em": "2026-07-07T09:45:11.123Z",
+  "preview": [
+    {
+      "id_legado": "1",
+      "alunoId": "f1439882-c9ad-400d-a298-dbec7b734eb6",
+      "aluno": "ADAM MIGUEL DE SANTANA",
+      "arquivo_origem": "1_foto3por4.jpg",
+      "arquivo_destino": "1_adam_miguel_de_santana.jpg",
+      "foto": "/uploads/alunos/1_adam_miguel_de_santana.jpg"
+    },
+    {
+      "id_legado": "2",
+      "alunoId": "cf3f5963-7678-4cb8-8d98-64b4f8cf81f9",
+      "aluno": "ADRIANA RODRIGUES RIBEIRO DA SILVA",
+      "arquivo_origem": "2_foto3por4.jpg",
+      "arquivo_destino": "2_adriana_rodrigues_ribeiro_da_silva.jpg",
+      "foto": "/uploads/alunos/2_adriana_rodrigues_ribeiro_da_silva.jpg"
+    },
+    {
+      "id_legado": "1",
+      "alunoId": "f1439882-c9ad-400d-a298-dbec7b734eb6",
+      "aluno": "ADAM MIGUEL DE SANTANA",
+      "arquivo_origem": "A1_foto3por4.jpg",
+      "arquivo_destino": "1_adam_miguel_de_santana.jpg",
+      "foto": "/uploads/alunos/1_adam_miguel_de_santana.jpg"
+    },
+    {
+      "id_legado": "2",
+      "alunoId": "cf3f5963-7678-4cb8-8d98-64b4f8cf81f9",
+      "aluno": "ADRIANA RODRIGUES RIBEIRO DA SILVA",
+      "arquivo_origem": "A2_foto3por4.jpg",
+      "arquivo_destino": "2_adriana_rodrigues_ribeiro_da_silva.jpg",
+      "foto": "/uploads/alunos/2_adriana_rodrigues_ribeiro_da_silva.jpg"
+    },
+    {
+      "id_legado": "4",
+      "alunoId": "47800783-ce9f-4176-87cd-54863fce2ab3",
+      "aluno": "ALDO SILVA",
+      "arquivo_origem": "A4_foto3por4.jpg",
+      "arquivo_destino": "4_aldo_silva.jpg",
+      "foto": "/uploads/alunos/4_aldo_silva.jpg"
+    },
+    {
+      "id_legado": "5",
+      "alunoId": "9c5e6857-4040-46f8-849e-bf25a4e5717d",
+      "aluno": "ALINE IZABELLI CORDEIRO DE SOUZA",
+      "arquivo_origem": "A5_foto3por4.jpg",
+      "arquivo_destino": "5_aline_izabelli_cordeiro_de_souza.jpg",
+      "foto": "/uploads/alunos/5_aline_izabelli_cordeiro_de_souza.jpg"
+    },
+    {
+      "id_legado": "6",
+      "alunoId": "c0647bde-9fab-49b1-8ed8-114c439f0a36",
+      "aluno": "ANA PAULA DOS SANTOS LIMA",
+      "arquivo_origem": "A6_foto3por4.jpg",
+      "arquivo_destino": "6_ana_paula_dos_santos_lima.jpg",
+      "foto": "/uploads/alunos/6_ana_paula_dos_santos_lima.jpg"
+    },
+    {
+      "id_legado": "7",
+      "alunoId": "6331016c-b4bb-4df0-9e82-59d05c8b9e7c",
+      "aluno": "ARICREMIS PEDRO DA SILVA",
+      "arquivo_origem": "A7_foto3por4.jpg",
+      "arquivo_destino": "7_aricremis_pedro_da_silva.jpg",
+      "foto": "/uploads/alunos/7_aricremis_pedro_da_silva.jpg"
+    },
+    {
+      "id_legado": "10",
+      "alunoId": "c3c8c026-51ff-40f3-aa65-5455e8c594d7",
+      "aluno": "BRUNO HENRIQUE SANTOS DA SILVA",
+      "arquivo_origem": "A10_foto3por4.jpg",
+      "arquivo_destino": "10_bruno_henrique_santos_da_silva.jpg",
+      "foto": "/uploads/alunos/10_bruno_henrique_santos_da_silva.jpg"
+    },
+    {
+      "id_legado": "17",
+      "alunoId": "616e7d16-2184-4631-82d9-efb0ba867790",
+      "aluno": "DANIELA MORAIS TENÓRIO DE OLIVEIRA",
+      "arquivo_origem": "A17_foto3por4.jpg",
+      "arquivo_destino": "17_daniela_morais_tenorio_de_oliveira.jpg",
+      "foto": "/uploads/alunos/17_daniela_morais_tenorio_de_oliveira.jpg"
+    },
+    {
+      "id_legado": "27",
+      "alunoId": "68d0a232-a80d-42aa-84dc-c7d57d69b762",
+      "aluno": "EDNALVA SOARES PINTO",
+      "arquivo_origem": "A27_foto3por4.jpg",
+      "arquivo_destino": "27_ednalva_soares_pinto.jpg",
+      "foto": "/uploads/alunos/27_ednalva_soares_pinto.jpg"
+    },
+    {
+      "id_legado": "79",
+      "alunoId": "3c3b79a4-97ef-4540-9e45-71432d098353",
+      "aluno": "LUZIANA DE ARAÚJO ALVES",
+      "arquivo_origem": "A79_foto3por4.jpg",
+      "arquivo_destino": "79_luziana_de_araujo_alves.jpg",
+      "foto": "/uploads/alunos/79_luziana_de_araujo_alves.jpg"
+    },
+    {
+      "id_legado": "29",
+      "alunoId": "a32afd3b-5df1-4254-838f-c5cccc05ddf5",
+      "aluno": "EDVALDO GOMES DA SILVA",
+      "arquivo_origem": "A29_foto3por4.jpg",
+      "arquivo_destino": "29_edvaldo_gomes_da_silva.jpg",
+      "foto": "/uploads/alunos/29_edvaldo_gomes_da_silva.jpg"
+    },
+    {
+      "id_legado": "39",
+      "alunoId": "c513ae91-c196-4edb-ae40-0f91be8c3a95",
+      "aluno": "GABRIELA MARQUES DE SOUZA",
+      "arquivo_origem": "A39_foto3por4.jpg",
+      "arquivo_destino": "39_gabriela_marques_de_souza.jpg",
+      "foto": "/uploads/alunos/39_gabriela_marques_de_souza.jpg"
+    },
+    {
+      "id_legado": "11",
+      "alunoId": "5ce052de-bf9a-4f2f-948d-de87850b823a",
+      "aluno": "CÍCERA FERREIRA DE ARAÚJO",
+      "arquivo_origem": "A11_foto3por4.jpg",
+      "arquivo_destino": "11_cicera_ferreira_de_araujo.jpg",
+      "foto": "/uploads/alunos/11_cicera_ferreira_de_araujo.jpg"
+    },
+    {
+      "id_legado": "12",
+      "alunoId": "392be2fc-5483-4984-874a-c88926357fb8",
+      "aluno": "CLAUDEVANIA DA SILVA BARROS OLIVEIRA",
+      "arquivo_origem": "A12_foto3por4.jpg",
+      "arquivo_destino": "12_claudevania_da_silva_barros_oliveira.jpg",
+      "foto": "/uploads/alunos/12_claudevania_da_silva_barros_oliveira.jpg"
+    },
+    {
+      "id_legado": "13",
+      "alunoId": "261f86d7-78a9-4538-94ab-bc552d9ef258",
+      "aluno": "CLAUDIANE PEREIRA DA SILVA",
+      "arquivo_origem": "A13_foto3por4.jpg",
+      "arquivo_destino": "13_claudiane_pereira_da_silva.jpg",
+      "foto": "/uploads/alunos/13_claudiane_pereira_da_silva.jpg"
+    },
+    {
+      "id_legado": "14",
+      "alunoId": "10246764-fe36-4ebf-bada-1744f452ffb8",
+      "aluno": "CRISTIANE SILVA DOS SANTOS",
+      "arquivo_origem": "A14_foto3por4.jpg",
+      "arquivo_destino": "14_cristiane_silva_dos_santos.jpg",
+      "foto": "/uploads/alunos/14_cristiane_silva_dos_santos.jpg"
+    },
+    {
+      "id_legado": "15",
+      "alunoId": "8e71981d-135a-4089-be1b-df73568b124f",
+      "aluno": "DANIEL DE SOUZA",
+      "arquivo_origem": "A15_foto3por4.jpg",
+      "arquivo_destino": "15_daniel_de_souza.jpg",
+      "foto": "/uploads/alunos/15_daniel_de_souza.jpg"
+    },
+    {
+      "id_legado": "16",
+      "alunoId": "94e45d3a-90d6-42cc-9096-57d0ca3db7cd",
+      "aluno": "DANIEL FAUSTINO BEZERRA",
+      "arquivo_origem": "A16_foto3por4.jpg",
+      "arquivo_destino": "16_daniel_faustino_bezerra.jpg",
+      "foto": "/uploads/alunos/16_daniel_faustino_bezerra.jpg"
+    }
+  ],
+  "detalhes": {
+    "sem_aluno": [],
+    "sem_arquivo": [],
+    "ignorados_txt": [],
+    "erros": []
+  }
+}

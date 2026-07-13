@@ -1,42 +1,19 @@
 {
-  "id": "/pages/login/",
+  "id": "/fusion-sistema-pwa",
   "name": "Fusion ERP Sistema",
   "short_name": "Fusion ERP",
-  "description": "Fusion ERP instalado como aplicativo PWA.",
-  "start_url": "/pages/login/",
+  "description": "Sistema administrativo Fusion ERP.",
+  "start_url": "/pages/login/index.html",
   "scope": "/",
   "display": "standalone",
-  "display_override": [
-    "standalone",
-    "minimal-ui",
-    "browser"
-  ],
   "background_color": "#111827",
   "theme_color": "#ff6600",
   "orientation": "portrait-primary",
-  "categories": [
-    "business",
-    "productivity"
-  ],
+  "categories": ["business", "productivity"],
   "lang": "pt-BR",
   "icons": [
-    {
-      "src": "/assets/pwa/icons/fusion-sistema-180.png",
-      "sizes": "180x180",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/assets/pwa/icons/fusion-sistema-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/assets/pwa/icons/fusion-sistema-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
-    }
+    { "src": "/assets/pwa/icons/fusion-sistema-180.png", "sizes": "180x180", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/pwa/icons/fusion-sistema-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/assets/pwa/icons/fusion-sistema-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ]
 }

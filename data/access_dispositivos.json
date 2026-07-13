@@ -1,0 +1,68 @@
+[
+  {
+    "id": "disp_simulador_01",
+    "nome": "Catraca Simulador 01",
+    "fabricante": "Simulador",
+    "modelo": "Genérico",
+    "driver": "simulador",
+    "ip": "",
+    "porta": "",
+    "sentido": "entrada_saida",
+    "status": "ativo",
+    "criadoEm": "2026-07-09T00:00:00.000Z",
+    "atualizadoEm": "2026-07-09T00:00:00.000Z"
+  },
+  {
+    "id": "disp_henry7x_01",
+    "nome": "Catraca Henry 7x - Recepção",
+    "fabricante": "Henry",
+    "modelo": "7x",
+    "driver": "henry7x",
+    "ip": "10.0.0.236",
+    "porta": "3000",
+    "sentido": "entrada_saida",
+    "status": "ativo",
+    "criadoEm": "2026-07-09T00:00:00.000Z",
+    "atualizadoEm": "2026-07-09T00:00:00.000Z",
+    "observacao": "Equipamento físico informado pelo usuário. Programa Henry deve estar aberto e catraca ONLINE."
+  },
+  {
+    "id": "disp_1783653606570_75c829b8",
+    "nome": "Catraca Simulador 01",
+    "fabricante": "Henry",
+    "modelo": "Genérico",
+    "driver": "henry",
+    "ip": "10.0.0.236",
+    "porta": "3000",
+    "sentido": "entrada_saida",
+    "status": "ativo",
+    "criadoEm": "2026-07-10T03:20:06.570Z",
+    "atualizadoEm": "2026-07-10T03:20:06.570Z"
+  },
+  {
+    "id": "disp_1783653612572_77ce38bc",
+    "nome": "Catraca Simulador 01",
+    "fabricante": "Henry",
+    "modelo": "Genérico",
+    "driver": "henry",
+    "ip": "10.0.0.236",
+    "porta": "3000",
+    "sentido": "entrada_saida",
+    "status": "ativo",
+    "criadoEm": "2026-07-10T03:20:12.572Z",
+    "atualizadoEm": "2026-07-10T03:20:12.572Z"
+  },
+  {
+    "id": "disp_1783653786498_2f61a174",
+    "nome": "Catraca Simulador 01",
+    "fabricante": "Simulador",
+    "modelo": "Genérico",
+    "driver": "simulador",
+    "ip": "10.0.0.236",
+    "porta": "3000",
+    "sentido": "entrada_saida",
+    "status": "ativo",
+    "criadoEm": "2026-07-10T03:23:06.498Z",
+    "atualizadoEm": "2026-07-10T03:23:06.498Z"
+  }
+]

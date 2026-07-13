@@ -1,0 +1,17 @@
+COMO INICIAR ESTA VERSAO
+
+1. Abra o terminal nesta pasta:
+   FusionERP_LIMITE_3_ACESSOS_CATRACA_PORTAL_ALUNO_20260712_221625_FINAL
+
+2. Rode:
+   npm start
+
+3. Abra no navegador:
+   http://localhost:3000
+
+Portal do aluno:
+   http://localhost:3000/pages/aluno-login/index.html
+
+Observacao:
+Esta pasta ja contem package.json, server.mjs e node_modules.
+Nao precisa rodar npm install para testar.

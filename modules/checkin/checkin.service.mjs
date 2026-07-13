@@ -6,7 +6,6 @@ import {
   buscarCheckinPorId
 } from "./checkin.repository.mjs";
 import { listarFrequencias, salvarFrequencias } from "../frequencia/frequencia.repository.mjs";
-import { portalTreinosAluno, iniciarExecucaoTreino } from "../treinos-operacional/treinos-operacional.service.mjs";
 
 const DATA_DIR = path.resolve(process.cwd(), "data");
 const COMERCIAL_DIR = path.join(DATA_DIR, "comercial");
@@ -211,13 +210,41 @@ function servicoPreferencialMusculacao(servicos = []) {
   }) || servicos[0] || null;
 }
 
-function pendenciasFinanceiras(alunoId, mensalidades = [], financeiro = []) {
+function pendenciasFinanceiras(matriculaId, mensalidades = [], financeiro = []) {
   const data = hojeISO();
-  const abertasMensalidades = mensalidades.filter((m) => String(m.alunoId || m.aluno_id) === String(alunoId) && vencido(m, data));
-  const abertasFinanceiro = financeiro.filter((f) => {
-    const tipoReceber = !f.tipo || normalizar(f.tipo).includes("receber");
-    return tipoReceber && String(f.alunoId || f.aluno_id) === String(alunoId) && vencido(f, data);
+  const statusIgnorados = new Set([
+    "cancelado", "cancelada",
+    "pago", "paga",
+    "recebido", "recebida",
+    "quitado", "quitada",
+    "baixado", "baixada"
+  ]);
+
+  const pertenceMatriculaAtiva = (item = {}) =>
+    String(item.matriculaId || item.matricula_id || "") === String(matriculaId || "");
+
+  const possuiStatusPendente = (item = {}) => {
+    const status = normalizar(item.status);
+    return !statusIgnorados.has(status);
+  };
+
+  const abertasMensalidades = mensalidades.filter((mensalidade) =>
+    pertenceMatriculaAtiva(mensalidade) &&
+    possuiStatusPendente(mensalidade) &&
+    vencido(mensalidade, data)
+  );
+
+  const abertasFinanceiro = financeiro.filter((lancamento) => {
+    const tipoReceber = !lancamento.tipo || normalizar(lancamento.tipo).includes("receber");
+
+    return (
+      tipoReceber &&
+      pertenceMatriculaAtiva(lancamento) &&
+      possuiStatusPendente(lancamento) &&
+      vencido(lancamento, data)
+    );
   });
+
   return [...abertasMensalidades, ...abertasFinanceiro];
 }
 
@@ -269,9 +296,38 @@ async function registrarFrequenciaMusculacao({ aluno, contrato, matricula, servi
 }
 
 async function localizarTreinoAtivoAluno(alunoId) {
-  const portal = await portalTreinosAluno(alunoId, { apenasAtivos: true });
-  const treinos = Array.isArray(portal.treinos) ? portal.treinos : [];
-  return treinos.find((t) => t.statusCalculado === "Ativo" || statusMatriculaAtiva(t.status)) || null;
+  const arquivosTreino = [
+    path.join(DATA_DIR, "treinos.json"),
+    path.join(DATA_DIR, "treinos-interno.json"),
+    path.join(DATA_DIR, "treinos_operacional.json")
+  ];
+
+  const treinos = await lerPrimeiroJson(arquivosTreino, []);
+  if (!Array.isArray(treinos)) return null;
+
+  return treinos
+    .filter((treino) => String(treino.alunoId || treino.aluno_id || "") === String(alunoId))
+    .filter((treino) => {
+      const status = normalizar(treino.status || "Ativo");
+      const validade = texto(treino.dataValidade || treino.validade || treino.dataFim || treino.data_fim);
+      return statusMatriculaAtiva(status) && (!validade || validade.slice(0, 10) >= hojeISO());
+    })
+    .sort((a, b) => String(b.criadoEm || b.dataInicio || b.data || "").localeCompare(String(a.criadoEm || a.dataInicio || a.data || "")))[0] || null;
+}
+
+async function iniciarExecucaoTreinoInterno(treinoId, dados = {}) {
+  return {
+    ok: true,
+    dados: {
+      id: `exec_${Date.now()}_${Math.random().toString(16).slice(2, 8)}`,
+      treinoId,
+      data: dados.data || hojeISO(),
+      origem: dados.origem || "checkin",
+      usuario: dados.usuario || "Sistema",
+      status: "Iniciada",
+      criadoEm: new Date().toISOString()
+    }
+  };
 }
 
 export async function autorizarCheckinMusculacao(dados = {}) {
@@ -310,7 +366,11 @@ export async function autorizarCheckinMusculacao(dados = {}) {
     return { ok: true, autorizado: false, status: "Bloqueado", motivo: "Plano/matrícula sem musculação liberada.", aluno, contrato: contratoFinal, matricula, servicosAtivos };
   }
 
-  const pendencias = pendenciasFinanceiras(alunoId, mensalidades, financeiro);
+  const pendencias = pendenciasFinanceiras(
+    matricula.id,
+    mensalidades,
+    financeiro
+  );
   if (pendencias.length) {
     return { ok: true, autorizado: false, status: "Bloqueado", motivo: "Aluno possui mensalidade ou lançamento financeiro vencido em aberto.", aluno, contrato: contratoFinal, matricula, servicosAtivos, pendenciasFinanceiras: pendencias };
   }
@@ -383,7 +443,7 @@ export async function registrarCheckinMusculacaoInteligente(dados = {}) {
     registro.frequenciaId = frequencia.id;
 
     if (autorizacao.treinoAtivo?.id) {
-      const inicio = await iniciarExecucaoTreino(autorizacao.treinoAtivo.id, {
+      const inicio = await iniciarExecucaoTreinoInterno(autorizacao.treinoAtivo.id, {
         data: registro.data,
         origem: "checkin_musculacao_inteligente",
         usuario: dados.usuario || "Check-in"

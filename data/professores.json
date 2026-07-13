@@ -3,7 +3,7 @@
     "id": "e1bdfb38-50bf-47fb-87ba-052ab6434f84",
     "status": "Ativo",
     "criadoEm": "2026-07-03T18:28:37.356Z",
-    "atualizadoEm": "2026-07-03T18:28:37.356Z",
+    "atualizadoEm": "2026-07-09T08:50:47.164Z",
     "nome": "MARCOS ANDRE DE SOUZA",
     "cpf": "04877315497",
     "rg": "2000001220025",
@@ -47,5 +47,76 @@
         "arquivo_base64": ""
       }
     ]
+  },
+  {
+    "id": "18e08222-7c37-4ade-bc18-201dddc460df",
+    "status": "Ativo",
+    "criadoEm": "2026-07-08T03:39:00.482Z",
+    "atualizadoEm": "2026-07-08T03:39:00.485Z",
+    "nome": "MARIA SHAIKYSCHANA DA CONCEIÇÃO DE LIMA",
+    "cpf": "07780139441",
+    "rg": "1121221-009",
+    "cref": "ESTAGIARIA",
+    "email": "cmmarechais@gmail.com",
+    "telefone": "82988405483",
+    "whatsapp": "82988405483",
+    "dataNascimento": "1988-09-16",
+    "especialidade": "preparação fisica",
+    "especialidades": [
+      "CAPOEIRA",
+      "MUSCULAÇÃO",
+      "NATAÇÃO"
+    ],
+    "modalidades": [
+      "TODAS"
+    ],
+    "diasTrabalho": [
+      "SEGUNDA",
+      "TERÇA",
+      "QUARTA",
+      "QUINTA",
+      "SEXTA"
+    ],
+    "horarioInicio": "14:00",
+    "horarioFim": "22:00",
+    "tipoContrato": "Parceria",
+    "valorHora": "10,00",
+    "banco": "",
+    "agencia": "",
+    "conta": "",
+    "chavePix": "",
+    "endereco": "Rua Mensageiro José Raimundo dos Santos, 260",
+    "observacoes": "",
+    "documentos": [],
+    "senhaHash": ""
+  },
+  {
+    "id": "prof_responsavel_tecnico",
+    "nome": "responsavel-tecnico",
+    "login": "responsavel-tecnico",
+    "perfil": "responsavel_tecnico",
+    "acessoTodosAlunos": true,
+    "status": "Ativo",
+    "cref": "RESPONSAVEL-TECNICO",
+    "email": "responsavel-tecnico@fusionerp.local",
+    "especialidade": "Responsabilidade técnica",
+    "especialidades": [
+      "TODAS"
+    ],
+    "modalidades": [
+      "TODAS"
+    ],
+    "diasTrabalho": [
+      "SEGUNDA",
+      "TERÇA",
+      "QUARTA",
+      "QUINTA",
+      "SEXTA",
+      "SABADO",
+      "DOMINGO"
+    ],
+    "senhaHash": "abf3ea069d36088d2ddf998a7de238cb:9cab110172afc64d36ab352f217dc0c3d2ef71425a82a690f8ed9f65687c3ac1911a66e74da35a18e0615453e68c60dc56474be9f244aaaa492a6ddf60b0a85f",
+    "criadoEm": "2026-07-10T00:00:00.000Z",
+    "atualizadoEm": "2026-07-10T00:00:00.000Z"
   }
 ]

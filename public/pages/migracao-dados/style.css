@@ -1,0 +1,19 @@
+.migration-page { display: grid; gap: 18px; }
+.migration-hero { display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+.migration-eyebrow { display: block; font-size: 12px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 8px; }
+.migration-hero h2 { margin: 0 0 8px; }
+.migration-hero p { margin: 0; color: #475569; max-width: 760px; }
+.migration-status { border: 1px solid #bbf7d0; background: #f0fdf4; color: #166534; border-radius: 999px; padding: 10px 14px; font-weight: 800; white-space: nowrap; }
+.migration-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.migration-grid.secondary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.migration-card { text-decoration: none; color: inherit; display: grid; gap: 8px; min-height: 128px; transition: transform .15s ease, box-shadow .15s ease; }
+.migration-card:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(15, 23, 42, .12); }
+.migration-card strong { font-size: 18px; color: #0f172a; }
+.migration-card span, .migration-info li { color: #475569; line-height: 1.5; }
+.migration-info h3 { margin: 0 0 10px; }
+.migration-info ul { margin: 0; padding-left: 18px; }
+@media (max-width: 900px) {
+  .migration-hero { align-items: flex-start; flex-direction: column; }
+  .migration-grid, .migration-grid.secondary { grid-template-columns: 1fr; }
+  .migration-status { white-space: normal; }
+}

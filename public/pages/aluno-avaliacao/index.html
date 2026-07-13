@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Fusion ERP - Minha Avaliação</title>
+  <link rel="stylesheet" href="./style.css">
+  <link rel="manifest" href="/manifest-sistema.webmanifest">
+  <meta name="theme-color" content="#ff6600">
+  <link rel="stylesheet" href="/assets/css/fusion-no-sidebar.css">
+</head>
+<body>
+  <main class="avaliacao-aluno-app">
+    <header class="topo">
+      <button id="btnVoltar" class="btn ghost" type="button">← Voltar ao treino</button>
+      <div>
+        <span>Resultado da avaliação física</span>
+        <h1 id="tituloAluno">Minha avaliação</h1>
+        <p id="subtitulo">Última avaliação salva pelo professor, com comparação da avaliação anterior.</p>
+      </div>
+      <button id="btnAtualizar" class="btn" type="button">Atualizar</button>
+    </header>
+
+    <section id="alerta" class="alerta hidden"></section>
+
+    <section class="resumo-grid">
+      <article class="card destaque">
+        <span>Última avaliação</span>
+        <strong id="dataAtual">-</strong>
+      </article>
+      <article class="card">
+        <span>Avaliação anterior</span>
+        <strong id="dataAnterior">-</strong>
+      </article>
+      <article class="card">
+        <span>Professor</span>
+        <strong id="professor">-</strong>
+      </article>
+      <article class="card">
+        <span>Objetivo</span>
+        <strong id="objetivo">-</strong>
+      </article>
+    </section>
+
+    <section class="card comparacao-card">
+      <div class="section-title">
+        <h2>Comparação com a avaliação anterior</h2>
+        <p id="comparacaoInfo">Comparação automática entre os dois últimos registros.</p>
+      </div>
+      <div id="comparacao" class="comparacao-lista"></div>
+    </section>
+
+    <section class="card">
+      <div class="section-title">
+        <h2>Resultado completo da última avaliação</h2>
+        <p>Tudo que foi salvo pelo professor fica disponível aqui para consulta do aluno.</p>
+      </div>
+      <div id="resultadoCompleto" class="resultado-completo"></div>
+    </section>
+
+    <section id="fotosBox" class="card hidden">
+      <div class="section-title">
+        <h2>Fotos posturais</h2>
+        <p>Imagens registradas na avaliação física, quando disponíveis.</p>
+      </div>
+      <div id="fotosPosturais" class="fotos-grid"></div>
+    </section>
+  </main>
+  <script src="./index.js"></script>
+  <script src="/assets/js/fusion-layout.js" defer></script>
+  <script src="/assets/js/fusion-no-sidebar.js" defer></script>
+</body>
+</html>

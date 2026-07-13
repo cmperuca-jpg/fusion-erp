@@ -1,0 +1,63 @@
+[
+  {
+    "id": "usr_admin",
+    "nome": "Administrador Fusion",
+    "email": "admin@fusionerp.local",
+    "senhaHash": "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9",
+    "perfil": "Administrador",
+    "status": "ativo",
+    "permissoes": [
+      "*"
+    ],
+    "criadoEm": "2026-07-08T17:18:12.539659Z",
+    "atualizadoEm": "2026-07-09T08:37:52.115Z"
+  },
+  {
+    "id": "usr_1783586226907_07dcda",
+    "nome": "admin",
+    "email": "cmperuca@gmail.com",
+    "senhaHash": "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4",
+    "perfil": "Administrador",
+    "status": "ativo",
+    "permissoes": [
+      "*"
+    ],
+    "criadoEm": "2026-07-09T08:37:06.908Z",
+    "atualizadoEm": "2026-07-10T14:24:53.468Z"
+  },
+  {
+    "id": "usr_1783586425367_319d0d",
+    "nome": "balcao",
+    "email": "balcao@fusionepr.com",
+    "senhaHash": "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4",
+    "perfil": "Recepcao",
+    "status": "ativo",
+    "permissoes": [
+      "dashboard",
+      "alunos",
+      "matriculas",
+      "matriculas-pendentes",
+      "comercial-painel",
+      "financeiro",
+      "mensalidades",
+      "caixa",
+      "checkin"
+    ],
+    "criadoEm": "2026-07-09T08:40:25.367Z",
+    "atualizadoEm": "2026-07-10T14:25:15.310Z"
+  },
+  {
+    "id": "usr_1783586480496_12ca6a",
+    "nome": "shaiky",
+    "email": "shaikybombinha2@gmail.com",
+    "senhaHash": "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4",
+    "perfil": "Professor",
+    "status": "ativo",
+    "permissoes": [
+      "avaliacoes",
+      "treinos"
+    ],
+    "criadoEm": "2026-07-09T08:41:20.496Z",
+    "atualizadoEm": "2026-07-10T14:25:46.852Z"
+  }
+]
