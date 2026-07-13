@@ -3,7 +3,7 @@ import * as repo from './access-engine.repository.mjs';
 import * as simulador from './drivers/simulador.driver.mjs';
 import { listarDrivers, obterDriver } from './drivers/driver-registry.mjs';
 import { mapaLegado } from './drivers/sdk-legacy.adapter.mjs';
-import { liberarCatraca as liberarCatracaFisica } from '../henry7x/henry7x.service.mjs';
+import { queueRelease, getAgent, getCommand } from '../access-bridge/access-bridge.service.mjs';
 
 
 const HENRY_PADRAO = {
@@ -12,18 +12,22 @@ const HENRY_PADRAO = {
   tempoSegundos: Number(process.env.HENRY7X_TEMPO_SEGUNDOS || 5)
 };
 
-async function liberarCatracaHenry7x({ aluno, dispositivo, direcao = 'entrada', origem = 'access-engine' } = {}) {
-  const host = String(dispositivo?.ip || HENRY_PADRAO.host).trim();
-  const port = Number(dispositivo?.porta || HENRY_PADRAO.port);
-  return await liberarCatracaFisica({
-    host,
-    port,
+async function enfileirarLiberacaoRemota({ aluno, dispositivo, direcao = 'entrada', origem = 'access-engine', operadorId = null, motivo = 'liberacao-autorizada' } = {}) {
+  const command = await queueRelease({
+    agentId: process.env.ACCESS_AGENT_ID || 'academia-01',
+    equipmentId: dispositivo?.id || 'catraca-01',
+    host: String(dispositivo?.ip || HENRY_PADRAO.host).trim(),
+    port: Number(dispositivo?.porta || HENRY_PADRAO.port),
     tempoSegundos: Number(HENRY_PADRAO.tempoSegundos),
-    direcao,
-    alunoId: aluno?.id || aluno?._id || aluno?.alunoId || '',
-    alunoNome: aluno?.nome || '',
-    origem
+    direcao: direcao === 'saida' ? 'saida' : 'ambos',
+    alunoId: aluno?.id || aluno?._id || aluno?.alunoId || null,
+    alunoNome: aluno?.nome || null,
+    operadorId,
+    origem,
+    motivo,
+    ttlSeconds: 30
   });
+  return { ok: true, modo: 'access-bridge', status: command.status, commandId: command.id, command };
 }
 
 function statusAtivo(valor) {
@@ -210,13 +214,11 @@ async function executarAvaliacao({ aluno, identificador = '', dispositivoId = ''
   let catraca = null;
   if (autorizado && aluno) {
     try {
-      catraca = await liberarCatracaHenry7x({ aluno, dispositivo, direcao, origem });
-      if (catraca?.ok === false || catraca?.respostasValidas === false) {
-        throw new Error(catraca?.erro || 'A Henry 7X respondeu com confirmação inválida.');
-      }
+      catraca = await enfileirarLiberacaoRemota({ aluno, dispositivo, direcao, origem });
+      if (catraca?.ok === false) throw new Error(catraca?.erro || 'Não foi possível criar o comando remoto.');
     } catch (erroCatraca) {
       autorizado = false;
-      motivo = `Acesso aprovado, mas a catraca não respondeu: ${erroCatraca.message}`;
+      motivo = `Acesso aprovado, mas o comando não foi enfileirado: ${erroCatraca.message}`;
       catraca = { ok: false, erro: erroCatraca.message };
     }
   }
@@ -243,7 +245,7 @@ async function executarAvaliacao({ aluno, identificador = '', dispositivoId = ''
   return { ok: true, autorizado, motivo, aluno, dispositivo, driver: driverInfo, comando, catraca, log };
 }
 
-export async function avaliarAcessoAluno({ aluno, dispositivoId = 'disp_henry7x_01', direcao = 'entrada', origem = 'biometria-futronic' } = {}) {
+export async function avaliarAcessoAluno({ aluno, dispositivoId = 'disp_henry7x_01', direcao = 'entrada', origem = 'access-engine' } = {}) {
   return executarAvaliacao({
     aluno,
     identificador: String(aluno?.id || ''),
@@ -336,4 +338,43 @@ export async function diagnosticoRedeHenry7x(payload = {}) {
     comando: resultado
   });
   return resultado;
+}
+
+
+export async function statusAgenteAcesso() {
+  const agentId = process.env.ACCESS_AGENT_ID || 'academia-01';
+  const agent = await getAgent(agentId);
+  const ultimoContato = agent?.updatedAt || agent?.lastSeenAt || agent?.last_seen_at || null;
+  const idadeMs = ultimoContato ? Date.now() - new Date(ultimoContato).getTime() : null;
+  return {
+    ok: true,
+    agentId,
+    online: Number.isFinite(idadeMs) && idadeMs <= 15000,
+    ultimoContato,
+    estado: agent?.state || agent?.status || 'offline',
+    agent: agent || null
+  };
+}
+
+export async function liberarRemoto(payload = {}) {
+  const dispositivo = await obterDispositivoOuPadrao(payload.dispositivoId || 'disp_henry7x_01');
+  const catraca = await enfileirarLiberacaoRemota({
+    aluno: { id: payload.alunoId || null, nome: payload.alunoNome || 'Liberação manual' },
+    dispositivo,
+    direcao: payload.direcao || 'entrada',
+    origem: payload.origem || 'painel-access-engine',
+    operadorId: payload.operadorId || null,
+    motivo: payload.motivo || 'liberacao-manual'
+  });
+  return { ok: true, mensagem: 'Comando enviado ao agente local.', catraca };
+}
+
+export async function consultarComandoRemoto(id) {
+  const command = await getCommand(id);
+  if (!command) {
+    const erro = new Error('Comando não encontrado');
+    erro.status = 404;
+    throw erro;
+  }
+  return { ok: true, command };
 }

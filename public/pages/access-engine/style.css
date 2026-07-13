@@ -7,24 +7,5 @@ body{background:var(--access-bg);color:#111827;font-family:Arial,Helvetica,sans-
 
 .access-help{display:block;margin:6px 0 12px;color:#64748b;font-size:12px;font-weight:700;line-height:1.35}.access-driver-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}.access-driver-card{border:1px solid #e2e8f0;border-radius:14px;padding:12px;background:#fff}.access-driver-card strong{display:block}.access-driver-card small{display:block;color:#64748b;margin:4px 0 8px}.access-driver-card p{margin:8px 0 0;color:#475569;font-size:12px;line-height:1.35}.badge-warn{background:#fef3c7;color:#92400e}
 
-.access-biometria-card{margin-bottom:18px}
-.access-biometria-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px}
-.access-biometria-head h2{margin:10px 0 6px}
-.access-biometria-head p{margin:0;color:var(--access-muted);line-height:1.45}
-.access-biometria-status{display:flex;align-items:center;gap:9px;border:1px solid var(--access-border);border-radius:999px;padding:9px 13px;white-space:nowrap;background:#f8fafc}
-.access-biometria-status span{width:11px;height:11px;border-radius:50%;background:#64748b;box-shadow:0 0 0 4px rgba(100,116,139,.12)}
-.access-biometria-status strong{font-size:13px;margin:0}
-.access-biometria-status[data-status="ativa"]{color:#166534;background:#f0fdf4;border-color:#bbf7d0}
-.access-biometria-status[data-status="ativa"] span{background:#16a34a;box-shadow:0 0 0 4px rgba(22,163,74,.13)}
-.access-biometria-status[data-status="processando"]{color:#92400e;background:#fffbeb;border-color:#fde68a}
-.access-biometria-status[data-status="processando"] span{background:#f59e0b;box-shadow:0 0 0 4px rgba(245,158,11,.14)}
-.access-biometria-status[data-status="erro"]{color:#991b1b;background:#fef2f2;border-color:#fecaca}
-.access-biometria-status[data-status="erro"] span{background:#dc2626;box-shadow:0 0 0 4px rgba(220,38,38,.13)}
-.access-biometria-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
-.access-biometria-actions button:disabled{opacity:.45;cursor:not-allowed}
-@media(max-width:760px){
-  .access-biometria-head{display:grid}
-  .access-biometria-status{justify-content:center}
-  .access-biometria-actions{display:grid}
-}
 
+.access-agent-card{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:18px}.access-agent-card h2{margin:10px 0 6px}.access-agent-card p{margin:0;color:var(--access-muted)}.access-agent-status{display:flex;align-items:center;gap:9px;border:1px solid var(--access-border);border-radius:999px;padding:9px 13px;background:#f8fafc;white-space:nowrap}.access-agent-status span{width:11px;height:11px;border-radius:50%;background:#dc2626;box-shadow:0 0 0 4px rgba(220,38,38,.13)}.access-agent-status strong{font-size:13px;margin:0}.access-agent-status[data-status="online"]{color:#166534;background:#f0fdf4;border-color:#bbf7d0}.access-agent-status[data-status="online"] span{background:#16a34a;box-shadow:0 0 0 4px rgba(22,163,74,.13)}.access-danger{background:#b91c1c}@media(max-width:760px){.access-agent-card{display:grid}.access-agent-status{justify-content:center}}

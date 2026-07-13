@@ -7,8 +7,6 @@ import fsp from "fs/promises";
 import { fileURLToPath } from "url";
 import { spawn, spawnSync } from "child_process";
 
-import biometriaRoutes from "./modules/biometria/biometria.routes.mjs";
-import { iniciarMotorAcessoBiometrico, garantirSdkLocal, encerrarSdkLocal } from "./modules/biometria/biometria.service.mjs";
 import henry7xRoutes from "./modules/henry7x/henry7x.routes.mjs";
 import alunosRoutes from "./modules/alunos/alunos.routes.mjs";
 import professoresRoutes from "./modules/professores/professores.routes.mjs";
@@ -57,86 +55,7 @@ const isRender = Boolean(process.env.RENDER || process.env.RENDER_EXTERNAL_URL);
 const persistentRoot = process.env.FUSION_PERSISTENT_DIR || "/var/data/fusion";
 
 
-let processoBiometriaLocal = null;
-
-async function biometriaLocalAtiva() {
-  try {
-    const resposta = await fetch("http://127.0.0.1:3041/status", {
-      signal: AbortSignal.timeout(1200)
-    });
-    const json = await resposta.json().catch(() => ({}));
-    return resposta.ok && json.ok !== false;
-  } catch {
-    return false;
-  }
-}
-
-function compilarSdkBiometricoSeNecessario(pastaSdk, executavel) {
-  // Executável Futronic homologado: não recompilar automaticamente.
-  return fs.existsSync(executavel);
-}
-
-async function iniciarBiometriaLocalAutomaticamente() {
-  if (isRender || process.platform !== "win32") return;
-  const ativo = await garantirSdkLocal({
-    tentativas: Number(process.env.FUSION_BIOMETRIA_STARTUP_TENTATIVAS || 30),
-    intervaloMs: Number(process.env.FUSION_BIOMETRIA_STARTUP_INTERVALO_MS || 1000),
-    silencioso: true
-  });
-
-  if (ativo) {
-    console.log("Biometria Futronic: ativa na porta 3041");
-  } else {
-    console.error("Biometria Futronic: porta 3041 ainda nao respondeu; o motor vai continuar tentando.");
-  }
-  return;
-
-  if (await biometriaLocalAtiva()) {
-    console.log("Biometria Futronic: ativa na porta 3041");
-    return;
-  }
-
-  const pastaSdk = path.join(__dirname, "fusion-biometria-local", "sdk-futronic");
-  const executavel = path.join(pastaSdk, "FusionBiometriaSdk.exe");
-
-  if (!compilarSdkBiometricoSeNecessario(pastaSdk, executavel)) {
-    console.error("Biometria Futronic: não foi possível localizar ou compilar FusionBiometriaSdk.exe");
-    return;
-  }
-
-  processoBiometriaLocal = spawn(executavel, [], {
-    cwd: pastaSdk,
-    windowsHide: true,
-    stdio: "ignore"
-  });
-
-  processoBiometriaLocal.on("error", (erro) => {
-    console.error(`Biometria Futronic: falha ao iniciar: ${erro.message}`);
-  });
-
-  for (let tentativa = 1; tentativa <= 15; tentativa += 1) {
-    await new Promise(resolve => setTimeout(resolve, 400));
-    if (await biometriaLocalAtiva()) {
-      console.log("Biometria Futronic: executável homologado ativo na porta 3041");
-      return;
-    }
-  }
-
-  console.error("Biometria Futronic: executável iniciado, mas a porta 3041 não respondeu");
-}
-
-function encerrarBiometriaLocal() {
-  encerrarSdkLocal();
-  return;
-
-  if (processoBiometriaLocal && !processoBiometriaLocal.killed) {
-    try { processoBiometriaLocal.kill(); } catch {}
-  }
-}
-
-process.once("SIGINT", () => { encerrarBiometriaLocal(); process.exit(0); });
-process.once("SIGTERM", () => { encerrarBiometriaLocal(); process.exit(0); });
-process.once("exit", encerrarBiometriaLocal);
+console.log("Biometria removida: controle físico exclusivo pelo Fusion Access Agent.");
 
 function garantirDiretorio(absPath) {
   if (!fs.existsSync(absPath)) fs.mkdirSync(absPath, { recursive: true });
@@ -695,7 +614,6 @@ app.use("/api/importador-access", importadorAccessRoutes);
 app.use("/api/access-engine", accessEngineRoutes);
 app.use("/api/henry7x", henry7xRoutes);
 app.use("/api/access-bridge", accessBridgeRoutes);
-app.use("/api/biometria", biometriaRoutes);
 
 // Aliases legados de páginas: evitam 404 em favoritos/menus antigos.
 app.get(['/pages/bi-comercial', '/pages/bi-comercial/', '/pages/bi-comercial/index.html'], (req, res) => {
@@ -929,18 +847,5 @@ app.listen(PORT, HOST, async () => {
     console.log(`URL: ${process.env.RENDER_EXTERNAL_URL}`);
   }
 
-  await iniciarBiometriaLocalAutomaticamente();
-
-  try {
-    const estadoMotor = await iniciarMotorAcessoBiometrico();
-    if (estadoMotor?.ativo && estadoMotor.ultimoErro) {
-      console.warn(`Motor de acesso biometrico: ativo em tentativa - ${estadoMotor.ultimoErro}`);
-    } else if (estadoMotor?.ativo) {
-      console.log("Motor de acesso biométrico: ativo e aguardando digital");
-    } else {
-      console.error("Motor de acesso biométrico: não iniciou");
-    }
-  } catch (erro) {
-    console.error(`Motor de acesso biométrico: falha ao iniciar: ${erro.message}`);
-  }
+  console.log("Controle de catraca online: Fusion Access Bridge ativo.");
 });

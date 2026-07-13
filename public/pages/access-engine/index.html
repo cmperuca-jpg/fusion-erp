@@ -13,30 +13,20 @@
   <main class="main fusion-main">
     <section class="access-hero">
       <div>
-        <span class="access-pill">Fusion Access Engine v1.1</span>
+        <span class="access-pill">Fusion Access Engine v1.2</span>
         <h1>Controle de Catracas</h1>
-        <p>Simulador genérico com arquitetura de drivers para Control iD, Henry, TopData, Dimep, Tecnibra, Proveu, biometria/facial e integrações HTTP/TCP futuras.</p>
+        <p>Controle online da Henry 7X por ponte segura entre o Render e o Fusion Access Agent instalado na academia.</p>
       </div>
       <button id="btnAtualizar" type="button">Atualizar painel</button>
     </section>
 
-    <section class="access-card access-biometria-card">
-      <div class="access-biometria-head">
-        <div>
-          <span class="access-pill">Futronic FTRAPI 1:N</span>
-          <h2>Monitor biométrico contínuo</h2>
-          <p>Ative o leitor para identificar alunos e liberar a catraca automaticamente após a validação do acesso.</p>
-        </div>
-        <div class="access-biometria-status" id="biometriaStatus" data-status="desativada">
-          <span></span>
-          <strong>Biometria desativada</strong>
-        </div>
+    <section class="access-card access-agent-card">
+      <div>
+        <span class="access-pill">Ponte segura</span>
+        <h2>Fusion Access Agent</h2>
+        <p id="agenteMensagem">Verificando conexão com o computador da academia...</p>
       </div>
-      <div class="access-biometria-actions">
-        <button id="btnAtivarBiometria" type="button">Ativar biometria</button>
-        <button id="btnDesativarBiometria" type="button" class="access-secondary" disabled>Desativar biometria</button>
-      </div>
-      <div id="biometriaResultado" class="access-result access-muted">Serviço local ainda não verificado.</div>
+      <div id="agenteStatus" class="access-agent-status" data-status="offline"><span></span><strong>Offline</strong></div>
     </section>
 
     <section class="access-grid access-kpis">
@@ -61,7 +51,8 @@
           <option value="saida">Saída</option>
         </select>
         <div class="access-actions">
-          <button id="btnSimular" type="button">Simular liberação</button>
+          <button id="btnSimular" type="button">Validar e liberar</button>
+          <button id="btnLiberarManual" type="button" class="access-danger">Liberar manualmente</button>
           <button id="btnLimpar" type="button" class="access-secondary">Limpar</button>
         </div>
         <div id="resultado" class="access-result access-muted">Aguardando simulação.</div>
