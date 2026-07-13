@@ -252,14 +252,11 @@
       if (!catracaAtiva()) return;
       atualizarControleCatraca(controle, { ativa: true, ocupada: true });
       try {
-        await requisicaoCatraca("/api/henry7x/liberar-sca", {
+        await requisicaoCatraca("/api/henry7x/liberar", {
           host: CATRACA_HOST,
           port: CATRACA_PORT,
           tempoSegundos: 5,
-          direcao: "ambos",
-          operadorId: user?.id || "",
-          origem: "topbar",
-          motivo: "Liberação manual pelo painel"
+          origem: "access-engine"
         });
         atualizarControleCatraca(controle, { ativa: true, ocupada: false });
       } catch (erro) {
