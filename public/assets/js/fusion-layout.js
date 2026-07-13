@@ -231,16 +231,9 @@
       const vaiLigar = !catracaAtiva();
       atualizarControleCatraca(controle, { ativa: catracaAtiva(), ocupada: true });
       try {
-        if (vaiLigar) {
-          await requisicaoCatraca("/api/henry7x/raw", {
-            host: CATRACA_HOST,
-            port: CATRACA_PORT,
-            hex: "FE8A7100010100050000"
-          });
-          salvarCatracaAtiva(true);
-        } else {
-          salvarCatracaAtiva(false);
-        }
+        // Este controle apenas habilita/desabilita o botão no painel.
+        // A Henry física é controlada exclusivamente pelo Fusion Access Agent.
+        salvarCatracaAtiva(vaiLigar);
         atualizarControleCatraca(controle, { ativa: vaiLigar, ocupada: false });
       } catch (erro) {
         atualizarControleCatraca(controle, { ativa: catracaAtiva(), ocupada: false });
@@ -252,11 +245,14 @@
       if (!catracaAtiva()) return;
       atualizarControleCatraca(controle, { ativa: true, ocupada: true });
       try {
-        await requisicaoCatraca("/api/henry7x/liberar", {
-          host: CATRACA_HOST,
-          port: CATRACA_PORT,
+        await requisicaoCatraca("/api/access-engine/liberar-remoto", {
+          dispositivoId: "disp_henry7x_01",
+          direcao: "ambos",
           tempoSegundos: 5,
-          origem: "access-engine"
+          operadorId: user?.id || "",
+          operadorNome: user?.nome || "",
+          origem: "topbar-liberacao-manual",
+          motivo: "Liberação manual pelo painel"
         });
         atualizarControleCatraca(controle, { ativa: true, ocupada: false });
       } catch (erro) {
@@ -269,76 +265,6 @@
     return controle;
   }
 
-
-  let biometriaHeartbeat = null;
-
-  function paginaDashboard() {
-    const atual = normalizarPath(location.pathname);
-    return atual === normalizarPath("/pages/dashboard/") ||
-      atual === normalizarPath("/pages/dashboard/index.html");
-  }
-
-  async function ativarBiometriaAcesso() {
-    try {
-      const opcoes = {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({})
-      };
-
-      const resp = window.FusionAuth?.fetchAuth
-        ? await FusionAuth.fetchAuth("/api/biometria/modo/acesso", opcoes)
-        : await fetch("/api/biometria/modo/acesso", opcoes);
-
-      const json = await resp.json().catch(() => ({}));
-      if (!resp.ok || json.ok === false) {
-        throw new Error(json.mensagem || json.erro || `Erro HTTP ${resp.status}`);
-      }
-
-      document.documentElement.dataset.biometriaAcesso = "ativa";
-      return true;
-    } catch (erro) {
-      document.documentElement.dataset.biometriaAcesso = "indisponivel";
-      console.warn("Biometria em modo acesso indisponível:", erro.message || erro);
-      return false;
-    }
-  }
-
-  async function verificarBiometriaAtiva() {
-    try {
-      const resp = window.FusionAuth?.fetchAuth
-        ? await FusionAuth.fetchAuth("/api/biometria/status", { cache: "no-store" })
-        : await fetch("/api/biometria/status", { cache: "no-store" });
-
-      const json = await resp.json().catch(() => ({}));
-      const local = json.local || {};
-      const conectada = resp.ok && json.ok !== false && local.conectado === true;
-
-      document.documentElement.dataset.biometriaLeitor =
-        conectada ? "conectado" : "desconectado";
-
-      const modo = String(local.modo || local.modoServidor || "").toLowerCase();
-      if (!conectada || modo !== "acesso") {
-        await ativarBiometriaAcesso();
-      }
-
-      return conectada;
-    } catch {
-      document.documentElement.dataset.biometriaLeitor = "indisponivel";
-      return false;
-    }
-  }
-
-  function iniciarBiometriaSempreAtiva() {
-    if (!paginaDashboard()) return;
-
-    ativarBiometriaAcesso().then(() => verificarBiometriaAtiva());
-
-    if (biometriaHeartbeat) clearInterval(biometriaHeartbeat);
-    biometriaHeartbeat = setInterval(() => {
-      verificarBiometriaAtiva();
-    }, 15000);
-  }
 
   window.carregarLayout = function carregarLayout(titulo) {
 
@@ -380,7 +306,6 @@
   };
 
   document.addEventListener("DOMContentLoaded", () => {
-    iniciarBiometriaSempreAtiva();
     if (paginaSemMenu()) {
       removerMenusExistentes();
       preencherUsuarioTopo();

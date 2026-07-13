@@ -77,23 +77,23 @@ function setText(id, value) {
         ? FusionAuth.fetchAuth.bind(FusionAuth)
         : fetch.bind(window);
 
-      const resposta = await fetchSeguro("/api/henry7x/liberar", {
+      const resposta = await fetchSeguro("/api/access-engine/liberar-remoto", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          host: "10.0.0.236",
-          port: 3000,
+          dispositivoId: "disp_henry7x_01",
+          direcao: "ambos",
           tempoSegundos: 5,
           origem: "dashboard-liberacao-manual",
-          usuarioId: usuario?.id || "",
-          usuarioNome: usuario?.nome || "Usuário do sistema",
-          usuarioPerfil: usuario?.perfilOriginal || usuario?.perfil || "",
+          operadorId: usuario?.id || "",
+          operadorNome: usuario?.nome || "Usuário do sistema",
+          operadorPerfil: usuario?.perfilOriginal || usuario?.perfil || "",
           motivo
         })
       });
 
       const json = await resposta.json().catch(() => ({}));
-      if (!resposta.ok || json.ok === false || json.respostasValidas === false) {
+      if (!resposta.ok || json.ok === false) {
         throw new Error(json.mensagem || json.erro || "A catraca não confirmou a liberação.");
       }
 
