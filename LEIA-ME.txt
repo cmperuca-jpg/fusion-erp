@@ -1,26 +1,36 @@
-FUSION ERP — EVOLUÇÃO DA BIOMETRIA ESTÁVEL
+CONFIGURAÇÃO PRONTA — FUSION ACCESS AGENT + RENDER
 
-Base comprovada:
-- o executável anterior permaneceu ativo;
-- /status respondeu após a captura;
-- /sdk/enroll gerou template real de 2001 bytes.
+1. COMPUTADOR DA ACADEMIA
+Copie o arquivo ".env" para a raiz do Fusion ERP:
+C:\Users\academia01\Desktop\FusionERP_chat_corrigido\.env
 
-Instalação:
-1. Pare o servidor com Ctrl+C.
-2. Faça backup da pasta atual.
-3. Extraia este ZIP na raiz e substitua os arquivos.
-4. Execute INICIAR-FUSION-BIOMETRIA-ESTAVEL.bat.
+Depois execute:
+INICIAR-FUSION-ACCESS-AGENT.bat
 
-Não execute em paralelo:
-- iniciar-sdk.bat;
-- FusionBiometriaLocal.ps1;
-- FusionBiometriaWatchdog.vbs;
-- compilar-x86.bat.
+2. RENDER
+Abra o serviço fusion-erp:
+Environment -> Add from .env
 
-Log esperado:
-Biometria Futronic: executável homologado ativo na porta 3041
-[Biometria] Inicialização: 1 template(s) válido(s) encontrado(s).
-Motor de acesso biométrico: ativo e aguardando digital
-[Biometria] Leitor armado. Coloque o dedo.
+Cole o conteúdo de "render-environment.txt".
 
-Se aparecer 0 templates, recadastre a digital pela tela do aluno.
+Substitua somente:
+SUPABASE_URL
+SUPABASE_SERVICE_ROLE_KEY
+
+Não altere ACCESS_AGENT_TOKEN. Ele precisa ser igual no Render e no computador local.
+
+3. SEGURANÇA
+Não envie o arquivo .env ao GitHub.
+Confirme que .gitignore contém:
+.env
+.env.local
+node_modules/
+
+4. VALIDAÇÃO
+Online:
+https://fusion-erp-8yrs.onrender.com/api/access-bridge/health
+
+Esperado:
+{"ok":true,"modulo":"access-bridge","versao":"1.0.0","storage":"supabase"}
+
+Depois inicie o agente local e confira se ele mostra conexão/autenticação.
