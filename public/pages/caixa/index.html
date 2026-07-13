@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
@@ -17,7 +17,6 @@
 <link rel="apple-touch-icon" href="/assets/pwa/icons/fusion-icon-180.png">
 <link rel="stylesheet" href="/assets/pwa/fusion-pwa-mobile.css">
   <link rel="stylesheet" href="/assets/css/fusion-mobile-final.css">
-  <link rel="stylesheet" href="/assets/css/fusion-no-sidebar.css">
 </head>
 <body>
   <main>
@@ -32,7 +31,7 @@
     <section class="hero">
       <div>
         <h2>Caixa</h2>
-        <p>Abertura, fechamento, entradas, saÃ­das, sangrias e suprimentos.</p>
+        <p>Abertura, fechamento, entradas, saídas, sangrias e suprimentos.</p>
       </div>
       <div class="top-actions">
         <button type="button" id="btnAbrir">Abrir Caixa</button>
@@ -44,29 +43,29 @@
     <section class="cards">
       <div class="card"><span>Status</span><strong id="cStatus">Fechado</strong></div>
       <div class="card"><span>Entradas</span><strong id="cEntradas">R$ 0,00</strong></div>
-      <div class="card"><span>SaÃ­das</span><strong id="cSaidas">R$ 0,00</strong></div>
+      <div class="card"><span>Saídas</span><strong id="cSaidas">R$ 0,00</strong></div>
       <div class="card"><span>Saldo Atual</span><strong id="cSaldo">R$ 0,00</strong></div>
     </section>
 
     <section class="cards menores">
       <div class="card"><span>Dinheiro</span><strong id="cDinheiro">R$ 0,00</strong></div>
       <div class="card"><span>PIX</span><strong id="cPix">R$ 0,00</strong></div>
-      <div class="card"><span>CartÃ£o</span><strong id="cCartao">R$ 0,00</strong></div>
+      <div class="card"><span>Cartão</span><strong id="cCartao">R$ 0,00</strong></div>
       <div class="card"><span>Outros</span><strong id="cOutros">R$ 0,00</strong></div>
     </section>
 
     <section class="filtros">
-      <input id="fBusca" placeholder="Buscar descriÃ§Ã£o, categoria, pessoa ou forma">
+      <input id="fBusca" placeholder="Buscar descrição, categoria, pessoa ou forma">
       <select id="fTipo">
         <option value="todos">Todos os tipos</option>
         <option value="entrada">Entrada</option>
-        <option value="saida">SaÃ­da</option>
+        <option value="saida">Saída</option>
       </select>
       <select id="fForma">
         <option value="todos">Todas as formas</option>
         <option value="Dinheiro">Dinheiro</option>
         <option value="PIX">PIX</option>
-        <option value="CartÃ£o">CartÃ£o</option>
+        <option value="Cartão">Cartão</option>
         <option value="Outros">Outros</option>
       </select>
       <button type="button" id="btnFiltrar">Filtrar</button>
@@ -80,13 +79,13 @@
           <thead>
             <tr>
               <th>Tipo</th>
-              <th>DescriÃ§Ã£o</th>
+              <th>Descrição</th>
               <th>Categoria</th>
               <th>Pessoa</th>
               <th>Forma</th>
               <th>Data</th>
               <th>Valor</th>
-              <th>AÃ§Ãµes</th>
+              <th>Ações</th>
             </tr>
           </thead>
           <tbody id="lista"></tbody>
@@ -102,10 +101,10 @@
       <label for="valorAbertura">Valor de abertura</label>
       <input id="valorAbertura" type="number" step="0.01" min="0" value="0">
 
-      <label for="responsavelAbertura">ResponsÃ¡vel</label>
+      <label for="responsavelAbertura">Responsável</label>
       <input id="responsavelAbertura" value="Administrador">
 
-      <label for="obsAbertura">ObservaÃ§Ã£o</label>
+      <label for="obsAbertura">Observação</label>
       <textarea id="obsAbertura" rows="3"></textarea>
 
       <div class="acoes-modal">
@@ -122,10 +121,10 @@
       <label for="tipo">Tipo</label>
       <select id="tipo">
         <option value="entrada">Entrada</option>
-        <option value="saida">SaÃ­da</option>
+        <option value="saida">Saída</option>
       </select>
 
-      <label for="descricao">DescriÃ§Ã£o</label>
+      <label for="descricao">Descrição</label>
       <input id="descricao" required>
 
       <label for="categoria">Categoria</label>
@@ -138,14 +137,14 @@
       <select id="formaPagamento">
         <option>Dinheiro</option>
         <option>PIX</option>
-        <option>CartÃ£o</option>
+        <option>Cartão</option>
         <option>Outros</option>
       </select>
 
       <label for="valor">Valor</label>
       <input id="valor" type="number" step="0.01" min="0" required>
 
-      <label for="observacao">ObservaÃ§Ã£o</label>
+      <label for="observacao">Observação</label>
       <textarea id="observacao" rows="3"></textarea>
 
       <div class="acoes-modal">
@@ -163,7 +162,7 @@
       <label for="valorFechamento">Valor informado no caixa</label>
       <input id="valorFechamento" type="number" step="0.01" min="0" required>
 
-      <label for="obsFechamento">ObservaÃ§Ã£o</label>
+      <label for="obsFechamento">Observação</label>
       <textarea id="obsFechamento" rows="3"></textarea>
 
       <div class="acoes-modal">
@@ -178,6 +177,5 @@
 
 <script src="/assets/pwa/fusion-pwa-install.js" defer></script>
   <script src="/assets/js/fusion-mobile-final.js" defer></script>
-  <script src="/assets/js/fusion-no-sidebar.js" defer></script>
 </body>
 </html>

@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fusion ERP - Cadastro de MatrÃ­cula</title>
+  <title>Fusion ERP - Cadastro de Matrícula</title>
   <link rel="stylesheet" href="/css/dashboard.css">
   <link rel="stylesheet" href="/assets/css/fusion-app.css">
   <script src="/assets/js/fusion-auth.js"></script>
@@ -21,14 +21,13 @@
 <link rel="apple-touch-icon" href="/assets/pwa/icons/fusion-icon-180.png">
 <link rel="stylesheet" href="/assets/pwa/fusion-pwa-mobile.css">
   <link rel="stylesheet" href="/assets/css/fusion-mobile-final.css">
-  <link rel="stylesheet" href="/assets/css/fusion-no-sidebar.css">
 </head>
 <body>
 <main class="main">
 <section class="card">
   <div class="cadastro-header">
     <div>
-      <h2 id="tituloCadastro">Nova MatrÃ­cula</h2>
+      <h2 id="tituloCadastro">Nova Matrícula</h2>
       <p>Vincule aluno e plano para gerar o financeiro inicial. Turma e apenas organizacao operacional.</p>
     </div>
   </div>
@@ -39,7 +38,7 @@
   <div class="tabs" role="tablist">
     <button type="button" class="tab active" data-tab="dados">Dados</button>
     <button type="button" class="tab" data-tab="financeiro">Plano e financeiro</button>
-    <button type="button" class="tab" data-tab="observacoes">ObservaÃ§Ãµes</button>
+    <button type="button" class="tab" data-tab="observacoes">Observações</button>
   </div>
 
   <form id="formMatricula" autocomplete="off">
@@ -62,10 +61,10 @@
             <option value="Cancelada">Cancelada</option>
           </select>
         </label>
-        <label>Data da matrÃ­cula
+        <label>Data da matrícula
           <input id="data_matricula" type="date">
         </label>
-        <label>Data de inÃ­cio
+        <label>Data de início
           <input id="data_inicio" type="date">
         </label>
         <label>Data fim
@@ -82,7 +81,7 @@
         <label>Valor mensal
           <input id="valor" type="number" min="0" step="0.01" readonly>
         </label>
-        <label>Taxa de matrÃ­cula
+        <label>Taxa de matrícula
           <input id="taxa_matricula" type="number" min="0" step="0.01">
         </label>
         <label>Desconto inicial
@@ -96,25 +95,25 @@
           <select id="forma_pagamento">
             <option value="Dinheiro">Dinheiro</option>
             <option value="PIX">PIX</option>
-            <option value="CartÃ£o de CrÃ©dito">CartÃ£o de CrÃ©dito</option>
-            <option value="CartÃ£o de DÃ©bito">CartÃ£o de DÃ©bito</option>
+            <option value="Cartão de Crédito">Cartão de Crédito</option>
+            <option value="Cartão de Débito">Cartão de Débito</option>
             <option value="Boleto">Boleto</option>
-            <option value="TransferÃªncia">TransferÃªncia</option>
+            <option value="Transferência">Transferência</option>
           </select>
         </label>
         <label>Primeiro vencimento
           <input id="vencimento" type="date">
         </label>
-        <label>Cobrar taxa de matrÃ­cula
+        <label>Cobrar taxa de matrícula
           <select id="cobrar_taxa_matricula">
             <option value="true">Sim</option>
-            <option value="false">NÃ£o</option>
+            <option value="false">Não</option>
           </select>
         </label>
         <label>Gerar mensalidade inicial
           <select id="gerar_mensalidade">
             <option value="true">Sim</option>
-            <option value="false">NÃ£o</option>
+            <option value="false">Não</option>
           </select>
         </label>
         <div class="full resumo-plano" id="resumoPlano">Selecione um plano para visualizar valores e modalidades.</div>
@@ -123,15 +122,15 @@
 
     <div class="tab-content" id="tab-observacoes">
       <div class="matricula-form-grid">
-        <label class="full">ObservaÃ§Ãµes
-          <textarea id="observacoes" rows="5" placeholder="ObservaÃ§Ãµes internas da matrÃ­cula"></textarea>
+        <label class="full">Observações
+          <textarea id="observacoes" rows="5" placeholder="Observações internas da matrícula"></textarea>
         </label>
       </div>
     </div>
 
     <div class="form-actions">
       <button type="button" class="secondary" id="btnCancelar">Cancelar</button>
-      <button type="submit" id="btnSalvar">Salvar matrÃ­cula</button>
+      <button type="submit" id="btnSalvar">Salvar matrícula</button>
     </div>
   </form>
 </section>
@@ -141,6 +140,5 @@
 
 <script src="/assets/pwa/fusion-pwa-install.js" defer></script>
   <script src="/assets/js/fusion-mobile-final.js" defer></script>
-  <script src="/assets/js/fusion-no-sidebar.js" defer></script>
 </body>
 </html>

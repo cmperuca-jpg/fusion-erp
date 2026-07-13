@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
@@ -19,7 +19,6 @@
 <link rel="apple-touch-icon" href="/assets/pwa/icons/fusion-icon-180.png">
 <link rel="stylesheet" href="/assets/pwa/fusion-pwa-mobile.css">
   <link rel="stylesheet" href="/assets/css/fusion-mobile-final.css">
-  <link rel="stylesheet" href="/assets/css/fusion-no-sidebar.css">
 </head>
 <body>
 <div class="fusion-shell">
@@ -32,8 +31,8 @@
     <section class="fusion-content professores-page">
       <div class="prof-header-card">
         <div>
-          <h2>GestÃ£o de Professores</h2>
-          <p>Cadastro, CREF, especialidades, agenda, turmas e prontuÃ¡rio profissional.</p>
+          <h2>Gestão de Professores</h2>
+          <p>Cadastro, CREF, especialidades, agenda, turmas e prontuário profissional.</p>
         </div>
         <div class="prof-actions">
           <button class="fusion-button secondary" id="btnAtualizar" type="button">Atualizar</button>
@@ -59,7 +58,7 @@
         <div class="table-top"><h3>Professores cadastrados</h3><span id="contador">0 registro(s)</span></div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Nome</th><th>CREF</th><th>Contato</th><th>Especialidades</th><th>Status</th><th class="text-right">AÃ§Ãµes</th></tr></thead>
+            <thead><tr><th>Nome</th><th>CREF</th><th>Contato</th><th>Especialidades</th><th>Status</th><th class="text-right">Ações</th></tr></thead>
             <tbody id="tabela"><tr><td colspan="6">Carregando...</td></tr></tbody>
           </table>
         </div>
@@ -72,7 +71,7 @@
   <div class="modal-card modal-large">
     <div class="modal-head">
       <h3 id="modalTitulo">Novo professor</h3>
-      <button id="btnFechar" type="button" aria-label="Fechar">Ã—</button>
+      <button id="btnFechar" type="button" aria-label="Fechar">×</button>
     </div>
 
     <div class="tabs" role="tablist">
@@ -81,7 +80,7 @@
       <button class="tab" data-tab="agenda" type="button">Agenda</button>
       <button class="tab" data-tab="financeiro" type="button">Financeiro</button>
       <button class="tab" data-tab="documentos" type="button">Documentos</button>
-      <button class="tab" data-tab="prontuario" type="button">ProntuÃ¡rio</button>
+      <button class="tab" data-tab="prontuario" type="button">Prontuário</button>
     </div>
 
     <form id="form" class="prof-form">
@@ -92,23 +91,23 @@
         <div class="grid-3"><div class="field"><label for="cpf">CPF</label><input id="cpf"></div><div class="field"><label for="rg">RG</label><input id="rg"></div><div class="field"><label for="dataNascimento">Nascimento</label><input id="dataNascimento" type="date"></div></div>
         <div class="grid-3"><div class="field"><label for="telefone">Telefone</label><input id="telefone"></div><div class="field"><label for="whatsapp">WhatsApp</label><input id="whatsapp"></div><div class="field"><label for="email">E-mail</label><input id="email" type="email"></div></div>
         <div class="grid-3"><div class="field"><label for="cep">CEP</label><input id="cep"></div><div class="field"><label for="cidade">Cidade</label><input id="cidade"></div><div class="field"><label for="estado">Estado</label><input id="estado" maxlength="2"></div></div>
-        <div class="field"><label for="endereco">EndereÃ§o</label><input id="endereco"></div>
+        <div class="field"><label for="endereco">Endereço</label><input id="endereco"></div>
       </section>
 
       <section class="tab-panel" id="tab-profissional">
-        <div class="grid-3"><div class="field"><label for="cref">CREF</label><input id="cref"></div><div class="field"><label for="tipoContrato">Tipo de contrato</label><select id="tipoContrato"><option value="">NÃ£o informado</option><option>CLT</option><option>Prestador</option><option>AutÃ´nomo</option><option>Parceria</option></select></div><div class="field"><label for="valorHora">Valor hora</label><input id="valorHora" inputmode="decimal"></div></div>
-        <div class="grid-2"><div class="field"><label for="especialidade">Especialidade principal</label><input id="especialidade"></div><div class="field"><label for="dataAdmissao">Data de admissÃ£o</label><input id="dataAdmissao" type="date"></div></div>
-        <div class="grid-2"><div class="field"><label for="especialidades">Especialidades</label><input id="especialidades" placeholder="MusculaÃ§Ã£o, Funcional, NataÃ§Ã£o"></div><div class="field"><label for="modalidades">Modalidades</label><input id="modalidades" placeholder="MusculaÃ§Ã£o, NataÃ§Ã£o"></div></div>
-        <div class="field"><label for="observacoes">ObservaÃ§Ãµes profissionais</label><textarea id="observacoes" rows="4"></textarea></div>
+        <div class="grid-3"><div class="field"><label for="cref">CREF</label><input id="cref"></div><div class="field"><label for="tipoContrato">Tipo de contrato</label><select id="tipoContrato"><option value="">Não informado</option><option>CLT</option><option>Prestador</option><option>Autônomo</option><option>Parceria</option></select></div><div class="field"><label for="valorHora">Valor hora</label><input id="valorHora" inputmode="decimal"></div></div>
+        <div class="grid-2"><div class="field"><label for="especialidade">Especialidade principal</label><input id="especialidade"></div><div class="field"><label for="dataAdmissao">Data de admissão</label><input id="dataAdmissao" type="date"></div></div>
+        <div class="grid-2"><div class="field"><label for="especialidades">Especialidades</label><input id="especialidades" placeholder="Musculação, Funcional, Natação"></div><div class="field"><label for="modalidades">Modalidades</label><input id="modalidades" placeholder="Musculação, Natação"></div></div>
+        <div class="field"><label for="observacoes">Observações profissionais</label><textarea id="observacoes" rows="4"></textarea></div>
       </section>
 
       <section class="tab-panel" id="tab-agenda">
-        <div class="grid-3"><div class="field"><label for="diasTrabalho">Dias de trabalho</label><input id="diasTrabalho" placeholder="Segunda, Quarta, Sexta"></div><div class="field"><label for="horarioInicio">InÃ­cio</label><input id="horarioInicio" type="time"></div><div class="field"><label for="horarioFim">Fim</label><input id="horarioFim" type="time"></div></div>
+        <div class="grid-3"><div class="field"><label for="diasTrabalho">Dias de trabalho</label><input id="diasTrabalho" placeholder="Segunda, Quarta, Sexta"></div><div class="field"><label for="horarioInicio">Início</label><input id="horarioInicio" type="time"></div><div class="field"><label for="horarioFim">Fim</label><input id="horarioFim" type="time"></div></div>
         <div id="agendaResumo" class="mini-panel">Salve ou selecione um professor para carregar agenda e turmas.</div>
       </section>
 
       <section class="tab-panel" id="tab-financeiro">
-        <div class="grid-3"><div class="field"><label for="banco">Banco</label><input id="banco"></div><div class="field"><label for="agencia">AgÃªncia</label><input id="agencia"></div><div class="field"><label for="conta">Conta</label><input id="conta"></div></div>
+        <div class="grid-3"><div class="field"><label for="banco">Banco</label><input id="banco"></div><div class="field"><label for="agencia">Agência</label><input id="agencia"></div><div class="field"><label for="conta">Conta</label><input id="conta"></div></div>
         <div class="field"><label for="chavePix">Chave PIX</label><input id="chavePix"></div>
       </section>
 
@@ -119,7 +118,7 @@
       </section>
 
       <section class="tab-panel" id="tab-prontuario">
-        <div id="prontuario">Selecione um professor para carregar o prontuÃ¡rio.</div>
+        <div id="prontuario">Selecione um professor para carregar o prontuário.</div>
       </section>
 
       <div class="modal-actions">
@@ -137,6 +136,5 @@
 
 <script src="/assets/pwa/fusion-pwa-install.js" defer></script>
   <script src="/assets/js/fusion-mobile-final.js" defer></script>
-  <script src="/assets/js/fusion-no-sidebar.js" defer></script>
 </body>
 </html>

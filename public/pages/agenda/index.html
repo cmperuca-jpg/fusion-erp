@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
@@ -19,14 +19,13 @@
 <link rel="apple-touch-icon" href="/assets/pwa/icons/fusion-icon-180.png">
 <link rel="stylesheet" href="/assets/pwa/fusion-pwa-mobile.css">
   <link rel="stylesheet" href="/assets/css/fusion-mobile-final.css">
-  <link rel="stylesheet" href="/assets/css/fusion-no-sidebar.css">
 </head>
 <body>
   <main class="main">
     <section class="page-actions">
       <div>
         <h2>Agenda de Aulas</h2>
-        <p>Controle diÃ¡rio, semanal e mensal das aulas, turmas e professores.</p>
+        <p>Controle diário, semanal e mensal das aulas, turmas e professores.</p>
       </div>
 
       <button class="btn-primary" id="btnNovaAula">
@@ -50,7 +49,7 @@
       <div class="card kpi">
         <span>Ativas</span>
         <strong id="kpiAtivas">0</strong>
-        <small>Aulas disponÃ­veis</small>
+        <small>Aulas disponíveis</small>
       </div>
 
       <div class="card kpi">
@@ -67,7 +66,7 @@
         <option value="">Todos os status</option>
         <option value="Ativa">Ativa</option>
         <option value="Cancelada">Cancelada</option>
-        <option value="ConcluÃ­da">ConcluÃ­da</option>
+        <option value="Concluída">Concluída</option>
       </select>
 
       <input id="filtroData" type="date" />
@@ -77,7 +76,7 @@
     </section>
 
     <section class="card">
-      <h2>CalendÃ¡rio Operacional</h2>
+      <h2>Calendário Operacional</h2>
 
       <div class="agenda-lista" id="listaAgenda"></div>
     </section>
@@ -87,20 +86,20 @@
     <div class="modal">
       <header class="modal-header">
         <h2 id="modalTitulo">Nova Aula</h2>
-        <button id="btnFecharModal">Ã—</button>
+        <button id="btnFecharModal">×</button>
       </header>
 
       <form id="formAula" class="form-grid">
         <input type="hidden" id="aulaId" />
 
         <label>
-          TÃ­tulo
-          <input id="titulo" required placeholder="Ex: NataÃ§Ã£o Infantil" />
+          Título
+          <input id="titulo" required placeholder="Ex: Natação Infantil" />
         </label>
 
         <label>
           Modalidade
-          <input id="modalidade" required placeholder="Ex: NataÃ§Ã£o" />
+          <input id="modalidade" required placeholder="Ex: Natação" />
         </label>
 
         <label>
@@ -124,7 +123,7 @@
         </label>
 
         <label>
-          InÃ­cio
+          Início
           <input id="horaInicio" type="time" required />
         </label>
 
@@ -148,12 +147,12 @@
           <select id="status">
             <option value="Ativa">Ativa</option>
             <option value="Cancelada">Cancelada</option>
-            <option value="ConcluÃ­da">ConcluÃ­da</option>
+            <option value="Concluída">Concluída</option>
           </select>
         </label>
 
         <label class="full">
-          ObservaÃ§Ãµes
+          Observações
           <textarea id="observacoes" rows="3"></textarea>
         </label>
 
@@ -169,6 +168,5 @@
 
 <script src="/assets/pwa/fusion-pwa-install.js" defer></script>
   <script src="/assets/js/fusion-mobile-final.js" defer></script>
-  <script src="/assets/js/fusion-no-sidebar.js" defer></script>
 </body>
 </html>

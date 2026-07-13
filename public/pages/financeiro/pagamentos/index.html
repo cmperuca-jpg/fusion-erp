@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
@@ -18,7 +18,6 @@
 <link rel="apple-touch-icon" href="/assets/pwa/icons/fusion-icon-180.png">
 <link rel="stylesheet" href="/assets/pwa/fusion-pwa-mobile.css">
   <link rel="stylesheet" href="/assets/css/fusion-mobile-final.css">
-  <link rel="stylesheet" href="/assets/css/fusion-no-sidebar.css">
 </head>
 <body>
   <main class="fusion-page">
@@ -26,15 +25,14 @@
       <div>
         <p class="eyebrow">Financeiro</p>
         <h1>Pagamentos</h1>
-        <p class="subtitle">Contas a pagar com cadastro, ediÃ§Ã£o, baixa, parcelamento, duplicaÃ§Ã£o, estorno, cancelamento, exclusÃ£o, filtros e exportaÃ§Ã£o.</p>
-        <p class="version-tag">Parte 4.2 - ZIP 12</p>
+        <p class="subtitle">Contas a pagar com cadastro, edição, baixa, parcelamento, duplicação, estorno, cancelamento, exclusão, filtros e exportação.</p>
       </div>
       <div class="actions">
         <button id="btnAtualizar" class="btn btn-secondary" type="button">Atualizar</button>
-        <button id="btnDiagnostico" class="btn btn-light" type="button">DiagnÃ³stico</button>
+        <button id="btnDiagnostico" class="btn btn-light" type="button">Diagnóstico</button>
         <button id="btnExportar" class="btn btn-light" type="button">Exportar CSV</button>
         <button id="btnBaixarLote" class="btn btn-light">Baixar lote</button>
-        <button id="btnConciliacao" class="btn btn-light">ConciliaÃ§Ã£o</button>
+        <button id="btnConciliacao" class="btn btn-light">Conciliação</button>
         <button id="btnFechamento" class="btn btn-light">Fechamento</button>
         <button id="btnParcelar" class="btn btn-light" type="button">Parcelar</button>
         <button id="btnNovo" class="btn btn-primary" type="button">Novo pagamento</button>
@@ -56,11 +54,11 @@
     </section>
 
     <section class="panel filtros">
-      <div class="field"><label for="fBusca">Pesquisar</label><input id="fBusca" type="search" placeholder="Fornecedor, descriÃ§Ã£o, documento ou categoria"></div>
+      <div class="field"><label for="fBusca">Pesquisar</label><input id="fBusca" type="search" placeholder="Fornecedor, descrição, documento ou categoria"></div>
       <div class="field"><label for="fStatus">Status</label><select id="fStatus"><option value="">Todos</option><option value="aberto">Aberto</option><option value="pago">Pago</option><option value="parcial">Parcial</option><option value="cancelado">Cancelado</option><option value="estornado">Estornado</option></select></div>
-      <div class="field"><label for="fForma">Forma</label><select id="fForma"><option value="">Todas</option><option value="dinheiro">Dinheiro</option><option value="pix">Pix</option><option value="cartao">CartÃ£o</option><option value="boleto">Boleto</option><option value="transferencia">TransferÃªncia</option><option value="debito">DÃ©bito</option><option value="credito">CrÃ©dito</option><option value="outros">Outros</option></select></div>
+      <div class="field"><label for="fForma">Forma</label><select id="fForma"><option value="">Todas</option><option value="dinheiro">Dinheiro</option><option value="pix">Pix</option><option value="cartao">Cartão</option><option value="boleto">Boleto</option><option value="transferencia">Transferência</option><option value="debito">Débito</option><option value="credito">Crédito</option><option value="outros">Outros</option></select></div>
       <div class="field"><label for="fInicio">De</label><input id="fInicio" type="date"></div>
-      <div class="field"><label for="fFim">AtÃ©</label><input id="fFim" type="date"></div>
+      <div class="field"><label for="fFim">Até</label><input id="fFim" type="date"></div>
       <div class="field buttons"><button id="btnFiltrar" class="btn btn-primary" type="button">Filtrar</button><button id="btnLimpar" class="btn btn-light" type="button">Limpar</button></div>
     </section>
 
@@ -72,35 +70,23 @@
     <section class="panel table-wrap">
       <div class="table-top"><h2>Lista de pagamentos</h2><span id="contadorLista">0 registros</span></div>
       <table id="tbPagamentos">
-        <thead><tr><th>Sel.</th><th>Vencimento</th><th>Fornecedor</th><th>DescriÃ§Ã£o</th><th>Categoria</th><th>Forma</th><th class="num">Valor</th><th class="num">Pago</th><th class="num">Saldo</th><th>Status</th><th>AÃ§Ãµes</th></tr></thead>
+        <thead><tr><th>Sel.</th><th>Vencimento</th><th>Fornecedor</th><th>Descrição</th><th>Categoria</th><th>Forma</th><th class="num">Valor</th><th class="num">Pago</th><th class="num">Saldo</th><th>Status</th><th>Ações</th></tr></thead>
         <tbody><tr><td colspan="11" class="empty">Carregando pagamentos...</td></tr></tbody>
       </table>
-      <div class="paginacao"><button id="btnAnterior" class="btn btn-light" type="button">Anterior</button><span id="paginaAtual">PÃ¡gina 1</span><button id="btnProxima" class="btn btn-light" type="button">PrÃ³xima</button></div>
+      <div class="paginacao"><button id="btnAnterior" class="btn btn-light" type="button">Anterior</button><span id="paginaAtual">Página 1</span><button id="btnProxima" class="btn btn-light" type="button">Próxima</button></div>
     </section>
   </main>
 
-  <dialog id="modalBaixa"><form method="dialog" class="modal-card"><header><h3>Registrar pagamento</h3><button id="btnFecharModal" class="icon-btn" type="button">Ã—</button></header><input id="baixaId" type="hidden"><div class="field"><label for="baixaValor">Valor pago</label><input id="baixaValor" type="number" step="0.01" min="0"></div><div class="field"><label for="baixaForma">Forma de pagamento</label><select id="baixaForma"><option value="pix">Pix</option><option value="dinheiro">Dinheiro</option><option value="cartao">CartÃ£o</option><option value="boleto">Boleto</option><option value="transferencia">TransferÃªncia</option><option value="debito">DÃ©bito</option><option value="credito">CrÃ©dito</option><option value="outros">Outros</option></select></div><div class="field"><label for="baixaObs">ObservaÃ§Ã£o</label><textarea id="baixaObs" rows="3"></textarea></div><footer><button class="btn btn-light" id="btnCancelarBaixa" type="button">Cancelar</button><button class="btn btn-primary" id="btnConfirmarBaixa" type="button">Confirmar pagamento</button></footer></form></dialog>
+  <dialog id="modalBaixa"><form method="dialog" class="modal-card"><header><h3>Registrar pagamento</h3><button id="btnFecharModal" class="icon-btn" type="button">×</button></header><input id="baixaId" type="hidden"><div class="field"><label for="baixaValor">Valor pago</label><input id="baixaValor" type="number" step="0.01" min="0"></div><div class="field"><label for="baixaForma">Forma de pagamento</label><select id="baixaForma"><option value="pix">Pix</option><option value="dinheiro">Dinheiro</option><option value="cartao">Cartão</option><option value="boleto">Boleto</option><option value="transferencia">Transferência</option><option value="debito">Débito</option><option value="credito">Crédito</option><option value="outros">Outros</option></select></div><div class="field"><label for="baixaObs">Observação</label><textarea id="baixaObs" rows="3"></textarea></div><footer><button class="btn btn-light" id="btnCancelarBaixa" type="button">Cancelar</button><button class="btn btn-primary" id="btnConfirmarBaixa" type="button">Confirmar pagamento</button></footer></form></dialog>
 
-  <dialog id="modalNovo"><form method="dialog" class="modal-card modal-large"><header><h3 id="tituloModalNovo">Novo pagamento</h3><button id="btnFecharNovo" class="icon-btn" type="button">Ã—</button></header><input id="novoId" type="hidden"><div class="modal-grid"><div class="field"><label for="novoFornecedor">Fornecedor</label><input id="novoFornecedor" type="text"></div><div class="field"><label for="novoDocumento">Documento</label><input id="novoDocumento" type="text"></div><div class="field span-2"><label for="novoDescricao">DescriÃ§Ã£o</label><input id="novoDescricao" type="text"></div><div class="field"><label for="novoCategoria">Categoria</label><input id="novoCategoria" type="text"></div><div class="field"><label for="novoVencimento">Vencimento</label><input id="novoVencimento" type="date"></div><div class="field"><label for="novoValor">Valor</label><input id="novoValor" type="number" step="0.01" min="0"></div><div class="field"><label for="novoForma">Forma</label><select id="novoForma"><option value="pix">Pix</option><option value="dinheiro">Dinheiro</option><option value="cartao">CartÃ£o</option><option value="boleto">Boleto</option><option value="transferencia">TransferÃªncia</option><option value="debito">DÃ©bito</option><option value="credito">CrÃ©dito</option><option value="outros">Outros</option></select></div><div class="field"><label for="novoStatus">Status</label><select id="novoStatus"><option value="aberto">Aberto</option><option value="parcial">Parcial</option><option value="pago">Pago</option><option value="cancelado">Cancelado</option></select></div><div class="field span-2"><label for="novoObs">ObservaÃ§Ã£o</label><textarea id="novoObs" rows="3"></textarea></div></div><footer><button class="btn btn-light" id="btnCancelarNovo" type="button">Cancelar</button><button class="btn btn-primary" id="btnSalvarNovo" type="button">Salvar pagamento</button></footer></form></dialog>
+  <dialog id="modalNovo"><form method="dialog" class="modal-card modal-large"><header><h3 id="tituloModalNovo">Novo pagamento</h3><button id="btnFecharNovo" class="icon-btn" type="button">×</button></header><input id="novoId" type="hidden"><div class="modal-grid"><div class="field"><label for="novoFornecedor">Fornecedor</label><input id="novoFornecedor" type="text"></div><div class="field"><label for="novoDocumento">Documento</label><input id="novoDocumento" type="text"></div><div class="field span-2"><label for="novoDescricao">Descrição</label><input id="novoDescricao" type="text"></div><div class="field"><label for="novoCategoria">Categoria</label><input id="novoCategoria" type="text"></div><div class="field"><label for="novoVencimento">Vencimento</label><input id="novoVencimento" type="date"></div><div class="field"><label for="novoValor">Valor</label><input id="novoValor" type="number" step="0.01" min="0"></div><div class="field"><label for="novoForma">Forma</label><select id="novoForma"><option value="pix">Pix</option><option value="dinheiro">Dinheiro</option><option value="cartao">Cartão</option><option value="boleto">Boleto</option><option value="transferencia">Transferência</option><option value="debito">Débito</option><option value="credito">Crédito</option><option value="outros">Outros</option></select></div><div class="field"><label for="novoStatus">Status</label><select id="novoStatus"><option value="aberto">Aberto</option><option value="parcial">Parcial</option><option value="pago">Pago</option><option value="cancelado">Cancelado</option></select></div><div class="field span-2"><label for="novoObs">Observação</label><textarea id="novoObs" rows="3"></textarea></div></div><footer><button class="btn btn-light" id="btnCancelarNovo" type="button">Cancelar</button><button class="btn btn-primary" id="btnSalvarNovo" type="button">Salvar pagamento</button></footer></form></dialog>
 
-  <dialog id="modalParcelar"><form method="dialog" class="modal-card modal-large"><header><h3>Pagamento parcelado</h3><button id="btnFecharParcelar" class="icon-btn" type="button">Ã—</button></header><div class="modal-grid"><div class="field"><label for="parcFornecedor">Fornecedor</label><input id="parcFornecedor" type="text"></div><div class="field"><label for="parcDocumento">Documento base</label><input id="parcDocumento" type="text"></div><div class="field span-2"><label for="parcDescricao">DescriÃ§Ã£o</label><input id="parcDescricao" type="text"></div><div class="field"><label for="parcCategoria">Categoria</label><input id="parcCategoria" type="text"></div><div class="field"><label for="parcPrimeiroVencimento">Primeiro vencimento</label><input id="parcPrimeiroVencimento" type="date"></div><div class="field"><label for="parcValorTotal">Valor total</label><input id="parcValorTotal" type="number" step="0.01" min="0"></div><div class="field"><label for="parcQtd">Parcelas</label><input id="parcQtd" type="number" min="1" max="60" value="2"></div><div class="field"><label for="parcIntervalo">Intervalo em dias</label><input id="parcIntervalo" type="number" min="1" value="30"></div><div class="field span-2"><label for="parcForma">Forma prevista</label><select id="parcForma"><option value="pix">Pix</option><option value="boleto">Boleto</option><option value="transferencia">TransferÃªncia</option><option value="cartao">CartÃ£o</option><option value="dinheiro">Dinheiro</option><option value="outros">Outros</option></select></div></div><footer><button class="btn btn-light" id="btnCancelarParcelar" type="button">Cancelar</button><button class="btn btn-primary" id="btnSalvarParcelar" type="button">Gerar parcelas</button></footer></form></dialog>
+  <dialog id="modalParcelar"><form method="dialog" class="modal-card modal-large"><header><h3>Pagamento parcelado</h3><button id="btnFecharParcelar" class="icon-btn" type="button">×</button></header><div class="modal-grid"><div class="field"><label for="parcFornecedor">Fornecedor</label><input id="parcFornecedor" type="text"></div><div class="field"><label for="parcDocumento">Documento base</label><input id="parcDocumento" type="text"></div><div class="field span-2"><label for="parcDescricao">Descrição</label><input id="parcDescricao" type="text"></div><div class="field"><label for="parcCategoria">Categoria</label><input id="parcCategoria" type="text"></div><div class="field"><label for="parcPrimeiroVencimento">Primeiro vencimento</label><input id="parcPrimeiroVencimento" type="date"></div><div class="field"><label for="parcValorTotal">Valor total</label><input id="parcValorTotal" type="number" step="0.01" min="0"></div><div class="field"><label for="parcQtd">Parcelas</label><input id="parcQtd" type="number" min="1" max="60" value="2"></div><div class="field"><label for="parcIntervalo">Intervalo em dias</label><input id="parcIntervalo" type="number" min="1" value="30"></div><div class="field span-2"><label for="parcForma">Forma prevista</label><select id="parcForma"><option value="pix">Pix</option><option value="boleto">Boleto</option><option value="transferencia">Transferência</option><option value="cartao">Cartão</option><option value="dinheiro">Dinheiro</option><option value="outros">Outros</option></select></div></div><footer><button class="btn btn-light" id="btnCancelarParcelar" type="button">Cancelar</button><button class="btn btn-primary" id="btnSalvarParcelar" type="button">Gerar parcelas</button></footer></form></dialog>
 
   <script type="module" src="./index.js"></script>
-
-<section class="zip15-panel">
-  <h2>Pagamentos - ZIP 15</h2>
-  <div id="zip15-dashboard" class="zip15-dashboard">
-    <div><strong>Hoje</strong><span id="zip15-hoje">0</span></div>
-    <div><strong>7 dias</strong><span id="zip15-7dias">0</span></div>
-    <div><strong>Atraso</strong><span id="zip15-atraso">0</span></div>
-    <div><strong>Pagas</strong><span id="zip15-pagas">0</span></div>
-  </div>
-  <p class="zip15-note">Novas APIs: aprovaÃ§Ã£o, reprovaÃ§Ã£o, agendamento, comprovantes, recorrÃªncia e dashboard.</p>
-</section>
     <script src="/assets/js/fusion-layout.js"></script>
 
 <script src="/assets/pwa/fusion-pwa-install.js" defer></script>
   <script src="/assets/js/fusion-mobile-final.js" defer></script>
-  <script src="/assets/js/fusion-no-sidebar.js" defer></script>
 </body>
 </html>

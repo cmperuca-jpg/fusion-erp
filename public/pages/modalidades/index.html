@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
@@ -19,7 +19,6 @@
 <link rel="apple-touch-icon" href="/assets/pwa/icons/fusion-icon-180.png">
 <link rel="stylesheet" href="/assets/pwa/fusion-pwa-mobile.css">
   <link rel="stylesheet" href="/assets/css/fusion-mobile-final.css">
-  <link rel="stylesheet" href="/assets/css/fusion-no-sidebar.css">
 </head>
 <body>
   <main class="main">
@@ -36,7 +35,7 @@
 
     <section class="card">
       <div class="filters-row">
-        <input id="buscaModalidade" type="text" placeholder="Buscar por nome, categoria, professor ou descriÃ§Ã£o" />
+        <input id="buscaModalidade" type="text" placeholder="Buscar por nome, categoria, professor ou descrição" />
         <select id="filtroStatus">
           <option value="Todos">Todos os status</option>
           <option value="Ativa">Ativas</option>
@@ -51,11 +50,11 @@
               <th>Modalidade</th>
               <th>Categoria</th>
               <th>Professor</th>
-              <th>DuraÃ§Ã£o</th>
+              <th>Duração</th>
               <th>Capacidade</th>
               <th>Valor</th>
               <th>Status</th>
-              <th>AÃ§Ãµes</th>
+              <th>Ações</th>
             </tr>
           </thead>
           <tbody id="tabelaModalidades"></tbody>
@@ -68,29 +67,29 @@
     <div class="modal-card">
       <div class="modal-header">
         <h2 id="modalTitulo">Nova Modalidade</h2>
-        <button class="btn-icon" id="btnFecharModal">Ã—</button>
+        <button class="btn-icon" id="btnFecharModal">×</button>
       </div>
 
       <form id="formModalidade" class="form-grid">
         <input type="hidden" id="modalidadeId" />
 
         <label>Nome
-          <input id="nome" required placeholder="Ex.: MusculaÃ§Ã£o" />
+          <input id="nome" required placeholder="Ex.: Musculação" />
         </label>
 
         <label>Categoria
-          <input id="categoria" required placeholder="Ex.: ForÃ§a, AquÃ¡tica, Funcional" />
+          <input id="categoria" required placeholder="Ex.: Força, Aquática, Funcional" />
         </label>
 
-        <label>Professor responsÃ¡vel
+        <label>Professor responsável
           <input id="professorResponsavel" placeholder="Nome do professor" />
         </label>
 
-        <label>DuraÃ§Ã£o em minutos
+        <label>Duração em minutos
           <input id="duracaoMinutos" type="number" min="1" value="60" />
         </label>
 
-        <label>Capacidade mÃ¡xima
+        <label>Capacidade máxima
           <input id="capacidadeMaxima" type="number" min="1" value="20" />
         </label>
 
@@ -98,7 +97,7 @@
           <input id="valorSugerido" type="number" min="0" step="0.01" value="0" />
         </label>
 
-        <label>Ãcone
+        <label>Ícone
           <input id="icone" placeholder="ðŸ‹ï¸" />
         </label>
 
@@ -113,8 +112,8 @@
           </select>
         </label>
 
-        <label class="full">DescriÃ§Ã£o
-          <textarea id="descricao" rows="3" placeholder="DescriÃ§Ã£o resumida da modalidade"></textarea>
+        <label class="full">Descrição
+          <textarea id="descricao" rows="3" placeholder="Descrição resumida da modalidade"></textarea>
         </label>
 
         <div class="modal-actions full">
@@ -129,6 +128,5 @@
 
 <script src="/assets/pwa/fusion-pwa-install.js" defer></script>
   <script src="/assets/js/fusion-mobile-final.js" defer></script>
-  <script src="/assets/js/fusion-no-sidebar.js" defer></script>
 </body>
 </html>

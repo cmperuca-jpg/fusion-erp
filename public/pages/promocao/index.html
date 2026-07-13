@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#ff6600">
+  <meta name="description" content="Promoções exclusivas para novos clientes da academia.">
+  <title>Promoções para novos clientes</title>
+  <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="/assets/css/fusion-site-chat.css">
+</head>
+<body>
+  <header class="promo-hero">
+    <nav class="promo-nav">
+      <div class="brand"><span>F</span><strong>Fusion ERP</strong></div>
+    </nav>
+
+    <div class="promo-hero-content">
+      <div>
+        <p class="tag">Oferta exclusiva para novos clientes</p>
+        <h1>Comece agora com condições especiais.</h1>
+        <p>Consulte os planos disponíveis, escolha a melhor opção e envie seus dados para receber atendimento da equipe comercial.</p>
+        <a class="cta" href="#planos">Ver promoções</a>
+      </div>
+      <aside class="offer-card">
+        <span>Novos clientes</span>
+        <strong>Condições especiais</strong>
+        <p>Valores, benefícios e disponibilidade são confirmados pela academia no atendimento.</p>
+      </aside>
+    </div>
+  </header>
+
+  <main>
+    <section id="planos" class="section">
+      <div class="section-head">
+        <div><p class="eyebrow">Planos promocionais</p><h2>Escolha seu plano</h2></div>
+        <p>Os planos são carregados diretamente do Fusion ERP e podem ser atualizados pela academia.</p>
+      </div>
+      <div id="listaPlanos" class="planos"><div class="loading">Carregando planos...</div></div>
+    </section>
+
+    <section class="section benefit-grid">
+      <article><span>01</span><h3>Atendimento rápido</h3><p>A equipe comercial entra em contato para confirmar a promoção e orientar os próximos passos.</p></article>
+      <article><span>02</span><h3>Plano adequado</h3><p>Escolha a opção que melhor combina com sua rotina, modalidade e objetivo.</p></article>
+      <article><span>03</span><h3>Início simplificado</h3><p>Após a confirmação, a academia conclui o cadastro e libera seu acesso.</p></article>
+    </section>
+
+    <section id="interesse" class="section lead-card">
+      <div>
+        <p class="eyebrow">Quero aproveitar</p>
+        <h2>Receba a promoção pelo WhatsApp</h2>
+        <p>Preencha os dados abaixo. A equipe comercial confirmará as condições disponíveis para novos clientes.</p>
+      </div>
+      <form id="formLead" class="lead-form">
+        <input id="leadNome" required placeholder="Nome completo">
+        <input id="leadTelefone" required inputmode="tel" placeholder="WhatsApp">
+        <input id="leadEmail" type="email" placeholder="E-mail">
+        <select id="leadPlano"><option value="">Plano de interesse</option></select>
+        <input id="leadHorario" placeholder="Melhor horário para contato">
+        <textarea id="leadObjetivo" rows="3" placeholder="Objetivo ou observação"></textarea>
+        <button type="submit">Solicitar promoção</button>
+      </form>
+      <div id="alertaLead" class="alerta hidden"></div>
+    </section>
+  </main>
+
+  <footer class="promo-footer">
+    <strong>Fusion ERP</strong>
+    <span>Página exclusiva para novas matrículas</span>
+  </footer>
+
+  <script src="/pages/comercial/index.js"></script>
+  <script src="/assets/js/fusion-site-chat.js" data-chat-origem="promocao_novos_clientes"></script>
+</body>
+</html>

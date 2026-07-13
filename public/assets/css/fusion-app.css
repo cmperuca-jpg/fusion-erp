@@ -148,3 +148,88 @@ body.fusion-com-sidebar .fusion-shell{
   .fusion-catraca-toggle,.fusion-catraca-liberar{flex:1}
 }
 
+
+
+/* Fusion ERP 2.8.0 — harmonização final das páginas internas */
+html{background:var(--fusion-bg)}
+body:not(.login-page){min-height:100vh}
+body:not(.fusion-sem-menu)>.fusion-main,
+body:not(.fusion-sem-menu)>main.main,
+body:not(.fusion-sem-menu)>main.fusion-page{margin-left:270px!important;width:auto!important;max-width:none!important;padding:22px!important}
+.sidebar.fusion-sidebar{display:block!important;position:fixed!important;left:0!important;top:0!important;bottom:0!important;width:270px!important;overflow-y:auto!important;background:var(--fusion-dark)!important;color:#fff!important;padding:18px!important;z-index:1000!important}
+.sidebar.fusion-sidebar .fusion-brand{height:auto!important;padding:8px 8px 18px!important;color:#fff!important}
+.sidebar.fusion-sidebar .fusion-menu-section{margin:14px 0!important}
+.sidebar.fusion-sidebar .fusion-menu-group{display:block!important;color:#93a4bd!important;padding:0!important;margin:0 0 8px!important;font-size:11px!important;letter-spacing:.08em!important}
+.sidebar.fusion-sidebar a{display:flex!important;color:#e5e7eb!important;padding:10px 11px!important;border-radius:10px!important;margin:3px 0!important;text-decoration:none!important;font-weight:750!important}
+.sidebar.fusion-sidebar a:hover,.sidebar.fusion-sidebar a.active{background:var(--fusion-primary)!important;color:#fff!important}
+.page-header,.topbar{border-radius:18px!important;background:#fff!important;border:1px solid var(--fusion-border)!important;box-shadow:0 10px 30px rgba(15,23,42,.05)!important}
+.actions{display:flex!important;gap:10px!important;flex-wrap:wrap!important;align-items:center!important}
+button,.btn,.actions button,.actions .btn{min-height:42px!important;border-radius:12px!important;padding:10px 16px!important;font-weight:850!important;line-height:1.1!important;box-shadow:none!important}
+.btn-light,.actions .btn-light{background:#e7edf6!important;color:#172033!important;border:1px solid #d4deeb!important}
+.btn-secondary,.actions .btn-secondary{background:#172033!important;color:#fff!important}
+.btn-primary,.actions .btn-primary{background:var(--fusion-primary)!important;color:#fff!important}
+.btn-danger,.actions .btn-danger{background:var(--fusion-red)!important;color:#fff!important}
+button:disabled,.btn:disabled{opacity:.5!important;cursor:not-allowed!important}
+.version-tag,.integration-status,.system-alert:empty,.qa-finalizado,.zip15-panel,[data-debug],.debug-info{display:none!important}
+#btnDiagnostico,#btnDiagnosticoRotas{display:none!important}
+@media(max-width:900px){
+  body:not(.fusion-sem-menu)>.fusion-main,body:not(.fusion-sem-menu)>main.main,body:not(.fusion-sem-menu)>main.fusion-page{margin-left:0!important;padding:12px!important}
+  .sidebar.fusion-sidebar{position:relative!important;width:auto!important;inset:auto!important;max-height:none!important}
+  .page-header{display:grid!important;gap:14px!important}
+  .actions{width:100%!important}
+}
+
+/* Fusion ERP 2.8.0 — correção de encaixe das páginas internas */
+body.fusion-com-sidebar > main,
+body.fusion-com-sidebar > .main,
+body.fusion-com-sidebar > .fusion-main,
+body.fusion-com-sidebar > .chat-admin {
+  margin-left:270px !important;
+  width:calc(100% - 270px) !important;
+  max-width:none !important;
+  padding:22px !important;
+}
+body.fusion-com-sidebar > main > header:not(.topbar):not(.topo) {
+  display:none !important;
+}
+body.fusion-com-sidebar .topbar {
+  min-height:72px;
+  margin:0 0 18px !important;
+}
+body.fusion-com-sidebar .hero,
+body.fusion-com-sidebar .topo {
+  margin-left:0 !important;
+  margin-right:0 !important;
+}
+body.fusion-com-sidebar .cards {
+  padding-left:0 !important;
+  padding-right:0 !important;
+}
+body.fusion-com-sidebar .filtros,
+body.fusion-com-sidebar .painel {
+  margin-left:0 !important;
+  margin-right:0 !important;
+}
+body.fusion-com-sidebar .tabela-wrap,
+body.fusion-com-sidebar .card {
+  min-width:0;
+}
+body.fusion-com-sidebar .sidebar.fusion-sidebar {
+  width:270px !important;
+}
+body.fusion-com-sidebar .sidebar.fusion-sidebar a[target="_blank"]::after {
+  content:"↗";
+  margin-left:auto;
+  opacity:.75;
+  font-size:12px;
+}
+@media(max-width:900px){
+  body.fusion-com-sidebar > main,
+  body.fusion-com-sidebar > .main,
+  body.fusion-com-sidebar > .fusion-main,
+  body.fusion-com-sidebar > .chat-admin {
+    margin-left:0 !important;
+    width:100% !important;
+    padding:12px !important;
+  }
+}

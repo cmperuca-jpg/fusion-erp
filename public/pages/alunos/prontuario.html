@@ -1,9 +1,9 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Fusion ERP - ProntuÃ¡rio do Aluno</title>
+  <title>Fusion ERP - Prontuário do Aluno</title>
   <link rel="stylesheet" href="/assets/css/fusion-app.css">
   <link rel="stylesheet" href="/assets/css/fusion-menu-global.css">
   <link rel="stylesheet" href="./style.css">
@@ -21,13 +21,12 @@
 <link rel="apple-touch-icon" href="/assets/pwa/icons/fusion-icon-180.png">
 <link rel="stylesheet" href="/assets/pwa/fusion-pwa-mobile.css">
   <link rel="stylesheet" href="/assets/css/fusion-mobile-final.css">
-  <link rel="stylesheet" href="/assets/css/fusion-no-sidebar.css">
 </head>
 <body>
   <div class="fusion-shell">
     <main class="fusion-main">
       <header class="fusion-topbar">
-        <div class="fusion-title">ProntuÃ¡rio do Aluno</div>
+        <div class="fusion-title">Prontuário do Aluno</div>
         <div><span data-fusion-user></span> <button onclick="FusionAuth.sair()">Sair</button></div>
       </header>
 
@@ -38,7 +37,7 @@
           <div class="foto-grande" id="fotoAluno">Foto</div>
           <div>
             <h2 id="nomeAluno">Carregando...</h2>
-            <p id="subtituloAluno">Ficha completa, financeiro, avaliaÃ§Ãµes, treinos e histÃ³rico.</p>
+            <p id="subtituloAluno">Ficha completa, financeiro, avaliações, treinos e histórico.</p>
             <div class="chip-row" id="chipsAluno"></div>
           </div>
           <div class="prontuario-actions">
@@ -49,29 +48,29 @@
         </div>
 
         <div class="prontuario-kpis">
-          <div class="aluno-kpi"><span>PrÃ³ximo vencimento</span><strong id="kpiProximo">-</strong></div>
+          <div class="aluno-kpi"><span>Próximo vencimento</span><strong id="kpiProximo">-</strong></div>
           <div class="aluno-kpi"><span>Aberto</span><strong id="kpiAberto">R$ 0,00</strong></div>
           <div class="aluno-kpi"><span>Pago</span><strong id="kpiPago">R$ 0,00</strong></div>
-          <div class="aluno-kpi"><span>Ãšltima avaliaÃ§Ã£o</span><strong id="kpiAvaliacao">-</strong></div>
+          <div class="aluno-kpi"><span>Última avaliação</span><strong id="kpiAvaliacao">-</strong></div>
         </div>
 
         <div class="prontuario-tabs fusion-card">
           <button class="tab" data-tab="financeiro">Financeiro</button>
-          <button class="tab" data-tab="matriculas">MatrÃ­culas</button>
+          <button class="tab" data-tab="matriculas">Matrículas</button>
           <button class="tab" data-tab="contrato-comercial">Contrato Comercial</button>
-          <button class="tab active" data-tab="servicos-contratados">ServiÃ§os Contratados</button>
-          <button class="tab" data-tab="avaliacoes">AvaliaÃ§Ãµes</button>
+          <button class="tab active" data-tab="servicos-contratados">Serviços Contratados</button>
+          <button class="tab" data-tab="avaliacoes">Avaliações</button>
           <button class="tab" data-tab="treinos">Treinos</button>
           <button class="tab" data-tab="checkins">Check-ins</button>
           <button class="tab" data-tab="timeline">Linha do tempo</button>
         </div>
 
         <div class="tab-panel" id="tab-financeiro">
-          <div class="fusion-card"><h3>Mensalidades</h3><div class="table-wrap"><table class="alunos-table"><thead><tr><th>CompetÃªncia</th><th>Vencimento</th><th>Valor</th><th>Status</th></tr></thead><tbody id="listaMensalidades"></tbody></table></div></div>
-          <div class="fusion-card"><h3>LanÃ§amentos financeiros</h3><div class="table-wrap"><table class="alunos-table"><thead><tr><th>DescriÃ§Ã£o</th><th>Vencimento</th><th>Valor</th><th>Status</th></tr></thead><tbody id="listaFinanceiro"></tbody></table></div></div>
+          <div class="fusion-card"><h3>Mensalidades</h3><div class="table-wrap"><table class="alunos-table"><thead><tr><th>Competência</th><th>Vencimento</th><th>Valor</th><th>Status</th></tr></thead><tbody id="listaMensalidades"></tbody></table></div></div>
+          <div class="fusion-card"><h3>Lançamentos financeiros</h3><div class="table-wrap"><table class="alunos-table"><thead><tr><th>Descrição</th><th>Vencimento</th><th>Valor</th><th>Status</th></tr></thead><tbody id="listaFinanceiro"></tbody></table></div></div>
         </div>
 
-        <div class="tab-panel" id="tab-matriculas"><div class="fusion-card"><h3>MatrÃ­culas e planos</h3><div id="listaMatriculas" class="cards-list"></div></div></div>
+        <div class="tab-panel" id="tab-matriculas"><div class="fusion-card"><h3>Matrículas e planos</h3><div id="listaMatriculas" class="cards-list"></div></div></div>
         
         <div class="tab-panel" id="tab-contrato-comercial">
           <div class="fusion-card comercial-card">
@@ -83,7 +82,7 @@
         <div class="tab-panel active" id="tab-servicos-contratados">
           <div class="fusion-card comercial-card">
             <div class="comercial-head">
-              <h3>ServiÃ§os Contratados</h3>
+              <h3>Serviços Contratados</h3>
               <button class="fusion-button" id="btnSalvarChecklistComercial" type="button">Salvar contrato</button>
             </div>
             <div id="servicosChecklist" class="servicos-checklist">Carregando...</div>
@@ -91,7 +90,7 @@
           </div>
         </div>
 
-        <div class="tab-panel" id="tab-avaliacoes"><div class="fusion-card"><h3>AvaliaÃ§Ãµes fÃ­sicas</h3><div id="listaAvaliacoes" class="cards-list"></div></div></div>
+        <div class="tab-panel" id="tab-avaliacoes"><div class="fusion-card"><h3>Avaliações físicas</h3><div id="listaAvaliacoes" class="cards-list"></div></div></div>
         <div class="tab-panel" id="tab-treinos"><div class="fusion-card"><h3>Treinos</h3><div id="listaTreinos" class="cards-list"></div></div></div>
         <div class="tab-panel" id="tab-checkins"><div class="fusion-card"><h3>Check-ins</h3><div id="listaCheckins" class="cards-list"></div></div></div>
         <div class="tab-panel" id="tab-timeline"><div class="fusion-card"><h3>Linha do tempo</h3><div id="linhaTempo" class="timeline"></div></div></div>
@@ -106,6 +105,5 @@
 
 <script src="/assets/pwa/fusion-pwa-install.js" defer></script>
   <script src="/assets/js/fusion-mobile-final.js" defer></script>
-  <script src="/assets/js/fusion-no-sidebar.js" defer></script>
 </body>
 </html>

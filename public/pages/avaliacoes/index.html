@@ -1,9 +1,9 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Fusion ERP - AvaliaÃ§Ãµes</title>
+  <title>Fusion ERP - Avaliações</title>
   <link rel="stylesheet" href="/assets/css/fusion-app.css">
   <link rel="stylesheet" href="/assets/css/fusion-menu-global.css" data-admin-only>
   <link rel="stylesheet" href="./style.css">
@@ -23,7 +23,6 @@
   </script>
   <meta name="fusion-existing-pages" content="access-engine,admin,agenda,aluno-avaliacao,aluno-login,aluno-treinos,alunos,avaliacoes,bi-academia,bi-academia-operacional,bi-financeiro,caixa,checkin,comercial,comercial-painel,configuracoes,dashboard,financeiro,matricula-online,matriculas,matriculas-pendentes,mensalidades,modalidades,natacao-professor,planos,professor-area,professor-login,professores,recebimentos,relatorios-caixa,treinos,turmas">
   <link rel="stylesheet" href="/assets/css/fusion-mobile-final.css">
-  <link rel="stylesheet" href="/assets/css/fusion-no-sidebar.css">
 </head>
 <body class="aval-admin">
 <div class="fusion-shell">
@@ -32,26 +31,26 @@
     <section class="fusion-content aval-page">
       <div class="aval-header-card">
         <div>
-          <h2>AvaliaÃ§Ãµes fÃ­sicas</h2>
-          <p>Anamnese, risco coronariano, perÃ­metros, composiÃ§Ã£o, cardio, neuromotores, postural e relatÃ³rio.</p>
+          <h2>Avaliações físicas</h2>
+          <p>Anamnese, risco coronariano, perímetros, composição, cardio, neuromotores, postural e relatório.</p>
         </div>
         <div class="aval-actions aval-actions-historico">
           <button class="fusion-button secondary" id="btnAtualizar" type="button">Atualizar</button>
-          <button class="fusion-button" id="btnNovaMobile" type="button">Nova avaliaÃ§Ã£o</button>
+          <button class="fusion-button" id="btnNovaMobile" type="button">Nova avaliação</button>
         </div>
       </div>
 
       <div class="aval-kpis">
         <div><span>Total</span><strong id="kpiTotal">0</strong></div>
-        <div><span>Este mÃªs</span><strong id="kpiMes">0</strong></div>
+        <div><span>Este mês</span><strong id="kpiMes">0</strong></div>
         <div><span>Alunos avaliados</span><strong id="kpiAlunos">0</strong></div>
-        <div><span>IMC mÃ©dio</span><strong id="kpiImc">0</strong></div>
+        <div><span>IMC médio</span><strong id="kpiImc">0</strong></div>
       </div>
 
       <div class="fusion-card aval-toolbar">
-        <div class="field"><label>Pesquisar</label><input id="busca" placeholder="Aluno, professor, objetivo ou observaÃ§Ã£o"></div>
+        <div class="field"><label>Pesquisar</label><input id="busca" placeholder="Aluno, professor, objetivo ou observação"></div>
         <div class="field"><label>Aluno</label><select id="filtroAluno"><option value="">Todos</option></select></div>
-        <div class="field"><label>MÃªs</label><input id="filtroMes" type="month"></div>
+        <div class="field"><label>Mês</label><input id="filtroMes" type="month"></div>
         <div class="field btn-field"><label>&nbsp;</label><button class="fusion-button secondary" id="btnLimpar" type="button">Limpar</button></div>
       </div>
 
@@ -59,20 +58,20 @@
 
       <div class="fusion-card">
         <div class="table-top">
-          <h3>HistÃ³rico de avaliaÃ§Ãµes</h3>
+          <h3>Histórico de avaliações</h3>
           <span id="contador">0 registro(s)</span>
         </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Aluno</th><th>Data</th><th>Professor</th><th>Peso</th><th>IMC</th><th>Gordura</th><th>Objetivo</th><th class="text-right">AÃ§Ãµes</th></tr></thead>
+            <thead><tr><th>Aluno</th><th>Data</th><th>Professor</th><th>Peso</th><th>IMC</th><th>Gordura</th><th>Objetivo</th><th class="text-right">Ações</th></tr></thead>
             <tbody id="tabela"><tr><td colspan="8">Carregando...</td></tr></tbody>
           </table>
         </div>
       </div>
 
       <div class="fusion-card evol-card">
-        <div class="table-top"><h3>EvoluÃ§Ã£o do aluno</h3><span id="evolTitulo">Selecione um aluno no filtro</span></div>
-        <div id="evolucao" class="evolucao-vazia">Escolha um aluno para visualizar a evoluÃ§Ã£o cronolÃ³gica.</div>
+        <div class="table-top"><h3>Evolução do aluno</h3><span id="evolTitulo">Selecione um aluno no filtro</span></div>
+        <div id="evolucao" class="evolucao-vazia">Escolha um aluno para visualizar a evolução cronológica.</div>
       </div>
     </section>
   </main>
@@ -81,8 +80,8 @@
 <div class="modal-backdrop hidden" id="modal">
   <div class="modal-card modal-avaliacao">
     <div class="sca-titlebar">
-      <div><strong>AvaliaÃ§Ã£o FÃ­sica</strong> <span id="tituloAlunoModal">:: Novo registro</span></div>
-      <button id="btnFechar" type="button">Ã—</button>
+      <div><strong>Avaliação Física</strong> <span id="tituloAlunoModal">:: Novo registro</span></div>
+      <button id="btnFechar" type="button">×</button>
     </div>
 
     <div class="avaliacao-mobile-resumo" id="avaliacaoMobileResumo" aria-live="polite">
@@ -101,13 +100,13 @@
       <input type="hidden" id="foto_lateral_esquerda_base64">
 
       <div class="sca-topline aval-meta-grid">
-        <div class="field matricula-box"><label>MatrÃ­cula</label><input id="matriculaNumero" readonly></div>
+        <div class="field matricula-box"><label>Matrícula</label><input id="matriculaNumero" readonly></div>
         <div class="field aluno-box"><label>Nome do aluno</label><select id="aluno_id" required><option value="">Carregando alunos...</option></select></div>
-        <div class="field aval-num"><label>AvaliaÃ§Ã£o</label><select id="avaliacaoNumero"><option value="nova">Nova avaliaÃ§Ã£o</option></select></div>
+        <div class="field aval-num"><label>Avaliação</label><select id="avaliacaoNumero"><option value="nova">Nova avaliação</option></select></div>
         <div class="field data-box"><label>Data</label><input id="data" type="date"></div>
         <div class="field hora-box"><label>Hora</label><input id="hora" type="time"></div>
       </div>
-      <div class="professor-lock">Professor avaliador: <strong id="professorNomeDisplay">Definido pelo professor responsÃ¡vel do aluno</strong></div>
+      <div class="professor-lock">Professor avaliador: <strong id="professorNomeDisplay">Definido pelo professor responsável do aluno</strong></div>
 
       <div class="avaliacao-voz-box" id="avaliacaoVozBox">
         <div>
@@ -116,50 +115,50 @@
         </div>
         <div class="avaliacao-voz-actions">
           <button class="fusion-button secondary" id="btnVozAvaliacao" type="button">ðŸŽ™ï¸ Iniciar voz</button>
-          <button class="fusion-button secondary" id="btnRepetirVozAvaliacao" type="button">Repetir instruÃ§Ã£o</button>
+          <button class="fusion-button secondary" id="btnRepetirVozAvaliacao" type="button">Repetir instrução</button>
         </div>
-        <div class="avaliacao-voz-transcript" id="avaliacaoVozTranscricao">Fale livremente: â€œpeso 82 vÃ­rgula 4, altura 1 e 78, cintura 90, quadril 102â€.</div>
+        <div class="avaliacao-voz-transcript" id="avaliacaoVozTranscricao">Fale livremente: “peso 82 vírgula 4, altura 1 e 78, cintura 90, quadril 102”.</div>
       </div>
 
       <div class="avaliacao-mode" id="modoAvaliacaoBox">
         <button class="modo-card active" type="button" data-avmodo="nova">
           <span class="modo-icon">+</span>
-          <strong>Nova avaliaÃ§Ã£o</strong>
+          <strong>Nova avaliação</strong>
           <small>Criar um novo registro para o aluno selecionado.</small>
         </button>
         <button class="modo-card" type="button" data-avmodo="editar">
           <span class="modo-icon">âœŽ</span>
-          <strong>Editar avaliaÃ§Ã£o existente</strong>
-          <small>Escolha uma avaliaÃ§Ã£o no campo acima para alterar os dados jÃ¡ salvos.</small>
+          <strong>Editar avaliação existente</strong>
+          <small>Escolha uma avaliação no campo acima para alterar os dados já salvos.</small>
         </button>
       </div>
 
       <div class="tabs sca-tabs">
         <button class="tab active" data-tab="anamnese" type="button">Anamnese</button>
         <button class="tab" data-tab="risco" type="button">Risco Coronariano</button>
-        <button class="tab" data-tab="perimetros" type="button">PerÃ­metros / RCQ</button>
-        <button class="tab" data-tab="composicao" type="button">ComposiÃ§Ã£o</button>
-        <button class="tab" data-tab="cardio" type="button">CardiorrespiratÃ³ria</button>
+        <button class="tab" data-tab="perimetros" type="button">Perímetros / RCQ</button>
+        <button class="tab" data-tab="composicao" type="button">Composição</button>
+        <button class="tab" data-tab="cardio" type="button">Cardiorrespiratória</button>
         <button class="tab" data-tab="neuromotores" type="button">Neuromotores</button>
         <button class="tab" data-tab="postural" type="button">Postural</button>
-        <button class="tab" data-tab="relatorio" type="button">RelatÃ³rio</button>
+        <button class="tab" data-tab="relatorio" type="button">Relatório</button>
       </div>
 
       <div class="tab-panel active" id="tab-anamnese">
         <div class="sca-panel two-col">
           <div>
             <h4>Anamnese</h4>
-            <label>Objetivos com relaÃ§Ã£o Ã  atividade fÃ­sica?<input id="objetivo" placeholder="Hipertrofia, emagrecimento, condicionamento"></label>
-            <label>Pratica atividade fÃ­sica atualmente?<input id="pratica_atividade"></label>
+            <label>Objetivos com relação à atividade física?<input id="objetivo" placeholder="Hipertrofia, emagrecimento, condicionamento"></label>
+            <label>Pratica atividade física atualmente?<input id="pratica_atividade"></label>
             <label>Utiliza algum tipo de medicamento?<input id="medicamentos"></label>
-            <label>JÃ¡ passou por alguma cirurgia?<input id="cirurgias"></label>
-            <label>DoenÃ§as na famÃ­lia?<input id="doencas_familia"></label>
-            <label>ObservaÃ§Ãµes<textarea id="observacoes" rows="4"></textarea></label>
+            <label>Já passou por alguma cirurgia?<input id="cirurgias"></label>
+            <label>Doenças na família?<input id="doencas_familia"></label>
+            <label>Observações<textarea id="observacoes" rows="4"></textarea></label>
           </div>
           <div>
             <h4>PAR-Q</h4>
             <div id="parqBox" class="parq-list"></div>
-            <p class="warn">Se o avaliado responder SIM para qualquer questÃ£o, encaminhe para avaliaÃ§Ã£o mÃ©dica.</p>
+            <p class="warn">Se o avaliado responder SIM para qualquer questão, encaminhe para avaliação médica.</p>
           </div>
         </div>
       </div>
@@ -170,18 +169,18 @@
             <label>Idade<select id="risco_idade"><option value="0">Selecione</option><option value="1">&lt; 30</option><option value="2">30 a 39</option><option value="3">40 a 49</option><option value="4">50 a 59</option><option value="5">60+</option></select></label>
             <label>Sexo<select id="risco_sexo"><option value="0">Selecione</option><option value="1">Feminino</option><option value="2">Masculino</option></select></label>
             <label>Peso<select id="risco_peso"><option value="0">Selecione</option><option value="1">Normal</option><option value="2">Sobrepeso</option><option value="3">Obesidade</option></select></label>
-            <label>ExercÃ­cio fÃ­sico<select id="risco_exercicio"><option value="0">Selecione</option><option value="0">Ativo</option><option value="3">SedentÃ¡rio</option></select></label>
-            <label>HistÃ³rico familiar<select id="risco_historico"><option value="0">Selecione</option><option value="0">NÃ£o</option><option value="3">Sim</option></select></label>
-            <label>Tabagismo<select id="risco_tabagismo"><option value="0">Selecione</option><option value="0">NÃ£o</option><option value="4">Sim</option></select></label>
+            <label>Exercício físico<select id="risco_exercicio"><option value="0">Selecione</option><option value="0">Ativo</option><option value="3">Sedentário</option></select></label>
+            <label>Histórico familiar<select id="risco_historico"><option value="0">Selecione</option><option value="0">Não</option><option value="3">Sim</option></select></label>
+            <label>Tabagismo<select id="risco_tabagismo"><option value="0">Selecione</option><option value="0">Não</option><option value="4">Sim</option></select></label>
             <label>% de colesterol<select id="risco_colesterol"><option value="0">Selecione</option><option value="1">Normal</option><option value="3">Elevado</option></select></label>
-            <label>PressÃ£o arterial sistÃ³lica<select id="risco_pas"><option value="0">Selecione</option><option value="1">Normal</option><option value="3">Elevada</option></select></label>
+            <label>Pressão arterial sistólica<select id="risco_pas"><option value="0">Selecione</option><option value="1">Normal</option><option value="3">Elevada</option></select></label>
           </div>
           <div class="resultado-card">
             <h4>Risco coronariano</h4>
             <div class="risk-meter"><div id="riscoBarra"></div></div>
-            <div class="risk-score"><span>PontuaÃ§Ã£o</span><strong id="risco_pontuacao">0</strong></div>
-            <div id="risco_classificacao" class="info">InformaÃ§Ãµes insuficientes</div>
-            <small>06 a 11: bem abaixo da mÃ©dia Â· 12 a 17: abaixo Â· 18 a 24: mÃ©dio Â· 25 a 31: moderado Â· 32 a 40: alto Â· 41+: muito alto</small>
+            <div class="risk-score"><span>Pontuação</span><strong id="risco_pontuacao">0</strong></div>
+            <div id="risco_classificacao" class="info">Informações insuficientes</div>
+            <small>06 a 11: bem abaixo da média · 12 a 17: abaixo · 18 a 24: médio · 25 a 31: moderado · 32 a 40: alto · 41+: muito alto</small>
           </div>
         </div>
       </div>
@@ -189,36 +188,36 @@
       <div class="tab-panel" id="tab-perimetros">
         <div class="sca-panel perimetros-layout perimetros-layout-lista-unica">
           <div class="perimetros-list perimetros-lista-oficial">
-            <h4>PerÃ­metros</h4>
+            <h4>Perímetros</h4>
 
-            <div class="measure-row single"><label>PescoÃ§o</label><input id="pescoco" inputmode="decimal" placeholder="0,00"></div>
+            <div class="measure-row single"><label>Pescoço</label><input id="pescoco" inputmode="decimal" placeholder="0,00"></div>
             <div class="measure-row single"><label>Punho</label><input id="punho" inputmode="decimal" placeholder="0,00"></div>
             <div class="measure-row single"><label>Ombro</label><input id="ombro" inputmode="decimal" placeholder="0,00"></div>
 
             <div class="measure-row pair measure-row-stack">
-              <label>BraÃ§o relaxado</label>
+              <label>Braço relaxado</label>
               <div class="measure-pair-values">
                 <span>Direito</span><input id="braco_relaxado_direito" inputmode="decimal" placeholder="0,00">
                 <span>Esquerdo</span><input id="braco_relaxado_esquerdo" inputmode="decimal" placeholder="0,00">
               </div>
             </div>
             <div class="measure-row pair measure-row-stack">
-              <label>BraÃ§o contraÃ­do</label>
+              <label>Braço contraído</label>
               <div class="measure-pair-values">
                 <span>Direito</span><input id="braco_contraido_direito" inputmode="decimal" placeholder="0,00">
                 <span>Esquerdo</span><input id="braco_contraido_esquerdo" inputmode="decimal" placeholder="0,00">
               </div>
             </div>
             <div class="measure-row pair measure-row-stack">
-              <label>AntebraÃ§o</label>
+              <label>Antebraço</label>
               <div class="measure-pair-values">
                 <span>Direito</span><input id="antebraco_direito" inputmode="decimal" placeholder="0,00">
                 <span>Esquerdo</span><input id="antebraco_esquerdo" inputmode="decimal" placeholder="0,00">
               </div>
             </div>
 
-            <div class="measure-row single"><label>TÃ³rax relaxado</label><input id="torax_relaxado" inputmode="decimal" placeholder="0,00"></div>
-            <div class="measure-row single"><label>TÃ³rax inspirado</label><input id="torax_inspirado" inputmode="decimal" placeholder="0,00"></div>
+            <div class="measure-row single"><label>Tórax relaxado</label><input id="torax_relaxado" inputmode="decimal" placeholder="0,00"></div>
+            <div class="measure-row single"><label>Tórax inspirado</label><input id="torax_inspirado" inputmode="decimal" placeholder="0,00"></div>
             <div class="measure-row single req"><label>Cintura *</label><input id="cintura" inputmode="decimal" placeholder="0,00"></div>
             <div class="measure-row single"><label>Abdome</label><input id="abdomen" inputmode="decimal" placeholder="0,00"></div>
             <div class="measure-row single req"><label>Quadril *</label><input id="quadril" inputmode="decimal" placeholder="0,00"></div>
@@ -245,19 +244,19 @@
               </div>
             </div>
 
-            <div class="measure-row single"><label>BiestilÃ³ide</label><input id="biestiloide" inputmode="decimal" placeholder="0,00"></div>
-            <div class="measure-row single"><label>BiepicÃ´ndilo Umeral</label><input id="biepicondilo_umeral" inputmode="decimal" placeholder="0,00"></div>
-            <div class="measure-row single"><label>BiepicÃ´ndilo Femural</label><input id="biepicondilo_femural" inputmode="decimal" placeholder="0,00"></div>
+            <div class="measure-row single"><label>Biestilóide</label><input id="biestiloide" inputmode="decimal" placeholder="0,00"></div>
+            <div class="measure-row single"><label>Biepicôndilo Umeral</label><input id="biepicondilo_umeral" inputmode="decimal" placeholder="0,00"></div>
+            <div class="measure-row single"><label>Biepicôndilo Femural</label><input id="biepicondilo_femural" inputmode="decimal" placeholder="0,00"></div>
             <div class="measure-row single"><label>Bimaleolar</label><input id="bimaleolar" inputmode="decimal" placeholder="0,00"></div>
           </div>
 
           <div class="resultado-card resultado-card-rcq compacto">
             <h4>RCQ / Resumo</h4>
-            <p>Resultado calculado automaticamente por cintura Ã· quadril.</p>
+            <p>Resultado calculado automaticamente por cintura ÷ quadril.</p>
             <div class="rcq-value"><span>RCQ</span><strong id="rcq">0,00</strong></div>
             <div id="rcq_classificacao" class="info">Preencha cintura e quadril.</div>
             <div class="rcq-mini-grid"><span>Cintura</span><strong id="rcq_cintura_view">0,00</strong><span>Quadril</span><strong id="rcq_quadril_view">0,00</strong></div>
-            <div class="sum-value"><span>SomatÃ³rio dos perÃ­metros</span><strong id="soma_perimetros">0,00</strong></div>
+            <div class="sum-value"><span>Somatório dos perímetros</span><strong id="soma_perimetros">0,00</strong></div>
           </div>
         </div>
       </div>
@@ -268,29 +267,29 @@
             <div class="field"><label>Peso (kg)</label><input id="peso" inputmode="decimal"></div>
             <div class="field"><label>Altura (m)</label><input id="altura" inputmode="decimal"></div>
             <div class="field"><label>IMC</label><input id="imc" readonly></div>
-            <div class="field"><label>ClassificaÃ§Ã£o</label><input id="classificacao_imc" readonly></div>
+            <div class="field"><label>Classificação</label><input id="classificacao_imc" readonly></div>
           </div>
-          <div class="subtabs"><button type="button" class="subtab active" data-sub="dobrasCutaneas">Dobras cutÃ¢neas</button><button type="button" class="subtab" data-sub="bioimpedancia">BioimpedÃ¢ncia</button></div>
+          <div class="subtabs"><button type="button" class="subtab active" data-sub="dobrasCutaneas">Dobras cutâneas</button><button type="button" class="subtab" data-sub="bioimpedancia">Bioimpedância</button></div>
           <div id="dobrasCutaneas" class="subpanel active">
             <div class="grid-4">
-              <div class="field"><label>Protocolo</label><select id="protocolo_dobras"><option>Jackson, Pollock e Ward - 3 dobras</option><option>Jackson, Pollock e Ward - 7 dobras</option><option>Faulkner - 4 dobras</option><option>Yuhasz - 6 dobras</option><option>BioimpedÃ¢ncia</option></select></div>
+              <div class="field"><label>Protocolo</label><select id="protocolo_dobras"><option>Jackson, Pollock e Ward - 3 dobras</option><option>Jackson, Pollock e Ward - 7 dobras</option><option>Faulkner - 4 dobras</option><option>Yuhasz - 6 dobras</option><option>Bioimpedância</option></select></div>
               <div class="field"><label>% ideal</label><input id="percentual_ideal" value="22,00"></div>
               <div class="field"><label>% gordura</label><input id="percentual_gordura" inputmode="decimal"></div>
-              <div class="field"><label>Ãgua corporal</label><input id="agua_corporal" inputmode="decimal"></div>
+              <div class="field"><label>Água corporal</label><input id="agua_corporal" inputmode="decimal"></div>
             </div>
             <div class="grid-4">
               <div class="field"><label>Subescapular</label><input id="subescapular" inputmode="decimal"></div>
               <div class="field"><label>Bicipital</label><input id="bicipital" inputmode="decimal"></div>
               <div class="field"><label>Tricipital</label><input id="tricipital" inputmode="decimal"></div>
-              <div class="field"><label>Axilar-mÃ©dia</label><input id="axilar_media" inputmode="decimal"></div>
-              <div class="field"><label>Supra-ilÃ­aca</label><input id="supra_iliaca" inputmode="decimal"></div>
+              <div class="field"><label>Axilar-média</label><input id="axilar_media" inputmode="decimal"></div>
+              <div class="field"><label>Supra-ilíaca</label><input id="supra_iliaca" inputmode="decimal"></div>
               <div class="field"><label>Peitoral</label><input id="peitoral" inputmode="decimal"></div>
               <div class="field"><label>Abdominal</label><input id="dobra_abdominal" inputmode="decimal"></div>
               <div class="field"><label>Coxa</label><input id="dobra_coxa" inputmode="decimal"></div>
               <div class="field"><label>Panturrilha</label><input id="dobra_panturrilha" inputmode="decimal"></div>
             </div>
           </div>
-          <div id="bioimpedancia" class="subpanel"><div class="grid-4"><div class="field"><label>Massa magra (kg)</label><input id="massa_magra_manual" inputmode="decimal"></div><div class="field"><label>Massa gorda (kg)</label><input id="massa_gorda_manual" inputmode="decimal"></div><div class="field"><label>Gordura visceral</label><input id="gordura_visceral" inputmode="decimal"></div><div class="field"><label>Idade metabÃ³lica</label><input id="idade_metabolica" inputmode="numeric"></div></div></div>
+          <div id="bioimpedancia" class="subpanel"><div class="grid-4"><div class="field"><label>Massa magra (kg)</label><input id="massa_magra_manual" inputmode="decimal"></div><div class="field"><label>Massa gorda (kg)</label><input id="massa_gorda_manual" inputmode="decimal"></div><div class="field"><label>Gordura visceral</label><input id="gordura_visceral" inputmode="decimal"></div><div class="field"><label>Idade metabólica</label><input id="idade_metabolica" inputmode="numeric"></div></div></div>
           <div class="grid-4 result-row"><div class="field"><label>Massa magra</label><input id="massa_magra" readonly></div><div class="field"><label>Massa gorda</label><input id="massa_gorda" readonly></div><div class="field"><label>TMB</label><input id="tmb" readonly></div><div class="field"><label>Resultado</label><input id="composicao_resultado" readonly></div></div>
         </div>
       </div>
@@ -298,8 +297,8 @@
       <div class="tab-panel" id="tab-cardio">
         <div class="sca-panel two-col">
           <div>
-            <h4>AvaliaÃ§Ã£o CardiorrespiratÃ³ria</h4>
-            <div class="inline-options"><strong>CondiÃ§Ã£o fÃ­sica:</strong><label><input type="radio" name="condicao_fisica" value="ativo"> Ativo</label><label><input type="radio" name="condicao_fisica" value="sedentario" checked> SedentÃ¡rio</label></div>
+            <h4>Avaliação Cardiorrespiratória</h4>
+            <div class="inline-options"><strong>Condição física:</strong><label><input type="radio" name="condicao_fisica" value="ativo"> Ativo</label><label><input type="radio" name="condicao_fisica" value="sedentario" checked> Sedentário</label></div>
             <div class="protocol-list">
               <label><input type="radio" name="protocolo_cardio" value="Bruce"> Protocolo de Bruce</label>
               <label><input type="radio" name="protocolo_cardio" value="Balke-Ware"> Protocolo de Balke-Ware</label>
@@ -308,15 +307,15 @@
               <label><input type="radio" name="protocolo_cardio" value="Astrand"> Astrand (5 minutos)</label>
             </div>
           </div>
-          <div class="resultado-card"><h4>VOÂ²</h4><div class="field"><label>VOÂ² mÃ¡ximo obtido</label><input id="vo2_obtido" inputmode="decimal"></div><div class="field"><label>VOÂ² mÃ¡ximo previsto</label><input id="vo2_previsto" readonly></div><div class="field"><label>DÃ©ficit aerÃ³bico funcional</label><input id="deficit_aerobico" readonly></div><div id="cardio_info" class="info">Complete o protocolo para gerar o resultado.</div></div>
+          <div class="resultado-card"><h4>VO²</h4><div class="field"><label>VO² máximo obtido</label><input id="vo2_obtido" inputmode="decimal"></div><div class="field"><label>VO² máximo previsto</label><input id="vo2_previsto" readonly></div><div class="field"><label>Déficit aeróbico funcional</label><input id="deficit_aerobico" readonly></div><div id="cardio_info" class="info">Complete o protocolo para gerar o resultado.</div></div>
         </div>
       </div>
 
       <div class="tab-panel" id="tab-neuromotores">
         <div class="sca-panel neuro-list">
-          <div class="neuro-item"><div><strong>FlexÃ£o de braÃ§os</strong><span>ResistÃªncia muscular localizada</span></div><label>RepetiÃ§Ãµes<input id="flexao_bracos" inputmode="numeric"></label><div id="flexao_resultado" class="info">InformaÃ§Ãµes insuficientes</div></div>
-          <div class="neuro-item"><div><strong>Abdominal</strong><span>ResistÃªncia muscular localizada</span></div><label>RepetiÃ§Ãµes<input id="abdominal_repeticoes" inputmode="numeric"></label><div id="abdominal_resultado" class="info">InformaÃ§Ãµes insuficientes</div></div>
-          <div class="neuro-item"><div><strong>Banco de Wells</strong><span>Flexibilidade</span></div><label>CentÃ­metros<input id="banco_wells" inputmode="decimal"></label><div id="wells_resultado" class="info">InformaÃ§Ãµes insuficientes</div></div>
+          <div class="neuro-item"><div><strong>Flexão de braços</strong><span>Resistência muscular localizada</span></div><label>Repetições<input id="flexao_bracos" inputmode="numeric"></label><div id="flexao_resultado" class="info">Informações insuficientes</div></div>
+          <div class="neuro-item"><div><strong>Abdominal</strong><span>Resistência muscular localizada</span></div><label>Repetições<input id="abdominal_repeticoes" inputmode="numeric"></label><div id="abdominal_resultado" class="info">Informações insuficientes</div></div>
+          <div class="neuro-item"><div><strong>Banco de Wells</strong><span>Flexibilidade</span></div><label>Centímetros<input id="banco_wells" inputmode="decimal"></label><div id="wells_resultado" class="info">Informações insuficientes</div></div>
         </div>
       </div>
 
@@ -331,15 +330,15 @@
 
       <div class="tab-panel" id="tab-relatorio">
         <div class="sca-panel">
-          <h4>RelatÃ³rio da avaliaÃ§Ã£o</h4>
-          <div id="relatorioPreview" class="relatorio-preview">Preencha ou selecione uma avaliaÃ§Ã£o para visualizar o relatÃ³rio premium com diagnÃ³stico, comparativo e impressÃ£o profissional.</div>
+          <h4>Relatório da avaliação</h4>
+          <div id="relatorioPreview" class="relatorio-preview">Preencha ou selecione uma avaliação para visualizar o relatório premium com diagnóstico, comparativo e impressão profissional.</div>
         </div>
       </div>
 
       <div class="modal-actions">
         <button type="button" class="btn-light" id="btnCancelar">Cancelar</button>
         <button type="button" class="btn-light" id="btnImprimir">Imprimir</button>
-        <button type="submit" class="fusion-button" id="btnSalvar">Salvar avaliaÃ§Ã£o</button>
+        <button type="submit" class="fusion-button" id="btnSalvar">Salvar avaliação</button>
       </div>
     </form>
   </div>
@@ -354,6 +353,5 @@
     }
   </script>
   <script src="/assets/js/fusion-mobile-final.js" defer></script>
-  <script src="/assets/js/fusion-no-sidebar.js" defer></script>
 </body>
 </html>

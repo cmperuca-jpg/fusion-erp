@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
@@ -19,14 +19,13 @@
 <link rel="apple-touch-icon" href="/assets/pwa/icons/fusion-icon-180.png">
 <link rel="stylesheet" href="/assets/pwa/fusion-pwa-mobile.css">
   <link rel="stylesheet" href="/assets/css/fusion-mobile-final.css">
-  <link rel="stylesheet" href="/assets/css/fusion-no-sidebar.css">
 </head>
 <body>
   <main class="main">
     <section class="modulo-header">
       <div>
         <h2>Turmas</h2>
-        <p>Controle de turmas, vagas, professores, modalidades e horÃ¡rios.</p>
+        <p>Controle de turmas, vagas, professores, modalidades e horários.</p>
       </div>
       <button class="btn-primary" id="btnNovaTurma">Nova Turma</button>
     </section>
@@ -67,10 +66,10 @@
             <th>Modalidade</th>
             <th>Professor</th>
             <th>Dias</th>
-            <th>HorÃ¡rio</th>
+            <th>Horário</th>
             <th>Vagas</th>
             <th>Status</th>
-            <th>AÃ§Ãµes</th>
+            <th>Ações</th>
           </tr>
         </thead>
         <tbody id="tabelaTurmas"></tbody>
@@ -84,7 +83,7 @@
 
       <header class="modal-header">
         <h2 id="modalTitulo">Nova Turma</h2>
-        <button type="button" class="btn-icon" id="btnFecharModal">Ã—</button>
+        <button type="button" class="btn-icon" id="btnFecharModal">×</button>
       </header>
 
       <div class="form-grid">
@@ -95,7 +94,7 @@
 
         <label>
           Modalidade
-          <input id="modalidade" required placeholder="Ex.: NataÃ§Ã£o" />
+          <input id="modalidade" required placeholder="Ex.: Natação" />
         </label>
 
         <label>
@@ -114,8 +113,8 @@
         </label>
 
         <label>
-          HorÃ¡rio
-          <input id="horario" required placeholder="Ex.: 07:00 Ã s 08:00" />
+          Horário
+          <input id="horario" required placeholder="Ex.: 07:00 às 08:00" />
         </label>
 
         <label>
@@ -138,7 +137,7 @@
       </div>
 
       <label>
-        ObservaÃ§Ãµes
+        Observações
         <textarea id="observacoes" rows="3"></textarea>
       </label>
 
@@ -153,6 +152,5 @@
 
 <script src="/assets/pwa/fusion-pwa-install.js" defer></script>
   <script src="/assets/js/fusion-mobile-final.js" defer></script>
-  <script src="/assets/js/fusion-no-sidebar.js" defer></script>
 </body>
 </html>

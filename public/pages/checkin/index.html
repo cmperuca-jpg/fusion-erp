@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
@@ -20,14 +20,13 @@
 <link rel="apple-touch-icon" href="/assets/pwa/icons/fusion-icon-180.png">
 <link rel="stylesheet" href="/assets/pwa/fusion-pwa-mobile.css">
   <link rel="stylesheet" href="/assets/css/fusion-mobile-final.css">
-  <link rel="stylesheet" href="/assets/css/fusion-no-sidebar.css">
 </head>
 <body>
   <main class="main">
     <section class="page-actions">
       <div>
         <h2>Check-in</h2>
-        <p>Controle de entrada, saÃ­da, presenÃ§a, bloqueios de acesso e inÃ­cio automÃ¡tico do treino de musculaÃ§Ã£o.</p>
+        <p>Controle de entrada, saída, presença, bloqueios de acesso e início automático do treino de musculação.</p>
       </div>
 
       <button class="btn-primary" id="btnNovoCheckin">
@@ -63,18 +62,18 @@
 
     <section class="card painel-checkin">
       <div>
-        <h2>Entrada rÃ¡pida</h2>
-        <p>Check-in inteligente por matrÃ­cula, CPF, QR Code ou cÃ³digo do aluno, validando matrÃ­cula, financeiro, frequÃªncia e treino ativo.</p>
+        <h2>Entrada rápida</h2>
+        <p>Check-in inteligente por matrícula, CPF, QR Code ou código do aluno, validando matrícula, financeiro, frequência e treino ativo.</p>
       </div>
 
       <div class="entrada-rapida">
-        <input id="entradaCodigo" placeholder="Digite matrÃ­cula, CPF, QR Code ou cÃ³digo do aluno" />
+        <input id="entradaCodigo" placeholder="Digite matrícula, CPF, QR Code ou código do aluno" />
         <button class="btn-secondary" id="btnEntradaRapida">Registrar</button>
       </div>
     </section>
 
     <section class="card filtros-checkin">
-      <input id="busca" placeholder="Buscar aluno, matrÃ­cula, plano, modalidade ou professor" />
+      <input id="busca" placeholder="Buscar aluno, matrícula, plano, modalidade ou professor" />
 
       <select id="filtroStatus">
         <option value="">Todos os status</option>
@@ -89,21 +88,21 @@
     </section>
 
     <section class="card">
-      <h2>HistÃ³rico de Check-in</h2>
+      <h2>Histórico de Check-in</h2>
 
       <div class="tabela-container">
         <table>
           <thead>
             <tr>
               <th>Aluno</th>
-              <th>MatrÃ­cula</th>
+              <th>Matrícula</th>
               <th>Plano</th>
               <th>Modalidade</th>
               <th>Data</th>
               <th>Entrada</th>
-              <th>SaÃ­da</th>
+              <th>Saída</th>
               <th>Status</th>
-              <th>AÃ§Ãµes</th>
+              <th>Ações</th>
             </tr>
           </thead>
 
@@ -117,7 +116,7 @@
     <div class="modal">
       <header class="modal-header">
         <h2 id="modalTitulo">Novo Check-in</h2>
-        <button id="btnFecharModal">Ã—</button>
+        <button id="btnFecharModal">×</button>
       </header>
 
       <form id="formCheckin" class="form-grid">
@@ -131,7 +130,7 @@
         </label>
 
         <label>
-          MatrÃ­cula
+          Matrícula
           <select id="matricula" required>
             <option value="">Selecione o aluno</option>
           </select>
@@ -147,7 +146,7 @@
         <label>
           Modalidade
           <select id="modalidade">
-            <option value="MusculaÃ§Ã£o">MusculaÃ§Ã£o</option>
+            <option value="Musculação">Musculação</option>
           </select>
         </label>
 
@@ -176,7 +175,7 @@
         </label>
 
         <label>
-          Hora de saÃ­da
+          Hora de saída
           <input id="horaSaida" type="time" />
         </label>
 
@@ -186,7 +185,7 @@
             <option value="Manual">Manual</option>
             <option value="QR Code">QR Code</option>
             <option value="Senha">Senha</option>
-            <option value="CartÃ£o">CartÃ£o</option>
+            <option value="Cartão">Cartão</option>
             <option value="Biometria">Biometria</option>
           </select>
         </label>
@@ -200,7 +199,7 @@
         </label>
 
         <label class="full">
-          ObservaÃ§Ãµes
+          Observações
           <textarea id="observacoes" rows="3"></textarea>
         </label>
 
@@ -216,6 +215,5 @@
 
 <script src="/assets/pwa/fusion-pwa-install.js" defer></script>
   <script src="/assets/js/fusion-mobile-final.js" defer></script>
-  <script src="/assets/js/fusion-no-sidebar.js" defer></script>
 </body>
 </html>

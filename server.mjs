@@ -344,7 +344,7 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "pages", "login", "index.html"));
+  res.redirect(302, "/pages/comercial/index.html");
 });
 
 app.get("/api", (req, res) => {

@@ -3,7 +3,7 @@
     "id": "e1bdfb38-50bf-47fb-87ba-052ab6434f84",
     "status": "Ativo",
     "criadoEm": "2026-07-03T18:28:37.356Z",
-    "atualizadoEm": "2026-07-09T08:50:47.164Z",
+    "atualizadoEm": "2026-07-13T12:20:43.279Z",
     "nome": "MARCOS ANDRE DE SOUZA",
     "cpf": "04877315497",
     "rg": "2000001220025",
@@ -46,7 +46,9 @@
         "tipo": "manual",
         "arquivo_base64": ""
       }
-    ]
+    ],
+    "acessoTodosAlunos": false,
+    "senhaHash": "82e6780c188ad1e9055e387fc818c82a:15422f8c9ca724a0ecdea45bd558acf8943d3b4fadeb3704e1a4320d1fcc49180ce58109f2df1a716cf97930ad81e57a2d8f5a194d78e3ccc8975d190d729eee"
   },
   {
     "id": "18e08222-7c37-4ade-bc18-201dddc460df",

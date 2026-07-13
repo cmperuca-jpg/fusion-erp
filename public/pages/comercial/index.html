@@ -2,63 +2,53 @@
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Academia - Planos e Matrícula</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#111827">
+  <meta name="description" content="Fusion ERP: central exclusiva de acesso ao sistema, portal do aluno e área do professor.">
+  <title>Fusion ERP — Central de acesso</title>
   <link rel="stylesheet" href="./style.css">
-  <link rel="stylesheet" href="/assets/css/fusion-site-chat.css">
 </head>
 <body>
-  <header class="hero">
-    <nav><strong>Fusion Academia</strong><a href="#planos">Planos</a><a href="#experimental">Aula experimental</a><a class="btn small" href="/pages/matricula-online/index.html">Matricule-se</a></nav>
-    <div class="hero-content">
-      <p class="tag">Matrícula online com análise da recepção</p>
-      <h1>Comece seu treino com acompanhamento profissional.</h1>
-      <p>Escolha um plano, agende uma aula experimental ou envie sua matrícula online. A equipe comercial acompanhará seu atendimento.</p>
-      <div class="actions"><a class="btn" href="/pages/matricula-online/index.html">Matricule-se agora</a><a class="btn secondary" href="#experimental">Agendar aula experimental</a></div>
-    </div>
-  </header>
+  <main class="home-shell">
+    <nav class="site-nav" aria-label="Identificação do sistema">
+      <div class="site-brand" aria-label="Fusion ERP">
+        <span class="brand-mark">F</span>
+        <span><strong>Fusion ERP</strong><small>Gestão para academias</small></span>
+      </div>
+    </nav>
 
-  <main>
-    <section id="planos" class="section">
-      <div class="section-head"><h2>Planos disponíveis</h2><p>Os planos atuais foram mantidos e os novos aparecem em templates próprios, todos carregados do Fusion ERP.</p></div>
-      <div id="listaPlanos" class="planos"><div class="loading">Carregando planos...</div></div>
+    <section class="hero-content">
+      <div class="hero-copy">
+        <p class="tag">Central oficial do Fusion ERP</p>
+        <h1>Escolha o ambiente que deseja acessar.</h1>
+        <p class="hero-description">Acesso exclusivo para funcionários, alunos e professores.</p>
+
+        <div class="home-actions">
+          <a class="primary-action" href="/pages/login/index.html">
+            <span class="action-number">01</span>
+            <span><strong>Login do Sistema</strong><small>Administração, gerência, recepção e comercial</small></span>
+            <b>→</b>
+          </a>
+
+          <a class="primary-action" href="/pages/aluno-login/index.html">
+            <span class="action-number">02</span>
+            <span><strong>Portal do Cliente / Aluno</strong><small>Treinos e acompanhamento individual</small></span>
+            <b>→</b>
+          </a>
+
+          <a class="primary-action" href="/pages/professor-login/index.html">
+            <span class="action-number">03</span>
+            <span><strong>Login do Professor</strong><small>Avaliações, prescrições e alunos vinculados</small></span>
+            <b>→</b>
+          </a>
+        </div>
+      </div>
     </section>
 
-    <section class="section grid-2">
-      <div class="card"><h2>Serviços oferecidos</h2><ul><li>Musculação</li><li>Avaliação física</li><li>Prescrição de treino</li><li>Acompanhamento pelo portal do aluno</li><li>Atendimento do professor</li></ul></div>
-      <div class="card"><h2>Como funciona</h2><ol><li>Preencha a matrícula online.</li><li>A recepção confere os dados.</li><li>O financeiro confirma o pagamento.</li><li>O portal do aluno e o professor são liberados.</li></ol></div>
-    </section>
-
-    <section id="experimental" class="section lead-card">
-      <div><h2>Agende uma aula experimental</h2><p>Deixe seus dados. A recepção entrará em contato pelo WhatsApp.</p></div>
-      <form id="formLead" class="lead-form">
-        <input id="leadNome" required placeholder="Nome completo">
-        <input id="leadTelefone" required inputmode="tel" placeholder="WhatsApp">
-        <input id="leadEmail" type="email" placeholder="E-mail">
-        <select id="leadPlano"><option value="">Plano de interesse</option></select>
-        <input id="leadHorario" placeholder="Melhor horário para contato/aula">
-        <textarea id="leadObjetivo" rows="3" placeholder="Objetivo ou observação"></textarea>
-        <button type="submit">Enviar interesse</button>
-      </form>
-      <div id="alertaLead" class="alerta hidden"></div>
-    </section>
+    <footer class="home-footer">
+      <span>Fusion ERP 2.8.0</span>
+      <span>Acesso restrito</span>
+    </footer>
   </main>
-
-  <script src="./index.js"></script>
-  <script src="/assets/js/fusion-site-chat.js" data-chat-origem="site_comercial"></script>
-  <script>
-    (() => {
-      const botao = document.querySelector('.fusion-chat-toggle');
-      if (!botao) return;
-      botao.classList.add('comercial-fale-conosco');
-      botao.setAttribute('aria-label', 'Fale conosco agora');
-      botao.innerHTML = `
-        <svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"></path>
-          <path d="M8 9h8M8 13h5"></path>
-        </svg>
-        <span>Fale conosco agora</span>`;
-    })();
-  </script>
 </body>
 </html>

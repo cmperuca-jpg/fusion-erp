@@ -1,29 +1,24 @@
 (function () {
   const PAGINAS_SEM_MENU = [
-    "/pages/avaliacoes/",
-    "/pages/avaliacoes/index.html",
-
-    "/pages/treinos/",
-    "/pages/treinos/index.html",
-
-    "/pages/comercial-painel/",
-    "/pages/comercial-painel/index.html",
-
-    "/pages/matricula-online/",
-    "/pages/matricula-online/index.html",
-
     "/pages/aluno-avaliacao/",
     "/pages/aluno-avaliacao/index.html",
-
     "/pages/aluno-treinos/",
     "/pages/aluno-treinos/index.html",
-
     "/pages/aluno-login/",
     "/pages/aluno-login/index.html",
-
+    "/pages/professor-area/",
+    "/pages/professor-area/index.html",
     "/pages/professor-login/",
-    "/pages/professor-login/index.html"
-];
+    "/pages/professor-login/index.html",
+    "/pages/comercial/",
+    "/pages/comercial/index.html",
+    "/pages/promocao/",
+    "/pages/promocao/index.html",
+    "/pages/matricula-online/",
+    "/pages/matricula-online/index.html",
+    "/pages/login/",
+    "/pages/login/index.html"
+  ];
 
   const ITENS_MENU = [
     { grupo: "Principal", itens: [
@@ -42,11 +37,11 @@
       { id: "access-engine", label: "Catracas", href: "/pages/access-engine/index.html", perm: "access-engine" }
     ]},
     { grupo: "Comercial", itens: [
-      { id: "comercial", label: "Site comercial", href: "/pages/comercial/index.html", perm: "comercial" },
-      { id: "matricula-online", label: "Matricula online", href: "/pages/matricula-online/index.html", perm: "comercial" },
-      { id: "matriculas-pendentes", label: "Matriculas pendentes", href: "/pages/matriculas-pendentes/index.html", perm: "matriculas" },
+      { id: "site-comercial", label: "Site Comercial", href: "/pages/comercial/index.html", perm: "comercial", novaAba: true },
+      { id: "matricula-online", label: "Matrícula Online", href: "/pages/matricula-online/index.html", perm: "matricula-online", novaAba: true },
+      { id: "matriculas-pendentes", label: "Matrículas pendentes", href: "/pages/matriculas-pendentes/index.html", perm: "matriculas" },
       { id: "site-chat", label: "Chat do site", href: "/pages/site-chat/index.html", perm: "site-chat" },
-      { id: "matriculas", label: "Matriculas", href: "/pages/matriculas/index.html", perm: "matriculas" }
+      { id: "matriculas", label: "Matrículas", href: "/pages/matriculas/index.html", perm: "matriculas" }
     ]},
     { grupo: "Financeiro", itens: [
       { id: "financeiro", label: "Financeiro", href: "/pages/financeiro/index.html", perm: "financeiro" },
@@ -54,14 +49,14 @@
       { id: "recebimentos", label: "Recebimentos", href: "/pages/recebimentos/index.html", perm: "financeiro" },
       { id: "pagamentos", label: "Pagamentos", href: "/pages/financeiro/pagamentos/index.html", perm: "financeiro" },
       { id: "caixa", label: "Caixa", href: "/pages/caixa/index.html", perm: "caixa" },
-      { id: "relatorios", label: "Relatorios de caixa", href: "/pages/relatorios-caixa/index.html", perm: "relatorios" }
+      { id: "relatorios", label: "Relatórios de caixa", href: "/pages/relatorios-caixa/index.html", perm: "relatorios" }
     ]},
     { grupo: "Indicadores", itens: [
       { id: "bi-academia", label: "BI Academia", href: "/pages/bi-academia/index.html", perm: "relatorios" },
       { id: "bi-operacional", label: "BI Operacional", href: "/pages/bi-academia-operacional/index.html", perm: "relatorios" }
     ]},
     { grupo: "Sistema", itens: [
-      { id: "configuracoes", label: "Configuracoes", href: "/pages/configuracoes/index.html", perm: "admin" }
+      { id: "configuracoes", label: "Configurações", href: "/pages/configuracoes/index.html", perm: "admin" }
     ]}
   ];
 
@@ -77,6 +72,7 @@
   function removerMenusExistentes() {
     document.querySelectorAll(".sidebar,.fusion-sidebar,#fusionSidebar,#fusionMenuGlobal,.fusion-menu-global").forEach(el => el.remove());
     document.body.classList.add("fusion-sem-menu");
+    document.body.classList.remove("fusion-com-sidebar");
     document.documentElement.classList.add("fusion-sem-menu");
   }
 
@@ -111,11 +107,11 @@
 
     const user = usuario();
     const sidebar = document.createElement("aside");
-    sidebar.className = "sidebar";
+    sidebar.className = "sidebar fusion-sidebar";
     sidebar.id = "fusionSidebar";
 
     const marca = document.createElement("div");
-    marca.className = "brand";
+    marca.className = "brand fusion-brand";
     marca.innerHTML = "<strong>Fusion ERP</strong><small>Menu inteligente</small>";
     sidebar.appendChild(marca);
 
@@ -124,10 +120,10 @@
       if (!itens.length) return;
 
       const box = document.createElement("div");
-      box.className = "menu-grupo";
+      box.className = "menu-grupo fusion-menu-section open";
 
       const titulo = document.createElement("span");
-      titulo.className = "menu-titulo";
+      titulo.className = "menu-titulo fusion-menu-group";
       titulo.textContent = grupo.grupo;
       box.appendChild(titulo);
 
@@ -136,6 +132,11 @@
         a.href = item.href;
         a.dataset.menuId = item.id;
         a.textContent = item.label;
+        if (item.novaAba) {
+          a.target = "_blank";
+          a.rel = "noopener noreferrer";
+          a.title = `${item.label} — abrir em nova aba`;
+        }
         if (itemAtivo(item.href)) a.classList.add("active");
         box.appendChild(a);
       });
@@ -146,6 +147,8 @@
     removerMenusExistentes();
     document.body.classList.remove("fusion-sem-menu");
     document.documentElement.classList.remove("fusion-sem-menu");
+    document.body.classList.add("fusion-com-sidebar");
+    document.documentElement.classList.add("fusion-com-sidebar");
     document.body.prepend(sidebar);
   }
 
@@ -266,6 +269,17 @@
   }
 
 
+  function prepararLinksPublicos(root = document) {
+    const destinos = ["/pages/comercial/index.html", "/pages/matricula-online/index.html", "/pages/promocao/index.html"];
+    root.querySelectorAll("a[href]").forEach((link) => {
+      const href = String(link.getAttribute("href") || "").split("?")[0];
+      if (destinos.includes(href)) {
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+      }
+    });
+  }
+
   window.carregarLayout = function carregarLayout(titulo) {
 
     if (paginaSemMenu()) {
@@ -306,6 +320,7 @@
   };
 
   document.addEventListener("DOMContentLoaded", () => {
+    prepararLinksPublicos(document);
     if (paginaSemMenu()) {
       removerMenusExistentes();
       preencherUsuarioTopo();

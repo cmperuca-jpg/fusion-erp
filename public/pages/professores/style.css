@@ -8,3 +8,11 @@
 
 /* Fusion ERP - Professores: prontuário profissional integrado */
 .prof-info-grid{display:grid;grid-template-columns:repeat(4,minmax(140px,1fr));gap:10px;margin:12px 0}.prof-info-grid>div{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:10px}.prof-info-grid span{display:block;color:#64748b;font-size:12px;font-weight:800;text-transform:uppercase}.prof-info-grid strong{display:block;margin-top:4px;color:#0f172a;overflow-wrap:anywhere}.prof-prontuario-lista{display:grid;gap:10px;padding:12px}.prof-vinculo-card{border:1px solid #e2e8f0;border-radius:12px;background:#fff;padding:12px}.prof-vinculo-card strong{display:block;color:#0f172a}.prof-vinculo-card small{display:block;color:#64748b;margin-top:4px}.prof-prontuario-status{white-space:nowrap}.pront-kpis{grid-template-columns:repeat(6,1fr)}@media(max-width:900px){.prof-info-grid{grid-template-columns:1fr 1fr}.pront-kpis{grid-template-columns:1fr 1fr}}@media(max-width:520px){.prof-info-grid{grid-template-columns:1fr}}
+
+
+/* Correção: abas visíveis e senha do portal do professor */
+.tabs .tab{color:#334155!important;opacity:1!important;visibility:visible!important;font-weight:700}
+.tabs .tab:hover{background:#fff7ed;border-color:#ff6600;color:#c2410c!important}
+.tabs .tab.active{background:#ff6600!important;color:#fff!important;border-color:#ff6600!important}
+.modal-actions button,.modal-actions .btn-light{opacity:1!important;visibility:visible!important}
+.senha-ajuda{display:block;margin-top:-6px;color:#64748b;line-height:1.4}

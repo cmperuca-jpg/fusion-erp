@@ -10,3 +10,12 @@ body.fusion-ui-ready .filtros{margin:0 0 18px!important}
 body.fusion-ui-ready .painel{margin:0 0 24px!important}
 body.fusion-ui-ready table{min-width:760px}
 body.fusion-ui-ready .card,body.fusion-ui-ready .painel,body.fusion-ui-ready .filtros{border-radius:18px!important}
+
+/* Encaixe no menu global */
+body.fusion-com-sidebar main{margin-left:270px!important;width:calc(100% - 270px)!important;padding:22px!important}
+body.fusion-com-sidebar main>header:not(.topbar){display:none!important}
+body.fusion-com-sidebar .hero{padding:0!important;margin:0 0 18px!important}
+body.fusion-com-sidebar .cards{padding:0!important;margin-bottom:18px!important}
+body.fusion-com-sidebar .filtros{margin:0 0 18px!important}
+body.fusion-com-sidebar .painel{margin:0 0 24px!important}
+@media(max-width:900px){body.fusion-com-sidebar main{margin-left:0!important;width:100%!important;padding:12px!important}}

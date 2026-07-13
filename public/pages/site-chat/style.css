@@ -34,3 +34,11 @@ input,select,textarea{width:100%;border:1px solid #cbd5e1;border-radius:10px;pad
   .mensagens{height:420px}
   .resposta{grid-template-columns:1fr}
 }
+
+/* Encaixe no layout administrativo */
+body.fusion-com-sidebar .chat-admin{margin-right:0!important}
+body.fusion-com-sidebar .layout{grid-template-columns:minmax(280px,340px) minmax(0,1fr);min-height:calc(100vh - 150px)}
+body.fusion-com-sidebar .janela{min-width:0}
+body.fusion-com-sidebar .mensagens{height:calc(100vh - 322px);min-height:330px}
+@media(max-width:1100px){body.fusion-com-sidebar .layout{grid-template-columns:300px minmax(0,1fr)}}
+@media(max-width:900px){body.fusion-com-sidebar .layout{grid-template-columns:1fr}body.fusion-com-sidebar .mensagens{height:420px}}
