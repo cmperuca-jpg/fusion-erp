@@ -10,6 +10,7 @@ import {
   importarFotosAccess,
   analisarFotosAccessLocal,
   importarFotosAccessLocal,
+  importarFotosSupabase,
   lerRelatorioFotosAccess
 } from "./importador-fotos.service.mjs";
 import {
@@ -30,7 +31,12 @@ function obterPayload(req) {
 }
 
 function erro(res, error, status = 500) {
-  return res.status(error.status || status).json({ ok: false, erro: error.message, mensagem: error.message });
+  return res.status(error.status || status).json({
+    ok: false,
+    erro: error.message,
+    mensagem: error.message,
+    ...(error.relatorio ? { relatorio: error.relatorio } : {})
+  });
 }
 
 function obterPayloadFotos(req) {
@@ -102,6 +108,15 @@ router.post("/fotos/importar-local", async (req, res) => {
     if (!payload.fotosTxt) return res.status(400).json({ ok: false, mensagem: "Envie o arquivo Fotos.txt." });
     if (!payload.zipBase64) return res.status(400).json({ ok: false, mensagem: "Envie o arquivo Fotos.zip." });
     res.json(await importarFotosAccess(payload));
+  } catch (error) { erro(res, error, 400); }
+});
+
+router.post("/fotos/importar-supabase", async (req, res) => {
+  try {
+    const payload = obterPayloadFotos(req);
+    if (!payload.fotosTxt) return res.status(400).json({ ok: false, mensagem: "Envie o arquivo Fotos.txt." });
+    if (!payload.zipBase64) return res.status(400).json({ ok: false, mensagem: "Envie o arquivo Fotos.zip." });
+    res.json(await importarFotosSupabase({ ...payload, dryRun: Boolean(req.body?.dryRun) }));
   } catch (error) { erro(res, error, 400); }
 });
 

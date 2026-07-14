@@ -15,6 +15,9 @@ const PUBLIC_UPLOADS_PREFIX = "/uploads/alunos";
 const FOTOS_TXT_LOCAL = path.resolve(process.cwd(), "Fotos.txt");
 const FOTOS_ZIP_LOCAL = path.resolve(process.cwd(), "Fotos.zip");
 
+const SUPABASE_FOTOS_BUCKET = process.env.SUPABASE_FOTOS_BUCKET || "alunos-fotos";
+const SUPABASE_FOTO_COLUMN = process.env.SUPABASE_FOTO_COLUMN || "foto";
+
 const EXT_IMAGEM = new Set([".jpg", ".jpeg", ".png", ".webp", ".gif"]);
 
 function texto(valor) {
@@ -282,6 +285,173 @@ function montarNomeDestino(aluno, registro, imagem) {
   return nomeBase;
 }
 
+async function criarClienteSupabase() {
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+  if (!url || !key) {
+    const erro = new Error("Configure SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY no Render.");
+    erro.status = 500;
+    throw erro;
+  }
+  const { createClient } = await import("@supabase/supabase-js");
+  return createClient(url, key, { auth: { persistSession: false } });
+}
+
+function mimeImagem(nome = "") {
+  const ext = path.extname(nome).toLowerCase();
+  if (ext === ".png") return "image/png";
+  if (ext === ".webp") return "image/webp";
+  if (ext === ".gif") return "image/gif";
+  return "image/jpeg";
+}
+
+async function garantirBucketFotos(supabase) {
+  const { data, error } = await supabase.storage.getBucket(SUPABASE_FOTOS_BUCKET);
+  if (!error && data) return;
+
+  const { error: criarErro } = await supabase.storage.createBucket(SUPABASE_FOTOS_BUCKET, {
+    public: true,
+    fileSizeLimit: 8 * 1024 * 1024,
+    allowedMimeTypes: ["image/jpeg", "image/png", "image/webp", "image/gif"]
+  });
+
+  if (criarErro && !/already exists|duplicate/i.test(criarErro.message || "")) {
+    throw new Error(`Não foi possível criar o bucket ${SUPABASE_FOTOS_BUCKET}: ${criarErro.message}`);
+  }
+}
+
+async function carregarAlunosSupabase(supabase) {
+  const { data, error } = await supabase
+    .from("alunos")
+    .select("id,id_legado,nome")
+    .limit(5000);
+  if (error) throw new Error(`Falha ao consultar alunos no Supabase: ${error.message}`);
+  return Array.isArray(data) ? data : [];
+}
+
+async function atualizarFotoAlunoSupabase(supabase, alunoId, fotoUrl) {
+  const payload = {
+    [SUPABASE_FOTO_COLUMN]: fotoUrl,
+    atualizado_em: new Date().toISOString()
+  };
+  const { error } = await supabase.from("alunos").update(payload).eq("id", alunoId);
+  if (error) {
+    throw new Error(
+      `Falha ao atualizar a coluna ${SUPABASE_FOTO_COLUMN} do aluno: ${error.message}. ` +
+      `Confirme que a tabela alunos possui essa coluna ou configure SUPABASE_FOTO_COLUMN.`
+    );
+  }
+}
+
+async function executarVinculacaoFotosSupabase({ fotosTxt, zipBase64, nomeZip = "Fotos.zip", dryRun = false } = {}) {
+  if (!fotosTxt) {
+    const erro = new Error("Envie o arquivo Fotos.txt.");
+    erro.status = 400;
+    throw erro;
+  }
+
+  const parsed = parseFotosTxt(fotosTxt);
+  const { tempDir, extractDir } = await prepararZip(zipBase64, nomeZip);
+  const imagens = await listarImagens(extractDir);
+  const imagensPorNome = montarIndiceImagens(imagens);
+  const supabase = await criarClienteSupabase();
+  const alunos = await carregarAlunosSupabase(supabase);
+  const alunosPorLegado = indexarAlunosPorIdLegado(alunos);
+
+  if (!dryRun) await garantirBucketFotos(supabase);
+
+  const vinculadas = [];
+  const semAluno = [];
+  const semArquivo = [];
+  const erros = [];
+
+  for (const registro of parsed.registros) {
+    const aluno = alunosPorLegado.get(String(registro.id_legado_aluno));
+    if (!aluno) {
+      semAluno.push({ id_legado: registro.id_legado_aluno, arquivo: registro.arquivo, motivo: "aluno_nao_encontrado_no_supabase" });
+      continue;
+    }
+
+    const imagem = imagensPorNome.get(registro.arquivo_lower) || imagensPorNome.get(path.basename(registro.arquivo).toLowerCase());
+    if (!imagem) {
+      semArquivo.push({ id_legado: registro.id_legado_aluno, aluno: aluno.nome || "", arquivo: registro.arquivo, motivo: "arquivo_nao_encontrado_no_zip" });
+      continue;
+    }
+
+    const nomeDestino = montarNomeDestino(aluno, registro, imagem);
+    const storagePath = `access/${nomeDestino}`;
+
+    try {
+      let fotoUrl = `supabase://${SUPABASE_FOTOS_BUCKET}/${storagePath}`;
+      if (!dryRun) {
+        const buffer = await fs.readFile(imagem.caminho);
+        const { error: uploadError } = await supabase.storage
+          .from(SUPABASE_FOTOS_BUCKET)
+          .upload(storagePath, buffer, {
+            contentType: mimeImagem(nomeDestino),
+            cacheControl: "3600",
+            upsert: true
+          });
+        if (uploadError) throw new Error(`Falha no upload: ${uploadError.message}`);
+
+        const { data: publicData } = supabase.storage.from(SUPABASE_FOTOS_BUCKET).getPublicUrl(storagePath);
+        fotoUrl = publicData?.publicUrl || fotoUrl;
+        await atualizarFotoAlunoSupabase(supabase, aluno.id, fotoUrl);
+      }
+
+      vinculadas.push({
+        id_legado: registro.id_legado_aluno,
+        alunoId: aluno.id,
+        aluno: aluno.nome || "",
+        arquivo_origem: registro.arquivo,
+        arquivo_destino: storagePath,
+        foto: fotoUrl
+      });
+    } catch (error) {
+      erros.push({ id_legado: registro.id_legado_aluno, aluno: aluno.nome || "", arquivo: registro.arquivo, erro: error.message });
+    }
+  }
+
+  const relatorio = {
+    ok: erros.length === 0,
+    destino: dryRun ? "supabase_storage_simulacao" : `supabase storage/${SUPABASE_FOTOS_BUCKET} + alunos.${SUPABASE_FOTO_COLUMN}`,
+    arquivo_fotos_txt: "Fotos.txt",
+    arquivo_zip: nomeZip,
+    modo_arquivos: "upload",
+    total_linhas_txt: parsed.total_linhas,
+    registros_txt_validos: parsed.registros.length,
+    imagens_no_zip: imagens.length,
+    alunos_na_base: alunos.length,
+    vinculadas: vinculadas.length,
+    sem_aluno: semAluno.length,
+    sem_arquivo: semArquivo.length,
+    ignorados_txt: parsed.ignorados.length,
+    erros: erros.length,
+    bucket: SUPABASE_FOTOS_BUCKET,
+    coluna_foto: SUPABASE_FOTO_COLUMN,
+    gerado_em: new Date().toISOString(),
+    preview: vinculadas.slice(0, 20),
+    detalhes: {
+      sem_aluno: semAluno.slice(0, 100),
+      sem_arquivo: semArquivo.slice(0, 100),
+      ignorados_txt: parsed.ignorados.slice(0, 50),
+      erros: erros.slice(0, 50)
+    }
+  };
+
+  await fs.mkdir(IMPORT_DIR, { recursive: true });
+  await fs.writeFile(RELATORIO_FOTOS_JSON, JSON.stringify(relatorio, null, 2), "utf-8");
+  try { if (fsSync.existsSync(tempDir)) await fs.rm(tempDir, { recursive: true, force: true }); } catch {}
+
+  if (erros.length) {
+    const erro = new Error(`Importação concluída com ${erros.length} erro(s). Consulte detalhes.erros.`);
+    erro.status = 400;
+    erro.relatorio = relatorio;
+    throw erro;
+  }
+  return relatorio;
+}
+
 async function executarVinculacaoFotos({ fotosTxt, zipBase64, nomeZip = "Fotos.zip", dryRun = true, usarArquivosLocais = false } = {}) {
   if (usarArquivosLocais) {
     fotosTxt = await lerFotosTxtLocal();
@@ -399,7 +569,13 @@ export async function analisarFotosAccess(payload = {}) {
 }
 
 export async function importarFotosAccess(payload = {}) {
+  const temSupabase = Boolean(process.env.SUPABASE_URL && (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY));
+  if (temSupabase) return executarVinculacaoFotosSupabase({ ...payload, dryRun: false });
   return executarVinculacaoFotos({ ...payload, dryRun: false });
+}
+
+export async function importarFotosSupabase(payload = {}) {
+  return executarVinculacaoFotosSupabase({ ...payload, dryRun: Boolean(payload.dryRun) });
 }
 
 export async function analisarFotosAccessLocal() {
