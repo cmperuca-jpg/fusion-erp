@@ -1,0 +1,19 @@
+:root{
+  --fusion-v3-sidebar-width:270px;
+  --fusion-v3-topbar-height:72px;
+  --fusion-v3-content-max:1600px;
+  --fusion-v3-space-1:4px;
+  --fusion-v3-space-2:8px;
+  --fusion-v3-space-3:12px;
+  --fusion-v3-space-4:16px;
+  --fusion-v3-space-5:20px;
+  --fusion-v3-space-6:24px;
+  --fusion-v3-radius-sm:8px;
+  --fusion-v3-radius-md:12px;
+  --fusion-v3-radius-lg:18px;
+  --fusion-v3-shadow:0 12px 32px rgba(15,23,42,.08);
+  --fusion-v3-overlay:rgba(2,6,23,.58);
+  --fusion-v3-focus:0 0 0 3px color-mix(in srgb,var(--fusion-primary,#ff6600) 28%,transparent);
+  --fusion-v3-control-height:44px;
+  --fusion-v3-mobile-gap:12px;
+}

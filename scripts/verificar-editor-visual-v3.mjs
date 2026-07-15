@@ -1,0 +1,10 @@
+import fs from "node:fs";
+const obrigatorios=["modules/aparencia/aparencia.routes.mjs","modules/aparencia/aparencia.service.mjs","public/assets/js/fusion-aparencia.js","public/pages/configuracoes/aparencia.js","public/pages/configuracoes/index.html"];
+const missing=obrigatorios.filter(a=>!fs.existsSync(a));
+const server=fs.readFileSync("server.mjs","utf8");
+const security=fs.readFileSync("modules/security/api-security.middleware.mjs","utf8");
+const page=fs.readFileSync("public/pages/configuracoes/index.html","utf8");
+const checks={requiredFiles:missing.length===0,routeMounted:server.includes('app.use("/api/aparencia", aparenciaRoutes)'),adminProtected:security.includes('"/api/aparencia"'),editorPresent:page.includes('id="editorAparencia"'),pageEditor:page.includes('id="paginaEditor"'),globalScript:fs.readFileSync("public/pages/comercial/index.html","utf8").includes("fusion-aparencia.js")};
+const failed=Object.entries(checks).filter(([,ok])=>!ok).map(([k])=>k);
+console.log(JSON.stringify({ok:failed.length===0,version:"3.0.0-editor-visual-final",checks,missing,failed},null,2));
+if(failed.length)process.exit(1);

@@ -1,0 +1,29 @@
+{
+  "patch": "FusionERP_V3_PATCH_01_BASE_ARQUITETURA",
+  "base": "fusion-erp(1).zip",
+  "created": "2026-07-14",
+  "files": [
+    "fusion-erp/.env.example",
+    "fusion-erp/PATCH_MANIFEST.json",
+    "fusion-erp/config/app.config.mjs",
+    "fusion-erp/config/database.config.mjs",
+    "fusion-erp/config/modules.config.mjs",
+    "fusion-erp/config/security.config.mjs",
+    "fusion-erp/config/storage.config.mjs",
+    "fusion-erp/docs/ARQUITETURA_V3.md",
+    "fusion-erp/docs/MAPA_MODULOS.md",
+    "fusion-erp/docs/MAPA_ROTAS.md",
+    "fusion-erp/docs/PADRAO_BACKEND.md",
+    "fusion-erp/docs/PADRAO_FRONTEND.md",
+    "fusion-erp/modules/core/bootstrap.mjs",
+    "fusion-erp/modules/core/healthcheck.mjs",
+    "fusion-erp/modules/core/logger.mjs",
+    "fusion-erp/modules/core/module-loader.mjs",
+    "fusion-erp/modules/core/validator.mjs",
+    "fusion-erp/package.json",
+    "fusion-erp/scripts/verificar-duplicados.mjs",
+    "fusion-erp/scripts/verificar-modulos.mjs",
+    "fusion-erp/scripts/verificar-projeto.mjs",
+    "fusion-erp/server.mjs"
+  ]
+}

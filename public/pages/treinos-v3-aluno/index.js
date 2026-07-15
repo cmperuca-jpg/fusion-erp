@@ -84,7 +84,7 @@
   function atualizarBotaoAudio(){
     const btn = $('#btnAudioTreino');
     if(!btn) return;
-    btn.textContent = audioTreinoAtivo ? '🔊 Voz' : '🔇 Voz';
+    btn.textContent = audioTreinoAtivo ? 'Áudio ativo' : 'Áudio desativado';
     btn.classList.toggle('muted', !audioTreinoAtivo);
     btn.setAttribute('aria-pressed', audioTreinoAtivo ? 'true' : 'false');
   }
@@ -121,7 +121,7 @@
     if(el) el.textContent = texto || (comandoVozAtivo ? 'Ouvindo: diga “concluí”' : 'Voz manual');
     const btn = $('#btnComandoVoz');
     if(btn){
-      btn.textContent = comandoVozAtivo ? '🎙️ Ouvindo' : '🎙️ Comando';
+      btn.textContent = comandoVozAtivo ? 'Ouvindo comando' : 'Comando de voz';
       btn.classList.toggle('active', comandoVozAtivo);
       btn.setAttribute('aria-pressed', comandoVozAtivo ? 'true' : 'false');
     }

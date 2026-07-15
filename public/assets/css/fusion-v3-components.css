@@ -1,0 +1,32 @@
+.fusion-card,.card,.panel,.alunos-header-card,.aluno-kpi,.mini-card,.info-item,.kpis>div,.pipeline>div{
+  border-radius:var(--fusion-card-radius,var(--fusion-v3-radius-lg))!important;
+  border:1px solid var(--fusion-border,#dbe3ef)!important;
+  background:var(--fusion-panel,#fff)!important;
+  box-shadow:var(--fusion-v3-shadow)!important;
+  min-width:0;
+}
+button,.btn,.fusion-button,input[type=submit],input[type=button],a.btn{
+  min-height:var(--fusion-v3-control-height);border-radius:var(--fusion-button-radius,var(--fusion-v3-radius-md))!important;
+  max-width:100%;white-space:normal;text-align:center
+}
+button:focus-visible,.btn:focus-visible,.fusion-button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:0;box-shadow:var(--fusion-v3-focus)!important}
+input,select,textarea{max-width:100%;min-width:0;min-height:var(--fusion-v3-control-height);font-size:16px}
+textarea{resize:vertical}
+label{min-width:0;overflow-wrap:anywhere}
+img,video,canvas,svg{max-width:100%;height:auto}
+.table-wrap,.tabela-wrap,[class*=table-wrap]{width:100%;max-width:100%;overflow-x:auto!important;-webkit-overflow-scrolling:touch;overscroll-behavior-inline:contain}
+table{min-width:640px}
+th,td{overflow-wrap:anywhere}
+.modal-backdrop,.modal{overflow-y:auto!important;overscroll-behavior:contain}
+.modal-card,.dialog{max-width:calc(100vw - 24px)!important;max-height:calc(100dvh - 24px)!important;overflow:auto!important}
+.actions,.acoes,.modal-actions,.alunos-actions,.prontuario-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.grid-2,.grid-3,.fusion-grid,.grid,.kpis,.pipeline{min-width:0}
+.hidden,[hidden]{display:none!important}
+.fusion-sidebar a{min-height:42px;align-items:center}
+.fusion-sidebar .fusion-brand{position:sticky;top:-18px;z-index:2;background:var(--fusion-dark,#101826)}
+@media(max-width:640px){
+  button,.btn,.fusion-button{min-height:46px}
+  .actions,.acoes,.modal-actions,.alunos-actions,.prontuario-actions{display:grid!important;grid-template-columns:1fr!important;width:100%}
+  .actions>* ,.acoes>* ,.modal-actions>* ,.alunos-actions>* ,.prontuario-actions>*{width:100%!important}
+  table{min-width:720px}
+}

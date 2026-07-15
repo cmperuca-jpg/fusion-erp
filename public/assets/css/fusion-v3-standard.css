@@ -1,0 +1,43 @@
+/* Fusion ERP V3 — padronização global da interface */
+:root{
+  --fusion-standard-space-1:6px;
+  --fusion-standard-space-2:10px;
+  --fusion-standard-space-3:14px;
+  --fusion-standard-space-4:18px;
+  --fusion-standard-space-5:24px;
+  --fusion-standard-heading:#0f172a;
+  --fusion-standard-muted:#64748b;
+}
+body.fusion-v3-page{line-height:1.45;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+body.fusion-v3-page h1,body.fusion-v3-page h2,body.fusion-v3-page h3,body.fusion-v3-page h4{color:var(--fusion-standard-heading);line-height:1.2;letter-spacing:-.015em}
+body.fusion-v3-page h1{font-size:clamp(1.55rem,2vw,2rem)}
+body.fusion-v3-page h2{font-size:clamp(1.25rem,1.6vw,1.55rem)}
+body.fusion-v3-page p{max-width:80ch}
+.fusion-standard-header{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:var(--fusion-standard-space-4)!important;padding:var(--fusion-standard-space-4) var(--fusion-standard-space-5)!important;background:var(--fusion-panel,#fff)!important;border:1px solid var(--fusion-border,#dbe3ef)!important;border-radius:var(--fusion-card-radius,18px)!important;box-shadow:var(--fusion-v3-shadow)!important}
+.fusion-standard-card{padding:var(--fusion-standard-space-4)!important;color:var(--fusion-text,#111827)!important}
+.fusion-standard-card>h1:first-child,.fusion-standard-card>h2:first-child,.fusion-standard-card>h3:first-child{margin-top:0}
+.fusion-standard-actions{justify-content:flex-end!important}
+.fusion-standard-button{font-family:inherit!important;font-size:.94rem!important;font-weight:800!important;letter-spacing:0!important;text-decoration:none!important;transition:transform .15s ease,box-shadow .15s ease,background .15s ease!important}
+.fusion-standard-button:hover:not(:disabled){transform:translateY(-1px)}
+.fusion-standard-button:active:not(:disabled){transform:translateY(0)}
+.fusion-standard-control{width:100%;background:#fff!important;color:var(--fusion-text,#111827)!important;border:1px solid #cbd5e1!important;border-radius:var(--fusion-button-radius,12px)!important;padding:10px 12px!important;box-shadow:none!important}
+.fusion-standard-control:hover{border-color:#94a3b8!important}
+.fusion-standard-control:focus{border-color:var(--fusion-primary,#ff6600)!important;box-shadow:0 0 0 3px color-mix(in srgb,var(--fusion-primary,#ff6600) 18%,transparent)!important;outline:0!important}
+.fusion-standard-form{display:grid;gap:var(--fusion-standard-space-3)}
+.fusion-standard-form label{font-size:.82rem;font-weight:800;color:#334155}
+.fusion-standard-table{width:100%;border-collapse:separate!important;border-spacing:0!important;background:#fff}
+.fusion-standard-table thead th{background:#f8fafc;color:#475569;font-size:.75rem;font-weight:900;text-transform:uppercase;letter-spacing:.035em;position:sticky;top:0;z-index:1}
+.fusion-standard-table th,.fusion-standard-table td{padding:12px 14px!important;border-bottom:1px solid #e5e7eb!important}
+.fusion-standard-table tbody tr:hover{background:#f8fafc}
+.fusion-content,.content,.page-content{display:grid;gap:var(--fusion-standard-space-4)}
+.badge,.chip{font-weight:800!important}
+.erro,.alert-error,.alunos-alert.erro{border-radius:12px!important}
+@media(max-width:900px){
+  .fusion-standard-header{display:grid!important;padding:var(--fusion-standard-space-3)!important}
+  .fusion-standard-actions{justify-content:stretch!important}
+  .fusion-standard-card{padding:var(--fusion-standard-space-3)!important}
+}
+@media(max-width:640px){
+  .fusion-standard-header{border-radius:14px!important}
+  .fusion-standard-control{font-size:16px!important}
+}

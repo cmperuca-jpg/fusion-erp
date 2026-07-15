@@ -653,7 +653,7 @@ function setStatusVozAvaliacao(texto, tipo=''){
     box.classList.toggle('erro', tipo === 'erro');
   }
   if(btn){
-    btn.textContent = avaliacaoVozAtiva ? '■ Parar voz' : '🎙️ Iniciar voz';
+    btn.textContent = avaliacaoVozAtiva ? 'Parar comando de voz' : 'Iniciar comando de voz';
     btn.classList.toggle('danger', avaliacaoVozAtiva);
   }
 }

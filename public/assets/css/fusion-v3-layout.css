@@ -1,0 +1,59 @@
+html{min-width:0;max-width:100%;overflow-x:hidden;scroll-behavior:smooth}
+body{min-width:0;max-width:100%;min-height:100vh;overflow-x:hidden}
+body.fusion-com-sidebar{min-height:100vh}
+body.fusion-com-sidebar>.fusion-main,
+body.fusion-com-sidebar>.main,
+body.fusion-com-sidebar>main,
+body.fusion-com-sidebar .fusion-shell>.fusion-main{
+  margin-left:var(--fusion-v3-sidebar-width)!important;
+  width:calc(100% - var(--fusion-v3-sidebar-width))!important;
+  min-width:0!important;
+  max-width:none!important;
+  padding:var(--fusion-v3-space-6)!important;
+}
+.fusion-shell{min-width:0;max-width:100%}
+.fusion-main,.main,main{min-width:0}
+.fusion-content,.content,.page-content,.crm{min-width:0;max-width:var(--fusion-v3-content-max);margin-inline:auto}
+.sidebar.fusion-sidebar{width:var(--fusion-v3-sidebar-width)!important;overscroll-behavior:contain;overflow-y:auto!important}
+.topbar,.fusion-topbar{min-width:0;min-height:var(--fusion-v3-topbar-height);gap:var(--fusion-v3-space-4);flex-wrap:wrap;position:relative;z-index:20}
+.topbar>*,.fusion-topbar>*{min-width:0}
+.fusion-title,.topbar h1,.fusion-topbar h1{overflow-wrap:anywhere}
+.fusion-v3-menu-toggle{display:none;position:fixed;left:12px;top:12px;z-index:1302;width:46px;height:46px;padding:0!important;border-radius:13px!important;box-shadow:var(--fusion-v3-shadow)!important}
+.fusion-v3-menu-backdrop{display:none;position:fixed;inset:0;background:var(--fusion-v3-overlay);z-index:1298}
+body.fusion-sem-menu>.fusion-main,body.fusion-sem-menu>.main,body.fusion-sem-menu>main{margin-left:0!important;width:100%!important}
+@media(max-width:900px){
+  body.fusion-com-sidebar>.fusion-main,
+  body.fusion-com-sidebar>.main,
+  body.fusion-com-sidebar>main,
+  body.fusion-com-sidebar .fusion-shell>.fusion-main{margin-left:0!important;width:100%!important;padding:72px 12px 16px!important}
+  .sidebar.fusion-sidebar{position:fixed!important;inset:0 auto 0 0!important;width:min(86vw,320px)!important;max-height:100dvh!important;transform:translateX(-105%)!important;transition:transform .22s ease!important;z-index:1301!important;box-shadow:20px 0 50px rgba(0,0,0,.25)!important}
+  body.fusion-menu-open .sidebar.fusion-sidebar{transform:translateX(0)!important}
+  body.fusion-menu-open{overflow:hidden!important;touch-action:none}
+  body.fusion-menu-open .fusion-v3-menu-backdrop{display:block}
+  .fusion-v3-menu-toggle{display:inline-grid;place-items:center}
+  .topbar,.fusion-topbar{display:grid!important;grid-template-columns:1fr!important;padding:14px!important;position:static!important}
+  .usuario-topo{justify-content:flex-start!important;flex-wrap:wrap!important}
+}
+
+/* Fusion ERP V3 — Etapa 14: menus e navegação */
+.fusion-menu-section{margin:0 0 8px!important}
+.fusion-menu-group{width:100%;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:10px!important;border:0!important;background:transparent!important;color:#94a3b8!important;padding:9px 10px!important;border-radius:10px!important;font-size:11px!important;font-weight:900!important;letter-spacing:.08em!important;text-transform:uppercase!important;cursor:pointer!important;text-align:left!important}
+.fusion-menu-group:hover,.fusion-menu-group:focus-visible{background:rgba(255,255,255,.07)!important;color:#fff!important}
+.fusion-menu-group-caret{display:inline-flex;transition:transform .18s ease;color:var(--fusion-primary,#ff6600);font-size:18px;line-height:1}
+.fusion-menu-section.open .fusion-menu-group-caret{transform:rotate(90deg)}
+.fusion-menu-items{display:grid;gap:3px;max-height:900px;opacity:1;overflow:hidden;transition:max-height .2s ease,opacity .15s ease}
+.fusion-menu-section.collapsed .fusion-menu-items{max-height:0;opacity:0;pointer-events:none}
+.fusion-sidebar a[aria-current="page"],.fusion-sidebar a.active{background:var(--fusion-primary,#ff6600)!important;color:#fff!important;box-shadow:0 8px 20px color-mix(in srgb,var(--fusion-primary,#ff6600) 24%,transparent)}
+.fusion-breadcrumb{display:flex;align-items:center;gap:8px;min-width:0;margin:0 0 16px;padding:10px 14px;border:1px solid var(--fusion-border,#dbe3ef);border-radius:12px;background:var(--fusion-panel,#fff);color:var(--fusion-muted,#64748b);font-size:13px;box-shadow:0 6px 18px rgba(15,23,42,.04)}
+.fusion-breadcrumb a{color:var(--fusion-primary,#ff6600);font-weight:800;text-decoration:none}
+.fusion-breadcrumb strong{color:var(--fusion-text,#111827);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:900px){.fusion-breadcrumb{margin-top:0;overflow-x:auto;white-space:nowrap}.fusion-menu-group{min-height:44px!important}}
+
+/* FUSION_V3_NAVIGATION_FINAL_CSS */
+.fusion-breadcrumb{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 16px;color:#64748b;font-size:13px;font-weight:700}
+.fusion-breadcrumb a{color:var(--fusion-primary,#ff6600);text-decoration:none}
+.fusion-breadcrumb strong{color:var(--fusion-text,#111827)}
+.fusion-menu-group{cursor:pointer;justify-content:space-between}
+.fusion-menu-group-caret{display:inline-flex;transition:transform .18s ease}
+.fusion-menu-section.open .fusion-menu-group-caret{transform:rotate(90deg)}
+.fusion-menu-section.collapsed>a{display:none!important}

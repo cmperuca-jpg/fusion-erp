@@ -1,16 +1,59 @@
 :root{
-  --fusion-bg:#f4f6f9;
+  --fusion-bg:#f1f6f8;
   --fusion-panel:#ffffff;
-  --fusion-text:#111827;
-  --fusion-muted:#64748b;
-  --fusion-border:#dbe3ef;
-  --fusion-primary:#ff6600;
-  --fusion-primary-dark:#d95600;
-  --fusion-dark:#101826;
+  --fusion-text:#09212a;
+  --fusion-muted:#607780;
+  --fusion-border:#d7e4e8;
+  --fusion-primary:#18b8cc;
+  --fusion-primary-dark:#0b93a6;
+  --fusion-dark:#061219;
   --fusion-green:#16a34a;
   --fusion-red:#dc2626;
   --fusion-yellow:#f59e0b;
 }
+
+/* Fusion ERP 2.8.0 — identidade visual premium unificada */
+:root{--fusion-cyan:#35d4e8;--fusion-navy:#061219;--fusion-navy-2:#0a2731;--fusion-soft:#eaf5f7;--fusion-focus:rgba(53,212,232,.28)}
+body{background:linear-gradient(135deg,rgba(53,212,232,.035),transparent 34%),var(--fusion-bg);color:var(--fusion-text);-webkit-font-smoothing:antialiased}
+.sidebar,.sidebar.fusion-sidebar,.fusion-sidebar,.fusion-ui-sidebar{background:linear-gradient(180deg,#061219 0%,#08232b 100%)!important;border-right:1px solid rgba(53,212,232,.16)!important;box-shadow:10px 0 34px rgba(6,18,25,.18)!important}
+.brand,.fusion-brand,.fusion-ui-brand{border-bottom-color:rgba(53,212,232,.16)!important}
+.brand strong,.fusion-brand strong,.fusion-ui-brand strong{color:#f4f8fa!important;letter-spacing:-.02em!important}
+.brand small,.fusion-brand small,.fusion-ui-brand small,.menu-titulo,.fusion-menu-group,.fusion-ui-menu-title{color:#8daab3!important}
+.sidebar a,.sidebar.fusion-sidebar a,.fusion-sidebar a,.fusion-ui-menu a{color:#d8e7eb!important;border:1px solid transparent!important;transition:background .16s ease,border-color .16s ease,transform .16s ease!important}
+.sidebar a:hover,.sidebar.fusion-sidebar a:hover,.fusion-sidebar a:hover,.fusion-ui-menu a:hover{background:rgba(53,212,232,.10)!important;border-color:rgba(53,212,232,.16)!important;color:#fff!important;transform:translateX(2px)}
+.sidebar a.ativo,.sidebar a.active,.sidebar.fusion-sidebar a.ativo,.sidebar.fusion-sidebar a.active,.fusion-sidebar a.ativo,.fusion-sidebar a.active,.fusion-ui-menu a.active,.fusion-ui-menu a[aria-current="page"]{background:linear-gradient(135deg,#159fb3,var(--fusion-cyan))!important;color:#04202a!important;border-color:rgba(255,255,255,.25)!important;box-shadow:0 10px 24px rgba(53,212,232,.18)!important}
+.topbar,.page-header,.topo,.fusion-ui-topbar{background:rgba(255,255,255,.96)!important;border:1px solid var(--fusion-border)!important;border-radius:16px!important;box-shadow:0 10px 32px rgba(8,35,43,.07)!important}
+.fusion-card,.card,.panel,.painel,.kpi,.modal-content,.modal-card,.box,.content-card{background:var(--fusion-panel)!important;border:1px solid var(--fusion-border)!important;border-radius:16px!important;box-shadow:0 12px 34px rgba(8,35,43,.06)!important}
+button,.btn,.button,input[type="button"],input[type="submit"],a.btn{min-height:42px!important;border-radius:10px!important;border:1px solid transparent!important;background:linear-gradient(135deg,#159fb3,var(--fusion-cyan))!important;color:#05222b!important;padding:10px 16px!important;font-weight:850!important;box-shadow:0 8px 20px rgba(53,212,232,.14)!important;transition:transform .15s ease,filter .15s ease,box-shadow .15s ease!important}
+button:hover,.btn:hover,.button:hover,input[type="button"]:hover,input[type="submit"]:hover,a.btn:hover{filter:brightness(1.03)!important;transform:translateY(-1px);box-shadow:0 11px 24px rgba(53,212,232,.2)!important}
+.btn-secondary,.secondary,.btn-light{background:#e7f0f3!important;color:#17333c!important;border-color:#d3e1e5!important;box-shadow:none!important}
+.btn-danger,.danger,.excluir,.delete{background:#dc4b5d!important;color:#fff!important;box-shadow:none!important}
+.btn-success,.success,.salvar{background:#16a36a!important;color:#fff!important}
+.btn-sair,.logout,.sair{background:#102f39!important;color:#e7f7fa!important;border-color:rgba(53,212,232,.18)!important;box-shadow:none!important}
+input,select,textarea{min-height:42px;border:1px solid #c9dadd!important;border-radius:10px!important;background:#fff!important;color:#0c2932!important;outline:none;transition:border-color .15s ease,box-shadow .15s ease}
+input:focus,select:focus,textarea:focus{border-color:var(--fusion-primary)!important;box-shadow:0 0 0 4px var(--fusion-focus)!important}
+label{color:#29434c;font-weight:750}table{background:#fff;border-radius:14px;overflow:hidden}th{background:#edf5f7!important;color:#29434c!important;border-bottom-color:#d7e4e8!important}td{border-bottom-color:#e5eef0!important}tbody tr:hover{background:#f3fafb!important}
+.badge,.status,.tag{border:1px solid rgba(53,212,232,.18);background:#e9f7f9;color:#0c6674}
+*:focus-visible{outline:3px solid rgba(53,212,232,.45)!important;outline-offset:2px!important}
+@media(max-width:900px){.topbar,.page-header,.topo{border-radius:12px!important}.fusion-card,.card,.panel,.painel,.kpi{border-radius:13px!important}button,.btn,.button,input[type="button"],input[type="submit"]{min-height:44px!important}}
+
+/* Fusion ERP 2.8.0 — botões premium sóbrios */
+button,.btn,.button,a.btn,input[type="button"],input[type="submit"]{min-height:42px!important;border-radius:8px!important;border:1px solid #0d8fa1!important;background:#0b9fb2!important;color:#f7fdff!important;padding:10px 17px!important;font-family:Arial,Helvetica,sans-serif!important;font-size:13px!important;font-weight:800!important;letter-spacing:.015em!important;line-height:1.2!important;box-shadow:0 3px 9px rgba(5,55,65,.13)!important;text-shadow:none!important;transform:none!important}
+button:hover,.btn:hover,.button:hover,a.btn:hover,input[type="button"]:hover,input[type="submit"]:hover{background:#087f90!important;border-color:#087381!important;box-shadow:0 5px 14px rgba(5,55,65,.18)!important;transform:translateY(-1px)!important;filter:none!important}
+button:active,.btn:active,.button:active,a.btn:active{transform:translateY(0)!important;box-shadow:0 2px 5px rgba(5,55,65,.15)!important}
+.btn-primary,.primary,.fusion-button:not(.secondary){background:#0b9fb2!important;color:#fff!important;border-color:#0d8fa1!important}
+.btn-secondary,.secondary,.btn-light,.ghost,[class*="btn-cancel"],[id*="btnCancelar"]{background:#fff!important;color:#25434c!important;border-color:#bfd1d6!important;box-shadow:0 2px 7px rgba(8,35,43,.06)!important}
+.btn-secondary:hover,.secondary:hover,.btn-light:hover,.ghost:hover,[class*="btn-cancel"]:hover,[id*="btnCancelar"]:hover{background:#edf5f7!important;color:#12323b!important;border-color:#91aeb6!important}
+.btn-danger,.danger,.excluir,.delete,[class*="btn-excluir"],[id*="Excluir"]{background:#fff!important;color:#b52f42!important;border-color:#e3a9b1!important;box-shadow:none!important}
+.btn-success,.success,.salvar{background:#137c5c!important;color:#fff!important;border-color:#106c50!important}
+.btn-sair,.logout,.sair,[id="sair"],[id*="btnSair"]{background:#102d36!important;color:#dcecef!important;border-color:#254953!important;box-shadow:none!important}
+.btn-icon,.icon-btn,[id*="Fechar"],[id*="fechar"]{width:38px!important;min-width:38px!important;height:38px!important;min-height:38px!important;padding:0!important;border-radius:8px!important;background:transparent!important;color:#58717a!important;border-color:#cadade!important;box-shadow:none!important;font-size:20px!important}
+.btn-icon:hover,.icon-btn:hover,[id*="Fechar"]:hover,[id*="fechar"]:hover{background:#edf5f7!important;color:#0c3540!important}
+.tab,.subtab,.nav,[role="tab"]{min-height:40px!important;border:0!important;border-bottom:2px solid transparent!important;border-radius:0!important;background:transparent!important;color:#617780!important;padding:9px 12px!important;box-shadow:none!important;font-size:13px!important}
+.tab:hover,.subtab:hover,.nav:hover,[role="tab"]:hover{background:transparent!important;color:#0b7f90!important;border-bottom-color:#b7dfe5!important;box-shadow:none!important;transform:none!important}
+.tab.active,.subtab.active,.nav.active,[role="tab"][aria-selected="true"]{background:transparent!important;color:#076f7e!important;border-bottom-color:#0b9fb2!important;box-shadow:none!important}
+.acoes,.actions,.page-action-buttons,.buttons{gap:9px!important}button svg,.btn svg,.button svg{width:16px!important;height:16px!important;stroke-width:1.8!important}
+@media(max-width:600px){button,.btn,.button,a.btn,input[type="button"],input[type="submit"]{min-height:44px!important;padding:11px 15px!important}.actions button,.actions .btn{flex:0 1 auto!important}}
 *{box-sizing:border-box}
 body{margin:0;background:var(--fusion-bg);color:var(--fusion-text);font-family:Arial,Helvetica,sans-serif}
 .main,.fusion-main{margin-left:270px;min-height:100vh;padding:22px}

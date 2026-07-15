@@ -280,6 +280,33 @@
     });
   }
 
+  function dataBrasil(valor) {
+    return String(valor || "").replace(/\b((?:19|20)\d{2})-(\d{2})-(\d{2})\b/g, "$3/$2/$1");
+  }
+
+  function formatarDatasVisiveis(root = document) {
+    const seletores = "td,time,[data-date-display],.data,.date,.vencimento,.nascimento";
+    const elementos = [];
+    if (root.nodeType === 1 && root.matches?.(seletores)) elementos.push(root);
+    root.querySelectorAll?.(seletores).forEach((el) => elementos.push(el));
+
+    elementos.forEach((elemento) => {
+      if (elemento.matches("input,select,textarea")) return;
+      const walker = document.createTreeWalker(elemento, NodeFilter.SHOW_TEXT);
+      const textos = [];
+      while (walker.nextNode()) textos.push(walker.currentNode);
+      textos.forEach((no) => {
+        const formatado = dataBrasil(no.nodeValue);
+        if (formatado !== no.nodeValue) no.nodeValue = formatado;
+      });
+    });
+
+    document.querySelectorAll('input[type="date"]').forEach((input) => {
+      input.lang = "pt-BR";
+      if (!input.title) input.title = "Data no formato dia/mês/ano";
+    });
+  }
+
   window.carregarLayout = function carregarLayout(titulo) {
 
     if (paginaSemMenu()) {
@@ -320,6 +347,19 @@
   };
 
   document.addEventListener("DOMContentLoaded", () => {
+    formatarDatasVisiveis(document);
+    const observadorDatas = new MutationObserver((mudancas) => {
+      mudancas.forEach((mudanca) => {
+        if (mudanca.type === "characterData" && mudanca.target.parentElement) {
+          formatarDatasVisiveis(mudanca.target.parentElement);
+        }
+        mudanca.addedNodes.forEach((no) => {
+          if (no.nodeType === 1) formatarDatasVisiveis(no);
+        });
+      });
+    });
+    observadorDatas.observe(document.body, { childList: true, characterData: true, subtree: true });
+
     prepararLinksPublicos(document);
     if (paginaSemMenu()) {
       removerMenusExistentes();

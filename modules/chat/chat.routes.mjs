@@ -1,0 +1,12 @@
+import express from "express";
+import { listarConversasChat, listarMensagensChat, enviarMensagemChat, marcarLeituraChat } from "./chat.service.mjs";
+const router = express.Router();
+const falha=(res,e)=>res.status(e.status||500).json({ok:false,erro:e.message||"Erro no chat."});
+router.get("/status", (_req,res)=>res.json({ok:true,module:"chat",api:"/api/chat"}));
+router.get("/conversas", async(req,res)=>{try{res.json(await listarConversasChat(req.query||{}));}catch(e){falha(res,e);}});
+router.get("/mensagens", async(req,res)=>{try{res.json(await listarMensagensChat(req.query||{}));}catch(e){falha(res,e);}});
+router.post("/mensagens", async(req,res)=>{try{res.status(201).json(await enviarMensagemChat(req.body||{}));}catch(e){falha(res,e);}});
+router.post("/conversas/:id/leitura", async(req,res)=>{try{res.json(await marcarLeituraChat(req.params.id, req.body?.leitor||"atendimento"));}catch(e){falha(res,e);}});
+router.get("/", async(req,res)=>{try{res.json(await listarConversasChat(req.query||{}));}catch(e){falha(res,e);}});
+router.post("/", async(req,res)=>{try{res.status(201).json(await enviarMensagemChat(req.body||{}));}catch(e){falha(res,e);}});
+export default router;

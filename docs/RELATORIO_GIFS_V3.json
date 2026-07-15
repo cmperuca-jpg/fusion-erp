@@ -1,0 +1,12 @@
+{
+  "ok": true,
+  "dryRun": false,
+  "scannedFiles": 1767,
+  "uniqueContents": 664,
+  "duplicateGroups": 664,
+  "removedFiles": 1103,
+  "removableFiles": 1103,
+  "bytesSaved": 189227665,
+  "potentialBytesSaved": 189227665,
+  "mapFile": "config/exercise-assets-map.json"
+}

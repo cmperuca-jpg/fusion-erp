@@ -1,0 +1,93 @@
+/* Fusion ERP V3 — responsividade global definitiva */
+:root{--fusion-v3-safe-bottom:env(safe-area-inset-bottom,0px);--fusion-v3-vh:1vh}
+html,body{width:100%;max-width:100%;min-width:0;overflow-x:hidden}
+body{min-height:calc(var(--fusion-v3-vh,1vh)*100);-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body.fusion-modal-open{overflow:hidden!important;touch-action:none}
+
+.fusion-responsive-table{width:100%;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-inline:contain}
+.fusion-responsive-table>table{margin:0}
+.fusion-mobile-scroll{overflow-x:auto!important;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+.fusion-mobile-stack{min-width:0}
+
+@media(max-width:1100px){
+  .fusion-grid,.grid-3,.kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .fusion-content,.content,.page-content,.crm{width:100%!important;max-width:100%!important}
+}
+
+@media(max-width:900px){
+  body{font-size:15px;padding-bottom:var(--fusion-v3-safe-bottom)}
+  body.fusion-com-sidebar>.fusion-main,
+  body.fusion-com-sidebar>.main,
+  body.fusion-com-sidebar>main,
+  body.fusion-com-sidebar .fusion-shell>.fusion-main{padding:70px 12px calc(16px + var(--fusion-v3-safe-bottom))!important}
+
+  .fusion-content,.content,.page-content,.crm{padding:0!important;width:100%!important;max-width:100%!important;margin:0!important}
+  .fusion-grid,.grid,.grid-2,.grid-3,.alunos-toolbar,.info-grid,.prontuario-kpis,.alunos-kpis,.kpis,.pipeline,
+  .form-grid,.fields-grid,.dashboard-grid,.cards-grid{grid-template-columns:1fr!important}
+  .fusion-grid>*,.grid>*,.grid-2>*,.grid-3>*,.form-grid>*,.fields-grid>*{min-width:0!important}
+
+  .tabs,.prontuario-tabs,.tab-list,[role=tablist]{overflow-x:auto!important;overflow-y:hidden!important;flex-wrap:nowrap!important;padding-bottom:8px!important;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity}
+  .tabs>*,.prontuario-tabs>*,.tab-list>*,[role=tablist]>*{flex:0 0 auto!important;scroll-snap-align:start}
+
+  .fusion-card,.card,.panel,.alunos-header-card,.mini-card,.info-item{padding:14px!important;max-width:100%!important}
+  .topo,.page-header,.alunos-header-card,.fusion-topbar,.topbar{display:grid!important;grid-template-columns:1fr!important;align-items:stretch!important;gap:12px!important}
+  .fusion-topbar>div,.topbar>div,.usuario-topo{width:100%!important;min-width:0!important}
+  .usuario-topo{justify-content:flex-start!important;display:flex!important;flex-wrap:wrap!important;gap:8px!important}
+  .fusion-catraca-controle{width:100%!important;display:grid!important;grid-template-columns:1fr 1fr!important}
+  .fusion-catraca-status{grid-column:1/-1!important}
+
+  .filtros,.filters,.toolbar,.alunos-toolbar{display:grid!important;grid-template-columns:1fr!important;gap:10px!important}
+  .filtros>*,.filters>*,.toolbar>*,.alunos-toolbar>*{width:100%!important;max-width:none!important;min-width:0!important}
+
+  .modal-backdrop,.dialog-backdrop{padding:8px!important;align-items:flex-start!important;overflow-y:auto!important}
+  .modal-card,.modal,.dialog,[role=dialog]{width:100%!important;max-width:100%!important;max-height:calc(var(--fusion-v3-vh,1vh)*100 - 16px)!important;margin:0!important;overflow:auto!important}
+  .modal-head,.modal-header{position:sticky!important;top:0!important;z-index:3!important;background:var(--fusion-panel,#fff)!important}
+  .modal-actions,.dialog-actions{position:sticky!important;bottom:0!important;z-index:3!important;background:var(--fusion-panel,#fff)!important;padding-bottom:calc(8px + var(--fusion-v3-safe-bottom))!important}
+
+  table{min-width:680px!important}
+  th,td{white-space:normal!important;vertical-align:top!important}
+  .table-wrap,.tabela-wrap,.fusion-responsive-table{border-radius:12px;max-width:100%!important}
+
+  input,select,textarea,button,.btn,.fusion-button{font-size:16px!important}
+  input,select,textarea{width:100%!important;max-width:100%!important}
+  input[type=checkbox],input[type=radio],input[type=color],input[type=range]{width:auto!important}
+  input[type=file]{overflow:hidden;text-overflow:ellipsis}
+
+  img,video,iframe,canvas,svg{max-width:100%!important}
+  iframe{width:100%!important}
+}
+
+@media(max-width:640px){
+  .fusion-title,.topbar h1,.fusion-topbar h1,.topo h1,.page-header h1{font-size:20px!important;line-height:1.2!important}
+  h2{font-size:19px!important} h3{font-size:17px!important}
+  .fusion-card,.card,.panel{border-radius:14px!important}
+
+  .actions,.acoes,.modal-actions,.alunos-actions,.prontuario-actions,.button-row,.btn-group{display:grid!important;grid-template-columns:1fr!important;width:100%!important;gap:8px!important}
+  .actions>*,.acoes>*,.modal-actions>*,.alunos-actions>*,.prontuario-actions>*,.button-row>*,.btn-group>*{width:100%!important;margin:0!important}
+
+  .fusion-v3-menu-toggle{left:10px!important;top:10px!important;width:46px!important;height:46px!important}
+  .sidebar.fusion-sidebar{width:min(90vw,320px)!important}
+  .fusion-sidebar a{min-height:46px!important;padding:11px 12px!important}
+
+  .fusion-card,.card,.panel,.alunos-header-card{padding:12px!important}
+  .kpis,.alunos-kpis,.prontuario-kpis{display:grid!important;grid-template-columns:1fr!important}
+  .badge,.chip{max-width:100%;white-space:normal!important;text-align:center}
+}
+
+@media(max-width:420px){
+  body.fusion-com-sidebar>.fusion-main,
+  body.fusion-com-sidebar>.main,
+  body.fusion-com-sidebar>main,
+  body.fusion-com-sidebar .fusion-shell>.fusion-main{padding-inline:8px!important}
+  .fusion-card,.card,.panel,.alunos-header-card{padding:10px!important}
+  .modal-backdrop,.dialog-backdrop{padding:4px!important}
+  .modal-card,.modal,.dialog,[role=dialog]{max-height:calc(var(--fusion-v3-vh,1vh)*100 - 8px)!important;border-radius:12px!important}
+}
+
+@media(orientation:landscape) and (max-height:560px){
+  .sidebar.fusion-sidebar{width:min(72vw,320px)!important}
+  .fusion-v3-menu-toggle{top:6px!important;left:6px!important}
+  body.fusion-com-sidebar>.fusion-main,body.fusion-com-sidebar>.main,body.fusion-com-sidebar>main{padding-top:58px!important}
+}
+
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
