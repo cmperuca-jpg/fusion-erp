@@ -1,0 +1,99 @@
+/* Financeiro - contraste definitivo do popup Confirmar recebimento */
+#modalBaixaFinanceiro .modal-baixa{
+  background:#0a2a34!important;
+  border:1px solid #32616c!important;
+  color:#fff!important;
+}
+
+#modalBaixaFinanceiro .resumo-baixa{
+  background:#f5f8f9!important;
+  border:1px solid #b7cdd2!important;
+  border-radius:5px!important;
+  color:#142f38!important;
+  opacity:1!important;
+}
+#modalBaixaFinanceiro .resumo-baixa,
+#modalBaixaFinanceiro .resumo-baixa *{
+  color:#142f38!important;
+  opacity:1!important;
+  text-shadow:none!important;
+}
+#modalBaixaFinanceiro .resumo-baixa strong{color:#071d25!important}
+
+#modalBaixaFinanceiro #painelDiferencaRecebimento{
+  background:#fff4e8!important;
+  border:1px solid #e7a260!important;
+  border-radius:5px!important;
+  color:#522b0e!important;
+  opacity:1!important;
+}
+#modalBaixaFinanceiro #painelDiferencaRecebimento :is(strong,span,label,small){
+  color:#522b0e!important;
+  opacity:1!important;
+  text-shadow:none!important;
+}
+#modalBaixaFinanceiro #painelDiferencaRecebimento>strong{
+  font-size:13px!important;
+  color:#321606!important;
+}
+#modalBaixaFinanceiro #painelDiferencaRecebimento label{
+  display:flex!important;
+  grid-template-columns:none!important;
+  align-items:center!important;
+  gap:8px!important;
+  min-height:28px!important;
+  margin:0!important;
+  background:transparent!important;
+}
+#modalBaixaFinanceiro #painelDiferencaRecebimento input[type="radio"]{
+  flex:0 0 16px!important;
+  width:16px!important;
+  min-width:16px!important;
+  max-width:16px!important;
+  height:16px!important;
+  min-height:16px!important;
+  margin:0!important;
+  padding:0!important;
+  appearance:auto!important;
+  accent-color:#159caf!important;
+  box-shadow:none!important;
+}
+#modalBaixaFinanceiro #painelDiferencaRecebimento small{
+  display:block!important;
+  font-size:10px!important;
+  line-height:1.4!important;
+}
+
+#modalBaixaFinanceiro .painel-cartao{
+  background:#f5f8f9!important;
+  border-color:#b7cdd2!important;
+  color:#142f38!important;
+}
+#modalBaixaFinanceiro .painel-cartao :is(strong,span,label){
+  color:#142f38!important;
+  opacity:1!important;
+}
+#modalBaixaFinanceiro .resultado-cartao>div{
+  background:#e8f1f3!important;
+  border-color:#b7cdd2!important;
+}
+
+#modalBaixaFinanceiro .form-grid>label{
+  color:#fff!important;
+  opacity:1!important;
+}
+#modalBaixaFinanceiro :is(input,select,textarea){
+  background:#071d25!important;
+  border-color:#527985!important;
+  color:#fff!important;
+  opacity:1!important;
+}
+#modalBaixaFinanceiro textarea::placeholder{color:#c7d9dd!important;opacity:1!important}
+
+@media(max-width:650px){
+  #modalBaixaFinanceiro .modal-baixa{padding:12px!important}
+  #modalBaixaFinanceiro .form-grid{grid-template-columns:1fr!important}
+  #modalBaixaFinanceiro .painel-cartao-head{display:grid!important}
+  #modalBaixaFinanceiro .grid-cartao,
+  #modalBaixaFinanceiro .resultado-cartao{grid-template-columns:1fr!important}
+}
