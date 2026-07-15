@@ -6,6 +6,7 @@
   <title>Painel Administrativo - Fusion ERP</title>
   <link rel="stylesheet" href="/assets/css/fusion-app.css">
   <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="./backup-admin.css">
   <script src="/assets/js/fusion-auth.js"></script>
   <script>FusionAuth.proteger(["admin","administrador"]);</script>
   <link rel="stylesheet" href="/assets/css/fusion-premium-final.css">
@@ -85,6 +86,33 @@
           <tbody id="tabelaUsuarios"><tr><td colspan="6">Carregando...</td></tr></tbody>
         </table>
       </div>
+    </section>
+
+    <section class="fusion-card backup-admin-card" aria-labelledby="tituloBackup">
+      <div class="backup-admin-head">
+        <div>
+          <span class="backup-eyebrow">Segurança dos dados</span>
+          <h2 id="tituloBackup">Backup e restauração</h2>
+          <p>Os dados são sincronizados continuamente com o Supabase. O backup automático cria cópias históricas adicionais.</p>
+        </div>
+        <span class="backup-status" id="backupStatus">Verificando...</span>
+      </div>
+
+      <div class="backup-actions">
+        <button type="button" id="btnBackupAgora">Fazer backup agora</button>
+        <button type="button" class="btn-light" id="btnAtualizarBackups">Atualizar lista</button>
+      </div>
+
+      <div class="backup-restore-box">
+        <label for="backupSelecionado">Backup disponível no Supabase</label>
+        <div class="backup-restore-row">
+          <select id="backupSelecionado"><option value="">Carregando backups...</option></select>
+          <button type="button" class="btn-danger" id="btnRestaurarBackup">Restaurar backup</button>
+        </div>
+        <small id="backupAjuda">Antes de restaurar, o sistema cria automaticamente uma cópia de segurança do estado atual.</small>
+      </div>
+
+      <div class="backup-result hidden" id="backupResultado" role="status"></div>
     </section>
   </main>
   <script src="/assets/js/fusion-layout.js"></script>

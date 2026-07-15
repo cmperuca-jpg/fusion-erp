@@ -41,6 +41,8 @@ import leadsRoutes from "./modules/leads/leads.routes.mjs";
 import siteChatRoutes from "./modules/site-chat/site-chat.routes.mjs";
 import fidelidadeRoutes from "./modules/fidelidade/fidelidade.routes.mjs";
 import accessBridgeRoutes from "./modules/access-bridge/access-bridge.routes.mjs";
+import { inicializarPersistenciaSupabase, encerrarPersistenciaSupabase } from "./modules/backup/supabase-data.service.mjs";
+import { iniciarBackupAutomatico } from "./modules/backup/backup.service.mjs";
 
 
 dotenv.config();
@@ -101,6 +103,7 @@ function prepararPersistenciaRender() {
 }
 
 prepararPersistenciaRender();
+await inicializarPersistenciaSupabase();
 
 const backupRoot = isRender ? path.join(persistentRoot, "backups") : path.join(__dirname, "backups");
 const backupDataRoot = path.join(backupRoot, "data");
@@ -848,4 +851,16 @@ app.listen(PORT, HOST, async () => {
   }
 
   console.log("Controle de catraca online: Fusion Access Bridge ativo.");
+  const backupAutomatico = iniciarBackupAutomatico();
+  console.log(`Backup automático: ${backupAutomatico.ativo ? "ativo" : "inativo"}.`);
 });
+
+async function encerrarServidor(sinal) {
+  console.log(`[Sistema] ${sinal}: sincronizando dados antes de encerrar.`);
+  try { await encerrarPersistenciaSupabase(); }
+  catch (erro) { console.error(`[Persistência] Falha no encerramento: ${erro.message}`); }
+  process.exit(0);
+}
+
+process.once("SIGTERM", () => encerrarServidor("SIGTERM"));
+process.once("SIGINT", () => encerrarServidor("SIGINT"));

@@ -8,7 +8,7 @@
   "scripts": {
     "start": "node server.mjs",
     "dev": "node --watch server.mjs",
-    "check": "node --check server.mjs && node --check scripts/render-smoke-test.mjs && node --check modules/backup/backup.service.mjs && node --check modules/backup/backup.routes.mjs && node --check scripts/backup-supabase.mjs && node --check scripts/backup-local.mjs",
+    "check": "node --check server.mjs && node --check scripts/render-smoke-test.mjs && node --check modules/backup/supabase-data.service.mjs && node --check modules/backup/backup.service.mjs && node --check modules/backup/backup.routes.mjs && node --check public/pages/admin/index.js && node --check scripts/backup-supabase.mjs && node --check scripts/backup-local.mjs",
     "reset:virgem": "node scripts/resetar-sistema-virgem.mjs",
     "reset:admin": "node scripts/reset-admin-password.mjs",
     "render:check": "node scripts/render-smoke-test.mjs",

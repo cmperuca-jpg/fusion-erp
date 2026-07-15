@@ -31,6 +31,90 @@ let usuarios = [];
 function esc(v){return String(v ?? "").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 function setText(id,v){const el=document.getElementById(id);if(el)el.textContent=v;}
 
+function dataHoraBR(valor) {
+  if (!valor) return "data não informada";
+  const data = new Date(valor);
+  return Number.isNaN(data.getTime()) ? String(valor) : data.toLocaleString("pt-BR");
+}
+
+function mostrarResultadoBackup(mensagem, tipo = "ok") {
+  const box = document.getElementById("backupResultado");
+  box.textContent = mensagem;
+  box.className = `backup-result ${tipo === "erro" ? "erro" : ""}`;
+}
+
+function bloquearBackup(bloqueado) {
+  ["btnBackupAgora", "btnAtualizarBackups", "btnRestaurarBackup"].forEach(id => {
+    const botao = document.getElementById(id);
+    if (botao) botao.disabled = bloqueado;
+  });
+}
+
+async function carregarStatusBackup() {
+  const resp = await FusionAuth.fetchAuth("/api/backup/status", { cache: "no-store" });
+  const json = await resp.json().catch(() => ({}));
+  if (!resp.ok || json.ok === false) throw new Error(json.mensagem || "Erro ao verificar backup.");
+  const status = document.getElementById("backupStatus");
+  const persistencia = json.persistencia || {};
+  const automatico = json.automatico || {};
+  if (persistencia.configurado && persistencia.ok !== false) {
+    status.textContent = `Supabase ativo · backup ${automatico.ativo ? "automático" : "manual"}`;
+    status.className = "backup-status ok";
+  } else {
+    status.textContent = persistencia.ultimoErro || "Supabase não configurado";
+    status.className = "backup-status erro";
+  }
+}
+
+async function carregarBackups() {
+  const select = document.getElementById("backupSelecionado");
+  const resp = await FusionAuth.fetchAuth("/api/backup/listar", { cache: "no-store" });
+  const json = await resp.json().catch(() => ({}));
+  if (!resp.ok || json.ok === false) throw new Error(json.mensagem || "Erro ao listar backups.");
+  const backups = json.backups || [];
+  select.innerHTML = backups.length
+    ? '<option value="">Selecione um backup</option>' + backups.map(item => `<option value="${esc(item.caminho)}">${esc(item.name)} · ${esc(dataHoraBR(item.created_at || item.updated_at))}</option>`).join("")
+    : '<option value="">Nenhum backup encontrado</option>';
+}
+
+async function fazerBackupAgora() {
+  bloquearBackup(true);
+  mostrarResultadoBackup("Criando e enviando backup para o Supabase...");
+  try {
+    const resp = await FusionAuth.fetchAuth("/api/backup/supabase", { method: "POST" });
+    const json = await resp.json().catch(() => ({}));
+    if (!resp.ok || json.ok === false) throw new Error(json.mensagem || "Erro ao criar backup.");
+    mostrarResultadoBackup(`Backup criado: ${json.nome || json.caminho}.`);
+    await carregarBackups();
+    await carregarStatusBackup();
+  } catch (erro) {
+    mostrarResultadoBackup(erro.message, "erro");
+  } finally { bloquearBackup(false); }
+}
+
+async function restaurarBackupSelecionado() {
+  const caminho = document.getElementById("backupSelecionado").value;
+  if (!caminho) return mostrarResultadoBackup("Selecione um backup para restaurar.", "erro");
+  const confirmacao = prompt("ATENÇÃO: os dados atuais serão substituídos. Digite RESTAURAR para confirmar:");
+  if (confirmacao !== "RESTAURAR") return;
+  if (!confirm("Confirma a restauração? Um backup de segurança será criado antes.")) return;
+  bloquearBackup(true);
+  mostrarResultadoBackup("Criando cópia de segurança e restaurando os dados...");
+  try {
+    const resp = await FusionAuth.fetchAuth("/api/backup/restaurar", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ caminho, confirmacao })
+    });
+    const json = await resp.json().catch(() => ({}));
+    if (!resp.ok || json.ok === false) throw new Error(json.mensagem || "Erro ao restaurar backup.");
+    mostrarResultadoBackup(`Restauração concluída: ${json.totalRestaurados || 0} arquivo(s). Atualize o painel.`);
+    await carregarBackups();
+  } catch (erro) {
+    mostrarResultadoBackup(erro.message, "erro");
+  } finally { bloquearBackup(false); }
+}
+
 function renderPermissoes(selecionadas = []) {
   const box = document.getElementById("permissoes");
   box.innerHTML = MODULOS.map(([valor,label]) => `
@@ -136,6 +220,9 @@ document.getElementById("perfil").addEventListener("change", ev => {
 
 document.getElementById("btnLimpar").addEventListener("click", limparForm);
 document.getElementById("btnAtualizar").addEventListener("click", () => carregarUsuarios().catch(e => alert(e.message)));
+document.getElementById("btnBackupAgora").addEventListener("click", fazerBackupAgora);
+document.getElementById("btnAtualizarBackups").addEventListener("click", () => carregarBackups().catch(e => mostrarResultadoBackup(e.message, "erro")));
+document.getElementById("btnRestaurarBackup").addEventListener("click", restaurarBackupSelecionado);
 
 document.getElementById("formUsuario").addEventListener("submit", async ev => {
   ev.preventDefault();
@@ -167,3 +254,4 @@ renderPermissoes(permissoesPorPerfil("Administrador"));
 carregarUsuarios().catch(e => {
   document.getElementById("tabelaUsuarios").innerHTML = `<tr><td colspan="6">${esc(e.message)}</td></tr>`;
 });
+Promise.all([carregarStatusBackup(), carregarBackups()]).catch(e => mostrarResultadoBackup(e.message, "erro"));

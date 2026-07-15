@@ -1,11 +1,29 @@
 import { Router } from "express";
 import * as service from "./backup.service.mjs";
+import { validarToken } from "../auth/auth.service.mjs";
 
 const router = Router();
 
 function erro(res, error, status = 500) {
   res.status(status).json({ ok: false, erro: error.message, mensagem: error.message });
 }
+
+async function exigirAdministrador(req, res, next) {
+  try {
+    const usuario = await validarToken(req.headers.authorization || "");
+    const perfil = String(usuario?.perfil || "").toLowerCase();
+    const permissoes = Array.isArray(usuario?.permissoes) ? usuario.permissoes : [];
+    if (!["admin", "administrador"].includes(perfil) && !permissoes.includes("*")) {
+      return res.status(403).json({ ok: false, mensagem: "Apenas administradores podem gerenciar backups." });
+    }
+    req.usuario = usuario;
+    next();
+  } catch (error) {
+    erro(res, error, error.status || 401);
+  }
+}
+
+router.use(exigirAdministrador);
 
 router.get("/status", async (req, res) => {
   try { res.json(await service.statusBackup()); }
@@ -45,6 +63,17 @@ router.post("/", async (req, res) => {
 
 router.get("/listar", async (req, res) => {
   try { res.json(await service.listarBackupsSupabase()); }
+  catch (error) { erro(res, error); }
+});
+
+router.post("/restaurar", async (req, res) => {
+  try {
+    res.json(await service.restaurarBackupSupabase(req.body?.caminho, req.body?.confirmacao));
+  } catch (error) { erro(res, error, error.status || 500); }
+});
+
+router.get("/automatico/status", async (req, res) => {
+  try { res.json({ ok: true, automatico: service.statusBackupAutomatico() }); }
   catch (error) { erro(res, error); }
 });
 

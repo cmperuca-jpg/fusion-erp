@@ -1,0 +1,19 @@
+.backup-admin-card{margin-top:16px!important;background:#0a2a34!important;border-color:#2d5a66!important;color:#fff!important}
+.backup-admin-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;flex-wrap:wrap}
+.backup-admin-head h2{margin:4px 0 6px;color:#fff!important}
+.backup-admin-head p{max-width:720px;margin:0;color:#c6dbe0!important;font-size:12px;line-height:1.45}
+.backup-eyebrow{color:#4fd7e5!important;font-size:10px;font-weight:900;letter-spacing:.09em;text-transform:uppercase}
+.backup-status{display:inline-flex;padding:6px 9px;border:1px solid #4c737d;border-radius:999px;background:#102f39;color:#dcecef;font-size:10px;font-weight:850}
+.backup-status.ok{border-color:#2d8b62;background:#12372a;color:#8ce9b8}
+.backup-status.erro{border-color:#a94b57;background:#351a20;color:#ff9ca8}
+.backup-actions{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}
+.backup-actions button,.backup-restore-row button{min-height:34px!important;border-radius:2px!important;padding:7px 10px!important;font-size:10px!important}
+.backup-restore-box{padding:13px;border:1px solid #315e69;border-radius:5px;background:#071d25}
+.backup-restore-box label{display:block;margin:0 0 7px;color:#fff!important;font-size:11px;font-weight:850}
+.backup-restore-box small{display:block;margin-top:8px;color:#bcd2d7!important;font-size:10px;line-height:1.4}
+.backup-restore-row{display:grid;grid-template-columns:minmax(220px,1fr) auto;gap:8px}
+.backup-restore-row select{min-width:0;background:#0b303a!important;border:1px solid #4d747e!important;border-radius:3px!important;color:#fff!important}
+.backup-result{margin-top:12px;padding:10px;border:1px solid #2d8b62;border-radius:4px;background:#12372a;color:#9cf0c3;font-size:11px;font-weight:750}
+.backup-result.erro{border-color:#a94b57;background:#351a20;color:#ff9ca8}
+.backup-result.hidden{display:none!important}
+@media(max-width:680px){.backup-restore-row{grid-template-columns:1fr}.backup-restore-row button,.backup-actions button{width:100%!important}.backup-actions{display:grid}}

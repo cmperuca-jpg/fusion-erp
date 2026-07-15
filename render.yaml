@@ -24,6 +24,20 @@ services:
         sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
+      - key: SUPABASE_DATA_BUCKET
+        value: fusion-data
+      - key: FUSION_TENANT_ID
+        value: academia-piloto
+      - key: FUSION_DATA_SYNC_MS
+        value: 5000
+      - key: FUSION_REQUIRE_SUPABASE_DATA
+        value: true
+      - key: SUPABASE_BACKUP_BUCKET
+        value: fusion-backups
+      - key: FUSION_BACKUP_AUTO
+        value: true
+      - key: FUSION_BACKUP_AUTO_MS
+        value: 21600000
       - key: ACCESS_AGENT_ID
         value: academia-01
       - key: ACCESS_AGENT_TOKEN
