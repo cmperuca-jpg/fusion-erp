@@ -1,0 +1,93 @@
+/* Pagina publica da academia - contraste definitivo em superficies claras */
+.benefit-grid article,
+.lead-card,
+.plano,
+.loading{
+  color:#102b35!important;
+}
+
+.benefit-grid article{
+  background:#ffffff!important;
+  border-color:#bfd3d8!important;
+}
+.benefit-grid article h3{
+  color:#102b35!important;
+  opacity:1!important;
+  text-shadow:none!important;
+}
+.benefit-grid article p{
+  color:#45616a!important;
+  opacity:1!important;
+}
+.benefit-grid article>span{
+  color:#e64f00!important;
+  opacity:1!important;
+}
+
+.lead-card{
+  background:#ffffff!important;
+  border-color:#b9cfd5!important;
+}
+.lead-card h2{
+  color:#102b35!important;
+  opacity:1!important;
+  text-shadow:none!important;
+}
+.lead-card .eyebrow{
+  color:#087f91!important;
+  opacity:1!important;
+}
+.lead-card p{
+  color:#45616a!important;
+  opacity:1!important;
+}
+
+.plano h3,
+.plano .plano-detalhes,
+.plano .plano-detalhes li,
+.loading{
+  color:#102b35!important;
+  opacity:1!important;
+}
+.plano .plano-tipo,
+.plano .plano-descricao{
+  color:#4b6570!important;
+  opacity:1!important;
+}
+
+.lead-form input,
+.lead-form select,
+.lead-form textarea{
+  background:#082630!important;
+  border-color:#35636e!important;
+  color:#ffffff!important;
+  opacity:1!important;
+}
+.lead-form input::placeholder,
+.lead-form textarea::placeholder{
+  color:#d8e8eb!important;
+  opacity:1!important;
+}
+.lead-form select option{
+  background:#082630!important;
+  color:#ffffff!important;
+}
+.lead-form button{
+  background:#28b8ca!important;
+  color:#ffffff!important;
+  border:1px solid #43c8d7!important;
+  border-radius:2px!important;
+}
+
+.promo-footer,
+.promo-footer strong,
+.promo-footer span,
+.promo-footer a{
+  color:#ffffff!important;
+  opacity:1!important;
+}
+
+@media(max-width:650px){
+  .lead-card h2{font-size:30px!important;line-height:1.08!important}
+  .benefit-grid article{padding:19px!important}
+}
