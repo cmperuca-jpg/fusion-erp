@@ -54,6 +54,7 @@
       { id: "access-engine", label: "Catracas", href: "/pages/access-engine/index.html", perm: "access-engine" }
     ]},
     { grupo: "Comercial", itens: [
+      { id: "comercial-painel", label: "CRM Comercial", href: "/pages/comercial-painel/index.html", perm: "comercial-painel" },
       { id: "site-fusion", label: "Site do Fusion ERP", href: "/pages/comercial/index.html", perm: "comercial", novaAba: true },
       { id: "site-academia", label: "Site da academia", href: "/pages/promocao/index.html", perm: "comercial", novaAba: true },
       { id: "matricula-online", label: "Matrícula Online", href: "/pages/matricula-online/index.html", perm: "matricula-online", novaAba: true },

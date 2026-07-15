@@ -1,0 +1,171 @@
+/* CRM Comercial - painel premium, legivel e responsivo */
+:root{
+  --crm-bg:#06171e;
+  --crm-panel:#0a2a34;
+  --crm-panel-2:#0d3541;
+  --crm-line:#2b5965;
+  --crm-text:#ffffff;
+  --crm-muted:#c3d8dd;
+  --crm-cyan:#28b8ca;
+  --crm-orange:#ff6a1a;
+}
+
+body{background:var(--crm-bg)!important;color:var(--crm-text)!important}
+.crm{width:100%!important;max-width:none!important;padding:0!important;color:var(--crm-text)!important}
+
+.crm .topo,
+.crm .filtros,
+.crm .kpis{
+  background:var(--crm-panel)!important;
+  border:1px solid var(--crm-line)!important;
+  border-radius:7px!important;
+  color:var(--crm-text)!important;
+  box-shadow:0 10px 28px rgba(0,0,0,.18)!important;
+}
+.crm .topo h1,
+.crm .topo p{
+  color:var(--crm-text)!important;
+  opacity:1!important;
+}
+.crm .topo p{color:var(--crm-muted)!important}
+
+.crm .kpis{
+  display:grid!important;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr))!important;
+  gap:10px!important;
+}
+.crm .kpis>div{
+  min-width:0!important;
+  background:var(--crm-panel-2)!important;
+  border:1px solid var(--crm-line)!important;
+  border-radius:5px!important;
+}
+.crm .kpis span{
+  color:var(--crm-muted)!important;
+  opacity:1!important;
+  font-size:10px!important;
+}
+.crm .kpis strong{
+  display:block!important;
+  margin-top:5px!important;
+  color:#fff!important;
+  opacity:1!important;
+  font-size:20px!important;
+  overflow-wrap:anywhere!important;
+}
+
+.crm .filtros{
+  display:grid!important;
+  grid-template-columns:minmax(220px,1fr) auto auto!important;
+  gap:8px!important;
+}
+.crm input,
+.crm select,
+.crm textarea{
+  min-width:0!important;
+  background:#071d25!important;
+  border:1px solid #4a717b!important;
+  border-radius:3px!important;
+  color:#fff!important;
+}
+.crm input::placeholder,
+.crm textarea::placeholder{color:#bed2d7!important;opacity:1!important}
+
+.crm button,
+.crm .filtros a,
+.crm .card-actions a{
+  min-width:0!important;
+  min-height:34px!important;
+  padding:7px 10px!important;
+  border:1px solid #42c6d5!important;
+  border-radius:2px!important;
+  background:var(--crm-cyan)!important;
+  color:#fff!important;
+  font-size:10px!important;
+  font-weight:850!important;
+  line-height:1.2!important;
+  white-space:normal!important;
+  text-align:center!important;
+}
+
+.crm .pipeline{
+  display:grid!important;
+  grid-template-columns:repeat(auto-fit,minmax(230px,1fr))!important;
+  gap:10px!important;
+  width:100%!important;
+  max-width:100%!important;
+  overflow:visible!important;
+  padding-bottom:0!important;
+}
+.crm .col{
+  min-width:0!important;
+  min-height:230px!important;
+  padding:11px!important;
+  background:var(--crm-panel)!important;
+  border:1px solid var(--crm-line)!important;
+  border-radius:6px!important;
+  color:var(--crm-text)!important;
+}
+.crm .col h2{
+  color:#fff!important;
+  opacity:1!important;
+  font-size:13px!important;
+}
+.crm .col h2 span{
+  background:#174650!important;
+  color:#dff8fb!important;
+}
+.crm .empty{color:var(--crm-muted)!important;opacity:1!important}
+
+.crm .lead{
+  min-width:0!important;
+  padding:11px!important;
+  background:var(--crm-panel-2)!important;
+  border:1px solid #35636e!important;
+  border-radius:4px!important;
+  color:#fff!important;
+  box-shadow:0 7px 18px rgba(0,0,0,.2)!important;
+}
+.crm .lead strong,
+.crm .lead small,
+.crm .lead div{
+  color:#fff!important;
+  opacity:1!important;
+  overflow-wrap:anywhere!important;
+}
+.crm .lead small{color:var(--crm-muted)!important}
+.crm .lead .valor{color:#ffb07c!important}
+.crm .card-actions{
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:6px!important;
+}
+.crm .card-actions a[href*="wa.me"]{
+  background:#168b59!important;
+  border-color:#29ae75!important;
+}
+
+.crm .modal{z-index:3500!important}
+.crm .modal-card{
+  background:var(--crm-panel)!important;
+  border:1px solid var(--crm-line)!important;
+  border-radius:6px!important;
+  color:#fff!important;
+}
+.crm .modal-card :is(h2,label){color:#fff!important;opacity:1!important}
+.crm .modal-head button{background:#102f39!important;color:#fff!important}
+
+@media(max-width:1100px){
+  .crm .pipeline{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+@media(max-width:720px){
+  .crm .topo{display:grid!important;gap:10px!important}
+  .crm .topo button{width:100%!important}
+  .crm .filtros{grid-template-columns:1fr!important}
+  .crm .pipeline{grid-template-columns:1fr!important}
+  .crm .kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+@media(max-width:420px){
+  .crm .kpis{grid-template-columns:1fr!important}
+  .crm .card-actions{grid-template-columns:1fr!important}
+}
