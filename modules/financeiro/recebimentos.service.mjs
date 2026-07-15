@@ -1,6 +1,6 @@
-import fs from 'node:fs/promises';
 import path from 'node:path';
 import { desbloquearAlunoAposPagamento } from './desbloqueio.service.mjs';
+import { lerJsonDuravel, salvarJsonDuravel, executarTransacaoJson } from '../core/persistence/durable-json.mjs';
 
 const ROOT = process.cwd();
 const DATA_DIR = path.join(ROOT, 'data');
@@ -14,25 +14,12 @@ const ALUNOS_FILE = path.join(DATA_DIR, 'alunos.json');
 const CHECKINS_FILE = path.join(DATA_DIR, 'checkins.json');
 const CREDITOS_FILE = path.join(DATA_DIR, 'creditos.json');
 
-async function garantirArquivo(arquivo, conteudoPadrao = []) {
-  try {
-    await fs.access(arquivo);
-  } catch {
-    await fs.mkdir(path.dirname(arquivo), { recursive: true });
-    await fs.writeFile(arquivo, JSON.stringify(conteudoPadrao, null, 2), 'utf8');
-  }
-}
-
 async function lerJson(arquivo, padrao = []) {
-  await garantirArquivo(arquivo, padrao);
-  const txt = await fs.readFile(arquivo, 'utf8');
-  if (!txt.trim()) return padrao;
-  return JSON.parse(txt);
+  return lerJsonDuravel(arquivo, padrao);
 }
 
 async function salvarJson(arquivo, dados) {
-  await fs.mkdir(path.dirname(arquivo), { recursive: true });
-  await fs.writeFile(arquivo, JSON.stringify(dados, null, 2), 'utf8');
+  return salvarJsonDuravel(arquivo, dados);
 }
 
 function hojeISO() {
@@ -717,7 +704,7 @@ export async function criarRecebimento(dados = {}) {
   return recebimento;
 }
 
-export async function confirmarRecebimento(id, dados = {}) {
+async function confirmarRecebimentoInterno(id, dados = {}) {
   const persistido = await persistirRecebimentoFinanceiro(id);
   const recebimentos = persistido.recebimentos;
   const idx = persistido.idx;
@@ -852,6 +839,12 @@ export async function confirmarRecebimento(id, dados = {}) {
       ? 'Recebimento confirmado, caixa movimentado e financeiro atualizado.'
       : 'Recebimento parcial confirmado, caixa movimentado e financeiro atualizado.'
   };
+}
+
+export async function confirmarRecebimento(id, dados = {}) {
+  return executarTransacaoJson(() => confirmarRecebimentoInterno(id, dados), {
+    operacaoId: `recebimento-${id}-${dados.idempotencyKey || dados.operacaoId || Date.now()}`
+  });
 }
 
 export async function atualizarRecebimento(id, dados = {}) {

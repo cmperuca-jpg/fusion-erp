@@ -1,7 +1,4 @@
-import fs from "node:fs/promises";
-import path from "node:path";
-
-const DATA_DIR = path.join(process.cwd(), "data");
+import { lerJsonDuravel, salvarJsonDuravel, salvarJsonMultiplosAtomico } from "../core/persistence/durable-json.mjs";
 
 const ARQUIVOS = {
   alunos: "alunos.json",
@@ -48,18 +45,11 @@ const STATUS_ABERTOS = new Set([
 ]);
 
 async function lerJson(nome, padrao = []) {
-  try {
-    const texto = await fs.readFile(path.join(DATA_DIR, nome), "utf8");
-    if (!texto.trim()) return padrao;
-    return JSON.parse(texto);
-  } catch {
-    return padrao;
-  }
+  try { return await lerJsonDuravel(nome, padrao); } catch { return padrao; }
 }
 
 async function salvarJson(nome, dados) {
-  await fs.mkdir(DATA_DIR, { recursive: true });
-  await fs.writeFile(path.join(DATA_DIR, nome), JSON.stringify(dados, null, 2), "utf8");
+  return salvarJsonDuravel(nome, dados);
 }
 
 async function carregarBases() {
@@ -74,12 +64,14 @@ async function carregarBases() {
 }
 
 async function salvarBases(bases) {
-  await salvarJson(ARQUIVOS.alunos, bases.alunos);
-  await salvarJson(ARQUIVOS.matriculas, bases.matriculas);
-  await salvarJson(ARQUIVOS.mensalidades, bases.mensalidades);
-  await salvarJson(ARQUIVOS.financeiro, bases.financeiro);
-  await salvarJson(ARQUIVOS.recebimentos, bases.recebimentos);
-  await salvarJson(ARQUIVOS.checkins, bases.checkins);
+  return salvarJsonMultiplosAtomico({
+    [ARQUIVOS.alunos]: bases.alunos,
+    [ARQUIVOS.matriculas]: bases.matriculas,
+    [ARQUIVOS.mensalidades]: bases.mensalidades,
+    [ARQUIVOS.financeiro]: bases.financeiro,
+    [ARQUIVOS.recebimentos]: bases.recebimentos,
+    [ARQUIVOS.checkins]: bases.checkins
+  });
 }
 
 function normalizar(valor = "") {

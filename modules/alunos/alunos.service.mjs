@@ -1,5 +1,4 @@
-import fs from "fs/promises";
-import path from "path";
+import { lerJsonDuravel, salvarJsonDuravel } from "../core/persistence/durable-json.mjs";
 import { alunoSchema, alunoUpdateSchema } from "./alunos.schema.mjs";
 import { obterTreinos } from "../treinos/treinos.service.mjs";
 import {
@@ -9,8 +8,6 @@ import {
   atualizarAluno,
   excluirAluno
 } from "./alunos.repository.mjs";
-
-const DATA_DIR = path.resolve(process.cwd(), "data");
 
 function mensagemValidacao(resultado) {
   return resultado.error.issues.map(item => item.message).join(", ");
@@ -23,25 +20,15 @@ function normalizar(v) { return texto(v).toLowerCase(); }
 function mesmoId(a, b) { return String(a || "") === String(b || ""); }
 
 async function lerJson(nomeArquivo, padrao) {
-  const arquivo = path.join(DATA_DIR, nomeArquivo);
   try {
-    const texto = await fs.readFile(arquivo, "utf-8");
-    if (!texto.trim()) return padrao;
-    const dados = JSON.parse(texto);
-    return dados ?? padrao;
-  } catch (erro) {
-    if (erro?.code === "ENOENT") {
-      await fs.mkdir(DATA_DIR, { recursive: true });
-      await fs.writeFile(arquivo, JSON.stringify(padrao, null, 2), "utf-8");
-      return padrao;
-    }
+    return await lerJsonDuravel(nomeArquivo, padrao);
+  } catch {
     return padrao;
   }
 }
 
 async function salvarJson(nomeArquivo, dados) {
-  await fs.mkdir(DATA_DIR, { recursive: true });
-  await fs.writeFile(path.join(DATA_DIR, nomeArquivo), JSON.stringify(dados, null, 2), "utf-8");
+  await salvarJsonDuravel(nomeArquivo, dados);
 }
 
 function estaPago(status) {

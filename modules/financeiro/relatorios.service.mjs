@@ -1,5 +1,5 @@
-import fs from 'node:fs/promises';
 import path from 'node:path';
+import { lerJsonDuravel } from '../core/persistence/durable-json.mjs';
 
 const ROOT = process.cwd();
 const DATA_DIR = path.join(ROOT, 'data');
@@ -9,28 +9,13 @@ const RECEBIMENTOS_FILE = path.join(DATA_DIR, 'recebimentos.json');
 const PAGAMENTOS_FILE = path.join(DATA_DIR, 'financeiro', 'pagamentos.json');
 const PAGAMENTOS_FILE_LEGADO = path.join(DATA_DIR, 'pagamentos.json');
 
-async function garantirArquivo(arquivo, padrao) {
-  try { await fs.access(arquivo); }
-  catch {
-    await fs.mkdir(path.dirname(arquivo), { recursive: true });
-    await fs.writeFile(arquivo, JSON.stringify(padrao, null, 2), 'utf8');
-  }
-}
-
 async function lerJson(arquivo, padrao) {
-  await garantirArquivo(arquivo, padrao);
-  const txt = await fs.readFile(arquivo, 'utf8');
-  if (!txt.trim()) return padrao;
-  try { return JSON.parse(txt); } catch { return padrao; }
+  try { return await lerJsonDuravel(arquivo, padrao); } catch { return padrao; }
 }
 
 async function lerJsonOpcional(arquivos, padrao) {
   for (const arquivo of arquivos) {
-    try {
-      const txt = await fs.readFile(arquivo, 'utf8');
-      if (!txt.trim()) return padrao;
-      return JSON.parse(txt);
-    } catch {}
+    try { return await lerJsonDuravel(arquivo, padrao); } catch {}
   }
   return padrao;
 }

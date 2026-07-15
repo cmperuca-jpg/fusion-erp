@@ -1,4 +1,3 @@
-import fs from "fs/promises";
 import path from "path";
 import {
   listarLancamentos,
@@ -8,26 +7,20 @@ import {
 import { baixarMensalidade } from "./mensalidades.service.mjs";
 import { confirmarRecebimento } from "./recebimentos.service.mjs";
 import { desbloquearAlunoAposPagamento } from "./desbloqueio.service.mjs";
+import { lerJsonDuravel, salvarJsonDuravel } from "../core/persistence/durable-json.mjs";
 
 const TAXAS_CARTAO_PATH = path.resolve(process.cwd(), "data", "taxas_cartao.json");
 
-const DATA_DIR = path.resolve(process.cwd(), "data");
-
 async function lerJsonFinanceiro(nomeArquivo, padrao = []) {
-  const arquivo = path.join(DATA_DIR, nomeArquivo);
   try {
-    const txt = await fs.readFile(arquivo, "utf-8");
-    if (!txt.trim()) return padrao;
-    const json = JSON.parse(txt);
-    return json ?? padrao;
+    return await lerJsonDuravel(nomeArquivo, padrao);
   } catch {
     return padrao;
   }
 }
 
 async function salvarJsonFinanceiro(nomeArquivo, dados) {
-  await fs.mkdir(DATA_DIR, { recursive: true });
-  await fs.writeFile(path.join(DATA_DIR, nomeArquivo), JSON.stringify(dados, null, 2), "utf-8");
+  await salvarJsonDuravel(nomeArquivo, dados);
 }
 
 function ehEntradaMatriculaFinanceiro(item = {}) {
@@ -200,12 +193,8 @@ const TAXAS_CARTAO_TESTE = [
 ];
 
 async function garantirTaxasCartao() {
-  try {
-    await fs.access(TAXAS_CARTAO_PATH);
-  } catch {
-    await fs.mkdir(path.dirname(TAXAS_CARTAO_PATH), { recursive: true });
-    await fs.writeFile(TAXAS_CARTAO_PATH, JSON.stringify(TAXAS_CARTAO_TESTE, null, 2), "utf-8");
-  }
+  const taxas = await lerJsonDuravel(TAXAS_CARTAO_PATH, []);
+  if (!Array.isArray(taxas) || !taxas.length) await salvarJsonDuravel(TAXAS_CARTAO_PATH, TAXAS_CARTAO_TESTE);
 }
 
 function normalizarTaxaCartao(item = {}) {
@@ -221,11 +210,9 @@ function normalizarTaxaCartao(item = {}) {
 
 export async function obterTaxasCartao() {
   await garantirTaxasCartao();
-  const raw = await fs.readFile(TAXAS_CARTAO_PATH, "utf-8");
-  let dados;
-  try { dados = JSON.parse(raw || "[]"); } catch { dados = []; }
+  const dados = await lerJsonDuravel(TAXAS_CARTAO_PATH, []);
   if (!Array.isArray(dados) || !dados.length) {
-    await fs.writeFile(TAXAS_CARTAO_PATH, JSON.stringify(TAXAS_CARTAO_TESTE, null, 2), "utf-8");
+    await salvarJsonDuravel(TAXAS_CARTAO_PATH, TAXAS_CARTAO_TESTE);
     return TAXAS_CARTAO_TESTE;
   }
   return dados.map(normalizarTaxaCartao).filter((t) => t.bandeira && t.percentual >= 0);
@@ -240,8 +227,7 @@ export async function salvarTaxasCartao(taxas = []) {
     erro.status = 400;
     throw erro;
   }
-  await fs.mkdir(path.dirname(TAXAS_CARTAO_PATH), { recursive: true });
-  await fs.writeFile(TAXAS_CARTAO_PATH, JSON.stringify(lista, null, 2), "utf-8");
+  await salvarJsonDuravel(TAXAS_CARTAO_PATH, lista);
   return lista;
 }
 

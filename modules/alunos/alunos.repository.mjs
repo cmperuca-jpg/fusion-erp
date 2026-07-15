@@ -1,25 +1,9 @@
-import fs from "fs/promises";
-import path from "path";
 import crypto from "crypto";
-
-const arquivo = path.resolve("data/alunos.json");
-
-async function garantirArquivo() {
-  await fs.mkdir("data", { recursive: true });
-
-  try {
-    await fs.access(arquivo);
-  } catch {
-    await fs.writeFile(arquivo, "[]", "utf-8");
-  }
-}
+import { lerJsonDuravel, salvarJsonDuravel, executarTransacaoJson } from "../core/persistence/durable-json.mjs";
 
 async function lerAlunos() {
-  await garantirArquivo();
-
   try {
-    const conteudo = await fs.readFile(arquivo, "utf-8");
-    const dados = conteudo.trim() ? JSON.parse(conteudo) : [];
+    const dados = await lerJsonDuravel("alunos.json", []);
     return Array.isArray(dados) ? dados : [];
   } catch {
     return [];
@@ -27,8 +11,7 @@ async function lerAlunos() {
 }
 
 async function salvarAlunos(alunos) {
-  await garantirArquivo();
-  await fs.writeFile(arquivo, JSON.stringify(alunos, null, 2), "utf-8");
+  await salvarJsonDuravel("alunos.json", alunos);
 }
 
 function limparCpf(valor) {
@@ -44,7 +27,7 @@ export async function buscarAlunoPorId(id) {
   return alunos.find(aluno => String(aluno.id) === String(id));
 }
 
-export async function criarAluno(aluno) {
+async function criarAlunoInterno(aluno) {
   const alunos = await lerAlunos();
   const cpfNovo = limparCpf(aluno.cpf);
 
@@ -69,8 +52,11 @@ export async function criarAluno(aluno) {
 
   return novoAluno;
 }
+export async function criarAluno(aluno) {
+  return executarTransacaoJson(() => criarAlunoInterno(aluno), { operacaoId: `aluno-criar-${crypto.randomUUID()}` });
+}
 
-export async function atualizarAluno(id, dados) {
+async function atualizarAlunoInterno(id, dados) {
   const alunos = await lerAlunos();
   const index = alunos.findIndex(aluno => String(aluno.id) === String(id));
 
@@ -101,12 +87,18 @@ export async function atualizarAluno(id, dados) {
 
   return alunos[index];
 }
+export async function atualizarAluno(id, dados) {
+  return executarTransacaoJson(() => atualizarAlunoInterno(id, dados), { operacaoId: `aluno-atualizar-${id}-${Date.now()}` });
+}
 
-export async function excluirAluno(id) {
+async function excluirAlunoInterno(id) {
   const alunos = await lerAlunos();
   const filtrados = alunos.filter(aluno => String(aluno.id) !== String(id));
 
   await salvarAlunos(filtrados);
 
   return alunos.length !== filtrados.length;
+}
+export async function excluirAluno(id) {
+  return executarTransacaoJson(() => excluirAlunoInterno(id), { operacaoId: `aluno-excluir-${id}-${Date.now()}` });
 }

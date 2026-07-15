@@ -8,7 +8,7 @@
   "scripts": {
     "start": "node server.mjs",
     "dev": "node --watch server.mjs",
-    "check": "node --check server.mjs && node --check scripts/render-smoke-test.mjs && node --check modules/backup/supabase-data.service.mjs && node --check modules/backup/backup.service.mjs && node --check modules/backup/backup.routes.mjs && node --check public/pages/admin/index.js && node --check scripts/backup-supabase.mjs && node --check scripts/backup-local.mjs",
+    "check": "node --check server.mjs && node --check config/supabase.mjs && node --check modules/core/persistence/collection-store.mjs && node --check modules/core/persistence/durable-json.mjs && node --check scripts/migrar-json-supabase-v3.mjs && node --check scripts/render-smoke-test.mjs && node --check modules/backup/supabase-data.service.mjs && node --check modules/backup/backup.service.mjs && node --check modules/backup/backup.routes.mjs && node --check public/pages/admin/index.js && node --check scripts/backup-supabase.mjs && node --check scripts/backup-local.mjs",
     "reset:virgem": "node scripts/resetar-sistema-virgem.mjs",
     "reset:admin": "node scripts/reset-admin-password.mjs",
     "render:check": "node scripts/render-smoke-test.mjs",
@@ -16,6 +16,7 @@
     "backup:supabase": "node scripts/backup-supabase.mjs",
     "backup:local": "node scripts/backup-local.mjs",
     "backup:data": "node scripts/backup-data.mjs",
+    "migrate:supabase": "node scripts/migrar-json-supabase-v3.mjs",
     "piloto:280": "npm run check && npm run backup:data",
     "access:agent": "node scripts/fusion-access-agent.mjs"
   },

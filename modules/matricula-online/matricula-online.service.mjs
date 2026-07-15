@@ -1,24 +1,17 @@
-import fs from 'node:fs/promises';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { integrarMatriculaAluno } from '../matriculas/matricula.integracao.service.mjs';
+import { lerJsonDuravel, salvarJsonDuravel, executarTransacaoJson } from '../core/persistence/durable-json.mjs';
 
 const DATA_DIR = path.resolve(process.cwd(), 'data');
 const SOLICITACOES_FILE = path.join(DATA_DIR, 'matriculas_online.json');
 const ALUNOS_FILE = path.join(DATA_DIR, 'alunos.json');
 const PLANOS_FILE = path.join(DATA_DIR, 'planos.json');
 
-async function garantirArquivo(arquivo, padrao = []) {
-  try { await fs.access(arquivo); }
-  catch { await fs.mkdir(path.dirname(arquivo), { recursive: true }); await fs.writeFile(arquivo, JSON.stringify(padrao, null, 2), 'utf8'); }
-}
 async function lerJson(arquivo, padrao = []) {
-  await garantirArquivo(arquivo, padrao);
-  const txt = await fs.readFile(arquivo, 'utf8');
-  if (!txt.trim()) return padrao;
-  try { return JSON.parse(txt) ?? padrao; } catch { return padrao; }
+  try { return await lerJsonDuravel(arquivo, padrao); } catch { return padrao; }
 }
-async function salvarJson(arquivo, dados) { await fs.mkdir(path.dirname(arquivo), { recursive: true }); await fs.writeFile(arquivo, JSON.stringify(dados, null, 2), 'utf8'); }
+async function salvarJson(arquivo, dados) { return salvarJsonDuravel(arquivo, dados); }
 function agoraISO() { return new Date().toISOString(); }
 function hojeISO() { return new Date().toISOString().slice(0, 10); }
 function texto(v) { return String(v ?? '').trim(); }
@@ -217,7 +210,7 @@ export async function criarSolicitacao(dados = {}) {
   await salvarJson(SOLICITACOES_FILE, solicitacoes);
   return { ok: true, solicitacao: exporSolicitacao(solicitacao), mensagem: 'Solicitação de matrícula enviada para aprovação.' };
 }
-export async function aprovarSolicitacao(id, opcoes = {}) {
+async function aprovarSolicitacaoInterna(id, opcoes = {}) {
   const solicitacoes = await lerJson(SOLICITACOES_FILE, []);
   const idx = solicitacoes.findIndex(s => mesmoId(s.id, id) || mesmoId(s.protocolo, id));
   if (idx < 0) erro('Solicitação não encontrada.', 404);
@@ -244,6 +237,11 @@ export async function aprovarSolicitacao(id, opcoes = {}) {
   solicitacoes[idx] = solicitacao;
   await salvarJson(SOLICITACOES_FILE, solicitacoes);
   return { ok: true, solicitacao: exporSolicitacao(solicitacao), aluno, integracao, financeiroId, mensalidadeId, mensagem: 'Matrícula online aprovada. Aluno, matrícula pendente e cobrança inicial foram criados.' };
+}
+export async function aprovarSolicitacao(id, opcoes = {}) {
+  return executarTransacaoJson(() => aprovarSolicitacaoInterna(id, opcoes), {
+    operacaoId: `matricula-online-${id}-${opcoes.idempotencyKey || opcoes.operacaoId || Date.now()}`
+  });
 }
 export async function rejeitarSolicitacao(id, opcoes = {}) {
   const solicitacoes = await lerJson(SOLICITACOES_FILE, []);

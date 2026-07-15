@@ -1,26 +1,13 @@
-import fs from 'node:fs/promises';
 import path from 'node:path';
+import { lerJsonDuravel, salvarJsonDuravel } from '../core/persistence/durable-json.mjs';
 
 const ROOT = process.cwd();
 const DATA_DIR = path.join(ROOT, 'data');
 const CAIXA_FILE = path.join(DATA_DIR, 'caixa.json');
 const FINANCEIRO_FILE = path.join(DATA_DIR, 'financeiro.json');
 
-async function garantirArquivo(arquivo, conteudoPadrao) {
-  try {
-    await fs.access(arquivo);
-  } catch {
-    await fs.mkdir(path.dirname(arquivo), { recursive: true });
-    await fs.writeFile(arquivo, JSON.stringify(conteudoPadrao, null, 2), 'utf8');
-  }
-}
-
 async function lerCaixa() {
-  await garantirArquivo(CAIXA_FILE, { caixas: [], movimentos: [] });
-  const txt = await fs.readFile(CAIXA_FILE, 'utf8');
-  if (!txt.trim()) return { caixas: [], movimentos: [] };
-
-  const dados = JSON.parse(txt);
+  const dados = await lerJsonDuravel(CAIXA_FILE, { caixas: [], movimentos: [] });
   return {
     caixas: Array.isArray(dados.caixas) ? dados.caixas : [],
     movimentos: Array.isArray(dados.movimentos) ? dados.movimentos : []
@@ -28,20 +15,15 @@ async function lerCaixa() {
 }
 
 async function salvarCaixa(dados) {
-  await fs.mkdir(path.dirname(CAIXA_FILE), { recursive: true });
-  await fs.writeFile(CAIXA_FILE, JSON.stringify(dados, null, 2), 'utf8');
+  await salvarJsonDuravel(CAIXA_FILE, dados);
 }
 
 async function lerFinanceiro() {
-  await garantirArquivo(FINANCEIRO_FILE, []);
-  const txt = await fs.readFile(FINANCEIRO_FILE, 'utf8');
-  if (!txt.trim()) return [];
-  return JSON.parse(txt);
+  return lerJsonDuravel(FINANCEIRO_FILE, []);
 }
 
 async function salvarFinanceiro(dados) {
-  await fs.mkdir(path.dirname(FINANCEIRO_FILE), { recursive: true });
-  await fs.writeFile(FINANCEIRO_FILE, JSON.stringify(dados, null, 2), 'utf8');
+  await salvarJsonDuravel(FINANCEIRO_FILE, dados);
 }
 
 function hojeISO() {

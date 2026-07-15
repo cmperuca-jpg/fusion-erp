@@ -24,6 +24,16 @@ services:
         sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
+      - key: FUSION_DATABASE_PROVIDER
+        value: supabase
+      - key: FUSION_SUPABASE_RECORDS_TABLE
+        value: fusion_v3_records
+      - key: FUSION_PERSISTENCE_WRITE_MODE
+        value: primary
+      - key: FUSION_JSON_FALLBACK
+        value: false
+      - key: FUSION_MIGRATE_JSON_ON_START
+        sync: false
       - key: SUPABASE_DATA_BUCKET
         value: fusion-data
       - key: FUSION_TENANT_ID

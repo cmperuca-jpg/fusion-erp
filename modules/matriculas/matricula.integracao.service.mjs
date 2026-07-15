@@ -1,9 +1,6 @@
-import fs from 'fs/promises';
-import path from 'path';
-const DATA_DIR = path.resolve(process.cwd(), 'data');
-async function ensureDir(){ await fs.mkdir(DATA_DIR,{recursive:true}); }
-async function readJson(file, fallback){ await ensureDir(); const full=path.join(DATA_DIR,file); try{ const raw=await fs.readFile(full,'utf8'); return JSON.parse(raw||'null') ?? fallback; }catch(e){ if(e?.code==='ENOENT'){ await writeJson(file,fallback); return fallback;} throw e; } }
-async function writeJson(file,data){ await ensureDir(); await fs.writeFile(path.join(DATA_DIR,file), JSON.stringify(data,null,2),'utf8'); }
+import { lerJsonDuravel, salvarJsonDuravel, salvarJsonMultiplosAtomico } from '../core/persistence/durable-json.mjs';
+async function readJson(file, fallback){ return lerJsonDuravel(file, fallback); }
+async function writeJson(file,data){ return salvarJsonDuravel(file, data); }
 function dinheiro(v){ const n=Number(v||0); return Number.isFinite(n)?Number(n.toFixed(2)):0; }
 function txt(v){ return String(v??'').trim(); }
 function hojeISO(){ return new Date().toISOString().slice(0,10); }
@@ -27,7 +24,7 @@ function numeroMatricula(matriculas,dataISO){ const ym=String(dataISO||hojeISO()
 function matriculaAtivaDoAluno(matriculas, alunoId){ return (matriculas||[]).find(m=>String(m.alunoId)===String(alunoId)&&['Ativa','Pendente','Trancada'].includes(String(m.status||''))); }
 function historico(m,acao,descricao,dados={},usuario='sistema'){ if(!Array.isArray(m.historico)) m.historico=[]; m.historico.push({ id:`hist_mat_${Date.now()}_${Math.floor(Math.random()*999999)}`, acao, descricao, usuario, dados, criadoEm:agoraISO() }); }
 export async function carregarBaseMatricula(){ return { alunos:await readJson('alunos.json',[]), planos:await readJson('planos.json',[]), matriculas:await readJson('matriculas.json',[]), mensalidades:await readJson('mensalidades.json',[]), financeiro:await readJson('financeiro.json',[]), recebimentos:await readJson('recebimentos.json',[]), checkins:await readJson('checkins.json',[]), historicoPlanos:await readJson('alunos_historico_planos.json',[]), turmas:await readJson('turmas.json',[]) }; }
-export async function salvarBaseMatricula(base){ await writeJson('alunos.json',base.alunos||[]); await writeJson('matriculas.json',base.matriculas||[]); await writeJson('mensalidades.json',base.mensalidades||[]); await writeJson('financeiro.json',base.financeiro||[]); await writeJson('recebimentos.json',base.recebimentos||[]); await writeJson('checkins.json',base.checkins||[]); await writeJson('alunos_historico_planos.json',base.historicoPlanos||[]); await writeJson('turmas.json',base.turmas||[]); }
+export async function salvarBaseMatricula(base){ return salvarJsonMultiplosAtomico({ 'alunos.json':base.alunos||[], 'matriculas.json':base.matriculas||[], 'mensalidades.json':base.mensalidades||[], 'financeiro.json':base.financeiro||[], 'recebimentos.json':base.recebimentos||[], 'checkins.json':base.checkins||[], 'alunos_historico_planos.json':base.historicoPlanos||[], 'turmas.json':base.turmas||[] }); }
 function statusPagoMatricula(item = {}){
   const s = normalizar(item.status || item.situacao || '');
   if(['pago','paga','recebido','recebida','quitado','baixado'].includes(s)) return true;

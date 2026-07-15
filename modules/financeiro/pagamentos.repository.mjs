@@ -1,5 +1,5 @@
-import fs from "fs/promises";
 import path from "path";
+import { lerJsonDuravel, salvarJsonDuravel, salvarJsonMultiplosAtomico, executarTransacaoJson } from "../core/persistence/durable-json.mjs";
 
 const DATA_DIR = path.resolve(process.cwd(), "data");
 const DB_PATH = path.join(DATA_DIR, "db.json");
@@ -7,31 +7,12 @@ const PAGAMENTOS_PATH = path.join(DATA_DIR, "pagamentos.json");
 const FINANCEIRO_PATH = path.join(DATA_DIR, "financeiro.json");
 const CAIXA_PATH = path.join(DATA_DIR, "caixa.json");
 
-async function garantirArquivo(filePath, padrao) {
-  try {
-    await fs.access(filePath);
-  } catch {
-    await fs.mkdir(path.dirname(filePath), { recursive: true });
-    await fs.writeFile(filePath, JSON.stringify(padrao, null, 2), "utf8");
-  }
-}
-
 async function lerJson(filePath, padrao) {
-  await garantirArquivo(filePath, padrao);
-  const raw = await fs.readFile(filePath, "utf8").catch(() => "");
-  if (!raw.trim()) return padrao;
-  try {
-    const parsed = JSON.parse(raw);
-    return parsed ?? padrao;
-  } catch {
-    return padrao;
-  }
+  return lerJsonDuravel(filePath, padrao);
 }
 
 async function salvarJson(filePath, dados) {
-  await fs.mkdir(path.dirname(filePath), { recursive: true });
-  await fs.writeFile(filePath, JSON.stringify(dados, null, 2), "utf8");
-  return dados;
+  return salvarJsonDuravel(filePath, dados);
 }
 
 function listaDe(dados, chave = "pagamentos") {
@@ -70,7 +51,6 @@ function deduplicarPorId(lista = []) {
 }
 
 export async function resolverDbPath() {
-  await garantirArquivo(DB_PATH, { pagamentos: [], lancamentosFinanceiros: [], caixaMovimentos: [] });
   return DB_PATH;
 }
 
@@ -135,24 +115,23 @@ function upsert(lista, item) {
   return [...lista, item];
 }
 
-export async function inserirPagamentoRaw(pagamento) {
+async function inserirPagamentoRawInterno(pagamento) {
   const item = { ...pagamento, tipo: pagamento.tipo || "pagar", natureza: pagamento.natureza || "pagar", modulo: pagamento.modulo || "pagamentos" };
 
-  const pagamentos = await lerPagamentosArquivo();
-  await salvarPagamentosArquivo(upsert(pagamentos, item));
-
-  const financeiro = await lerFinanceiroArquivo();
-  await salvarFinanceiroArquivo(upsert(financeiro, item));
-
+  const pagamentos = upsert(await lerPagamentosArquivo(), item);
+  const financeiro = upsert(await lerFinanceiroArquivo(), item);
   const { db, filePath } = await lerDb();
   db.pagamentos = upsert(db.pagamentos, item);
   db.lancamentosFinanceiros = upsert(db.lancamentosFinanceiros, item);
-  await salvarDb(db, filePath);
+  await salvarJsonMultiplosAtomico({ [PAGAMENTOS_PATH]: pagamentos, [FINANCEIRO_PATH]: financeiro, [filePath]: db });
 
   return item;
 }
+export async function inserirPagamentoRaw(pagamento) {
+  return executarTransacaoJson(() => inserirPagamentoRawInterno(pagamento), { operacaoId: `pagamento-inserir-${idItem(pagamento) || Date.now()}` });
+}
 
-export async function atualizarPagamentoRaw(id, updater) {
+async function atualizarPagamentoRawInterno(id, updater) {
   const idStr = String(id);
   let atualizado = null;
 
@@ -166,15 +145,11 @@ export async function atualizarPagamentoRaw(id, updater) {
   };
 
   const pagamentos = atualizarLista(await lerPagamentosArquivo());
-  await salvarPagamentosArquivo(pagamentos);
-
   const financeiro = atualizarLista(await lerFinanceiroArquivo(), true);
-  await salvarFinanceiroArquivo(financeiro);
 
   const { db, filePath } = await lerDb();
   db.pagamentos = atualizarLista(db.pagamentos);
   db.lancamentosFinanceiros = atualizarLista(db.lancamentosFinanceiros, true);
-  await salvarDb(db, filePath);
 
   if (!atualizado) {
     const erro = new Error("Pagamento não encontrado.");
@@ -182,10 +157,15 @@ export async function atualizarPagamentoRaw(id, updater) {
     throw erro;
   }
 
+  await salvarJsonMultiplosAtomico({ [PAGAMENTOS_PATH]: pagamentos, [FINANCEIRO_PATH]: financeiro, [filePath]: db });
+
   return atualizado;
 }
+export async function atualizarPagamentoRaw(id, updater) {
+  return executarTransacaoJson(() => atualizarPagamentoRawInterno(id, updater), { operacaoId: `pagamento-atualizar-${id}-${Date.now()}` });
+}
 
-export async function removerPagamentoRaw(id) {
+async function removerPagamentoRawInterno(id) {
   const idStr = String(id);
   let removido = false;
   const remover = (lista = [], somentePagar = false) => lista.filter((item) => {
@@ -195,13 +175,12 @@ export async function removerPagamentoRaw(id) {
     return false;
   });
 
-  await salvarPagamentosArquivo(remover(await lerPagamentosArquivo()));
-  await salvarFinanceiroArquivo(remover(await lerFinanceiroArquivo(), true));
+  const pagamentos = remover(await lerPagamentosArquivo());
+  const financeiro = remover(await lerFinanceiroArquivo(), true);
 
   const { db, filePath } = await lerDb();
   db.pagamentos = remover(db.pagamentos);
   db.lancamentosFinanceiros = remover(db.lancamentosFinanceiros, true);
-  await salvarDb(db, filePath);
 
   if (!removido) {
     const erro = new Error("Pagamento não encontrado.");
@@ -209,24 +188,31 @@ export async function removerPagamentoRaw(id) {
     throw erro;
   }
 
+
+  await salvarJsonMultiplosAtomico({ [PAGAMENTOS_PATH]: pagamentos, [FINANCEIRO_PATH]: financeiro, [filePath]: db });
+
   return { id: idStr, removido: true };
 }
+export async function removerPagamentoRaw(id) {
+  return executarTransacaoJson(() => removerPagamentoRawInterno(id), { operacaoId: `pagamento-remover-${id}-${Date.now()}` });
+}
 
-export async function registrarMovimentoCaixa(movimento) {
+async function registrarMovimentoCaixaInterno(movimento) {
   const caixa = await lerJson(CAIXA_PATH, { caixas: [], movimentos: [] });
   if (Array.isArray(caixa)) {
     caixa.push(movimento);
-    await salvarJson(CAIXA_PATH, caixa);
   } else {
     if (!Array.isArray(caixa.movimentos)) caixa.movimentos = [];
     caixa.movimentos.push(movimento);
-    await salvarJson(CAIXA_PATH, caixa);
   }
 
   const { db, filePath } = await lerDb();
   if (!Array.isArray(db.caixaMovimentos)) db.caixaMovimentos = [];
   db.caixaMovimentos.push(movimento);
-  await salvarDb(db, filePath);
+  await salvarJsonMultiplosAtomico({ [CAIXA_PATH]: caixa, [filePath]: db });
 
   return movimento;
+}
+export async function registrarMovimentoCaixa(movimento) {
+  return executarTransacaoJson(() => registrarMovimentoCaixaInterno(movimento), { operacaoId: `caixa-movimento-${idItem(movimento) || Date.now()}` });
 }

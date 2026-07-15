@@ -1,10 +1,7 @@
-import fs from "node:fs/promises";
-import path from "node:path";
 import crypto from "node:crypto";
 import jwt from "jsonwebtoken";
+import { lerJsonDuravel, salvarJsonDuravel } from "../core/persistence/durable-json.mjs";
 
-const DATA_DIR = path.resolve(process.cwd(), "data");
-const USUARIOS_FILE = path.join(DATA_DIR, "usuarios.json");
 const JWT_SECRET = process.env.JWT_SECRET || process.env.FUSION_JWT_SECRET || "fusion-erp-dev-secret-trocar-em-producao";
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "12h";
 
@@ -58,36 +55,25 @@ function erro(mensagem, status = 500) {
 }
 
 async function garantirArquivoUsuarios() {
-  await fs.mkdir(DATA_DIR, { recursive: true });
-
-  try {
-    await fs.access(USUARIOS_FILE);
-  } catch {
-    const admin = {
-      id: "usr_admin",
-      nome: "Administrador Fusion",
-      email: "admin@fusionerp.local",
-      senhaHash: senhaHash("admin123"),
-      perfil: "Administrador",
-      status: "ativo",
-      permissoes: ["*"],
-      criadoEm: agoraISO(),
-      atualizadoEm: agoraISO()
-    };
-    await fs.writeFile(USUARIOS_FILE, JSON.stringify([admin], null, 2), "utf8");
-  }
+  const existentes = await lerJsonDuravel("usuarios.json", []);
+  if (Array.isArray(existentes) && existentes.length) return;
+  if (process.env.NODE_ENV === "production") throw erro("Nenhum usuário foi migrado para o Supabase. Implantação bloqueada por segurança.", 503);
+  const admin = {
+    id: "usr_admin", nome: "Administrador Fusion", email: "admin@fusionerp.local",
+    senhaHash: senhaHash("admin123"), perfil: "Administrador", status: "ativo",
+    permissoes: ["*"], criadoEm: agoraISO(), atualizadoEm: agoraISO()
+  };
+  await salvarJsonDuravel("usuarios.json", [admin]);
 }
 
 async function lerUsuarios() {
   await garantirArquivoUsuarios();
-  const bruto = await fs.readFile(USUARIOS_FILE, "utf8");
-  const lista = bruto.trim() ? JSON.parse(bruto) : [];
+  const lista = await lerJsonDuravel("usuarios.json", []);
   return Array.isArray(lista) ? lista : [];
 }
 
 async function salvarUsuarios(lista) {
-  await fs.mkdir(DATA_DIR, { recursive: true });
-  await fs.writeFile(USUARIOS_FILE, JSON.stringify(lista, null, 2), "utf8");
+  await salvarJsonDuravel("usuarios.json", lista);
 }
 
 function validarPayloadUsuario(payload = {}, editando = false) {

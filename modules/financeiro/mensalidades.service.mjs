@@ -1,7 +1,7 @@
-import fs from 'node:fs/promises';
 import path from 'node:path';
 import { gerarProximaMensalidadeAposPagamento } from '../cobranca/cobranca.service.mjs';
 import { aplicarPremioNaMensalidade, vincularMensalidadePremio } from '../fidelidade/fidelidade.service.mjs';
+import { lerJsonDuravel, salvarJsonDuravel } from '../core/persistence/durable-json.mjs';
 
 const ROOT = process.cwd();
 const DATA_DIR = path.join(ROOT, 'data');
@@ -11,25 +11,12 @@ const ALUNOS_FILE = path.join(DATA_DIR, 'alunos.json');
 const PLANOS_FILE = path.join(DATA_DIR, 'planos.json');
 const CAIXA_FILE = path.join(DATA_DIR, 'caixa.json');
 
-async function garantirArquivo(arquivo, conteudoPadrao = []) {
-  try {
-    await fs.access(arquivo);
-  } catch {
-    await fs.mkdir(path.dirname(arquivo), { recursive: true });
-    await fs.writeFile(arquivo, JSON.stringify(conteudoPadrao, null, 2), 'utf8');
-  }
-}
-
 async function lerJson(arquivo, padrao = []) {
-  await garantirArquivo(arquivo, padrao);
-  const txt = await fs.readFile(arquivo, 'utf8');
-  if (!txt.trim()) return padrao;
-  return JSON.parse(txt);
+  return lerJsonDuravel(arquivo, padrao);
 }
 
 async function salvarJson(arquivo, dados) {
-  await fs.mkdir(path.dirname(arquivo), { recursive: true });
-  await fs.writeFile(arquivo, JSON.stringify(dados, null, 2), 'utf8');
+  return salvarJsonDuravel(arquivo, dados);
 }
 
 function hojeISO() {

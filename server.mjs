@@ -1,6 +1,6 @@
+import "dotenv/config";
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
 import path from "path";
 import fs from "fs";
 import fsp from "fs/promises";
@@ -43,9 +43,9 @@ import fidelidadeRoutes from "./modules/fidelidade/fidelidade.routes.mjs";
 import accessBridgeRoutes from "./modules/access-bridge/access-bridge.routes.mjs";
 import { inicializarPersistenciaSupabase, encerrarPersistenciaSupabase } from "./modules/backup/supabase-data.service.mjs";
 import { iniciarBackupAutomatico } from "./modules/backup/backup.service.mjs";
+import { assertDatabaseConfiguration } from "./config/database.config.mjs";
+import { verificarPersistenciaTransacional, migrarTodosJsonParaSupabase } from "./modules/core/persistence/collection-store.mjs";
 
-
-dotenv.config();
 
 const app = express();
 
@@ -103,7 +103,13 @@ function prepararPersistenciaRender() {
 }
 
 prepararPersistenciaRender();
+assertDatabaseConfiguration();
+await verificarPersistenciaTransacional();
 await inicializarPersistenciaSupabase();
+if (["1", "true", "sim", "yes"].includes(String(process.env.FUSION_MIGRATE_JSON_ON_START || "false").toLowerCase())) {
+  const migracao = await migrarTodosJsonParaSupabase();
+  console.log(`[Persistência] Migração inicial concluída: ${migracao.totalColecoes} coleção(ões).`);
+}
 
 const backupRoot = isRender ? path.join(persistentRoot, "backups") : path.join(__dirname, "backups");
 const backupDataRoot = path.join(backupRoot, "data");
