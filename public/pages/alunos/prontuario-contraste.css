@@ -1,0 +1,136 @@
+/* Prontuario do aluno - contraste, encaixe e responsividade */
+.prontuario-page{
+  width:100%!important;
+  max-width:none!important;
+  min-width:0!important;
+}
+
+.prontuario-page .prontuario-header,
+.prontuario-page .prontuario-tabs,
+.prontuario-page .tab-panel>.fusion-card{
+  background:#0a2a34!important;
+  border:1px solid #2c5965!important;
+  border-radius:7px!important;
+  color:#fff!important;
+}
+.prontuario-page .prontuario-header :is(h2,p),
+.prontuario-page .tab-panel>.fusion-card>h3{
+  color:#fff!important;
+  opacity:1!important;
+}
+.prontuario-page .prontuario-header p{color:#d0e1e5!important}
+
+.prontuario-page .prontuario-kpis .aluno-kpi{
+  min-width:0!important;
+  background:#082630!important;
+  border:1px solid #2c5965!important;
+  border-radius:6px!important;
+  color:#fff!important;
+}
+.prontuario-page .prontuario-kpis .aluno-kpi :is(span,strong){
+  color:#fff!important;
+  opacity:1!important;
+}
+
+.prontuario-page .prontuario-tabs{
+  padding:10px!important;
+  gap:6px!important;
+}
+.prontuario-page .prontuario-tabs .tab{
+  min-width:0!important;
+  min-height:34px!important;
+  padding:7px 10px!important;
+  border:1px solid transparent!important;
+  border-radius:2px!important;
+  background:transparent!important;
+  color:#e9f6f8!important;
+  font-size:10px!important;
+  line-height:1.2!important;
+  white-space:normal!important;
+  box-shadow:none!important;
+}
+.prontuario-page .prontuario-tabs .tab.active,
+.prontuario-page .prontuario-tabs .tab:hover{
+  background:#123d48!important;
+  border-color:#2fc4d5!important;
+  color:#58d9e7!important;
+}
+
+/* Cartoes claros: todos os textos ficam escuros e legiveis */
+.prontuario-page :is(.mini-card,.timeline-row,.info-item,.empty),
+.prontuario-page .cards-list>*{
+  background:#f7fafb!important;
+  border-color:#b8d0d6!important;
+  border-radius:5px!important;
+  color:#15323b!important;
+  opacity:1!important;
+  text-shadow:none!important;
+}
+.prontuario-page :is(.mini-card,.timeline-row,.info-item,.empty) *,
+.prontuario-page .cards-list>*>*{
+  color:#15323b!important;
+  opacity:1!important;
+  text-shadow:none!important;
+}
+.prontuario-page :is(.mini-card,.timeline-row,.info-item) :is(p,span,time,small){
+  color:#4b6670!important;
+}
+.prontuario-page .timeline-row{
+  border-left:3px solid #28b8ca!important;
+  padding:11px 12px!important;
+}
+.prontuario-page .timeline-row strong{color:#102b35!important}
+
+/* Tabelas financeiras */
+.prontuario-page .table-wrap{
+  max-width:100%!important;
+  overflow-x:auto!important;
+  border:1px solid #315d68!important;
+  border-radius:5px!important;
+}
+.prontuario-page .alunos-table thead th{
+  background:#10404c!important;
+  color:#fff!important;
+  opacity:1!important;
+}
+.prontuario-page .alunos-table tbody tr{background:#f7fafb!important}
+.prontuario-page .alunos-table tbody td,
+.prontuario-page .alunos-table tbody td *{
+  color:#15323b!important;
+  opacity:1!important;
+}
+
+.prontuario-page .chip{
+  background:#123d48!important;
+  border-color:#31717d!important;
+  color:#e7f8fa!important;
+  opacity:1!important;
+}
+.prontuario-page .chip.ok{color:#83efb5!important;border-color:#2c8b61!important}
+.prontuario-page .foto-grande{border-radius:8px!important}
+
+.prontuario-page .prontuario-actions button{
+  min-height:32px!important;
+  padding:6px 9px!important;
+  border-radius:2px!important;
+  font-size:10px!important;
+}
+
+@media(max-width:900px){
+  .prontuario-page .prontuario-tabs{
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+  .prontuario-page .prontuario-tabs .tab{width:100%!important}
+}
+@media(max-width:560px){
+  .prontuario-page .prontuario-kpis{grid-template-columns:1fr!important}
+  .prontuario-page .prontuario-tabs{grid-template-columns:1fr!important}
+  .prontuario-page .prontuario-actions{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important}
+  .prontuario-page .prontuario-actions button{width:100%!important}
+}
+
+@media print{
+  .prontuario-page :is(.mini-card,.timeline-row,.info-item),
+  .prontuario-page .cards-list>*{background:#fff!important;color:#111!important}
+}
