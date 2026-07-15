@@ -1,4 +1,21 @@
 (function () {
+  function garantirEstilosGlobais() {
+    const estilos = [
+      ["fusion-premium-final", "/assets/css/fusion-premium-final.css"],
+      ["fusion-correcoes-visuais", "/assets/css/fusion-correcoes-visuais.css"]
+    ];
+    estilos.forEach(([id, href]) => {
+      if (document.getElementById(id) || document.querySelector(`link[href="${href}"]`)) return;
+      const link = document.createElement("link");
+      link.id = id;
+      link.rel = "stylesheet";
+      link.href = href;
+      document.head.appendChild(link);
+    });
+  }
+
+  garantirEstilosGlobais();
+
   const PAGINAS_SEM_MENU = [
     "/pages/aluno-avaliacao/",
     "/pages/aluno-avaliacao/index.html",
@@ -37,7 +54,8 @@
       { id: "access-engine", label: "Catracas", href: "/pages/access-engine/index.html", perm: "access-engine" }
     ]},
     { grupo: "Comercial", itens: [
-      { id: "site-comercial", label: "Site Comercial", href: "/pages/comercial/index.html", perm: "comercial", novaAba: true },
+      { id: "site-fusion", label: "Site do Fusion ERP", href: "/pages/comercial/index.html", perm: "comercial", novaAba: true },
+      { id: "site-academia", label: "Site da academia", href: "/pages/promocao/index.html", perm: "comercial", novaAba: true },
       { id: "matricula-online", label: "Matrícula Online", href: "/pages/matricula-online/index.html", perm: "matricula-online", novaAba: true },
       { id: "matriculas-pendentes", label: "Matrículas pendentes", href: "/pages/matriculas-pendentes/index.html", perm: "matriculas" },
       { id: "site-chat", label: "Chat do site", href: "/pages/site-chat/index.html", perm: "site-chat" },
@@ -280,30 +298,13 @@
     });
   }
 
-  function dataBrasil(valor) {
-    return String(valor || "").replace(/\b((?:19|20)\d{2})-(\d{2})-(\d{2})\b/g, "$3/$2/$1");
-  }
-
   function formatarDatasVisiveis(root = document) {
-    const seletores = "td,time,[data-date-display],.data,.date,.vencimento,.nascimento";
-    const elementos = [];
-    if (root.nodeType === 1 && root.matches?.(seletores)) elementos.push(root);
-    root.querySelectorAll?.(seletores).forEach((el) => elementos.push(el));
-
-    elementos.forEach((elemento) => {
-      if (elemento.matches("input,select,textarea")) return;
-      const walker = document.createTreeWalker(elemento, NodeFilter.SHOW_TEXT);
-      const textos = [];
-      while (walker.nextNode()) textos.push(walker.currentNode);
-      textos.forEach((no) => {
-        const formatado = dataBrasil(no.nodeValue);
-        if (formatado !== no.nodeValue) no.nodeValue = formatado;
-      });
-    });
-
-    document.querySelectorAll('input[type="date"]').forEach((input) => {
-      input.lang = "pt-BR";
-      if (!input.title) input.title = "Data no formato dia/mês/ano";
+    const seletor = "td,th,span,small,p,strong,[data-date-br]";
+    root.querySelectorAll?.(seletor).forEach((el) => {
+      if (el.children.length || el.closest("input,select,textarea,script,style")) return;
+      const atual = String(el.textContent || "");
+      const formatado = atual.replace(/\b(\d{4})-(\d{2})-(\d{2})\b/g, "$3/$2/$1");
+      if (formatado !== atual) el.textContent = formatado;
     });
   }
 
@@ -347,20 +348,8 @@
   };
 
   document.addEventListener("DOMContentLoaded", () => {
-    formatarDatasVisiveis(document);
-    const observadorDatas = new MutationObserver((mudancas) => {
-      mudancas.forEach((mudanca) => {
-        if (mudanca.type === "characterData" && mudanca.target.parentElement) {
-          formatarDatasVisiveis(mudanca.target.parentElement);
-        }
-        mudanca.addedNodes.forEach((no) => {
-          if (no.nodeType === 1) formatarDatasVisiveis(no);
-        });
-      });
-    });
-    observadorDatas.observe(document.body, { childList: true, characterData: true, subtree: true });
-
     prepararLinksPublicos(document);
+    formatarDatasVisiveis(document);
     if (paginaSemMenu()) {
       removerMenusExistentes();
       preencherUsuarioTopo();
@@ -375,6 +364,17 @@
   });
 
   window.addEventListener("load", () => {
+    formatarDatasVisiveis(document);
     if (paginaSemMenu()) removerMenusExistentes();
   });
+
+  let formatacaoPendente = false;
+  new MutationObserver(() => {
+    if (formatacaoPendente) return;
+    formatacaoPendente = true;
+    requestAnimationFrame(() => {
+      formatacaoPendente = false;
+      formatarDatasVisiveis(document);
+    });
+  }).observe(document.documentElement, { childList: true, subtree: true });
 })();
