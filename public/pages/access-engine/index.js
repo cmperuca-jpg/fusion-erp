@@ -24,12 +24,32 @@ async function consultarAgente() {
     box.querySelector('strong').textContent = data.online ? 'Online' : 'Offline';
     $('agenteMensagem').textContent = data.online
       ? `Agente ${data.agentId} conectado. Último contato: ${hora(data.ultimoContato)}.`
-      : `Agente ${data.agentId} desconectado. Inicie INICIAR-FUSION-ACCESS-AGENT.bat no computador da academia.`;
+      : `Agente ${data.agentId} desconectado. Use o botão Instalar agente ou abra o atalho Status do Fusion Access no computador.`;
   } catch (e) {
     $('agenteStatus').dataset.status = 'offline';
     $('agenteStatus').querySelector('strong').textContent = 'Indisponível';
     $('agenteMensagem').textContent = e.message;
   }
+}
+
+async function gerarCodigoInstalacao() {
+  const box = $('mensagemInstalacao');
+  try {
+    const data = await json('/api/access-onboarding/codigo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+    $('codigoInstalacao').textContent = data.codigo.replace(/(\d{4})(\d{4})/, '$1 $2');
+    box.className = 'access-result access-ok';
+    box.textContent = 'Código pronto. Digite-o no instalador antes de 15 minutos.';
+  } catch (erro) {
+    box.className = 'access-result access-no';
+    box.textContent = erro.message;
+  }
+}
+
+async function copiarCodigoInstalacao() {
+  const codigo = $('codigoInstalacao').textContent.replace(/\D/g, '');
+  if (codigo.length !== 8) return;
+  await navigator.clipboard.writeText(codigo);
+  $('mensagemInstalacao').textContent = 'Código copiado.';
 }
 
 async function carregarDrivers() {
@@ -103,6 +123,9 @@ document.addEventListener('DOMContentLoaded', () => {
   try { FusionAuth?.proteger(['admin','gerente','recepcao','comercial']); } catch {}
   try { window.carregarLayout?.('Fusion Access Engine'); } catch {}
   $('btnAtualizar').addEventListener('click', carregar);
+  $('btnInstalar').addEventListener('click', () => { $('instalacaoAgente').hidden = !$('instalacaoAgente').hidden; });
+  $('btnGerarCodigo').addEventListener('click', gerarCodigoInstalacao);
+  $('btnCopiarCodigo').addEventListener('click', copiarCodigoInstalacao);
   $('btnSimular').addEventListener('click', simular);
   $('btnLiberarManual').addEventListener('click', liberarManual);
   $('btnSalvarEquipamento').addEventListener('click', salvarEquipamento);

@@ -1,0 +1,15 @@
+FUSION ACCESS - INSTALAÇÃO SIMPLES
+
+1. No Fusion ERP, abra Catracas e clique em Instalar agente.
+2. Clique em Gerar código.
+3. No computador da academia, abra FusionAccessSetup.exe.
+4. Clique em Avançar, informe o código e conclua.
+
+O instalador configura a inicialização automática e preserva os cadastros em atualizações futuras.
+Para conferir, abra o atalho Status do Fusion Access na área de trabalho.
+
+IMPORTANTE SOBRE RECONHECIMENTO FACIAL
+O modo inicial usa identificação facial com verificação de movimento. Ele deve permanecer em homologação
+até a academia validar iluminação, posicionamento, taxa de falso aceite e procedimento alternativo de acesso.
+Essa verificação de movimento reduz tentativas com fotografia estática, mas não equivale a prova de vida
+certificada contra todos os tipos de fraude. Biometria facial exige tratamento compatível com a LGPD.

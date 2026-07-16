@@ -1,0 +1,58 @@
+{
+  "henry7x": {
+    "nome": "Henry 7X",
+    "status": "operacional",
+    "tipo": "tcp",
+    "portaPadrao": 3000,
+    "observacao": "Driver funcional e homologado com a sequência 8A + 86."
+  },
+  "simulador": {
+    "nome": "Simulador Fusion",
+    "status": "operacional",
+    "tipo": "simulador",
+    "portaPadrao": 0,
+    "observacao": "Usado para testes sem equipamento físico."
+  },
+  "generic_tcp": {
+    "nome": "Genérico TCP",
+    "status": "configuravel",
+    "tipo": "tcp",
+    "portaPadrao": 3000,
+    "observacao": "Aceita HEX de liberação configurável no agent.env."
+  },
+  "controlid": {
+    "nome": "Control iD",
+    "status": "aguardando_sdk",
+    "tipo": "sdk_api",
+    "portaPadrao": 80,
+    "observacao": "Estrutura preparada; requer API/SDK oficial e credenciais do equipamento."
+  },
+  "topdata": {
+    "nome": "TopData",
+    "status": "aguardando_sdk",
+    "tipo": "sdk_tcp",
+    "portaPadrao": 3570,
+    "observacao": "Estrutura preparada; requer protocolo/SDK oficial."
+  },
+  "dimep": {
+    "nome": "Dimep",
+    "status": "aguardando_sdk",
+    "tipo": "sdk",
+    "portaPadrao": 3000,
+    "observacao": "Estrutura preparada; requer protocolo/SDK oficial."
+  },
+  "tecnibra": {
+    "nome": "Tecnibra",
+    "status": "aguardando_sdk",
+    "tipo": "sdk",
+    "portaPadrao": 3000,
+    "observacao": "Estrutura preparada; requer protocolo/SDK oficial."
+  },
+  "proveu": {
+    "nome": "Proveu",
+    "status": "aguardando_sdk",
+    "tipo": "sdk",
+    "portaPadrao": 3000,
+    "observacao": "Estrutura preparada; requer protocolo/SDK oficial."
+  }
+}

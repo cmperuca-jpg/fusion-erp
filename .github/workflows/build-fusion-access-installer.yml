@@ -1,0 +1,80 @@
+name: Gerar instalador Fusion Access
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["fusion-access-v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  windows-installer:
+    runs-on: windows-2022
+    timeout-minutes: 45
+    steps:
+      - name: Abrir código
+        uses: actions/checkout@v4
+
+      - name: Preparar dependências C++
+        shell: pwsh
+        run: |
+          vcpkg install nlohmann-json:x64-windows-static
+          Invoke-WebRequest -Uri "https://github.com/opencv/opencv/releases/download/4.10.0/opencv-4.10.0-windows.exe" -OutFile "$env:RUNNER_TEMP\opencv.exe"
+          & 7z x "$env:RUNNER_TEMP\opencv.exe" "-o$env:RUNNER_TEMP\opencv" -y | Out-Null
+          git clone --depth 1 https://github.com/opencv/opencv_zoo.git "$env:RUNNER_TEMP\opencv_zoo"
+          git -C "$env:RUNNER_TEMP\opencv_zoo" lfs pull
+
+      - name: Compilar motor nativo
+        shell: pwsh
+        run: |
+          $source = "${{ github.workspace }}\tools\fusion-access-native"
+          $opencv = "$env:RUNNER_TEMP\opencv\opencv\build"
+          cmake -S $source -B "$env:RUNNER_TEMP\fusion-build" -A x64 `
+            -DOpenCV_DIR="$opencv\x64\vc16\lib" `
+            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake" `
+            -DVCPKG_TARGET_TRIPLET=x64-windows-static
+          cmake --build "$env:RUNNER_TEMP\fusion-build" --config Release --parallel
+
+      - name: Montar pacote único
+        shell: pwsh
+        run: |
+          $source = "${{ github.workspace }}\tools\fusion-access-native"
+          $stage = "$source\stage"
+          New-Item -ItemType Directory -Force "$stage\models", "$stage\drivers", "$stage\logs", "$stage\data", "$stage\licenses" | Out-Null
+          Copy-Item "$env:RUNNER_TEMP\fusion-build\Release\FusionFacialWorker.exe" $stage
+          Copy-Item "$env:RUNNER_TEMP\opencv\opencv\build\x64\vc16\bin\opencv_world*.dll" $stage
+          Copy-Item "$source\runtime\*" $stage -Recurse -Force
+          Copy-Item "$source\legacy\FusionAccessAgent.ps1" $stage -Force
+          Copy-Item "$source\legacy\drivers\*" "$stage\drivers" -Recurse -Force
+          Copy-Item "$env:RUNNER_TEMP\opencv_zoo\models\face_detection_yunet\face_detection_yunet_2023mar.onnx" "$stage\models"
+          Copy-Item "$env:RUNNER_TEMP\opencv_zoo\models\face_recognition_sface\face_recognition_sface_2021dec.onnx" "$stage\models"
+          Copy-Item "$source\THIRD_PARTY_NOTICES.txt" $stage
+          Copy-Item "$source\GUIA-OPERADOR.txt" $stage
+          Copy-Item "$env:RUNNER_TEMP\opencv\opencv\LICENSE" "$stage\licenses\OpenCV-LICENSE.txt"
+          Copy-Item "$env:RUNNER_TEMP\opencv_zoo\models\face_detection_yunet\LICENSE" "$stage\licenses\YuNet-LICENSE.txt"
+          Copy-Item "$env:RUNNER_TEMP\opencv_zoo\models\face_recognition_sface\LICENSE" "$stage\licenses\SFace-LICENSE.txt"
+          Copy-Item "$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static\share\nlohmann-json\copyright" "$stage\licenses\nlohmann-json-LICENSE.txt"
+          Invoke-WebRequest -Uri "https://aka.ms/vs/17/release/vc_redist.x64.exe" -OutFile "$stage\VC_redist.x64.exe"
+
+      - name: Autoteste nativo
+        shell: pwsh
+        run: |
+          & "${{ github.workspace }}\tools\fusion-access-native\stage\FusionFacialWorker.exe" --self-test
+          if ($LASTEXITCODE -ne 0) { throw "O motor facial não passou no autoteste." }
+
+      - name: Criar FusionAccessSetup.exe
+        shell: pwsh
+        run: |
+          choco install innosetup --yes --no-progress
+          $iss = "${{ github.workspace }}\tools\fusion-access-native\installer\FusionAccessSetup.iss"
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" $iss
+          if ($LASTEXITCODE -ne 0) { throw "Falha ao gerar o instalador." }
+
+      - name: Publicar instalador
+        uses: actions/upload-artifact@v4
+        with:
+          name: FusionAccessSetup-Windows-x64
+          path: tools/fusion-access-native/installer/output/FusionAccessSetup.exe
+          if-no-files-found: error
+          retention-days: 30

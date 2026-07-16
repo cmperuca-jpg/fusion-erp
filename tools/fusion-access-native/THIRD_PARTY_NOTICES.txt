@@ -1,0 +1,14 @@
+FUSION ACCESS - AVISOS DE COMPONENTES DE TERCEIROS
+
+Este produto inclui OpenCV, distribuído sob a licença Apache License 2.0.
+Projeto: https://github.com/opencv/opencv
+
+Este produto inclui modelos do OpenCV Zoo:
+- YuNet face detector: licença MIT disponível no diretório oficial do modelo.
+- SFace face recognizer: licença Apache License 2.0 disponível no diretório oficial do modelo.
+Projeto: https://github.com/opencv/opencv_zoo
+
+Este produto inclui nlohmann/json, distribuído sob a licença MIT.
+Projeto: https://github.com/nlohmann/json
+
+Os textos integrais das licenças devem acompanhar o pacote final de distribuição.

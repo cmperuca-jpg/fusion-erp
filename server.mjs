@@ -43,6 +43,7 @@ import notificacoesRoutes from "./modules/notificacoes/notificacoes.routes.mjs";
 import fidelidadeRoutes from "./modules/fidelidade/fidelidade.routes.mjs";
 import accessBridgeRoutes from "./modules/access-bridge/access-bridge.routes.mjs";
 import reconhecimentoFacialRoutes from "./modules/reconhecimento-facial/reconhecimento-facial.routes.mjs";
+import accessOnboardingRoutes from "./modules/access-onboarding/access-onboarding.routes.mjs";
 import { inicializarPersistenciaSupabase, encerrarPersistenciaSupabase } from "./modules/backup/supabase-data.service.mjs";
 import { iniciarBackupAutomatico } from "./modules/backup/backup.service.mjs";
 import { assertDatabaseConfiguration } from "./config/database.config.mjs";
@@ -641,6 +642,7 @@ app.use("/api/access-engine", accessEngineRoutes);
 app.use("/api/henry7x", henry7xRoutes);
 app.use("/api/access-bridge", accessBridgeRoutes);
 app.use("/api/reconhecimento-facial", reconhecimentoFacialRoutes);
+app.use("/api/access-onboarding", accessOnboardingRoutes);
 
 // Aliases legados de páginas: evitam 404 em favoritos/menus antigos.
 app.get(['/pages/bi-comercial', '/pages/bi-comercial/', '/pages/bi-comercial/index.html'], (req, res) => {

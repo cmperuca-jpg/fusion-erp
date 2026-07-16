@@ -12,12 +12,15 @@ import {
   obterTarefaFacial,
   removerRosto,
   statusFacial,
+  tokenTerminal,
   validarTokenTerminal
 } from "./reconhecimento-facial.service.mjs";
 
 const router = Router();
 const acessos = new Map();
 const desafios = new Map();
+const pareamentos = new Map();
+const tentativasPareamento = new Map();
 
 function respostaErro(res, erro) {
   return res.status(erro.status || 500).json({ ok: false, mensagem: erro.message || "Erro no reconhecimento facial." });
@@ -45,6 +48,32 @@ function autenticarTerminal(req, res, next) {
   janela.push(agora); acessos.set(chave, janela);
   next();
 }
+
+router.post("/terminal/codigo", autenticarGestor, (req, res) => {
+  const agora = Date.now();
+  for (const [codigo, item] of pareamentos) if (item.expiraEm <= agora || item.usado) pareamentos.delete(codigo);
+  let codigo;
+  do { codigo = String(crypto.randomInt(0, 1_000_000)).padStart(6, "0"); } while (pareamentos.has(codigo));
+  pareamentos.set(codigo, { expiraEm: agora + 10 * 60 * 1000, usado: false });
+  res.status(201).json({ ok: true, codigo, expiraEm: new Date(agora + 10 * 60 * 1000).toISOString() });
+});
+router.post("/terminal/parear", (req, res) => {
+  const chave = String(req.ip || "terminal");
+  const agora = Date.now();
+  const limite = tentativasPareamento.get(chave) || { inicio: agora, total: 0 };
+  if (agora - limite.inicio > 10 * 60 * 1000) { limite.inicio = agora; limite.total = 0; }
+  limite.total += 1; tentativasPareamento.set(chave, limite);
+  if (limite.total > 12) return res.status(429).json({ ok: false, mensagem: "Muitas tentativas. Aguarde dez minutos." });
+  const codigo = String(req.body?.codigo || "").replace(/\D/g, "").slice(0, 6);
+  const item = pareamentos.get(codigo);
+  if (!item || item.usado || item.expiraEm <= agora) return res.status(400).json({ ok: false, mensagem: "Código inválido ou expirado." });
+  const token = tokenTerminal();
+  if (!token) return res.status(503).json({ ok: false, mensagem: "Terminal ainda não habilitado no servidor." });
+  item.usado = true;
+  res.json({ ok: true, token, terminalId: textoTerminal(req.body?.terminalId) });
+});
+
+function textoTerminal(valor) { return String(valor || "entrada-principal").replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 60) || "entrada-principal"; }
 
 router.get("/terminal/status", autenticarTerminal, (req, res) => res.json({ ok: true, ...statusFacial() }));
 router.get("/terminal/desafio", autenticarTerminal, (req, res) => {
@@ -87,7 +116,7 @@ router.delete("/cadastros/:alunoId", autenticarGestor, async (req, res) => {
 router.get("/agent/next", (req, res) => {
   const agentId = validateAgent(req);
   if (!agentId) return res.status(401).json({ ok: false, mensagem: "Agente não autorizado." });
-  const tarefa = obterTarefaFacial(agentId, { versao: req.get("x-facial-agent-version"), compreface: req.get("x-compreface-status") });
+  const tarefa = obterTarefaFacial(agentId, { versao: req.get("x-facial-agent-version"), motor: req.get("x-facial-engine-status") });
   return res.json({ ok: true, tarefa });
 });
 router.post("/agent/tasks/:id/result", (req, res) => {

@@ -62,8 +62,8 @@
       { id: "turmas", label: "Turmas", href: "/pages/turmas/index.html", perm: "turmas" },
       { id: "agenda", label: "Agenda", href: "/pages/agenda/index.html", perm: "turmas" },
       { id: "checkin", label: "Check-in", href: "/pages/checkin/index.html", perm: "checkin" },
-      { id: "access-engine", label: "Catracas", href: "/pages/access-engine/index.html", perm: "access-engine" }
-      ,{ id: "reconhecimento-facial", label: "Reconhecimento facial", href: "/pages/reconhecimento-facial/admin.html", perm: "alunos" }
+      { id: "access-engine", label: "Catracas", href: "/pages/access-engine/index.html", perm: "access-engine" },
+      { id: "reconhecimento-facial", label: "Reconhecimento facial", href: "/pages/reconhecimento-facial/admin.html", perm: "alunos" }
     ]},
     { grupo: "Comercial", itens: [
       { id: "comercial-painel", label: "CRM Comercial", href: "/pages/comercial-painel/index.html", perm: "comercial-painel" },

@@ -20,7 +20,10 @@
         <h1>Controle de Catracas</h1>
         <p>Controle online da Henry 7X por ponte segura entre o Render e o Fusion Access Agent instalado na academia.</p>
       </div>
-      <button id="btnAtualizar" type="button">Atualizar painel</button>
+      <div class="access-actions">
+        <button id="btnInstalar" type="button" class="access-secondary">Instalar agente</button>
+        <button id="btnAtualizar" type="button">Atualizar painel</button>
+      </div>
     </section>
 
     <section class="access-card access-agent-card">
@@ -30,6 +33,18 @@
         <p id="agenteMensagem">Verificando conexão com o computador da academia...</p>
       </div>
       <div id="agenteStatus" class="access-agent-status" data-status="offline"><span></span><strong>Offline</strong></div>
+    </section>
+
+    <section id="instalacaoAgente" class="access-card" hidden>
+      <h2>Instalação fácil</h2>
+      <p>Baixe o instalador no computador da academia. Quando ele pedir, informe o código abaixo. O código vale por 15 minutos e funciona uma única vez.</p>
+      <div class="access-actions">
+        <strong id="codigoInstalacao" style="font-size:24px;letter-spacing:.14em">--------</strong>
+        <button id="btnGerarCodigo" type="button">Gerar código</button>
+        <button id="btnCopiarCodigo" type="button" class="access-secondary">Copiar código</button>
+        <a class="access-download" href="/downloads/FusionAccessSetup.exe" download>Baixar instalador</a>
+      </div>
+      <div id="mensagemInstalacao" class="access-result access-muted">Gere o código somente quando estiver com o instalador aberto.</div>
     </section>
 
     <section class="access-grid access-kpis">

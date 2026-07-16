@@ -14,6 +14,11 @@ const PUBLIC_RULES = [
   ["GET", "/api/site-chat"],
   ["POST", "/api/treinos/aluno-login"],
   ["POST", "/api/aluno-login"],
+  ["POST", "/api/access-onboarding/ativar"],
+  ["GET", "/api/reconhecimento-facial/terminal"],
+  ["POST", "/api/reconhecimento-facial/terminal"],
+  ["GET", "/api/reconhecimento-facial/agent"],
+  ["POST", "/api/reconhecimento-facial/agent"],
   ["GET", "/api/aparencia"]
 ];
 

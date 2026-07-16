@@ -9,7 +9,7 @@ const TEMPO_TAREFA_MS = Math.max(10_000, Math.min(60_000, Number(process.env.FAC
 const MAX_IMAGEM_BYTES = 1_500_000;
 const tarefas = new Map();
 const fila = [];
-let agenteFacial = { vistoEm: null, estado: "offline", versao: "", compreface: null };
+let agenteFacial = { vistoEm: null, estado: "offline", versao: "", motor: null };
 
 function agora() { return new Date().toISOString(); }
 function texto(valor, limite = 300) { return String(valor ?? "").trim().slice(0, limite); }
@@ -24,17 +24,26 @@ export function configuracaoFacial() {
   return {
     habilitado: booleano(process.env.FACIAL_ENABLED, true),
     liberarCatraca: booleano(process.env.FACIAL_RELEASE_ENABLED, false),
-    similaridadeMinima: Math.max(0.5, Math.min(0.99, numero(process.env.FACIAL_SIMILARITY_THRESHOLD, 0.86))),
+    similaridadeMinima: Math.max(0.3, Math.min(0.95, numero(process.env.FACIAL_SIMILARITY_THRESHOLD, 0.45))),
     movimentoMinimo: Math.max(4, Math.min(30, numero(process.env.FACIAL_LIVENESS_MIN_YAW, 8))),
-    terminalConfigurado: Boolean(texto(process.env.FACIAL_TERMINAL_TOKEN, 500))
+    terminalConfigurado: Boolean(segredoTerminal())
   };
+}
+
+function segredoTerminal() {
+  const configurado = texto(process.env.FACIAL_TERMINAL_TOKEN, 500);
+  if (configurado.length > 15) return configurado;
+  const agente = texto(process.env.ACCESS_AGENT_TOKEN, 500);
+  return agente.length > 15 ? crypto.createHash("sha256").update(`fusion-terminal:${agente}`).digest("hex") : "";
 }
 
 export function validarTokenTerminal(token) {
   const recebido = Buffer.from(texto(token, 500));
-  const esperado = Buffer.from(texto(process.env.FACIAL_TERMINAL_TOKEN, 500));
+  const esperado = Buffer.from(segredoTerminal());
   return esperado.length > 15 && recebido.length === esperado.length && crypto.timingSafeEqual(recebido, esperado);
 }
+
+export function tokenTerminal() { return segredoTerminal(); }
 
 export function normalizarImagem(valor) {
   let base64 = texto(valor, Math.ceil(MAX_IMAGEM_BYTES * 1.5));
@@ -88,7 +97,7 @@ export function obterTarefaFacial(agentId, detalhes = {}) {
     estado: "online",
     agentId: texto(agentId, 120),
     versao: texto(detalhes.versao || detalhes.version, 80),
-    compreface: detalhes.compreface ?? agenteFacial.compreface
+    motor: detalhes.motor ?? agenteFacial.motor
   };
   while (fila.length) {
     const id = fila.shift();
