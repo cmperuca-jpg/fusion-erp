@@ -152,7 +152,7 @@ export async function cadastrarRosto({ alunoId, imagens, consentimento, usuario 
   const aluno = await buscarAlunoPorId(alunoId);
   if (!aluno) erro("Aluno não encontrado.", 404);
   const capturas = Array.isArray(imagens) ? imagens.map(normalizarImagem) : [];
-  if (capturas.length < 3) erro("Faça as três capturas: frente, esquerda e direita.");
+  if (capturas.length < 3) erro("Não foi possível obter as amostras automáticas do rosto.");
   const subject = assuntoDoAluno(String(aluno.id || alunoId));
   const resultado = await criarTarefa("cadastrar", { subject, imagens: capturas.slice(0, 3) });
 
