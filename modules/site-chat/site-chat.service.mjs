@@ -1,29 +1,16 @@
-import fs from "node:fs/promises";
 import path from "node:path";
+import { lerJsonDuravel, salvarJsonDuravel } from "../core/persistence/durable-json.mjs";
+import { criarNotificacao } from "../notificacoes/notificacoes.service.mjs";
 
 const DATA_DIR = path.resolve(process.cwd(), "data");
 const CHAT_FILE = path.join(DATA_DIR, "site_chat.json");
 
-async function garantirArquivo() {
-  await fs.mkdir(DATA_DIR, { recursive: true });
-  try {
-    await fs.access(CHAT_FILE);
-  } catch {
-    await fs.writeFile(CHAT_FILE, JSON.stringify([], null, 2), "utf8");
-  }
-}
-
 async function lerMensagens() {
-  await garantirArquivo();
-  const raw = await fs.readFile(CHAT_FILE, "utf8");
-  if (!raw.trim()) return [];
-  const dados = JSON.parse(raw);
-  return Array.isArray(dados) ? dados : [];
+  return lerJsonDuravel(CHAT_FILE, []);
 }
 
 async function salvarMensagens(mensagens) {
-  await fs.mkdir(DATA_DIR, { recursive: true });
-  await fs.writeFile(CHAT_FILE, JSON.stringify(mensagens, null, 2), "utf8");
+  return salvarJsonDuravel(CHAT_FILE, mensagens);
 }
 
 function id(prefixo) {
@@ -198,6 +185,19 @@ export async function enviarMensagemChat(payload = {}) {
   }
 
   await salvarMensagens(mensagens);
+  if (!["atendimento", "sistema"].includes(String(usuario.remetente))) {
+    await criarNotificacao({
+      eventoId: `chat:${usuario.id}`,
+      tipo: "chat",
+      prioridade: "alta",
+      titulo: `Nova mensagem de ${usuario.nome || "visitante"}`,
+      mensagem: usuario.mensagem,
+      contato: usuario.contato,
+      referenciaId: usuario.conversaId,
+      link: `/pages/site-chat/index.html?conversaId=${encodeURIComponent(usuario.conversaId)}`,
+      destinatarios: ["admin", "recepcao", "comercial", "site_chat"]
+    }).catch(erro => console.error(`[Notificações] Chat salvo, mas o aviso falhou: ${erro.message}`));
+  }
   return {
     ok: true,
     conversaId: usuario.conversaId,

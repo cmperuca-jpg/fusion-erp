@@ -3,6 +3,10 @@ const formLead = document.getElementById('formLead');
 const alertaLead = document.getElementById('alertaLead');
 const leadPlano = document.getElementById('leadPlano');
 let planos = [];
+let assinaturaPlanos = '';
+let atualizacaoPlanosEmAndamento = false;
+const PLANOS_ATUALIZADOS_KEY = 'fusion_planos_atualizados_em';
+const INTERVALO_ATUALIZACAO_PLANOS = 15000;
 
 function lista(payload) {
   return Array.isArray(payload)
@@ -153,8 +157,26 @@ function renderizarPlanos() {
   `).join('');
 }
 
-async function carregarPlanos() {
-  listaPlanos.innerHTML = '<div class="loading">Carregando planos disponíveis...</div>';
+function assinaturaDaLista(itens) {
+  return JSON.stringify(itens.map((plano) => ({
+    id: idPlano(plano),
+    nome: nomePlano(plano),
+    tipo: tipoPlano(plano),
+    valor: valorPlano(plano),
+    taxa: plano.taxaMatricula ?? plano.valorMatricula ?? 0,
+    status: plano.status,
+    descricao: plano.descricao,
+    modalidades: plano.modalidadesIncluidas,
+    limite: plano.limiteSemanal,
+    fidelidade: plano.fidelidadeMeses,
+    horarios: plano.horariosPermitidos
+  })));
+}
+
+async function carregarPlanos({ silencioso = false, forcar = false } = {}) {
+  if (atualizacaoPlanosEmAndamento) return;
+  atualizacaoPlanosEmAndamento = true;
+  if (!silencioso) listaPlanos.innerHTML = '<div class="loading">Carregando planos disponíveis...</div>';
 
   try {
     const resposta = await fetch('/api/planos?status=Ativo', { cache: 'no-store' });
@@ -164,11 +186,24 @@ async function carregarPlanos() {
       throw new Error(json.erro || json.mensagem || 'Não foi possível carregar os planos.');
     }
 
-    planos = lista(json).filter(planoAtivo);
-    renderizarPlanos();
+    const novosPlanos = lista(json).filter(planoAtivo);
+    const novaAssinatura = assinaturaDaLista(novosPlanos);
+    if (forcar || novaAssinatura !== assinaturaPlanos) {
+      const planoSelecionado = leadPlano.value;
+      planos = novosPlanos;
+      assinaturaPlanos = novaAssinatura;
+      renderizarPlanos();
+      if (planos.some((plano) => String(idPlano(plano)) === String(planoSelecionado))) {
+        leadPlano.value = planoSelecionado;
+      }
+    }
   } catch (erro) {
-    listaPlanos.innerHTML = '<div class="loading erro-planos">Não foi possível carregar os planos disponíveis. Atualize a página.</div>';
-    leadPlano.innerHTML = '<option value="">Planos indisponíveis</option>';
+    if (!silencioso || !planos.length) {
+      listaPlanos.innerHTML = '<div class="loading erro-planos">Não foi possível carregar os planos disponíveis. Atualize a página.</div>';
+      leadPlano.innerHTML = '<option value="">Planos indisponíveis</option>';
+    }
+  } finally {
+    atualizacaoPlanosEmAndamento = false;
   }
 }
 
@@ -185,7 +220,7 @@ formLead.addEventListener('submit', async (evento) => {
     valorPrevisto: plano ? valorPlano(plano) : 0,
     horarioAgendado: document.getElementById('leadHorario').value.trim(),
     objetivo: document.getElementById('leadObjetivo').value.trim(),
-    origem: 'site_comercial',
+    origem: 'site_academia_promocao',
     etapa: document.getElementById('leadHorario').value.trim() ? 'agendado' : 'novo'
   };
 
@@ -208,4 +243,16 @@ formLead.addEventListener('submit', async (evento) => {
   }
 });
 
-carregarPlanos();
+carregarPlanos({ forcar: true });
+
+/* Mantem as caixas sincronizadas sem editar esta pagina: a consulta ocorre
+   a cada 15 segundos, ao voltar para a aba e imediatamente apos salvar um
+   plano em outra aba do mesmo navegador. */
+setInterval(() => carregarPlanos({ silencioso: true }), INTERVALO_ATUALIZACAO_PLANOS);
+window.addEventListener('focus', () => carregarPlanos({ silencioso: true }));
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) carregarPlanos({ silencioso: true });
+});
+window.addEventListener('storage', (evento) => {
+  if (evento.key === PLANOS_ATUALIZADOS_KEY) carregarPlanos({ silencioso: true, forcar: true });
+});

@@ -28,10 +28,10 @@
   },
   {
     "id": "753f0de7-12f8-4740-99b7-830acf2743a4",
-    "nome": "PLANO 3 MESES",
+    "nome": "PLANO FIDELIDADE 3",
     "tipo": "Mensal",
     "tipoPlano": "Mensal",
-    "descricao": "PAGAMENTO A VISTA DOS 3 MESES",
+    "descricao": "PGAMENTO UNICO",
     "valorMatricula": 0,
     "valorMensal": 150,
     "taxaMatricula": 0,
@@ -44,14 +44,14 @@
     "fidelidadeMeses": 3,
     "descontoPercentual": 0,
     "multaAtrasoPercentual": 0,
-    "limiteSemanal": 0,
+    "limiteSemanal": 7,
     "modalidadesIncluidas": [
       "MUSCULAÇÃO"
     ],
     "horariosPermitidos": "Livre",
     "status": "Ativo",
     "criadoEm": "2026-07-08T03:34:49.080Z",
-    "atualizadoEm": "2026-07-13T02:35:56.988Z"
+    "atualizadoEm": "2026-07-16T15:16:15.904Z"
   },
   {
     "id": "2a254688-0bfa-4a2b-9eb5-4f941e35cd41",
@@ -106,5 +106,32 @@
     "status": "Ativo",
     "criadoEm": "2026-07-13T02:37:37.270Z",
     "atualizadoEm": "2026-07-13T02:37:37.270Z"
+  },
+  {
+    "id": "bf929b41-434a-4695-b9a2-d51605a7f5b5",
+    "nome": "JUDÔ",
+    "tipo": "Mensal",
+    "tipoPlano": "Mensal",
+    "descricao": "SEGUNDA, QUARTA E SEXTA-FEIRA",
+    "valorMatricula": 0,
+    "valorMensal": 200,
+    "taxaMatricula": 0,
+    "cobraMatricula": true,
+    "geraMensalidade": true,
+    "recorrenciaMeses": 0,
+    "renovacaoAutomatica": true,
+    "bloquearAoVencer": false,
+    "permiteServicosExtras": true,
+    "fidelidadeMeses": 0,
+    "descontoPercentual": 0,
+    "multaAtrasoPercentual": 0,
+    "limiteSemanal": 3,
+    "modalidadesIncluidas": [
+      "AULA DE JUDO"
+    ],
+    "horariosPermitidos": "19:00 AS 21:00",
+    "status": "Ativo",
+    "criadoEm": "2026-07-16T15:18:31.978Z",
+    "atualizadoEm": "2026-07-16T15:18:31.979Z"
   }
 ]

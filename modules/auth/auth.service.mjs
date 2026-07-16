@@ -2,8 +2,13 @@ import crypto from "node:crypto";
 import jwt from "jsonwebtoken";
 import { lerJsonDuravel, salvarJsonDuravel } from "../core/persistence/durable-json.mjs";
 
-const JWT_SECRET = process.env.JWT_SECRET || process.env.FUSION_JWT_SECRET || "fusion-erp-dev-secret-trocar-em-producao";
+const SEGREDO_DESENVOLVIMENTO = "fusion-erp-dev-secret-trocar-em-producao";
+const JWT_SECRET = process.env.JWT_SECRET || process.env.FUSION_JWT_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY || SEGREDO_DESENVOLVIMENTO;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "12h";
+
+if (process.env.NODE_ENV === "production" && JWT_SECRET === SEGREDO_DESENVOLVIMENTO) {
+  throw new Error("Produção exige JWT_SECRET, FUSION_JWT_SECRET ou SUPABASE_SERVICE_ROLE_KEY para proteger as sessões.");
+}
 
 const PERFIS_PADRAO = {
   Administrador: ["*"],
@@ -112,6 +117,30 @@ function extrairToken(authorization = "") {
   if (!valor) return "";
   if (valor.toLowerCase().startsWith("bearer ")) return valor.slice(7).trim();
   return valor;
+}
+
+export function gerarTokenPortal({ sub, tipo, perfil = "", permissoes = [] } = {}) {
+  if (!sub || !tipo) throw erro("Não foi possível criar a sessão do portal.", 500);
+  return jwt.sign(
+    { sub: String(sub), tipo: String(tipo), perfil, permissoes },
+    JWT_SECRET,
+    { expiresIn: JWT_EXPIRES_IN }
+  );
+}
+
+export function validarTokenPortal(tokenOuAuthorization, tipoEsperado = "") {
+  const token = extrairToken(tokenOuAuthorization);
+  if (!token) throw erro("Sessão do portal ausente. Faça login novamente.", 401);
+  let payload;
+  try {
+    payload = jwt.verify(token, JWT_SECRET);
+  } catch {
+    throw erro("Sessão do portal expirada ou inválida. Faça login novamente.", 401);
+  }
+  if (!payload?.sub || !payload?.tipo || (tipoEsperado && String(payload.tipo) !== String(tipoEsperado))) {
+    throw erro("Sessão incompatível com este portal.", 401);
+  }
+  return payload;
 }
 
 export async function listarUsuarios() {

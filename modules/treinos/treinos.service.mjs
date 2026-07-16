@@ -1,26 +1,11 @@
-import fs from "fs/promises";
-import path from "path";
-import { fileURLToPath } from "url";
 import { listarBiblioteca, listarTreinos, salvarTreinos } from "./treinos.repository.mjs";
 import { avaliarAcessoAluno } from "../access-engine/access-engine.service.mjs";
 import { listarLogs as listarLogsAcesso, registrarLog as registrarLogAcesso } from "../access-engine/access-engine.repository.mjs";
+import { lerJsonDuravel } from "../core/persistence/durable-json.mjs";
+import { gerarTokenPortal, validarTokenPortal } from "../auth/auth.service.mjs";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const ROOT = path.resolve(__dirname, "..", "..");
-const DATA_DIR = path.join(ROOT, "data");
-const TOKEN_TTL_MS = Number(process.env.FUSION_ALUNO_TOKEN_TTL_MS || 12 * 60 * 60 * 1000);
 const LIMITE_ACESSOS_PORTAL_DIA = Math.max(0, Number(process.env.FUSION_PORTAL_ALUNO_LIMITE_CATRACA_DIA || 3));
 const TIMEZONE_SISTEMA = process.env.FUSION_TIMEZONE || "America/Sao_Paulo";
-
-async function lerJsonSeguro(arquivo, fallback) {
-  try {
-    const bruto = await fs.readFile(arquivo, "utf-8");
-    return bruto.trim() ? JSON.parse(bruto) : fallback;
-  } catch {
-    return fallback;
-  }
-}
 
 function listaDePessoas(dados, chave) {
   if (Array.isArray(dados)) return dados;
@@ -51,17 +36,8 @@ function dataNascimentoSenha(pessoa) {
 }
 
 async function listarAlunosSistema() {
-  const candidatos = [
-    path.join(DATA_DIR, "alunos.json"),
-    path.join(DATA_DIR, "alunos", "alunos.json"),
-    path.join(DATA_DIR, "matriculas", "alunos.json")
-  ];
-  for (const arquivo of candidatos) {
-    const dados = await lerJsonSeguro(arquivo, null);
-    const lista = listaDePessoas(dados, "alunos");
-    if (lista.length) return lista;
-  }
-  return [];
+  const dados = await lerJsonDuravel("alunos.json", []);
+  return listaDePessoas(dados, "alunos");
 }
 
 function erroHttp(mensagem, statusCode = 400) {
@@ -71,28 +47,16 @@ function erroHttp(mensagem, statusCode = 400) {
 }
 
 function criarTokenAluno(alunoId) {
-  return Buffer.from(`${alunoId}:${Date.now()}`).toString("base64");
+  return gerarTokenPortal({ sub: alunoId, tipo: "aluno", perfil: "aluno", permissoes: ["aluno-treinos", "aluno-avaliacao"] });
 }
 
 function validarTokenAluno(token, alunoId) {
   if (!token || !alunoId) throw erroHttp("Faça login novamente para liberar a catraca.", 401);
-
-  let bruto = "";
   try {
-    bruto = Buffer.from(String(token), "base64").toString("utf-8");
-  } catch {
-    throw erroHttp("Sessão do aluno inválida. Faça login novamente.", 401);
-  }
-
-  const [idToken, criadoEm] = bruto.split(":");
-  if (!idToken || String(idToken) !== String(alunoId)) {
-    throw erroHttp("Sessão do aluno não confere com este cadastro.", 401);
-  }
-
-  const criadoEmMs = Number(criadoEm);
-  if (!Number.isFinite(criadoEmMs) || (TOKEN_TTL_MS > 0 && Date.now() - criadoEmMs > TOKEN_TTL_MS)) {
-    throw erroHttp("Sessão expirada. Faça login novamente.", 401);
-  }
+    const payload = validarTokenPortal(token, "aluno");
+    if (String(payload.sub) !== String(alunoId)) throw new Error("aluno divergente");
+    return payload;
+  } catch { throw erroHttp("Sessão do aluno expirada ou inválida. Faça login novamente.", 401); }
 }
 
 function dataLocalISO(valor = new Date()) {
@@ -219,6 +183,13 @@ export async function autenticarAlunoTreino({ login, senha } = {}) {
   };
 }
 
+export async function validarSessaoAlunoTreino({ alunoId, token } = {}) {
+  validarTokenAluno(token, alunoId);
+  const aluno = await buscarAlunoPorId(alunoId);
+  if (!aluno) throw erroHttp("Aluno não encontrado ou acesso indisponível.", 401);
+  return { alunoId: idPessoa(aluno), alunoNome: nomePessoa(aluno) };
+}
+
 export async function liberarCatracaPortalAluno({ alunoId, token, direcao = "entrada" } = {}) {
   validarTokenAluno(token, alunoId);
 
@@ -296,11 +267,194 @@ export async function obterBiblioteca() {
   return biblioteca;
 }
 
+function textoDivisao(valor = "") {
+  const texto = String(valor || "").trim();
+  const encontrado = texto.match(/(?:^|\b)treino\s*([a-z0-9]+)/i);
+  return encontrado ? encontrado[1].toUpperCase() : "";
+}
+
+function normalizarBuscaExercicio(valor = "") {
+  return String(valor || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\b\d+(?:x\d+)?\b/g, " ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+const ALIASES_EXERCICIOS = new Map(Object.entries({
+  "crucifixo na maquina": "crucifixo no voador",
+  "triceps na polia com corda": "triceps corda no cross over",
+  "puxada frontal pegada aberta": "pulley frente",
+  "remada baixa": "remada baixa neutra",
+  "remada unilateral com halter": "remada unilateral",
+  "pulldown com corda": "pull down com corda",
+  "rosca direta com barra": "rosca direta",
+  "rosca martelo": "rosca martelo com halteres",
+  "cadeira extensora": "extensao de joelhos",
+  "stiff com barra": "stiff",
+  "panturrilha em pe": "elevacao de panturrilha em pe"
+}));
+
+function midiaExercicio(item = {}) {
+  return item.midia || item.imagemUrl || item.foto || item.gif || item.videoUrl || "";
+}
+
+function criarCatalogoMidias(...fontes) {
+  const itens = fontes.flatMap((fonte) => {
+    if (Array.isArray(fonte)) return fonte;
+    if (Array.isArray(fonte?.exercicios)) return fonte.exercicios;
+    return [];
+  }).filter((item) => item && midiaExercicio(item));
+
+  const porId = new Map();
+  const porNome = new Map();
+  for (const item of itens) {
+    for (const id of [item.id, item.codigo, item.exercicioId, item.bibliotecaId].filter(Boolean)) {
+      if (!porId.has(String(id))) porId.set(String(id), item);
+    }
+    const nome = normalizarBuscaExercicio(item.nome || item.exercicio);
+    if (nome && !porNome.has(nome)) porNome.set(nome, item);
+  }
+  return { itens, porId, porNome };
+}
+
+function resolverExercicioNaBiblioteca(item = {}, catalogo) {
+  if (!catalogo?.itens?.length) return null;
+
+  for (const id of [item.bibliotecaId, item.exercicioId, item.codigo, item.id].filter(Boolean)) {
+    const encontrado = catalogo.porId.get(String(id));
+    if (encontrado) return encontrado;
+  }
+
+  const nomeOriginal = normalizarBuscaExercicio(item.nome || item.exercicio);
+  if (!nomeOriginal) return null;
+  const nomeAlvo = ALIASES_EXERCICIOS.get(nomeOriginal) || nomeOriginal;
+  const exato = catalogo.porNome.get(nomeAlvo) || catalogo.porNome.get(nomeOriginal);
+  if (exato) return exato;
+
+  const tokensAlvo = nomeAlvo.split(" ").filter((token) => token.length > 2);
+  const grupo = normalizarBuscaExercicio(item.grupoMuscular || item.grupo);
+  let melhor = null;
+  let melhorNota = 0;
+
+  for (const candidato of catalogo.itens) {
+    const nome = normalizarBuscaExercicio(candidato.nome || candidato.exercicio);
+    if (!nome) continue;
+    const tokensNome = new Set(nome.split(" "));
+    const acertos = tokensAlvo.filter((token) => tokensNome.has(token)).length;
+    if (!acertos) continue;
+
+    let nota = acertos / Math.max(tokensAlvo.length, 1);
+    if (nome.startsWith(nomeAlvo) || nomeAlvo.startsWith(nome)) nota += 0.35;
+    const grupoCandidato = normalizarBuscaExercicio(candidato.grupoMuscular || candidato.grupo);
+    if (grupo && grupoCandidato && (grupo.includes(grupoCandidato) || grupoCandidato.includes(grupo))) nota += 0.1;
+
+    if (nota > melhorNota) {
+      melhor = candidato;
+      melhorNota = nota;
+    }
+  }
+
+  return melhorNota >= 0.72 ? melhor : null;
+}
+
+function treinoEstaAtivo(treino = {}) {
+  const status = String(treino.status || "ativo").trim().toLowerCase();
+  return treino.ativo !== false && !["cancelado", "inativo", "arquivado"].includes(status);
+}
+
+function exercicioParaPortal(item = {}, catalogo = null) {
+  const referencia = resolverExercicioNaBiblioteca(item, catalogo);
+  const midia = midiaExercicio(item) || midiaExercicio(referencia);
+  return {
+    ...item,
+    nome: item.nome || item.exercicio || "Exercício",
+    descricao: item.descricao || item.observacoes || item.observacao || "",
+    exercicioId: item.exercicioId || referencia?.id || referencia?.codigo || "",
+    bibliotecaId: item.bibliotecaId || referencia?.bibliotecaId || referencia?.id || "",
+    foto: midia,
+    gif: midia,
+    series: item.series ?? "",
+    repeticoes: item.repeticoes ?? item.reps ?? "",
+    carga: item.carga ?? "",
+    descanso: item.descanso ?? "",
+    metodo: item.metodo || item.intensidade || "Convencional",
+    cadencia: item.cadencia || "",
+    obs: item.obs || item.observacao || item.observacoes || ""
+  };
+}
+
+function divisoesDoTreinoPlano(treino = {}, indice = 0, catalogo = null) {
+  const exercicios = Array.isArray(treino.exercicios) ? treino.exercicios : [];
+  const nomePadrao = textoDivisao(treino.nome || treino.tipoDivisao) || String.fromCharCode(65 + indice);
+  const grupos = new Map();
+
+  exercicios.forEach((item) => {
+    const nome = textoDivisao(item.divisao || item.nomeDivisao || item.treino || item.observacao || item.obs) || nomePadrao;
+    if (!grupos.has(nome)) grupos.set(nome, []);
+    grupos.get(nome).push(exercicioParaPortal(item, catalogo));
+  });
+
+  return [...grupos.entries()].map(([nome, itens]) => ({ nome, itens }));
+}
+
+function normalizarTreinosParaPortal(lista = [], catalogo = null) {
+  const estruturados = lista
+    .filter((treino) => Array.isArray(treino.divisoes) && treino.divisoes.some((divisao) => Array.isArray(divisao.itens) && divisao.itens.length))
+    .map((treino) => ({
+      ...treino,
+      alunoNome: treino.alunoNome || treino.aluno || "Aluno",
+      professorNome: treino.professorNome || treino.professor || "",
+      validade: treino.validade || treino.dataValidade || "",
+      ativo: treinoEstaAtivo(treino),
+      divisoes: treino.divisoes.map((divisao) => ({
+        ...divisao,
+        nome: textoDivisao(divisao.nome) || divisao.nome || "A",
+        itens: (divisao.itens || []).map((item) => exercicioParaPortal(item, catalogo))
+      }))
+    }));
+
+  const planos = lista.filter((treino) => Array.isArray(treino.exercicios) && treino.exercicios.length);
+  if (!planos.length) return estruturados;
+
+  const primeiro = planos[0];
+  const divisoes = planos
+    .flatMap((treino, indice) => divisoesDoTreinoPlano(treino, indice, catalogo))
+    .filter((divisao) => divisao.itens.length)
+    .sort((a, b) => String(a.nome).localeCompare(String(b.nome), "pt-BR", { numeric: true }));
+
+  const combinado = {
+    ...primeiro,
+    id: `portal_${primeiro.alunoId || primeiro.aluno_id || primeiro.id || "treino"}`,
+    nome: planos.length > 1 ? "Treino ABC" : (primeiro.nome || "Treino"),
+    alunoNome: primeiro.alunoNome || primeiro.aluno || "Aluno",
+    professorNome: primeiro.professorNome || primeiro.professor || "",
+    validade: primeiro.validade || primeiro.dataValidade || "",
+    ativo: planos.some(treinoEstaAtivo),
+    divisoes
+  };
+
+  return [combinado, ...estruturados];
+}
+
 export async function obterTreinos(filtros = {}) {
-  const treinos = await listarTreinos();
+  const [treinos, bibliotecaTreinos, bibliotecaAtual] = await Promise.all([
+    listarTreinos(),
+    listarBiblioteca(),
+    lerJsonDuravel("exercicios_biblioteca.json", [])
+  ]);
+  // A biblioteca atual vem primeiro. O catálogo legado complementa nomes e
+  // mantém compatibilidade com treinos antigos sem gravar caminhos duplicados.
+  const catalogo = criarCatalogoMidias(bibliotecaAtual, bibliotecaTreinos);
   const alunoId = filtros.alunoId ? String(filtros.alunoId) : "";
-  if (!alunoId) return treinos;
-  return treinos.filter((t) => String(t.alunoId || "") === alunoId);
+  const filtrados = alunoId
+    ? treinos.filter((t) => String(t.alunoId || t.aluno_id || "") === alunoId)
+    : treinos;
+  const ativos = filtrados.filter(treinoEstaAtivo);
+  return normalizarTreinosParaPortal(ativos.length ? ativos : filtrados, catalogo);
 }
 
 export async function criarTreino(payload) {

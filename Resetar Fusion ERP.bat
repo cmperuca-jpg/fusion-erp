@@ -2,50 +2,40 @@
 setlocal
 cd /d "%~dp0"
 
-echo ==================================================
-echo FUSION ERP - RESET GERAL DE TESTES
-echo ==================================================
+echo ==========================================================
+echo FUSION ERP - PREPARAR SISTEMA MODELO PARA ENTREGA
+echo ==========================================================
 echo.
-echo Este processo vai zerar:
-echo - alunos
-echo - matriculas
-echo - mensalidades
-echo - financeiro
-echo - recebimentos
-echo - caixa
-echo - avaliacoes
-echo - treinos
-echo - biometrias
-echo - check-ins e acessos
+echo ATENCAO: esta operacao substitui alunos, professores,
+echo usuarios e movimentacoes financeiras do tenant configurado.
 echo.
-echo Serao preservados:
-echo - professores
-echo - administradores
-echo - funcionarios
-echo - usuarios
-echo - planos
-echo - modalidades
-echo - configuracoes
-echo - dispositivos e Henry 7X
+echo Antes da limpeza sera criado um backup obrigatorio.
+echo Serao preservados catalogos de exercicios, planos,
+echo modalidades, taxas e configuracoes do sistema.
 echo.
-echo Um backup automatico sera criado antes da limpeza.
+echo O resultado tera apenas:
+echo - Administrador modelo
+echo - Recepcao modelo
+echo - Responsavel tecnico modelo
+echo - Aluno modelo com avaliacao e treino ABC de hipertrofia
 echo.
-set /p CONFIRMA=Digite RESETAR para confirmar: 
+set /p CONFIRMA=Digite RESETAR-MODELO para confirmar: 
 
-if /I not "%CONFIRMA%"=="RESETAR" (
+if /I not "%CONFIRMA%"=="RESETAR-MODELO" (
   echo Operacao cancelada.
   pause
   exit /b 0
 )
 
-node "scripts\resetar-piloto.mjs"
+node "scripts\resetar-sistema-virgem.mjs" --confirmar=RESETAR-MODELO
 if errorlevel 1 (
   echo.
-  echo O reset falhou. Verifique a mensagem acima.
+  echo O reset falhou. Nenhum erro deve ser ignorado.
   pause
   exit /b 1
 )
 
 echo.
-echo Reset concluido com sucesso.
+echo Reset modelo concluido com sucesso.
+echo Consulte CREDENCIAIS-INICIAIS-FUSION-ERP.txt
 pause

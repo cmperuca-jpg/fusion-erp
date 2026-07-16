@@ -443,6 +443,30 @@ html, body { max-width:100%; overflow-x:hidden !important; }
 /* Fusion ERP 2.8.0 — Biometria Futronic integrada */
 .biometria-painel{display:grid;gap:16px;border:1px solid #dbe3ef;background:#f8fafc;border-radius:14px;padding:18px}.biometria-cabecalho{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.biometria-cabecalho h4{margin:0 0 5px;font-size:20px}.biometria-cabecalho p{margin:0;color:#64748b}.biometria-badge{display:inline-flex;border-radius:999px;padding:7px 11px;background:#dcfce7;color:#166534;font-size:12px;font-weight:900}.biometria-badge.cadastro{background:#ffedd5;color:#9a3412}.biometria-identificacao{display:grid;grid-template-columns:2fr 2fr 1fr 1fr;gap:10px}.biometria-identificacao>div,.biometria-capturas>div{border:1px solid #e2e8f0;background:#fff;border-radius:11px;padding:12px;min-width:0}.biometria-identificacao span,.biometria-capturas span{display:block;color:#64748b;font-size:11px;text-transform:uppercase;font-weight:800;margin-bottom:5px}.biometria-identificacao strong,.biometria-identificacao code{overflow-wrap:anywhere}.biometria-mensagem{padding:12px;border-radius:10px;background:#fff;border:1px solid #cbd5e1;color:#334155}.biometria-mensagem.erro{background:#fef2f2;border-color:#fecaca;color:#991b1b}.biometria-mensagem.sucesso{background:#f0fdf4;border-color:#86efac;color:#166534}.biometria-capturas{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.biometria-capturas>div.aceita{border-color:#86efac;background:#f0fdf4}.biometria-capturas>div.rejeitada{border-color:#fecaca;background:#fef2f2}.biometria-acoes{display:flex;flex-wrap:wrap;gap:9px}.biometria-acoes button{min-height:42px}.biometria-danger{border-color:#fecaca!important;color:#991b1b!important}.biometria-acoes button:disabled{opacity:.5;cursor:not-allowed}@media(max-width:900px){.biometria-identificacao{grid-template-columns:1fr 1fr}}@media(max-width:640px){.biometria-identificacao,.biometria-capturas{grid-template-columns:1fr}.biometria-cabecalho{flex-direction:column}.biometria-acoes{display:grid;grid-template-columns:1fr}.biometria-acoes button{width:100%}}
 
+/* A listagem inteira respeita a largura descontada do menu lateral. */
+.alunos-page,
+.alunos-page>*{
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  box-sizing:border-box!important;
+}
+.alunos-page .alunos-kpis{
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+}
+.alunos-page :is(.aluno-kpi,.fusion-card,.alunos-toolbar,.alunos-table-card,.table-wrap){
+  min-width:0!important;
+  max-width:100%!important;
+  box-sizing:border-box!important;
+}
+.alunos-page .table-wrap{overflow-x:auto!important}
+@media(max-width:760px){
+  .alunos-page .alunos-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+@media(max-width:480px){
+  .alunos-page .alunos-kpis{grid-template-columns:1fr!important}
+}
+
 
 /* Fusion ERP 2.8.0 — cadastro separado da matrícula */
 .cadastro-sem-matricula{

@@ -2,6 +2,7 @@ if (typeof carregarLayout === "function") carregarLayout("Planos");
 
 let planos = [];
 const API = "/api/planos";
+const PLANOS_ATUALIZADOS_KEY = "fusion_planos_atualizados_em";
 
 const elementos = {
   tabela: document.getElementById("tabelaPlanos"),
@@ -130,6 +131,7 @@ window.editarPlano = function (id) {
 window.excluirPlano = async function (id) {
   if (!confirm("Deseja realmente excluir este plano?")) return;
   await request(`${API}/${id}`, { method: "DELETE" });
+  localStorage.setItem(PLANOS_ATUALIZADOS_KEY, String(Date.now()));
   await carregarPlanos();
 };
 
@@ -158,6 +160,9 @@ elementos.form.addEventListener("submit", async (event) => {
     await request(API, { method: "POST", body: JSON.stringify(payload) });
   }
 
+  /* A pagina publica escuta esta chave e tambem consulta o servidor
+     periodicamente, portanto outras abas e outros equipamentos se atualizam. */
+  localStorage.setItem(PLANOS_ATUALIZADOS_KEY, String(Date.now()));
   fecharModal();
   await carregarPlanos();
 });

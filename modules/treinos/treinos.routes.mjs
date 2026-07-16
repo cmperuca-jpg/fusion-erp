@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { obterBiblioteca, obterTreinos, criarTreino, atualizarTreino, removerTreino, autenticarAlunoTreino, liberarCatracaPortalAluno, obterContadorCatracaPortalAluno } from "./treinos.service.mjs";
+import { obterBiblioteca, obterTreinos, criarTreino, atualizarTreino, removerTreino, autenticarAlunoTreino, validarSessaoAlunoTreino, liberarCatracaPortalAluno, obterContadorCatracaPortalAluno } from "./treinos.service.mjs";
 
 const router = Router();
 
@@ -12,6 +12,13 @@ router.get("/biblioteca", async (req, res) => {
 router.post("/aluno-login", async (req, res) => {
   try { res.json({ ok: true, dados: await autenticarAlunoTreino(req.body || {}) }); }
   catch (erro) { res.status(erro.statusCode || 500).json({ ok: false, mensagem: erro.message || "Erro ao autenticar aluno" }); }
+});
+
+router.get("/aluno-sessao", async (req, res) => {
+  try {
+    const token = String(req.headers.authorization || "").replace(/^Bearer\s+/i, "") || req.query.token;
+    res.json({ ok: true, dados: await validarSessaoAlunoTreino({ alunoId: req.query.alunoId, token }) });
+  } catch (erro) { res.status(erro.statusCode || 401).json({ ok: false, mensagem: erro.message || "Sessão do aluno inválida" }); }
 });
 
 router.post("/aluno-liberar-catraca", async (req, res) => {

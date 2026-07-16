@@ -17,13 +17,12 @@
       window.FUSION_PARAMS.has('professor_id') ||
       !!localStorage.getItem('fusion_professor_sessao');
 
-    if (!window.FUSION_EMBED && !window.FUSION_PORTAL_PROFESSOR) {
-      document.write('<script src="/assets/js/fusion-auth.js"><\/script><script>FusionAuth.proteger();<\/script>');
-    }
   </script>
+  <script src="/assets/js/fusion-portal-guard.js" data-fusion-guard="sistema-ou-professor"></script>
   <meta name="fusion-existing-pages" content="access-engine,admin,agenda,aluno-avaliacao,aluno-login,aluno-treinos,alunos,avaliacoes,bi-academia,bi-academia-operacional,bi-financeiro,caixa,checkin,comercial,comercial-painel,configuracoes,dashboard,financeiro,matricula-online,matriculas,matriculas-pendentes,mensalidades,modalidades,natacao-professor,planos,professor-area,professor-login,professores,recebimentos,relatorios-caixa,treinos,turmas">
   <link rel="stylesheet" href="/assets/css/fusion-mobile-final.css">
   <link rel="stylesheet" href="/assets/css/fusion-premium-final.css">
+  <link rel="stylesheet" href="./contraste.css">
 </head>
 <body class="aval-admin">
 <div class="fusion-shell">

@@ -6,6 +6,11 @@ function mensagem(texto, tipo = "") {
   el.className = `msg ${tipo}`.trim();
 }
 
+function destinoAposLogin(padrao) {
+  const next = new URLSearchParams(location.search).get("next") || "";
+  return next.startsWith("/pages/") ? next : padrao;
+}
+
 async function entrar() {
   const login = $("login").value.trim();
   const senha = $("senha").value.trim();
@@ -32,7 +37,7 @@ async function entrar() {
       alunoNome: data.dados.alunoNome
     }));
     mensagem("Acesso liberado.", "ok");
-    location.href = `/pages/aluno-treinos/index.html?alunoId=${encodeURIComponent(data.dados.alunoId)}`;
+    location.href = destinoAposLogin(`/pages/aluno-treinos/index.html?alunoId=${encodeURIComponent(data.dados.alunoId)}`);
   } catch (erro) {
     mensagem(erro.message || "Erro ao entrar.", "erro");
   } finally {

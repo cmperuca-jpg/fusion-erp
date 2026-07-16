@@ -1,35 +1,23 @@
 [
   {
-    "id": "usr_admin",
+    "id": "usr_modelo_admin",
     "nome": "Administrador Fusion",
     "email": "admin@fusionerp.local",
-    "senhaHash": "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9",
+    "senhaHash": "e86f78a8a3caf0b60d8e74e5942aa6d86dc150cd3c03338aef25b7d2d7e3acc7",
     "perfil": "Administrador",
     "status": "ativo",
     "permissoes": [
       "*"
     ],
-    "criadoEm": "2026-07-08T17:18:12.539659Z",
-    "atualizadoEm": "2026-07-09T08:37:52.115Z"
+    "trocarSenhaNoPrimeiroAcesso": true,
+    "criadoEm": "2026-07-16T12:14:17.917Z",
+    "atualizadoEm": "2026-07-16T12:14:17.917Z"
   },
   {
-    "id": "usr_1783586226907_07dcda",
-    "nome": "admin",
-    "email": "cmperuca@gmail.com",
-    "senhaHash": "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4",
-    "perfil": "Administrador",
-    "status": "ativo",
-    "permissoes": [
-      "*"
-    ],
-    "criadoEm": "2026-07-09T08:37:06.908Z",
-    "atualizadoEm": "2026-07-10T14:24:53.468Z"
-  },
-  {
-    "id": "usr_1783586425367_319d0d",
-    "nome": "balcao",
-    "email": "balcao@fusionepr.com",
-    "senhaHash": "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4",
+    "id": "usr_modelo_recepcao",
+    "nome": "Recepção Modelo",
+    "email": "recepcao@fusionerp.local",
+    "senhaHash": "70f96b3ae3688b9d67735d3d01b5564dd487be0839e7c8659481b15a49f60066",
     "perfil": "Recepcao",
     "status": "ativo",
     "permissoes": [
@@ -37,27 +25,48 @@
       "alunos",
       "matriculas",
       "matriculas-pendentes",
-      "comercial-painel",
       "financeiro",
       "mensalidades",
       "caixa",
+      "comercial",
+      "comercial-painel",
+      "site-chat",
       "checkin"
     ],
-    "criadoEm": "2026-07-09T08:40:25.367Z",
-    "atualizadoEm": "2026-07-10T14:25:15.310Z"
+    "trocarSenhaNoPrimeiroAcesso": true,
+    "criadoEm": "2026-07-16T12:14:17.917Z",
+    "atualizadoEm": "2026-07-16T12:14:17.917Z"
   },
   {
-    "id": "usr_1783586480496_12ca6a",
-    "nome": "shaiky",
-    "email": "shaikybombinha2@gmail.com",
-    "senhaHash": "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4",
+    "id": "usr_modelo_responsavel_tecnico",
+    "nome": "Responsável Técnico Modelo",
+    "email": "tecnico@fusionerp.local",
+    "senhaHash": "858fdfdbaef1fbd70aedeb97f794f44ce8f52c3cb3f7616243c88de11ad4ea40",
     "perfil": "Professor",
     "status": "ativo",
     "permissoes": [
+      "professor-area",
       "avaliacoes",
-      "treinos"
+      "treinos",
+      "aluno-treinos"
     ],
-    "criadoEm": "2026-07-09T08:41:20.496Z",
-    "atualizadoEm": "2026-07-10T14:25:46.852Z"
+    "trocarSenhaNoPrimeiroAcesso": true,
+    "criadoEm": "2026-07-16T12:14:17.917Z",
+    "atualizadoEm": "2026-07-16T12:14:17.917Z"
+  },
+  {
+    "id": "usr_modelo_aluno",
+    "nome": "Aluno Modelo",
+    "email": "aluno@fusionerp.local",
+    "senhaHash": "7e0bbb00b4e5ead1760fe87c9f485d2228cf8af4152f149de682f071897a76fd",
+    "perfil": "Aluno",
+    "status": "ativo",
+    "permissoes": [
+      "aluno-treinos",
+      "aluno-avaliacao"
+    ],
+    "trocarSenhaNoPrimeiroAcesso": true,
+    "criadoEm": "2026-07-16T12:14:17.917Z",
+    "atualizadoEm": "2026-07-16T12:14:17.917Z"
   }
 ]

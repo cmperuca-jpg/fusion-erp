@@ -39,8 +39,10 @@ import accessEngineRoutes from "./modules/access-engine/access-engine.routes.mjs
 import matriculaOnlineRoutes from "./modules/matricula-online/matricula-online.routes.mjs";
 import leadsRoutes from "./modules/leads/leads.routes.mjs";
 import siteChatRoutes from "./modules/site-chat/site-chat.routes.mjs";
+import notificacoesRoutes from "./modules/notificacoes/notificacoes.routes.mjs";
 import fidelidadeRoutes from "./modules/fidelidade/fidelidade.routes.mjs";
 import accessBridgeRoutes from "./modules/access-bridge/access-bridge.routes.mjs";
+import reconhecimentoFacialRoutes from "./modules/reconhecimento-facial/reconhecimento-facial.routes.mjs";
 import { inicializarPersistenciaSupabase, encerrarPersistenciaSupabase } from "./modules/backup/supabase-data.service.mjs";
 import { iniciarBackupAutomatico } from "./modules/backup/backup.service.mjs";
 import { assertDatabaseConfiguration } from "./config/database.config.mjs";
@@ -349,11 +351,25 @@ app.use((req, res, next) => {
   return next();
 });
 
+// A página comercial institucional pertence à empresa Fusion ERP, não à
+// academia cliente. Esta proteção vem antes dos arquivos estáticos para também
+// bloquear uma cópia residual deixada por alguma atualização anterior.
+app.use((req, res, next) => {
+  const rota = String(req.path || "").replace(/\/+$/, "");
+  if (
+    ["GET", "HEAD"].includes(req.method) &&
+    ["/pages/comercial", "/pages/comercial/index.html"].includes(rota)
+  ) {
+    return res.redirect(302, "/pages/promocao/index.html");
+  }
+  return next();
+});
+
 app.use(express.static(path.join(__dirname, "public")));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.get("/", (req, res) => {
-  res.redirect(302, "/pages/comercial/index.html");
+  res.redirect(302, "/pages/promocao/index.html");
 });
 
 app.get("/api", (req, res) => {
@@ -616,6 +632,7 @@ app.use("/api/comercial", comercialRoutes);
 app.use("/api/matricula-online", matriculaOnlineRoutes);
 app.use("/api/leads", leadsRoutes);
 app.use("/api/site-chat", siteChatRoutes);
+app.use("/api/notificacoes", notificacoesRoutes);
 app.use("/api/fidelidade", fidelidadeRoutes);
 app.use("/api/natacao", natacaoRoutes);
 app.use("/api/backup", backupRoutes);
@@ -623,6 +640,7 @@ app.use("/api/importador-access", importadorAccessRoutes);
 app.use("/api/access-engine", accessEngineRoutes);
 app.use("/api/henry7x", henry7xRoutes);
 app.use("/api/access-bridge", accessBridgeRoutes);
+app.use("/api/reconhecimento-facial", reconhecimentoFacialRoutes);
 
 // Aliases legados de páginas: evitam 404 em favoritos/menus antigos.
 app.get(['/pages/bi-comercial', '/pages/bi-comercial/', '/pages/bi-comercial/index.html'], (req, res) => {

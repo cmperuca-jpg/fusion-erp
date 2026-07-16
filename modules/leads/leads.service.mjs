@@ -1,6 +1,7 @@
-import fs from 'node:fs/promises';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import { lerJsonDuravel, salvarJsonDuravel } from '../core/persistence/durable-json.mjs';
+import { criarNotificacao } from '../notificacoes/notificacoes.service.mjs';
 
 const DATA_DIR = path.resolve(process.cwd(), 'data');
 const LEADS_FILE = path.join(DATA_DIR, 'leads.json');
@@ -17,24 +18,12 @@ const ETAPAS = [
   'perdido'
 ];
 
-async function garantirArquivo(arquivo, padrao = []) {
-  try { await fs.access(arquivo); }
-  catch {
-    await fs.mkdir(path.dirname(arquivo), { recursive: true });
-    await fs.writeFile(arquivo, JSON.stringify(padrao, null, 2), 'utf8');
-  }
-}
-
 async function lerJson(arquivo, padrao = []) {
-  await garantirArquivo(arquivo, padrao);
-  const txt = await fs.readFile(arquivo, 'utf8');
-  if (!txt.trim()) return padrao;
-  try { return JSON.parse(txt) ?? padrao; } catch { return padrao; }
+  return lerJsonDuravel(arquivo, padrao);
 }
 
 async function salvarJson(arquivo, dados) {
-  await fs.mkdir(path.dirname(arquivo), { recursive: true });
-  await fs.writeFile(arquivo, JSON.stringify(dados, null, 2), 'utf8');
+  return salvarJsonDuravel(arquivo, dados);
 }
 
 function agoraISO() { return new Date().toISOString(); }
@@ -169,6 +158,18 @@ export async function criarLead(dados = {}) {
   };
   leads.unshift(lead);
   await salvarJson(LEADS_FILE, leads);
+  const agendamento = ['agendado', 'aula_experimental'].includes(base.etapa);
+  await criarNotificacao({
+    eventoId: `lead:${lead.id}`,
+    tipo: agendamento ? 'aula_experimental' : 'lead',
+    prioridade: agendamento ? 'alta' : 'normal',
+    titulo: agendamento ? `Nova aula experimental: ${lead.nome}` : `Novo interesse: ${lead.nome}`,
+    mensagem: [lead.plano || lead.modalidade, lead.dataAgendada, lead.horarioAgendado].filter(Boolean).join(' · ') || lead.objetivo || 'Novo contato recebido pelo site da academia.',
+    contato: lead.whatsapp || lead.telefone,
+    referenciaId: lead.id,
+    link: `/pages/comercial-painel/index.html?leadId=${encodeURIComponent(lead.id)}`,
+    destinatarios: ['admin', 'recepcao', 'comercial', 'comercial_painel']
+  }).catch(erroNotificacao => console.error(`[Notificações] Lead salvo, mas o aviso falhou: ${erroNotificacao.message}`));
   return exporLead(lead);
 }
 

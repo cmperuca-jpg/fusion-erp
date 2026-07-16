@@ -1,124 +1,30 @@
 [
   {
-    "id": "e1bdfb38-50bf-47fb-87ba-052ab6434f84",
-    "status": "Ativo",
-    "criadoEm": "2026-07-03T18:28:37.356Z",
-    "atualizadoEm": "2026-07-13T12:20:43.279Z",
-    "nome": "MARCOS ANDRE DE SOUZA",
-    "cpf": "04877315497",
-    "rg": "2000001220025",
-    "cref": "ESTAGIARIO",
-    "email": "cmmarechais@gmail.com",
-    "telefone": "82988450407",
-    "whatsapp": "(82) 98845-0407",
-    "dataNascimento": "1981-10-06",
-    "especialidade": "preparação fisica",
+    "id": "prof_modelo_responsavel_tecnico",
+    "nome": "Responsável Técnico Modelo",
+    "cpf": "00000000000",
+    "rg": "MODELO",
+    "cref": "CREF-MODELO",
+    "email": "tecnico@fusionerp.local",
+    "login": "tecnico@fusionerp.local",
+    "telefone": "82999990001",
+    "whatsapp": "82999990001",
+    "especialidade": "Musculação e Hipertrofia",
     "especialidades": [
-      "CAPOEIRA",
-      "MUSCULAÇÃO",
-      "NATAÇÃO"
+      "Musculação",
+      "Hipertrofia",
+      "Avaliação física"
     ],
     "modalidades": [
-      "TODAS"
+      "Musculação"
     ],
-    "diasTrabalho": [
-      "SEGUNDA",
-      "TERÇA",
-      "QUARTA",
-      "QUINTA",
-      "SEXTA",
-      "SABADO",
-      "DOMINGO"
-    ],
-    "horarioInicio": "05:00",
-    "horarioFim": "14:00",
-    "tipoContrato": "Prestador",
-    "valorHora": "10,00",
-    "banco": "BANCO INTER",
-    "agencia": "",
-    "conta": "",
-    "chavePix": "82988450407",
-    "endereco": "Rua Mensageiro José Raimundo dos Santos, 260",
-    "observacoes": "",
-    "documentos": [
-      {
-        "nome": "marcos andre",
-        "tipo": "manual",
-        "arquivo_base64": ""
-      }
-    ],
-    "acessoTodosAlunos": false,
-    "senhaHash": "82e6780c188ad1e9055e387fc818c82a:15422f8c9ca724a0ecdea45bd558acf8943d3b4fadeb3704e1a4320d1fcc49180ce58109f2df1a716cf97930ad81e57a2d8f5a194d78e3ccc8975d190d729eee"
-  },
-  {
-    "id": "18e08222-7c37-4ade-bc18-201dddc460df",
-    "status": "Ativo",
-    "criadoEm": "2026-07-08T03:39:00.482Z",
-    "atualizadoEm": "2026-07-08T03:39:00.485Z",
-    "nome": "MARIA SHAIKYSCHANA DA CONCEIÇÃO DE LIMA",
-    "cpf": "07780139441",
-    "rg": "1121221-009",
-    "cref": "ESTAGIARIA",
-    "email": "cmmarechais@gmail.com",
-    "telefone": "82988405483",
-    "whatsapp": "82988405483",
-    "dataNascimento": "1988-09-16",
-    "especialidade": "preparação fisica",
-    "especialidades": [
-      "CAPOEIRA",
-      "MUSCULAÇÃO",
-      "NATAÇÃO"
-    ],
-    "modalidades": [
-      "TODAS"
-    ],
-    "diasTrabalho": [
-      "SEGUNDA",
-      "TERÇA",
-      "QUARTA",
-      "QUINTA",
-      "SEXTA"
-    ],
-    "horarioInicio": "14:00",
-    "horarioFim": "22:00",
-    "tipoContrato": "Parceria",
-    "valorHora": "10,00",
-    "banco": "",
-    "agencia": "",
-    "conta": "",
-    "chavePix": "",
-    "endereco": "Rua Mensageiro José Raimundo dos Santos, 260",
-    "observacoes": "",
-    "documentos": [],
-    "senhaHash": ""
-  },
-  {
-    "id": "prof_responsavel_tecnico",
-    "nome": "responsavel-tecnico",
-    "login": "responsavel-tecnico",
     "perfil": "responsavel_tecnico",
     "acessoTodosAlunos": true,
     "status": "Ativo",
-    "cref": "RESPONSAVEL-TECNICO",
-    "email": "responsavel-tecnico@fusionerp.local",
-    "especialidade": "Responsabilidade técnica",
-    "especialidades": [
-      "TODAS"
-    ],
-    "modalidades": [
-      "TODAS"
-    ],
-    "diasTrabalho": [
-      "SEGUNDA",
-      "TERÇA",
-      "QUARTA",
-      "QUINTA",
-      "SEXTA",
-      "SABADO",
-      "DOMINGO"
-    ],
-    "senhaHash": "abf3ea069d36088d2ddf998a7de238cb:9cab110172afc64d36ab352f217dc0c3d2ef71425a82a690f8ed9f65687c3ac1911a66e74da35a18e0615453e68c60dc56474be9f244aaaa492a6ddf60b0a85f",
-    "criadoEm": "2026-07-10T00:00:00.000Z",
-    "atualizadoEm": "2026-07-10T00:00:00.000Z"
+    "bloqueado": false,
+    "senhaHash": "36c0bfcd8b80ee5141fe2f517113d44f:becee19a6d5eb35091cab1a39bb18e56b8050ef7041f5f7bfd472e8af386c41c878681ffea2a0985df59d7f584277e04b606492a84902713b54e377588218a63",
+    "criadoEm": "2026-07-16T12:14:17.917Z",
+    "atualizadoEm": "2026-07-16T12:14:17.917Z",
+    "observacoes": "Conta modelo. Substituir pelos dados e CREF do responsável técnico da academia."
   }
 ]

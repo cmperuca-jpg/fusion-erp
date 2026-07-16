@@ -1,0 +1,24 @@
+(function(){
+  if(!FusionAuth.proteger(["admin","administrador","recepcao","responsavel_tecnico","alunos"]))return;
+  const $=s=>document.querySelector(s),capturas=[null,null,null];let stream;
+  function mensagem(texto,tipo=""){const el=$("#mensagem");el.textContent=texto;el.className=`face-message ${tipo}`;}
+  function dataBR(v){if(!v)return "-";return new Intl.DateTimeFormat("pt-BR",{dateStyle:"short",timeStyle:"short"}).format(new Date(v));}
+  async function api(url,opt={}){const r=await FusionAuth.fetchAuth(url,opt);const j=await r.json().catch(()=>({}));if(!r.ok||j.ok===false)throw new Error(j.mensagem||`Erro HTTP ${r.status}`);return j;}
+  async function camera(){try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"user",width:{ideal:960},height:{ideal:720}},audio:false});$("#camera").srcObject=stream;}catch(e){mensagem("Autorize a câmera no navegador para cadastrar o rosto.","error");}}
+  function capturar(i){const v=$("#camera");if(!v.videoWidth)return mensagem("A câmera ainda não está pronta.","error");const c=document.createElement("canvas"),ctx=c.getContext("2d");c.width=640;c.height=480;ctx.translate(c.width,0);ctx.scale(-1,1);ctx.drawImage(v,0,0,c.width,c.height);capturas[i]=c.toDataURL("image/jpeg",.8);const el=$("#cap"+i);el.style.backgroundImage=`url(${capturas[i]})`;el.textContent="Capturado";validar();}
+  function validar(){$("#salvar").disabled=!$("#aluno").value||!capturas.every(Boolean)||!$("#consentimento").checked;}
+  async function carregar(){
+    try{const [s,a,c,e]=await Promise.all([api("/api/reconhecimento-facial/status"),api("/api/reconhecimento-facial/alunos"),api("/api/reconhecimento-facial/cadastros"),api("/api/reconhecimento-facial/eventos?limite=30")]);
+      $("#statusAgente").textContent=s.agente.online?"Online":"Offline";$("#statusCompreFace").textContent=s.agente.compreface||"Aguardando agente";$("#statusModo").textContent=s.configuracao.liberarCatraca?"Liberação ativa":"Homologação segura";
+      $("#aluno").innerHTML='<option value="">Selecione o aluno</option>'+a.alunos.map(x=>`<option value="${esc(x.id)}">${esc(x.nome)}${x.cpf?` — ${esc(x.cpf)}`:""}</option>`).join("");
+      $("#cadastros").innerHTML=c.cadastros.length?c.cadastros.map(x=>`<tr><td>${esc(x.alunoNome)}</td><td>${dataBR(x.atualizadoEm)}</td><td><button class="face-btn danger" data-remover="${esc(x.alunoId)}">Remover</button></td></tr>`).join(""):'<tr><td colspan="3">Nenhuma biometria cadastrada.</td></tr>';
+      $("#eventos").innerHTML=e.eventos.length?e.eventos.map(x=>`<tr><td>${dataBR(x.criadoEm)}</td><td>${esc(x.alunoNome||"Não identificado")}</td><td>${x.autorizado?"Liberado":esc(x.motivo||"Não liberado")}</td></tr>`).join(""):'<tr><td colspan="3">Nenhum evento.</td></tr>';
+    }catch(err){mensagem(err.message,"error");}
+  }
+  function esc(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));}
+  document.addEventListener("click",async e=>{const b=e.target.closest("[data-captura],[data-remover]");if(!b)return;if(b.dataset.captura!==undefined)capturar(Number(b.dataset.captura));if(b.dataset.remover&&confirm("Remover a biometria facial deste aluno?")){try{await api(`/api/reconhecimento-facial/cadastros/${encodeURIComponent(b.dataset.remover)}`,{method:"DELETE"});mensagem("Biometria removida.","ok");carregar();}catch(err){mensagem(err.message,"error");}}});
+  $("#aluno").addEventListener("change",validar);$("#consentimento").addEventListener("change",validar);
+  $("#salvar").addEventListener("click",async()=>{const b=$("#salvar");b.disabled=true;mensagem("Enviando as capturas ao agente local...");try{await api(`/api/reconhecimento-facial/cadastros/${encodeURIComponent($("#aluno").value)}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({imagens:capturas,consentimento:true})});mensagem("Biometria cadastrada com sucesso.","ok");capturas.fill(null);document.querySelectorAll(".capture").forEach((x,i)=>{x.style.backgroundImage="";x.textContent=["Frente","Esquerda","Direita"][i]});$("#consentimento").checked=false;carregar();}catch(err){mensagem(err.message,"error");validar();}});
+  $("#copiarUrl").addEventListener("click",async()=>{await navigator.clipboard.writeText(`${location.origin}/pages/reconhecimento-facial/index.html`);mensagem("URL do terminal copiada.","ok");});
+  camera();carregar();setInterval(()=>api("/api/reconhecimento-facial/status").then(s=>{$("#statusAgente").textContent=s.agente.online?"Online":"Offline";$("#statusCompreFace").textContent=s.agente.compreface||"Aguardando agente";}).catch(()=>{}),10000);
+})();

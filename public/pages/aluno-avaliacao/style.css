@@ -1,1 +1,54 @@
 *{box-sizing:border-box}html,body{margin:0;min-height:100%;background:#f5f7fb;color:#101828;font-family:Arial,Helvetica,sans-serif}.avaliacao-aluno-app{max-width:1180px;margin:0 auto;padding:18px}.topo{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:14px}.topo span{display:block;font-size:12px;text-transform:uppercase;font-weight:900;color:#ff6600;letter-spacing:.04em}.topo h1{margin:3px 0;font-size:30px;line-height:1.05}.topo p{margin:0;color:#475569;font-weight:700}.btn{border:0;border-radius:12px;padding:11px 15px;font-weight:900;cursor:pointer;text-decoration:none;background:#111d35;color:#fff}.btn.ghost{background:#fff;color:#111d35;border:1px solid #ccd6e5}.alerta{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;border-radius:14px;padding:14px;font-weight:900;margin:12px 0}.hidden{display:none!important}.resumo-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}.card{background:#fff;border:1px solid #dfe6f1;border-radius:18px;padding:16px;box-shadow:0 8px 24px rgba(15,23,42,.05);margin-bottom:12px}.card span{display:block;font-size:11px;color:#64748b;font-weight:900;text-transform:uppercase;letter-spacing:.03em}.card strong{display:block;margin-top:6px;font-size:18px;line-height:1.25}.card.destaque{border-color:#fed7aa;background:#fff7ed}.section-title{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;margin-bottom:12px}.section-title h2{margin:0;font-size:21px}.section-title p{margin:3px 0 0;color:#64748b;font-weight:700}.comparacao-lista{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.metric-card{border:1px solid #e2e8f0;border-radius:14px;background:#f8fafc;padding:12px}.metric-card h3{margin:0 0 8px;font-size:15px}.metric-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;align-items:center}.metric-row div{background:#fff;border:1px solid #e5edf6;border-radius:12px;padding:9px}.metric-row span{font-size:10px;color:#64748b;font-weight:900;text-transform:uppercase}.metric-row strong{font-size:17px}.diff{font-weight:900;border-radius:999px;padding:6px 8px;display:inline-block;text-align:center}.diff.positivo{background:#ecfdf3;color:#067647}.diff.negativo{background:#fff1f3;color:#b42318}.diff.neutro{background:#eef2f7;color:#475569}.resultado-completo{display:grid;gap:14px}.grupo{border:1px solid #e2e8f0;border-radius:16px;overflow:hidden;background:#fff}.grupo h3{margin:0;background:#f8fafc;border-bottom:1px solid #e2e8f0;padding:12px 14px;font-size:17px;color:#111d35}.campo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0}.campo{padding:12px 14px;border-right:1px solid #f1f5f9;border-bottom:1px solid #f1f5f9;min-height:72px}.campo span{display:block;color:#64748b;font-size:11px;text-transform:uppercase;font-weight:900}.campo strong{display:block;margin-top:5px;font-size:16px;word-break:break-word}.campo.full{grid-column:1/-1}.fotos-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.foto-card{border:1px solid #e2e8f0;border-radius:14px;background:#f8fafc;padding:10px}.foto-card span{display:block;font-size:12px;color:#64748b;font-weight:900;text-transform:uppercase;margin-bottom:8px}.foto-card img{width:100%;height:240px;object-fit:cover;border-radius:12px;background:#eef2f7}@media(max-width:980px){.resumo-grid,.comparacao-lista{grid-template-columns:1fr 1fr}.campo-grid{grid-template-columns:1fr 1fr}.fotos-grid{grid-template-columns:1fr 1fr}.topo{align-items:flex-start;flex-direction:column}.topo .btn{width:100%}}@media(max-width:560px){.avaliacao-aluno-app{padding:10px}.topo h1{font-size:24px}.resumo-grid,.comparacao-lista,.campo-grid,.fotos-grid{grid-template-columns:1fr}.section-title{display:block}.metric-row{grid-template-columns:1fr}.card{padding:13px}.foto-card img{height:260px}}
+
+/* Contraste do portal: o tema premium e escuro, mas os dados completos usam
+   superficies claras. Estes seletores mantem todos os textos legiveis. */
+html,body{max-width:100%!important;overflow-x:hidden!important}
+.avaliacao-aluno-app{width:100%!important;max-width:1180px!important;min-width:0!important;overflow-x:hidden!important}
+.avaliacao-aluno-app :is(.resultado-completo,.grupo,.campo-grid,.campo,.comparacao-lista,.metric-card,.metric-row,.foto-card){
+  min-width:0!important;
+  max-width:100%!important;
+}
+.avaliacao-aluno-app .grupo{
+  background:#f7fafb!important;
+  border-color:#b8d0d6!important;
+  border-radius:6px!important;
+}
+.avaliacao-aluno-app .grupo h3{
+  background:#eaf1f3!important;
+  border-color:#b8d0d6!important;
+  color:#102b35!important;
+  opacity:1!important;
+  text-shadow:none!important;
+}
+.avaliacao-aluno-app .campo{
+  background:#f7fafb!important;
+  border-color:#b8d0d6!important;
+  color:#15323b!important;
+  overflow-wrap:anywhere!important;
+}
+.avaliacao-aluno-app .campo span{
+  color:#415f69!important;
+  opacity:1!important;
+  text-shadow:none!important;
+}
+.avaliacao-aluno-app .campo strong{
+  color:#102b35!important;
+  opacity:1!important;
+  text-shadow:none!important;
+  overflow-wrap:anywhere!important;
+}
+.avaliacao-aluno-app .metric-card,
+.avaliacao-aluno-app .metric-row>div,
+.avaliacao-aluno-app .foto-card{
+  background:#f7fafb!important;
+  border-color:#b8d0d6!important;
+  color:#102b35!important;
+}
+.avaliacao-aluno-app :is(.metric-card h3,.metric-row strong,.foto-card strong){
+  color:#102b35!important;
+  text-shadow:none!important;
+}
+.avaliacao-aluno-app :is(.metric-row span,.foto-card span){color:#415f69!important;opacity:1!important}
+.avaliacao-aluno-app .campo-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+@media(max-width:980px){.avaliacao-aluno-app .campo-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+@media(max-width:560px){.avaliacao-aluno-app .campo-grid{grid-template-columns:minmax(0,1fr)!important}}

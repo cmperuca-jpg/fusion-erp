@@ -2,7 +2,8 @@
   function garantirEstilosGlobais() {
     const estilos = [
       ["fusion-premium-final", "/assets/css/fusion-premium-final.css"],
-      ["fusion-correcoes-visuais", "/assets/css/fusion-correcoes-visuais.css"]
+      ["fusion-correcoes-visuais", "/assets/css/fusion-correcoes-visuais.css"],
+      ["fusion-notificacoes", "/assets/css/fusion-notificacoes.css"]
     ];
     estilos.forEach(([id, href]) => {
       if (document.getElementById(id) || document.querySelector(`link[href="${href}"]`)) return;
@@ -16,6 +17,16 @@
 
   garantirEstilosGlobais();
 
+  function garantirCentralNotificacoes() {
+    if (document.querySelector('script[src="/assets/js/fusion-notificacoes.js"]')) return;
+    const script = document.createElement("script");
+    script.src = "/assets/js/fusion-notificacoes.js";
+    script.defer = true;
+    document.head.appendChild(script);
+  }
+
+  garantirCentralNotificacoes();
+
   const PAGINAS_SEM_MENU = [
     "/pages/aluno-avaliacao/",
     "/pages/aluno-avaliacao/index.html",
@@ -27,14 +38,14 @@
     "/pages/professor-area/index.html",
     "/pages/professor-login/",
     "/pages/professor-login/index.html",
-    "/pages/comercial/",
-    "/pages/comercial/index.html",
     "/pages/promocao/",
     "/pages/promocao/index.html",
     "/pages/matricula-online/",
     "/pages/matricula-online/index.html",
     "/pages/login/",
-    "/pages/login/index.html"
+    "/pages/login/index.html",
+    "/pages/reconhecimento-facial/",
+    "/pages/reconhecimento-facial/index.html"
   ];
 
   const ITENS_MENU = [
@@ -52,10 +63,10 @@
       { id: "agenda", label: "Agenda", href: "/pages/agenda/index.html", perm: "turmas" },
       { id: "checkin", label: "Check-in", href: "/pages/checkin/index.html", perm: "checkin" },
       { id: "access-engine", label: "Catracas", href: "/pages/access-engine/index.html", perm: "access-engine" }
+      ,{ id: "reconhecimento-facial", label: "Reconhecimento facial", href: "/pages/reconhecimento-facial/admin.html", perm: "alunos" }
     ]},
     { grupo: "Comercial", itens: [
       { id: "comercial-painel", label: "CRM Comercial", href: "/pages/comercial-painel/index.html", perm: "comercial-painel" },
-      { id: "site-fusion", label: "Site do Fusion ERP", href: "/pages/comercial/index.html", perm: "comercial", novaAba: true },
       { id: "site-academia", label: "Site da academia", href: "/pages/promocao/index.html", perm: "comercial", novaAba: true },
       { id: "matricula-online", label: "Matrícula Online", href: "/pages/matricula-online/index.html", perm: "matricula-online", novaAba: true },
       { id: "matriculas-pendentes", label: "Matrículas pendentes", href: "/pages/matriculas-pendentes/index.html", perm: "matriculas" },
@@ -289,7 +300,7 @@
 
 
   function prepararLinksPublicos(root = document) {
-    const destinos = ["/pages/comercial/index.html", "/pages/matricula-online/index.html", "/pages/promocao/index.html"];
+    const destinos = ["/pages/matricula-online/index.html", "/pages/promocao/index.html"];
     root.querySelectorAll("a[href]").forEach((link) => {
       const href = String(link.getAttribute("href") || "").split("?")[0];
       if (destinos.includes(href)) {

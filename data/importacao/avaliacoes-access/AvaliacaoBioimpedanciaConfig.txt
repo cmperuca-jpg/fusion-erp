@@ -1,6 +1,0 @@
-1;"Água Corporal";"Lt"
-2;"Idade Metabólica";"anos"
-3;"Massa Óssea";"g"
-4;"Gordura Visceral";"%"
-5;"Proteína";"g"
-6;"Minerais";"g"

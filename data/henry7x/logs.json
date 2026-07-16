@@ -1,5 +1,164 @@
 [
   {
+    "id": "log-1784196347534-266908",
+    "at": "2026-07-16T10:05:47.534Z",
+    "acao": "liberar-catraca",
+    "host": "10.0.0.236",
+    "port": 3000,
+    "direcao": "ambos",
+    "tempoSegundos": 5,
+    "alunoId": null,
+    "alunoNome": "Liberação manual",
+    "operadorId": "usr_admin",
+    "origem": "topbar-liberacao-manual",
+    "motivo": "Liberação manual pelo painel",
+    "confirmadoFisicamente": true,
+    "respostasValidas": true,
+    "result": {
+      "ok": true,
+      "connected": true,
+      "connectedAt": "2026-07-16T10:05:46.446Z",
+      "closedAt": "2026-07-16T10:05:47.534Z",
+      "host": "10.0.0.236",
+      "port": 3000,
+      "ms": 1097,
+      "etapas": [
+        {
+          "indice": 1,
+          "nome": "habilitar-operacao-8A",
+          "sentHex": "FE8A7100010100050000",
+          "sentBytes": 10,
+          "receivedBytes": 8,
+          "responseHex": "01 8A 71 00 01 00 00 FB",
+          "responseHexRaw": "018A7100010000FB",
+          "responseAscii": "..q....."
+        },
+        {
+          "indice": 2,
+          "nome": "liberar-ambos-5s-86",
+          "sentHex": "FE8671000201000A030506",
+          "sentBytes": 11,
+          "receivedBytes": 8,
+          "responseHex": "01 86 71 00 02 00 00 F4",
+          "responseHexRaw": "01867100020000F4",
+          "responseAscii": "..q....."
+        }
+      ],
+      "tipo": "liberar-catraca-sca",
+      "direcao": "ambos",
+      "tempoSegundos": 5,
+      "confirmadoFisicamente": true,
+      "respostasValidas": true,
+      "aviso": "Sequência confirmada fisicamente em três liberações consecutivas na Henry 7X."
+    }
+  },
+  {
+    "id": "log-1784196335351-70224",
+    "at": "2026-07-16T10:05:35.351Z",
+    "acao": "liberar-catraca",
+    "host": "10.0.0.236",
+    "port": 3000,
+    "direcao": "ambos",
+    "tempoSegundos": 5,
+    "alunoId": null,
+    "alunoNome": "Liberação manual",
+    "operadorId": "usr_admin",
+    "origem": "topbar-liberacao-manual",
+    "motivo": "Liberação manual pelo painel",
+    "confirmadoFisicamente": true,
+    "respostasValidas": true,
+    "result": {
+      "ok": true,
+      "connected": true,
+      "connectedAt": "2026-07-16T10:05:34.274Z",
+      "closedAt": "2026-07-16T10:05:35.350Z",
+      "host": "10.0.0.236",
+      "port": 3000,
+      "ms": 1086,
+      "etapas": [
+        {
+          "indice": 1,
+          "nome": "habilitar-operacao-8A",
+          "sentHex": "FE8A7100010100050000",
+          "sentBytes": 10,
+          "receivedBytes": 8,
+          "responseHex": "01 8A 71 00 01 00 00 FB",
+          "responseHexRaw": "018A7100010000FB",
+          "responseAscii": "..q....."
+        },
+        {
+          "indice": 2,
+          "nome": "liberar-ambos-5s-86",
+          "sentHex": "FE8671000201000A030506",
+          "sentBytes": 11,
+          "receivedBytes": 8,
+          "responseHex": "01 86 71 00 02 00 00 F4",
+          "responseHexRaw": "01867100020000F4",
+          "responseAscii": "..q....."
+        }
+      ],
+      "tipo": "liberar-catraca-sca",
+      "direcao": "ambos",
+      "tempoSegundos": 5,
+      "confirmadoFisicamente": true,
+      "respostasValidas": true,
+      "aviso": "Sequência confirmada fisicamente em três liberações consecutivas na Henry 7X."
+    }
+  },
+  {
+    "id": "log-1784196322941-811442",
+    "at": "2026-07-16T10:05:22.945Z",
+    "acao": "liberar-catraca",
+    "host": "10.0.0.236",
+    "port": 3000,
+    "direcao": "ambos",
+    "tempoSegundos": 5,
+    "alunoId": null,
+    "alunoNome": "Liberação manual",
+    "operadorId": "usr_admin",
+    "origem": "topbar-liberacao-manual",
+    "motivo": "Liberação manual pelo painel",
+    "confirmadoFisicamente": true,
+    "respostasValidas": true,
+    "result": {
+      "ok": true,
+      "connected": true,
+      "connectedAt": "2026-07-16T10:05:21.820Z",
+      "closedAt": "2026-07-16T10:05:22.940Z",
+      "host": "10.0.0.236",
+      "port": 3000,
+      "ms": 1138,
+      "etapas": [
+        {
+          "indice": 1,
+          "nome": "habilitar-operacao-8A",
+          "sentHex": "FE8A7100010100050000",
+          "sentBytes": 10,
+          "receivedBytes": 8,
+          "responseHex": "01 8A 71 00 01 00 00 FB",
+          "responseHexRaw": "018A7100010000FB",
+          "responseAscii": "..q....."
+        },
+        {
+          "indice": 2,
+          "nome": "liberar-ambos-5s-86",
+          "sentHex": "FE8671000201000A030506",
+          "sentBytes": 11,
+          "receivedBytes": 8,
+          "responseHex": "01 86 71 00 02 00 00 F4",
+          "responseHexRaw": "01867100020000F4",
+          "responseAscii": "..q....."
+        }
+      ],
+      "tipo": "liberar-catraca-sca",
+      "direcao": "ambos",
+      "tempoSegundos": 5,
+      "confirmadoFisicamente": true,
+      "respostasValidas": true,
+      "aviso": "Sequência confirmada fisicamente em três liberações consecutivas na Henry 7X."
+    }
+  },
+  {
     "id": "log-1783936351000-162682",
     "at": "2026-07-13T09:52:31.000Z",
     "acao": "liberar-catraca",

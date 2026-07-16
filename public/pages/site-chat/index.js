@@ -142,6 +142,7 @@ async function responder(ev){
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
+  const conversaInicial = new URLSearchParams(location.search).get("conversaId") || "";
   $("btnAtualizar").addEventListener("click", async () => {
     await carregarConversas();
     if(estado.conversa) await abrirConversa(estado.conversa.conversaId);
@@ -154,6 +155,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
   $("formResposta").addEventListener("submit", responder);
   await carregarConversas();
+  if(conversaInicial) await abrirConversa(conversaInicial);
   renderMensagens();
   setInterval(async () => {
     await carregarConversas().catch(() => {});

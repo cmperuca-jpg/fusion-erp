@@ -9,10 +9,15 @@
     var l=document.createElement('link'); l.rel='stylesheet'; l.href=href; document.head.appendChild(l);
   }
   function aplicarMenu(){
-    style('/assets/css/fusion-no-sidebar.css');
-    if(window.FusionLayout && typeof window.FusionLayout.init === 'function') window.FusionLayout.init();
-    else load('/assets/js/fusion-layout.js');
-    load('/assets/js/fusion-no-sidebar.js');
+    /* Este arquivo e usado apenas nas paginas internas. O comportamento antigo
+       carregava o modo sem sidebar e removia o proprio menu que deveria criar. */
+    style('/assets/css/fusion-menu-global.css');
+    document.body && document.body.classList.remove('fusion-no-sidebar');
+
+    if(typeof window.carregarLayout === 'function') window.carregarLayout();
+    else load('/assets/js/fusion-layout.js', function(){
+      if(typeof window.carregarLayout === 'function') window.carregarLayout();
+    });
   }
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', aplicarMenu);
   else aplicarMenu();

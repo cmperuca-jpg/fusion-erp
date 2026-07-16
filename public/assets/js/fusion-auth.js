@@ -1,6 +1,9 @@
 (function () {
   const LOGIN_URL = "/pages/login/index.html";
   const STORAGE_KEYS = ["fusionToken", "fusionUsuario", "usuarioLogado", "usuarioNome", "usuarioEmail", "usuarioPerfil"];
+  const estiloPendente = document.createElement("style");
+  estiloPendente.textContent = "html.fusion-auth-pendente{visibility:hidden!important}";
+  document.head.appendChild(estiloPendente);
 
   function texto(valor) { return String(valor || "").trim(); }
   function normalizar(valor) { return texto(valor).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); }
@@ -36,8 +39,9 @@
   }
 
   function salvarSessao(token, usuario) {
+    if (!token) throw new Error("Token de autenticação ausente.");
     const user = normalizarUsuario(usuario);
-    localStorage.setItem("fusionToken", token || `fusion-local-${Date.now()}`);
+    localStorage.setItem("fusionToken", token);
     localStorage.setItem("fusionUsuario", JSON.stringify(user));
     localStorage.setItem("usuarioLogado", "true");
     localStorage.setItem("usuarioNome", user.nome);
@@ -53,13 +57,6 @@
       const bruto = localStorage.getItem("fusionUsuario");
       if (bruto) return normalizarUsuario(JSON.parse(bruto));
     } catch {}
-    if (localStorage.getItem("usuarioLogado") === "true") {
-      return normalizarUsuario({
-        nome: localStorage.getItem("usuarioNome") || "Administrador",
-        email: localStorage.getItem("usuarioEmail") || "admin@fusionerp.local",
-        perfil: localStorage.getItem("usuarioPerfil") || "Administrador"
-      });
-    }
     return null;
   }
 
@@ -99,13 +96,13 @@
   async function validarSessao() {
     const token = tokenAtual();
     if (!token) return null;
-    if (token.startsWith("fusion-local-")) return usuarioAtual();
-
     try {
       const resp = await fetch("/api/auth/me", { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
       const json = await resp.json().catch(() => ({}));
       if (!resp.ok || json.ok === false) throw new Error(json.mensagem || "Sessão inválida.");
-      return salvarSessao(token, json.usuario);
+      const usuario = salvarSessao(token, json.usuario);
+      document.documentElement.classList.remove("fusion-auth-pendente");
+      return usuario;
     } catch {
       limparSessao(true);
       return null;
@@ -113,6 +110,7 @@
   }
 
   function proteger(perfisPermitidos) {
+    document.documentElement.classList.add("fusion-auth-pendente");
     if (!estaLogado()) {
       const destino = encodeURIComponent(location.pathname + location.search);
       location.href = `${LOGIN_URL}?next=${destino}`;
@@ -124,8 +122,15 @@
       location.href = destinoPorPerfil(user);
       return false;
     }
-    setTimeout(() => validarSessao().then(() => filtrarElementosPorPermissao()).catch(() => {}), 0);
-    setTimeout(() => filtrarElementosPorPermissao(), 0);
+    setTimeout(() => validarSessao().then((sessao) => {
+      if (!sessao) return;
+      if (!podeAcessar(sessao, perfisPermitidos)) {
+        alert("Acesso não permitido para este usuário.");
+        location.href = destinoPorPerfil(sessao);
+        return;
+      }
+      filtrarElementosPorPermissao();
+    }).catch(() => limparSessao(true)), 0);
     return true;
   }
 
@@ -170,6 +175,5 @@
 
   window.FusionAuth = { login, salvarSessao, usuarioAtual, tokenAtual, estaLogado, validarSessao, temPermissao, permissoesAtual, cabecalhoAuth, fetchAuth, filtrarElementosPorPermissao, proteger, sair, limparSessao, destinoPorPerfil };
   window.protegerPagina = function protegerPagina(perfisPermitidos) { return proteger(perfisPermitidos); };
-  window.salvarSessaoUsuario = function salvarSessaoUsuario(nome = "Administrador") { return salvarSessao(`fusion-local-${Date.now()}`, { nome, perfil: "Administrador", permissoes: ["*"] }); };
   window.sair = sair;
 })();

@@ -5,14 +5,11 @@ const DATA_FILE = path.resolve(process.cwd(), "data", "aparencia.json");
 const UPLOAD_DIR = path.resolve(process.cwd(), "uploads", "aparencia");
 
 const PAGINAS = {
-  comercial: {
-    rota: "/pages/comercial/index.html",
+  promocao: {
+    rota: "/pages/promocao/index.html",
     elementos: {
-      titulo: { seletor: ".hero-copy h1", texto: "Escolha o ambiente que deseja acessar.", visivel: true },
-      descricao: { seletor: ".hero-description", texto: "Acesso exclusivo para funcionários, alunos e professores.", visivel: true },
-      botaoSistema: { seletor: ".home-actions .primary-action:nth-child(1) strong", texto: "Login do Sistema", visivel: true },
-      botaoAluno: { seletor: ".home-actions .primary-action:nth-child(2) strong", texto: "Portal do Cliente / Aluno", visivel: true },
-      botaoProfessor: { seletor: ".home-actions .primary-action:nth-child(3) strong", texto: "Login do Professor", visivel: true }
+      titulo: { seletor: ".promo-hero h1", texto: "Comece agora com condições especiais.", visivel: true },
+      descricao: { seletor: ".promo-hero-content > div > p:not(.tag)", texto: "Consulte os planos disponíveis e fale com a equipe da academia.", visivel: true }
     }
   },
   login: {

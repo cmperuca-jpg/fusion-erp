@@ -10,6 +10,11 @@ function mensagem(textoMsg, tipo = "") {
   el.className = `msg ${tipo}`.trim();
 }
 
+function destinoAposLogin(padrao) {
+  const next = new URLSearchParams(location.search).get("next") || "";
+  return next.startsWith("/pages/") ? next : padrao;
+}
+
 async function entrar() {
   const login = texto($("login").value);
   const senha = texto($("senha").value);
@@ -49,7 +54,7 @@ async function entrar() {
 
     localStorage.setItem("fusion_professor_sessao", JSON.stringify(sessao));
     mensagem("Acesso liberado.", "ok");
-    location.href = "/pages/professor-area/index.html";
+    location.href = destinoAposLogin("/pages/professor-area/index.html");
   } catch (erro) {
     mensagem(erro.message || "Erro ao entrar.", "erro");
   } finally {

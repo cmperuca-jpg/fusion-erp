@@ -1,20 +1,9 @@
-import fs from "fs/promises";
-import path from "path";
 import crypto from "crypto";
-
-const arquivo = path.resolve("data/avaliacoes.json");
-
-async function garantirArquivo() {
-  await fs.mkdir("data", { recursive: true });
-  try { await fs.access(arquivo); }
-  catch { await fs.writeFile(arquivo, "[]", "utf-8"); }
-}
+import { lerJsonDuravel, salvarJsonDuravel } from "../core/persistence/durable-json.mjs";
 
 async function lerAvaliacoes() {
-  await garantirArquivo();
-  const conteudo = await fs.readFile(arquivo, "utf-8");
   try {
-    const dados = JSON.parse(conteudo || "[]");
+    const dados = await lerJsonDuravel("avaliacoes.json", []);
     return Array.isArray(dados) ? dados : [];
   } catch {
     return [];
@@ -22,8 +11,7 @@ async function lerAvaliacoes() {
 }
 
 async function salvarAvaliacoes(avaliacoes) {
-  await garantirArquivo();
-  await fs.writeFile(arquivo, JSON.stringify(avaliacoes, null, 2), "utf-8");
+  await salvarJsonDuravel("avaliacoes.json", avaliacoes);
 }
 
 export async function listarAvaliacoes() {

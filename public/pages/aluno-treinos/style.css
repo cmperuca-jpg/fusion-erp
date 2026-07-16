@@ -42,3 +42,43 @@ body .fusion-ui-userbar{
   border-color:#fed7aa;
   color:#9a3412;
 }
+
+/* O tema premium e carregado depois desta pagina e usa texto branco global.
+   Estes seletores identificam os cartoes claros do portal para impedir texto
+   branco sobre fundo branco, sem alterar as demais telas do sistema. */
+.aluno-app :is(.painel-aluno,.treino-box,.card-exercicio,.imagem-stage,.info-prescricao>div,.descricao-box,.check-finalizado){
+  background:#f8fafc!important;
+  border-color:#b9cbd3!important;
+  color:#102b35!important;
+  text-shadow:none!important;
+}
+.aluno-app :is(.painel-aluno,.treino-box,.card-exercicio,.info-prescricao,.descricao-box,.check-finalizado) :is(h1,h2,h3,h4,strong,b){
+  color:#102b35!important;
+  opacity:1!important;
+  text-shadow:none!important;
+}
+.aluno-app :is(.painel-aluno,.treino-box,.card-exercicio,.info-prescricao,.descricao-box) :is(p,span,small){
+  color:#4a6570!important;
+  opacity:1!important;
+  text-shadow:none!important;
+}
+.aluno-app .perfil-texto :is(h1,p){color:#f4fbfc!important}
+.aluno-app .perfil-texto span{color:#65dbe8!important}
+.aluno-app .contador{
+  background:#d9edf1!important;
+  color:#123944!important;
+}
+.aluno-app .tab-divisao{
+  background:#f4f8f9!important;
+  color:#123944!important;
+  border-color:#8eb2bb!important;
+}
+.aluno-app .tab-divisao.active{
+  background:#159caf!important;
+  color:#fff!important;
+  border-color:#25bfd1!important;
+}
+.aluno-app .imagem-stage img{
+  max-width:100%!important;
+  height:auto!important;
+}

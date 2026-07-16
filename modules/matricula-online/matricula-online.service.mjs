@@ -2,6 +2,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { integrarMatriculaAluno } from '../matriculas/matricula.integracao.service.mjs';
 import { lerJsonDuravel, salvarJsonDuravel, executarTransacaoJson } from '../core/persistence/durable-json.mjs';
+import { criarNotificacao } from '../notificacoes/notificacoes.service.mjs';
 
 const DATA_DIR = path.resolve(process.cwd(), 'data');
 const SOLICITACOES_FILE = path.join(DATA_DIR, 'matriculas_online.json');
@@ -208,6 +209,17 @@ export async function criarSolicitacao(dados = {}) {
   const solicitacao = { id: crypto.randomUUID(), protocolo, ...base, whatsapp: base.telefone, planoId: plano.id || base.planoId, plano: nomePlano(plano), valorPlano: valorPlano(plano), status: 'aguardando', origem: 'matricula_online', criadoEm: agoraISO(), atualizadoEm: agoraISO(), historico: [{ acao: 'solicitacao_recebida', criadoEm: agoraISO() }] };
   solicitacoes.push(solicitacao);
   await salvarJson(SOLICITACOES_FILE, solicitacoes);
+  await criarNotificacao({
+    eventoId: `matricula-online:${solicitacao.id}`,
+    tipo: 'matricula_online',
+    prioridade: 'alta',
+    titulo: `Nova matrícula online: ${solicitacao.nome}`,
+    mensagem: `${solicitacao.plano} · Protocolo ${solicitacao.protocolo}`,
+    contato: solicitacao.whatsapp || solicitacao.telefone,
+    referenciaId: solicitacao.id,
+    link: '/pages/matriculas-pendentes/index.html',
+    destinatarios: ['admin', 'recepcao', 'comercial', 'matriculas']
+  }).catch(erroNotificacao => console.error(`[Notificações] Matrícula salva, mas o aviso falhou: ${erroNotificacao.message}`));
   return { ok: true, solicitacao: exporSolicitacao(solicitacao), mensagem: 'Solicitação de matrícula enviada para aprovação.' };
 }
 async function aprovarSolicitacaoInterna(id, opcoes = {}) {

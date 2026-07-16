@@ -1,0 +1,19 @@
+FUSION ERP — CREDENCIAIS INICIAIS DO MODELO
+
+Administrador
+E-mail: admin@fusionerp.local
+Senha: Admin@123
+
+Recepção
+E-mail: recepcao@fusionerp.local
+Senha: Recepcao@123
+
+Responsável técnico
+Login: tecnico@fusionerp.local
+Senha: Tecnico@123
+
+Aluno modelo
+Login: aluno@fusionerp.local ou CPF 12345678909
+Senha: Aluno@123
+
+IMPORTANTE: altere todas as senhas e substitua os dados fictícios antes de iniciar a operação real.

@@ -1,0 +1,31 @@
+/* Contraste local: o tema premium nao pode deixar texto branco em cartao claro. */
+.aval-page .aval-header-card,
+.aval-page .aval-kpis>div{
+  background:#0a2a34!important;
+  border:1px solid #2d5a65!important;
+  color:#fff!important;
+  box-shadow:0 8px 22px rgba(3,18,24,.16)!important;
+}
+.aval-page .aval-header-card :is(h1,h2,h3,strong){
+  color:#fff!important;
+  opacity:1!important;
+  text-shadow:none!important;
+}
+.aval-page .aval-header-card p,
+.aval-page .aval-kpis>div span{
+  color:#c8dde2!important;
+  opacity:1!important;
+  text-shadow:none!important;
+}
+.aval-page .aval-kpis>div strong{
+  color:#fff!important;
+  opacity:1!important;
+  text-shadow:none!important;
+}
+.aval-page,
+.aval-page>*{
+  max-width:100%!important;
+  min-width:0!important;
+  box-sizing:border-box!important;
+}
+.aval-page .table-wrap{max-width:100%!important;overflow-x:auto!important}

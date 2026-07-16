@@ -2,6 +2,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import { professorSchema, professorUpdateSchema } from './professores.schema.mjs';
 import { listarProfessores, buscarProfessorPorId, buscarProfessorPorCpf, buscarProfessorPorEmail, buscarProfessorPorIdentificador, criarProfessor, atualizarProfessor, excluirProfessor, alterarStatusProfessor, verificarSenha, limparCpf } from './professores.repository.mjs';
+import { gerarTokenPortal, validarTokenPortal } from '../auth/auth.service.mjs';
 
 const DATA_DIR = path.resolve(process.cwd(), 'data');
 async function lerJson(nome, padrao = []) {
@@ -219,7 +220,12 @@ export async function login(dados = {}) {
   const prof = sanitizarProfessorSessao(professor);
   return {
     ok: true,
-    token: `fusion-professor-${prof.id}-${Date.now()}`,
+    token: gerarTokenPortal({
+      sub: prof.id,
+      tipo: 'professor',
+      perfil: prof.perfil,
+      permissoes: prof.acessoTodosAlunos === true ? ['professores', 'avaliacoes', 'treinos'] : ['avaliacoes', 'treinos']
+    }),
     professor: prof,
     usuario: {
       ...prof,
@@ -232,4 +238,13 @@ export async function login(dados = {}) {
     },
     mensagem: 'Professor autenticado com sucesso.'
   };
+}
+
+export async function validarSessao(tokenOuAuthorization = '') {
+  const payload = validarTokenPortal(tokenOuAuthorization, 'professor');
+  const professor = await buscarProfessorPorId(payload.sub);
+  if (!professor || !professorAtivo(professor)) {
+    throw Object.assign(new Error('Professor não encontrado, inativo ou bloqueado.'), { status: 401 });
+  }
+  return sanitizarProfessorSessao(professor);
 }
