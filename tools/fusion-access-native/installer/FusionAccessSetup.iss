@@ -75,6 +75,17 @@ begin
   end;
 end;
 
+function PrepareToInstall(var NeedsRestart: Boolean): String;
+var
+  ResultCode: Integer;
+begin
+  Result := '';
+  // Em atualizações, encerra primeiro a tarefa e o motor que mantêm arquivos bloqueados.
+  Exec(ExpandConstant('{sys}\schtasks.exe'), '/End /TN "Fusion Access Agent"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  Exec(ExpandConstant('{sys}\taskkill.exe'), '/F /T /IM FusionFacialWorker.exe', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  Sleep(2000);
+end;
+
 procedure CurStepChanged(CurStep: TSetupStep);
 var
   ResultCode: Integer;
