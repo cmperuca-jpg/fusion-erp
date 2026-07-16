@@ -80,11 +80,13 @@ int main(int argc, char** argv) {
 
     const std::map<std::string, std::string> auth = {
       {"x-agent-id", agentId}, {"x-agent-token", token},
-      {"x-facial-agent-version", "native-1.0.0"}, {"x-facial-engine-status", engine.status()}
+      {"x-facial-agent-version", "native-1.0.1"}
     };
     while (true) {
       try {
-        const auto response = http.request("GET", "/api/reconhecimento-facial/agent/next", "", auth);
+        auto headers = auth;
+        headers["x-facial-engine-status"] = engine.status();
+        const auto response = http.request("GET", "/api/reconhecimento-facial/agent/next", "", headers);
         if (response.status < 200 || response.status >= 300) throw std::runtime_error("Servidor respondeu HTTP " + std::to_string(response.status));
         const auto data = nlohmann::json::parse(response.body);
         if (!data.contains("tarefa") || data["tarefa"].is_null()) {
@@ -103,12 +105,12 @@ int main(int argc, char** argv) {
           else throw std::runtime_error("Operação facial não suportada");
 
           const nlohmann::json body = {{"ok", true}, {"resultado", result}};
-          const auto completed = http.request("POST", "/api/reconhecimento-facial/agent/tasks/" + id + "/result", body.dump(), auth);
+          const auto completed = http.request("POST", "/api/reconhecimento-facial/agent/tasks/" + id + "/result", body.dump(), headers);
           if (completed.status < 200 || completed.status >= 300) throw std::runtime_error("Falha ao confirmar tarefa facial");
           log(base, "INFO", "Tarefa facial concluída: " + action);
         } catch (const std::exception& error) {
           const nlohmann::json body = {{"ok", false}, {"erro", error.what()}};
-          http.request("POST", "/api/reconhecimento-facial/agent/tasks/" + id + "/result", body.dump(), auth);
+          http.request("POST", "/api/reconhecimento-facial/agent/tasks/" + id + "/result", body.dump(), headers);
           log(base, "ERROR", std::string("Tarefa facial falhou: ") + error.what());
         }
       } catch (const std::exception& error) {

@@ -48,7 +48,8 @@ FaceEngine::FaceEngine(const std::filesystem::path& baseDir)
   if (!std::filesystem::exists(detectorModel) || !std::filesystem::exists(recognizerModel)) {
     throw std::runtime_error("Modelos faciais não encontrados. Repare a instalação do Fusion Access.");
   }
-  detector_ = cv::FaceDetectorYN::create(detectorModel, "", cv::Size(320, 320), 0.88f, 0.3f, 5000);
+  // Mantém precisão, mas aceita câmeras comuns e iluminação real de academia.
+  detector_ = cv::FaceDetectorYN::create(detectorModel, "", cv::Size(320, 320), 0.75f, 0.3f, 5000);
   recognizer_ = cv::FaceRecognizerSF::create(recognizerModel, "");
   std::filesystem::create_directories(galleryPath_.parent_path());
   loadGallery();

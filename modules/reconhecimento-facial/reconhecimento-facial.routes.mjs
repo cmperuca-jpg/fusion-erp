@@ -22,6 +22,11 @@ const desafios = new Map();
 const pareamentos = new Map();
 const tentativasPareamento = new Map();
 
+router.use((req, res, next) => {
+  res.set("Cache-Control", "no-store, no-cache, must-revalidate");
+  next();
+});
+
 function respostaErro(res, erro) {
   return res.status(erro.status || 500).json({ ok: false, mensagem: erro.message || "Erro no reconhecimento facial." });
 }
