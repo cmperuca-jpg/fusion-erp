@@ -24,7 +24,7 @@ export function configuracaoFacial() {
   return {
     habilitado: booleano(process.env.FACIAL_ENABLED, true),
     liberarCatraca: booleano(process.env.FACIAL_RELEASE_ENABLED, false),
-    similaridadeMinima: Math.max(0.3, Math.min(0.95, numero(process.env.FACIAL_SIMILARITY_THRESHOLD, 0.45))),
+    similaridadeMinima: Math.max(0.3, Math.min(0.95, numero(process.env.FACIAL_SIMILARITY_THRESHOLD, 0.38))),
     movimentoMinimo: Math.max(4, Math.min(30, numero(process.env.FACIAL_LIVENESS_MIN_YAW, 8))),
     terminalConfigurado: Boolean(segredoTerminal())
   };
@@ -210,15 +210,13 @@ export async function identificarRosto({ imagens, desafio, terminalId } = {}) {
   const subject = texto(resultado?.subject, 120);
   const similaridade = numero(resultado?.similaridade, 0);
   const movimentoValido = resultado?.movimentoValido === true;
-  const reconhecido = Boolean(subject && movimentoValido && similaridade >= config.similaridadeMinima);
+  const reconhecido = Boolean(subject && similaridade >= config.similaridadeMinima);
   const cadastros = await lerJsonDuravel(COLECAO_CADASTROS, []);
   const cadastro = cadastros.find(item => item.subject === subject && item.status === "ativo");
   const aluno = cadastro ? await buscarAlunoPorId(cadastro.alunoId) : null;
 
   let resposta;
-  if (!movimentoValido) {
-    resposta = { reconhecido: false, autorizado: false, motivo: "Prova de movimento não confirmada. Tente novamente.", similaridade, movimentoValido };
-  } else if (!reconhecido || !cadastro || !aluno) {
+  if (!reconhecido || !cadastro || !aluno) {
     resposta = { reconhecido: false, autorizado: false, motivo: "Rosto não reconhecido.", similaridade, movimentoValido };
   } else if (!config.liberarCatraca) {
     resposta = { reconhecido: true, autorizado: false, homologacao: true, motivo: "Rosto reconhecido. Liberação facial ainda está em homologação.", similaridade, movimentoValido, aluno: { id: aluno.id, nome: aluno.nome } };
@@ -246,7 +244,9 @@ export async function listarCadastros() {
 }
 
 export async function listarEventos(limite = 50) {
-  return (await lerJsonDuravel(COLECAO_EVENTOS, [])).slice(0, Math.max(1, Math.min(200, Number(limite || 50))));
+  return (await lerJsonDuravel(COLECAO_EVENTOS, []))
+    .sort((a, b) => new Date(b.criadoEm || 0).getTime() - new Date(a.criadoEm || 0).getTime())
+    .slice(0, Math.max(1, Math.min(200, Number(limite || 50))));
 }
 
 export async function listarAlunosParaCadastro() {
