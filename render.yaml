@@ -48,6 +48,10 @@ services:
         value: true
       - key: FUSION_BACKUP_AUTO_MS
         value: 21600000
+      - key: FUSION_BACKUP_PART_MB
+        value: 40
+      - key: FUSION_BACKUP_RESTORE_MAX_MB
+        value: 250
       - key: ACCESS_AGENT_ID
         value: academia-01
       - key: ACCESS_AGENT_TOKEN

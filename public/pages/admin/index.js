@@ -58,8 +58,13 @@ async function carregarStatusBackup() {
   const persistencia = json.persistencia || {};
   const automatico = json.automatico || {};
   if (persistencia.configurado && persistencia.ok !== false) {
-    status.textContent = `Supabase ativo · backup ${automatico.ativo ? "automático" : "manual"}`;
-    status.className = "backup-status ok";
+    if (automatico.ultimoErro) {
+      status.textContent = "Supabase ativo · último backup automático falhou";
+      status.className = "backup-status erro";
+    } else {
+      status.textContent = `Supabase ativo · backup ${automatico.ativo ? "automático" : "manual"}`;
+      status.className = "backup-status ok";
+    }
   } else {
     status.textContent = persistencia.ultimoErro || "Supabase não configurado";
     status.className = "backup-status erro";
@@ -73,7 +78,7 @@ async function carregarBackups() {
   if (!resp.ok || json.ok === false) throw new Error(json.mensagem || "Erro ao listar backups.");
   const backups = json.backups || [];
   select.innerHTML = backups.length
-    ? '<option value="">Selecione um backup</option>' + backups.map(item => `<option value="${esc(item.caminho)}">${esc(item.name)} · ${esc(dataHoraBR(item.created_at || item.updated_at))}</option>`).join("")
+    ? '<option value="">Selecione um backup</option>' + backups.map(item => `<option value="${esc(item.caminho)}">${esc(item.nomeExibicao || item.name)} · ${esc(dataHoraBR(item.created_at || item.updated_at))}</option>`).join("")
     : '<option value="">Nenhum backup encontrado</option>';
 }
 
@@ -84,7 +89,10 @@ async function fazerBackupAgora() {
     const resp = await FusionAuth.fetchAuth("/api/backup/supabase", { method: "POST" });
     const json = await resp.json().catch(() => ({}));
     if (!resp.ok || json.ok === false) throw new Error(json.mensagem || "Erro ao criar backup.");
-    mostrarResultadoBackup(`Backup criado: ${json.nome || json.caminho}.`);
+    const partes = Number(json.partes || 1);
+    const detalhePartes = partes > 1 ? `, dividido em ${partes} partes` : "";
+    const detalheBanco = Number.isFinite(Number(json.totalRegistrosBanco)) ? `, ${Number(json.totalRegistrosBanco)} registro(s) do banco` : "";
+    mostrarResultadoBackup(`Backup criado: ${json.nome || json.caminho}${detalhePartes}${detalheBanco}.`);
     await carregarBackups();
     await carregarStatusBackup();
   } catch (erro) {
@@ -108,7 +116,7 @@ async function restaurarBackupSelecionado() {
     });
     const json = await resp.json().catch(() => ({}));
     if (!resp.ok || json.ok === false) throw new Error(json.mensagem || "Erro ao restaurar backup.");
-    mostrarResultadoBackup(`Restauração concluída: ${json.totalRestaurados || 0} arquivo(s). Atualize o painel.`);
+    mostrarResultadoBackup(`Restauração concluída: ${json.totalRestaurados || 0} arquivo(s) e banco transacional restaurados. Atualize o painel.`);
     await carregarBackups();
   } catch (erro) {
     mostrarResultadoBackup(erro.message, "erro");
