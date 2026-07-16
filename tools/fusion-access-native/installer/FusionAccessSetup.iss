@@ -49,7 +49,8 @@ var
 
 procedure InitializeWizard;
 begin
-  ExistingConfig := FileExists(ExpandConstant('{app}\agent.env'));
+  // A pasta de destino ainda não está inicializada durante InitializeWizard.
+  ExistingConfig := FileExists(ExpandConstant('{commonappdata}\FusionERP\AccessAgent\agent.env'));
   ActivationPage := CreateInputQueryPage(wpSelectDir,
     'Conectar ao Fusion ERP',
     'Informe o código mostrado no painel do Fusion ERP.',
