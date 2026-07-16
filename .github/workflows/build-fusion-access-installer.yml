@@ -22,8 +22,15 @@ jobs:
           vcpkg install nlohmann-json:x64-windows-static
           Invoke-WebRequest -Uri "https://github.com/opencv/opencv/releases/download/4.10.0/opencv-4.10.0-windows.exe" -OutFile "$env:RUNNER_TEMP\opencv.exe"
           & 7z x "$env:RUNNER_TEMP\opencv.exe" "-o$env:RUNNER_TEMP\opencv" -y | Out-Null
-          git clone --depth 1 https://github.com/opencv/opencv_zoo.git "$env:RUNNER_TEMP\opencv_zoo"
-          git -C "$env:RUNNER_TEMP\opencv_zoo" lfs pull
+          $models = "$env:RUNNER_TEMP\facial-models"
+          $licenses = "$env:RUNNER_TEMP\facial-licenses"
+          New-Item -ItemType Directory -Force $models, $licenses | Out-Null
+          Invoke-WebRequest -Uri "https://media.githubusercontent.com/media/opencv/opencv_zoo/main/models/face_detection_yunet/face_detection_yunet_2023mar.onnx" -OutFile "$models\face_detection_yunet_2023mar.onnx"
+          Invoke-WebRequest -Uri "https://media.githubusercontent.com/media/opencv/opencv_zoo/main/models/face_recognition_sface/face_recognition_sface_2021dec.onnx" -OutFile "$models\face_recognition_sface_2021dec.onnx"
+          Invoke-WebRequest -Uri "https://raw.githubusercontent.com/opencv/opencv_zoo/main/models/face_detection_yunet/LICENSE" -OutFile "$licenses\YuNet-LICENSE.txt"
+          Invoke-WebRequest -Uri "https://raw.githubusercontent.com/opencv/opencv_zoo/main/models/face_recognition_sface/LICENSE" -OutFile "$licenses\SFace-LICENSE.txt"
+          if ((Get-Item "$models\face_detection_yunet_2023mar.onnx").Length -lt 100000) { throw "Download do modelo YuNet inválido ou incompleto." }
+          if ((Get-Item "$models\face_recognition_sface_2021dec.onnx").Length -lt 10000000) { throw "Download do modelo SFace inválido ou incompleto." }
 
       - name: Compilar motor nativo
         shell: pwsh
@@ -47,13 +54,13 @@ jobs:
           Copy-Item "$source\runtime\*" $stage -Recurse -Force
           Copy-Item "$source\legacy\FusionAccessAgent.ps1" $stage -Force
           Copy-Item "$source\legacy\drivers\*" "$stage\drivers" -Recurse -Force
-          Copy-Item "$env:RUNNER_TEMP\opencv_zoo\models\face_detection_yunet\face_detection_yunet_2023mar.onnx" "$stage\models"
-          Copy-Item "$env:RUNNER_TEMP\opencv_zoo\models\face_recognition_sface\face_recognition_sface_2021dec.onnx" "$stage\models"
+          Copy-Item "$env:RUNNER_TEMP\facial-models\face_detection_yunet_2023mar.onnx" "$stage\models"
+          Copy-Item "$env:RUNNER_TEMP\facial-models\face_recognition_sface_2021dec.onnx" "$stage\models"
           Copy-Item "$source\THIRD_PARTY_NOTICES.txt" $stage
           Copy-Item "$source\GUIA-OPERADOR.txt" $stage
           Copy-Item "$env:RUNNER_TEMP\opencv\opencv\LICENSE" "$stage\licenses\OpenCV-LICENSE.txt"
-          Copy-Item "$env:RUNNER_TEMP\opencv_zoo\models\face_detection_yunet\LICENSE" "$stage\licenses\YuNet-LICENSE.txt"
-          Copy-Item "$env:RUNNER_TEMP\opencv_zoo\models\face_recognition_sface\LICENSE" "$stage\licenses\SFace-LICENSE.txt"
+          Copy-Item "$env:RUNNER_TEMP\facial-licenses\YuNet-LICENSE.txt" "$stage\licenses\YuNet-LICENSE.txt"
+          Copy-Item "$env:RUNNER_TEMP\facial-licenses\SFace-LICENSE.txt" "$stage\licenses\SFace-LICENSE.txt"
           Copy-Item "$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static\share\nlohmann-json\copyright" "$stage\licenses\nlohmann-json-LICENSE.txt"
           Invoke-WebRequest -Uri "https://aka.ms/vs/17/release/vc_redist.x64.exe" -OutFile "$stage\VC_redist.x64.exe"
 
