@@ -1,42 +1,5 @@
 [
   {
-    "id": "mat_modelo_001",
-    "numero": "MODELO-001",
-    "numeroMatricula": "MODELO-001",
-    "alunoId": "aluno_modelo_001",
-    "aluno": "Aluno Modelo",
-    "alunoNome": "Aluno Modelo",
-    "planoId": "plano_modelo_demonstracao",
-    "plano": "Plano Demonstração",
-    "planoNome": "Plano Demonstração",
-    "status": "Ativa",
-    "bloqueada": false,
-    "dataInicio": "2026-07-16",
-    "dataMatricula": "2026-07-16",
-    "dataAtivacao": "2026-07-16",
-    "ativadaEm": "2026-07-16T12:14:17.917Z",
-    "valorPlano": 0,
-    "valorMensal": 0,
-    "valorMensalTotal": 0,
-    "valorServicos": 0,
-    "statusPagamento": "Isento — conta modelo",
-    "formaPagamento": "Cortesia",
-    "gerarMensalidadeAutomatica": false,
-    "renovacaoAutomatica": false,
-    "origem": "reset_modelo_entrega",
-    "criadoEm": "2026-07-16T12:14:17.917Z",
-    "atualizadoEm": "2026-07-16T12:14:17.917Z",
-    "historico": [
-      {
-        "id": "hist_modelo_001",
-        "acao": "matricula_modelo",
-        "descricao": "Matrícula de demonstração sem cobrança.",
-        "usuario": "Sistema",
-        "criadoEm": "2026-07-16T12:14:17.917Z"
-      }
-    ]
-  },
-  {
     "id": "mat_imp_57dbf310-a262-44fd-875a-ddf630cb85bf",
     "numero": "MAT-IMP-202608-000001",
     "alunoId": "f9c51f10-370e-4663-b34a-063453bdc7a3",
