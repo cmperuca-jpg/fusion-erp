@@ -1,1 +1,28 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><meta name="theme-color" content="#041923"><title>Terminal facial - Fusion ERP</title><link rel="stylesheet" href="/pages/reconhecimento-facial/style.css"></head><body class="terminal-body"><main class="terminal"><section class="terminal-camera"><video id="camera" autoplay playsinline muted></video><div class="camera-guide"></div></section><section class="terminal-side"><span class="terminal-brand">Fusion ERP · Acesso</span><h1 id="titulo">Posicione seu rosto</h1><div class="terminal-instruction" id="instrucao">Mantenha o rosto dentro da marcação.</div><div class="terminal-result" id="resultado">Preparando o terminal...</div><button class="face-btn secondary" id="telaCheia">Usar em tela cheia</button></section></main><section class="terminal-setup" id="config"><div class="face-card face-form"><h2>Conectar este celular</h2><p>No painel do Fusion ERP, abra Reconhecimento facial e clique em Configurar celular.</p><label for="terminalId">Nome deste acesso</label><input id="terminalId" value="entrada-principal"><label for="codigo">Código de seis números</label><input id="codigo" inputmode="numeric" maxlength="7" autocomplete="one-time-code"><button class="face-btn" id="conectar">Conectar</button><div class="face-message hidden" id="configMsg"></div></div></section><script src="/pages/reconhecimento-facial/terminal.js"></script></body></html>
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <meta name="theme-color" content="#041923">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Terminal facial - Fusion ERP</title>
+  <link rel="manifest" href="/pages/reconhecimento-facial/manifest.webmanifest">
+  <link rel="icon" href="/pages/reconhecimento-facial/icon.svg">
+  <link rel="stylesheet" href="/pages/reconhecimento-facial/terminal-pwa.css">
+</head>
+<body class="terminal-body">
+  <main class="terminal">
+    <section class="terminal-camera"><video id="camera" autoplay playsinline muted></video><div class="camera-guide"></div></section>
+    <section class="terminal-side">
+      <span class="terminal-brand">Fusion ERP · Acesso</span><h1 id="titulo">Posicione seu rosto</h1>
+      <div class="terminal-instruction" id="instrucao">Mantenha o rosto dentro da marcação.</div>
+      <div class="terminal-result" id="resultado">Preparando o terminal...</div>
+      <div class="terminal-actions"><button class="face-btn secondary" id="telaCheia">Tela cheia</button><button class="face-btn secondary hidden" id="instalar">Instalar terminal</button></div>
+    </section>
+  </main>
+  <section class="terminal-setup" id="config"><div class="face-card face-form"><h2>Conectar este celular</h2><p>No painel do Fusion ERP, abra Reconhecimento facial e clique em Configurar celular.</p><label for="terminalId">Nome deste acesso</label><input id="terminalId" value="entrada-principal"><label for="codigo">Código de seis números</label><input id="codigo" inputmode="numeric" maxlength="7" autocomplete="one-time-code"><button class="face-btn" id="conectar">Conectar</button><div class="face-message hidden" id="configMsg"></div></div></section>
+  <script src="/pages/reconhecimento-facial/terminal.js"></script>
+</body>
+</html>

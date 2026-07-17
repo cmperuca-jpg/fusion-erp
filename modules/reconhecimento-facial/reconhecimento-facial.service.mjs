@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 import { lerJsonDuravel, salvarJsonDuravel, executarTransacaoJson } from "../core/persistence/durable-json.mjs";
 import { buscarAlunoPorId } from "../alunos/alunos.repository.mjs";
-import { avaliarAcessoAluno } from "../access-engine/access-engine.service.mjs";
+import { avaliarAcessoAluno, liberarRemoto } from "../access-engine/access-engine.service.mjs";
 
 const COLECAO_CADASTROS = "reconhecimento_facial_cadastros";
 const COLECAO_EVENTOS = "reconhecimento_facial_eventos";
@@ -9,6 +9,8 @@ const TEMPO_TAREFA_MS = Math.max(10_000, Math.min(60_000, Number(process.env.FAC
 const MAX_IMAGEM_BYTES = 1_500_000;
 const tarefas = new Map();
 const fila = [];
+const ultimasLiberacoes = new Map();
+const INTERVALO_LIBERACAO_DUPLICADA_MS = 15_000;
 let agenteFacial = { vistoEm: null, estado: "offline", versao: "", motor: null };
 
 function agora() { return new Date().toISOString(); }
@@ -17,6 +19,11 @@ function numero(valor, padrao = 0) { const n = Number(valor); return Number.isFi
 function booleano(valor, padrao = false) {
   if (valor === undefined || valor === null || valor === "") return padrao;
   return ["1", "true", "sim", "yes", "on"].includes(String(valor).toLowerCase());
+}
+function pessoaAtiva(pessoa = {}) {
+  if (pessoa.ativo === false || pessoa.bloqueado === true) return false;
+  const status = texto(pessoa.status || pessoa.statusMatricula || "ativo").toLowerCase();
+  return !["inativo", "inativa", "bloqueado", "bloqueada", "cancelado", "cancelada", "suspenso", "suspensa"].includes(status);
 }
 function erro(mensagem, status = 400) { const e = new Error(mensagem); e.status = status; throw e; }
 
@@ -55,9 +62,16 @@ export function normalizarImagem(valor) {
   return base64;
 }
 
-function assuntoDoAluno(alunoId) {
+function assuntoDaPessoa(tipo, pessoaId) {
   const tenant = texto(process.env.FUSION_TENANT_ID || "academia", 120);
-  return `fusion_${crypto.createHash("sha256").update(`${tenant}:${alunoId}`).digest("hex").slice(0, 32)}`;
+  return `fusion_${crypto.createHash("sha256").update(`${tenant}:${tipo}:${pessoaId}`).digest("hex").slice(0, 32)}`;
+}
+
+async function buscarPessoa(tipo, pessoaId) {
+  if (tipo === "aluno") return await buscarAlunoPorId(pessoaId);
+  const arquivo = tipo === "professor" ? "professores.json" : "usuarios.json";
+  const lista = await lerJsonDuravel(arquivo, []);
+  return lista.find(item => String(item.id) === String(pessoaId)) || null;
 }
 
 function limparExpiradas() {
@@ -147,22 +161,29 @@ async function registrarEvento(dados = {}) {
   }, { operacaoId: `facial-evento-${crypto.randomUUID()}` });
 }
 
-export async function cadastrarRosto({ alunoId, imagens, consentimento, usuario } = {}) {
+export async function cadastrarRosto({ alunoId, pessoaId, pessoaTipo = "aluno", imagens, consentimento, usuario, aparencia = "uso_variavel" } = {}) {
   if (!consentimento) erro("Confirme o consentimento para uso da biometria facial.");
-  const aluno = await buscarAlunoPorId(alunoId);
-  if (!aluno) erro("Aluno não encontrado.", 404);
+  const tipo = ["aluno", "professor", "funcionario"].includes(pessoaTipo) ? pessoaTipo : "aluno";
+  const id = pessoaId || alunoId;
+  const pessoa = await buscarPessoa(tipo, id);
+  if (!pessoa) erro("Pessoa não encontrada.", 404);
   const capturas = Array.isArray(imagens) ? imagens.map(normalizarImagem) : [];
   if (capturas.length < 3) erro("Não foi possível obter as amostras automáticas do rosto.");
-  const subject = assuntoDoAluno(String(aluno.id || alunoId));
+  const subject = assuntoDaPessoa(tipo, String(pessoa.id || id));
   const resultado = await criarTarefa("cadastrar", { subject, imagens: capturas.slice(0, 3) });
 
   const cadastro = await executarTransacaoJson(async () => {
     const lista = await lerJsonDuravel(COLECAO_CADASTROS, []);
-    const existente = lista.find(item => String(item.alunoId) === String(aluno.id || alunoId));
+    const existente = lista.find(item => item.subject === subject);
     const registro = {
       id: existente?.id || crypto.randomUUID(),
-      alunoId: String(aluno.id || alunoId),
-      alunoNome: texto(aluno.nome, 180),
+      pessoaId: String(pessoa.id || id),
+      pessoaTipo: tipo,
+      pessoaNome: texto(pessoa.nome, 180),
+      perfil: texto(pessoa.perfil || (tipo === "aluno" ? "Aluno" : tipo === "professor" ? "Professor" : "Funcionário"), 80),
+      alunoId: tipo === "aluno" ? String(pessoa.id || id) : "",
+      alunoNome: texto(pessoa.nome, 180),
+      aparencia: ["com_oculos", "sem_oculos", "uso_variavel"].includes(aparencia) ? aparencia : "uso_variavel",
       subject,
       status: "ativo",
       exemplos: Array.isArray(resultado?.exemplos) ? resultado.exemplos.map(item => texto(item.imageId || item.image_id, 120)).filter(Boolean) : [],
@@ -175,15 +196,15 @@ export async function cadastrarRosto({ alunoId, imagens, consentimento, usuario 
     if (existente) Object.assign(existente, registro); else lista.unshift(registro);
     await salvarJsonDuravel(COLECAO_CADASTROS, lista);
     return registro;
-  }, { operacaoId: `facial-cadastro-${aluno.id || alunoId}` });
+  }, { operacaoId: `facial-cadastro-${tipo}-${pessoa.id || id}` });
 
   await registrarEvento({ tipo: "cadastro", alunoId: cadastro.alunoId, alunoNome: cadastro.alunoNome, reconhecido: true, autorizado: false, motivo: "Biometria facial cadastrada." });
   return cadastro;
 }
 
-export async function removerRosto(alunoId, usuario = {}) {
+export async function removerRosto(pessoaId, usuario = {}, pessoaTipo = "") {
   const lista = await lerJsonDuravel(COLECAO_CADASTROS, []);
-  const cadastro = lista.find(item => String(item.alunoId) === String(alunoId) && item.status !== "removido");
+  const cadastro = lista.find(item => String(item.pessoaId || item.alunoId) === String(pessoaId) && (!pessoaTipo || (item.pessoaTipo || "aluno") === pessoaTipo) && item.status !== "removido");
   if (!cadastro) erro("Cadastro facial não encontrado.", 404);
   await criarTarefa("remover", { subject: cadastro.subject });
   cadastro.status = "removido";
@@ -213,22 +234,44 @@ export async function identificarRosto({ imagens, desafio, terminalId } = {}) {
   const reconhecido = Boolean(subject && similaridade >= config.similaridadeMinima);
   const cadastros = await lerJsonDuravel(COLECAO_CADASTROS, []);
   const cadastro = cadastros.find(item => item.subject === subject && item.status === "ativo");
-  const aluno = cadastro ? await buscarAlunoPorId(cadastro.alunoId) : null;
+  const pessoaTipo = cadastro?.pessoaTipo || "aluno";
+  const pessoaId = cadastro?.pessoaId || cadastro?.alunoId;
+  const pessoa = cadastro ? await buscarPessoa(pessoaTipo, pessoaId) : null;
+  const aluno = pessoaTipo === "aluno" ? pessoa : null;
 
   let resposta;
-  if (!reconhecido || !cadastro || !aluno) {
+  if (!reconhecido || !cadastro || !pessoa) {
     resposta = { reconhecido: false, autorizado: false, motivo: "Rosto não reconhecido.", similaridade, movimentoValido };
+  } else if (!pessoaAtiva(pessoa)) {
+    resposta = { reconhecido: true, autorizado: false, motivo: "Cadastro ou vínculo inativo. Procure a recepção.", similaridade, movimentoValido, aluno: { id: pessoa.id, nome: pessoa.nome }, pessoaTipo };
   } else if (!config.liberarCatraca) {
-    resposta = { reconhecido: true, autorizado: false, homologacao: true, motivo: "Rosto reconhecido. Liberação facial ainda está em homologação.", similaridade, movimentoValido, aluno: { id: aluno.id, nome: aluno.nome } };
+    resposta = { reconhecido: true, autorizado: false, homologacao: true, motivo: "Rosto reconhecido. Liberação facial ainda está em homologação.", similaridade, movimentoValido, aluno: { id: pessoa.id, nome: pessoa.nome }, pessoaTipo };
   } else {
-    const acesso = await avaliarAcessoAluno({ aluno, dispositivoId: "disp_henry7x_01", direcao: "entrada", origem: "reconhecimento-facial" });
-    resposta = { reconhecido: true, autorizado: acesso.autorizado === true, motivo: acesso.motivo, similaridade, movimentoValido, aluno: { id: aluno.id, nome: aluno.nome }, comandoId: acesso.catraca?.commandId || null };
+    const chaveLiberacao = `${texto(terminalId, 120)}:${pessoaTipo}:${pessoa.id}`;
+    const ultimaLiberacao = ultimasLiberacoes.get(chaveLiberacao) || 0;
+    if (Date.now() - ultimaLiberacao < INTERVALO_LIBERACAO_DUPLICADA_MS) {
+      resposta = {
+        reconhecido: true,
+        autorizado: false,
+        jaRegistrado: true,
+        motivo: "Acesso já registrado. Aguarde alguns segundos para uma nova entrada.",
+        similaridade,
+        movimentoValido,
+        aluno: { id: pessoa.id, nome: pessoa.nome }, pessoaTipo
+      };
+    } else {
+    const acesso = pessoaTipo === "aluno"
+      ? await avaliarAcessoAluno({ aluno, dispositivoId: "disp_henry7x_01", direcao: "entrada", origem: "reconhecimento-facial" })
+      : await liberarRemoto({ dispositivoId: "disp_henry7x_01", direcao: "entrada", origem: "reconhecimento-facial", alunoId: pessoa.id, alunoNome: pessoa.nome, motivo: `acesso-${pessoaTipo}` });
+    resposta = { reconhecido: true, autorizado: pessoaTipo === "aluno" ? acesso.autorizado === true : acesso.ok === true, motivo: pessoaTipo === "aluno" ? acesso.motivo : "Acesso liberado", similaridade, movimentoValido, aluno: { id: pessoa.id, nome: pessoa.nome }, pessoaTipo, comandoId: acesso.catraca?.commandId || null };
+      if (resposta.autorizado) ultimasLiberacoes.set(chaveLiberacao, Date.now());
+    }
   }
 
   await registrarEvento({
     tipo: "identificacao",
-    alunoId: aluno?.id || cadastro?.alunoId || "",
-    alunoNome: aluno?.nome || cadastro?.alunoNome || "",
+    alunoId: pessoa?.id || cadastro?.pessoaId || cadastro?.alunoId || "",
+    alunoNome: pessoa?.nome || cadastro?.pessoaNome || cadastro?.alunoNome || "",
     reconhecido: resposta.reconhecido,
     autorizado: resposta.autorizado,
     similaridade,
@@ -252,6 +295,19 @@ export async function listarEventos(limite = 50) {
 export async function listarAlunosParaCadastro() {
   const alunos = await lerJsonDuravel("alunos.json", []);
   return alunos.map(aluno => ({ id: aluno.id, nome: aluno.nome, cpf: aluno.cpf || "", status: aluno.statusMatricula || aluno.status || "" })).sort((a, b) => String(a.nome).localeCompare(String(b.nome), "pt-BR"));
+}
+
+export async function listarPessoasParaCadastro() {
+  const [alunos, professores, usuarios] = await Promise.all([
+    listarAlunosParaCadastro(),
+    lerJsonDuravel("professores.json", []),
+    lerJsonDuravel("usuarios.json", [])
+  ]);
+  const pessoas = alunos.map(item => ({ ...item, tipo: "aluno", perfil: "Aluno" }));
+  for (const item of professores) if (!String(item.status || "ativo").toLowerCase().includes("bloq")) pessoas.push({ id: item.id, nome: item.nome, tipo: "professor", perfil: item.perfil || "Professor", status: item.status || "Ativo" });
+  const permitidos = new Set(["administrador", "admin", "recepcao", "responsavel_tecnico"]);
+  for (const item of usuarios) if (String(item.status || "ativo").toLowerCase() === "ativo" && permitidos.has(String(item.perfil || "").toLowerCase())) pessoas.push({ id: item.id, nome: item.nome, tipo: "funcionario", perfil: item.perfil, status: item.status });
+  return pessoas.sort((a, b) => String(a.nome).localeCompare(String(b.nome), "pt-BR"));
 }
 
 export function statusFacial() {

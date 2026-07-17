@@ -1,0 +1,11 @@
+{
+  "name": "Fusion ERP - Terminal Facial",
+  "short_name": "Fusion Facial",
+  "start_url": "/pages/reconhecimento-facial/index.html",
+  "scope": "/pages/reconhecimento-facial/",
+  "display": "fullscreen",
+  "orientation": "portrait",
+  "background_color": "#041923",
+  "theme_color": "#041923",
+  "icons": [{ "src": "/pages/reconhecimento-facial/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}

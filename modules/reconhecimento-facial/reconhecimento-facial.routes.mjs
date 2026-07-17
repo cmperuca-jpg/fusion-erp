@@ -9,6 +9,7 @@ import {
   listarAlunosParaCadastro,
   listarCadastros,
   listarEventos,
+  listarPessoasParaCadastro,
   obterTarefaFacial,
   removerRosto,
   statusFacial,
@@ -21,6 +22,9 @@ const acessos = new Map();
 const desafios = new Map();
 const pareamentos = new Map();
 const tentativasPareamento = new Map();
+const falhasReconhecimento = new Map();
+const MAX_FALHAS_CONSECUTIVAS = 3;
+const PAUSA_APOS_FALHAS_MS = 30_000;
 
 router.use((req, res, next) => {
   res.set("Cache-Control", "no-store, no-cache, must-revalidate");
@@ -91,19 +95,47 @@ router.get("/terminal/desafio", autenticarTerminal, (req, res) => {
 router.post("/terminal/identificar", autenticarTerminal, async (req, res) => {
   try {
     const terminalId = req.get("x-facial-terminal-id") || "terminal";
+    const controle = falhasReconhecimento.get(terminalId) || { falhas: 0, bloqueadoAte: 0 };
+    if (controle.bloqueadoAte > Date.now()) {
+      const segundos = Math.max(1, Math.ceil((controle.bloqueadoAte - Date.now()) / 1000));
+      return res.status(429).json({
+        ok: false,
+        mensagem: `Três tentativas não reconhecidas. Aguarde ${segundos} segundos.`,
+        bloqueadoAte: new Date(controle.bloqueadoAte).toISOString(),
+        segundosRestantes: segundos
+      });
+    }
     const esperado = desafios.get(terminalId);
     desafios.delete(terminalId);
     if (!esperado || esperado.expiraEm < Date.now() || esperado.desafioId !== req.body?.desafioId || esperado.desafio !== req.body?.desafio) {
       return res.status(400).json({ ok: false, mensagem: "Desafio facial expirado. Tente novamente." });
     }
     const resultado = await identificarRosto({ ...(req.body || {}), terminalId });
-    res.json({ ok: true, ...resultado });
+    if (resultado.reconhecido) {
+      falhasReconhecimento.delete(terminalId);
+      return res.json({ ok: true, ...resultado, tentativasRestantes: MAX_FALHAS_CONSECUTIVAS });
+    }
+    controle.falhas += 1;
+    if (controle.falhas >= MAX_FALHAS_CONSECUTIVAS) {
+      controle.falhas = 0;
+      controle.bloqueadoAte = Date.now() + PAUSA_APOS_FALHAS_MS;
+    }
+    falhasReconhecimento.set(terminalId, controle);
+    return res.json({
+      ok: true,
+      ...resultado,
+      tentativasRestantes: controle.bloqueadoAte ? 0 : MAX_FALHAS_CONSECUTIVAS - controle.falhas,
+      bloqueadoAte: controle.bloqueadoAte ? new Date(controle.bloqueadoAte).toISOString() : null
+    });
   } catch (erro) { respostaErro(res, erro); }
 });
 
 router.get("/status", autenticarGestor, (req, res) => res.json({ ok: true, ...statusFacial() }));
 router.get("/alunos", autenticarGestor, async (req, res) => {
   try { res.json({ ok: true, alunos: await listarAlunosParaCadastro() }); } catch (erro) { respostaErro(res, erro); }
+});
+router.get("/pessoas", autenticarGestor, async (req, res) => {
+  try { res.json({ ok: true, pessoas: await listarPessoasParaCadastro() }); } catch (erro) { respostaErro(res, erro); }
 });
 router.get("/cadastros", autenticarGestor, async (req, res) => {
   try { res.json({ ok: true, cadastros: await listarCadastros() }); } catch (erro) { respostaErro(res, erro); }
@@ -112,10 +144,16 @@ router.get("/eventos", autenticarGestor, async (req, res) => {
   try { res.json({ ok: true, eventos: await listarEventos(req.query.limite) }); } catch (erro) { respostaErro(res, erro); }
 });
 router.post("/cadastros/:alunoId", autenticarGestor, async (req, res) => {
-  try { res.status(201).json({ ok: true, cadastro: await cadastrarRosto({ alunoId: req.params.alunoId, imagens: req.body?.imagens, consentimento: req.body?.consentimento === true, usuario: req.usuario }) }); } catch (erro) { respostaErro(res, erro); }
+  try { res.status(201).json({ ok: true, cadastro: await cadastrarRosto({ alunoId: req.params.alunoId, imagens: req.body?.imagens, consentimento: req.body?.consentimento === true, aparencia: req.body?.aparencia, usuario: req.usuario }) }); } catch (erro) { respostaErro(res, erro); }
+});
+router.post("/cadastros/:pessoaTipo/:pessoaId", autenticarGestor, async (req, res) => {
+  try { res.status(201).json({ ok: true, cadastro: await cadastrarRosto({ pessoaId: req.params.pessoaId, pessoaTipo: req.params.pessoaTipo, imagens: req.body?.imagens, consentimento: req.body?.consentimento === true, aparencia: req.body?.aparencia, usuario: req.usuario }) }); } catch (erro) { respostaErro(res, erro); }
 });
 router.delete("/cadastros/:alunoId", autenticarGestor, async (req, res) => {
   try { res.json({ ok: true, cadastro: await removerRosto(req.params.alunoId, req.usuario) }); } catch (erro) { respostaErro(res, erro); }
+});
+router.delete("/cadastros/:pessoaTipo/:pessoaId", autenticarGestor, async (req, res) => {
+  try { res.json({ ok: true, cadastro: await removerRosto(req.params.pessoaId, req.usuario, req.params.pessoaTipo) }); } catch (erro) { respostaErro(res, erro); }
 });
 
 router.get("/agent/next", (req, res) => {
