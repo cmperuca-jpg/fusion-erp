@@ -234,6 +234,45 @@ body.fusion-com-sidebar .fusion-menu-sair{
   color:#eaf5f7!important;
   box-shadow:none!important;
 }
+body.fusion-com-sidebar .fusion-sidebar-ferramentas{
+  display:flex!important;
+  align-items:center!important;
+  gap:8px!important;
+  padding:8px 12px 12px!important;
+  border-bottom:1px solid #24444d!important;
+}
+body.fusion-com-sidebar .fusion-catraca-controle{
+  display:grid!important;
+  grid-template-columns:1fr auto!important;
+  align-items:center!important;
+  gap:6px!important;
+  flex:1 1 auto!important;
+  min-width:0!important;
+  padding:6px 7px!important;
+  border:1px solid #315963!important;
+  background:#092630!important;
+}
+body.fusion-com-sidebar .fusion-catraca-status{
+  min-width:0!important;
+  color:#eaf7f8!important;
+  font-size:10px!important;
+  line-height:1.15!important;
+}
+body.fusion-com-sidebar .fusion-catraca-toggle{
+  min-height:28px!important;
+  padding:5px 8px!important;
+  font-size:10px!important;
+  background:var(--fusion-fix-cyan)!important;
+  color:#fff!important;
+}
+body.fusion-com-sidebar .fusion-sidebar-notificacoes{flex:0 0 auto!important;position:relative!important}
+body.fusion-com-sidebar .fusion-sidebar-notificacoes .fusion-notificacoes-panel{
+  left:0!important;
+  right:auto!important;
+  top:42px!important;
+  width:min(360px,calc(100vw - 24px))!important;
+  z-index:5000!important;
+}
 body.fusion-com-sidebar :is(.topbar,.fusion-topbar){display:none!important}
 
 /* Páginas especiais, como reconhecimento facial, também respeitam a sidebar. */

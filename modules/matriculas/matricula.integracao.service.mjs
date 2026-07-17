@@ -6,6 +6,12 @@ function txt(v){ return String(v??'').trim(); }
 function hojeISO(){ return new Date().toISOString().slice(0,10); }
 function agoraISO(){ return new Date().toISOString(); }
 function addMeses(dataISO, meses=1){ const d=new Date(`${dataISO||hojeISO()}T12:00:00`); d.setMonth(d.getMonth()+Number(meses||1)); return d.toISOString().slice(0,10); }
+function proximoMesNoDia(dataISO, dia){
+  const d=new Date(`${dataISO||hojeISO()}T12:00:00`);
+  d.setDate(1); d.setMonth(d.getMonth()+1);
+  d.setDate(Math.max(1,Math.min(28,Number(dia)||1)));
+  return d.toISOString().slice(0,10);
+}
 function alunoNome(a){ return a?.nome || a?.name || a?.nomeCompleto || ''; }
 function normalizar(v){ return String(v||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
 function tipoPlano(plano){ const n=normalizar(plano?.tipoPlano || plano?.tipo || 'Mensal'); if(n.includes('pre')) return 'Pré-pago'; if(n.includes('diar')) return 'Diarista'; if(n.includes('semes')) return 'Semestral'; if(n.includes('anual')) return 'Anual'; return 'Mensal'; }
@@ -146,8 +152,9 @@ export async function integrarMatriculaAluno(alunoId, planoId, opcoes={}){
   const tipo=opcoes.tipoCobranca || opcoes.tipoPlano || tipoPlano(plano);
   const dataMatricula=opcoes.dataMatricula || hojeISO();
   const dataInicio=opcoes.dataInicio || dataMatricula;
+  const diaVencimento=Math.max(1,Math.min(28,Number(opcoes.diaVencimento)||Number(String(dataMatricula).slice(8,10))||1));
   const vencimentoInicial=opcoes.vencimento || dataMatricula;
-  const proximoVencimento=addMeses(vencimentoInicial, 1);
+  const proximoVencimento=opcoes.diaVencimento ? proximoMesNoDia(dataMatricula,diaVencimento) : addMeses(vencimentoInicial, 1);
   const dataFim=opcoes.dataFim || (mesesPlano(plano)>0 ? addMeses(dataInicio, mesesPlano(plano)) : '');
 
   const servicos=montarServicos(base,plano,{...opcoes,tipoCobranca:tipo});
@@ -165,16 +172,21 @@ export async function integrarMatriculaAluno(alunoId, planoId, opcoes={}){
   const valorServicos=r.valorServicos;
   const valorPlanoBase=dinheiro((plano?.id ? (plano.valorMensal ?? plano.valor ?? plano.mensalidade) : 0) ?? opcoes.valorPlano ?? opcoes.valorMensalPlano ?? opcoes.valorMensal ?? 0);
   const valorMensalTotal=dinheiro(Math.max(0, valorPlanoBase));
-  const valorEntradaUnica=dinheiro(Math.max(0, valorMatricula + valorMensalTotal - desconto));
+  const diaMatricula=Number(String(dataMatricula).slice(8,10))||diaVencimento;
+  const diferencaDias=opcoes.ajustarPrimeiraMensalidade===true ? diaVencimento-diaMatricula : 0;
+  const ajusteProporcional=dinheiro(valorMensalTotal*(diferencaDias/30));
+  const valorPrimeiraMensalidade=dinheiro(Math.max(0,valorMensalTotal+ajusteProporcional));
+  const valorEntradaUnica=dinheiro(Math.max(0, valorMatricula + valorPrimeiraMensalidade - desconto));
   const geraMensalidade = opcoes.gerarMensalidade !== false && planoGeraMensalidade(plano);
   const nome=alunoNome(aluno);
   const origem = tipoAvulso(tipo) ? `venda_${normalizar(tipo).replace('-','_')}` : 'matricula_plano';
   const itensEntrada = [
     { descricao:'Taxa de matricula', valor:valorMatricula },
     { descricao:'Plano mensal', valor:valorMensalTotal },
+    ...(ajusteProporcional ? [{ descricao:`Ajuste proporcional de ${Math.abs(diferencaDias)} dia(s)`, valor:ajusteProporcional }] : []),
     { descricao:'Desconto inicial', valor:dinheiro(-desconto) }
   ];
-  const resumoValoresEntrada = `Taxa de matricula ${valorMatricula.toFixed(2)} + plano mensal ${valorMensalTotal.toFixed(2)} - desconto ${desconto.toFixed(2)} = total ${valorEntradaUnica.toFixed(2)}`;
+  const resumoValoresEntrada = `Taxa de matricula ${valorMatricula.toFixed(2)} + plano mensal ${valorMensalTotal.toFixed(2)} + ajuste proporcional ${ajusteProporcional.toFixed(2)} - desconto ${desconto.toFixed(2)} = total ${valorEntradaUnica.toFixed(2)}`;
 
   let mensalidadeInicial=null;
   let financeiroInicial=null;
@@ -199,6 +211,9 @@ export async function integrarMatriculaAluno(alunoId, planoId, opcoes={}){
     valorServicos,
     valorMensal:valorMensalTotal,
     valorMensalTotal,
+    valorPrimeiraMensalidade,
+    ajusteProporcional,
+    diaVencimento,
     descontoMatricula:desconto,
     valorTotalInicial:valorEntradaUnica,
     itensFinanceirosIniciais:itensEntrada,
@@ -242,7 +257,7 @@ export async function integrarMatriculaAluno(alunoId, planoId, opcoes={}){
       taxaMatricula:valorMatricula,
       valorPlano:valorPlanoBase,
       valorServicos,
-      valor:valorMensalTotal,
+      valor:valorPrimeiraMensalidade,
       total:valorEntradaUnica,
       valorOriginal:valorEntradaUnica,
       valorTotalInicial:valorEntradaUnica,
@@ -281,7 +296,10 @@ export async function integrarMatriculaAluno(alunoId, planoId, opcoes={}){
       valorMatricula,
       taxaMatricula:valorMatricula,
       valorPlano:valorPlanoBase,
-      valorMensal:valorMensalTotal,
+      valorMensal:valorPrimeiraMensalidade,
+      valorMensalNormal:valorMensalTotal,
+      ajusteProporcional,
+      diaVencimento,
       valorServicos,
       valorPago:valorEntradaUnica > 0 ? 0 : valorEntradaUnica,
       valorRecebido:valorEntradaUnica > 0 ? 0 : valorEntradaUnica,
@@ -323,7 +341,10 @@ export async function integrarMatriculaAluno(alunoId, planoId, opcoes={}){
       valorMatricula,
       taxaMatricula:valorMatricula,
       valorPlano:valorPlanoBase,
-      valorMensal:valorMensalTotal,
+      valorMensal:valorPrimeiraMensalidade,
+      valorMensalNormal:valorMensalTotal,
+      ajusteProporcional,
+      diaVencimento,
       valorServicos,
       descontoMatricula:desconto,
       valorRecebido:valorEntradaUnica > 0 ? 0 : valorEntradaUnica,
@@ -389,6 +410,7 @@ export async function integrarMatriculaAluno(alunoId, planoId, opcoes={}){
         valorMatricula:0,
         valorPlano:valorPlanoBase,
         valorMensal:valorMensalTotal,
+        diaVencimento,
         valorServicos,
         valorPago:0,
         valorRecebido:0,
@@ -424,7 +446,8 @@ export async function integrarMatriculaAluno(alunoId, planoId, opcoes={}){
     valorMatricula,
     valorPlano:valorPlanoBase,
     valorServicos,
-    valorMensal:valorMensalTotal,
+        valorMensal:valorMensalTotal,
+        diaVencimento,
     valorMensalTotal,
     statusMatricula:matricula.status,
     status:valorEntradaUnica > 0 ? 'pre-matriculado' : 'ativo',

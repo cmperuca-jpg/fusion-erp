@@ -27,8 +27,7 @@
     document.head.appendChild(script);
   }
 
-  /* As notificações continuam disponíveis no módulo de atendimento, mas o
-     sino global foi removido para manter o cabeçalho das páginas limpo. */
+  /* Sino e catraca ficam concentrados na barra lateral, sem poluir as páginas. */
 
   const PAGINAS_SEM_MENU = [
     "/pages/aluno-avaliacao/",
@@ -163,6 +162,13 @@
     });
     sidebar.appendChild(marca);
 
+    const ferramentas = document.createElement("div");
+    ferramentas.className = "fusion-sidebar-ferramentas";
+    ferramentas.innerHTML = '<div class="fusion-sidebar-notificacoes" aria-label="Notificações do sistema"></div>';
+    const controleCatraca = montarControleCatraca(user);
+    if (controleCatraca) ferramentas.prepend(controleCatraca);
+    sidebar.appendChild(ferramentas);
+
     ITENS_MENU.forEach(grupo => {
       const itens = grupo.itens.filter(item => podeVer(item, user));
       if (!itens.length) return;
@@ -198,6 +204,7 @@
     document.body.classList.add("fusion-com-sidebar");
     document.documentElement.classList.add("fusion-com-sidebar");
     document.body.prepend(sidebar);
+    garantirCentralNotificacoes();
   }
 
   function preencherUsuarioTopo() {
@@ -272,7 +279,6 @@
     controle.innerHTML = `
       <span class="fusion-catraca-status" data-catraca-status>Catraca ligada</span>
       <button type="button" class="fusion-catraca-toggle" data-catraca-alternar>Desligar</button>
-      <button type="button" class="fusion-catraca-liberar" data-catraca-liberar>Liberar</button>
     `;
 
     const alternar = controle.querySelector("[data-catraca-alternar]");
@@ -292,7 +298,7 @@
       }
     });
 
-    liberar.addEventListener("click", async () => {
+    liberar?.addEventListener("click", async () => {
       if (!catracaAtiva()) return;
       atualizarControleCatraca(controle, { ativa: true, ocupada: true });
       try {

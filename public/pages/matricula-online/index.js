@@ -334,8 +334,6 @@ form.addEventListener('submit', async (ev)=>{
   const enderecoObrigatorio = ['endereco','bairro','cidade','estado','numero'].every(id => String(document.getElementById(id)?.value || '').trim());
   if(!enderecoObrigatorio) return msg('Informe o endereço completo antes de enviar.', 'erro');
   if(!fotoBase64) return msg('A foto é obrigatória. Tire uma foto pelo celular ou selecione uma imagem.', 'erro');
-  if(!documentosBase64.rgFrente) return msg('Anexe o RG frente.', 'erro');
-  if(!documentosBase64.comprovanteResidencia) return msg('Anexe o comprovante de residência.', 'erro');
   if(!assinaturaAtiva) return msg('Assine digitalmente antes de enviar.', 'erro');
 
   const payload = {
@@ -343,7 +341,7 @@ form.addEventListener('submit', async (ev)=>{
     telefone: document.getElementById('telefone').value.trim(), whatsapp: document.getElementById('telefone').value.trim(), email: document.getElementById('email').value.trim(),
     dataNascimento: dataParaISO(document.getElementById('dataNascimento').value), sexo: document.getElementById('sexo').value.trim(), rg: document.getElementById('rg').value.trim(),
     cep: document.getElementById('cep').value.trim(), endereco: document.getElementById('endereco').value.trim(), numero: document.getElementById('numero').value.trim(), complemento: document.getElementById('complemento').value.trim(), bairro: document.getElementById('bairro').value.trim(), cidade: document.getElementById('cidade').value.trim(), estado: document.getElementById('estado').value.trim(),
-    planoId: selectPlano.value, horarioPreferido: document.getElementById('horarioPreferido').value.trim(), modalidade: document.getElementById('modalidade').value.trim(), objetivo: document.getElementById('objetivo').value.trim(), restricoes: document.getElementById('restricoes').value.trim(), observacao: document.getElementById('observacao').value.trim(),
+    planoId: selectPlano.value, diaVencimento: Number(document.getElementById('diaVencimento').value), horarioPreferido: document.getElementById('horarioPreferido').value.trim(), modalidade: document.getElementById('modalidade').value.trim(), objetivo: document.getElementById('objetivo').value.trim(), restricoes: document.getElementById('restricoes').value.trim(), observacao: document.getElementById('observacao').value.trim(),
     fotoBase64,
     documentos: documentosBase64,
     assinaturaBase64: canvas.toDataURL('image/png'),
@@ -359,7 +357,7 @@ form.addEventListener('submit', async (ev)=>{
     const json = await resp.json().catch(()=>({}));
     if(!resp.ok || json.ok === false) throw new Error(json.erro || json.mensagem || 'Erro ao enviar solicitação.');
     form.reset(); fotoBase64 = ''; documentosBase64 = {}; assinaturaAtiva = false; fotoPreview.textContent = 'Sem foto'; prepararAssinatura();
-    ['rgFrente','rgVerso','comprovanteResidencia','atestadoMedico'].forEach(id => { const p = document.getElementById(`${id}Preview`); if(p) p.textContent = id === 'rgVerso' || id === 'atestadoMedico' ? 'Opcional.' : 'Nenhum arquivo.'; });
+    ['rgFrente','rgVerso','comprovanteResidencia','atestadoMedico'].forEach(id => { const p = document.getElementById(`${id}Preview`); if(p) p.textContent = 'Opcional.'; });
     msg(`${json.mensagem || 'Solicitação enviada.'} Protocolo: ${json.solicitacao?.protocolo || '-'}`, 'sucesso');
   }catch(e){ msg(e.message, 'erro'); }
   finally{ btnEnviar.disabled = false; btnEnviar.textContent = 'Enviar solicitação'; }

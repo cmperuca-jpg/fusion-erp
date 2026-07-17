@@ -37,8 +37,32 @@ function dentroPeriodo(data, inicio, fim) {
 }
 
 function ativo(item = {}) {
-  const st = normalizar(item.status ?? item.situacao);
-  return ["ativo", "ativa", "liberado", "liberada", "presente", "aberto", "aberta"].includes(st);
+  if (item.ativo === true || item.ativa === true || item.matriculaAtiva === true) return true;
+  const st = normalizar(item.status ?? item.situacao ?? item.statusMatricula ?? item.matriculaStatus);
+  return ["ativo", "ativa", "regular", "aprovado", "aprovada", "liberado", "liberada", "presente", "aberto", "aberta"].includes(st);
+}
+
+function chaveAluno(item = {}) {
+  return normalizar(item.id ?? item.alunoId ?? item.aluno_id ?? item.cpf ?? item.email ?? item.nome);
+}
+
+function matriculasAtivasUnicas(matriculas = []) {
+  const mapa = new Map();
+  for (const matricula of matriculas.filter(ativo)) {
+    const chave = texto(matricula.id) || `${chaveAluno(matricula)}|${texto(matricula.planoId ?? matricula.plano)}|${dataMatricula(matricula)}`;
+    if (chave) mapa.set(chave, matricula);
+  }
+  return [...mapa.values()];
+}
+
+function alunosAtivosUnicos(alunos = [], matriculas = []) {
+  const idsMatriculados = new Set(matriculasAtivasUnicas(matriculas).map(chaveAluno).filter(Boolean));
+  const mapa = new Map();
+  for (const aluno of alunos) {
+    const chave = chaveAluno(aluno);
+    if (chave && (ativo(aluno) || idsMatriculados.has(chave))) mapa.set(chave, aluno);
+  }
+  return [...mapa.values()];
 }
 
 function inativo(item = {}) {
@@ -200,12 +224,14 @@ export async function gerarDashboardExecutivo(filtros = {}) {
   const base = await carregarBaseBI();
   const hoje = hojeISO();
   const presencasReais = base.presencas.filter(presencaReal);
+  const matriculasAtivas = matriculasAtivasUnicas(base.matriculas);
+  const alunosAtivos = alunosAtivosUnicos(base.alunos, matriculasAtivas);
 
   return {
     kpis: {
       totalAlunos: base.alunos.length,
-      alunosAtivos: base.alunos.filter(ativo).length,
-      matriculasAtivas: base.matriculas.filter(ativo).length,
+      alunosAtivos: alunosAtivos.length,
+      matriculasAtivas: matriculasAtivas.length,
       presentesHoje: presencasReais.filter(p => dataPresenca(p) === hoje).length
     },
     graficos: {
@@ -248,6 +274,8 @@ export async function gerarBIAcademia(filtros = {}) {
   const inicio = filtros.inicio || filtros.dataInicio || "";
   const fim = filtros.fim || filtros.dataFim || "";
   const hoje = hojeISO();
+  const matriculasAtivas = matriculasAtivasUnicas(base.matriculas);
+  const alunosAtivos = alunosAtivosUnicos(base.alunos, matriculasAtivas);
 
   const matriculasPeriodo = filtrarPeriodo(base.matriculas, dataMatricula, inicio, fim);
   const presencasReais = base.presencas.filter(presencaReal);
@@ -276,11 +304,11 @@ export async function gerarBIAcademia(filtros = {}) {
     filtros: { inicio, fim },
     kpis: {
       totalAlunos: base.alunos.length,
-      alunosAtivos: base.alunos.filter(ativo).length,
+      alunosAtivos: alunosAtivos.length,
       alunosInativos: base.alunos.filter(inativo).length,
       alunosNovosPeriodo,
       totalMatriculas: base.matriculas.length,
-      matriculasAtivas: base.matriculas.filter(ativo).length,
+      matriculasAtivas: matriculasAtivas.length,
       matriculasTrancadas: base.matriculas.filter(m => statusEh(m, ["trancado", "trancada", "suspenso", "suspensa"])).length,
       matriculasEncerradas: base.matriculas.filter(m => statusEh(m, ["encerrado", "encerrada", "finalizado", "finalizada"])).length,
       matriculasCanceladas: base.matriculas.filter(cancelado).length,

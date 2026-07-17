@@ -230,6 +230,10 @@ export async function biFinanceiro(filtros = {}) {
   const movimentos = arrayDe(caixaRaw.movimentos || [], 'movimentos').filter(statusAtivo);
 
   const linhas = [];
+  const referencias = item => [...new Set([
+    item.id, item.lancamentoFinanceiroId, item.financeiroId, item.recebimentoId,
+    item.pagamentoId, item.movimentoCaixaId, item.caixaId, item.mensalidadeId
+  ].map(v => String(v || '').trim()).filter(Boolean))];
   for (const f of financeiro) {
     const receita = tipoReceita(f);
     const dVenc = dataVencimento(f);
@@ -240,18 +244,18 @@ export async function biFinanceiro(filtros = {}) {
     linhas.push({
       origem: 'financeiro', id: f.id, tipo: receita ? 'receita' : 'despesa', status: f.status || 'Aberto',
       data: dPag || dVenc, vencimento: dVenc, realizado: statusPago(f), valor: base,
-      valorRealizado, taxa: calcularTaxa(f), categoria: categoria(f, receita ? 'Receitas' : 'Despesas'), descricao: descricao(f), pessoa: pessoa(f)
+      valorRealizado, taxa: calcularTaxa(f), categoria: categoria(f, receita ? 'Receitas' : 'Despesas'), descricao: descricao(f), pessoa: pessoa(f), referencias: referencias(f)
     });
   }
 
   for (const r of recebimentos) {
     const data = dataPagamento(r) || dataVencimento(r);
-    linhas.push({ origem: 'recebimentos', id: r.id, tipo: 'receita', status: r.status || 'Recebido', data, vencimento: dataVencimento(r), realizado: true, valor: valorOriginal(r), valorRealizado: valorLiquido(r), taxa: calcularTaxa(r), categoria: categoria(r, 'Recebimentos'), descricao: descricao(r, 'Recebimento'), pessoa: pessoa(r) });
+    linhas.push({ origem: 'recebimentos', id: r.id, tipo: 'receita', status: r.status || 'Recebido', data, vencimento: dataVencimento(r), realizado: true, valor: valorOriginal(r), valorRealizado: valorLiquido(r), taxa: calcularTaxa(r), categoria: categoria(r, 'Recebimentos'), descricao: descricao(r, 'Recebimento'), pessoa: pessoa(r), referencias: referencias(r) });
   }
 
   for (const p of pagamentos) {
     const data = dataPagamento(p) || dataVencimento(p);
-    linhas.push({ origem: 'pagamentos', id: p.id, tipo: 'despesa', status: p.status || 'Pago', data, vencimento: dataVencimento(p), realizado: statusPago(p), valor: valorOriginal(p), valorRealizado: statusPago(p) ? valorBruto(p) : valorPago(p), taxa: 0, categoria: categoria(p, 'Pagamentos'), descricao: descricao(p, 'Pagamento'), pessoa: pessoa(p) });
+    linhas.push({ origem: 'pagamentos', id: p.id, tipo: 'despesa', status: p.status || 'Pago', data, vencimento: dataVencimento(p), realizado: statusPago(p), valor: valorOriginal(p), valorRealizado: statusPago(p) ? valorBruto(p) : valorPago(p), taxa: 0, categoria: categoria(p, 'Pagamentos'), descricao: descricao(p, 'Pagamento'), pessoa: pessoa(p), referencias: referencias(p) });
   }
 
   // Usa também o caixa como fonte de segurança para valores já movimentados,
@@ -262,10 +266,21 @@ export async function biFinanceiro(filtros = {}) {
     const despesa = t.includes('saida') || t.includes('saída');
     if (!receita && !despesa) continue;
     const data = dataISO(m.data || m.dataPagamento || m.criadoEm);
-    linhas.push({ origem: 'caixa', id: m.id, tipo: receita ? 'receita' : 'despesa', status: m.status || 'ativo', data, vencimento: data, realizado: true, valor: valorBruto(m), valorRealizado: valorLiquido(m), taxa: calcularTaxa(m), categoria: categoria(m, receita ? 'Caixa - entradas' : 'Caixa - saídas'), descricao: descricao(m, receita ? 'Entrada de caixa' : 'Saída de caixa'), pessoa: pessoa(m) });
+    linhas.push({ origem: 'caixa', id: m.id, tipo: receita ? 'receita' : 'despesa', status: m.status || 'ativo', data, vencimento: data, realizado: true, valor: valorBruto(m), valorRealizado: valorLiquido(m), taxa: calcularTaxa(m), categoria: categoria(m, receita ? 'Caixa - entradas' : 'Caixa - saídas'), descricao: descricao(m, receita ? 'Entrada de caixa' : 'Saída de caixa'), pessoa: pessoa(m), referencias: referencias(m) });
   }
 
-  const periodo = linhas.filter(l => dentroPeriodo(l.data || l.vencimento, inicio, fim));
+  // A mesma baixa existe em financeiro, recebimentos e caixa. Consolida pelos
+  // IDs cruzados e prioriza a fonte operacional mais específica.
+  const prioridade = { recebimentos: 1, pagamentos: 1, financeiro: 2, caixa: 3 };
+  const vistos = new Set();
+  const consolidadas = [...linhas].sort((a, b) => (prioridade[a.origem] || 9) - (prioridade[b.origem] || 9)).filter(linha => {
+    if (!linha.realizado) return true;
+    const refs = linha.referencias || [];
+    if (refs.some(ref => vistos.has(ref))) return false;
+    refs.forEach(ref => vistos.add(ref));
+    return true;
+  });
+  const periodo = consolidadas.filter(l => dentroPeriodo(l.data || l.vencimento, inicio, fim));
   const receitas = periodo.filter(l => l.tipo === 'receita');
   const despesas = periodo.filter(l => l.tipo === 'despesa');
 

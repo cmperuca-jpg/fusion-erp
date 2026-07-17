@@ -74,17 +74,25 @@
         </div>
 
         <h2>Documentos</h2>
-        <p class="muted">Anexe os documentos pela câmera do celular ou selecione arquivos já salvos.</p>
+        <p class="muted">Os documentos abaixo são opcionais nesta etapa. A recepção poderá solicitá-los depois, quando necessário.</p>
         <div class="grid docs-grid">
-          <div class="doc-box"><label for="rgFrente">RG frente *</label><input id="rgFrente" type="file" accept="image/*,.pdf" capture="environment" required><small id="rgFrentePreview">Nenhum arquivo.</small></div>
+          <div class="doc-box"><label for="rgFrente">RG frente</label><input id="rgFrente" type="file" accept="image/*,.pdf" capture="environment"><small id="rgFrentePreview">Opcional.</small></div>
           <div class="doc-box"><label for="rgVerso">RG verso</label><input id="rgVerso" type="file" accept="image/*,.pdf" capture="environment"><small id="rgVersoPreview">Opcional.</small></div>
-          <div class="doc-box"><label for="comprovanteResidencia">Comprovante de residência *</label><input id="comprovanteResidencia" type="file" accept="image/*,.pdf" capture="environment" required><small id="comprovanteResidenciaPreview">Nenhum arquivo.</small></div>
+          <div class="doc-box"><label for="comprovanteResidencia">Comprovante de residência</label><input id="comprovanteResidencia" type="file" accept="image/*,.pdf" capture="environment"><small id="comprovanteResidenciaPreview">Opcional.</small></div>
           <div class="doc-box"><label for="atestadoMedico">Atestado médico</label><input id="atestadoMedico" type="file" accept="image/*,.pdf" capture="environment"><small id="atestadoMedicoPreview">Opcional, quando exigido.</small></div>
         </div>
 
         <h2>Plano e solicitações</h2>
         <label for="planoId">Plano desejado *</label>
         <select id="planoId" required><option value="">Carregando planos...</option></select>
+
+        <label for="diaVencimento">Melhor dia para pagar *</label>
+        <select id="diaVencimento" required>
+          <option value="">Selecione o dia</option>
+          <option value="5">Dia 5</option><option value="10">Dia 10</option><option value="15">Dia 15</option>
+          <option value="20">Dia 20</option><option value="25">Dia 25</option><option value="28">Dia 28</option>
+        </select>
+        <small class="muted">A primeira cobrança terá ajuste proporcional até o dia escolhido. Nos meses seguintes, a mensalidade volta ao valor normal nesse dia.</small>
 
         <div class="grid">
           <div><label for="horarioPreferido">Horário preferido</label><input id="horarioPreferido" placeholder="Ex.: manhã, noite, 18h"></div>

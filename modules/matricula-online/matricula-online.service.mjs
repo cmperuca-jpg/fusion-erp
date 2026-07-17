@@ -149,7 +149,7 @@ function validarSolicitacao(dados = {}) {
   const base = {
     nome: texto(dados.nome || dados.nomeCompleto), cpf: numeros(dados.cpf || dados.documento), telefone: numeros(dados.telefone || dados.whatsapp || dados.celular), email: texto(dados.email).toLowerCase(), dataNascimento: dataISO(dados.dataNascimento || dados.data_nascimento), sexo: texto(dados.sexo), rg: texto(dados.rg),
     cep: numeros(dados.cep), endereco: texto(dados.endereco || dados.rua || dados.logradouro), numero: texto(dados.numero), complemento: texto(dados.complemento), bairro: texto(dados.bairro), cidade: texto(dados.cidade), estado: texto(dados.estado).toUpperCase().slice(0, 2),
-    planoId: texto(dados.planoId || dados.plano_id || dados.plano), horarioPreferido: texto(dados.horarioPreferido || dados.horario), modalidade: texto(dados.modalidade || dados.servico || dados.servicoDesejado), objetivo: texto(dados.objetivo), restricoes: texto(dados.restricoes || dados.restricoesMedicas), observacao: texto(dados.observacao || dados.observacoes),
+    planoId: texto(dados.planoId || dados.plano_id || dados.plano), diaVencimento: Math.trunc(numero(dados.diaVencimento || dados.melhorDiaPagamento, 0)), horarioPreferido: texto(dados.horarioPreferido || dados.horario), modalidade: texto(dados.modalidade || dados.servico || dados.servicoDesejado), objetivo: texto(dados.objetivo), restricoes: texto(dados.restricoes || dados.restricoesMedicas), observacao: texto(dados.observacao || dados.observacoes),
     fotoBase64: texto(dados.fotoBase64 || dados.foto_base64 || dados.foto), documentos, assinaturaBase64: texto(dados.assinaturaBase64 || dados.assinatura || ''), aceiteTermos: Boolean(dados.aceiteTermos), aceiteImagem: Boolean(dados.aceiteImagem), aceiteLgpd: Boolean(dados.aceiteLgpd), aceiteContrato: Boolean(dados.aceiteContrato)
   };
   if (base.nome.length < 3) erro('Informe o nome completo.');
@@ -164,9 +164,8 @@ function validarSolicitacao(dados = {}) {
   if (!base.cidade) erro('Informe a cidade.');
   if (!base.estado || base.estado.length !== 2) erro('Informe o estado com 2 letras.');
   if (!base.planoId) erro('Selecione um plano.');
+  if (base.diaVencimento < 1 || base.diaVencimento > 28) erro('Selecione um dia de pagamento entre 1 e 28.');
   if (!fotoValida(base.fotoBase64)) erro('A foto é obrigatória. Tire uma foto pelo celular ou selecione uma imagem.');
-  if (!base.documentos.rgFrente) erro('Anexe o RG frente.');
-  if (!base.documentos.comprovanteResidencia) erro('Anexe o comprovante de residência.');
   if (!assinaturaValida(base.assinaturaBase64)) erro('Assinatura digital obrigatória.');
   if (!base.aceiteTermos || !base.aceiteImagem || !base.aceiteLgpd || !base.aceiteContrato) erro('Aceite todos os termos obrigatórios para enviar a matrícula.');
   return base;
@@ -176,7 +175,7 @@ function exporSolicitacao(s = {}) {
     id: s.id, protocolo: s.protocolo, nome: s.nome, cpf: s.cpf, telefone: s.telefone, whatsapp: s.whatsapp, email: s.email,
     dataNascimento: s.dataNascimento || '', sexo: s.sexo || '', rg: s.rg || '', fotoBase64: s.fotoBase64 || '', documentos: s.documentos || {}, assinaturaBase64: s.assinaturaBase64 || '',
     cep: s.cep || '', endereco: s.endereco || '', numero: s.numero || '', complemento: s.complemento || '', bairro: s.bairro || '', cidade: s.cidade || '', estado: s.estado || '',
-    planoId: s.planoId, plano: s.plano, valorPlano: s.valorPlano, horarioPreferido: s.horarioPreferido || '', modalidade: s.modalidade || '', objetivo: s.objetivo, restricoes: s.restricoes || '', observacao: s.observacao,
+    planoId: s.planoId, plano: s.plano, valorPlano: s.valorPlano, diaVencimento: s.diaVencimento || '', horarioPreferido: s.horarioPreferido || '', modalidade: s.modalidade || '', objetivo: s.objetivo, restricoes: s.restricoes || '', observacao: s.observacao,
     status: s.status, motivoCorrecao: s.motivoCorrecao || '', motivoRejeicao: s.motivoRejeicao || '', alunoId: s.alunoId || '', matriculaId: s.matriculaId || '', financeiroId: s.financeiroId || '', mensalidadeId: s.mensalidadeId || '', criadoEm: s.criadoEm, aprovadoEm: s.aprovadoEm || '', rejeitadoEm: s.rejeitadoEm || '', correcaoSolicitadaEm: s.correcaoSolicitadaEm || ''
   };
 }
@@ -233,13 +232,13 @@ async function aprovarSolicitacaoInterna(id, opcoes = {}) {
   const cpf = numeros(solicitacao.cpf);
   let aluno = alunos.find(a => cpf && numeros(a.cpf || a.documento) === cpf) || null;
   if (!aluno) {
-    aluno = { id: crypto.randomUUID(), nome: solicitacao.nome, cpf: solicitacao.cpf, rg: solicitacao.rg || '', sexo: solicitacao.sexo || '', telefone: solicitacao.telefone, whatsapp: solicitacao.whatsapp || solicitacao.telefone, email: solicitacao.email || '', data_nascimento: solicitacao.dataNascimento || '', foto_base64: solicitacao.fotoBase64 || '', documentos_matricula: solicitacao.documentos || {}, assinatura_matricula: solicitacao.assinaturaBase64 || '', cep: solicitacao.cep || '', endereco: solicitacao.endereco || '', numero: solicitacao.numero || '', complemento: solicitacao.complemento || '', bairro: solicitacao.bairro || '', cidade: solicitacao.cidade || '', estado: solicitacao.estado || '', objetivo: solicitacao.objetivo || '', restricoes_medicas: solicitacao.restricoes || '', observacoes: solicitacao.observacao || '', planoId: solicitacao.planoId, plano: solicitacao.plano, valorMensal: numero(solicitacao.valorPlano, 0), status: 'pre-matriculado', statusMatricula: 'Pendente', origem: 'matricula_online', data_matricula: hojeISO(), criadoEm: agoraISO(), atualizadoEm: agoraISO() };
+    aluno = { id: crypto.randomUUID(), nome: solicitacao.nome, cpf: solicitacao.cpf, rg: solicitacao.rg || '', sexo: solicitacao.sexo || '', telefone: solicitacao.telefone, whatsapp: solicitacao.whatsapp || solicitacao.telefone, email: solicitacao.email || '', data_nascimento: solicitacao.dataNascimento || '', foto_base64: solicitacao.fotoBase64 || '', documentos_matricula: solicitacao.documentos || {}, assinatura_matricula: solicitacao.assinaturaBase64 || '', cep: solicitacao.cep || '', endereco: solicitacao.endereco || '', numero: solicitacao.numero || '', complemento: solicitacao.complemento || '', bairro: solicitacao.bairro || '', cidade: solicitacao.cidade || '', estado: solicitacao.estado || '', objetivo: solicitacao.objetivo || '', restricoes_medicas: solicitacao.restricoes || '', observacoes: solicitacao.observacao || '', planoId: solicitacao.planoId, plano: solicitacao.plano, valorMensal: numero(solicitacao.valorPlano, 0), diaVencimento: solicitacao.diaVencimento, status: 'pre-matriculado', statusMatricula: 'Pendente', origem: 'matricula_online', data_matricula: hojeISO(), criadoEm: agoraISO(), atualizadoEm: agoraISO() };
     alunos.push(aluno);
   } else {
-    aluno = Object.assign(aluno, { planoId: solicitacao.planoId || aluno.planoId || '', plano: solicitacao.plano || aluno.plano || '', foto_base64: aluno.foto_base64 || solicitacao.fotoBase64 || '', documentos_matricula: aluno.documentos_matricula || solicitacao.documentos || {}, assinatura_matricula: aluno.assinatura_matricula || solicitacao.assinaturaBase64 || '', status: ['ativo','ativa'].includes(normalizar(aluno.status)) ? aluno.status : 'pre-matriculado', statusMatricula: ['Ativa','ativa'].includes(String(aluno.statusMatricula || '')) ? aluno.statusMatricula : 'Pendente', atualizadoEm: agoraISO() });
+    aluno = Object.assign(aluno, { planoId: solicitacao.planoId || aluno.planoId || '', plano: solicitacao.plano || aluno.plano || '', diaVencimento: solicitacao.diaVencimento || aluno.diaVencimento || '', foto_base64: aluno.foto_base64 || solicitacao.fotoBase64 || '', documentos_matricula: aluno.documentos_matricula || solicitacao.documentos || {}, assinatura_matricula: aluno.assinatura_matricula || solicitacao.assinaturaBase64 || '', status: ['ativo','ativa'].includes(normalizar(aluno.status)) ? aluno.status : 'pre-matriculado', statusMatricula: ['Ativa','ativa'].includes(String(aluno.statusMatricula || '')) ? aluno.statusMatricula : 'Pendente', atualizadoEm: agoraISO() });
   }
   await salvarJson(ALUNOS_FILE, alunos);
-  const integracao = await integrarMatriculaAluno(aluno.id, solicitacao.planoId, { dataMatricula: hojeISO(), gerarMensalidade: true, usuario: opcoes.usuario || 'operador', observacao: `Matrícula online aprovada. Protocolo ${solicitacao.protocolo}.`, permitirTroca: false });
+  const integracao = await integrarMatriculaAluno(aluno.id, solicitacao.planoId, { dataMatricula: hojeISO(), gerarMensalidade: true, diaVencimento: solicitacao.diaVencimento, ajustarPrimeiraMensalidade: true, usuario: opcoes.usuario || 'operador', observacao: `Matrícula online aprovada. Protocolo ${solicitacao.protocolo}.`, permitirTroca: false });
   const matricula = integracao?.matricula || integracao?.dados || {};
   const financeiroId = integracao?.financeiroInicial?.id || matricula.financeiroInicialId || '';
   const mensalidadeId = integracao?.mensalidadeGerada?.id || matricula.mensalidadeInicialId || '';

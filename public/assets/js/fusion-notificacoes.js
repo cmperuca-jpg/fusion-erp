@@ -28,7 +28,7 @@
   function garantirRaiz(){
     let raiz = document.getElementById("fusionNotificacoes");
     if (raiz) return raiz;
-    const alvo = document.querySelector(".fusion-topbar>div:last-child,.usuario-topo,.fusion-userbar,.topbar>div:last-child");
+    const alvo = document.querySelector(".fusion-sidebar-notificacoes,.fusion-topbar>div:last-child,.usuario-topo,.fusion-userbar,.topbar>div:last-child");
     if (!alvo) return null;
     raiz = document.createElement("div");
     raiz.id = "fusionNotificacoes";
