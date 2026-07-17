@@ -20,7 +20,12 @@ jobs:
         shell: pwsh
         run: |
           vcpkg install nlohmann-json:x64-windows-static
-          Invoke-WebRequest -Uri "https://github.com/opencv/opencv/releases/download/4.10.0/opencv-4.10.0-windows.exe" -OutFile "$env:RUNNER_TEMP\opencv.exe"
+          & curl.exe -fL --retry 6 --retry-delay 10 --retry-all-errors --connect-timeout 30 --max-time 900 `
+            "https://github.com/opencv/opencv/releases/download/4.10.0/opencv-4.10.0-windows.exe" `
+            -o "$env:RUNNER_TEMP\opencv.exe"
+          if ($LASTEXITCODE -ne 0 -or -not (Test-Path "$env:RUNNER_TEMP\opencv.exe") -or (Get-Item "$env:RUNNER_TEMP\opencv.exe").Length -lt 100000000) {
+            throw "Download do OpenCV inválido ou incompleto após várias tentativas."
+          }
           & 7z x "$env:RUNNER_TEMP\opencv.exe" "-o$env:RUNNER_TEMP\opencv" -y | Out-Null
           $models = "$env:RUNNER_TEMP\facial-models"
           $licenses = "$env:RUNNER_TEMP\facial-licenses"
