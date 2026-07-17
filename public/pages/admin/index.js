@@ -13,8 +13,6 @@ const MODULOS = [
   ["financeiro", "Financeiro"],
   ["mensalidades", "Mensalidades"],
   ["caixa", "Caixa"],
-  ["avaliacoes", "Avaliações"],
-  ["treinos", "Treinos"],
   ["planos", "Planos"],
   ["turmas", "Turmas"],
   ["checkin", "Check-in"],
@@ -140,10 +138,10 @@ function permissoesSelecionadas() {
 function permissoesPorPerfil(perfil) {
   const mapa = {
     Administrador: ["*"],
-    Gerente: ["dashboard","alunos","professores","matriculas","matriculas-pendentes","financeiro","mensalidades","caixa","comercial","comercial-painel","site-chat","avaliacoes","treinos","planos","turmas","relatorios"],
+    Gerente: ["dashboard","alunos","professores","matriculas","matriculas-pendentes","financeiro","mensalidades","caixa","comercial","comercial-painel","site-chat","planos","turmas","relatorios"],
     Recepcao: ["dashboard","alunos","matriculas","matriculas-pendentes","financeiro","mensalidades","caixa","comercial-painel","site-chat","checkin"],
     Comercial: ["dashboard","comercial","comercial-painel","site-chat","matriculas-pendentes"],
-    Professor: ["professor-area","avaliacoes","treinos","aluno-treinos"],
+    Professor: ["professor-area"],
     Aluno: ["aluno-treinos","aluno-avaliacao"]
   };
   return mapa[perfil] || mapa.Recepcao;

@@ -15,14 +15,14 @@ const PERFIS_PADRAO = {
   Gerente: [
     "dashboard", "alunos", "professores", "matriculas", "matriculas-pendentes",
     "financeiro", "mensalidades", "caixa", "comercial", "comercial-painel", "site-chat",
-    "avaliacoes", "treinos", "planos", "turmas", "relatorios"
+    "planos", "turmas", "relatorios"
   ],
   Recepcao: [
     "dashboard", "alunos", "matriculas", "matriculas-pendentes", "financeiro",
     "mensalidades", "caixa", "comercial", "comercial-painel", "site-chat", "checkin"
   ],
   Comercial: ["dashboard", "comercial", "comercial-painel", "site-chat", "matriculas-pendentes", "leads", "matricula-online"],
-  Professor: ["professor-area", "avaliacoes", "treinos", "aluno-treinos"],
+  Professor: ["professor-area"],
   Aluno: ["aluno-treinos", "aluno-avaliacao"]
 };
 

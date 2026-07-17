@@ -38,6 +38,10 @@
     "/pages/professor-area/index.html",
     "/pages/professor-login/",
     "/pages/professor-login/index.html",
+    "/pages/treinos/",
+    "/pages/treinos/index.html",
+    "/pages/avaliacoes/",
+    "/pages/avaliacoes/index.html",
     "/pages/promocao/",
     "/pages/promocao/index.html",
     "/pages/matricula-online/",
@@ -100,7 +104,7 @@
   }
 
   function removerMenusExistentes() {
-    document.querySelectorAll(".sidebar,.fusion-sidebar,#fusionSidebar,#fusionMenuGlobal,.fusion-menu-global").forEach(el => el.remove());
+    document.querySelectorAll(".sidebar,.fusion-sidebar,#fusionSidebar,#fusionMenuGlobal,.fusion-menu-global,.topbar").forEach(el => el.remove());
     document.body.classList.add("fusion-sem-menu");
     document.body.classList.remove("fusion-com-sidebar");
     document.documentElement.classList.add("fusion-sem-menu");

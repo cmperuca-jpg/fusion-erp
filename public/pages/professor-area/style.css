@@ -5,3 +5,12 @@
 
 .gestao-professores{margin-top:16px;background:#fff;border:1px solid #dfe6f1;border-radius:22px;padding:20px;box-shadow:0 12px 34px rgba(15,23,42,.06)}
 .gestao-professores[hidden]{display:none}.gestao-cabecalho{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:14px}.gestao-cabecalho span{font-size:12px;text-transform:uppercase;font-weight:900;color:#ff6600}.gestao-cabecalho h2{margin:4px 0 5px}.gestao-cabecalho p{margin:0;color:#475569}.gestao-mensagem{min-height:22px;font-weight:800;color:#475569;margin-bottom:8px}.lista-professores{display:grid;gap:9px}.professor-item{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:12px;border:1px solid #e2e8f0;border-radius:14px;padding:12px}.professor-dados{display:flex;flex-direction:column;gap:4px;min-width:0}.professor-dados span{color:#64748b;font-size:13px;overflow-wrap:anywhere}.status-professor{padding:6px 9px;border-radius:999px;font-size:12px;font-weight:900}.status-professor.ativo{background:#dcfce7;color:#166534}.status-professor.bloqueado{background:#fee2e2;color:#991b1b}.btn.bloquear{background:#fee2e2;color:#991b1b}.btn.desbloquear{background:#dcfce7;color:#166534}.btn:disabled{opacity:.5;cursor:not-allowed}.lista-vazia{color:#64748b}@media(max-width:700px){.gestao-cabecalho{flex-direction:column}.gestao-cabecalho .btn{width:100%}.professor-item{grid-template-columns:1fr auto}.professor-item .btn{grid-column:1/-1;width:100%}}
+
+/* Portal do professor: contraste independente do tema administrativo. */
+.prof-alerta{background:#fff7ed!important;border-color:#fdba74!important;color:#7c2d12!important;text-shadow:none!important}
+.prof-alerta *{color:inherit!important}
+.icon{background:#e6f3f6!important;border-color:#7fb5c1!important;color:#082f3a!important;text-shadow:none!important}
+.prof-card h2,.gestao-professores h2,.professor-dados strong{color:#fff!important;text-shadow:none!important}
+.prof-card p,.gestao-cabecalho p,.professor-dados span,.gestao-mensagem,.lista-vazia{color:#d5e7eb!important;opacity:1!important;text-shadow:none!important}
+.prof-hero p{color:#d5e7eb!important;opacity:1!important}
+.escopo-acesso.global{background:#dcfce7!important;color:#14532d!important}

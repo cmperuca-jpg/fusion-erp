@@ -29,3 +29,12 @@ select.campo-bloqueado-professor:disabled{
   opacity:1!important;
   cursor:not-allowed!important;
 }
+
+/* Montador exclusivo do professor: cartões e textos sempre legíveis. */
+.ex,.divisao,.item,.drop{background:#0b303b!important;border-color:#477581!important;color:#f8fcfd!important}
+.ex strong,.item strong,.divisao h3,.treino h2,.biblioteca h2{color:#fff!important;opacity:1!important;text-shadow:none!important}
+.ex small,.item small,.drop,.meta,.aluno-meta,.observacoes-aluno{color:#cfe2e6!important;opacity:1!important;text-shadow:none!important}
+.ex img,.item img{background:#f4f7fa!important}
+.aba-divisao{background:#123d48!important;border-color:#477581!important;color:#f8fcfd!important}
+.aba-divisao.ativa{background:#20aec0!important;border-color:#54d6e5!important;color:#041d24!important}
+.btn.ghost{background:#f8fafc!important;border-color:#b8cbd1!important;color:#102a33!important}

@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Fusion ERP - Avaliações</title>
   <link rel="stylesheet" href="/assets/css/fusion-app.css">
-  <link rel="stylesheet" href="/assets/css/fusion-menu-global.css" data-admin-only>
   <link rel="stylesheet" href="./style.css">
   <script>
     window.FUSION_PARAMS = new URLSearchParams(location.search);
@@ -18,7 +17,7 @@
       !!localStorage.getItem('fusion_professor_sessao');
 
   </script>
-  <script src="/assets/js/fusion-portal-guard.js" data-fusion-guard="sistema-ou-professor"></script>
+  <script src="/assets/js/fusion-portal-guard.js" data-fusion-guard="professor"></script>
   <meta name="fusion-existing-pages" content="access-engine,admin,agenda,aluno-avaliacao,aluno-login,aluno-treinos,alunos,avaliacoes,bi-academia,bi-academia-operacional,bi-financeiro,caixa,checkin,comercial,comercial-painel,configuracoes,dashboard,financeiro,matricula-online,matriculas,matriculas-pendentes,mensalidades,modalidades,natacao-professor,planos,professor-area,professor-login,professores,recebimentos,relatorios-caixa,treinos,turmas">
   <link rel="stylesheet" href="/assets/css/fusion-mobile-final.css">
   <link rel="stylesheet" href="/assets/css/fusion-premium-final.css">
@@ -348,7 +347,6 @@
   <script>
     if (!window.FUSION_EMBED) {
       document.write('<script src="/assets/js/fusion-ciclo-professor-aluno.js"><\/script>');
-      document.write('<script src="/assets/js/fusion-menu-global.js"><\/script>');
       document.write('<script src="/assets/js/fusion-layout.js"><\/script>');
     }
   </script>
