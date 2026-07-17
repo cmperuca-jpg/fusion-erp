@@ -82,3 +82,63 @@ body .fusion-ui-userbar{
   max-width:100%!important;
   height:auto!important;
 }
+
+/* Chat do portal do aluno: impede o tema premium de apagar textos claros. */
+body .fusion-site-chat .fusion-chat-panel{
+  background:#f7fafc!important;
+  border-color:#9bb5be!important;
+  color:#102b35!important;
+}
+body .fusion-site-chat .fusion-chat-head{
+  background:#102736!important;
+  color:#fff!important;
+}
+body .fusion-site-chat .fusion-chat-head :is(strong,span),
+body .fusion-site-chat .fusion-chat-close{
+  color:#fff!important;
+  opacity:1!important;
+  text-shadow:none!important;
+}
+body .fusion-site-chat .fusion-chat-identificacao{
+  background:#f5f8fa!important;
+  color:#173842!important;
+  border-color:#c7d6db!important;
+  opacity:1!important;
+}
+body .fusion-site-chat .fusion-chat-messages{
+  background:#f2f6f8!important;
+}
+body .fusion-site-chat .fusion-chat-msg{
+  background:#fff!important;
+  border-color:#b9ccd2!important;
+  color:#17333c!important;
+  text-shadow:none!important;
+}
+body .fusion-site-chat .fusion-chat-msg.user{
+  background:#d8f8e4!important;
+  border-color:#8ad9aa!important;
+  color:#123c2a!important;
+}
+body .fusion-site-chat .fusion-chat-msg :is(small,strong,span,p){
+  color:inherit!important;
+  opacity:1!important;
+  text-shadow:none!important;
+}
+body .fusion-site-chat .fusion-chat-form{
+  background:#f8fafb!important;
+  border-color:#c7d6db!important;
+}
+body .fusion-site-chat .fusion-chat-form textarea,
+body .fusion-site-chat .fusion-chat-form input{
+  background:#082630!important;
+  border-color:#527984!important;
+  color:#fff!important;
+}
+body .fusion-site-chat .fusion-chat-form :is(textarea,input)::placeholder{
+  color:#d2e2e6!important;
+  opacity:1!important;
+}
+body .fusion-site-chat .fusion-chat-status{
+  color:#365964!important;
+  opacity:1!important;
+}
