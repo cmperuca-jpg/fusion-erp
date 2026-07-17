@@ -3,6 +3,8 @@ import { avaliarAcessoAluno } from "../access-engine/access-engine.service.mjs";
 import { listarLogs as listarLogsAcesso, registrarLog as registrarLogAcesso } from "../access-engine/access-engine.repository.mjs";
 import { lerJsonDuravel } from "../core/persistence/durable-json.mjs";
 import { gerarTokenPortal, validarTokenPortal } from "../auth/auth.service.mjs";
+import fs from "node:fs";
+import path from "node:path";
 
 const LIMITE_ACESSOS_PORTAL_DIA = Math.max(0, Number(process.env.FUSION_PORTAL_ALUNO_LIMITE_CATRACA_DIA || 3));
 const TIMEZONE_SISTEMA = process.env.FUSION_TIMEZONE || "America/Sao_Paulo";
@@ -260,10 +262,12 @@ export async function obterBiblioteca() {
   const biblioteca = await listarBiblioteca();
   biblioteca.grupos = Array.isArray(biblioteca.grupos) ? biblioteca.grupos : [];
   biblioteca.objetivos = Array.isArray(biblioteca.objetivos) ? biblioteca.objetivos : [];
-  biblioteca.exercicios = Array.isArray(biblioteca.exercicios) ? biblioteca.exercicios.map((ex) => ({
-    ...ex,
-    foto: ex.foto || ex.gif || `/assets/exercicios/flash/${String(ex.codigo || ex.id || "").padStart(3, "0")}.gif`
-  })) : [];
+  biblioteca.exercicios = Array.isArray(biblioteca.exercicios) ? biblioteca.exercicios
+    .map((ex) => {
+      const codigo = String(ex.codigo || ex.id || "").padStart(3, "0");
+      return { ...ex, codigo, foto: `/assets/exercicios/flash/${codigo}.gif` };
+    })
+    .filter((ex) => fs.existsSync(path.resolve("public/assets/exercicios/flash", `${ex.codigo}.gif`))) : [];
   return biblioteca;
 }
 

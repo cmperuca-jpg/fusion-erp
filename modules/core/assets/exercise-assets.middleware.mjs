@@ -13,7 +13,32 @@ function loadAliases() {
     const stat = fs.statSync(MAP_FILE);
     if (stat.mtimeMs === cache.mtimeMs) return cache.aliases;
     const parsed = JSON.parse(fs.readFileSync(MAP_FILE, "utf8"));
-    cache = { mtimeMs: stat.mtimeMs, aliases: parsed?.aliases || {} };
+    const configured = parsed?.aliases || {};
+    const canonicalToFlash = {};
+
+    // A biblioteca oficial e enxuta fica em /assets/exercicios/flash.
+    // O mapa legado ainda contém nomes da antiga árvore /assets/exercises.
+    // Invertemos esses aliases em memória para preservar treinos antigos sem
+    // manter cópias duplicadas dos mesmos GIFs no deploy.
+    for (const [source, target] of Object.entries(configured)) {
+      if (!source.startsWith("/assets/exercicios/flash/")) continue;
+      const absolute = path.resolve(PUBLIC, `.${source}`);
+      if (absolute.startsWith(PUBLIC + path.sep) && fs.existsSync(absolute)) {
+        canonicalToFlash[target] = source;
+      }
+    }
+
+    const aliases = {};
+    for (const [source, target] of Object.entries(configured)) {
+      const flash = canonicalToFlash[target];
+      if (flash) aliases[source] = flash;
+    }
+    for (const [canonical, flash] of Object.entries(canonicalToFlash)) {
+      aliases[canonical] = flash;
+      aliases[flash] = flash;
+    }
+
+    cache = { mtimeMs: stat.mtimeMs, aliases };
   } catch {
     cache = { mtimeMs: -1, aliases: {} };
   }
