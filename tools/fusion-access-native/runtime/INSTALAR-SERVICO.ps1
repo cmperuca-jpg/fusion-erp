@@ -15,3 +15,9 @@ $settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -RestartCount 999 -
 Unregister-ScheduledTask -TaskName $task -Confirm:$false -ErrorAction SilentlyContinue
 Register-ScheduledTask -TaskName $task -Action $action -Trigger @($startup,$logon) -Principal $principal -Settings $settings | Out-Null
 Start-ScheduledTask -TaskName $task
+& netsh.exe advfirewall firewall delete rule name="Fusion Access Offline" | Out-Null
+& netsh.exe advfirewall firewall add rule name="Fusion Access Offline" dir=in action=allow protocol=TCP localport=8765 profile=any | Out-Null
+Start-Sleep -Seconds 2
+if (-not (Get-ScheduledTask -TaskName $task -ErrorAction SilentlyContinue)) {
+  throw "A tarefa automatica do Fusion Access nao foi criada."
+}

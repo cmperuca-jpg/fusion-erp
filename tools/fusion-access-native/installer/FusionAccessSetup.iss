@@ -106,6 +106,6 @@ begin
     if not Exec('powershell.exe', Params, '', SW_HIDE, ewWaitUntilTerminated, ResultCode) or (ResultCode <> 0) then
       RaiseException('A inicialização automática não pôde ser configurada.');
     Exec('netsh.exe', 'advfirewall firewall delete rule name="Fusion Access Offline"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
-    Exec('netsh.exe', 'advfirewall firewall add rule name="Fusion Access Offline" dir=in action=allow protocol=TCP localport=8765 profile=private', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+    Exec('netsh.exe', 'advfirewall firewall add rule name="Fusion Access Offline" dir=in action=allow protocol=TCP localport=8765 profile=any', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
   end;
 end;
