@@ -110,6 +110,7 @@ function Invoke-AgentApi([string]$Method,[string]$Path,$Body=$null){
   return Invoke-RestMethod @p
 }
 
+
 try{
   $script:Cfg=Read-EnvFile $ConfigPath
   $script:AgentId=[string]$Cfg["ACCESS_AGENT_ID"]

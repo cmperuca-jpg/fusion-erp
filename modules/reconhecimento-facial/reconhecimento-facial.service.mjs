@@ -25,6 +25,22 @@ function pessoaAtiva(pessoa = {}) {
   const status = texto(pessoa.status || pessoa.statusMatricula || "ativo").toLowerCase();
   return !["inativo", "inativa", "bloqueado", "bloqueada", "cancelado", "cancelada", "suspenso", "suspensa"].includes(status);
 }
+async function alunoComPendenciaOffline(aluno = {}) {
+  const mensalidades = await lerJsonDuravel("mensalidades.json", []);
+  const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+  const ids = new Set([aluno.id, aluno._id, aluno.alunoId, aluno.cpf].filter(Boolean).map(String));
+  const nome = texto(aluno.nome).toLowerCase();
+  return mensalidades.some(item => {
+    const pertence = [item.alunoId, item.aluno_id, item.pessoaId, item.clienteId, item.cpf].filter(Boolean).some(valor => ids.has(String(valor))) || texto(item.alunoNome || item.aluno || item.nomeAluno).toLowerCase() === nome;
+    if (!pertence) return false;
+    const status = texto(item.statusPagamento || item.pagamento || item.status || item.situacao).toLowerCase();
+    if (["pago", "paga", "recebido", "recebida", "baixado", "baixada", "quitado", "quitada", "cancelado", "cancelada", "isento", "isenta"].includes(status)) return false;
+    const vencimento = new Date(item.vencimento || item.dataVencimento || item.data_vencimento || "");
+    if (Number.isNaN(vencimento.getTime())) return ["vencido", "vencida", "atrasado", "atrasada", "inadimplente"].includes(status);
+    vencimento.setHours(0, 0, 0, 0);
+    return vencimento < hoje;
+  });
+}
 function erro(mensagem, status = 400) { const e = new Error(mensagem); e.status = status; throw e; }
 
 export function configuracaoFacial() {
@@ -308,6 +324,52 @@ export async function listarPessoasParaCadastro() {
   const permitidos = new Set(["administrador", "admin", "recepcao", "responsavel_tecnico"]);
   for (const item of usuarios) if (String(item.status || "ativo").toLowerCase() === "ativo" && permitidos.has(String(item.perfil || "").toLowerCase())) pessoas.push({ id: item.id, nome: item.nome, tipo: "funcionario", perfil: item.perfil, status: item.status });
   return pessoas.sort((a, b) => String(a.nome).localeCompare(String(b.nome), "pt-BR"));
+}
+
+export async function snapshotFacialOffline() {
+  const cadastros = await listarCadastros();
+  const regras = [];
+  for (const cadastro of cadastros) {
+    const tipo = cadastro.pessoaTipo || "aluno";
+    const id = cadastro.pessoaId || cadastro.alunoId;
+    const pessoa = await buscarPessoa(tipo, id);
+    const pendencia = tipo === "aluno" && pessoa ? await alunoComPendenciaOffline(pessoa) : false;
+    const autorizado = Boolean(pessoa && pessoaAtiva(pessoa) && !pendencia);
+    regras.push({
+      subject: cadastro.subject,
+      pessoaId: id,
+      pessoaTipo: tipo,
+      pessoaNome: texto(pessoa?.nome || cadastro.pessoaNome || cadastro.alunoNome, 180),
+      autorizado,
+      motivo: autorizado ? "Acesso offline autorizado" : pendencia ? "Pagamento em atraso" : "Cadastro ou vínculo inativo"
+    });
+  }
+  return {
+    versao: Date.now(),
+    geradoEm: agora(),
+    geradoEmEpoch: Math.floor(Date.now() / 1000),
+    validoPorHoras: Math.max(1, Math.min(168, numero(process.env.FACIAL_OFFLINE_MAX_AGE_HOURS, 72))),
+    similaridadeMinima: configuracaoFacial().similaridadeMinima,
+    regras
+  };
+}
+
+export async function receberEventosFaciaisOffline(eventos = []) {
+  const aceitos = [];
+  for (const item of (Array.isArray(eventos) ? eventos : []).slice(0, 5000)) {
+    aceitos.push(await registrarEvento({
+      tipo: "identificacao-offline",
+      alunoId: item.pessoaId,
+      alunoNome: item.pessoaNome,
+      reconhecido: item.reconhecido === true,
+      autorizado: item.autorizado === true,
+      similaridade: item.similaridade,
+      motivo: item.motivo || "Evento sincronizado pelo agente local",
+      terminalId: item.terminalId || "terminal-offline",
+      origem: "terminal-facial-offline"
+    }));
+  }
+  return { recebidos: aceitos.length };
 }
 
 export function statusFacial() {

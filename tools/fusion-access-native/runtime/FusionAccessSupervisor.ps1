@@ -14,7 +14,7 @@ function Start-Hidden([string]$file,[string]$arguments) {
   return [System.Diagnostics.Process]::Start($info)
 }
 Log "Supervisor iniciado"
-$catraca = $null; $facial = $null
+$catraca = $null; $facial = $null; $localRelease = $null
 while ($true) {
   try {
     if ($null -eq $catraca -or $catraca.HasExited) {
@@ -24,6 +24,10 @@ while ($true) {
     if ($null -eq $facial -or $facial.HasExited) {
       $facial = Start-Hidden (Join-Path $base "FusionFacialWorker.exe") ""
       Log "Motor facial iniciado"
+    }
+    if ($null -eq $localRelease -or $localRelease.HasExited) {
+      $localRelease = Start-Hidden "powershell.exe" "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$base\FusionLocalReleaseAgent.ps1`" -ConfigPath `"$base\agent.env`""
+      Log "Executor local da catraca iniciado"
     }
   } catch { Log "Falha ao reiniciar componente: $($_.Exception.Message)" }
   Start-Sleep -Seconds 10

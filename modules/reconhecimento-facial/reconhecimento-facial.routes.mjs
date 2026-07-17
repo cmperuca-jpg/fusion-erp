@@ -12,6 +12,8 @@ import {
   listarPessoasParaCadastro,
   obterTarefaFacial,
   removerRosto,
+  receberEventosFaciaisOffline,
+  snapshotFacialOffline,
   statusFacial,
   tokenTerminal,
   validarTokenTerminal
@@ -168,6 +170,16 @@ router.post("/agent/tasks/:id/result", (req, res) => {
   const tarefa = finalizarTarefaFacial(req.params.id, agentId, req.body || {});
   if (!tarefa) return res.status(404).json({ ok: false, mensagem: "Tarefa facial não encontrada ou expirada." });
   return res.json({ ok: true, tarefa });
+});
+router.get("/agent/offline/snapshot", async (req, res) => {
+  const agentId = validateAgent(req);
+  if (!agentId) return res.status(401).json({ ok: false, mensagem: "Agente não autorizado." });
+  try { return res.json({ ok: true, snapshot: await snapshotFacialOffline() }); } catch (erro) { return respostaErro(res, erro); }
+});
+router.post("/agent/offline/eventos", async (req, res) => {
+  const agentId = validateAgent(req);
+  if (!agentId) return res.status(401).json({ ok: false, mensagem: "Agente não autorizado." });
+  try { return res.json({ ok: true, ...(await receberEventosFaciaisOffline(req.body?.eventos)) }); } catch (erro) { return respostaErro(res, erro); }
 });
 
 export default router;

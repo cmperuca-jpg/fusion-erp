@@ -1,0 +1,16 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:background="#041923">
+  <androidx.camera.view.PreviewView android:id="@+id/preview" android:layout_width="match_parent" android:layout_height="match_parent" app:scaleType="fillCenter"/>
+  <View android:id="@+id/veil" android:layout_width="match_parent" android:layout_height="match_parent" android:background="#55041923"/>
+  <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:gravity="center_horizontal" android:padding="24dp">
+    <TextView android:id="@+id/title" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Fusion Access" android:textColor="#FFFFFF" android:textSize="34sp" android:textStyle="bold"/>
+    <TextView android:id="@+id/message" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="Preparando câmera..." android:textColor="#E8F9FB" android:textSize="20sp"/>
+    <Space android:layout_width="1dp" android:layout_height="0dp" android:layout_weight="1"/>
+    <LinearLayout android:id="@+id/setup" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="#EE0A303B" android:orientation="vertical" android:padding="18dp">
+      <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Conectar ao computador da academia" android:textColor="#FFFFFF" android:textSize="20sp" android:textStyle="bold"/>
+      <EditText android:id="@+id/host" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="IP do computador, ex.: 192.168.0.10" android:inputType="textUri" android:textColor="#FFFFFF" android:textColorHint="#B9D1D8"/>
+      <EditText android:id="@+id/code" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Código de 6 números" android:inputType="number" android:maxLength="6" android:textColor="#FFFFFF" android:textColorHint="#B9D1D8"/>
+      <Button android:id="@+id/connect" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:text="Conectar terminal"/>
+    </LinearLayout>
+    <TextView android:id="@+id/status" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="#DD082C37" android:padding="16dp" android:text="Modo local" android:textColor="#FFFFFF" android:textSize="18sp"/>
+  </LinearLayout>
+</FrameLayout>

@@ -12,9 +12,10 @@ add_executable(FusionFacialWorker
   src/main.cpp
   src/http_client.cpp
   src/face_engine.cpp
+  src/offline_gateway.cpp
 )
 target_include_directories(FusionFacialWorker PRIVATE src)
-target_link_libraries(FusionFacialWorker PRIVATE ${OpenCV_LIBS} nlohmann_json::nlohmann_json winhttp crypt32)
+target_link_libraries(FusionFacialWorker PRIVATE ${OpenCV_LIBS} nlohmann_json::nlohmann_json winhttp crypt32 bcrypt ws2_32)
 target_compile_definitions(FusionFacialWorker PRIVATE UNICODE _UNICODE NOMINMAX WIN32_LEAN_AND_MEAN)
 if(MSVC)
   target_compile_options(FusionFacialWorker PRIVATE /W4 /permissive- /utf-8)

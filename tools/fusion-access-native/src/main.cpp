@@ -1,5 +1,6 @@
 #include "face_engine.h"
 #include "http_client.h"
+#include "offline_gateway.h"
 #include <windows.h>
 #include <chrono>
 #include <algorithm>
@@ -76,14 +77,34 @@ int main(int argc, char** argv) {
     const int pollMs = std::max(1000, std::stoi(config.count("ACCESS_AGENT_POLL_MS") ? config.at("ACCESS_AGENT_POLL_MS") : "1500"));
     HttpClient http(server);
     FaceEngine engine(base);
+    const int localPort = std::max(1024, std::stoi(config.count("FACIAL_LOCAL_PORT") ? config.at("FACIAL_LOCAL_PORT") : "8765"));
+    OfflineGateway offline(engine, base, localPort);
+    offline.start();
     log(base, "INFO", "Motor facial nativo iniciado");
+    log(base, "INFO", "Terminal offline ativo na porta " + std::to_string(localPort) + ". Código de pareamento: " + offline.pairingCode());
 
     const std::map<std::string, std::string> auth = {
       {"x-agent-id", agentId}, {"x-agent-token", token},
       {"x-facial-agent-version", "native-1.0.1"}
     };
+    auto nextSync = std::chrono::steady_clock::now();
     while (true) {
       try {
+        if (std::chrono::steady_clock::now() >= nextSync) {
+          try {
+            const auto snapshotResponse = http.request("GET", "/api/reconhecimento-facial/agent/offline/snapshot", "", auth);
+            if (snapshotResponse.status >= 200 && snapshotResponse.status < 300) {
+              const auto snapshotData = nlohmann::json::parse(snapshotResponse.body);
+              if (snapshotData.contains("snapshot")) offline.updateRules(snapshotData["snapshot"]);
+            }
+            const auto events = offline.pendingEvents();
+            if (!events.empty()) {
+              const auto sent = http.request("POST", "/api/reconhecimento-facial/agent/offline/eventos", nlohmann::json({{"eventos",events}}).dump(), auth);
+              if (sent.status >= 200 && sent.status < 300) offline.clearEvents();
+            }
+          } catch (const std::exception& syncError) { log(base, "WARN", std::string("Sincronização offline adiada: ") + syncError.what()); }
+          nextSync = std::chrono::steady_clock::now() + std::chrono::seconds(60);
+        }
         auto headers = auth;
         headers["x-facial-engine-status"] = engine.status();
         const auto response = http.request("GET", "/api/reconhecimento-facial/agent/next", "", headers);
