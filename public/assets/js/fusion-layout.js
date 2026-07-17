@@ -1,6 +1,8 @@
 (function () {
   function garantirEstilosGlobais() {
     const estilos = [
+      ["fusion-app-global", "/assets/css/fusion-app.css"],
+      ["fusion-menu-global", "/assets/css/fusion-menu-global.css"],
       ["fusion-premium-final", "/assets/css/fusion-premium-final.css"],
       ["fusion-correcoes-visuais", "/assets/css/fusion-correcoes-visuais.css"],
       ["fusion-notificacoes", "/assets/css/fusion-notificacoes.css"]
@@ -25,7 +27,8 @@
     document.head.appendChild(script);
   }
 
-  garantirCentralNotificacoes();
+  /* As notificações continuam disponíveis no módulo de atendimento, mas o
+     sino global foi removido para manter o cabeçalho das páginas limpo. */
 
   const PAGINAS_SEM_MENU = [
     "/pages/aluno-avaliacao/",
@@ -104,10 +107,14 @@
   }
 
   function removerMenusExistentes() {
-    document.querySelectorAll(".sidebar,.fusion-sidebar,#fusionSidebar,#fusionMenuGlobal,.fusion-menu-global,.topbar").forEach(el => el.remove());
+    document.querySelectorAll(".sidebar,.fusion-sidebar,#fusionSidebar,#fusionMenuGlobal,.fusion-menu-global,.topbar,.fusion-topbar").forEach(el => el.remove());
     document.body.classList.add("fusion-sem-menu");
     document.body.classList.remove("fusion-com-sidebar");
     document.documentElement.classList.add("fusion-sem-menu");
+  }
+
+  function removerBarrasSuperiores() {
+    document.querySelectorAll(".topbar,.fusion-topbar").forEach(el => el.remove());
   }
 
   function usuario() {
@@ -146,7 +153,14 @@
 
     const marca = document.createElement("div");
     marca.className = "brand fusion-brand";
-    marca.innerHTML = "<strong>Fusion ERP</strong><small>Menu inteligente</small>";
+    marca.innerHTML = `
+      <span class="fusion-brand-texto"><strong>Fusion ERP</strong><small>Menu inteligente</small></span>
+      <button class="fusion-menu-sair" type="button" aria-label="Sair do Fusion ERP">Sair</button>
+    `;
+    marca.querySelector(".fusion-menu-sair")?.addEventListener("click", () => {
+      if (window.FusionAuth && typeof FusionAuth.sair === "function") FusionAuth.sair();
+      else location.href = "/pages/login/index.html";
+    });
     sidebar.appendChild(marca);
 
     ITENS_MENU.forEach(grupo => {
@@ -333,39 +347,13 @@
 
     montarMenu();
     preencherUsuarioTopo();
-
-    const main = document.querySelector(".fusion-main,.main,main");
-    if (!main || main.querySelector(".topbar")) return;
-
-    const user = usuario();
-    const topbar = document.createElement("header");
-    topbar.className = "topbar";
-    topbar.innerHTML = `
-      <div>
-        <h1>${titulo || document.title.replace("Fusion ERP - ", "").replace(" - Fusion ERP", "") || "Fusion ERP"}</h1>
-        <small>${user?.perfilOriginal || user?.perfil || "Administrador"}</small>
-      </div>
-      <div class="usuario-topo">
-        <div data-catraca-slot></div>
-        <span>${user?.nome || "Administrador"}</span>
-        <button type="button" class="btn-sair">Sair</button>
-      </div>
-    `;
-    const slotCatraca = topbar.querySelector("[data-catraca-slot]");
-    const controleCatraca = montarControleCatraca(user);
-    if (slotCatraca && controleCatraca) slotCatraca.appendChild(controleCatraca);
-    else slotCatraca?.remove();
-
-    topbar.querySelector(".btn-sair")?.addEventListener("click", () => {
-      if (window.FusionAuth && typeof FusionAuth.sair === "function") FusionAuth.sair();
-      else location.href = "/pages/login/index.html";
-    });
-    main.prepend(topbar);
+    removerBarrasSuperiores();
   };
 
   document.addEventListener("DOMContentLoaded", () => {
     prepararLinksPublicos(document);
     formatarDatasVisiveis(document);
+    removerBarrasSuperiores();
     if (paginaSemMenu()) {
       removerMenusExistentes();
       preencherUsuarioTopo();
@@ -381,6 +369,7 @@
 
   window.addEventListener("load", () => {
     formatarDatasVisiveis(document);
+    removerBarrasSuperiores();
     if (paginaSemMenu()) removerMenusExistentes();
   });
 
@@ -391,6 +380,7 @@
     requestAnimationFrame(() => {
       formatacaoPendente = false;
       formatarDatasVisiveis(document);
+      removerBarrasSuperiores();
     });
   }).observe(document.documentElement, { childList: true, subtree: true });
 })();

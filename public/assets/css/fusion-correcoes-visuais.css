@@ -195,3 +195,68 @@ body.fusion-premium .page .termos label{color:#fff!important}
   body.fusion-com-sidebar :is(.modal-actions,.modal-footer){display:grid!important;grid-template-columns:1fr 1fr!important;gap:7px!important}
   body.fusion-com-sidebar :is(.modal-actions,.modal-footer) button{width:100%!important;min-width:0!important}
 }
+
+/* Menu principal enxuto: marca em duas linhas e única saída do sistema. */
+body.fusion-com-sidebar .sidebar .fusion-brand{
+  display:flex!important;
+  flex-direction:row!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:10px!important;
+  min-height:76px!important;
+  padding:14px 12px!important;
+  white-space:normal!important;
+}
+body.fusion-com-sidebar .fusion-brand-texto{
+  display:flex!important;
+  flex-direction:column!important;
+  min-width:0!important;
+}
+body.fusion-com-sidebar .fusion-brand-texto strong{
+  display:block!important;
+  font-size:20px!important;
+  line-height:1.05!important;
+  white-space:nowrap!important;
+}
+body.fusion-com-sidebar .fusion-brand-texto small{
+  display:block!important;
+  margin-top:5px!important;
+  font-size:11px!important;
+  line-height:1.2!important;
+  white-space:nowrap!important;
+}
+body.fusion-com-sidebar .fusion-menu-sair{
+  flex:0 0 auto!important;
+  min-height:30px!important;
+  padding:6px 9px!important;
+  background:transparent!important;
+  border:1px solid #58737b!important;
+  color:#eaf5f7!important;
+  box-shadow:none!important;
+}
+body.fusion-com-sidebar :is(.topbar,.fusion-topbar){display:none!important}
+
+/* Páginas especiais, como reconhecimento facial, também respeitam a sidebar. */
+body.fusion-com-sidebar>.sidebar.fusion-sidebar{
+  position:fixed!important;
+  left:0!important;
+  top:0!important;
+  bottom:0!important;
+  width:270px!important;
+  max-width:270px!important;
+  overflow-y:auto!important;
+}
+body.fusion-com-sidebar>main:not(.fusion-main){
+  width:calc(100% - 270px)!important;
+  max-width:calc(100% - 270px)!important;
+  margin:0 0 0 270px!important;
+  padding:24px!important;
+}
+@media(max-width:900px){
+  body.fusion-com-sidebar>main:not(.fusion-main){
+    width:100%!important;
+    max-width:100%!important;
+    margin:0!important;
+    padding:12px!important;
+  }
+}
