@@ -4,6 +4,7 @@ import * as simulador from './drivers/simulador.driver.mjs';
 import { listarDrivers, obterDriver } from './drivers/driver-registry.mjs';
 import { mapaLegado } from './drivers/sdk-legacy.adapter.mjs';
 import { queueRelease, getAgent, getCommand } from '../access-bridge/access-bridge.service.mjs';
+import { lerJsonDuravel, salvarJsonDuravel } from '../core/persistence/durable-json.mjs';
 
 
 const HENRY_PADRAO = {
@@ -11,6 +12,72 @@ const HENRY_PADRAO = {
   port: Number(process.env.HENRY7X_PORT || 3000),
   tempoSegundos: Number(process.env.HENRY7X_TEMPO_SEGUNDOS || 5)
 };
+
+const CONFIG_FILE = 'access_config.json';
+const CONFIG_PADRAO = { limiteLiberacoesManuaisDia: 20, limiteLiberacoesProfessorDia: 10 };
+
+function hojeLocal() {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Maceio' }).format(new Date());
+}
+
+export async function obterConfiguracaoAcesso() {
+  const salvo = await lerJsonDuravel(CONFIG_FILE, CONFIG_PADRAO);
+  return { ...CONFIG_PADRAO, ...(salvo && !Array.isArray(salvo) ? salvo : {}) };
+}
+
+export async function salvarConfiguracaoAcesso(payload = {}) {
+  const atual = await obterConfiguracaoAcesso();
+  const inteiro = (valor, padrao) => Math.max(1, Math.min(999, Number.parseInt(valor, 10) || padrao));
+  const novo = {
+    ...atual,
+    limiteLiberacoesManuaisDia: inteiro(payload.limiteLiberacoesManuaisDia, atual.limiteLiberacoesManuaisDia),
+    limiteLiberacoesProfessorDia: inteiro(payload.limiteLiberacoesProfessorDia, atual.limiteLiberacoesProfessorDia),
+    atualizadoEm: new Date().toISOString(),
+    atualizadoPor: String(payload.atualizadoPor || 'administrador')
+  };
+  await salvarJsonDuravel(CONFIG_FILE, novo);
+  return novo;
+}
+
+export async function opcoesLiberacaoManual() {
+  const [alunos, leads] = await Promise.all([repo.listarAlunos(), lerJsonDuravel('leads.json', [])]);
+  const ativo = (v) => !['inativo','inativa','bloqueado','bloqueada','cancelado','cancelada','excluido'].includes(repo.normalizar(v));
+  return {
+    ok: true,
+    alunos: alunos.filter(a => ativo(a.status || a.situacao)).map(a => ({ id:a.id, nome:a.nome || a.nomeCompleto, cpf:a.cpf || '', matricula:a.numeroMatricula || a.matricula || '' })),
+    visitantes: (Array.isArray(leads) ? leads : []).filter(l => ativo(l.status) && l.etapa !== 'perdido').map(l => ({ id:l.id, nome:l.nome, telefone:l.whatsapp || l.telefone || '', etapa:l.etapa || 'novo' }))
+  };
+}
+
+async function validarLiberacaoIdentificada(payload = {}) {
+  const categoria = repo.normalizar(payload.categoriaMotivo || payload.categoria || payload.motivo);
+  if (categoria.includes('aluno')) {
+    if (!payload.alunoId) { const e = new Error('Selecione o aluno sem biometria.'); e.status = 400; throw e; }
+    const aluno = (await repo.listarAlunos()).find(a => String(a.id) === String(payload.alunoId));
+    if (!aluno) { const e = new Error('Aluno selecionado não foi encontrado.'); e.status = 404; throw e; }
+    return { categoria:'aluno_sem_biometria', pessoaId:aluno.id, pessoaNome:aluno.nome || aluno.nomeCompleto, motivo:`Aluno sem biometria: ${aluno.nome || aluno.nomeCompleto}` };
+  }
+  if (categoria.includes('visit')) {
+    if (!payload.visitanteId) { const e = new Error('O visitante precisa realizar o pré-cadastro no site antes da liberação.'); e.status = 400; throw e; }
+    const leads = await lerJsonDuravel('leads.json', []);
+    const visitante = (Array.isArray(leads) ? leads : []).find(l => String(l.id) === String(payload.visitanteId) && repo.normalizar(l.status || 'ativo') !== 'excluido');
+    if (!visitante) { const e = new Error('Pré-cadastro do visitante não foi encontrado.'); e.status = 404; throw e; }
+    return { categoria:'visitante_precadastrado', pessoaId:visitante.id, pessoaNome:visitante.nome, motivo:`Visitante pré-cadastrado: ${visitante.nome}` };
+  }
+  return { categoria: categoria || 'outro', pessoaId:null, pessoaNome:null, motivo:String(payload.motivoDetalhe || payload.motivo || 'Outro motivo operacional').trim() };
+}
+
+async function controlarLimite(payload = {}) {
+  const config = await obterConfiguracaoAcesso();
+  const professor = String(payload.origem || '').includes('professor');
+  const limite = professor ? config.limiteLiberacoesProfessorDia : config.limiteLiberacoesManuaisDia;
+  const operadorId = String(payload.operadorId || 'sem-operador');
+  const hoje = hojeLocal();
+  const auditoria = await lerJsonDuravel('access_manual_audit.json', []);
+  const usados = (Array.isArray(auditoria) ? auditoria : []).filter(x => x.data === hoje && String(x.operadorId) === operadorId).length;
+  if (usados >= limite) { const e = new Error(`Limite diário de ${limite} liberações atingido para este usuário.`); e.status = 429; throw e; }
+  return { config, limite, usados, hoje, auditoria: Array.isArray(auditoria) ? auditoria : [] };
+}
 
 async function enfileirarLiberacaoRemota({ aluno, dispositivo, direcao = 'entrada', origem = 'access-engine', operadorId = null, motivo = 'liberacao-autorizada' } = {}) {
   const command = await queueRelease({
@@ -357,16 +424,27 @@ export async function statusAgenteAcesso() {
 }
 
 export async function liberarRemoto(payload = {}) {
+  const identificacao = await validarLiberacaoIdentificada(payload);
+  const controle = await controlarLimite(payload);
   const dispositivo = await obterDispositivoOuPadrao(payload.dispositivoId || 'disp_henry7x_01');
   const catraca = await enfileirarLiberacaoRemota({
-    aluno: { id: payload.alunoId || null, nome: payload.alunoNome || 'Liberação manual' },
+    aluno: { id: identificacao.pessoaId, nome: identificacao.pessoaNome || 'Liberação manual' },
     dispositivo,
     direcao: payload.direcao || 'entrada',
     origem: payload.origem || 'painel-access-engine',
     operadorId: payload.operadorId || null,
-    motivo: payload.motivo || 'liberacao-manual'
+    motivo: identificacao.motivo
   });
-  return { ok: true, mensagem: 'Comando enviado ao agente local.', catraca };
+  const registro = {
+    id:`manual_${Date.now()}_${Math.floor(Math.random()*999999)}`,
+    data:controle.hoje, criadoEm:new Date().toISOString(), operadorId:String(payload.operadorId || 'sem-operador'),
+    operadorNome:String(payload.operadorNome || ''), origem:String(payload.origem || 'painel'),
+    categoria:identificacao.categoria, pessoaId:identificacao.pessoaId, pessoaNome:identificacao.pessoaNome,
+    motivo:identificacao.motivo, commandId:catraca.commandId
+  };
+  controle.auditoria.unshift(registro);
+  await salvarJsonDuravel('access_manual_audit.json', controle.auditoria.slice(0, 10000));
+  return { ok: true, mensagem: 'Comando enviado ao agente local.', catraca, auditoria:registro, limiteDiario:controle.limite, usadosHoje:controle.usados + 1 };
 }
 
 export async function consultarComandoRemoto(id) {

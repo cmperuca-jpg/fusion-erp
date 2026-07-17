@@ -6,6 +6,7 @@ function txt(v){ return String(v??'').trim(); }
 function hojeISO(){ return new Date().toISOString().slice(0,10); }
 function agoraISO(){ return new Date().toISOString(); }
 function addMeses(dataISO, meses=1){ const d=new Date(`${dataISO||hojeISO()}T12:00:00`); d.setMonth(d.getMonth()+Number(meses||1)); return d.toISOString().slice(0,10); }
+function addDias(dataISO, dias=1){ const d=new Date(`${dataISO||hojeISO()}T12:00:00`); d.setDate(d.getDate()+Number(dias||0)); return d.toISOString().slice(0,10); }
 function proximoMesNoDia(dataISO, dia){
   const d=new Date(`${dataISO||hojeISO()}T12:00:00`);
   d.setDate(1); d.setMonth(d.getMonth()+1);
@@ -14,9 +15,9 @@ function proximoMesNoDia(dataISO, dia){
 }
 function alunoNome(a){ return a?.nome || a?.name || a?.nomeCompleto || ''; }
 function normalizar(v){ return String(v||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
-function tipoPlano(plano){ const n=normalizar(plano?.tipoPlano || plano?.tipo || 'Mensal'); if(n.includes('pre')) return 'Pré-pago'; if(n.includes('diar')) return 'Diarista'; if(n.includes('semes')) return 'Semestral'; if(n.includes('anual')) return 'Anual'; return 'Mensal'; }
+function tipoPlano(plano){ const n=normalizar(plano?.tipoPlano || plano?.tipo || 'Mensal'); if(n.includes('pre')) return 'Pré-pago'; if(n.includes('diar')) return 'Diarista'; if(n.includes('trimes')) return 'Trimestral'; if(n.includes('semes')) return 'Semestral'; if(n.includes('anual')) return 'Anual'; return 'Mensal'; }
 function tipoAvulso(tipo){ const n=normalizar(tipo); return n.includes('pre') || n.includes('diar'); }
-function mesesPlano(plano){ const t=tipoPlano(plano); if(t==='Semestral') return 6; if(t==='Anual') return 12; if(t==='Mensal') return 1; return 0; }
+function mesesPlano(plano){ const t=tipoPlano(plano); if(t==='Trimestral') return 3; if(t==='Semestral') return 6; if(t==='Anual') return 12; if(t==='Mensal') return 1; return 0; }
 function planoGeraMensalidade(plano){ if(plano?.geraMensalidade !== undefined) return plano.geraMensalidade !== false && plano.geraMensalidade !== 'false'; return ['Mensal','Semestral','Anual'].includes(tipoPlano(plano)); }
 function planoCobraMatricula(plano){ if(plano?.cobraMatricula !== undefined) return plano.cobraMatricula !== false && plano.cobraMatricula !== 'false'; return ['Mensal','Semestral','Anual'].includes(tipoPlano(plano)); }
 function valorMatriculaPlano(plano){ return dinheiro(plano?.valorMatricula ?? plano?.valorBaseMatricula ?? plano?.taxaMatricula ?? 0); }
@@ -127,7 +128,7 @@ function limparPendenciasMatricula(base, matricula, motivo = '', usuario = 'sist
   return resumo;
 }
 
-function resumirMatricula(m, completo=false){ const servicos=Array.isArray(m.servicos)?m.servicos:(Array.isArray(m.turmas)?m.turmas:[]); const r=resumoServicos(servicos); const out={ id:m.id, numero:m.numero, alunoId:m.alunoId, aluno:m.aluno, cpf:m.cpf||'', planoId:m.planoId, plano:m.plano, tipoPlano:m.tipoPlano || m.tipoCobranca || 'Mensal', tipoCobranca:m.tipoCobranca || m.tipoPlano || 'Mensal', status:m.status, dataMatricula:m.dataMatricula||'', vencimentoInicial:m.vencimentoInicial||'', dataInicio:m.dataInicio||'', dataFim:m.dataFim||'', valorMatricula:dinheiro(m.valorMatricula), valorServicos:dinheiro(m.valorServicos ?? r.valorServicos), valorMensal:dinheiro(m.valorMensalTotal ?? m.valorMensal), valorMensalTotal:dinheiro(m.valorMensalTotal ?? m.valorMensal), valorTotalInicial:dinheiro(m.valorTotalInicial), taxaMatricula:dinheiro(m.taxaMatricula), descontoMatricula:dinheiro(m.descontoMatricula), resumoValoresEntrada:m.resumoValoresEntrada||'', itensFinanceirosIniciais:Array.isArray(m.itensFinanceirosIniciais)?m.itensFinanceirosIniciais:[], turmaId:m.turmaId||r.turmaIds[0]||'', turmaIds:Array.isArray(m.turmaIds)?m.turmaIds:r.turmaIds, turma:m.turma||r.turma, turmas:servicos, servicos, modalidade:m.modalidade||r.modalidade, professor:m.professor||r.professor, horario:m.horario||r.horario, sala:m.sala||r.sala, formaPagamento:m.formaPagamento||'', mensalidadeInicialId:m.mensalidadeInicialId||null, financeiroInicialId:m.financeiroInicialId||null, recebimentoInicialId:m.recebimentoInicialId||null, criadoEm:m.criadoEm, atualizadoEm:m.atualizadoEm } ; if(completo){ out.historico=Array.isArray(m.historico)?m.historico:[]; out.auditoria=Array.isArray(m.auditoria)?m.auditoria:[]; } return out; }
+function resumirMatricula(m, completo=false){ const servicos=Array.isArray(m.servicos)?m.servicos:(Array.isArray(m.turmas)?m.turmas:[]); const r=resumoServicos(servicos); const out={ id:m.id, numero:m.numero, alunoId:m.alunoId, aluno:m.aluno, cpf:m.cpf||'', planoId:m.planoId, plano:m.plano, tipoPlano:m.tipoPlano || m.tipoCobranca || 'Mensal', tipoCobranca:m.tipoCobranca || m.tipoPlano || 'Mensal', status:m.status, dataMatricula:m.dataMatricula||'', vencimentoInicial:m.vencimentoInicial||'', proximoVencimento:m.proximoVencimento||'', diaVencimento:m.diaVencimento||'', dataInicio:m.dataInicio||'', dataFim:m.dataFim||'', expiraEm:m.expiraEm||'', creditosAcesso:m.creditosAcesso??null, acessosConsumidos:m.acessosConsumidos||0, recorrenciaAutomatica:m.recorrenciaAutomatica!==false, valorMatricula:dinheiro(m.valorMatricula), valorServicos:dinheiro(m.valorServicos ?? r.valorServicos), valorMensal:dinheiro(m.valorMensalTotal ?? m.valorMensal), valorMensalTotal:dinheiro(m.valorMensalTotal ?? m.valorMensal), valorTotalInicial:dinheiro(m.valorTotalInicial), taxaMatricula:dinheiro(m.taxaMatricula), descontoMatricula:dinheiro(m.descontoMatricula), resumoValoresEntrada:m.resumoValoresEntrada||'', itensFinanceirosIniciais:Array.isArray(m.itensFinanceirosIniciais)?m.itensFinanceirosIniciais:[], turmaId:m.turmaId||r.turmaIds[0]||'', turmaIds:Array.isArray(m.turmaIds)?m.turmaIds:r.turmaIds, turma:m.turma||r.turma, turmas:servicos, servicos, modalidade:m.modalidade||r.modalidade, professor:m.professor||r.professor, horario:m.horario||r.horario, sala:m.sala||r.sala, formaPagamento:m.formaPagamento||'', mensalidadeInicialId:m.mensalidadeInicialId||null, financeiroInicialId:m.financeiroInicialId||null, recebimentoInicialId:m.recebimentoInicialId||null, criadoEm:m.criadoEm, atualizadoEm:m.atualizadoEm } ; if(completo){ out.historico=Array.isArray(m.historico)?m.historico:[]; out.auditoria=Array.isArray(m.auditoria)?m.auditoria:[]; } return out; }
 export async function listarMatriculas(filtros={}){ const base=await carregarBaseMatricula(); const termo=String(filtros.q||filtros.busca||'').toLowerCase(); const status=String(filtros.status||''); const alunoId=String(filtros.alunoId||filtros.aluno_id||''); let dados=base.matriculas||[]; if(status) dados=dados.filter(m=>String(m.status)===status); if(alunoId) dados=dados.filter(m=>String(m.alunoId)===alunoId); if(termo) dados=dados.filter(m=>[m.numero,m.aluno,m.plano,m.turma,m.status].join(' ').toLowerCase().includes(termo)); return { ok:true, success:true, total:dados.length, dados:dados.map(m=>resumirMatricula(m)).sort((a,b)=>String(b.criadoEm||'').localeCompare(String(a.criadoEm||''))) }; }
 export async function obterMatricula(id){ const base=await carregarBaseMatricula(); const m=(base.matriculas||[]).find(x=>String(x.id)===String(id)||String(x.numero)===String(id)); if(!m){ const e=new Error('Matrícula não encontrada.'); e.status=404; throw e; } return { ok:true, success:true, dados:resumirMatricula(m,true) }; }
 export async function integrarMatriculaAluno(alunoId, planoId, opcoes={}){
@@ -155,7 +156,7 @@ export async function integrarMatriculaAluno(alunoId, planoId, opcoes={}){
   const diaVencimento=Math.max(1,Math.min(28,Number(opcoes.diaVencimento)||Number(String(dataMatricula).slice(8,10))||1));
   const vencimentoInicial=opcoes.vencimento || dataMatricula;
   const proximoVencimento=opcoes.diaVencimento ? proximoMesNoDia(dataMatricula,diaVencimento) : addMeses(vencimentoInicial, 1);
-  const dataFim=opcoes.dataFim || (mesesPlano(plano)>0 ? addMeses(dataInicio, mesesPlano(plano)) : '');
+  const dataFim=opcoes.dataFim || (tipo === 'Pré-pago' ? addDias(dataInicio, Math.max(1, Number(plano.validadeDias || 30))) : (tipo === 'Diarista' ? '' : (mesesPlano(plano)>0 ? addMeses(dataInicio, mesesPlano(plano)) : '')));
 
   const servicos=montarServicos(base,plano,{...opcoes,tipoCobranca:tipo});
   const r=resumoServicos(servicos);
@@ -225,6 +226,10 @@ export async function integrarMatriculaAluno(alunoId, planoId, opcoes={}){
     proximoVencimento,
     dataInicio,
     dataFim,
+    expiraEm: tipo === 'Pré-pago' ? `${dataFim}T00:00:00-03:00` : '',
+    creditosAcesso: tipo === 'Diarista' ? Math.max(1, Number(opcoes.creditosAcesso || plano.creditosAcesso || 1)) : null,
+    acessosConsumidos: 0,
+    recorrenciaAutomatica: !tipoAvulso(tipo),
     turmaId:r.turmaIds[0]||'',
     turmaIds:r.turmaIds,
     turma:r.turma,
@@ -476,6 +481,46 @@ export async function integrarMatriculaAluno(alunoId, planoId, opcoes={}){
 }
 
 export async function trocarPlanoAluno(alunoId, novoPlanoId, opcoes={}){ return integrarMatriculaAluno(alunoId, novoPlanoId, {...opcoes, permitirTroca:true}); }
+
+export async function alterarDiaVencimento(id, novoDia, usuario='sistema'){
+  const base=await carregarBaseMatricula();
+  const m=base.matriculas.find(x=>String(x.id)===String(id)||String(x.numero)===String(id));
+  if(!m){ const e=new Error('Matrícula não encontrada.'); e.status=404; throw e; }
+  if(tipoAvulso(m.tipoPlano || m.tipoCobranca)){ const e=new Error('Planos pré-pago e diária não possuem vencimento mensal recorrente.'); e.status=400; throw e; }
+  const diaInformado=Number(novoDia);
+  if(!Number.isInteger(diaInformado)||diaInformado<1||diaInformado>28){ const e=new Error('Informe um dia entre 1 e 28.'); e.status=400; throw e; }
+  const dia=diaInformado;
+  const antigo=Math.max(1,Math.min(28,Number(m.diaVencimento)||Number(String(m.proximoVencimento||m.vencimentoInicial||'').slice(8,10))||1));
+  const valor=dinheiro(m.valorMensalTotal ?? m.valorMensal ?? 0);
+  const diferencaDias=dia-antigo;
+  const ajuste=dinheiro(valor*(diferencaDias/30));
+  const novaData=proximoMesNoDia(hojeISO(),dia);
+  const aberta=(base.mensalidades||[]).filter(x=>String(x.matriculaId||'')===String(m.id)&&!statusPagoMatricula(x)).sort((a,b)=>String(a.vencimento||'').localeCompare(String(b.vencimento||'')))[0];
+  let valorAjustado=dinheiro(Math.max(0,valor+ajuste));
+  if(aberta){ aberta.vencimento=novaData; aberta.diaVencimento=dia; aberta.ajusteMudancaVencimento=ajuste; aberta.valor=valorAjustado; aberta.total=valorAjustado; aberta.valorOriginal=valor; aberta.valorRestante=valorAjustado; aberta.atualizadoEm=agoraISO(); }
+  const financeiro=(base.financeiro||[]).find(x=>String(x.matriculaId||'')===String(m.id)&&(!aberta||String(x.mensalidadeId||'')===String(aberta.id))&&!statusPagoMatricula(x));
+  if(financeiro){ financeiro.vencimento=novaData; financeiro.diaVencimento=dia; financeiro.ajusteMudancaVencimento=ajuste; financeiro.valor=valorAjustado; financeiro.valorBruto=valorAjustado; financeiro.valorRestante=valorAjustado; financeiro.atualizadoEm=agoraISO(); }
+  Object.assign(m,{diaVencimento:dia,proximoVencimento:novaData,ajusteMudancaVencimento:ajuste,atualizadoEm:agoraISO()});
+  const aluno=base.alunos.find(a=>String(a.id)===String(m.alunoId)); if(aluno) Object.assign(aluno,{diaVencimento:dia,proximoVencimento:novaData,atualizadoEm:agoraISO()});
+  historico(m,'alterar_dia_vencimento',`Vencimento alterado do dia ${antigo} para ${dia}.`,{diaAnterior:antigo,novoDia:dia,diferencaDias,ajuste,novaData,valorNormal:valor,valorAjustado},usuario);
+  await salvarBaseMatricula(base);
+  return {ok:true,success:true,dados:resumirMatricula(m,true),calculo:{diaAnterior:antigo,novoDia:dia,diferencaDias,ajuste,valorNormal:valor,valorAjustado,novaData},mensagem:'Vencimento alterado. O próximo lançamento recebeu o ajuste proporcional e os seguintes permanecem no valor normal.'};
+}
+export async function recarregarDiaria(id, quantidade=1, usuario='sistema'){
+  const base=await carregarBaseMatricula();
+  const m=base.matriculas.find(x=>String(x.id)===String(id)||String(x.numero)===String(id));
+  if(!m){ const e=new Error('Matrícula não encontrada.'); e.status=404; throw e; }
+  if(tipoPlano({tipoPlano:m.tipoPlano||m.tipoCobranca})!=='Diarista'){ const e=new Error('A recarga é exclusiva do plano diária.'); e.status=400; throw e; }
+  const qtd=Number(quantidade);
+  if(!Number.isInteger(qtd)||qtd<1||qtd>365){ const e=new Error('Informe de 1 a 365 diárias.'); e.status=400; throw e; }
+  m.creditosAcesso=Math.max(0,Number(m.creditosAcesso||0))+qtd;
+  m.status='Ativa'; m.atualizadoEm=agoraISO();
+  const aluno=base.alunos.find(a=>String(a.id)===String(m.alunoId));
+  if(aluno) Object.assign(aluno,{status:'Ativo',creditosAcesso:m.creditosAcesso,atualizadoEm:agoraISO()});
+  historico(m,'recarregar_diarias',`${qtd} diária(s) adicionada(s).`,{quantidade:qtd,creditosDisponiveis:m.creditosAcesso},usuario);
+  await salvarBaseMatricula(base);
+  return {ok:true,success:true,dados:resumirMatricula(m,true),creditosDisponiveis:m.creditosAcesso,mensagem:`${qtd} diária(s) recarregada(s) com sucesso.`};
+}
 export async function alterarStatusMatricula(id,status,motivo='',usuario='sistema'){
   const base=await carregarBaseMatricula();
   const idx=base.matriculas.findIndex(x=>String(x.id)===String(id)||String(x.numero)===String(id));

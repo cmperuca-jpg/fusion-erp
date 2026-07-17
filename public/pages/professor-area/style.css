@@ -14,3 +14,5 @@
 .prof-card p,.gestao-cabecalho p,.professor-dados span,.gestao-mensagem,.lista-vazia{color:#d5e7eb!important;opacity:1!important;text-shadow:none!important}
 .prof-hero p{color:#d5e7eb!important;opacity:1!important}
 .escopo-acesso.global{background:#dcfce7!important;color:#14532d!important}
+
+.prof-access-card{display:grid;grid-template-columns:1fr auto;gap:8px 16px;align-items:center;padding:18px 20px;border:1px solid #155e75;border-radius:16px;background:#082f3a;color:#fff}.prof-access-card span{display:block;margin-top:4px;color:#c8eef3}.prof-access-card small{grid-column:1/-1;color:#67e8f9;font-weight:800}

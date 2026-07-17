@@ -943,6 +943,20 @@ body.modo-professor-avaliacao .modal-actions{
   z-index:22!important;
 }
 
+/* Avaliação no celular: um único fluxo de rolagem, sem painéis fixos. */
+@media(max-width:860px){
+ body.modo-professor-avaliacao .modal-backdrop{position:relative!important;inset:auto!important;overflow:visible!important;background:#eef4f7!important}
+ body.modo-professor-avaliacao .modal-avaliacao{height:auto!important;min-height:100dvh!important;max-height:none!important;overflow:visible!important}
+ body.modo-professor-avaliacao .aval-form{padding-bottom:20px!important}
+ body.modo-professor-avaliacao .sca-titlebar,body.modo-professor-avaliacao .sca-tabs,body.modo-professor-avaliacao .modal-actions,.avaliacao-mobile-resumo{position:static!important;top:auto!important;bottom:auto!important}
+ body.modo-professor-avaliacao .modal-actions{display:grid!important;grid-template-columns:1fr 1fr!important;padding:12px!important;box-shadow:none!important}
+ body.modo-professor-avaliacao .modal-actions>*:last-child:nth-child(odd){grid-column:1/-1}
+ body.modo-professor-avaliacao .sca-panel,body.modo-professor-avaliacao .resultado-card{background:#fff!important;color:#0f172a!important}
+ body.modo-professor-avaliacao .sca-panel :is(h3,h4,label,strong,p,span),body.modo-professor-avaliacao .field label{color:#172033!important;text-shadow:none!important}
+ body.modo-professor-avaliacao :is(input,select,textarea){background:#fff!important;color:#0f172a!important;border-color:#8293a8!important;-webkit-text-fill-color:#0f172a!important}
+ body.modo-professor-avaliacao :is(input,textarea)::placeholder{color:#526477!important;opacity:1!important}
+}
+
 @media(max-width:760px){
   body.modo-professor-avaliacao .aval-page{
     padding:12px!important;

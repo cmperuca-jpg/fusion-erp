@@ -124,6 +124,16 @@ body.fusion-com-sidebar :is(.modal-actions,.modal-footer) :is(.btn-primary,[type
   color:#fff!important;
   opacity:1!important;
 }
+
+.fusion-sidebar-toggle,.fusion-sidebar-backdrop{display:none}
+@media(max-width:900px){
+ body.fusion-com-sidebar .fusion-sidebar{position:fixed!important;inset:0 auto 0 0!important;width:min(86vw,320px)!important;max-width:320px!important;height:100dvh!important;z-index:2001!important;transform:translateX(-105%)!important;transition:transform .22s ease!important;overflow:auto!important}
+ body.fusion-com-sidebar.fusion-sidebar-aberta .fusion-sidebar{transform:translateX(0)!important}
+ .fusion-sidebar-toggle{display:grid!important;place-items:center;position:fixed;top:10px;left:10px;z-index:2000;width:46px;height:46px;border-radius:10px;border:1px solid #2a6574;background:#092833;color:#fff;font-size:24px}
+ .fusion-sidebar-backdrop{display:none;border:0;padding:0}
+ body.fusion-sidebar-aberta .fusion-sidebar-backdrop{display:block;position:fixed;inset:0;z-index:1999;background:rgba(2,12,18,.62)}
+ body.fusion-com-sidebar .fusion-main,body.fusion-com-sidebar main{margin-left:0!important;width:100%!important;max-width:100%!important;padding-top:62px!important}
+}
 body.fusion-com-sidebar :is(.grid-2,.grid-3,.form-grid,.modal-grid){min-width:0!important}
 
 /* Chat: texto escuro e legivel sobre as superficies claras */

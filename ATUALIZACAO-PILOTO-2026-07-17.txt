@@ -1,0 +1,22 @@
+FUSION ERP - ATUALIZACAO DA ACADEMIA PILOTO
+
+Implementado nesta entrega:
+- Liberação manual exige selecionar o aluno sem biometria.
+- Visitante somente pode ser liberado após pré-cadastro no site.
+- Portal do professor possui liberação de catraca com limite diário configurável.
+- Limites de liberação disponíveis em Configurações.
+- Alteração do dia de vencimento calcula ajuste proporcional no próximo lançamento.
+- Plano pré-pago encerra na meia-noite do vencimento e não cria mensalidade futura.
+- Plano diária usa créditos, permite recarga e não cria mensalidade futura.
+- Diaristas não entram no indicador de alunos ativos do BI.
+- Portal do aluno desconta uma diária após liberação autorizada.
+- Avaliação do professor recebeu contraste alto e fluxo mobile sem cabeçalhos/rodapés fixos.
+- Menu administrativo inicia recolhido no celular e abre pelo botão de menu.
+
+Validação executada: npm run check (aprovado).
+
+Publicação:
+1. Preserve as variáveis do Render/Supabase; o ZIP não contém arquivo .env.
+2. Substitua os arquivos da raiz do projeto pelos desta entrega.
+3. Execute npm install e npm run check.
+4. Faça commit e push para disparar o deploy do Render.

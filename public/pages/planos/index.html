@@ -43,7 +43,8 @@
           <option value="Trimestral">Trimestral</option>
           <option value="Semestral">Semestral</option>
           <option value="Anual">Anual</option>
-          <option value="Diária">Diária</option>
+          <option value="Pré-pago">Pré-pago (30 dias corridos)</option>
+          <option value="Diarista">Diária recarregável</option>
         </select>
         <select id="filtroStatus">
           <option value="Todos">Todos os status</option>
@@ -93,7 +94,8 @@
             <option value="Trimestral">Trimestral</option>
             <option value="Semestral">Semestral</option>
             <option value="Anual">Anual</option>
-            <option value="Diária">Diária</option>
+            <option value="Pré-pago">Pré-pago (30 dias corridos)</option>
+            <option value="Diarista">Diária recarregável</option>
           </select>
         </label>
 
@@ -126,6 +128,16 @@
 
         <label>Limite semanal
           <input id="limiteSemanal" type="number" min="0" value="0" placeholder="0 = ilimitado" />
+        </label>
+
+        <label>Créditos de acesso
+          <input id="creditosAcesso" type="number" min="1" value="3" />
+          <small>Usado principalmente no plano diária.</small>
+        </label>
+
+        <label>Validade em dias
+          <input id="validadeDias" type="number" min="1" value="30" />
+          <small>Pré-pago: 30 dias corridos, encerrando à meia-noite.</small>
         </label>
 
         <label class="full">Modalidades incluídas

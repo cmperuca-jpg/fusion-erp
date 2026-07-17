@@ -1,7 +1,7 @@
 import { listarBiblioteca, listarTreinos, salvarTreinos } from "./treinos.repository.mjs";
 import { avaliarAcessoAluno } from "../access-engine/access-engine.service.mjs";
 import { listarLogs as listarLogsAcesso, registrarLog as registrarLogAcesso } from "../access-engine/access-engine.repository.mjs";
-import { lerJsonDuravel } from "../core/persistence/durable-json.mjs";
+import { lerJsonDuravel, salvarJsonDuravel } from "../core/persistence/durable-json.mjs";
 import { gerarTokenPortal, validarTokenPortal } from "../auth/auth.service.mjs";
 import fs from "node:fs";
 import path from "node:path";
@@ -199,6 +199,17 @@ export async function liberarCatracaPortalAluno({ alunoId, token, direcao = "ent
   if (!aluno) throw erroHttp("Aluno não encontrado para liberar a catraca.", 404);
 
   const direcaoNormalizada = direcao === "saida" ? "saida" : "entrada";
+  const matriculas = listaDePessoas(await lerJsonDuravel("matriculas.json", []), "matriculas");
+  const matricula = matriculas.find((m) => String(m.alunoId || m.aluno_id || "") === String(idPessoa(aluno)) && ["ativa","ativo"].includes(String(m.status || "").toLowerCase()));
+  const tipo = String(matricula?.tipoPlano || matricula?.tipoCobranca || "").toLowerCase();
+  if (tipo.includes("pre")) {
+    const limite = String(matricula.expiraEm || (matricula.dataFim ? `${matricula.dataFim}T00:00:00-03:00` : ""));
+    if (limite && Date.now() >= new Date(limite).getTime()) throw erroHttp("Plano pré-pago vencido. Reative na recepção.", 403);
+  }
+  if (tipo.includes("diar")) {
+    const disponiveis = Math.max(0, Number(matricula.creditosAcesso || 0));
+    if (disponiveis < 1) throw erroHttp("Diárias esgotadas. Solicite uma recarga na recepção.", 403);
+  }
   const controleAntes = await contadorAcessosPortal(idPessoa(aluno));
 
   if (controleAntes.limiteAtingido) {
@@ -227,6 +238,14 @@ export async function liberarCatracaPortalAluno({ alunoId, token, direcao = "ent
   const controleDepois = resultado.autorizado
     ? await contadorAcessosPortal(idPessoa(aluno))
     : controleAntes;
+  let creditosRestantes = null;
+  if (resultado.autorizado && tipo.includes("diar") && matricula) {
+    matricula.creditosAcesso = Math.max(0, Number(matricula.creditosAcesso || 0) - 1);
+    matricula.acessosConsumidos = Number(matricula.acessosConsumidos || 0) + 1;
+    matricula.atualizadoEm = new Date().toISOString();
+    creditosRestantes = matricula.creditosAcesso;
+    await salvarJsonDuravel("matriculas.json", matriculas);
+  }
 
   return {
     autorizado: Boolean(resultado.autorizado),
@@ -239,7 +258,8 @@ export async function liberarCatracaPortalAluno({ alunoId, token, direcao = "ent
     limiteDiario: controleDepois.limite,
     acessosUsadosHoje: controleDepois.usados,
     acessosRestantesHoje: controleDepois.restantes,
-    controleAcessos: controleDepois
+    controleAcessos: controleDepois,
+    creditosRestantes
   };
 }
 
@@ -250,10 +270,13 @@ export async function obterContadorCatracaPortalAluno({ alunoId, token } = {}) {
   if (!aluno) throw erroHttp("Aluno nao encontrado para consultar acessos.", 404);
 
   const controle = await contadorAcessosPortal(idPessoa(aluno));
+  const matriculas = listaDePessoas(await lerJsonDuravel("matriculas.json", []), "matriculas");
+  const matricula = matriculas.find((m) => String(m.alunoId || "") === String(idPessoa(aluno)) && ["ativa","ativo"].includes(String(m.status || "").toLowerCase()));
   return {
     alunoId: idPessoa(aluno),
     alunoNome: nomePessoa(aluno),
-    ...controle
+    ...controle,
+    creditosRestantes: String(matricula?.tipoPlano || matricula?.tipoCobranca || "").toLowerCase().includes("diar") ? Math.max(0,Number(matricula?.creditosAcesso||0)) : null
   };
 }
 
