@@ -47,22 +47,10 @@
     </main>
   </div>
 
-  <dialog id="modalLiberacao" class="fusion-access-dialog">
-    <form id="formLiberacao" method="dialog">
-      <header><div><strong>Liberar catraca</strong><small>A liberação ficará registrada na auditoria.</small></div><button id="fecharLiberacao" type="button">×</button></header>
-      <label>Motivo<select id="categoriaLiberacao" required><option value="">Selecione</option><option value="aluno_sem_biometria">Aluno sem biometria</option><option value="visitante">Visitante pré-cadastrado</option><option value="manutencao">Manutenção</option><option value="outro">Outro</option></select></label>
-      <label id="campoAlunoLiberacao" hidden>Aluno<select id="alunoLiberacao"><option value="">Selecione o aluno</option></select></label>
-      <label id="campoVisitanteLiberacao" hidden>Visitante<select id="visitanteLiberacao"><option value="">Selecione o pré-cadastro</option></select><small>O visitante deve preencher o formulário no site da academia.</small></label>
-      <label id="campoDetalheLiberacao" hidden>Detalhe<input id="detalheLiberacao" maxlength="180" placeholder="Informe o motivo operacional"></label>
-      <footer><button id="cancelarLiberacao" type="button" class="fusion-btn">Cancelar</button><button type="submit" class="fusion-btn fusion-btn-primary">Confirmar liberação</button></footer>
-    </form>
-  </dialog>
-
   <script src="/assets/js/fusion-layout.js"></script>
   <script>carregarLayout("Dashboard Executivo");</script>
   <script src="/assets/js/fusion-date.js" defer></script>
   <script src="/assets/pwa/fusion-pwa-install.js" defer></script>
   <script src="index.js" defer></script>
-  <style>.fusion-access-dialog{width:min(560px,calc(100vw - 24px));border:1px solid #155e75;border-radius:16px;background:#082f3a;color:#fff;padding:0}.fusion-access-dialog::backdrop{background:#001219cc}.fusion-access-dialog form{display:grid;gap:14px;padding:20px}.fusion-access-dialog header,.fusion-access-dialog footer{display:flex;justify-content:space-between;gap:12px;align-items:center}.fusion-access-dialog header small{display:block;color:#a5f3fc}.fusion-access-dialog header button{font-size:24px}.fusion-access-dialog label{display:grid;gap:6px;font-weight:800}.fusion-access-dialog select,.fusion-access-dialog input{width:100%;min-height:46px;padding:10px;border:1px solid #67e8f9;border-radius:8px;background:#fff;color:#082f49}.fusion-access-dialog footer{justify-content:flex-end}@media(max-width:560px){.fusion-access-dialog footer{display:grid;grid-template-columns:1fr}.fusion-access-dialog footer button{width:100%}}</style>
 </body>
 </html>

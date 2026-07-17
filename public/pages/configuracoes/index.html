@@ -30,16 +30,6 @@
         </div>
 
         <div class="fusion-grid">
-          <section class="fusion-card" style="grid-column:1/-1">
-            <h2>Limites de liberação da catraca</h2>
-            <p>Defina quantas liberações manuais cada usuário poderá fazer por dia.</p>
-            <form id="formConfigAcesso" class="fusion-config-access">
-              <label>Painel administrativo<input id="limiteManual" type="number" min="1" max="999" required></label>
-              <label>Portal do professor<input id="limiteProfessor" type="number" min="1" max="999" required></label>
-              <button class="fusion-btn fusion-btn-primary" type="submit">Salvar limites</button>
-              <small id="statusConfigAcesso"></small>
-            </form>
-          </section>
           <a class="fusion-card" href="/pages/migracao-dados/index.html" style="text-decoration:none;color:inherit;display:block">
             <h2>Migração de Dados</h2>
             <p>Centro fixo para importação, validação e manutenção dos dados migrados do Access.</p>
@@ -64,9 +54,5 @@
     <script src="/assets/js/fusion-layout.js"></script>
 
 <script src="/assets/pwa/fusion-pwa-install.js" defer></script>
-<script>
-(async()=>{const f=document.getElementById('formConfigAcesso'),m=document.getElementById('limiteManual'),p=document.getElementById('limiteProfessor'),s=document.getElementById('statusConfigAcesso');const req=(u,o={})=>window.FusionAuth?.fetchAuth?FusionAuth.fetchAuth(u,o):fetch(u,o);try{const r=await req('/api/access-engine/configuracao');const j=await r.json();m.value=j.configuracao?.limiteLiberacoesManuaisDia||20;p.value=j.configuracao?.limiteLiberacoesProfessorDia||10}catch{s.textContent='Não foi possível carregar os limites.'}f.onsubmit=async e=>{e.preventDefault();s.textContent='Salvando...';try{const r=await req('/api/access-engine/configuracao',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({limiteLiberacoesManuaisDia:m.value,limiteLiberacoesProfessorDia:p.value})});const j=await r.json();if(!r.ok)throw Error(j.mensagem||'Erro ao salvar');s.textContent='Limites salvos no sistema.'}catch(x){s.textContent=x.message}}})();
-</script>
-<style>.fusion-config-access{display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end}.fusion-config-access label{display:grid;gap:6px;font-weight:800}.fusion-config-access input{min-height:44px;padding:10px;border:1px solid #67e8f9;border-radius:8px}.fusion-config-access small{grid-column:1/-1;color:#67e8f9}@media(max-width:700px){.fusion-config-access{grid-template-columns:1fr}}</style>
 </body>
 </html>

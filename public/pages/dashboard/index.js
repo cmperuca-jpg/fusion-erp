@@ -57,43 +57,26 @@ function setText(id, value) {
   if (!card || !botao || !status || !perfilPermitido) return;
   card.style.display = "block";
 
-  const modal = document.getElementById("modalLiberacao");
-  const categoria = document.getElementById("categoriaLiberacao");
-  const aluno = document.getElementById("alunoLiberacao");
-  const visitante = document.getElementById("visitanteLiberacao");
-  const detalhe = document.getElementById("detalheLiberacao");
-  const fetchSeguro = window.FusionAuth?.fetchAuth ? FusionAuth.fetchAuth.bind(FusionAuth) : fetch.bind(window);
-
-  function atualizarCampos() {
-    document.getElementById("campoAlunoLiberacao").hidden = categoria.value !== "aluno_sem_biometria";
-    document.getElementById("campoVisitanteLiberacao").hidden = categoria.value !== "visitante";
-    document.getElementById("campoDetalheLiberacao").hidden = !["manutencao","outro"].includes(categoria.value);
-  }
-  categoria.addEventListener("change", atualizarCampos);
-  document.getElementById("fecharLiberacao").onclick = () => modal.close();
-  document.getElementById("cancelarLiberacao").onclick = () => modal.close();
-
-  async function abrirModal() {
-    const resp = await fetchSeguro("/api/access-engine/liberacao/opcoes", { cache:"no-store" });
-    const json = await resp.json();
-    aluno.innerHTML = '<option value="">Selecione o aluno</option>' + (json.alunos || []).map(x => `<option value="${x.id}">${x.nome}${x.matricula ? ` · ${x.matricula}` : ''}</option>`).join('');
-    visitante.innerHTML = '<option value="">Selecione o pré-cadastro</option>' + (json.visitantes || []).map(x => `<option value="${x.id}">${x.nome}${x.telefone ? ` · ${x.telefone}` : ''}</option>`).join('');
-    categoria.value = ""; detalhe.value = ""; atualizarCampos(); modal.showModal();
-  }
-
-  botao.addEventListener("click", () => abrirModal().catch(e => alert(e.message)));
-  document.getElementById("formLiberacao").addEventListener("submit", async (evento) => {
-    evento.preventDefault();
+  botao.addEventListener("click", async () => {
     if (botao.disabled) return;
-    if (!categoria.value) return alert("Selecione o motivo.");
-    if (categoria.value === "aluno_sem_biometria" && !aluno.value) return alert("Selecione o aluno.");
-    if (categoria.value === "visitante" && !visitante.value) return alert("Selecione o visitante pré-cadastrado.");
+
+    const motivoInformado = window.prompt(
+      "Motivo da liberação:\n\n1 - Visitante\n2 - Aluno sem biometria\n3 - Manutenção\n4 - Outro",
+      "Visitante"
+    );
+
+    if (motivoInformado === null) return;
+    const motivo = String(motivoInformado || "Liberação manual").trim() || "Liberação manual";
 
     botao.disabled = true;
     botao.textContent = "Liberando...";
     status.textContent = "Enviando comando para a catraca...";
 
     try {
+      const fetchSeguro = window.FusionAuth?.fetchAuth
+        ? FusionAuth.fetchAuth.bind(FusionAuth)
+        : fetch.bind(window);
+
       const resposta = await fetchSeguro("/api/access-engine/liberar-remoto", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -105,10 +88,7 @@ function setText(id, value) {
           operadorId: usuario?.id || "",
           operadorNome: usuario?.nome || "Usuário do sistema",
           operadorPerfil: usuario?.perfilOriginal || usuario?.perfil || "",
-          categoriaMotivo: categoria.value,
-          alunoId: aluno.value || null,
-          visitanteId: visitante.value || null,
-          motivoDetalhe: detalhe.value.trim()
+          motivo
         })
       });
 
@@ -118,8 +98,7 @@ function setText(id, value) {
       }
 
       const agora = new Date().toLocaleString("pt-BR");
-      status.textContent = `Catraca liberada às ${agora}. Uso: ${json.usadosHoje}/${json.limiteDiario}.`;
-      modal.close();
+      status.textContent = `Catraca liberada por 5 segundos às ${agora}. Motivo: ${motivo}.`;
       alert("Catraca liberada com sucesso por 5 segundos.");
     } catch (erro) {
       console.error("Falha na liberação manual da catraca:", erro);

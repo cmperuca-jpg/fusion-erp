@@ -17,7 +17,6 @@ function tipoPlano(valor) {
   const n = t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   if (n.includes("pre")) return "Pré-pago";
   if (n.includes("diar")) return "Diarista";
-  if (n.includes("trimes")) return "Trimestral";
   if (n.includes("semes")) return "Semestral";
   if (n.includes("anual")) return "Anual";
   return "Mensal";
@@ -25,7 +24,6 @@ function tipoPlano(valor) {
 function mesesPorTipo(tipo) {
   if (tipo === "Semestral") return 6;
   if (tipo === "Anual") return 12;
-  if (tipo === "Trimestral") return 3;
   if (tipo === "Mensal") return 1;
   return 0;
 }
@@ -56,8 +54,6 @@ function validarPayload(payload = {}) {
     descontoPercentual: numero(payload.descontoPercentual, 0),
     multaAtrasoPercentual: numero(payload.multaAtrasoPercentual, 0),
     limiteSemanal: numero(payload.limiteSemanal, 0),
-    creditosAcesso: Math.max(1, Math.trunc(numero(payload.creditosAcesso, tipo === "Diarista" ? 1 : 3))),
-    validadeDias: Math.max(1, Math.trunc(numero(payload.validadeDias, tipo === "Pré-pago" ? 30 : 1))),
     modalidadesIncluidas: lista(payload.modalidadesIncluidas),
     horariosPermitidos: texto(payload.horariosPermitidos) || "Livre",
     status: texto(payload.status) || "Ativo"

@@ -48,7 +48,7 @@ function chaveAluno(item = {}) {
 
 function matriculasAtivasUnicas(matriculas = []) {
   const mapa = new Map();
-  for (const matricula of matriculas.filter(ativo).filter((m)=>!normalizar(m.tipoPlano ?? m.tipoCobranca ?? m.tipo).includes("diar"))) {
+  for (const matricula of matriculas.filter(ativo)) {
     const chave = texto(matricula.id) || `${chaveAluno(matricula)}|${texto(matricula.planoId ?? matricula.plano)}|${dataMatricula(matricula)}`;
     if (chave) mapa.set(chave, matricula);
   }

@@ -204,17 +204,6 @@
     document.body.classList.add("fusion-com-sidebar");
     document.documentElement.classList.add("fusion-com-sidebar");
     document.body.prepend(sidebar);
-    let toggle = document.querySelector('.fusion-sidebar-toggle');
-    if (!toggle) {
-      toggle = document.createElement('button');
-      toggle.type='button'; toggle.className='fusion-sidebar-toggle'; toggle.setAttribute('aria-label','Abrir menu'); toggle.textContent='☰';
-      document.body.appendChild(toggle);
-      const backdrop=document.createElement('button'); backdrop.type='button'; backdrop.className='fusion-sidebar-backdrop'; backdrop.setAttribute('aria-label','Fechar menu'); document.body.appendChild(backdrop);
-      const fechar=()=>document.body.classList.remove('fusion-sidebar-aberta');
-      toggle.addEventListener('click',()=>document.body.classList.toggle('fusion-sidebar-aberta'));
-      backdrop.addEventListener('click',fechar);
-      sidebar.addEventListener('click',e=>{if(e.target.closest('a'))fechar();});
-    }
     garantirCentralNotificacoes();
   }
 

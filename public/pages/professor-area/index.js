@@ -62,25 +62,6 @@ $("sair").onclick = () => {
   location.replace("/pages/professor-login/index.html");
 };
 
-$("liberarCatracaProfessor").onclick = async () => {
-  const sessao = exigirLoginProfessor();
-  if (!sessao?.token) return;
-  const botao = $("liberarCatracaProfessor");
-  const status = $("statusCatracaProfessor");
-  botao.disabled = true; status.textContent = "Enviando comando...";
-  try {
-    const resp = await fetch("/api/access-engine/liberar-professor", {
-      method:"POST",
-      headers:{ "Content-Type":"application/json", "Authorization":`Bearer ${sessao.token}` },
-      body:JSON.stringify({ dispositivoId:"disp_henry7x_01", direcao:"ambos" })
-    });
-    const json = await resp.json().catch(() => ({}));
-    if (!resp.ok || json.ok === false) throw new Error(json.mensagem || "Não foi possível liberar a catraca.");
-    status.textContent = `Liberada. Uso diário: ${json.usadosHoje}/${json.limiteDiario}.`;
-  } catch (erro) { status.textContent = erro.message || "Falha na liberação."; }
-  finally { botao.disabled = false; }
-};
-
 
 function ehResponsavelTecnico(sessao) {
   return sessao?.acessoTodosAlunos === true || sessao?.perfil === "responsavel_tecnico" || sessao?.perfil === "responsavel-tecnico";

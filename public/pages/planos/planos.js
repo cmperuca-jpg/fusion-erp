@@ -97,8 +97,6 @@ function abrirModal() {
   document.getElementById("descontoPercentual").value = 0;
   document.getElementById("multaAtrasoPercentual").value = 0;
   document.getElementById("limiteSemanal").value = 0;
-  document.getElementById("creditosAcesso").value = 3;
-  document.getElementById("validadeDias").value = 30;
   document.getElementById("horariosPermitidos").value = "Livre";
   elementos.modalTitulo.textContent = "Novo Plano";
   elementos.modal.classList.add("aberto");
@@ -122,8 +120,6 @@ window.editarPlano = function (id) {
   document.getElementById("descontoPercentual").value = item.descontoPercentual || 0;
   document.getElementById("multaAtrasoPercentual").value = item.multaAtrasoPercentual || 0;
   document.getElementById("limiteSemanal").value = item.limiteSemanal || 0;
-  document.getElementById("creditosAcesso").value = item.creditosAcesso || 3;
-  document.getElementById("validadeDias").value = item.validadeDias || 30;
   document.getElementById("modalidadesIncluidas").value = (item.modalidadesIncluidas || []).join(", ");
   document.getElementById("horariosPermitidos").value = item.horariosPermitidos || "Livre";
   document.getElementById("descricao").value = item.descricao || "";
@@ -153,8 +149,6 @@ elementos.form.addEventListener("submit", async (event) => {
     descontoPercentual: document.getElementById("descontoPercentual").value,
     multaAtrasoPercentual: document.getElementById("multaAtrasoPercentual").value,
     limiteSemanal: document.getElementById("limiteSemanal").value,
-    creditosAcesso: document.getElementById("creditosAcesso").value,
-    validadeDias: document.getElementById("validadeDias").value,
     modalidadesIncluidas: document.getElementById("modalidadesIncluidas").value,
     horariosPermitidos: document.getElementById("horariosPermitidos").value,
     descricao: document.getElementById("descricao").value
