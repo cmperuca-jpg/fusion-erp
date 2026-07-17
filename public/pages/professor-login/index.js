@@ -12,7 +12,23 @@ function mensagem(textoMsg, tipo = "") {
 
 function destinoAposLogin(padrao) {
   const next = new URLSearchParams(location.search).get("next") || "";
-  return next.startsWith("/pages/") ? next : padrao;
+  const rotasProfessor = [
+    "/pages/professor-area/",
+    "/pages/professor-painel/",
+    "/pages/avaliacoes/",
+    "/pages/treinos/",
+    "/pages/treinos-v3/",
+    "/pages/treinos-v4/",
+    "/pages/natacao-professor/"
+  ];
+  try {
+    const destino = new URL(next, location.origin);
+    const permitido = destino.origin === location.origin
+      && rotasProfessor.some((rota) => destino.pathname.startsWith(rota));
+    return permitido ? `${destino.pathname}${destino.search}${destino.hash}` : padrao;
+  } catch {
+    return padrao;
+  }
 }
 
 async function entrar() {

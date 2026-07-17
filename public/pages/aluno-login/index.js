@@ -8,7 +8,19 @@ function mensagem(texto, tipo = "") {
 
 function destinoAposLogin(padrao) {
   const next = new URLSearchParams(location.search).get("next") || "";
-  return next.startsWith("/pages/") ? next : padrao;
+  const rotasAluno = [
+    "/pages/aluno-treinos/",
+    "/pages/aluno-avaliacao/",
+    "/pages/promocao-90-dias/"
+  ];
+  try {
+    const destino = new URL(next, location.origin);
+    const permitido = destino.origin === location.origin
+      && rotasAluno.some((rota) => destino.pathname.startsWith(rota));
+    return permitido ? `${destino.pathname}${destino.search}${destino.hash}` : padrao;
+  } catch {
+    return padrao;
+  }
 }
 
 async function entrar() {
