@@ -3,7 +3,7 @@
 .fusion-notificacoes-bell svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .fusion-notificacoes-badge{position:absolute;top:-7px;right:-7px;display:grid;place-items:center;min-width:20px;height:20px;padding:0 5px;border:2px solid #082630;border-radius:999px;background:#ef4444;color:#fff;font:800 10px/1 Arial,sans-serif}
 .fusion-notificacoes-badge[hidden]{display:none!important}
-.fusion-notificacoes-panel{position:absolute;top:46px;right:0;width:min(390px,calc(100vw - 24px));max-height:min(620px,78vh);overflow:hidden;display:flex;flex-direction:column;background:#f7fafb;border:1px solid #8fb0b8;border-radius:7px;box-shadow:0 20px 55px rgba(0,0,0,.35);color:#102b35}
+.fusion-notificacoes-panel{position:fixed;top:96px;left:calc(var(--fusion-v3-sidebar-width,254px) - 68px);right:auto;z-index:10080;width:min(390px,calc(100vw - 24px));max-height:min(620px,78vh);overflow:hidden;display:flex;flex-direction:column;background:#f7fafb;border:1px solid #8fb0b8;border-radius:7px;box-shadow:0 20px 55px rgba(0,0,0,.35);color:#102b35}
 .fusion-notificacoes-panel[hidden]{display:none!important}
 .fusion-notificacoes-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 14px;background:#0a2a34;color:#fff;border-bottom:1px solid #315d68}
 .fusion-notificacoes-head strong{color:#fff!important;font-size:14px!important}

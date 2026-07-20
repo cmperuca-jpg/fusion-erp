@@ -158,7 +158,7 @@ async function criarCreditoAluno({ recebimento, valorCredito }) {
 
 async function criarMovimentoCaixa(recebimento) {
   const dados = await lerCaixa();
-  const caixa = caixaAberto(dados);
+  let caixa = caixaAberto(dados);
 
   if (!caixa) {
     const novoCaixa = {

@@ -19,3 +19,20 @@ body.fusion-com-sidebar .cards{padding:0!important;margin-bottom:18px!important}
 body.fusion-com-sidebar .filtros{margin:0 0 18px!important}
 body.fusion-com-sidebar .painel{margin:0 0 24px!important}
 @media(max-width:900px){body.fusion-com-sidebar main{margin-left:0!important;width:100%!important;padding:12px!important}}
+
+/* Caixa: deixa abrir/fechar claros para troca de turno. */
+.top-actions button{
+  min-width:122px;
+  min-height:38px;
+  white-space:nowrap;
+}
+
+.top-actions #btnFechar{
+  min-width:132px;
+}
+
+button:disabled{
+  opacity:.55;
+  cursor:not-allowed;
+  filter:none;
+}

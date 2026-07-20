@@ -31,7 +31,7 @@ function arrayDe(raw, chave) {
 function hojeISO() { return new Date().toISOString().slice(0, 10); }
 function dataISO(v) { return String(v || '').slice(0, 10); }
 function mesISO(v) { const d = dataISO(v); return d ? d.slice(0, 7) : 'Sem data'; }
-function normalizar(v) { return String(v || '').trim().toLowerCase(); }
+function normalizar(v) { return String(v || '').trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase(); }
 function numero(v) {
   const n = Number(String(v ?? '').replace(',', '.'));
   return Number.isFinite(n) ? Number(n.toFixed(2)) : 0;
@@ -73,7 +73,7 @@ function valorLiquido(item = {}) {
 }
 function valorOriginal(item = {}) { return arred(item.valor ?? item.valorBruto ?? item.valorTotal ?? item.total ?? item.valorLiquido ?? 0); }
 function valorPago(item = {}) { return arred(item.valorPago ?? item.valorPagoTotal ?? item.totalPago ?? item.valorRecebido ?? 0); }
-function dataPagamento(item = {}) { return dataISO(item.dataPagamento || item.pagamento || item.dataBaixa || item.recebidoEm || item.pagoEm || item.atualizadoEm || item.criadoEm); }
+function dataPagamento(item = {}) { return dataISO(item.dataPagamento || item.pagamento || item.dataBaixa || item.recebidoEm || item.pagoEm || item.atualizadoEm || item.updatedAt || item.criadoEm || item.createdAt); }
 function dataVencimento(item = {}) { return dataISO(item.vencimento || item.dataVencimento || item.data || item.criadoEm); }
 function categoria(item = {}, padrao = 'Sem categoria') { return item.categoria || item.centroCusto || item.origem || padrao; }
 function descricao(item = {}, padrao = 'Lançamento') { return item.descricao || item.titulo || item.observacao || padrao; }
@@ -107,6 +107,47 @@ function formaGrupo(forma = '') {
   return forma || 'Outros';
 }
 
+function tokensFiltro(valor = '') {
+  return normalizar(valor).split(/[;,|]/).map(t => t.trim()).filter(Boolean);
+}
+
+function passaCategoriaFiltro(item = {}, filtro = '') {
+  const tokens = tokensFiltro(filtro);
+  if (!tokens.length) return true;
+  const alvo = normalizar(`${categoria(item)} ${descricao(item)} ${pessoa(item)}`);
+  return tokens.some(token => alvo.includes(token));
+}
+
+function passaFormaFiltro(item = {}, filtro = '') {
+  const f = normalizar(filtro);
+  if (!f) return true;
+  const alvo = normalizar(item.formaPagamento || item.forma || item.meioPagamento || '');
+  if (f.includes('credito')) return alvo.includes('credito') || alvo.includes('cart');
+  if (f.includes('debito')) return alvo.includes('debito') || alvo.includes('cart');
+  return alvo.includes(f);
+}
+
+function referencias(item = {}) {
+  return [...new Set([
+    item.id,
+    item.movimentoCaixaId,
+    item.lancamentoFinanceiroId,
+    item.financeiroId,
+    item.recebimentoId,
+    item.pagamentoId,
+    item.referenciaId,
+    item.mensalidadeId
+  ].map(v => String(v || '').trim()).filter(Boolean))];
+}
+
+function jaVisto(vistos, item = {}) {
+  return referencias(item).some(ref => vistos.has(ref));
+}
+
+function marcarVisto(vistos, item = {}) {
+  referencias(item).forEach(ref => vistos.add(ref));
+}
+
 export async function movimentoDiarioCaixa(filtros = {}) {
   const dataInicio = dataISO(filtros.dataInicio || filtros.inicio || filtros.data || hojeISO());
   const dataFim = dataISO(filtros.dataFim || filtros.fim || filtros.data || dataInicio);
@@ -115,16 +156,20 @@ export async function movimentoDiarioCaixa(filtros = {}) {
 
   const caixaRaw = await lerJson(CAIXA_FILE, { caixas: [], movimentos: [] });
   const financeiro = await lerJson(FINANCEIRO_FILE, []);
+  const recebimentosRaw = await lerJson(RECEBIMENTOS_FILE, []);
+  const pagamentosRaw = await lerJsonOpcional([PAGAMENTOS_FILE, PAGAMENTOS_FILE_LEGADO], []);
 
   const caixas = Array.isArray(caixaRaw.caixas) ? caixaRaw.caixas : [];
   const movimentos = Array.isArray(caixaRaw.movimentos) ? caixaRaw.movimentos : [];
+  const recebimentosBase = arrayDe(recebimentosRaw, 'recebimentos');
+  const pagamentosBase = arrayDe(pagamentosRaw, 'pagamentos');
 
   const movimentosPeriodo = movimentos.filter((m) => {
     const data = dataISO(m.data || m.dataPagamento || m.criadoEm);
     if (!data || data < dataInicio || data > dataFim) return false;
     if (!statusAtivo(m)) return false;
-    if (formaFiltro && !normalizar(m.formaPagamento).includes(formaFiltro)) return false;
-    if (categoriaFiltro && !normalizar(m.categoria).includes(categoriaFiltro)) return false;
+    if (!passaFormaFiltro(m, formaFiltro)) return false;
+    if (!passaCategoriaFiltro(m, categoriaFiltro)) return false;
     return true;
   });
 
@@ -136,7 +181,7 @@ export async function movimentoDiarioCaixa(filtros = {}) {
     if (f.movimentoCaixaId) financeiroPorMovimento.set(String(f.movimentoCaixaId), f);
   }
 
-  const recebimentos = entradas.map((m) => {
+  let recebimentos = entradas.map((m) => {
     const fin = financeiroPorMovimento.get(String(m.id)) || {};
     const bruto = valorBruto(fin.valor ? fin : m);
     const taxa = calcularTaxa(fin);
@@ -156,7 +201,7 @@ export async function movimentoDiarioCaixa(filtros = {}) {
     };
   });
 
-  const pagamentos = saidas.map((m) => ({
+  let pagamentos = saidas.map((m) => ({
     id: m.id,
     hora: horaItem(m),
     data: dataISO(m.data || m.criadoEm),
@@ -167,6 +212,60 @@ export async function movimentoDiarioCaixa(filtros = {}) {
     valor: arred(m.valor || 0),
     status: m.status || 'ativo'
   }));
+
+  const vistosRecebimentos = new Set();
+  recebimentos.forEach(m => marcarVisto(vistosRecebimentos, m));
+  entradas.forEach(m => marcarVisto(vistosRecebimentos, m));
+
+  const recebimentosExtras = recebimentosBase
+    .filter(r => statusAtivo(r) && statusPago(r))
+    .filter(r => dentroPeriodo(dataPagamento(r) || dataVencimento(r), dataInicio, dataFim))
+    .filter(r => passaFormaFiltro(r, formaFiltro) && passaCategoriaFiltro(r, categoriaFiltro))
+    .filter(r => !jaVisto(vistosRecebimentos, r))
+    .map(r => {
+      const item = {
+        id: r.id,
+        hora: horaItem(r),
+        data: dataPagamento(r) || dataVencimento(r),
+        cliente: pessoa(r),
+        descricao: descricao(r, 'Recebimento'),
+        categoria: categoria(r, 'Recebimentos'),
+        formaPagamento: r.formaPagamento || r.forma || '',
+        bruto: valorBruto(r),
+        taxa: calcularTaxa(r),
+        liquido: valorLiquido(r),
+        status: r.status || 'recebido'
+      };
+      marcarVisto(vistosRecebimentos, r);
+      return item;
+    });
+  recebimentos = [...recebimentos, ...recebimentosExtras];
+
+  const vistosPagamentos = new Set();
+  pagamentos.forEach(m => marcarVisto(vistosPagamentos, m));
+  saidas.forEach(m => marcarVisto(vistosPagamentos, m));
+
+  const pagamentosExtras = pagamentosBase
+    .filter(p => statusAtivo(p) && statusPago(p))
+    .filter(p => dentroPeriodo(dataPagamento(p) || dataVencimento(p), dataInicio, dataFim))
+    .filter(p => passaFormaFiltro(p, formaFiltro) && passaCategoriaFiltro(p, categoriaFiltro))
+    .filter(p => !jaVisto(vistosPagamentos, p))
+    .map(p => {
+      const item = {
+        id: p.id,
+        hora: horaItem(p),
+        data: dataPagamento(p) || dataVencimento(p),
+        pessoa: pessoa(p),
+        descricao: descricao(p, 'Pagamento'),
+        categoria: categoria(p, 'Pagamentos'),
+        formaPagamento: p.formaPagamento || p.forma || '',
+        valor: valorPago(p) || valorOriginal(p),
+        status: p.status || 'pago'
+      };
+      marcarVisto(vistosPagamentos, p);
+      return item;
+    });
+  pagamentos = [...pagamentos, ...pagamentosExtras];
 
   const porForma = new Map();
   const acumularForma = (forma, bruto, taxa, liquido) => {

@@ -65,6 +65,9 @@ function filtros() {
 function renderCaixa() {
   const aberto = Boolean(estado.caixa && estado.caixa.status === 'aberto');
   const totais = estado.totais || {};
+  const btnAbrir = $('#btnAbrir');
+  const btnFechar = $('#btnFechar');
+  const btnNovoMovimento = $('#btnNovoMovimento');
 
   $('#cStatus').textContent = aberto ? 'Aberto' : 'Fechado';
   $('#cEntradas').textContent = moeda(totais.entradas || 0);
@@ -75,9 +78,24 @@ function renderCaixa() {
   $('#cCartao').textContent = moeda(totais.cartao || 0);
   $('#cOutros').textContent = moeda(totais.outros || 0);
 
-  $('#btnAbrir').disabled = aberto;
-  $('#btnFechar').disabled = !aberto;
-  $('#btnNovoMovimento').disabled = !aberto;
+  if (btnAbrir) {
+    btnAbrir.textContent = 'Abrir Caixa';
+    btnAbrir.disabled = aberto;
+    btnAbrir.title = aberto ? 'Feche o caixa atual antes de abrir outro turno.' : 'Abrir caixa para o turno atual.';
+    btnAbrir.setAttribute('aria-disabled', aberto ? 'true' : 'false');
+  }
+
+  if (btnFechar) {
+    btnFechar.textContent = 'Fechar Caixa';
+    btnFechar.disabled = !aberto;
+    btnFechar.title = aberto ? 'Fechar o caixa do turno atual.' : 'Abra um caixa antes de fechar.';
+    btnFechar.setAttribute('aria-disabled', !aberto ? 'true' : 'false');
+  }
+
+  if (btnNovoMovimento) {
+    btnNovoMovimento.disabled = !aberto;
+    btnNovoMovimento.setAttribute('aria-disabled', !aberto ? 'true' : 'false');
+  }
 }
 
 function renderMovimentos() {

@@ -21,6 +21,8 @@ async function carregarDashboard() {
 }
 
 function preencherKPIs(kpis) {
+  const totalAlunos = document.getElementById("kpiTotalAlunos");
+  if (totalAlunos) totalAlunos.textContent = kpis.totalAlunos;
   document.getElementById("kpiAlunosAtivos").textContent = kpis.alunosAtivos;
   document.getElementById("kpiAlunosNovos").textContent = kpis.alunosNovosPeriodo;
   document.getElementById("kpiMatriculasAtivas").textContent = kpis.matriculasAtivas;

@@ -10,6 +10,7 @@ import { spawn, spawnSync } from "child_process";
 import henry7xRoutes from "./modules/henry7x/henry7x.routes.mjs";
 import alunosRoutes from "./modules/alunos/alunos.routes.mjs";
 import professoresRoutes from "./modules/professores/professores.routes.mjs";
+import fornecedoresRoutes from "./modules/fornecedores/fornecedores.routes.mjs";
 import modalidadesRoutes from "./modules/modalidades/modalidades.routes.mjs";
 import planosRoutes from "./modules/planos/planos.routes.mjs";
 import turmasRoutes from "./modules/turmas/turmas.routes.mjs";
@@ -606,6 +607,7 @@ app.get("/api/financeiro/pagamentos/:id/historico", async (req, res) => {
 
 app.use("/api/alunos", alunosRoutes);
 app.use("/api/professores", professoresRoutes);
+app.use("/api/fornecedores", fornecedoresRoutes);
 app.use("/api/modalidades", modalidadesRoutes);
 app.use("/api/planos", planosRoutes);
 app.use("/api/turmas", turmasRoutes);

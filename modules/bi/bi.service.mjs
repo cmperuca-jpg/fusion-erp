@@ -294,11 +294,10 @@ export async function gerarBIAcademia(filtros = {}) {
   }
 
   const alunosComPresenca = new Set(presencasPeriodo.map(p => normalizar(alunoId(p) || nomeAluno(base.alunos, p))).filter(Boolean));
-  const alunosSemPresenca = base.alunos
-    .filter(ativo)
+  const alunosSemPresenca = alunosAtivos
     .filter(a => !alunosComPresenca.has(normalizar(a.id)) && !alunosComPresenca.has(normalizar(a.nome)))
     .map(a => ({ nome: a.nome || "-", telefone: a.telefone || a.whatsapp || "-", status: a.status || "-" }))
-    .slice(0, 20);
+    .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
 
   return {
     filtros: { inicio, fim },

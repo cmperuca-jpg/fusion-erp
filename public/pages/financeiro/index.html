@@ -40,6 +40,12 @@
 
     <section class="financeiro-kpis">
       <div class="card kpi">
+        <span>Caixa real</span>
+        <strong id="kpiCaixaReal">R$ 0,00</strong>
+        <small>Saldo atual do caixa aberto</small>
+      </div>
+
+      <div class="card kpi">
         <span>Receita líquida recebida</span>
         <strong id="kpiReceitasPagas">R$ 0,00</strong>
         <small>Valor que realmente entrou</small>
@@ -155,7 +161,11 @@
 
         <label>
           Aluno/Fornecedor
-          <input id="alunoFornecedor" placeholder="Nome do aluno ou fornecedor" />
+          <input id="alunoFornecedor" list="listaPessoasFinanceiro" autocomplete="off" placeholder="Selecione aluno ou fornecedor" />
+          <datalist id="listaPessoasFinanceiro"></datalist>
+          <input type="hidden" id="pessoaTipo" />
+          <input type="hidden" id="pessoaId" />
+          <small class="texto-apoio">Em conta a pagar, se o fornecedor não estiver na lista, digite o nome e ele será cadastrado.</small>
         </label>
 
         <label>

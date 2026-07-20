@@ -46,5 +46,29 @@
     "finishedAt": null,
     "result": null,
     "error": null
+  },
+  {
+    "id": "cmd_1784514265124_688933",
+    "agentId": "academia-01",
+    "equipmentId": "disp_henry7x_01",
+    "action": "release",
+    "payload": {
+      "host": "10.0.0.236",
+      "port": 3000,
+      "tempoSegundos": 5,
+      "direcao": "ambos",
+      "alunoId": null,
+      "alunoNome": "Liberação manual",
+      "operadorId": "usr_modelo_admin",
+      "origem": "dashboard-liberacao-manual",
+      "motivo": "Visitante"
+    },
+    "status": "pending",
+    "createdAt": "2026-07-20T02:24:25.127Z",
+    "expiresAt": "2026-07-20T02:24:55.122Z",
+    "claimedAt": null,
+    "finishedAt": null,
+    "result": null,
+    "error": null
   }
 ]

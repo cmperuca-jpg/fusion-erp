@@ -250,6 +250,10 @@ function gerarId() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 }
 
+function hojeISO() {
+  return new Date().toISOString().slice(0, 10);
+}
+
 function normalizarValor(valor) {
   return Number(valor || 0);
 }
@@ -269,7 +273,7 @@ function valorLiquidoRecebido(item = {}) {
 }
 
 function estaPago(item = {}) {
-  return ["Pago", "Recebido", "Quitado"].includes(String(item.status || ""));
+  return statusPagoOuBaixadoFinanceiro(item.status);
 }
 
 function dataOrdenacaoFinanceiro(item = {}) {
@@ -379,8 +383,61 @@ export async function obterResumoFinanceiro() {
   };
 }
 
+async function registrarSaidaPagaNoCaixa(lancamento = {}, dados = {}) {
+  const valor = normalizarValor(dados.valorPago ?? dados.valor ?? lancamento.valor ?? 0);
+  if (!(valor > 0)) return null;
+
+  const caixa = await lerJsonFinanceiro("caixa.json", { caixas: [], movimentos: [] });
+  if (!Array.isArray(caixa.caixas)) caixa.caixas = [];
+  if (!Array.isArray(caixa.movimentos)) caixa.movimentos = [];
+
+  let aberto = caixa.caixas.find((item) => String(item.status || "").toLowerCase() === "aberto");
+  if (!aberto) {
+    aberto = {
+      id: `cx_${Date.now()}_${Math.random().toString(16).slice(2, 8)}`,
+      dataAbertura: hojeISO(),
+      valorAbertura: 0,
+      responsavel: "Administrador",
+      observacaoAbertura: "Caixa aberto automaticamente pelo financeiro.",
+      status: "aberto",
+      abertoEm: new Date().toISOString(),
+      fechadoEm: "",
+      valorFechamentoInformado: null,
+      diferenca: null,
+      observacaoFechamento: ""
+    };
+    caixa.caixas.push(aberto);
+  }
+
+  const movimento = {
+    id: `mov_fin_pag_${Date.now()}_${Math.random().toString(16).slice(2, 8)}`,
+    caixaId: aberto.id,
+    tipo: "saida",
+    descricao: lancamento.descricao || "Pagamento",
+    categoria: lancamento.categoria || "Despesas",
+    pessoa: lancamento.alunoFornecedor || lancamento.pessoa || lancamento.pessoaFornecedor || "",
+    formaPagamento: dados.formaPagamento || lancamento.formaPagamento || "Dinheiro",
+    valor,
+    valorBruto: valor,
+    valorLiquido: valor,
+    data: dados.dataPagamento || dados.pagamento || hojeISO(),
+    status: "ativo",
+    origem: "financeiro",
+    lancamentoFinanceiroId: lancamento.id || "",
+    observacao: dados.observacao || dados.observacoes || lancamento.observacoes || "",
+    criadoEm: new Date().toISOString(),
+    atualizadoEm: new Date().toISOString()
+  };
+
+  caixa.movimentos.push(movimento);
+  await salvarJsonFinanceiro("caixa.json", caixa);
+  return movimento;
+}
+
 export async function criarLancamento(dados) {
   const lancamentos = await listarLancamentos();
+  const statusInformado = dados.status || "Aberto";
+  const deveBaixarAoCriar = statusPagoOuBaixadoFinanceiro(statusInformado);
 
   const novo = {
     id: gerarId(),
@@ -389,17 +446,32 @@ export async function criarLancamento(dados) {
     categoria: dados.categoria || "",
     centroCusto: dados.centroCusto || "",
     alunoFornecedor: dados.alunoFornecedor || "",
+    pessoaTipo: dados.pessoaTipo || "",
+    pessoaId: dados.pessoaId || "",
+    alunoId: dados.alunoId || "",
+    fornecedorId: dados.fornecedorId || "",
     valor: normalizarValor(dados.valor),
     vencimento: dados.vencimento || "",
     pagamento: dados.pagamento || "",
     formaPagamento: dados.formaPagamento || "",
-    status: dados.status || "Aberto",
+    status: deveBaixarAoCriar ? "Aberto" : statusInformado,
     observacoes: dados.observacoes || "",
     criadoEm: new Date().toISOString()
   };
 
   lancamentos.push(novo);
   await salvarLancamentos(lancamentos);
+
+  if (deveBaixarAoCriar) {
+    return await baixarLancamento(novo.id, {
+      ...dados,
+      valorPago: normalizarValor(dados.valor),
+      valor: normalizarValor(dados.valor),
+      dataPagamento: dados.pagamento || hojeISO(),
+      pagamento: dados.pagamento || hojeISO(),
+      formaPagamento: dados.formaPagamento || "Dinheiro"
+    });
+  }
 
   return novo;
 }
@@ -412,14 +484,29 @@ export async function atualizarLancamento(id, dados) {
     return null;
   }
 
+  const anterior = lancamentos[index];
+  const deveBaixarAgora = !estaPago(anterior) && statusPagoOuBaixadoFinanceiro(dados.status);
+  const dadosParaSalvar = deveBaixarAgora ? { ...dados, status: anterior.status || "Aberto" } : dados;
+
   lancamentos[index] = {
     ...lancamentos[index],
-    ...dados,
+    ...dadosParaSalvar,
     valor: normalizarValor(dados.valor ?? lancamentos[index].valor),
     atualizadoEm: new Date().toISOString()
   };
 
   await salvarLancamentos(lancamentos);
+
+  if (deveBaixarAgora) {
+    return await baixarLancamento(id, {
+      ...dados,
+      valorPago: normalizarValor(dados.valorPago ?? dados.valor ?? lancamentos[index].valor),
+      valor: normalizarValor(dados.valorPago ?? dados.valor ?? lancamentos[index].valor),
+      dataPagamento: dados.pagamento || dados.dataPagamento || hojeISO(),
+      pagamento: dados.pagamento || dados.dataPagamento || hojeISO(),
+      formaPagamento: dados.formaPagamento || lancamentos[index].formaPagamento || "Dinheiro"
+    });
+  }
 
   const desbloqueioAcesso = await desbloquearAlunoAposPagamento(lancamentos[index], {
     origem: "financeiro_atualizacao_manual"
@@ -596,12 +683,36 @@ export async function baixarLancamento(id, dados = {}) {
 
   await salvarLancamentos(lancamentos);
 
+  let movimentoCaixa = null;
+  if (String(atual.tipo || "").toLowerCase() === "pagar") {
+    movimentoCaixa = await registrarSaidaPagaNoCaixa(lancamentos[index], {
+      ...dados,
+      valorPago,
+      dataPagamento,
+      formaPagamento
+    });
+
+    if (movimentoCaixa) {
+      lancamentos[index] = {
+        ...lancamentos[index],
+        caixaId: movimentoCaixa.caixaId,
+        movimentoCaixaId: movimentoCaixa.id,
+        movimentosCaixaIds: [
+          ...(Array.isArray(lancamentos[index].movimentosCaixaIds) ? lancamentos[index].movimentosCaixaIds : []),
+          movimentoCaixa.id
+        ]
+      };
+      await salvarLancamentos(lancamentos);
+    }
+  }
+
   const desbloqueioAcesso = valorRestante <= 0
     ? await desbloquearAlunoAposPagamento(lancamentos[index], { origem: "financeiro_baixa" })
     : { ok: true, desbloqueado: false, motivo: "Pagamento parcial." };
 
   return {
     ...lancamentos[index],
+    caixa: movimentoCaixa,
     desbloqueioAcesso
   };
 }

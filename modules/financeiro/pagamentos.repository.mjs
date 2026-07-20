@@ -199,19 +199,54 @@ export async function removerPagamentoRaw(id) {
 
 async function registrarMovimentoCaixaInterno(movimento) {
   const caixa = await lerJson(CAIXA_PATH, { caixas: [], movimentos: [] });
+  const agora = new Date().toISOString();
+  const hoje = agora.slice(0, 10);
+  let movimentoCaixa = {
+    ...movimento,
+    data: String(movimento.data || hoje).slice(0, 10),
+    status: movimento.status || "ativo",
+    criadoEm: movimento.criadoEm || agora,
+    atualizadoEm: agora
+  };
+
   if (Array.isArray(caixa)) {
-    caixa.push(movimento);
+    caixa.push(movimentoCaixa);
   } else {
+    if (!Array.isArray(caixa.caixas)) caixa.caixas = [];
     if (!Array.isArray(caixa.movimentos)) caixa.movimentos = [];
-    caixa.movimentos.push(movimento);
+
+    let aberto = caixa.caixas.find((item) => String(item.status || "").toLowerCase() === "aberto");
+    if (!aberto) {
+      aberto = {
+        id: `cx_${Date.now()}_${Math.random().toString(16).slice(2, 8)}`,
+        dataAbertura: hoje,
+        valorAbertura: 0,
+        responsavel: "Administrador",
+        observacaoAbertura: "Caixa aberto automaticamente pela baixa de pagamento.",
+        status: "aberto",
+        abertoEm: agora,
+        fechadoEm: "",
+        valorFechamentoInformado: null,
+        diferenca: null,
+        observacaoFechamento: ""
+      };
+      caixa.caixas.push(aberto);
+    }
+
+    movimentoCaixa = {
+      ...movimentoCaixa,
+      caixaId: movimentoCaixa.caixaId || aberto.id,
+      pessoa: movimentoCaixa.pessoa || movimentoCaixa.fornecedor || movimentoCaixa.credor || ""
+    };
+    caixa.movimentos.push(movimentoCaixa);
   }
 
   const { db, filePath } = await lerDb();
   if (!Array.isArray(db.caixaMovimentos)) db.caixaMovimentos = [];
-  db.caixaMovimentos.push(movimento);
+  db.caixaMovimentos.push(movimentoCaixa);
   await salvarJsonMultiplosAtomico({ [CAIXA_PATH]: caixa, [filePath]: db });
 
-  return movimento;
+  return movimentoCaixa;
 }
 export async function registrarMovimentoCaixa(movimento) {
   return executarTransacaoJson(() => registrarMovimentoCaixaInterno(movimento), { operacaoId: `caixa-movimento-${idItem(movimento) || Date.now()}` });

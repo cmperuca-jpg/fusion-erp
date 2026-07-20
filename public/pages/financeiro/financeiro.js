@@ -2,6 +2,8 @@ if (typeof carregarLayout === "function") carregarLayout("Financeiro");
 
 const API = "/api/financeiro";
 const API_TAXAS = "/api/financeiro/taxas-cartao";
+const API_ALUNOS = "/api/alunos";
+const API_FORNECEDORES = "/api/fornecedores";
 
 const TAXAS_CARTAO_TESTE = [
   { bandeira: "Mastercard", modalidade: "debito", parcelas: 1, percentual: 1.09, taxaFixa: 0, descricao: "Débito Mastercard" },
@@ -33,6 +35,8 @@ const els = {
   kpiReceitasAbertas: document.getElementById("kpiReceitasAbertas"),
   kpiDespesasAbertas: document.getElementById("kpiDespesasAbertas"),
   kpiSaldoPrevisto: document.getElementById("kpiSaldoPrevisto"),
+  kpiCaixaReal: document.getElementById("kpiCaixaReal"),
+  listaPessoasFinanceiro: document.getElementById("listaPessoasFinanceiro"),
   modalBaixa: document.getElementById("modalBaixaFinanceiro"),
   formBaixa: document.getElementById("formBaixaFinanceiro"),
   resumoBaixa: document.getElementById("resumoBaixa"),
@@ -43,6 +47,9 @@ const els = {
 
 let lancamentos = [];
 let taxasCartao = [];
+let alunosFinanceiro = [];
+let fornecedoresFinanceiro = [];
+let opcoesPessoasFinanceiro = [];
 let baixaAtual = null;
 let baixaAutomaticaUrlProcessada = false;
 
@@ -76,6 +83,16 @@ function valor(id) { return document.getElementById(id).value; }
 function setValor(id, value) { const el = document.getElementById(id); if (el) el.value = value ?? ""; }
 function statusClasse(status) { return String(status || "").toLowerCase(); }
 function escapeHtml(v) { return String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function normalizarTexto(v) { return String(v || "").trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase(); }
+function listaPayload(payload, chave) {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.[chave])) return payload[chave];
+  if (Array.isArray(payload?.dados)) return payload.dados;
+  if (Array.isArray(payload?.data)) return payload.data;
+  return [];
+}
+function nomeAlunoFinanceiro(aluno = {}) { return aluno.nome || aluno.nomeCompleto || aluno.aluno || aluno.name || ""; }
+function nomeFornecedorFinanceiro(fornecedor = {}) { return fornecedor.nome || fornecedor.razaoSocial || fornecedor.fantasia || fornecedor.fornecedor || ""; }
 async function obterMensagemErroResposta(resp, fallback = "Erro na operação.") {
   let texto = "";
   try { texto = await resp.text(); } catch { texto = ""; }
@@ -162,6 +179,95 @@ async function carregarTaxasCartao() {
   } catch {
     taxasCartao = TAXAS_CARTAO_TESTE;
   }
+}
+
+async function carregarPessoasFinanceiro() {
+  try {
+    const [alunosResp, fornecedoresResp] = await Promise.all([
+      fetch(API_ALUNOS, { cache: "no-store" }).then((r) => r.json()).catch(() => ({})),
+      fetch(API_FORNECEDORES, { cache: "no-store" }).then((r) => r.json()).catch(() => ({}))
+    ]);
+    alunosFinanceiro = listaPayload(alunosResp, "alunos");
+    fornecedoresFinanceiro = listaPayload(fornecedoresResp, "fornecedores");
+  } catch {
+    alunosFinanceiro = [];
+    fornecedoresFinanceiro = [];
+  }
+  preencherListaPessoasFinanceiro();
+}
+
+function preencherListaPessoasFinanceiro() {
+  opcoesPessoasFinanceiro = [
+    ...alunosFinanceiro.map((aluno) => ({
+      tipo: "aluno",
+      id: aluno.id || aluno.alunoId || "",
+      nome: nomeAlunoFinanceiro(aluno),
+      label: `Aluno - ${nomeAlunoFinanceiro(aluno)}`
+    })),
+    ...fornecedoresFinanceiro.map((fornecedor) => ({
+      tipo: "fornecedor",
+      id: fornecedor.id || fornecedor.fornecedorId || "",
+      nome: nomeFornecedorFinanceiro(fornecedor),
+      label: `Fornecedor - ${nomeFornecedorFinanceiro(fornecedor)}`
+    }))
+  ].filter((item) => item.nome);
+
+  if (!els.listaPessoasFinanceiro) return;
+  els.listaPessoasFinanceiro.innerHTML = opcoesPessoasFinanceiro
+    .sort((a, b) => a.label.localeCompare(b.label, "pt-BR"))
+    .map((item) => `<option value="${escapeHtml(item.label)}">${escapeHtml(item.nome)}</option>`)
+    .join("");
+}
+
+function opcaoPessoaSelecionada() {
+  const digitado = valor("alunoFornecedor").trim();
+  const alvo = normalizarTexto(digitado);
+  if (!alvo) return null;
+  return opcoesPessoasFinanceiro.find((item) =>
+    normalizarTexto(item.label) === alvo ||
+    normalizarTexto(item.nome) === alvo
+  ) || null;
+}
+
+function sincronizarPessoaSelecionada() {
+  const selecionado = opcaoPessoaSelecionada();
+  if (!selecionado) return;
+  setValor("pessoaTipo", selecionado.tipo);
+  setValor("pessoaId", selecionado.id);
+}
+
+async function resolverPessoaFinanceira() {
+  const digitado = valor("alunoFornecedor").trim();
+  const selecionado = opcaoPessoaSelecionada();
+
+  if (selecionado) {
+    setValor("pessoaTipo", selecionado.tipo);
+    setValor("pessoaId", selecionado.id);
+    setValor("alunoFornecedor", selecionado.nome);
+    return selecionado;
+  }
+
+  setValor("pessoaTipo", "");
+  setValor("pessoaId", "");
+
+  if (valor("tipo") !== "pagar" || !digitado) return { tipo: "", id: "", nome: digitado };
+
+  const resp = await fetch(API_FORNECEDORES, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ nome: digitado, origem: "financeiro" })
+  });
+  const json = resp.ok ? await resp.json().catch(() => ({})) : {};
+  if (!resp.ok || json.ok === false) {
+    throw new Error(json.mensagem || json.erro || "Não foi possível cadastrar o fornecedor.");
+  }
+
+  const fornecedor = json.fornecedor || {};
+  await carregarPessoasFinanceiro();
+  setValor("pessoaTipo", "fornecedor");
+  setValor("pessoaId", fornecedor.id || "");
+  setValor("alunoFornecedor", fornecedor.nome || digitado);
+  return { tipo: "fornecedor", id: fornecedor.id || "", nome: fornecedor.nome || digitado };
 }
 
 function preencherBandeirasCartao() {
@@ -311,6 +417,8 @@ function abrirModal(lancamento = null) {
     setValor("categoria", lancamento.categoria);
     setValor("centroCusto", lancamento.centroCusto);
     setValor("alunoFornecedor", lancamento.alunoFornecedor || lancamento.pessoa || lancamento.pessoaFornecedor);
+    setValor("pessoaTipo", lancamento.pessoaTipo || (lancamento.fornecedorId ? "fornecedor" : (lancamento.alunoId ? "aluno" : "")));
+    setValor("pessoaId", lancamento.pessoaId || lancamento.fornecedorId || lancamento.alunoId || "");
     setValor("valor", lancamento.valor);
     setValor("vencimento", lancamento.vencimento);
     setValor("pagamento", lancamento.pagamento || lancamento.dataPagamento);
@@ -321,6 +429,8 @@ function abrirModal(lancamento = null) {
     setValor("lancamentoId", "");
     setValor("tipo", "receber");
     setValor("status", "Aberto");
+    setValor("pessoaTipo", "");
+    setValor("pessoaId", "");
   }
   els.modal.classList.add("ativo");
 }
@@ -374,13 +484,21 @@ function renderizarTabela() {
 }
 
 async function carregarResumo() {
-  const resp = await fetch(`${API}/resumo`, { cache: "no-store" });
-  const json = await resp.json();
-  if (!json.ok) return;
-  els.kpiReceitasPagas.textContent = moeda(json.resumo.receitasLiquidasPagas ?? json.resumo.receitasPagas);
-  els.kpiReceitasAbertas.textContent = moeda(json.resumo.receitasAbertas);
-  els.kpiDespesasAbertas.textContent = moeda(json.resumo.taxasFinanceiras ?? json.resumo.despesasAbertas);
-  els.kpiSaldoPrevisto.textContent = moeda(json.resumo.saldoLiquidoPrevisto ?? json.resumo.saldoPrevisto);
+  const [respResumo, respCaixa] = await Promise.all([
+    fetch(`${API}/resumo`, { cache: "no-store" }),
+    fetch("/api/caixa/atual", { cache: "no-store" }).catch(() => null)
+  ]);
+  const json = await respResumo.json();
+  if (json.ok) {
+    els.kpiReceitasPagas.textContent = moeda(json.resumo.receitasLiquidasPagas ?? json.resumo.receitasPagas);
+    els.kpiReceitasAbertas.textContent = moeda(json.resumo.receitasAbertas);
+    els.kpiDespesasAbertas.textContent = moeda(json.resumo.taxasFinanceiras ?? json.resumo.despesasAbertas);
+    els.kpiSaldoPrevisto.textContent = moeda(json.resumo.saldoLiquidoPrevisto ?? json.resumo.saldoPrevisto);
+  }
+  if (els.kpiCaixaReal && respCaixa?.ok) {
+    const caixaJson = await respCaixa.json().catch(() => ({}));
+    els.kpiCaixaReal.textContent = moeda(caixaJson?.totais?.saldoAtual || 0);
+  }
 }
 
 async function carregarLancamentos() {
@@ -396,23 +514,45 @@ async function carregarLancamentos() {
   abrirBaixaPorUrlSeExistir();
 }
 
+async function iniciarFinanceiro() {
+  await carregarTaxasCartao();
+  await carregarPessoasFinanceiro();
+  await carregarLancamentos();
+}
+
 async function salvarLancamento(event) {
   event.preventDefault();
-  const id = valor("lancamentoId");
-  const payload = {
-    tipo: valor("tipo"), status: valor("status"), descricao: valor("descricao"), categoria: valor("categoria"),
-    centroCusto: valor("centroCusto"), alunoFornecedor: valor("alunoFornecedor"), valor: valor("valor"),
-    vencimento: valor("vencimento"), pagamento: valor("pagamento"), formaPagamento: valor("formaPagamento"),
-    observacoes: valor("observacoes")
-  };
-  await fetch(id ? `${API}/${encodeURIComponent(id)}` : API, {
-    method: id ? "PUT" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload)
-  });
-  fecharModal();
-  await (async function iniciarFinanceiro() {
-  await carregarTaxasCartao();
-  await carregarLancamentos();
-})();
+  const btn = event.submitter || els.form.querySelector('button[type="submit"]');
+  try {
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = "Salvando...";
+    }
+    const id = valor("lancamentoId");
+    const pessoa = await resolverPessoaFinanceira();
+    const payload = {
+      tipo: valor("tipo"), status: valor("status"), descricao: valor("descricao"), categoria: valor("categoria"),
+      centroCusto: valor("centroCusto"), alunoFornecedor: pessoa.nome || valor("alunoFornecedor"), pessoaTipo: pessoa.tipo || valor("pessoaTipo"),
+      pessoaId: pessoa.id || valor("pessoaId"), fornecedorId: pessoa.tipo === "fornecedor" ? pessoa.id : "",
+      alunoId: pessoa.tipo === "aluno" ? pessoa.id : "", valor: valor("valor"),
+      vencimento: valor("vencimento"), pagamento: valor("pagamento"), formaPagamento: valor("formaPagamento"),
+      observacoes: valor("observacoes")
+    };
+    const resp = await fetch(id ? `${API}/${encodeURIComponent(id)}` : API, {
+      method: id ? "PUT" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload)
+    });
+    const json = resp.ok ? await resp.json().catch(() => ({})) : {};
+    if (!resp.ok || json.ok === false) throw new Error(json.mensagem || json.erro || await obterMensagemErroResposta(resp, `Erro HTTP ${resp.status}`));
+    fecharModal();
+    await iniciarFinanceiro();
+  } catch (erro) {
+    alert(erro.message || "Erro ao salvar lançamento financeiro.");
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = "Salvar";
+    }
+  }
 }
 
 window.editarLancamento = function editarLancamento(id) {
@@ -529,10 +669,7 @@ async function confirmarBaixa(event) {
     fecharModalBaixa();
     limparParametrosBaixaDaUrl();
     alert(`Pagamento confirmado e registrado.${mensagemMotor}`);
-    await (async function iniciarFinanceiro() {
-  await carregarTaxasCartao();
-  await carregarLancamentos();
-})();
+    await iniciarFinanceiro();
   } catch (erro) {
     alert(erro.message || "Erro ao confirmar pagamento.");
   } finally {
@@ -544,10 +681,7 @@ async function confirmarBaixa(event) {
 window.excluirLancamento = async function excluirLancamento(id) {
   if (!confirm("Deseja excluir este lançamento?")) return;
   await fetch(`${API}/${encodeURIComponent(id)}`, { method: "DELETE" });
-  await (async function iniciarFinanceiro() {
-  await carregarTaxasCartao();
-  await carregarLancamentos();
-})();
+  await iniciarFinanceiro();
 };
 
 function abrirBaixaPorUrlSeExistir() {
@@ -597,17 +731,13 @@ document.getElementById("baixaTaxaFixa")?.addEventListener("input", calcularPrev
 document.getElementById("baixaValorPago")?.addEventListener("input", calcularPreviewCartao);
 document.getElementById("btnFecharModal")?.addEventListener("click", fecharModal);
 document.getElementById("btnCancelar")?.addEventListener("click", fecharModal);
+document.getElementById("alunoFornecedor")?.addEventListener("change", sincronizarPessoaSelecionada);
+document.getElementById("alunoFornecedor")?.addEventListener("input", () => { setValor("pessoaTipo", ""); setValor("pessoaId", ""); });
 document.getElementById("btnFiltrar")?.addEventListener("click", carregarLancamentos);
-document.getElementById("btnLimpar").addEventListener("click", () => { els.busca.value = ""; els.filtroTipo.value = ""; els.filtroStatus.value = ""; (async function iniciarFinanceiro() {
-  await carregarTaxasCartao();
-  await carregarLancamentos();
-})(); });
+document.getElementById("btnLimpar").addEventListener("click", () => { els.busca.value = ""; els.filtroTipo.value = ""; els.filtroStatus.value = ""; iniciarFinanceiro(); });
 document.getElementById("btnFecharBaixa")?.addEventListener("click", fecharModalBaixa);
 document.getElementById("btnCancelarBaixa")?.addEventListener("click", fecharModalBaixa);
 els.form.addEventListener("submit", salvarLancamento);
 els.formBaixa.addEventListener("submit", confirmarBaixa);
 
-(async function iniciarFinanceiro() {
-  await carregarTaxasCartao();
-  await carregarLancamentos();
-})();
+iniciarFinanceiro();

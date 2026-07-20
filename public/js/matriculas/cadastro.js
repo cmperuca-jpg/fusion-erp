@@ -63,6 +63,15 @@
   }
   function planoSelecionado() { return planos.find((p) => String(p.id) === String($("plano_id")?.value)) || null; }
   function turmaSelecionadaId() { return $("turma_id")?.value || ""; }
+  function statusMatriculaEditavel(status) {
+    return ["ativa", "pendente", "trancada"].includes(norm(status));
+  }
+  function setSalvando(ativo) {
+    const btn = $("btnSalvar");
+    if (!btn) return;
+    btn.disabled = Boolean(ativo);
+    btn.textContent = ativo ? "Salvando..." : (matriculaAtual ? "Salvar matrícula" : "Salvar matrícula");
+  }
 
   function preencherSelect(id, dados, label, getValue, getText) {
     const el = $(id);
@@ -134,13 +143,13 @@
   function preencherFormulario(m) {
     matriculaAtual = m;
     $("matriculaId").value = m.id || "";
-    $("aluno_id").value = m.alunoId || "";
+    $("aluno_id").value = m.alunoId || m.aluno_id || m.idAluno || "";
     $("status").value = m.status || "Ativa";
-    $("data_matricula").value = String(m.dataMatricula || hoje()).slice(0, 10);
-    $("data_inicio").value = String(m.dataInicio || m.dataMatricula || hoje()).slice(0, 10);
-    $("data_fim").value = String(m.dataFim || "").slice(0, 10);
-    $("plano_id").value = m.planoId || "";
-    $("turma_id").value = Array.isArray(m.turmaIds) ? (m.turmaIds[0] || "") : (m.turmaId || "");
+    $("data_matricula").value = String(m.dataMatricula || m.data_matricula || hoje()).slice(0, 10);
+    $("data_inicio").value = String(m.dataInicio || m.data_inicio || m.dataMatricula || hoje()).slice(0, 10);
+    $("data_fim").value = String(m.dataFim || m.data_fim || "").slice(0, 10);
+    $("plano_id").value = m.planoId || m.plano_id || "";
+    $("turma_id").value = Array.isArray(m.turmaIds) ? (m.turmaIds[0] || "") : (m.turmaId || m.turma_id || "");
     $("taxa_matricula").value = dinheiro(m.valorMatricula ?? m.taxaMatricula).toFixed(2);
     $("taxa_matricula").dataset.manual = dinheiro(m.valorMatricula ?? m.taxaMatricula) > 0 ? "true" : "";
     $("desconto_matricula").value = dinheiro(m.descontoMatricula).toFixed(2);
@@ -168,7 +177,7 @@
     const alunoId = $("aluno_id")?.value;
     if (!alunoId) return;
     const mats = await buscarMatriculasAluno(alunoId);
-    const ativa = mats.find((m) => ["Ativa", "Pendente", "Trancada"].includes(String(m.status || "")));
+    const ativa = mats.find((m) => statusMatriculaEditavel(m.status));
     if (ativa) preencherFormulario(ativa);
   }
 
@@ -179,22 +188,17 @@
     const alunoId = $("aluno_id").value;
     const planoId = $("plano_id").value;
     const turmaId = turmaSelecionadaId();
-    const planoAtual = matriculaAtual?.planoId || "";
+    const planoAtual = matriculaAtual?.planoId || matriculaAtual?.plano_id || "";
     const tipo = tipoPlano(planoSelecionado());
 
-    if (!alunoId || !planoId) return setAlerta("Informe aluno e plano.", "erro");
-
-    if (matriculaAtual && String(planoAtual) === String(planoId)) {
-      const res = await fetch(`/api/matriculas/${encodeURIComponent(matriculaAtual.id)}/turmas`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ turmaIds: turmaId ? [turmaId] : [], usuario: "Administrador" })
-      });
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok || json.ok === false) return setAlerta(json.erro || "Erro ao salvar turma.", "erro");
-      setAlerta(json.mensagem || "Turma salva sem alterar financeiro.", "ok");
-      setTimeout(() => location.href = `/pages/matriculas/ficha.html?id=${encodeURIComponent(matriculaAtual.id)}`, 700);
-      return;
+    if (!alunoId) {
+      tab("dados");
+      return setAlerta("Informe o aluno da matrícula.", "erro");
+    }
+    if (!planoId) {
+      tab("financeiro");
+      $("plano_id")?.focus();
+      return setAlerta("Informe o plano antes de salvar a matrícula.", "erro");
     }
 
     if (matriculaAtual && String(planoAtual) !== String(planoId)) {
@@ -229,17 +233,47 @@
       usuario: "Administrador"
     };
 
-    const url = matriculaAtual ? "/api/matriculas/trocar-plano" : "/api/matriculas/integrar";
-    const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-    const json = await res.json().catch(() => ({}));
-    if (!res.ok || json.ok === false) return setAlerta(json.erro || "Erro ao salvar matricula.", "erro");
+    try {
+      setSalvando(true);
+      if (matriculaAtual && String(planoAtual) === String(planoId)) {
+        const resTurma = await fetch(`/api/matriculas/${encodeURIComponent(matriculaAtual.id)}/turmas`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ turmaIds: turmaId ? [turmaId] : [], usuario: "Administrador" })
+        });
+        const jsonTurma = await resTurma.json().catch(() => ({}));
+        if (!resTurma.ok || jsonTurma.ok === false) throw new Error(jsonTurma.erro || jsonTurma.mensagem || "Erro ao salvar turma.");
 
-    const mat = json.matricula || json.dados;
-    setAlerta(json.mensagem || "Matricula salva com plano vinculado.", "ok");
-    if (mat?.id) setTimeout(() => location.href = `/pages/matriculas/ficha.html?id=${encodeURIComponent(mat.id)}`, 700);
+        if (matriculaAtual.status && norm(matriculaAtual.status) !== norm(payload.status)) {
+          await fetch(`/api/matriculas/${encodeURIComponent(matriculaAtual.id)}/status`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ status: payload.status, usuario: "Administrador" })
+          }).catch(() => null);
+        }
+
+        setAlerta(jsonTurma.mensagem || "Matrícula salva sem alterar o financeiro.", "ok");
+        setTimeout(() => location.href = `/pages/matriculas/ficha.html?id=${encodeURIComponent(matriculaAtual.id)}`, 700);
+        return;
+      }
+
+      const url = matriculaAtual ? "/api/matriculas/trocar-plano" : "/api/matriculas/integrar";
+      const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || json.ok === false) throw new Error(json.erro || json.mensagem || "Erro ao salvar matricula.");
+
+      const mat = json.matricula || json.dados;
+      setAlerta(json.mensagem || "Matricula salva com plano vinculado.", "ok");
+      if (mat?.id) setTimeout(() => location.href = `/pages/matriculas/ficha.html?id=${encodeURIComponent(mat.id)}`, 700);
+    } catch (erro) {
+      setAlerta(erro.message || "Erro ao salvar matricula.", "erro");
+    } finally {
+      setSalvando(false);
+    }
   }
 
   async function iniciar() {
+    $("formMatricula")?.setAttribute("novalidate", "novalidate");
     document.querySelectorAll(".tab").forEach((btn) => btn.addEventListener("click", () => tab(btn.dataset.tab)));
     await carregarBase();
 

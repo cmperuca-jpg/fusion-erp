@@ -51,8 +51,28 @@ function caixaAberto(dados) {
   return dados.caixas.find(c => c.status === 'aberto') || null;
 }
 
-function calcularTotais(movimentos, caixaId) {
-  const lista = movimentos.filter(m => String(m.caixaId) === String(caixaId) && m.status !== 'cancelado');
+function dataMovimento(movimento = {}) {
+  return String(movimento.data || movimento.dataPagamento || movimento.criadoEm || '').slice(0, 10);
+}
+
+function statusAtivoMovimento(movimento = {}) {
+  return !['cancelado', 'estornado'].includes(normalizar(movimento.status));
+}
+
+function pertenceAoCaixa(movimento = {}, caixa = {}) {
+  const caixaId = String(caixa.id || caixa).trim();
+  const movimentoCaixaId = String(movimento.caixaId || '').trim();
+  if (movimentoCaixaId) return movimentoCaixaId === caixaId;
+
+  // Compatibilidade com saídas antigas de contas a pagar que foram gravadas sem caixaId.
+  if (normalizar(caixa.status) !== 'aberto') return false;
+  const data = dataMovimento(movimento);
+  const abertura = String(caixa.dataAbertura || caixa.abertoEm || '').slice(0, 10);
+  return !abertura || !data || data >= abertura;
+}
+
+function calcularTotais(movimentos, caixa) {
+  const lista = movimentos.filter(m => pertenceAoCaixa(m, caixa) && statusAtivoMovimento(m));
 
   const totais = {
     entradas: 0,
@@ -68,14 +88,18 @@ function calcularTotais(movimentos, caixaId) {
   for (const m of lista) {
     const valor = numero(m.valor, 0);
 
-    if (m.tipo === 'entrada') totais.entradas += valor;
-    if (m.tipo === 'saida') totais.saidas += valor;
+    const saida = normalizar(m.tipo).includes('saida') || normalizar(m.tipo).includes('saÃ­da');
+    const entrada = !saida;
+
+    if (entrada) totais.entradas += valor;
+    if (saida) totais.saidas += valor;
 
     const forma = normalizar(m.formaPagamento);
-    if (forma.includes('dinheiro')) totais.dinheiro += valor;
-    else if (forma.includes('pix')) totais.pix += valor;
-    else if (forma.includes('cart')) totais.cartao += valor;
-    else totais.outros += valor;
+    const valorLiquidoForma = saida ? -valor : valor;
+    if (forma.includes('dinheiro')) totais.dinheiro += valorLiquidoForma;
+    else if (forma.includes('pix')) totais.pix += valorLiquidoForma;
+    else if (forma.includes('cart')) totais.cartao += valorLiquidoForma;
+    else totais.outros += valorLiquidoForma;
   }
 
   totais.saldoAtual = Number((totais.entradas - totais.saidas).toFixed(2));
@@ -167,7 +191,7 @@ export async function obterCaixaAtual() {
   return {
     aberto: true,
     caixa: atual,
-    totais: calcularTotais(dados.movimentos, atual.id)
+    totais: calcularTotais(dados.movimentos, atual)
   };
 }
 
@@ -179,7 +203,7 @@ export async function listarCaixas(filtros = {}) {
   return dados.caixas
     .map(c => ({
       ...c,
-      totais: calcularTotais(dados.movimentos, c.id)
+      totais: calcularTotais(dados.movimentos, c)
     }))
     .filter(c => {
       if (status && status !== 'todos' && normalizar(c.status) !== status) return false;
@@ -195,10 +219,11 @@ export async function listarMovimentos(filtros = {}) {
   const tipo = normalizar(filtros.tipo);
   const formaPagamento = normalizar(filtros.formaPagamento);
   const caixaId = String(filtros.caixaId || '').trim();
+  const caixaFiltro = caixaId ? dados.caixas.find(c => String(c.id) === caixaId) : null;
 
   return dados.movimentos
     .filter(m => {
-      if (caixaId && String(m.caixaId) !== caixaId) return false;
+      if (caixaId && !pertenceAoCaixa(m, caixaFiltro || { id: caixaId, status: 'aberto' })) return false;
       if (tipo && tipo !== 'todos' && normalizar(m.tipo) !== tipo) return false;
       if (formaPagamento && formaPagamento !== 'todos' && normalizar(m.formaPagamento) !== formaPagamento) return false;
       if (q) {
@@ -271,7 +296,7 @@ export async function fecharCaixa(dadosEntrada = {}) {
     throw erro;
   }
 
-  const totais = calcularTotais(dados.movimentos, atual.id);
+  const totais = calcularTotais(dados.movimentos, atual);
   const valorFechamentoInformado = numero(dadosEntrada.valorFechamentoInformado, totais.saldoAtual);
 
   atual.status = 'fechado';
