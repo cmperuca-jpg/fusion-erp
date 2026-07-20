@@ -683,6 +683,60 @@ async function confirmarCancelamento(id,motivo,dataAcao){
   }catch(e){alert(erroAmigavel(e));}
 }
 
+async function confirmarAcao(){
+  const id=$("#acaoId")?.value || "";
+  const tipo=$("#acaoTipo")?.value || "";
+  const motivo=$("#acaoMotivo")?.value || "";
+  const dataAcao=$("#acaoData")?.value || hojeIso();
+
+  if(tipo==="estorno") await confirmarEstorno(id,motivo,dataAcao);
+  if(tipo==="cancelamento") await confirmarCancelamento(id,motivo,dataAcao);
+
+  $("#modalAcao")?.close();
+}
+
+function alternarSelecaoPagina(marcado){
+  paginaAtualItens().forEach((item)=>{
+    const id=idRegistro(item);
+    if(!id) return;
+    if(marcado && estaEmAberto(item)) estado.selecionados.add(String(id));
+    else estado.selecionados.delete(String(id));
+  });
+  renderTabela();
+}
+
+function alternarSelecaoItem(id,marcado){
+  const item=obterPorId(id);
+  if(!item || !estaEmAberto(item)) return renderTabela();
+  if(marcado) estado.selecionados.add(String(id));
+  else estado.selecionados.delete(String(id));
+  atualizarBarraLote();
+}
+
+function limparSelecao(){
+  estado.selecionados.clear();
+  renderTabela();
+}
+
+function abrirBaixaDoDetalhe(){
+  const id=estado.detalheId;
+  const item=obterPorId(id);
+  if(!item || !estaEmAberto(item)) return;
+  $("#modalDetalhe")?.close();
+  abrirModalBaixa(id);
+}
+
+function duplicarDoDetalhe(){
+  const id=estado.detalheId;
+  if(!id) return;
+  $("#modalDetalhe")?.close();
+  duplicarPagamento(id);
+}
+
+function imprimirComprovanteDetalhe(){
+  if(estado.detalheId) imprimirComprovante(estado.detalheId);
+}
+
 function csvCell(v){return`"${String(v??"").replaceAll('"','""')}"`}
 function exportarCsv(){
   aplicarFiltrosLocais();
@@ -725,6 +779,15 @@ document.addEventListener("DOMContentLoaded",()=>{
   $("#fBusca")?.addEventListener("input",()=>{estado.pagina=1;renderTabela();});
   $("#btnAnterior")?.addEventListener("click",()=>{estado.pagina--;renderTabela();});
   $("#btnProxima")?.addEventListener("click",()=>{estado.pagina++;renderTabela();});
+  $("#chkTodos")?.addEventListener("change",(ev)=>alternarSelecaoPagina(ev.target.checked));
+  $("#btnSelecionarFiltrados")?.addEventListener("click",selecionarFiltrados);
+  $("#btnBaixaLote")?.addEventListener("click",abrirLote);
+  $("#btnLimparSelecao")?.addEventListener("click",limparSelecao);
+  document.querySelectorAll(".sort-btn").forEach((btn)=>btn.addEventListener("click",()=>{
+    if(estado.sortCampo===btn.dataset.sort) estado.sortDir=estado.sortDir==="asc"?"desc":"asc";
+    else { estado.sortCampo=btn.dataset.sort; estado.sortDir="asc"; }
+    renderTabela();
+  }));
 
   $("#btnFecharModal")?.addEventListener("click",()=>$("#modalBaixa").close());
   $("#btnCancelarBaixa")?.addEventListener("click",()=>$("#modalBaixa").close());
@@ -738,6 +801,19 @@ document.addEventListener("DOMContentLoaded",()=>{
   $("#btnFecharNovo")?.addEventListener("click",()=>$("#modalNovo").close());
   $("#btnCancelarNovo")?.addEventListener("click",()=>$("#modalNovo").close());
   $("#btnSalvarNovo")?.addEventListener("click",salvarNovo);
+  $("#btnFecharResumo")?.addEventListener("click",()=>$("#modalResumo").close());
+  $("#btnImprimirResumo")?.addEventListener("click",imprimirResumo);
+  $("#btnExportarResumo")?.addEventListener("click",exportarResumoCsv);
+  $("#btnFecharDetalhe")?.addEventListener("click",()=>$("#modalDetalhe").close());
+  $("#btnComprovanteDetalhe")?.addEventListener("click",imprimirComprovanteDetalhe);
+  $("#btnDuplicarDetalhe")?.addEventListener("click",duplicarDoDetalhe);
+  $("#btnBaixarDetalhe")?.addEventListener("click",abrirBaixaDoDetalhe);
+  $("#btnFecharLote")?.addEventListener("click",()=>$("#modalLote").close());
+  $("#btnCancelarLote")?.addEventListener("click",()=>$("#modalLote").close());
+  $("#btnConfirmarLote")?.addEventListener("click",confirmarLote);
+  $("#btnFecharAcao")?.addEventListener("click",()=>$("#modalAcao").close());
+  $("#btnCancelarAcao")?.addEventListener("click",()=>$("#modalAcao").close());
+  $("#btnConfirmarAcao")?.addEventListener("click",confirmarAcao);
 
   $("#tbPagamentos")?.addEventListener("click",(ev)=>{
     const detalhe=ev.target.closest("[data-detalhe]");
@@ -752,6 +828,10 @@ document.addEventListener("DOMContentLoaded",()=>{
     if(baixar&&!baixar.disabled)abrirModalBaixa(baixar.dataset.baixar);
     if(estornar&&!estornar.disabled)abrirModalAcao("estorno",estornar.dataset.estornar);
     if(cancelar&&!cancelar.disabled)abrirModalAcao("cancelamento",cancelar.dataset.cancelar);
+  });
+  $("#tbPagamentos")?.addEventListener("change",(ev)=>{
+    const select=ev.target.closest("[data-select]");
+    if(select) alternarSelecaoItem(select.dataset.select,select.checked);
   });
 
   carregar();

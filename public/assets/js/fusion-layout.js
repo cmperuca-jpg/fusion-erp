@@ -1,4 +1,6 @@
 (function () {
+  const __FUSION_V3_NAVIGATION_FINAL__ = true;
+
   function garantirEstilosGlobais() {
     const estilos = [
       ["fusion-app-global", "/assets/css/fusion-app.css"],
@@ -106,8 +108,9 @@
   }
 
   function removerMenusExistentes() {
-    document.querySelectorAll(".sidebar,.fusion-sidebar,#fusionSidebar,#fusionMenuGlobal,.fusion-menu-global,.topbar,.fusion-topbar").forEach(el => el.remove());
+    document.querySelectorAll(".sidebar,.fusion-sidebar,#fusionSidebar,#fusionMenuGlobal,.fusion-menu-global,.fusion-v3-menu-toggle,.fusion-v3-menu-backdrop,.fusion-breadcrumb,.topbar,.fusion-topbar").forEach(el => el.remove());
     document.body.classList.add("fusion-sem-menu");
+    document.body.classList.remove("fusion-menu-open");
     document.body.classList.remove("fusion-com-sidebar");
     document.documentElement.classList.add("fusion-sem-menu");
   }
@@ -136,7 +139,62 @@
 
   function itemAtivo(href) {
     const atual = normalizarPath(location.pathname);
-    return atual === normalizarPath(href);
+    const alvo = normalizarPath(href);
+    return atual === alvo || atual === alvo.replace(/\/$/, "/index.html/");
+  }
+
+  function todosItensMenu() {
+    return ITENS_MENU.flatMap(grupo => grupo.itens.map(item => ({ ...item, grupo: grupo.grupo })));
+  }
+
+  function itemMenuAtual() {
+    return todosItensMenu().find(item => itemAtivo(item.href)) || null;
+  }
+
+  function montarBreadcrumb() {
+    if (paginaSemMenu()) return;
+    document.querySelectorAll(".fusion-breadcrumb").forEach(el => el.remove());
+    const item = itemMenuAtual();
+    if (!item) return;
+    const destino = document.querySelector(".fusion-content,.content,.page-content,.crm,main");
+    if (!destino) return;
+
+    const nav = document.createElement("nav");
+    nav.className = "fusion-breadcrumb";
+    nav.setAttribute("aria-label", "Caminho da pagina");
+    nav.innerHTML = `<a href="/pages/dashboard/index.html">Inicio</a><span>/</span><span>${item.grupo}</span><span>/</span><strong>${item.label}</strong>`;
+    destino.prepend(nav);
+  }
+
+  function montarMenuMobile() {
+    document.querySelectorAll(".fusion-v3-menu-toggle,.fusion-v3-menu-backdrop").forEach(el => el.remove());
+
+    const botao = document.createElement("button");
+    botao.type = "button";
+    botao.className = "fusion-v3-menu-toggle";
+    botao.setAttribute("aria-label", "Abrir menu");
+    botao.setAttribute("aria-expanded", "false");
+    botao.setAttribute("aria-controls", "fusionSidebar");
+    botao.textContent = "Menu";
+
+    const fundo = document.createElement("div");
+    fundo.className = "fusion-v3-menu-backdrop";
+
+    function alternarMenu(forcar) {
+      const aberto = typeof forcar === "boolean" ? forcar : !document.body.classList.contains("fusion-menu-open");
+      document.body.classList.toggle("fusion-menu-open", aberto);
+      botao.setAttribute("aria-expanded", aberto ? "true" : "false");
+      botao.setAttribute("aria-label", aberto ? "Fechar menu" : "Abrir menu");
+    }
+
+    botao.addEventListener("click", () => alternarMenu());
+    fundo.addEventListener("click", () => alternarMenu(false));
+    document.addEventListener("keydown", (ev) => {
+      if (ev.key === "Escape") alternarMenu(false);
+    });
+
+    document.body.prepend(fundo);
+    document.body.prepend(botao);
   }
 
   function montarMenu() {
@@ -169,17 +227,30 @@
     if (controleCatraca) ferramentas.prepend(controleCatraca);
     sidebar.appendChild(ferramentas);
 
-    ITENS_MENU.forEach(grupo => {
+    ITENS_MENU.forEach((grupo, indiceGrupo) => {
       const itens = grupo.itens.filter(item => podeVer(item, user));
       if (!itens.length) return;
 
       const box = document.createElement("div");
       box.className = "menu-grupo fusion-menu-section open";
+      box.id = `fusion_menu_grupo_${indiceGrupo}`;
 
-      const titulo = document.createElement("span");
+      const titulo = document.createElement("button");
+      titulo.type = "button";
       titulo.className = "menu-titulo fusion-menu-group";
-      titulo.textContent = grupo.grupo;
+      titulo.setAttribute("aria-expanded", "true");
+      titulo.setAttribute("aria-controls", `${box.id}_itens`);
+      titulo.innerHTML = `<span>${grupo.grupo}</span><span class="fusion-menu-group-caret" aria-hidden="true">&rsaquo;</span>`;
+      titulo.addEventListener("click", () => {
+        const recolhido = box.classList.toggle("collapsed");
+        box.classList.toggle("open", !recolhido);
+        titulo.setAttribute("aria-expanded", recolhido ? "false" : "true");
+      });
       box.appendChild(titulo);
+
+      const lista = document.createElement("div");
+      lista.className = "fusion-menu-items";
+      lista.id = `${box.id}_itens`;
 
       itens.forEach(item => {
         const a = document.createElement("a");
@@ -191,10 +262,15 @@
           a.rel = "noopener noreferrer";
           a.title = `${item.label} — abrir em nova aba`;
         }
-        if (itemAtivo(item.href)) a.classList.add("active");
-        box.appendChild(a);
+        a.addEventListener("click", () => document.body.classList.remove("fusion-menu-open"));
+        if (itemAtivo(item.href)) {
+          a.classList.add("active");
+          a.setAttribute("aria-current", "page");
+        }
+        lista.appendChild(a);
       });
 
+      box.appendChild(lista);
       sidebar.appendChild(box);
     });
 
@@ -204,6 +280,8 @@
     document.body.classList.add("fusion-com-sidebar");
     document.documentElement.classList.add("fusion-com-sidebar");
     document.body.prepend(sidebar);
+    montarMenuMobile();
+    montarBreadcrumb();
     garantirCentralNotificacoes();
   }
 

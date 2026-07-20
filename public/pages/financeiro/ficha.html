@@ -1,69 +1,14 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fusion ERP - Ficha Financeira</title>
-  <link rel="stylesheet" href="/css/dashboard.css">
-  <link rel="stylesheet" href="/assets/css/fusion-app.css">
-  <script src="/assets/js/fusion-auth.js"></script>
-  <script>FusionAuth.proteger();</script>
-  <meta name="fusion-existing-pages" content="agenda,alunos,avaliacoes,bi,bi-academia,bi-academia-operacional,bi-financeiro,caixa,checkin,configuracoes,dashboard,estoque,exercicios,financeiro,login,matriculas,mensalidades,modalidades,modelos-treino,pagamentos,planos,presencas,professores,recebimentos,relatorios-caixa,treinos,turmas">
-
-<link rel="manifest" href="/manifest-sistema.webmanifest">
-<meta name="theme-color" content="#ff6600">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="apple-touch-icon" href="/assets/pwa/icons/fusion-icon-180.png">
-<link rel="stylesheet" href="/assets/pwa/fusion-pwa-mobile.css">
-  <link rel="stylesheet" href="/assets/css/fusion-premium-final.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Redirecionando - Financeiro</title>
+  <script>
+    location.replace("/pages/financeiro/index.html" + location.search);
+  </script>
 </head>
 <body>
-
-<main class="main">
-
-<section class="card">
-
-  <div class="cadastro-header">
-    <div>
-      <h2 id="tituloLancamento">Carregando...</h2>
-      <p>Ficha completa do lançamento financeiro.</p>
-    </div>
-  </div>
-
-  <div class="ficha-grid">
-    <p><b>Tipo:</b> <span id="tipo"></span></p>
-    <p><b>Descrição:</b> <span id="descricao"></span></p>
-    <p><b>Categoria:</b> <span id="categoria"></span></p>
-    <p><b>Competência:</b> <span id="competencia"></span></p>
-    <p><b>Aluno:</b> <span id="aluno"></span></p>
-    <p><b>Vencimento:</b> <span id="data_vencimento"></span></p>
-    <p><b>Valor:</b> <span id="valor"></span></p>
-    <p><b>Data pagamento:</b> <span id="data_pagamento"></span></p>
-    <p><b>Valor pago:</b> <span id="valor_pago"></span></p>
-    <p><b>Pagamento:</b> <span id="forma_pagamento"></span></p>
-    <p><b>Status:</b> <span id="status"></span></p>
-  </div>
-
-  <br>
-
-  <h3>Observações</h3>
-  <p id="observacoes"></p>
-
-  <div class="form-actions">
-    <button id="btnEditar">Editar</button>
-    <button onclick="window.print()">Imprimir</button>
-    <button onclick="window.location='/pages/financeiro/'">Voltar</button>
-  </div>
-
-</section>
-
-</main>
-<script src="/js/financeiro/ficha.js"></script>
-
-    <script src="/assets/js/fusion-layout.js"></script>
-
-<script src="/assets/pwa/fusion-pwa-install.js" defer></script>
+  <a href="/pages/financeiro/index.html">Abrir Financeiro</a>
 </body>
 </html>

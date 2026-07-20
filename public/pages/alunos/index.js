@@ -1391,6 +1391,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   $("#btnAddHistorico").addEventListener("click", adicionarHistoricoManual);
   $("#btnLimparHistorico").addEventListener("click", limparHistoricoLocal);
+  $("#btnNovaMatriculaAluno")?.addEventListener("click", abrirMatriculaDoModal);
+  $("#btnAbrirMatriculaAtiva")?.addEventListener("click", abrirMatriculaAtivaDoAluno);
+  $("#btnAtualizarMatriculasAluno")?.addEventListener("click", atualizarMatriculasAlunoAtual);
 
   $("#btnAbrirAvaliacoes").addEventListener("click", () => abrirIntegracao("avaliacoes"));
   $("#btnAbrirMensalidades").addEventListener("click", () => abrirIntegracao("mensalidades"));
