@@ -1,17 +1,1 @@
-[
-  {
-    "id": "ciclo_modelo_001",
-    "alunoId": "aluno_modelo_001",
-    "nome": "Ciclo ABC Hipertrofia — Modelo",
-    "objetivo": "Hipertrofia",
-    "treinoIds": [
-      "trn_modelo_a",
-      "trn_modelo_b",
-      "trn_modelo_c"
-    ],
-    "dataInicio": "2026-07-16",
-    "dataFim": "2026-10-14",
-    "status": "Ativo",
-    "criadoEm": "2026-07-16T12:14:17.917Z"
-  }
-]
+[]
