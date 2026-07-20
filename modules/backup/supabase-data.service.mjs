@@ -80,6 +80,27 @@ function absoluto(relativo) {
   return destino;
 }
 
+async function garantirDiretorio(absPath) {
+  const stat = await fs.lstat(absPath).catch(() => null);
+  if (stat) {
+    if (stat.isSymbolicLink()) {
+      try {
+        const alvo = await fs.stat(absPath);
+        if (alvo.isDirectory()) return;
+      } catch {}
+    } else if (stat.isDirectory()) {
+      return;
+    }
+    await fs.rm(absPath, { recursive: true, force: true });
+  }
+  await fs.mkdir(absPath, { recursive: true });
+}
+
+async function garantirDiretoriosBase() {
+  await garantirDiretorio(DATA_DIR);
+  await garantirDiretorio(UPLOADS_DIR);
+}
+
 async function listarArquivosDiretorio(base, prefixoRelativo) {
   const saida = [];
   async function percorrer(dir) {
@@ -100,6 +121,7 @@ async function listarArquivosDiretorio(base, prefixoRelativo) {
 }
 
 async function inventarioLocal() {
+  await garantirDiretoriosBase();
   const arquivos = [
     ...(await listarArquivosDiretorio(DATA_DIR, "data")),
     ...(await listarArquivosDiretorio(UPLOADS_DIR, "uploads"))
@@ -164,6 +186,7 @@ function assinaturaManifesto(arquivos = []) {
 }
 
 async function restaurarEstadoRemoto(manifesto) {
+  await garantirDiretoriosBase();
   const nomesRemotos = new Set(manifesto.arquivos.map(item => caminhoSeguro(item.relativo)));
   const locais = await inventarioLocal();
   for (const item of locais) {
@@ -188,6 +211,7 @@ export async function sincronizarTudoAgora({ forcar = false } = {}) {
   if (sincronizando) return ultimoResultado || { ok: true, aguardando: true };
   sincronizando = true;
   try {
+    await garantirDiretoriosBase();
     await garantirBucket();
     const inventario = await inventarioLocal();
     const manifesto = [];
@@ -235,6 +259,7 @@ export async function inicializarPersistenciaSupabase() {
     return statusPersistencia();
   }
   try {
+    await garantirDiretoriosBase();
     await garantirBucket();
     const manifesto = await lerManifestoRemoto();
     if (manifesto?.arquivos) {

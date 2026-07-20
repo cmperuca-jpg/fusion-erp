@@ -64,7 +64,18 @@ const persistentRoot = process.env.FUSION_PERSISTENT_DIR || "/var/data/fusion";
 console.log("Biometria removida: controle físico exclusivo pelo Fusion Access Agent.");
 
 function garantirDiretorio(absPath) {
-  if (!fs.existsSync(absPath)) fs.mkdirSync(absPath, { recursive: true });
+  const stat = fs.lstatSync(absPath, { throwIfNoEntry: false });
+  if (stat) {
+    if (stat.isSymbolicLink()) {
+      try {
+        if (fs.statSync(absPath).isDirectory()) return;
+      } catch {}
+    } else if (stat.isDirectory()) {
+      return;
+    }
+    fs.rmSync(absPath, { recursive: true, force: true });
+  }
+  fs.mkdirSync(absPath, { recursive: true });
 }
 
 function copiarSeedsSeDiretorioVazio(origem, destino) {
@@ -73,6 +84,31 @@ function copiarSeedsSeDiretorioVazio(origem, destino) {
   const destinoVazio = fs.readdirSync(destino).length === 0;
   if (!destinoVazio) return;
   fs.cpSync(origem, destino, { recursive: true, force: false, errorOnExist: false });
+}
+
+function removerCaminhoSeExistir(absPath) {
+  if (fs.existsSync(absPath) || fs.lstatSync(absPath, { throwIfNoEntry: false })) {
+    fs.rmSync(absPath, { recursive: true, force: true });
+  }
+}
+
+function arquivarSeedRepositorio(localPath, backupPath) {
+  if (!fs.existsSync(localPath)) return;
+  const stat = fs.lstatSync(localPath);
+  if (stat.isSymbolicLink()) return;
+
+  if (fs.existsSync(backupPath)) {
+    removerCaminhoSeExistir(localPath);
+    return;
+  }
+
+  try {
+    fs.renameSync(localPath, backupPath);
+  } catch (erro) {
+    if (erro?.code !== "EXDEV") throw erro;
+    fs.cpSync(localPath, backupPath, { recursive: true, force: true });
+    removerCaminhoSeExistir(localPath);
+  }
 }
 
 function prepararPersistenciaRender() {
@@ -90,14 +126,7 @@ function prepararPersistenciaRender() {
     copiarSeedsSeDiretorioVazio(localPath, persistentePath);
 
     try {
-      if (fs.existsSync(localPath)) {
-        const stat = fs.lstatSync(localPath);
-        if (!stat.isSymbolicLink()) {
-          const backupPath = path.join(__dirname, `.${pasta}-repo-seed`);
-          if (!fs.existsSync(backupPath)) fs.renameSync(localPath, backupPath);
-          else fs.rmSync(localPath, { recursive: true, force: true });
-        }
-      }
+      arquivarSeedRepositorio(localPath, path.join(__dirname, `.${pasta}-repo-seed`));
       if (!fs.existsSync(localPath)) fs.symlinkSync(persistentePath, localPath, "dir");
     } catch (erro) {
       console.warn(`[Render] Não foi possível vincular ${pasta} ao disco persistente: ${erro.message}`);
