@@ -1,6 +1,19 @@
-# Entrega — reconhecimento facial v1
+# Entrega - reconhecimento facial v1
 
-## Arquivos do Fusion ERP alterados
+## Estrutura correta
+
+A estrutura atual e Windows nativa. Nao usa CompreFace, Docker ou Linux.
+
+Componentes:
+
+- Fusion Access instalado no computador da academia.
+- `FusionFacialWorker.exe` como motor facial nativo.
+- OpenCV e modelos ONNX locais para deteccao e reconhecimento.
+- App Android local conectado ao IP do computador na porta `8765`.
+- Terminal web/PWA opcional pelo site do Fusion.
+- Catraca liberada pelo Fusion Access Agent, respeitando aluno, matricula e financeiro.
+
+## Arquivos do Fusion ERP envolvidos
 
 - `.env.example`
 - `server.mjs`
@@ -12,29 +25,42 @@
 - `public/pages/reconhecimento-facial/index.html`
 - `public/pages/reconhecimento-facial/terminal.js`
 - `public/pages/reconhecimento-facial/style.css`
+- `tools/fusion-access-native/src/main.cpp`
+- `tools/fusion-access-native/src/offline_gateway.cpp`
+- `tools/fusion-access-native/runtime/VER-STATUS.cmd`
+- `tools/fusion-access-native/runtime/FusionAccessSupervisor.ps1`
 - `docs/RECONHECIMENTO-FACIAL.md`
-- `docs/ENTREGA_RECONHECIMENTO_FACIAL_V1.md`
 
-## Funções entregues
+## Codigos
 
-- Terminal responsivo para celular Android com câmera frontal.
-- Token exclusivo do terminal e limite de requisições.
-- Desafio aleatório de movimento com expiração.
-- Cadastro com três capturas e confirmação de consentimento.
-- Processamento local pelo CompreFace através do Access Agent.
-- Identificação com limiar de similaridade e pose da cabeça.
-- Reaproveitamento das regras existentes de matrícula, financeiro e catraca.
-- Histórico persistido no Supabase sem gravar as capturas no banco do Fusion.
-- Modo de homologação que reconhece sem liberar a catraca.
-- Tela administrativa integrada ao menu Academia.
+- 8 numeros: ativa o Fusion Access Windows pelo painel Access Engine.
+- 6 numeros no Status do Fusion Access: pareia o app Android local com a porta `8765`.
+- 6 numeros no painel de reconhecimento facial: pareia o terminal web/PWA do site.
 
-## Validações executadas
+## Funcoes entregues
 
-- Verificação de sintaxe do servidor, rotas, serviço e JavaScript das telas.
-- `npm run check` completo do projeto.
-- Teste da fila em memória: criação, coleta pelo agente, conclusão e descarte da captura.
-- Teste HTTP das duas páginas, autenticação do terminal, desafio e rejeição de token inválido.
+- Cadastro facial com consentimento.
+- Identificacao facial pelo motor local Windows.
+- Terminal Android local para uso como camera fixa.
+- Servidor local offline na porta `8765`.
+- Pareamento local por codigo de 6 numeros.
+- Sincronizacao de regras offline com o site.
+- Registro de eventos de reconhecimento.
+- Liberacao da catraca pelas regras atuais do Fusion.
+- Terminal web/PWA pelo site como alternativa.
+
+## Validacao obrigatoria do pacote Windows
+
+Antes de entregar um novo `FusionAccessSetup.exe`, confirmar que o `FusionFacialWorker.exe` empacotado contem:
+
+- `native-1.0.1`;
+- rota local `/status`;
+- rota local `/pair`;
+- rota local `/identify`;
+- porta `8765`.
+
+No computador instalado, o atalho `Status do Fusion Access` deve informar que o terminal local respondeu. Se nao responder, o app Android local vai falhar com mensagem semelhante a `failed to connect to /IP:8765`.
 
 ## Limite conhecido
 
-A v1 usa movimento de cabeça e o plugin de pose do CompreFace. Isso dificulta uma foto estática, mas não substitui uma solução certificada de prova de vida contra vídeo, tela ou máscara. A liberação vem desativada por padrão e exige homologação local antes de ser ligada.
+A verificacao facial do piloto reduz uso indevido por foto estatica, mas nao substitui uma solucao certificada de prova de vida contra todos os tipos de fraude. A academia deve manter alternativa de acesso manual, cartao ou outro metodo permitido.

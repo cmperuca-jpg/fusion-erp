@@ -1,5 +1,5 @@
 #define AppName "Fusion Access"
-#define AppVersion "1.0.0"
+#define AppVersion "1.0.1"
 #define AppPublisher "Fusion ERP"
 #define AppDir "{commonappdata}\FusionERP\AccessAgent"
 
