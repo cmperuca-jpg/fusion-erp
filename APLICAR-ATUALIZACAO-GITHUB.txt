@@ -1,0 +1,28 @@
+PACOTE DE ATUALIZACAO DO FUSION ERP
+
+Este ZIP contem somente arquivos novos ou alterados da pasta SITECOPIA em
+comparacao com a pasta SITEGITHUB.
+
+NAO contem o site inteiro.
+NAO contem .env, chaves, tokens ou a configuracao de teste do WhatsApp.
+
+COMO APLICAR
+1. Feche o Fusion ERP que estiver em execucao.
+2. Extraia este ZIP diretamente dentro da pasta do projeto que esta ligada ao GitHub.
+3. Confirme a substituicao dos arquivos quando o Windows perguntar.
+4. Na pasta do projeto, execute:
+
+   npm install
+   git status
+   git add .
+   git commit -m "Atualiza financeiro, recorrencia, cadastros e WhatsApp"
+   git push
+
+5. O Render deve iniciar um novo deploy apos o git push.
+
+OBSERVACAO IMPORTANTE
+Os arquivos data/*.json foram incluidos porque foram alterados na copia.
+Se a producao estiver usando Supabase, confirme tambem no Fusion que a
+sincronizacao de dados esta configurada com as credenciais reais do Render.
+
+NAO copie este pacote dentro de node_modules.

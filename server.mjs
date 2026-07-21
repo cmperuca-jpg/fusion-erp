@@ -24,9 +24,11 @@ import matriculaIntegracaoRoutes from "./modules/matriculas/matricula.integracao
 import caixaRoutes from "./modules/financeiro/caixa.routes.mjs";
 import recebimentosRoutes from "./modules/financeiro/recebimentos.routes.mjs";
 import pagamentosRoutes from "./modules/financeiro/pagamentos.routes.mjs";
+import financeiroLedgerRoutes from "./modules/financeiro/financeiro-ledger.routes.mjs";
 import avaliacoesRoutes from "./modules/avaliacoes/avaliacoes.routes.mjs";
 import treinosRoutes from "./modules/treinos/treinos.routes.mjs";
 import cobrancaRoutes from "./modules/cobranca/cobranca.routes.mjs";
+import { executarMotorCobranca } from "./modules/cobranca/cobranca.service.mjs";
 import authRoutes from "./modules/auth/auth.routes.mjs";
 import biRoutes from "./modules/bi/bi.routes.mjs";
 import presencasRoutes from "./modules/presencas/presencas.routes.mjs";
@@ -45,6 +47,8 @@ import fidelidadeRoutes from "./modules/fidelidade/fidelidade.routes.mjs";
 import accessBridgeRoutes from "./modules/access-bridge/access-bridge.routes.mjs";
 import reconhecimentoFacialRoutes from "./modules/reconhecimento-facial/reconhecimento-facial.routes.mjs";
 import accessOnboardingRoutes from "./modules/access-onboarding/access-onboarding.routes.mjs";
+import whatsappRoutes from "./modules/whatsapp/whatsapp.routes.mjs";
+import { executarLembretesVencimento } from "./modules/whatsapp/whatsapp.service.mjs";
 import { inicializarPersistenciaSupabase, encerrarPersistenciaSupabase } from "./modules/backup/supabase-data.service.mjs";
 import { iniciarBackupAutomatico } from "./modules/backup/backup.service.mjs";
 import { assertDatabaseConfiguration } from "./config/database.config.mjs";
@@ -138,7 +142,14 @@ function prepararPersistenciaRender() {
 prepararPersistenciaRender();
 assertDatabaseConfiguration();
 await verificarPersistenciaTransacional();
-await inicializarPersistenciaSupabase();
+const sincronizarDadosNesteAmbiente = isRender || ["1", "true", "sim", "yes"].includes(
+  String(process.env.FUSION_SYNC_DATA_ON_LOCAL || "false").toLowerCase()
+);
+if (sincronizarDadosNesteAmbiente) {
+  await inicializarPersistenciaSupabase();
+} else {
+  console.log("[Persistência] Sincronização Supabase desativada no localhost (FUSION_SYNC_DATA_ON_LOCAL=false).");
+}
 if (["1", "true", "sim", "yes"].includes(String(process.env.FUSION_MIGRATE_JSON_ON_START || "false").toLowerCase())) {
   const migracao = await migrarTodosJsonParaSupabase();
   console.log(`[Persistência] Migração inicial concluída: ${migracao.totalColecoes} coleção(ões).`);
@@ -644,6 +655,7 @@ app.use("/api/agenda", agendaRoutes);
 app.use("/api/agenda-operacional", agendaOperacionalRoutes);
 app.use("/api/checkin", checkinRoutes);
 app.use("/api/financeiro/relatorios", relatoriosFinanceirosRoutes);
+app.use("/api/financeiro/ledger", financeiroLedgerRoutes);
 app.use("/api/financeiro", financeiroRoutes);
 app.use("/api/mensalidades", mensalidadesRoutes);
 app.use(matriculaIntegracaoRoutes);
@@ -674,6 +686,7 @@ app.use("/api/henry7x", henry7xRoutes);
 app.use("/api/access-bridge", accessBridgeRoutes);
 app.use("/api/reconhecimento-facial", reconhecimentoFacialRoutes);
 app.use("/api/access-onboarding", accessOnboardingRoutes);
+app.use("/api/whatsapp", whatsappRoutes);
 
 // Aliases legados de páginas: evitam 404 em favoritos/menus antigos.
 app.get(['/pages/bi-comercial', '/pages/bi-comercial/', '/pages/bi-comercial/index.html'], (req, res) => {
@@ -908,8 +921,31 @@ app.listen(PORT, HOST, async () => {
   }
 
   console.log("Controle de catraca online: Fusion Access Bridge ativo.");
-  const backupAutomatico = iniciarBackupAutomatico();
+  const backupNoAmbiente = isRender || ["1", "true", "sim", "yes"].includes(String(process.env.FUSION_BACKUP_AUTO_ON_LOCAL || "false").toLowerCase());
+  const backupAutomatico = backupNoAmbiente ? iniciarBackupAutomatico() : { ativo: false };
   console.log(`Backup automático: ${backupAutomatico.ativo ? "ativo" : "inativo"}.`);
+
+  // Confere na inicialização e a cada hora. Só emite títulos cujo vencimento
+  // programado já chegou; nunca antecipa mensalidade por causa de uma baixa.
+  const executarCobrancaProgramada = async () => {
+    try {
+      const resultado = await executarMotorCobranca({ usuario: "agenda-automatica" });
+      if (resultado.geradas) console.log(`[Cobrança] ${resultado.geradas} título(s) emitido(s) na data programada.`);
+    } catch (erro) { console.error(`[Cobrança] Falha no motor automático: ${erro.message}`); }
+  };
+  await executarCobrancaProgramada();
+  setInterval(executarCobrancaProgramada, 60 * 60 * 1000).unref();
+
+  let lembretesExecutadosEm = '';
+  const executarWhatsAppAgendado = async () => {
+    const agora = new Date(); const data = agora.toLocaleDateString('en-CA', { timeZone: 'America/Maceio' });
+    const hora = Number(agora.toLocaleString('en-US', { timeZone: 'America/Maceio', hour: '2-digit', hour12: false }));
+    if (hora !== 9 || lembretesExecutadosEm === data) return;
+    lembretesExecutadosEm = data;
+    try { await executarLembretesVencimento({ dataReferencia: data }); } catch (erro) { console.error(`[WhatsApp] Lembretes não enviados: ${erro.message}`); }
+  };
+  setInterval(executarWhatsAppAgendado, 60 * 1000).unref();
+  executarWhatsAppAgendado();
 });
 
 async function encerrarServidor(sinal) {

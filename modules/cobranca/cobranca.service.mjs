@@ -496,7 +496,7 @@ function montarLancamentoFinanceiro(mensalidade) {
   };
 }
 
-export async function gerarProximaMensalidadeAposPagamento({ mensalidadeId = "", financeiroId = "", alunoId = "", usuario = "sistema" } = {}) {
+export async function gerarProximaMensalidadeAposPagamento({ mensalidadeId = "", financeiroId = "", alunoId = "", vencimentoProgramado = "", usuario = "sistema" } = {}) {
   const [mensalidades, financeiro, matriculas, alunos, planos, creditos] = await Promise.all([
     lerJson(FILES.mensalidades, []),
     lerJson(FILES.financeiro, []),
@@ -582,7 +582,7 @@ export async function gerarProximaMensalidadeAposPagamento({ mensalidadeId = "",
       null
     );
 
-  const proximoVencimento = adicionarMeses(vencimentoAtual, periodicidade.meses, diaVencimento);
+  const proximoVencimento = somenteData(vencimentoProgramado) || adicionarMeses(vencimentoAtual, periodicidade.meses, diaVencimento);
   const proximaCompetencia = competencia(proximoVencimento);
 
   if (existeMensalidadeCompetencia(mensalidades, aluno.id, matricula.id, proximaCompetencia)) {
@@ -664,19 +664,48 @@ export async function gerarProximaMensalidadeAposPagamento({ mensalidadeId = "",
   };
 }
 
-export async function executarMotorCobranca(filtros = {}) {
-  const mensalidades = await lerJson(FILES.mensalidades, []);
-  const pagas = mensalidades.filter(m => statusNormalizado(m.status) === "pago" && ehMensalidadeRecorrente(m));
+// Registra somente a agenda da recorrência. Esta função não cria título,
+// mensalidade, recebimento nem movimento de caixa.
+export async function programarProximaCobrancaAposPagamento({ mensalidadeId = "", financeiroId = "", alunoId = "", usuario = "sistema" } = {}) {
+  const [mensalidades, financeiro, matriculas, alunos, planos] = await Promise.all([
+    lerJson(FILES.mensalidades, []), lerJson(FILES.financeiro, []), lerJson(FILES.matriculas, []), lerJson(FILES.alunos, []), lerJson(FILES.planos, [])
+  ]);
+  const mensalidade = mensalidades.find(m => String(m.id) === String(mensalidadeId)) || null;
+  const lancamento = financeiro.find(f => String(f.id) === String(financeiroId)) || null;
+  const aluno = alunos.find(a => String(a.id) === String(alunoId || mensalidade?.alunoId || lancamento?.alunoId)) || null;
+  if (!aluno) return { ok: true, programada: false, motivo: 'Aluno não encontrado para agendamento.' };
+  const matricula = encontrarMatriculaAtiva(matriculas, mensalidade || lancamento || {}, aluno);
+  if (!matricula) return { ok: true, programada: false, motivo: 'Aluno sem matrícula ativa.' };
+  const plano = encontrarPlano(planos, matricula, aluno);
+  if (!planoRenovaAutomaticamente(plano || {}, matricula)) return { ok: true, programada: false, motivo: 'Plano sem renovação automática.' };
+  const periodicidade = normalizarPeriodicidadePlano(plano || {}, matricula);
+  const referencia = somenteData(mensalidade?.vencimento || lancamento?.vencimento || matricula.proximoVencimento || hojeISO());
+  const proximoVencimento = adicionarMeses(referencia, periodicidade.meses, matricula.diaVencimento || diaMes(referencia));
+  matricula.proximoVencimento = proximoVencimento;
+  matricula.ultimoPagamentoEm = hojeISO();
+  matricula.atualizadoEm = agoraISO();
+  await salvarJson(FILES.matriculas, matriculas);
+  await registrarLog({ acao: 'programar_proxima_cobranca', sucesso: true, alunoId: aluno.id, matriculaId: matricula.id, mensalidadeId, financeiroId, vencimento: proximoVencimento, usuario });
+  return { ok: true, programada: true, proximoVencimento, motivo: 'Próxima cobrança somente programada.' };
+}
 
+export async function executarMotorCobranca(filtros = {}) {
+  const [matriculas, alunos] = await Promise.all([lerJson(FILES.matriculas, []), lerJson(FILES.alunos, [])]);
+  const hoje = somenteData(filtros.dataReferencia || hojeISO());
   const resultados = [];
-  for (const m of pagas) {
-    if (filtros.alunoId && String(m.alunoId) !== String(filtros.alunoId)) continue;
+  for (const matricula of matriculas) {
+    if (!statusMatriculaAtivo(matricula.status)) continue;
+    if (filtros.alunoId && String(matricula.alunoId) !== String(filtros.alunoId)) continue;
+    const vencimentoProgramado = somenteData(matricula.proximoVencimento || matricula.vencimentoInicial);
+    if (!vencimentoProgramado || vencimentoProgramado > hoje) continue;
+    const aluno = alunos.find(a => String(a.id) === String(matricula.alunoId));
+    if (!aluno) continue;
     const resultado = await gerarProximaMensalidadeAposPagamento({
-      mensalidadeId: m.id,
-      alunoId: m.alunoId,
+      alunoId: aluno.id,
+      vencimentoProgramado,
       usuario: filtros.usuario || "motor"
     });
-    resultados.push({ mensalidadeId: m.id, ...resultado });
+    resultados.push({ alunoId: aluno.id, matriculaId: matricula.id, vencimentoProgramado, ...resultado });
   }
 
   return {

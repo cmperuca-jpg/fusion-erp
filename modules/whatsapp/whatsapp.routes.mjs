@@ -1,0 +1,4 @@
+import express from 'express';
+import { campanhaInativos, executarLembretesVencimento, listarEnvios, listarInativos, obterConfiguracao, salvarConfiguracao } from './whatsapp.service.mjs';
+const router = express.Router(); const rota = (fn, status = 200) => async (req, res) => { try { res.status(status).json(await fn(req)); } catch (e) { res.status(e.status || 400).json({ ok: false, mensagem: e.message || 'Erro no WhatsApp.' }); } };
+router.get('/configuracao', rota(() => obterConfiguracao())); router.put('/configuracao', rota(req => salvarConfiguracao(req.body || {}))); router.get('/inativos', rota(() => listarInativos())); router.post('/campanhas/inativos', rota(req => campanhaInativos(req.body || {}), 201)); router.post('/executar-lembretes', rota(req => executarLembretesVencimento(req.body || {}))); router.get('/envios', rota(() => listarEnvios())); export default router;

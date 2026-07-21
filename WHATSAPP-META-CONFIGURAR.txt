@@ -1,0 +1,13 @@
+Configuração Meta WhatsApp Cloud API
+
+1. Crie e aprove na Meta os modelos:
+   - promocao_inativos (categoria Marketing; primeiro parâmetro: nome)
+   - lembrete_mensalidade_5_dias (Utility; parâmetros: nome, vencimento)
+   - lembrete_mensalidade_vencimento (Utility; parâmetros: nome, vencimento)
+2. No arquivo .env do servidor, informe:
+   WHATSAPP_META_TOKEN=token_permanente_da_meta
+   WHATSAPP_META_PHONE_NUMBER_ID=id_do_numero_whatsapp
+3. Abra /api/whatsapp/configuracao e ative a integração com os nomes dos modelos.
+4. A tela de campanha é /pages/whatsapp/index.html.
+5. Os lembretes automáticos rodam às 09:00 no horário de Maceió e só enviam uma vez por aluno/vencimento.
+

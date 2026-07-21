@@ -129,7 +129,7 @@ function finalizarMatriculaCancelada(matricula, { motivo = '', usuario = 'sistem
   historico(
     matricula,
     'cancelamento_matricula_sem_pendencia',
-    'Matrícula cancelada; pendências abertas e vínculos financeiros futuros foram removidos.',
+    'Matrícula cancelada; pendências abertas foram canceladas e preservadas para auditoria.',
     { motivo, statusAnterior, resumoLimpeza, haPagamento },
     usuario
   );
@@ -140,7 +140,7 @@ function limparPendenciasMatricula(base, matricula, motivo = '', usuario = 'sist
   const matriculaId = String(matricula.id || '');
   const idsMensalidades = new Set([matricula.mensalidadeInicialId, matricula.mensalidadeProximaId].filter(Boolean).map(String));
   const idsFinanceiro = new Set([matricula.financeiroInicialId, matricula.financeiroProximoId].filter(Boolean).map(String));
-  const resumo = { mensalidadesRemovidas:0, financeiroRemovido:0, checkinsRemovidos:0 };
+  const resumo = { mensalidadesCanceladas:0, financeiroCancelado:0, checkinsBloqueados:0 };
 
   for(const m of base.mensalidades || []){
     if(String(m.matriculaId || m.matricula_id || '') === matriculaId || idsMensalidades.has(String(m.id || ''))){
@@ -157,28 +157,26 @@ function limparPendenciasMatricula(base, matricula, motivo = '', usuario = 'sist
     }
   }
 
-  base.mensalidades = (base.mensalidades || []).filter(m => {
+  base.mensalidades = (base.mensalidades || []).map(m => {
     const pertence = String(m.matriculaId || m.matricula_id || '') === matriculaId || idsMensalidades.has(String(m.id || ''));
-    if(!pertence) return true;
-    if(statusPagoMatricula(m)) return true;
-    resumo.mensalidadesRemovidas += 1;
-    return false;
+    if(!pertence || statusPagoMatricula(m)) return m;
+    resumo.mensalidadesCanceladas += 1;
+    return { ...m, status:'cancelado', canceladoEm:agoraISO(), motivoCancelamento:motivo || 'Cancelamento da matrícula', atualizadoEm:agoraISO() };
   });
-  base.financeiro = (base.financeiro || []).filter(f => {
+  base.financeiro = (base.financeiro || []).map(f => {
     const pertence = String(f.matriculaId || f.matricula_id || '') === matriculaId || idsFinanceiro.has(String(f.id || '')) || idsMensalidades.has(String(f.mensalidadeId || f.mensalidade_id || ''));
-    if(!pertence) return true;
-    if(statusPagoMatricula(f)) return true;
-    resumo.financeiroRemovido += 1;
-    return false;
+    if(!pertence || statusPagoMatricula(f)) return f;
+    resumo.financeiroCancelado += 1;
+    return { ...f, status:'cancelado', canceladoEm:agoraISO(), motivoCancelamento:motivo || 'Cancelamento da matrícula', atualizadoEm:agoraISO() };
   });
-  base.checkins = (base.checkins || []).filter(c => {
+  base.checkins = (base.checkins || []).map(c => {
     const pertence = String(c.matriculaId || c.matricula_id || '') === matriculaId || String(c.alunoId || '') === alunoId;
-    if(!pertence) return true;
-    resumo.checkinsRemovidos += 1;
-    return false;
+    if(!pertence) return c;
+    resumo.checkinsBloqueados += 1;
+    return { ...c, status:'Bloqueado', bloqueado:true, motivoBloqueio:motivo || 'Cancelamento da matrícula', atualizadoEm:agoraISO() };
   });
   if(!Array.isArray(base.historicoPlanos)) base.historicoPlanos = [];
-  base.historicoPlanos.push({ id:`hist_limpeza_mat_${Date.now()}_${Math.floor(Math.random()*999999)}`, alunoId, matriculaId, matricula:matricula.numero || matriculaId, acao:'limpeza_pendencias_matricula_cancelada', motivo, resumo, usuario, criadoEm:agoraISO() });
+  base.historicoPlanos.push({ id:`hist_cancelamento_mat_${Date.now()}_${Math.floor(Math.random()*999999)}`, alunoId, matriculaId, matricula:matricula.numero || matriculaId, acao:'cancelamento_logico_pendencias_matricula', motivo, resumo, usuario, criadoEm:agoraISO() });
   return resumo;
 }
 
@@ -449,7 +447,10 @@ export async function integrarMatriculaAluno(alunoId, planoId, opcoes={}){
     financeiroInicial.recebimentoId=recebimentoInicial.id;
     base.recebimentos.push(recebimentoInicial);
 
-    if(tipo==='Mensal' && plano?.id && valorMensalTotal > 0){
+    // A próxima mensalidade é uma PREVISÃO da matrícula, não uma dívida.
+    // O motor de cobrança a emitirá somente no dia do vencimento programado.
+    // Nunca criar aqui registros abertos em mensalidades/financeiro.
+    if(false && tipo==='Mensal' && plano?.id && valorMensalTotal > 0){
       mensalidadeProxima={
         id:`men_${Date.now()}_${Math.floor(Math.random()*999999)}`,
         alunoId:aluno.id,
@@ -602,7 +603,7 @@ export async function alterarStatusMatricula(id,status,motivo='',usuario='sistem
     aluno.atualizadoEm=agoraISO();
   }
   await salvarBaseMatricula(base);
-  return { ok:true, success:true, dados:resumirMatricula(m,true), removida:false, resumoLimpeza, mensagem:'Status da matrícula atualizado; pendências abertas e vínculos financeiros futuros foram limpos.' };
+  return { ok:true, success:true, dados:resumirMatricula(m,true), removida:false, resumoLimpeza, mensagem:'Status da matrícula atualizado; pendências abertas foram canceladas e preservadas para auditoria.' };
 }
 export async function atualizarTurmasMatricula(id, opcoes={}, usuario='sistema'){
   const base=await carregarBaseMatricula();

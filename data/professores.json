@@ -1,14 +1,14 @@
 [
   {
     "id": "prof_modelo_responsavel_tecnico",
-    "nome": "Responsável Técnico Modelo",
-    "cpf": "00000000000",
-    "rg": "MODELO",
-    "cref": "CREF-MODELO",
-    "email": "tecnico@fusionerp.local",
+    "nome": "Responsável Técnico",
+    "cpf": "04877315497",
+    "rg": "2000001220025",
+    "cref": "ESTAGIARIO",
+    "email": "cmperuca@gmail.com",
     "login": "tecnico@fusionerp.local",
-    "telefone": "82999990001",
-    "whatsapp": "82999990001",
+    "telefone": "82988450407",
+    "whatsapp": "82988450407",
     "especialidade": "Musculação e Hipertrofia",
     "especialidades": [
       "Musculação",
@@ -19,12 +19,31 @@
       "Musculação"
     ],
     "perfil": "responsavel_tecnico",
-    "acessoTodosAlunos": true,
+    "acessoTodosAlunos": false,
     "status": "Ativo",
     "bloqueado": false,
-    "senhaHash": "36c0bfcd8b80ee5141fe2f517113d44f:becee19a6d5eb35091cab1a39bb18e56b8050ef7041f5f7bfd472e8af386c41c878681ffea2a0985df59d7f584277e04b606492a84902713b54e377588218a63",
+    "senhaHash": "e581d17ef36f0f2556ea321a6c708c41:1dee58aad3aaf374764bda22e763dc5d5b0d1cdc72ff6e2a5b459502de243e56841b6963f70c8fd2ed5608a064e117c012880c650914c41ebcc1fde3ace2d22e",
     "criadoEm": "2026-07-16T12:14:17.917Z",
-    "atualizadoEm": "2026-07-16T12:14:17.917Z",
-    "observacoes": "Conta modelo. Substituir pelos dados e CREF do responsável técnico da academia."
+    "atualizadoEm": "2026-07-21T23:09:16.456Z",
+    "observacoes": "",
+    "dataNascimento": "1981-10-06",
+    "diasTrabalho": [
+      "SEGUNDA",
+      "TERÇA",
+      "QUARTA",
+      "QUINTA",
+      "SEXTA",
+      "SABADO E DOMINGO"
+    ],
+    "horarioInicio": "05:30",
+    "horarioFim": "22:00",
+    "tipoContrato": "Parceria",
+    "valorHora": "10,00",
+    "banco": "BANCO INTER",
+    "agencia": "",
+    "conta": "",
+    "chavePix": "82988450407",
+    "endereco": "Rua Mensageiro José Raimundo dos Santos, 260",
+    "documentos": []
   }
 ]

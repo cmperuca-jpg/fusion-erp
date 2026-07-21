@@ -21,6 +21,9 @@
   gap: 18px;
 }
 
+.kpi-btn { width: 100%; border: 1px solid transparent; text-align: left; font: inherit; color: inherit; cursor: pointer; }
+.kpi-btn:hover, .kpi-btn:focus-visible { border-color: #22d3ee; transform: translateY(-2px); outline: none; }
+
 .filtros-financeiro {
   display: grid;
   grid-template-columns: 1fr 180px 180px auto auto;

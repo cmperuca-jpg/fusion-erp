@@ -250,6 +250,7 @@ export async function abrirCaixa(dadosEntrada = {}) {
     id: gerarId('cx'),
     dataAbertura: dadosEntrada.dataAbertura || hojeISO(),
     valorAbertura,
+    valorAberturaCentavos: Math.round(valorAbertura * 100),
     responsavel: dadosEntrada.responsavel || 'Administrador',
     observacaoAbertura: dadosEntrada.observacao || '',
     status: 'aberto',
@@ -272,6 +273,7 @@ export async function abrirCaixa(dadosEntrada = {}) {
       pessoa: caixa.responsavel,
       formaPagamento: 'Dinheiro',
       valor: valorAbertura,
+      valorCentavos: Math.round(valorAbertura * 100),
       data: caixa.dataAbertura,
       status: 'ativo',
       origem: 'abertura',
@@ -302,6 +304,7 @@ export async function fecharCaixa(dadosEntrada = {}) {
   atual.status = 'fechado';
   atual.fechadoEm = agoraISO();
   atual.valorFechamentoInformado = valorFechamentoInformado;
+  atual.valorFechamentoInformadoCentavos = Math.round(valorFechamentoInformado * 100);
   atual.diferenca = Number((valorFechamentoInformado - totais.saldoAtual).toFixed(2));
   atual.observacaoFechamento = dadosEntrada.observacao || '';
 
@@ -341,6 +344,7 @@ export async function criarMovimento(dadosEntrada = {}) {
     pessoa: dadosEntrada.pessoa || '',
     formaPagamento: dadosEntrada.formaPagamento || 'Dinheiro',
     valor,
+    valorCentavos: Math.round(valor * 100),
     data: dadosEntrada.data || hojeISO(),
     status: 'ativo',
     origem: dadosEntrada.origem || 'manual',
@@ -365,7 +369,9 @@ export async function criarMovimento(dadosEntrada = {}) {
     atualizadoEm: agoraISO()
   };
 
-  movimento.lancamentoFinanceiroId = await criarLancamentoFinanceiro(movimento);
+  // Suprimentos e retiradas pertencem ao caixa. Contas a pagar/receber são
+  // criadas nos módulos financeiros e apenas vinculam seu movimento aqui.
+  movimento.lancamentoFinanceiroId = dadosEntrada.lancamentoFinanceiroId || '';
 
   dados.movimentos.push(movimento);
   await salvarCaixa(dados);
@@ -383,28 +389,20 @@ export async function cancelarMovimento(id) {
     throw erro;
   }
 
+  if (['recibo', 'estorno_recibo', 'pagamentos'].includes(normalizar(dados.movimentos[idx].origem))) {
+    const erro = new Error('Movimento financeiro vinculado não pode ser cancelado pelo caixa. Use o estorno no módulo de origem.');
+    erro.status = 409;
+    throw erro;
+  }
+
   dados.movimentos[idx].status = 'cancelado';
   dados.movimentos[idx].atualizadoEm = agoraISO();
 
-  await removerLancamentoFinanceiro(id);
   await salvarCaixa(dados);
 
   return dados.movimentos[idx];
 }
 
 export async function excluirMovimento(id) {
-  const dados = await lerCaixa();
-  const existe = dados.movimentos.some(m => String(m.id) === String(id));
-
-  if (!existe) {
-    const erro = new Error('Movimento de caixa não encontrado.');
-    erro.status = 404;
-    throw erro;
-  }
-
-  dados.movimentos = dados.movimentos.filter(m => String(m.id) !== String(id));
-  await removerLancamentoFinanceiro(id);
-  await salvarCaixa(dados);
-
-  return { ok: true };
+  return cancelarMovimento(id);
 }

@@ -4,7 +4,7 @@
     "nome": "MUSCULAÇÃO",
     "tipo": "Mensal",
     "tipoPlano": "Mensal",
-    "descricao": "",
+    "descricao": "BLOQUEIO 3 DIAS APOS O VENCIMENTO",
     "valorMatricula": 0,
     "valorMensal": 65,
     "taxaMatricula": 0,
@@ -16,15 +16,15 @@
     "permiteServicosExtras": true,
     "fidelidadeMeses": 0,
     "descontoPercentual": 0,
-    "multaAtrasoPercentual": 0,
-    "limiteSemanal": 0,
+    "multaAtrasoPercentual": 0.1,
+    "limiteSemanal": 7,
     "modalidadesIncluidas": [
       "MUSCULAÇÃO"
     ],
     "horariosPermitidos": "Livre",
     "status": "Ativo",
     "criadoEm": "2026-07-03T18:26:13.295Z",
-    "atualizadoEm": "2026-07-03T18:26:13.295Z"
+    "atualizadoEm": "2026-07-21T23:12:16.248Z"
   },
   {
     "id": "753f0de7-12f8-4740-99b7-830acf2743a4",

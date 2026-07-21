@@ -1,29 +1,23 @@
 import path from "path";
-import { lerJsonDuravel, salvarJsonDuravel, salvarJsonMultiplosAtomico, executarTransacaoJson } from "../core/persistence/durable-json.mjs";
+import {
+  lerJsonDuravel,
+  salvarJsonDuravel,
+  salvarJsonMultiplosAtomico,
+  executarTransacaoJson
+} from "../core/persistence/durable-json.mjs";
 
 const DATA_DIR = path.resolve(process.cwd(), "data");
-const DB_PATH = path.join(DATA_DIR, "db.json");
-const PAGAMENTOS_PATH = path.join(DATA_DIR, "pagamentos.json");
 const FINANCEIRO_PATH = path.join(DATA_DIR, "financeiro.json");
 const CAIXA_PATH = path.join(DATA_DIR, "caixa.json");
-
-async function lerJson(filePath, padrao) {
-  return lerJsonDuravel(filePath, padrao);
-}
-
-async function salvarJson(filePath, dados) {
-  return salvarJsonDuravel(filePath, dados);
-}
-
-function listaDe(dados, chave = "pagamentos") {
-  if (Array.isArray(dados)) return dados;
-  if (Array.isArray(dados?.[chave])) return dados[chave];
-  if (Array.isArray(dados?.lancamentos)) return dados.lancamentos;
-  return [];
-}
+const FECHAMENTOS_PATH = path.join(DATA_DIR, "fechamentos_financeiros.json");
 
 function idItem(item = {}) {
   return String(item.id || item._id || item.codigo || item.uuid || item.chave || "");
+}
+
+function centavos(valor) {
+  const n = Number(String(valor ?? 0).replace(",", "."));
+  return Number.isFinite(n) ? Math.round(n * 100) : 0;
 }
 
 function isPagar(item = {}) {
@@ -35,219 +29,212 @@ function isPagar(item = {}) {
     item.origem,
     item.categoria
   ].filter(Boolean).join(" ")).toLowerCase();
-
   return alvo.includes("pagar") || alvo.includes("pagamento") || alvo.includes("despesa") || alvo.includes("fornecedor");
 }
 
-function deduplicarPorId(lista = []) {
-  const ids = new Set();
-  return lista.filter((item) => {
-    const id = idItem(item);
-    if (!id) return true;
-    if (ids.has(id)) return false;
-    ids.add(id);
-    return true;
-  });
+async function lerFinanceiro() {
+  const dados = await lerJsonDuravel(FINANCEIRO_PATH, []);
+  if (Array.isArray(dados)) return dados;
+  if (Array.isArray(dados?.lancamentos)) return dados.lancamentos;
+  return [];
+}
+
+async function salvarFinanceiro(lista) {
+  return salvarJsonDuravel(FINANCEIRO_PATH, lista);
 }
 
 export async function resolverDbPath() {
-  return DB_PATH;
+  return FECHAMENTOS_PATH;
 }
 
+// Compatibilidade restrita aos fechamentos. Contas e caixa não são mais espelhados em db.json.
 export async function lerDb() {
-  const db = await lerJson(DB_PATH, { pagamentos: [], lancamentosFinanceiros: [], caixaMovimentos: [] });
-  if (!Array.isArray(db.pagamentos)) db.pagamentos = [];
-  if (!Array.isArray(db.lancamentosFinanceiros)) db.lancamentosFinanceiros = [];
-  if (!Array.isArray(db.caixaMovimentos)) db.caixaMovimentos = [];
-  return { db, filePath: DB_PATH };
+  const fechamentosFinanceiros = await lerJsonDuravel(FECHAMENTOS_PATH, []);
+  return {
+    db: { fechamentosFinanceiros: Array.isArray(fechamentosFinanceiros) ? fechamentosFinanceiros : [] },
+    filePath: FECHAMENTOS_PATH
+  };
 }
 
-export async function salvarDb(db, filePath = DB_PATH) {
-  return salvarJson(filePath, db);
-}
-
-async function lerPagamentosArquivo() {
-  const dados = await lerJson(PAGAMENTOS_PATH, []);
-  return listaDe(dados, "pagamentos");
-}
-
-async function salvarPagamentosArquivo(lista) {
-  return salvarJson(PAGAMENTOS_PATH, lista);
-}
-
-async function lerFinanceiroArquivo() {
-  const dados = await lerJson(FINANCEIRO_PATH, []);
-  return listaDe(dados, "lancamentos");
-}
-
-async function salvarFinanceiroArquivo(lista) {
-  return salvarJson(FINANCEIRO_PATH, lista);
+export async function salvarDb(db) {
+  return salvarJsonDuravel(FECHAMENTOS_PATH, Array.isArray(db?.fechamentosFinanceiros) ? db.fechamentosFinanceiros : []);
 }
 
 export async function listarPagamentosRaw() {
-  const [{ db }, pagamentosArquivo, financeiroArquivo] = await Promise.all([
-    lerDb(),
-    lerPagamentosArquivo(),
-    lerFinanceiroArquivo()
-  ]);
-
-  const pagamentosDb = Array.isArray(db.pagamentos) ? db.pagamentos : [];
-  const lancamentosDb = Array.isArray(db.lancamentosFinanceiros) ? db.lancamentosFinanceiros.filter(isPagar) : [];
-  const lancamentosFinanceiros = financeiroArquivo.filter(isPagar);
-
-  return deduplicarPorId([
-    ...pagamentosArquivo,
-    ...pagamentosDb,
-    ...lancamentosDb,
-    ...lancamentosFinanceiros
-  ]);
-}
-
-function upsert(lista, item) {
-  const id = idItem(item);
-  if (!id) return [...lista, item];
-  const idx = lista.findIndex((atual) => idItem(atual) === id);
-  if (idx >= 0) {
-    const nova = [...lista];
-    nova[idx] = { ...nova[idx], ...item };
-    return nova;
-  }
-  return [...lista, item];
+  return (await lerFinanceiro()).filter(isPagar);
 }
 
 async function inserirPagamentoRawInterno(pagamento) {
-  const item = { ...pagamento, tipo: pagamento.tipo || "pagar", natureza: pagamento.natureza || "pagar", modulo: pagamento.modulo || "pagamentos" };
-
-  const pagamentos = upsert(await lerPagamentosArquivo(), item);
-  const financeiro = upsert(await lerFinanceiroArquivo(), item);
-  const { db, filePath } = await lerDb();
-  db.pagamentos = upsert(db.pagamentos, item);
-  db.lancamentosFinanceiros = upsert(db.lancamentosFinanceiros, item);
-  await salvarJsonMultiplosAtomico({ [PAGAMENTOS_PATH]: pagamentos, [FINANCEIRO_PATH]: financeiro, [filePath]: db });
-
+  const agora = new Date().toISOString();
+  const item = {
+    ...pagamento,
+    tipo: "pagar",
+    natureza: "pagar",
+    modulo: "pagamentos",
+    valorCentavos: centavos(pagamento.valor ?? pagamento.valorBruto),
+    valorPagoCentavos: centavos(pagamento.valorPago ?? pagamento.valorLiquido),
+    criadoEm: pagamento.criadoEm || pagamento.createdAt || agora,
+    atualizadoEm: agora
+  };
+  const lista = await lerFinanceiro();
+  const id = idItem(item);
+  if (!id) {
+    const erro = new Error("Pagamento sem identificador.");
+    erro.status = 400;
+    throw erro;
+  }
+  if (lista.some((atual) => idItem(atual) === id)) {
+    const erro = new Error("Já existe um pagamento com este identificador.");
+    erro.status = 409;
+    throw erro;
+  }
+  lista.push(item);
+  await salvarFinanceiro(lista);
   return item;
 }
+
 export async function inserirPagamentoRaw(pagamento) {
-  return executarTransacaoJson(() => inserirPagamentoRawInterno(pagamento), { operacaoId: `pagamento-inserir-${idItem(pagamento) || Date.now()}` });
+  return executarTransacaoJson(() => inserirPagamentoRawInterno(pagamento), {
+    operacaoId: `pagamento-inserir-${idItem(pagamento) || Date.now()}`
+  });
 }
 
 async function atualizarPagamentoRawInterno(id, updater) {
-  const idStr = String(id);
-  let atualizado = null;
-
-  const atualizarLista = (lista = [], somentePagar = false) => {
-    return lista.map((item) => {
-      if (idItem(item) !== idStr) return item;
-      if (somentePagar && !isPagar(item)) return item;
-      atualizado = updater(item);
-      return atualizado;
-    });
+  const lista = await lerFinanceiro();
+  const indice = lista.findIndex((item) => idItem(item) === String(id) && isPagar(item));
+  if (indice < 0) {
+    const erro = new Error("Pagamento não encontrado.");
+    erro.status = 404;
+    throw erro;
+  }
+  const atualizado = updater(lista[indice]);
+  lista[indice] = {
+    ...atualizado,
+    id: idItem(lista[indice]),
+    tipo: "pagar",
+    natureza: "pagar",
+    modulo: "pagamentos",
+    valorCentavos: centavos(atualizado.valor ?? atualizado.valorBruto),
+    valorPagoCentavos: centavos(atualizado.valorPago ?? atualizado.valorLiquido),
+    atualizadoEm: new Date().toISOString()
   };
-
-  const pagamentos = atualizarLista(await lerPagamentosArquivo());
-  const financeiro = atualizarLista(await lerFinanceiroArquivo(), true);
-
-  const { db, filePath } = await lerDb();
-  db.pagamentos = atualizarLista(db.pagamentos);
-  db.lancamentosFinanceiros = atualizarLista(db.lancamentosFinanceiros, true);
-
-  if (!atualizado) {
-    const erro = new Error("Pagamento não encontrado.");
-    erro.status = 404;
-    throw erro;
-  }
-
-  await salvarJsonMultiplosAtomico({ [PAGAMENTOS_PATH]: pagamentos, [FINANCEIRO_PATH]: financeiro, [filePath]: db });
-
-  return atualizado;
+  await salvarFinanceiro(lista);
+  return lista[indice];
 }
+
 export async function atualizarPagamentoRaw(id, updater) {
-  return executarTransacaoJson(() => atualizarPagamentoRawInterno(id, updater), { operacaoId: `pagamento-atualizar-${id}-${Date.now()}` });
-}
-
-async function removerPagamentoRawInterno(id) {
-  const idStr = String(id);
-  let removido = false;
-  const remover = (lista = [], somentePagar = false) => lista.filter((item) => {
-    if (idItem(item) !== idStr) return true;
-    if (somentePagar && !isPagar(item)) return true;
-    removido = true;
-    return false;
+  return executarTransacaoJson(() => atualizarPagamentoRawInterno(id, updater), {
+    operacaoId: `pagamento-atualizar-${id}-${Date.now()}`
   });
-
-  const pagamentos = remover(await lerPagamentosArquivo());
-  const financeiro = remover(await lerFinanceiroArquivo(), true);
-
-  const { db, filePath } = await lerDb();
-  db.pagamentos = remover(db.pagamentos);
-  db.lancamentosFinanceiros = remover(db.lancamentosFinanceiros, true);
-
-  if (!removido) {
-    const erro = new Error("Pagamento não encontrado.");
-    erro.status = 404;
-    throw erro;
-  }
-
-
-  await salvarJsonMultiplosAtomico({ [PAGAMENTOS_PATH]: pagamentos, [FINANCEIRO_PATH]: financeiro, [filePath]: db });
-
-  return { id: idStr, removido: true };
 }
+
+// Mantido para clientes antigos: DELETE agora é cancelamento lógico e nunca apaga histórico.
 export async function removerPagamentoRaw(id) {
-  return executarTransacaoJson(() => removerPagamentoRawInterno(id), { operacaoId: `pagamento-remover-${id}-${Date.now()}` });
+  return atualizarPagamentoRaw(id, (item) => ({
+    ...item,
+    status: "cancelado",
+    canceladoEm: new Date().toISOString(),
+    historico: [
+      ...(Array.isArray(item.historico) ? item.historico : []),
+      { id: `can_pag_${Date.now()}`, tipo: "cancelamento", data: new Date().toISOString(), observacao: "Cancelamento solicitado pela rota legada." }
+    ]
+  }));
 }
 
 async function registrarMovimentoCaixaInterno(movimento) {
-  const caixa = await lerJson(CAIXA_PATH, { caixas: [], movimentos: [] });
+  const caixa = await lerJsonDuravel(CAIXA_PATH, { caixas: [], movimentos: [] });
+  if (Array.isArray(caixa)) {
+    const erro = new Error("Estrutura de caixa antiga detectada. Execute a migração financeira antes da baixa.");
+    erro.status = 409;
+    throw erro;
+  }
+  if (!Array.isArray(caixa.caixas)) caixa.caixas = [];
+  if (!Array.isArray(caixa.movimentos)) caixa.movimentos = [];
+  const aberto = caixa.caixas.find((item) => String(item.status || "").toLowerCase() === "aberto");
+  if (!aberto) {
+    const erro = new Error("Abra o caixa antes de registrar uma saída.");
+    erro.status = 409;
+    throw erro;
+  }
+  const id = idItem(movimento);
+  if (id && caixa.movimentos.some((item) => idItem(item) === id)) {
+    return caixa.movimentos.find((item) => idItem(item) === id);
+  }
   const agora = new Date().toISOString();
-  const hoje = agora.slice(0, 10);
-  let movimentoCaixa = {
+  const item = {
     ...movimento,
-    data: String(movimento.data || hoje).slice(0, 10),
+    id: id || `mov_pag_${Date.now()}_${Math.random().toString(16).slice(2, 8)}`,
+    caixaId: movimento.caixaId || aberto.id,
+    valor: Number((centavos(movimento.valor) / 100).toFixed(2)),
+    valorCentavos: centavos(movimento.valor),
+    data: String(movimento.data || agora).slice(0, 10),
     status: movimento.status || "ativo",
+    pessoa: movimento.pessoa || movimento.fornecedor || movimento.credor || "",
     criadoEm: movimento.criadoEm || agora,
     atualizadoEm: agora
   };
-
-  if (Array.isArray(caixa)) {
-    caixa.push(movimentoCaixa);
-  } else {
-    if (!Array.isArray(caixa.caixas)) caixa.caixas = [];
-    if (!Array.isArray(caixa.movimentos)) caixa.movimentos = [];
-
-    let aberto = caixa.caixas.find((item) => String(item.status || "").toLowerCase() === "aberto");
-    if (!aberto) {
-      aberto = {
-        id: `cx_${Date.now()}_${Math.random().toString(16).slice(2, 8)}`,
-        dataAbertura: hoje,
-        valorAbertura: 0,
-        responsavel: "Administrador",
-        observacaoAbertura: "Caixa aberto automaticamente pela baixa de pagamento.",
-        status: "aberto",
-        abertoEm: agora,
-        fechadoEm: "",
-        valorFechamentoInformado: null,
-        diferenca: null,
-        observacaoFechamento: ""
-      };
-      caixa.caixas.push(aberto);
-    }
-
-    movimentoCaixa = {
-      ...movimentoCaixa,
-      caixaId: movimentoCaixa.caixaId || aberto.id,
-      pessoa: movimentoCaixa.pessoa || movimentoCaixa.fornecedor || movimentoCaixa.credor || ""
-    };
-    caixa.movimentos.push(movimentoCaixa);
-  }
-
-  const { db, filePath } = await lerDb();
-  if (!Array.isArray(db.caixaMovimentos)) db.caixaMovimentos = [];
-  db.caixaMovimentos.push(movimentoCaixa);
-  await salvarJsonMultiplosAtomico({ [CAIXA_PATH]: caixa, [filePath]: db });
-
-  return movimentoCaixa;
+  caixa.movimentos.push(item);
+  await salvarJsonDuravel(CAIXA_PATH, caixa);
+  return item;
 }
+
 export async function registrarMovimentoCaixa(movimento) {
-  return executarTransacaoJson(() => registrarMovimentoCaixaInterno(movimento), { operacaoId: `caixa-movimento-${idItem(movimento) || Date.now()}` });
+  return executarTransacaoJson(() => registrarMovimentoCaixaInterno(movimento), {
+    operacaoId: `caixa-movimento-${idItem(movimento) || Date.now()}`
+  });
+}
+
+export async function atualizarPagamentoComMovimentoCaixa(id, updater, montarMovimento, operacaoId = "") {
+  return executarTransacaoJson(async () => {
+    const lista = await lerFinanceiro();
+    const indice = lista.findIndex((item) => idItem(item) === String(id) && isPagar(item));
+    if (indice < 0) {
+      const erro = new Error("Pagamento não encontrado.");
+      erro.status = 404;
+      throw erro;
+    }
+    const caixa = await lerJsonDuravel(CAIXA_PATH, { caixas: [], movimentos: [] });
+    const aberto = !Array.isArray(caixa) && Array.isArray(caixa.caixas)
+      ? caixa.caixas.find((item) => String(item.status || "").toLowerCase() === "aberto")
+      : null;
+    if (!aberto) {
+      const erro = new Error("Abra o caixa antes de registrar esta operação.");
+      erro.status = 409;
+      throw erro;
+    }
+    if (!Array.isArray(caixa.movimentos)) caixa.movimentos = [];
+    const agora = new Date().toISOString();
+    const atualizado = updater(lista[indice]);
+    lista[indice] = {
+      ...atualizado,
+      id: idItem(lista[indice]),
+      tipo: "pagar",
+      natureza: "pagar",
+      modulo: "pagamentos",
+      valorCentavos: centavos(atualizado.valor ?? atualizado.valorBruto),
+      valorPagoCentavos: centavos(atualizado.valorPago ?? atualizado.valorLiquido),
+      atualizadoEm: agora
+    };
+    const movimentoBase = montarMovimento(lista[indice]);
+    const movimento = {
+      ...movimentoBase,
+      id: idItem(movimentoBase) || `mov_pag_${Date.now()}_${Math.random().toString(16).slice(2, 8)}`,
+      caixaId: movimentoBase.caixaId || aberto.id,
+      referenciaId: movimentoBase.referenciaId || String(id),
+      valor: Number((centavos(movimentoBase.valor) / 100).toFixed(2)),
+      valorCentavos: centavos(movimentoBase.valor),
+      data: String(movimentoBase.data || agora).slice(0, 10),
+      status: movimentoBase.status || "ativo",
+      criadoEm: movimentoBase.criadoEm || agora,
+      atualizadoEm: agora
+    };
+    if (caixa.movimentos.some((item) => idItem(item) === movimento.id)) {
+      const erro = new Error("Esta operação de caixa já foi registrada.");
+      erro.status = 409;
+      throw erro;
+    }
+    caixa.movimentos.push(movimento);
+    await salvarJsonMultiplosAtomico({ [FINANCEIRO_PATH]: lista, [CAIXA_PATH]: caixa });
+    return { pagamento: lista[indice], movimento };
+  }, { operacaoId: operacaoId || `pagamento-caixa-${id}-${Date.now()}` });
 }

@@ -40,7 +40,12 @@ function estaCancelado(status) {
 }
 
 function podeCancelarCobranca(item = {}) {
-  if (estaPago(item.status)) return false;
+  // Dados antigos podem trazer status "Pago" sem qualquer baixa real.
+  // Em cancelamento, só preservamos o título como pago quando existe valor,
+  // recibo, caixa ou data de pagamento efetivamente registrada.
+  const valorPago = Number(String(item.valorPago ?? item.valorRecebido ?? item.valorPagoCentavos / 100 ?? 0).replace(',', '.')) || 0;
+  const temPagamentoReal = valorPago > 0 || Boolean(item.reciboId || item.ultimoReciboId || item.movimentoCaixaId || item.caixaId || item.dataPagamento || item.dataRecebimento);
+  if (estaPago(item.status) && temPagamentoReal) return false;
   if (estaCancelado(item.status)) return false;
   return true;
 }
@@ -1136,35 +1141,12 @@ export async function desligar(id, opcoes = {}) {
 export async function excluir(id, opcoes = {}) {
   const aluno = await buscarAlunoPorId(id);
   if (!aluno) return null;
-
-  const forcar = opcoes.forcar === true || opcoes.forcar === "true";
-  const temHistorico = await alunoPossuiHistoricoFinanceiro(id);
-
-  if (temHistorico && !forcar) {
-    // Regra segura para o botão atual de exclusão: com histórico, desliga em vez de apagar.
-    return await desligar(id, opcoes);
-  }
-
-  const resumoCancelamento = await cancelarVinculosFinanceirosDoAluno(aluno, opcoes);
-  const removido = await excluirAluno(id);
-
-  await registrarAuditoria({
-    tipo: "aluno_excluido_definitivamente",
-    alunoId: id,
-    aluno: nomeAluno(aluno),
-    usuario: opcoes.usuario || "sistema",
-    motivo: opcoes.motivo || "Exclusão definitiva de aluno sem histórico financeiro relevante.",
-    resumoCancelamento
+  // Cadastro de aluno é documento mestre. Mesmo sem recebimentos, sua identidade e
+  // auditoria devem sobreviver; por isso a rota DELETE sempre efetua desligamento lógico.
+  return desligar(id, {
+    ...opcoes,
+    motivo: opcoes.motivo || "Aluno desligado pela operação de exclusão."
   });
-
-  return {
-    ok: Boolean(removido),
-    desligado: false,
-    removido: Boolean(removido),
-    alunoId: id,
-    aluno: nomeAluno(aluno),
-    resumoCancelamento
-  };
 }
 
 

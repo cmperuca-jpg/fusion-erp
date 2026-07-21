@@ -31,6 +31,10 @@
       </div>
 
       <div class="page-action-buttons">
+        <a class="btn-light" href="/pages/caixa/">Abrir caixa</a>
+        <button class="btn-light" id="btnRecibos" type="button">Recibos</button>
+        <button class="btn-light" id="btnExtratoAluno" type="button">Extrato do aluno</button>
+        <button class="btn-light" id="btnIntegridade" type="button">Verificar integridade</button>
         <button class="btn-light" id="btnTaxasCartao" type="button">Taxas de recebimento</button>
         <button class="btn-primary" id="btnNovoLancamento" type="button">
           Novo Lançamento
@@ -39,35 +43,35 @@
     </section>
 
     <section class="financeiro-kpis">
-      <div class="card kpi">
+      <button class="card kpi kpi-btn" id="kpiAbrirCaixa" type="button" title="Abrir movimentos do caixa">
         <span>Caixa real</span>
         <strong id="kpiCaixaReal">R$ 0,00</strong>
         <small>Saldo atual do caixa aberto</small>
-      </div>
+      </button>
 
-      <div class="card kpi">
+      <button class="card kpi kpi-btn" id="kpiAbrirReceitasPagas" type="button" title="Ver receitas recebidas">
         <span>Receita líquida recebida</span>
         <strong id="kpiReceitasPagas">R$ 0,00</strong>
         <small>Valor que realmente entrou</small>
-      </div>
+      </button>
 
-      <div class="card kpi">
+      <button class="card kpi kpi-btn" id="kpiAbrirReceitasAbertas" type="button" title="Ver contas a receber em aberto">
         <span>Receitas em Aberto</span>
         <strong id="kpiReceitasAbertas">R$ 0,00</strong>
         <small>Valores a receber</small>
-      </div>
+      </button>
 
-      <div class="card kpi">
+      <button class="card kpi kpi-btn" id="kpiAbrirTaxas" type="button" title="Ver taxas de recebimento">
         <span>Taxas financeiras</span>
         <strong id="kpiDespesasAbertas">R$ 0,00</strong>
         <small>Custos de operadora</small>
-      </div>
+      </button>
 
-      <div class="card kpi">
+      <button class="card kpi kpi-btn" id="kpiAbrirSaldoPrevisto" type="button" title="Ver lançamentos que compõem o saldo previsto">
         <span>Saldo líquido previsto</span>
         <strong id="kpiSaldoPrevisto">R$ 0,00</strong>
         <small>Receitas menos despesas</small>
-      </div>
+      </button>
     </section>
 
     <section class="card filtros-financeiro">
@@ -364,6 +368,18 @@
       <footer class="modal-actions full">
         <button type="button" class="btn-light" id="btnCancelarTaxas">Cancelar</button>
         <button type="button" class="btn-primary" id="btnSalvarTaxas">Salvar taxas</button>
+      </footer>
+    </div>
+  </div>
+  <div class="modal-overlay" id="modalConsultaFinanceira">
+    <div class="modal" style="max-width:920px">
+      <header class="modal-header">
+        <h2 id="tituloConsultaFinanceira">Consulta financeira</h2>
+        <button id="btnFecharConsultaFinanceira" type="button">×</button>
+      </header>
+      <div id="conteudoConsultaFinanceira" class="tabela-container" style="max-height:65vh;overflow:auto;padding:8px"></div>
+      <footer class="modal-actions full">
+        <button type="button" class="btn-primary" id="btnOkConsultaFinanceira">Fechar</button>
       </footer>
     </div>
   </div>

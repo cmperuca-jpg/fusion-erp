@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { gerarProximaMensalidadeAposPagamento } from '../cobranca/cobranca.service.mjs';
+import { programarProximaCobrancaAposPagamento } from '../cobranca/cobranca.service.mjs';
 
 const ROOT = process.cwd();
 const DATA_DIR = path.join(ROOT, 'data');
@@ -736,26 +736,10 @@ export async function baixarMensalidade(id, dados = {}) {
   mensalidades[idx] = paga;
   await salvarJson(MENSALIDADES_FILE, mensalidades);
 
-  // Após a baixa efetiva, gera a próxima mensalidade uma única vez.
-  // Isto também vale para matrícula inicial paga: ela é cobrança única,
-  // mas o pagamento dela libera a primeira recorrência do mês seguinte.
-  let cobrancaAutomatica = null;
-  if (statusInterno(paga.status) === 'pago') {
-    try {
-      cobrancaAutomatica = await gerarProximaMensalidadeAposPagamento({
-        mensalidadeId: paga.id,
-        financeiroId: paga.lancamentoFinanceiroId || '',
-        alunoId: paga.alunoId || '',
-        usuario: dados.usuario || 'mensalidades'
-      });
-    } catch (erroMotor) {
-      cobrancaAutomatica = {
-        ok: false,
-        gerada: false,
-        motivo: erroMotor?.message || 'Motor de cobrança não executado.'
-      };
-    }
-  }
+  // A baixa não pode antecipar a cobrança do próximo mês.
+  const cobrancaAutomatica = statusInterno(paga.status) === 'pago'
+    ? await programarProximaCobrancaAposPagamento({ mensalidadeId: paga.id, financeiroId: paga.lancamentoFinanceiroId || '', alunoId: paga.alunoId || '', usuario: dados.usuario || 'mensalidades' })
+    : { ok: true, gerada: false, programada: false, motivo: 'Pagamento parcial; vencimento mantido.' };
 
   return { ...paga, recebimentoDoDia, cobrancaAutomatica };
 }

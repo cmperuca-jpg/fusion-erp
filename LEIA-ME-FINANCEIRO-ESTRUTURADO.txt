@@ -1,0 +1,32 @@
+FUSION ERP 2.8.0 - FINANCEIRO ESTRUTURADO
+
+Instalação
+1. Faça backup do Fusion ERP e do Supabase.
+2. Extraia este ZIP na pasta raiz do Fusion ERP, mantendo as pastas.
+3. Substitua os arquivos quando solicitado.
+4. Execute: npm run check
+5. Reinicie o serviço do Fusion ERP.
+
+Regras implantadas
+- Caixa deve estar aberto antes de qualquer recebimento ou pagamento.
+- Recebimentos geram recibo numerado e movimento de caixa.
+- Um recibo pode liquidar um ou mais títulos.
+- Registros pagos não são apagados; devem ser estornados.
+- Exclusões abertas viram cancelamentos e preservam o histórico.
+- Plano de contas separado entre receitas e despesas.
+- Formas de pagamento padronizadas.
+- Extrato financeiro completo por aluno.
+- Mudança de vencimento registra auditoria e pode calcular diferença proporcional.
+- Auditoria financeira registra operações críticas.
+
+Novas rotas
+/api/financeiro/estrutura/configuracao
+/api/financeiro/estrutura/plano-contas
+/api/financeiro/estrutura/alunos/:id/extrato
+/api/financeiro/estrutura/titulos/:id/vencimento
+/api/financeiro/estrutura/receber
+/api/financeiro/estrutura/recibos
+/api/financeiro/estrutura/auditoria
+
+As novas coleções são criadas automaticamente na primeira utilização e são
+persistidas pelo mesmo mecanismo transacional já utilizado pelo Supabase.

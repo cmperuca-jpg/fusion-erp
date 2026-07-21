@@ -6,13 +6,13 @@
     "descricao": "",
     "professorResponsavel": "TODOS",
     "duracaoMinutos": 60,
-    "capacidadeMaxima": 20,
-    "valorSugerido": 0,
-    "cor": "#ff6b00",
+    "capacidadeMaxima": 200,
+    "valorSugerido": 65,
+    "cor": "#002aff",
     "icone": "🏋️",
     "status": "Ativa",
     "criadoEm": "2026-07-03T18:32:00.041Z",
-    "atualizadoEm": "2026-07-03T18:32:00.041Z"
+    "atualizadoEm": "2026-07-21T23:10:15.011Z"
   },
   {
     "id": "bf8c5d2a-72ee-43c8-9617-d6903cbc9a8b",
@@ -23,11 +23,11 @@
     "duracaoMinutos": 60,
     "capacidadeMaxima": 20,
     "valorSugerido": 40,
-    "cor": "#ff6b00",
+    "cor": "#ccff00",
     "icone": "🏋️",
     "status": "Ativa",
     "criadoEm": "2026-07-08T03:32:24.853Z",
-    "atualizadoEm": "2026-07-08T03:32:24.853Z"
+    "atualizadoEm": "2026-07-21T23:10:31.026Z"
   },
   {
     "id": "bfe2a51b-07d3-433d-9a7a-ddb47724d34a",
@@ -37,11 +37,11 @@
     "professorResponsavel": "TODOS",
     "duracaoMinutos": 60,
     "capacidadeMaxima": 20,
-    "valorSugerido": 120,
-    "cor": "#ff6b00",
+    "valorSugerido": 100,
+    "cor": "#00e1ff",
     "icone": "🏋️",
     "status": "Ativa",
     "criadoEm": "2026-07-08T03:33:05.693Z",
-    "atualizadoEm": "2026-07-08T03:33:05.693Z"
+    "atualizadoEm": "2026-07-21T23:10:50.587Z"
   }
 ]

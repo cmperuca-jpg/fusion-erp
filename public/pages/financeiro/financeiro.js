@@ -1,6 +1,7 @@
 if (typeof carregarLayout === "function") carregarLayout("Financeiro");
 
 const API = "/api/financeiro";
+const API_LEDGER = "/api/financeiro/ledger";
 const API_TAXAS = "/api/financeiro/taxas-cartao";
 const API_ALUNOS = "/api/alunos";
 const API_FORNECEDORES = "/api/fornecedores";
@@ -52,6 +53,7 @@ let fornecedoresFinanceiro = [];
 let opcoesPessoasFinanceiro = [];
 let baixaAtual = null;
 let baixaAutomaticaUrlProcessada = false;
+let filtroIndicador = '';
 
 function limparParametrosBaixaDaUrl() {
   const params = new URLSearchParams(location.search);
@@ -455,12 +457,23 @@ function saldoLancamento(item) {
   return Math.max(0, valorTotalLancamento(item) - valorPagoLancamento(item));
 }
 
+function abrirIndicadorFinanceiro(tipo = '', status = '', indicador = '') {
+  filtroIndicador = indicador;
+  els.busca.value = '';
+  els.filtroTipo.value = tipo;
+  els.filtroStatus.value = status;
+  carregarLancamentos().then(() => document.querySelector('.tabela-container')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+}
+
 function renderizarTabela() {
-  if (!lancamentos.length) {
+  const listaExibida = filtroIndicador === 'taxas'
+    ? lancamentos.filter((item) => lancamentoPago(item) && taxaOperadoraLancamento(item) > 0)
+    : lancamentos;
+  if (!listaExibida.length) {
     els.tabela.innerHTML = `<tr><td colspan="10">Nenhum lançamento encontrado.</td></tr>`;
     return;
   }
-  els.tabela.innerHTML = lancamentos.map((item) => {
+  els.tabela.innerHTML = listaExibida.map((item) => {
     const st = statusClasse(item.status);
     const jaPago = lancamentoPago(item);
     return `<tr>
@@ -476,8 +489,9 @@ function renderizarTabela() {
       <td><span class="badge ${escapeHtml(st)}">${escapeHtml(item.status || "Aberto")}</span></td>
       <td><div class="acoes">
         <button class="btn-secondary" onclick="editarLancamento('${escapeHtml(item.id)}')">Editar</button>
-        <button class="btn-light" ${jaPago ? "disabled" : ""} onclick="baixarLancamento('${escapeHtml(item.id)}')">Baixar</button>
-        <button class="btn-danger" onclick="excluirLancamento('${escapeHtml(item.id)}')">Excluir</button>
+        <button class="btn-light" ${jaPago ? "disabled" : ""} onclick="baixarLancamento('${escapeHtml(item.id)}')">${item.tipo === "pagar" ? "Pagar" : "Receber"}</button>
+        <button class="btn-light" ${jaPago ? "disabled" : ""} onclick="alterarVencimentoLancamento('${escapeHtml(item.id)}')">Vencimento</button>
+        <button class="btn-danger" ${jaPago ? "disabled" : ""} onclick="excluirLancamento('${escapeHtml(item.id)}')">Cancelar</button>
       </div></td>
     </tr>`;
   }).join("");
@@ -531,6 +545,7 @@ async function salvarLancamento(event) {
     const id = valor("lancamentoId");
     const pessoa = await resolverPessoaFinanceira();
     const payload = {
+      operacaoId: `financeiro-${id}-${Date.now()}-${Math.random().toString(16).slice(2)}`,
       tipo: valor("tipo"), status: valor("status"), descricao: valor("descricao"), categoria: valor("categoria"),
       centroCusto: valor("centroCusto"), alunoFornecedor: pessoa.nome || valor("alunoFornecedor"), pessoaTipo: pessoa.tipo || valor("pessoaTipo"),
       pessoaId: pessoa.id || valor("pessoaId"), fornecedorId: pessoa.tipo === "fornecedor" ? pessoa.id : "",
@@ -580,6 +595,7 @@ function abrirModalBaixa(lancamento) {
     <div>Saldo para baixa: <strong>${moeda(saldo)}</strong></div>`;
   atualizarPainelCartao();
   calcularPreviewCartao();
+  atualizarDiferencaRecebimento();
   els.modalBaixa.classList.add("ativo");
   setTimeout(() => document.getElementById("baixaValorPago")?.focus(), 80);
 }
@@ -599,6 +615,7 @@ async function confirmarBaixa(event) {
   event.preventDefault();
   const id = valor("baixaLancamentoId");
   const valorPago = numero(valor("baixaValorPago"));
+  const saldoAplicado = Math.min(valorPago, numero(valor("baixaValorDevido")));
   if (!id) return alert("Lançamento não informado.");
   if (valorPago <= 0) return alert("Informe um valor pago maior que zero.");
   const btn = document.getElementById("btnConfirmarBaixa");
@@ -615,7 +632,9 @@ async function confirmarBaixa(event) {
     const formaPagamento = valor("baixaFormaPagamento");
     const payload = {
       valorPago,
-      valor: valorPago,
+      valorEntregue: valorPago,
+      valorAplicado: saldoAplicado,
+      valor: saldoAplicado,
       pagamento: valor("baixaDataPagamento"),
       dataPagamento: valor("baixaDataPagamento"),
       formaPagamento,
@@ -631,6 +650,10 @@ async function confirmarBaixa(event) {
       valorBrutoRecebido: valorPago,
       valorLiquido: formaTemTaxaOperadora(formaPagamento) ? dadosCartao.liquido : valorPago
     };
+    if (valorPago > saldoAplicado) {
+      const troco = document.getElementById("baixaDestinoTroco")?.checked;
+      payload.destinoDiferenca = troco ? "troco" : "credito";
+    }
     const resp = await fetch(`${API}/${encodeURIComponent(id)}/baixar`, {
       method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload)
     });
@@ -638,37 +661,15 @@ async function confirmarBaixa(event) {
     if (!resp.ok) throw new Error(await obterMensagemErroResposta(resp, `Erro HTTP ${resp.status}`));
     if (json.ok === false) throw new Error(json.mensagem || json.erro || "Não foi possível confirmar o recebimento.");
 
+    const motor = json?.cobrancaAutomatica || {};
     let mensagemMotor = "";
-    try {
-      const motorPayload = {
-        financeiroId: id,
-        mensalidadeId: valor("baixaMensalidadeId") || json?.lancamento?.mensalidadeId || baixaAtual?.mensalidadeId || "",
-        alunoId: json?.lancamento?.alunoId || baixaAtual?.alunoId || "",
-        usuario: "financeiro"
-      };
-
-      const respMotor = await fetch("/api/cobranca/gerar-proxima", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(motorPayload)
-      });
-
-      const jsonMotor = await respMotor.json().catch(() => ({}));
-
-      if (respMotor.ok && jsonMotor.ok && jsonMotor.gerada) {
-        mensagemMotor = `\n\nPróxima mensalidade gerada: ${jsonMotor.proximoVencimento || ""}`;
-      } else if (respMotor.ok && jsonMotor.ok && jsonMotor.motivo) {
-        mensagemMotor = `\n\nMotor de cobrança: ${jsonMotor.motivo}`;
-      } else if (!respMotor.ok) {
-        mensagemMotor = "\n\nPagamento registrado, mas o motor de cobrança não conseguiu gerar a próxima mensalidade.";
-      }
-    } catch {
-      mensagemMotor = "\n\nPagamento registrado. Motor de cobrança não executado automaticamente.";
-    }
+    if (motor.gerada) mensagemMotor = `\n\nPróxima mensalidade gerada automaticamente: ${motor.proximoVencimento || ""}`;
+    else if (motor.aviso && motor.motivo) mensagemMotor = `\n\nAtenção na recorrência: ${motor.motivo}`;
 
     fecharModalBaixa();
     limparParametrosBaixaDaUrl();
-    alert(`Pagamento confirmado e registrado.${mensagemMotor}`);
+    const numeroRecibo = json?.lancamento?.recibo?.numero;
+    alert(`${baixaAtual?.tipo === "pagar" ? "Pagamento" : "Recebimento"} confirmado e registrado.${numeroRecibo ? `\nRecibo nº ${numeroRecibo}` : ""}${mensagemMotor}`);
     await iniciarFinanceiro();
   } catch (erro) {
     alert(erro.message || "Erro ao confirmar pagamento.");
@@ -679,10 +680,97 @@ async function confirmarBaixa(event) {
 }
 
 window.excluirLancamento = async function excluirLancamento(id) {
-  if (!confirm("Deseja excluir este lançamento?")) return;
-  await fetch(`${API}/${encodeURIComponent(id)}`, { method: "DELETE" });
+  const motivo = prompt("Motivo do cancelamento (obrigatório para auditoria):", "Cancelamento operacional");
+  if (!motivo) return;
+  const resp = await fetch(`${API}/${encodeURIComponent(id)}`, { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ motivo, usuario: "financeiro" }) });
+  if (!resp.ok) return alert(await obterMensagemErroResposta(resp, "Não foi possível cancelar."));
   await iniciarFinanceiro();
 };
+
+window.alterarVencimentoLancamento = async function alterarVencimentoLancamento(id) {
+  const atual = lancamentos.find((item) => String(item.id) === String(id));
+  if (!atual) return;
+  if (atual.tipo === "pagar") return editarLancamento(id);
+  const vencimento = prompt("Novo vencimento (AAAA-MM-DD):", atual.vencimento || hojeISO());
+  if (!vencimento || !/^\d{4}-\d{2}-\d{2}$/.test(vencimento)) return;
+  const motivo = prompt("Motivo da alteração:", "Acordo com o aluno");
+  if (!motivo) return;
+  const resp = await fetch(`${API_LEDGER}/titulos/${encodeURIComponent(id)}/vencimento`, {
+    method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ vencimento, motivo, usuario: "financeiro" })
+  });
+  if (!resp.ok) return alert(await obterMensagemErroResposta(resp, "Não foi possível alterar o vencimento."));
+  await iniciarFinanceiro();
+};
+
+function abrirConsultaFinanceira(titulo, html) {
+  document.getElementById("tituloConsultaFinanceira").textContent = titulo;
+  document.getElementById("conteudoConsultaFinanceira").innerHTML = html;
+  document.getElementById("modalConsultaFinanceira").classList.add("ativo");
+}
+
+function atualizarDiferencaRecebimento() {
+  const pago = numero(valor("baixaValorPago"));
+  const devido = numero(valor("baixaValorDevido"));
+  const painel = document.getElementById("painelDiferencaRecebimento");
+  if (!painel) return;
+  const diferenca = Number(Math.max(0, pago - devido).toFixed(2));
+  painel.classList.toggle("hidden", diferenca <= 0);
+  painel.style.display = diferenca > 0 ? "grid" : "none";
+  const texto = document.getElementById("textoDiferencaRecebimento");
+  if (texto) texto.textContent = `Diferença de ${moeda(diferenca)}: escolha troco ou crédito.`;
+  const dinheiro = normalizarTexto(valor("baixaFormaPagamento")) === "dinheiro";
+  const opcaoTroco = document.getElementById("opcaoTrocoRecebimento");
+  const radioTroco = document.getElementById("baixaDestinoTroco");
+  const radioCredito = document.getElementById("baixaDestinoCredito");
+  if (opcaoTroco) opcaoTroco.style.display = dinheiro ? "flex" : "none";
+  if (!dinheiro && radioTroco) radioTroco.checked = false;
+  if (diferenca > 0 && !radioTroco?.checked && radioCredito) radioCredito.checked = true;
+}
+
+function fecharConsultaFinanceira() { document.getElementById("modalConsultaFinanceira").classList.remove("ativo"); }
+
+async function consultarRecibos() {
+  const resp = await fetch(`${API_LEDGER}/recibos`, { cache: "no-store" });
+  const json = await resp.json().catch(() => ({}));
+  if (!resp.ok) return alert(json.erro || "Não foi possível listar recibos.");
+  const lista = Array.isArray(json) ? json : (json.recibos || json.dados || []);
+  abrirConsultaFinanceira("Recibos", `<table><thead><tr><th>Número</th><th>Data</th><th>Aluno</th><th>Valor</th><th>Situação</th><th>Ação</th></tr></thead><tbody>${lista.map((r) => `<tr><td>${escapeHtml(r.numero)}</td><td>${escapeHtml(r.data)}</td><td>${escapeHtml(r.aluno || "-")}</td><td>${moeda(r.valorPago)}</td><td>${r.cancelado ? "Estornado" : "Válido"}</td><td>${r.cancelado ? "-" : `<button class="btn-danger" type="button" onclick="estornarReciboFinanceiro('${escapeHtml(r.id)}')">Estornar</button>`}</td></tr>`).join("") || '<tr><td colspan="6">Nenhum recibo.</td></tr>'}</tbody></table>`);
+}
+
+window.estornarReciboFinanceiro = async function estornarReciboFinanceiro(id) {
+  const motivo = prompt("Motivo obrigatório do estorno:");
+  if (!motivo || motivo.trim().length < 3) return;
+  const resp = await fetch(`${API_LEDGER}/recibos/${encodeURIComponent(id)}/estornar`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ motivo, usuario: "financeiro" }) });
+  const json = await resp.json().catch(() => ({}));
+  if (!resp.ok) return alert(json.mensagem || "Não foi possível estornar. Verifique se o caixa está aberto.");
+  alert("Recibo estornado com contramovimento no caixa. O histórico foi preservado.");
+  await consultarRecibos();
+  await iniciarFinanceiro();
+};
+
+async function consultarExtratoAluno() {
+  const termo = prompt("Digite o nome ou CPF do aluno:");
+  if (!termo) return;
+  const alvo = normalizarTexto(termo);
+  const aluno = alunosFinanceiro.find((a) => normalizarTexto(`${nomeAlunoFinanceiro(a)} ${a.cpf || ""}`).includes(alvo));
+  if (!aluno) return alert("Aluno não encontrado. Digite parte do nome ou CPF cadastrado.");
+  const id = aluno.id || aluno.alunoId;
+  const resp = await fetch(`${API_LEDGER}/alunos/${encodeURIComponent(id)}/extrato`, { cache: "no-store" });
+  const json = await resp.json().catch(() => ({}));
+  if (!resp.ok) return alert(json.erro || "Não foi possível montar o extrato.");
+  const e = json.extrato || json.dados || json;
+  const titulos = e.titulos || [];
+  abrirConsultaFinanceira(`Extrato — ${nomeAlunoFinanceiro(aluno)}`, `<p><strong>Cobrado:</strong> ${moeda(e.totais?.cobrado)} &nbsp; <strong>Recebido:</strong> ${moeda(e.totais?.recebido)} &nbsp; <strong>Em aberto:</strong> ${moeda(e.totais?.aberto)} &nbsp; <strong>Vencido:</strong> ${moeda(e.totais?.vencido)}</p><table><thead><tr><th>Vencimento</th><th>Descrição</th><th>Valor</th><th>Pago</th><th>Status</th></tr></thead><tbody>${titulos.map((t) => `<tr><td>${escapeHtml(t.vencimento)}</td><td>${escapeHtml(t.descricao)}</td><td>${moeda(t.valor)}</td><td>${moeda(t.valorPago)}</td><td>${escapeHtml(t.status)}</td></tr>`).join("") || '<tr><td colspan="5">Sem movimentação.</td></tr>'}</tbody></table>`);
+}
+
+async function consultarIntegridade() {
+  const resp = await fetch(`${API_LEDGER}/integridade`, { cache: "no-store" });
+  const json = await resp.json().catch(() => ({}));
+  if (!resp.ok) return alert(json.erro || "Falha na verificação.");
+  const rel = json.relatorio || json.dados || json;
+  const falhas = rel.falhas || [];
+  abrirConsultaFinanceira("Integridade financeira", `<p><strong>${rel.ok ? "Base íntegra" : "Atenção necessária"}</strong> — ${falhas.length} ocorrência(s).</p><table><thead><tr><th>Nível</th><th>Código</th><th>Registro</th></tr></thead><tbody>${falhas.map((f) => `<tr><td>${escapeHtml(f.nivel)}</td><td>${escapeHtml(f.codigo)}</td><td>${escapeHtml(f.registroId || "-")}</td></tr>`).join("") || '<tr><td colspan="3">Nenhuma inconsistência encontrada.</td></tr>'}</tbody></table>`);
+}
 
 function abrirBaixaPorUrlSeExistir() {
   if (baixaAutomaticaUrlProcessada) return;
@@ -715,6 +803,11 @@ function abrirBaixaPorUrlSeExistir() {
 }
 
 document.getElementById("btnNovoLancamento")?.addEventListener("click", () => abrirModal());
+document.getElementById("kpiAbrirCaixa")?.addEventListener("click", () => { window.location.href = "/pages/caixa/index.html"; });
+document.getElementById("kpiAbrirReceitasPagas")?.addEventListener("click", () => abrirIndicadorFinanceiro("receber", "Pago"));
+document.getElementById("kpiAbrirReceitasAbertas")?.addEventListener("click", () => abrirIndicadorFinanceiro("receber", "Aberto"));
+document.getElementById("kpiAbrirTaxas")?.addEventListener("click", () => abrirIndicadorFinanceiro("receber", "Pago", "taxas"));
+document.getElementById("kpiAbrirSaldoPrevisto")?.addEventListener("click", () => abrirIndicadorFinanceiro("", "Aberto"));
 document.getElementById("btnTaxasCartao")?.addEventListener("click", abrirModalTaxas);
 document.getElementById("btnAbrirTaxasNoRecebimento")?.addEventListener("click", abrirModalTaxas);
 document.getElementById("btnFecharTaxas")?.addEventListener("click", fecharModalTaxas);
@@ -723,18 +816,25 @@ document.getElementById("btnAdicionarTaxa")?.addEventListener("click", () => { t
 document.getElementById("btnRestaurarTaxas")?.addEventListener("click", () => { taxasCartao = TAXAS_CARTAO_TESTE.map((t) => ({ ...t })); renderizarTabelaTaxas(); });
 document.getElementById("btnSalvarTaxas")?.addEventListener("click", salvarTaxasCartaoTela);
 document.getElementById("baixaFormaPagamento")?.addEventListener("change", atualizarPainelCartao);
+document.getElementById("baixaFormaPagamento")?.addEventListener("change", atualizarDiferencaRecebimento);
 document.getElementById("baixaBandeiraCartao")?.addEventListener("change", preencherParcelasCartao);
 document.getElementById("baixaModalidadeCartao")?.addEventListener("change", preencherParcelasCartao);
 document.getElementById("baixaParcelasCartao")?.addEventListener("change", aplicarTaxaSelecionada);
 document.getElementById("baixaTaxaPercentual")?.addEventListener("input", calcularPreviewCartao);
 document.getElementById("baixaTaxaFixa")?.addEventListener("input", calcularPreviewCartao);
 document.getElementById("baixaValorPago")?.addEventListener("input", calcularPreviewCartao);
+document.getElementById("baixaValorPago")?.addEventListener("input", atualizarDiferencaRecebimento);
 document.getElementById("btnFecharModal")?.addEventListener("click", fecharModal);
 document.getElementById("btnCancelar")?.addEventListener("click", fecharModal);
 document.getElementById("alunoFornecedor")?.addEventListener("change", sincronizarPessoaSelecionada);
 document.getElementById("alunoFornecedor")?.addEventListener("input", () => { setValor("pessoaTipo", ""); setValor("pessoaId", ""); });
 document.getElementById("btnFiltrar")?.addEventListener("click", carregarLancamentos);
-document.getElementById("btnLimpar").addEventListener("click", () => { els.busca.value = ""; els.filtroTipo.value = ""; els.filtroStatus.value = ""; iniciarFinanceiro(); });
+document.getElementById("btnRecibos")?.addEventListener("click", consultarRecibos);
+document.getElementById("btnExtratoAluno")?.addEventListener("click", consultarExtratoAluno);
+document.getElementById("btnIntegridade")?.addEventListener("click", consultarIntegridade);
+document.getElementById("btnFecharConsultaFinanceira")?.addEventListener("click", fecharConsultaFinanceira);
+document.getElementById("btnOkConsultaFinanceira")?.addEventListener("click", fecharConsultaFinanceira);
+document.getElementById("btnLimpar").addEventListener("click", () => { filtroIndicador = ""; els.busca.value = ""; els.filtroTipo.value = ""; els.filtroStatus.value = ""; iniciarFinanceiro(); });
 document.getElementById("btnFecharBaixa")?.addEventListener("click", fecharModalBaixa);
 document.getElementById("btnCancelarBaixa")?.addEventListener("click", fecharModalBaixa);
 els.form.addEventListener("submit", salvarLancamento);

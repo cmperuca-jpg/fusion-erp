@@ -1,0 +1,159 @@
+[
+  {
+    "id": "audfin_c3ce43a1-0890-442b-ba9e-a98ba55692a5",
+    "dataHora": "2026-07-21T23:21:58.363Z",
+    "usuario": "sistema",
+    "acao": "emitir_recibo",
+    "entidade": "recibo",
+    "entidadeId": "rec_c4aaeee5-647a-476a-9bb4-046768a2fe3e",
+    "detalhes": {
+      "numero": "00000007",
+      "valor": 65,
+      "tituloIds": [
+        "fin_men_reat_1784676049514_435647"
+      ],
+      "caixaId": "cx_1784676088270_78a460"
+    }
+  },
+  {
+    "id": "audfin_22beae51-f846-4d53-aed9-70916c863263",
+    "dataHora": "2026-07-21T18:34:49.024Z",
+    "usuario": "sistema",
+    "acao": "criar_titulo",
+    "entidade": "titulo",
+    "entidadeId": "tit_78598d77-6e40-440d-8829-b6755df02a99",
+    "detalhes": {
+      "tipo": "pagar",
+      "valor": 390,
+      "vencimento": "2026-07-21"
+    }
+  },
+  {
+    "id": "audfin_c5e33e33-413e-46f5-b031-eabfc65cacb0",
+    "dataHora": "2026-07-21T18:31:11.419Z",
+    "usuario": "sistema",
+    "acao": "emitir_recibo",
+    "entidade": "recibo",
+    "entidadeId": "rec_77a4a7f5-5ea5-4139-8651-0e506e7ed46e",
+    "detalhes": {
+      "numero": "00000006",
+      "valor": 65,
+      "tituloIds": [
+        "fin_men_reat_1784658618171_685975"
+      ],
+      "caixaId": "cx_1784653653536_a25c76"
+    }
+  },
+  {
+    "id": "audfin_acadcfe0-dfc5-4dea-932c-662adcc94e80",
+    "dataHora": "2026-07-21T17:26:56.116Z",
+    "usuario": "sistema",
+    "acao": "emitir_recibo",
+    "entidade": "recibo",
+    "entidadeId": "rec_e443620e-4135-411b-873e-945bb3846880",
+    "detalhes": {
+      "numero": "00000005",
+      "valor": 65,
+      "tituloIds": [
+        "fin_men_reat_1784654806502_469138"
+      ],
+      "caixaId": "cx_1784653653536_a25c76"
+    }
+  },
+  {
+    "id": "audfin_678082be-d126-477b-96fa-5b3297d94593",
+    "dataHora": "2026-07-21T17:24:01.264Z",
+    "usuario": "sistema",
+    "acao": "emitir_recibo",
+    "entidade": "recibo",
+    "entidadeId": "rec_ddcbfb78-42dd-43a7-a9a9-95df389da942",
+    "detalhes": {
+      "numero": "00000004",
+      "valor": 65,
+      "tituloIds": [
+        "fin_men_reat_1784654624525_631876"
+      ],
+      "caixaId": "cx_1784653653536_a25c76"
+    }
+  },
+  {
+    "id": "audfin_c2197ba8-8e9d-4083-b1cd-955bd27ffe26",
+    "dataHora": "2026-07-21T17:23:03.058Z",
+    "usuario": "sistema",
+    "acao": "emitir_recibo",
+    "entidade": "recibo",
+    "entidadeId": "rec_3b7417d7-a16b-48a7-93d3-5f1d8563a1f3",
+    "detalhes": {
+      "numero": "00000003",
+      "valor": 65,
+      "tituloIds": [
+        "fin_men_reat_1784653591397_539385"
+      ],
+      "caixaId": "cx_1784653653536_a25c76"
+    }
+  },
+  {
+    "id": "audfin_3493dd57-4149-403a-a925-957d0dcc1d92",
+    "dataHora": "2026-07-21T17:21:20.470Z",
+    "usuario": "sistema",
+    "acao": "emitir_recibo",
+    "entidade": "recibo",
+    "entidadeId": "rec_ec51375a-b7a8-497c-a519-e32642b338db",
+    "detalhes": {
+      "numero": "00000002",
+      "valor": 65,
+      "tituloIds": [
+        "fin_men_rec_1784653690862_531859"
+      ],
+      "caixaId": "cx_1784653653536_a25c76"
+    }
+  },
+  {
+    "id": "audfin_7ae6565f-1d54-4a60-94ef-b36188220fcd",
+    "dataHora": "2026-07-21T17:08:24.435Z",
+    "usuario": "sistema",
+    "acao": "emitir_recibo",
+    "entidade": "recibo",
+    "entidadeId": "rec_48299551-a593-4d28-bd4a-7f47e5dca5af",
+    "detalhes": {
+      "numero": "00000001",
+      "valor": 65,
+      "tituloIds": [
+        "fin_men_reat_1784653690859_120526"
+      ],
+      "caixaId": "cx_1784653653536_a25c76"
+    }
+  },
+  {
+    "id": "audfin_1deacb4f-10f3-465f-bcd3-9448f1ab71a2",
+    "dataHora": "2026-07-21T16:13:46.260Z",
+    "usuario": "script-migracao",
+    "acao": "migrar_financeiro_legado",
+    "entidade": "financeiro",
+    "entidadeId": "ledger-v1",
+    "detalhes": {
+      "ok": true,
+      "modo": "aplicado",
+      "titulosOriginais": 0,
+      "titulosConsolidados": 0,
+      "contasPagarIncorporadas": 0,
+      "mensalidadesIncorporadas": 0
+    }
+  },
+  {
+    "id": "audfin_2f525f24-ebb0-481e-b08b-c5212e213661",
+    "dataHora": "2026-07-21T16:12:20.288Z",
+    "usuario": "script-migracao",
+    "acao": "migrar_financeiro_legado",
+    "entidade": "financeiro",
+    "entidadeId": "ledger-v1",
+    "detalhes": {
+      "ok": true,
+      "modo": "aplicado",
+      "titulosOriginais": 0,
+      "titulosConsolidados": 0,
+      "contasPagarIncorporadas": 0,
+      "mensalidadesIncorporadas": 0
+    }
+  }
+]

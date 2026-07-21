@@ -13,7 +13,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -30,13 +30,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.820Z",
     "criado_em": "2026-07-20T10:18:52.820Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:26:10.246Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -50,9 +50,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.820Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784654770261_466993",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:26:10.246Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:26:10.246Z",
+    "encerradaEm": "2026-07-21T17:26:10.246Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_e63532aa-2bef-4db6-94a7-a56d34efcf83",
@@ -68,7 +79,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -85,13 +96,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.820Z",
     "criado_em": "2026-07-20T10:18:52.820Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:26:14.222Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -105,9 +116,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.820Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784654774241_623062",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:26:14.222Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:26:14.222Z",
+    "encerradaEm": "2026-07-21T17:26:14.222Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_30657aa9-f30f-4ff9-a105-57886c5a4815",
@@ -123,7 +145,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -140,13 +162,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.821Z",
     "criado_em": "2026-07-20T10:18:52.821Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:26:17.462Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -160,9 +182,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.821Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784654777474_267732",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:26:17.462Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:26:17.462Z",
+    "encerradaEm": "2026-07-21T17:26:17.462Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_ed39cd15-e51b-47b0-8ff4-9b59c8083b21",
@@ -178,7 +211,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -195,13 +228,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.821Z",
     "criado_em": "2026-07-20T10:18:52.821Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:26:24.220Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -215,9 +248,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.821Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784654784226_497906",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:26:24.220Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:26:24.220Z",
+    "encerradaEm": "2026-07-21T17:26:24.220Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_4256b431-f67b-4d53-aff9-64724b19e171",
@@ -233,7 +277,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -250,13 +294,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.821Z",
     "criado_em": "2026-07-20T10:18:52.821Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:26:29.381Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -270,9 +314,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.821Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784654789394_305059",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:26:29.381Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:26:29.381Z",
+    "encerradaEm": "2026-07-21T17:26:29.381Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_02a04cec-fdc5-4a3e-93e7-55361f7e7b3e",
@@ -288,7 +343,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -305,13 +360,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.821Z",
     "criado_em": "2026-07-20T10:18:52.821Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:26:39.209Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -325,9 +380,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.821Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784654799232_671865",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:26:39.209Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:26:39.209Z",
+    "encerradaEm": "2026-07-21T17:26:39.209Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_3a569454-7d07-403e-a1bf-d7c400b702c9",
@@ -343,7 +409,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -360,13 +426,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.822Z",
     "criado_em": "2026-07-20T10:18:52.822Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:26:42.581Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -380,9 +446,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.822Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784654802600_874418",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:26:42.581Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:26:42.581Z",
+    "encerradaEm": "2026-07-21T17:26:42.581Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_830df94a-64b6-4631-a49b-60cd288c7a41",
@@ -398,7 +475,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -415,13 +492,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.822Z",
     "criado_em": "2026-07-20T10:18:52.822Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:27:11.035Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -435,9 +512,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.822Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784654831040_966967",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:27:11.035Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:27:11.035Z",
+    "encerradaEm": "2026-07-21T17:27:11.035Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_fda53e90-8afc-4a3d-9cd9-accab71e2d46",
@@ -453,7 +541,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -470,13 +558,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.822Z",
     "criado_em": "2026-07-20T10:18:52.822Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:27:14.237Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -490,9 +578,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.822Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784654834245_144289",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:27:14.237Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:27:14.237Z",
+    "encerradaEm": "2026-07-21T17:27:14.237Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_4b041782-8b61-4daa-a93f-2f6733e80f62",
@@ -508,7 +607,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -525,13 +624,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.822Z",
     "criado_em": "2026-07-20T10:18:52.822Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:27:18.650Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -545,9 +644,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.822Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784654838665_616048",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:27:18.650Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:27:18.650Z",
+    "encerradaEm": "2026-07-21T17:27:18.650Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_acb84de0-7ba0-47a4-945e-d497e424cd27",
@@ -563,7 +673,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -580,13 +690,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.823Z",
     "criado_em": "2026-07-20T10:18:52.823Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:27:21.790Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -600,9 +710,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.823Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784654841796_163446",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:27:21.790Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:27:21.790Z",
+    "encerradaEm": "2026-07-21T17:27:21.790Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_76e499a4-1118-4d3e-92b9-02f8cf144de3",
@@ -618,7 +739,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -635,13 +756,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.823Z",
     "criado_em": "2026-07-20T10:18:52.823Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:27:25.049Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -655,9 +776,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.823Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784654845058_148313",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:27:25.049Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:27:25.049Z",
+    "encerradaEm": "2026-07-21T17:27:25.049Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_41ccb18d-7688-4994-9af7-d31e9657836f",
@@ -673,7 +805,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -690,13 +822,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.824Z",
     "criado_em": "2026-07-20T10:18:52.824Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:27:42.216Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -710,9 +842,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.824Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784654862231_797479",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:27:42.216Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:27:42.216Z",
+    "encerradaEm": "2026-07-21T17:27:42.216Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_6fd471b4-633d-411f-9f31-4e7ff773b6fb",
@@ -728,7 +871,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -745,13 +888,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.824Z",
     "criado_em": "2026-07-20T10:18:52.824Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:27:49.471Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -765,9 +908,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.824Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784654869489_181124",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:27:49.471Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:27:49.471Z",
+    "encerradaEm": "2026-07-21T17:27:49.471Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_02ce535a-849a-4c21-b607-be0e742a460d",
@@ -783,7 +937,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -800,13 +954,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.824Z",
     "criado_em": "2026-07-20T10:18:52.824Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:27:55.468Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -820,9 +974,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.824Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784654875478_556313",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:27:55.468Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:27:55.468Z",
+    "encerradaEm": "2026-07-21T17:27:55.468Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_93b72948-b214-4fcf-8c39-2efea2e58dc5",
@@ -838,7 +1003,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -855,13 +1020,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.825Z",
     "criado_em": "2026-07-20T10:18:52.825Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:28:01.387Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -875,9 +1040,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.825Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784654881396_408352",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:28:01.387Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:28:01.387Z",
+    "encerradaEm": "2026-07-21T17:28:01.387Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_b3607b91-0da0-48a0-ac22-643a11c99bfb",
@@ -893,7 +1069,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -910,13 +1086,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.826Z",
     "criado_em": "2026-07-20T10:18:52.826Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:28:06.960Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -930,9 +1106,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.826Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784654886967_286052",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:28:06.960Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:28:06.960Z",
+    "encerradaEm": "2026-07-21T17:28:06.960Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_cd647e29-19e8-404a-b3ca-58e941e04bc3",
@@ -948,7 +1135,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -965,13 +1152,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.827Z",
     "criado_em": "2026-07-20T10:18:52.827Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:28:10.283Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -985,9 +1172,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.827Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784654890294_795220",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:28:10.283Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:28:10.283Z",
+    "encerradaEm": "2026-07-21T17:28:10.283Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_6a56eae8-3acf-416c-bce0-8a87c9dd3752",
@@ -1003,7 +1201,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -1020,13 +1218,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.829Z",
     "criado_em": "2026-07-20T10:18:52.829Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:28:13.678Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -1040,9 +1238,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.829Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784654893684_758308",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:28:13.678Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:28:13.678Z",
+    "encerradaEm": "2026-07-21T17:28:13.678Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_bd40cc9b-cfc2-4fc7-b140-5a14a71215b8",
@@ -1058,7 +1267,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -1075,13 +1284,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.830Z",
     "criado_em": "2026-07-20T10:18:52.830Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:28:18.577Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -1095,9 +1304,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.830Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784654898587_198001",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:28:18.577Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:28:18.577Z",
+    "encerradaEm": "2026-07-21T17:28:18.577Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_d188457a-a55e-42c1-868b-31628b7b3b26",
@@ -1113,7 +1333,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -1130,13 +1350,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.832Z",
     "criado_em": "2026-07-20T10:18:52.832Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:28:21.754Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -1150,9 +1370,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.832Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784654901757_387330",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:28:21.754Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:28:21.754Z",
+    "encerradaEm": "2026-07-21T17:28:21.754Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_35bc3670-3b52-4329-9207-8ac8fe69a316",
@@ -1168,7 +1399,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -1185,13 +1416,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.832Z",
     "criado_em": "2026-07-20T10:18:52.832Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:28:26.289Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -1205,9 +1436,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.832Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784654906295_791107",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:28:26.289Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:28:26.289Z",
+    "encerradaEm": "2026-07-21T17:28:26.289Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_f9482d44-4c0b-4497-9502-eeaa3060334c",
@@ -1223,7 +1465,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -1240,13 +1482,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.832Z",
     "criado_em": "2026-07-20T10:18:52.832Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:28:29.819Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -1260,9 +1502,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.832Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784654909829_631370",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:28:29.819Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:28:29.819Z",
+    "encerradaEm": "2026-07-21T17:28:29.819Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_568d5411-d12e-4a02-9ebc-aa0e35bb2f2b",
@@ -1278,7 +1531,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -1295,13 +1548,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.834Z",
     "criado_em": "2026-07-20T10:18:52.834Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:28:35.298Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -1315,9 +1568,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.834Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784654915317_213747",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:28:35.298Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:28:35.298Z",
+    "encerradaEm": "2026-07-21T17:28:35.298Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_76ef9303-47a7-48d2-9c80-3fe541f49dfc",
@@ -1333,7 +1597,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -1350,13 +1614,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.834Z",
     "criado_em": "2026-07-20T10:18:52.834Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:28:39.753Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -1370,9 +1634,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.834Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784654919758_274209",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:28:39.753Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:28:39.753Z",
+    "encerradaEm": "2026-07-21T17:28:39.753Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_e00dc949-d136-43fc-9c41-6d8d7839ad8f",
@@ -1388,7 +1663,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -1405,13 +1680,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.836Z",
     "criado_em": "2026-07-20T10:18:52.836Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:28:45.401Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -1425,9 +1700,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.836Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784654925406_542545",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:28:45.401Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:28:45.401Z",
+    "encerradaEm": "2026-07-21T17:28:45.401Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_87bb129b-91d0-4068-b191-79d645a8d53f",
@@ -1443,7 +1729,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -1460,13 +1746,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.836Z",
     "criado_em": "2026-07-20T10:18:52.836Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:28:48.915Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -1480,9 +1766,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.836Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784654928920_498718",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:28:48.915Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:28:48.915Z",
+    "encerradaEm": "2026-07-21T17:28:48.915Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_0a4d3cf4-5dff-4337-8d2c-6c8958ba7187",
@@ -1498,7 +1795,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -1515,13 +1812,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.836Z",
     "criado_em": "2026-07-20T10:18:52.836Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:28:53.286Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -1535,9 +1832,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.836Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784654933290_230936",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:28:53.286Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:28:53.286Z",
+    "encerradaEm": "2026-07-21T17:28:53.286Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_50e51446-f884-499c-afb2-668b98475b54",
@@ -1553,7 +1861,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -1570,13 +1878,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.837Z",
     "criado_em": "2026-07-20T10:18:52.837Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:28:56.814Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -1590,9 +1898,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.837Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784654936820_56827",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:28:56.814Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:28:56.814Z",
+    "encerradaEm": "2026-07-21T17:28:56.814Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_2ff88499-ed7a-40ed-93f7-f286b1061b0f",
@@ -1608,7 +1927,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -1625,13 +1944,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.837Z",
     "criado_em": "2026-07-20T10:18:52.837Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:28:59.908Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -1645,9 +1964,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.837Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784654939923_32624",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:28:59.908Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:28:59.908Z",
+    "encerradaEm": "2026-07-21T17:28:59.908Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_11eedb58-2770-486c-8492-67ed5891faf8",
@@ -1663,7 +1993,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -1680,13 +2010,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.837Z",
     "criado_em": "2026-07-20T10:18:52.837Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:29:03.523Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -1700,9 +2030,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.837Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784654943527_505399",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:29:03.523Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:29:03.523Z",
+    "encerradaEm": "2026-07-21T17:29:03.523Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_403ae896-ef1b-4514-87be-d34ef9bca36c",
@@ -1718,7 +2059,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -1735,13 +2076,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.837Z",
     "criado_em": "2026-07-20T10:18:52.837Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:29:07.638Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -1755,9 +2096,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.837Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784654947647_799847",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:29:07.638Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:29:07.638Z",
+    "encerradaEm": "2026-07-21T17:29:07.638Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_71ab6256-755e-4b29-9f7f-abc06f958e2d",
@@ -1773,7 +2125,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -1790,13 +2142,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.838Z",
     "criado_em": "2026-07-20T10:18:52.838Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:29:12.776Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -1810,9 +2162,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.838Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784654952790_110693",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:29:12.776Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:29:12.776Z",
+    "encerradaEm": "2026-07-21T17:29:12.776Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_4625f183-9df6-4190-8f88-90c4deb7bd14",
@@ -1828,7 +2191,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -1845,13 +2208,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.839Z",
     "criado_em": "2026-07-20T10:18:52.839Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:29:17.307Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -1865,9 +2228,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.839Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784654957314_874239",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:29:17.307Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:29:17.307Z",
+    "encerradaEm": "2026-07-21T17:29:17.307Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_75bf2b62-cf34-496c-be83-8af8bda47e40",
@@ -1883,7 +2257,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -1900,13 +2274,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.840Z",
     "criado_em": "2026-07-20T10:18:52.840Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:29:20.244Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -1920,9 +2294,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.840Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784654960250_960969",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:29:20.244Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:29:20.244Z",
+    "encerradaEm": "2026-07-21T17:29:20.244Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_3a168a80-fe9b-4aab-83ed-e1e66011f8ce",
@@ -1938,7 +2323,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -1955,13 +2340,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.841Z",
     "criado_em": "2026-07-20T10:18:52.841Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:29:23.702Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -1975,9 +2360,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.841Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784654963713_217817",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:29:23.702Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:29:23.702Z",
+    "encerradaEm": "2026-07-21T17:29:23.702Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_d6320d28-327a-4fb2-8c03-3dcdf1d608c7",
@@ -1993,7 +2389,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -2010,13 +2406,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.847Z",
     "criado_em": "2026-07-20T10:18:52.847Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:29:27.451Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -2030,9 +2426,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.847Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784654967461_46468",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:29:27.451Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:29:27.451Z",
+    "encerradaEm": "2026-07-21T17:29:27.451Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_018885b3-3a08-4f9f-95ed-84db3bd2b017",
@@ -2048,7 +2455,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -2065,13 +2472,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.848Z",
     "criado_em": "2026-07-20T10:18:52.848Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:29:31.740Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -2085,9 +2492,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.848Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784654971744_641415",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:29:31.740Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:29:31.740Z",
+    "encerradaEm": "2026-07-21T17:29:31.740Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_86aa9832-2f30-4d70-8aa7-234884a4989a",
@@ -2103,7 +2521,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -2120,13 +2538,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.848Z",
     "criado_em": "2026-07-20T10:18:52.848Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:29:34.884Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -2140,9 +2558,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.848Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784654974891_18057",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:29:34.884Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:29:34.884Z",
+    "encerradaEm": "2026-07-21T17:29:34.884Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_494da2d6-bbb6-4eef-987f-d2d323028dec",
@@ -2158,7 +2587,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -2175,13 +2604,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.849Z",
     "criado_em": "2026-07-20T10:18:52.849Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:29:38.343Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -2195,9 +2624,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.849Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784654978346_20873",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:29:38.343Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:29:38.343Z",
+    "encerradaEm": "2026-07-21T17:29:38.343Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_4667c82a-cf9c-4014-90a8-9aba434705c6",
@@ -2213,7 +2653,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -2230,13 +2670,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.849Z",
     "criado_em": "2026-07-20T10:18:52.849Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:29:41.235Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -2250,9 +2690,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.849Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784654981240_229957",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:29:41.235Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:29:41.235Z",
+    "encerradaEm": "2026-07-21T17:29:41.235Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_8f5e6d32-d589-466f-a721-a7856f629c6a",
@@ -2268,7 +2719,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -2285,13 +2736,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.849Z",
     "criado_em": "2026-07-20T10:18:52.849Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:29:44.909Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -2305,9 +2756,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.849Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784654984918_245497",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:29:44.909Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:29:44.909Z",
+    "encerradaEm": "2026-07-21T17:29:44.909Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_5d2ef2b7-eb92-4f52-978c-68a77cf3320b",
@@ -2323,7 +2785,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -2340,13 +2802,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.850Z",
     "criado_em": "2026-07-20T10:18:52.850Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:29:50.309Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -2360,9 +2822,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.850Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784654990325_883587",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:29:50.309Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:29:50.309Z",
+    "encerradaEm": "2026-07-21T17:29:50.309Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_b3737e22-06a4-443a-a137-089a15b3c00c",
@@ -2378,7 +2851,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -2395,13 +2868,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.852Z",
     "criado_em": "2026-07-20T10:18:52.852Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:29:54.519Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -2415,9 +2888,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.852Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784654994523_867021",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:29:54.519Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:29:54.519Z",
+    "encerradaEm": "2026-07-21T17:29:54.519Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_0dfb8b59-5334-468f-9345-4b321dc47c40",
@@ -2433,7 +2917,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -2450,13 +2934,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.854Z",
     "criado_em": "2026-07-20T10:18:52.854Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:29:59.358Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -2470,9 +2954,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.854Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784654999364_913210",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:29:59.358Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:29:59.358Z",
+    "encerradaEm": "2026-07-21T17:29:59.358Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_a12664e7-fa68-4337-a06b-75deffe74448",
@@ -2488,7 +2983,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -2505,13 +3000,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.855Z",
     "criado_em": "2026-07-20T10:18:52.855Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:30:02.354Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -2525,9 +3020,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.855Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784655002359_686931",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:30:02.354Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:30:02.354Z",
+    "encerradaEm": "2026-07-21T17:30:02.354Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_1dbc60f1-f794-4c78-93ba-278175ec76b4",
@@ -2543,7 +3049,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -2560,13 +3066,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.855Z",
     "criado_em": "2026-07-20T10:18:52.855Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:30:06.375Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -2580,9 +3086,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.855Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784655006379_709022",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:30:06.375Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:30:06.375Z",
+    "encerradaEm": "2026-07-21T17:30:06.375Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_5d63109c-56b6-4090-b803-34fc9504e8d1",
@@ -2598,7 +3115,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -2615,13 +3132,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.855Z",
     "criado_em": "2026-07-20T10:18:52.855Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:30:10.537Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -2635,9 +3152,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.855Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784655010543_939371",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:30:10.537Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:30:10.537Z",
+    "encerradaEm": "2026-07-21T17:30:10.537Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_0526d4fa-e736-4c9c-a48b-cd8224fa6010",
@@ -2653,7 +3181,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -2670,13 +3198,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.857Z",
     "criado_em": "2026-07-20T10:18:52.857Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:30:14.847Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -2690,9 +3218,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.857Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784655014852_801795",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:30:14.847Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:30:14.847Z",
+    "encerradaEm": "2026-07-21T17:30:14.847Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_76aa9e39-d29c-4170-b1ae-9fa7d8e2182d",
@@ -2708,7 +3247,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -2725,13 +3264,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.857Z",
     "criado_em": "2026-07-20T10:18:52.857Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:30:18.073Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -2745,9 +3284,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.857Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784655018077_388134",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:30:18.073Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:30:18.073Z",
+    "encerradaEm": "2026-07-21T17:30:18.073Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_be75614a-1c81-407d-9e9e-0f29972b893c",
@@ -2763,7 +3313,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -2780,13 +3330,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.858Z",
     "criado_em": "2026-07-20T10:18:52.858Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:30:25.183Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -2800,9 +3350,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.858Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784655025187_243139",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:30:25.183Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:30:25.183Z",
+    "encerradaEm": "2026-07-21T17:30:25.183Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_dd2c879c-d0d9-40b6-b344-03df33fb334e",
@@ -2818,7 +3379,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -2835,13 +3396,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.859Z",
     "criado_em": "2026-07-20T10:18:52.859Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:30:28.081Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -2855,9 +3416,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.859Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784655028085_78",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:30:28.081Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:30:28.081Z",
+    "encerradaEm": "2026-07-21T17:30:28.081Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_29cb219d-e7dd-4054-b8ef-220c4fe0977c",
@@ -2873,7 +3445,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -2890,13 +3462,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.860Z",
     "criado_em": "2026-07-20T10:18:52.860Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:30:31.929Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -2910,9 +3482,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.860Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784655031934_393614",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:30:31.929Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:30:31.929Z",
+    "encerradaEm": "2026-07-21T17:30:31.929Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_88303292-f023-455e-8e54-3082bc71657c",
@@ -2928,7 +3511,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -2945,13 +3528,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.861Z",
     "criado_em": "2026-07-20T10:18:52.861Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:30:36.114Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -2965,9 +3548,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.861Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784655036123_266885",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:30:36.114Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:30:36.114Z",
+    "encerradaEm": "2026-07-21T17:30:36.114Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_d895d932-d9cc-4f48-b86e-501ac2e53a09",
@@ -2983,7 +3577,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -3000,13 +3594,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.862Z",
     "criado_em": "2026-07-20T10:18:52.862Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:30:41.103Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -3020,9 +3614,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.862Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784655041110_200733",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:30:41.103Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:30:41.103Z",
+    "encerradaEm": "2026-07-21T17:30:41.103Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_a1f0bc14-c217-465e-889f-724d4529a0bc",
@@ -3038,7 +3643,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -3055,13 +3660,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.862Z",
     "criado_em": "2026-07-20T10:18:52.862Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:30:45.385Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -3075,9 +3680,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.862Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784655045391_67880",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:30:45.385Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:30:45.385Z",
+    "encerradaEm": "2026-07-21T17:30:45.385Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_7a2dca6a-72a2-43e0-8302-715260f23717",
@@ -3093,7 +3709,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -3110,13 +3726,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.863Z",
     "criado_em": "2026-07-20T10:18:52.863Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:30:48.241Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -3130,9 +3746,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.863Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784655048245_242349",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:30:48.241Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:30:48.241Z",
+    "encerradaEm": "2026-07-21T17:30:48.241Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_8ca99d29-c80c-424d-ba20-5e2b19e54000",
@@ -3148,7 +3775,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -3165,13 +3792,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.863Z",
     "criado_em": "2026-07-20T10:18:52.863Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:30:51.642Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -3185,9 +3812,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.863Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784655051647_200844",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:30:51.642Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:30:51.642Z",
+    "encerradaEm": "2026-07-21T17:30:51.642Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_2180e74b-4431-4499-85de-b240434f98a7",
@@ -3203,7 +3841,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -3220,13 +3858,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.863Z",
     "criado_em": "2026-07-20T10:18:52.863Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:30:55.680Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -3240,9 +3878,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.863Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784655055689_967469",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:30:55.680Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:30:55.680Z",
+    "encerradaEm": "2026-07-21T17:30:55.680Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_1c5327da-3480-4159-a8ab-88034b452206",
@@ -3258,7 +3907,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -3275,13 +3924,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.864Z",
     "criado_em": "2026-07-20T10:18:52.864Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:31:01.196Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -3295,9 +3944,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.864Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784655061201_305407",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:31:01.196Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:31:01.196Z",
+    "encerradaEm": "2026-07-21T17:31:01.196Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_83259be2-6924-441c-b6fe-4fb11c34517a",
@@ -3313,7 +3973,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -3330,13 +3990,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.867Z",
     "criado_em": "2026-07-20T10:18:52.867Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:31:04.068Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -3350,9 +4010,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.867Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784655064074_270565",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:31:04.068Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:31:04.068Z",
+    "encerradaEm": "2026-07-21T17:31:04.068Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_601f6c9b-4cb2-4e12-9acf-a880de9d85a7",
@@ -3368,7 +4039,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -3385,13 +4056,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.868Z",
     "criado_em": "2026-07-20T10:18:52.868Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:31:07.957Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -3405,9 +4076,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.868Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784655067961_345774",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:31:07.957Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:31:07.957Z",
+    "encerradaEm": "2026-07-21T17:31:07.957Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_3e68f4b9-deb2-48dd-87d8-c60c614d6c1f",
@@ -3423,7 +4105,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -3440,13 +4122,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.868Z",
     "criado_em": "2026-07-20T10:18:52.868Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:31:11.141Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -3460,9 +4142,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.868Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784655071146_421481",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:31:11.141Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:31:11.141Z",
+    "encerradaEm": "2026-07-21T17:31:11.141Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_d0aae07d-72dc-4eca-b2a2-b9636e3c9169",
@@ -3478,7 +4171,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -3495,13 +4188,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.868Z",
     "criado_em": "2026-07-20T10:18:52.868Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:31:14.565Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -3515,9 +4208,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.868Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784655074569_53969",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:31:14.565Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:31:14.565Z",
+    "encerradaEm": "2026-07-21T17:31:14.565Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_eacc0ce8-22ec-4eef-bce8-719da518cf6d",
@@ -3533,7 +4237,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -3550,13 +4254,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.869Z",
     "criado_em": "2026-07-20T10:18:52.869Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:31:19.605Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -3570,9 +4274,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.869Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784655079614_584208",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:31:19.605Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:31:19.605Z",
+    "encerradaEm": "2026-07-21T17:31:19.605Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_a69fe6fe-5630-4973-8819-ce62f5f2ec4b",
@@ -3588,7 +4303,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -3605,13 +4320,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.869Z",
     "criado_em": "2026-07-20T10:18:52.869Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:31:25.074Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -3625,9 +4340,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.869Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784655085080_57265",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:31:25.074Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:31:25.074Z",
+    "encerradaEm": "2026-07-21T17:31:25.074Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_1aa1d631-7787-4ee9-90b9-3b2ae627d863",
@@ -3643,7 +4369,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -3660,13 +4386,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.869Z",
     "criado_em": "2026-07-20T10:18:52.869Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:31:28.766Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -3680,9 +4406,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.869Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784655088769_159968",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:31:28.766Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:31:28.766Z",
+    "encerradaEm": "2026-07-21T17:31:28.766Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_559bc29b-bec3-4d3a-a5c8-400ad68c5274",
@@ -3698,7 +4435,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -3715,13 +4452,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.870Z",
     "criado_em": "2026-07-20T10:18:52.870Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:31:31.717Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -3735,9 +4472,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.870Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784655091728_789392",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:31:31.717Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:31:31.717Z",
+    "encerradaEm": "2026-07-21T17:31:31.717Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_5381819b-09e0-43eb-9ab3-90872de0e630",
@@ -3753,7 +4501,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -3770,13 +4518,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.870Z",
     "criado_em": "2026-07-20T10:18:52.870Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:31:35.526Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -3790,9 +4538,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.870Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784655095531_199054",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:31:35.526Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:31:35.526Z",
+    "encerradaEm": "2026-07-21T17:31:35.526Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_86b01000-8ff2-44a8-9170-ede6d980595e",
@@ -3808,7 +4567,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -3825,13 +4584,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.870Z",
     "criado_em": "2026-07-20T10:18:52.870Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:31:38.467Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -3845,9 +4604,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.870Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784655098490_72662",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:31:38.467Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:31:38.467Z",
+    "encerradaEm": "2026-07-21T17:31:38.467Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_e3b41795-b554-4a72-a22b-d03c8b7de4d9",
@@ -3863,7 +4633,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -3880,13 +4650,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.870Z",
     "criado_em": "2026-07-20T10:18:52.870Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:31:42.260Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -3900,9 +4670,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.870Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784655102265_194125",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:31:42.260Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:31:42.260Z",
+    "encerradaEm": "2026-07-21T17:31:42.260Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_93ec904d-33ca-46ac-a81b-e0a43de7b95e",
@@ -3918,7 +4699,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -3935,13 +4716,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.872Z",
     "criado_em": "2026-07-20T10:18:52.872Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:31:45.064Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -3955,9 +4736,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.872Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784655105069_933926",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:31:45.064Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:31:45.064Z",
+    "encerradaEm": "2026-07-21T17:31:45.064Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_6a094263-0d66-4279-a857-2f13b3583694",
@@ -3973,7 +4765,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -3990,13 +4782,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.873Z",
     "criado_em": "2026-07-20T10:18:52.873Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:31:51.780Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -4010,9 +4802,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.873Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784655111790_468635",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:31:51.780Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:31:51.780Z",
+    "encerradaEm": "2026-07-21T17:31:51.780Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_77122d9d-7827-47ed-aa61-a0d36913eb81",
@@ -4028,7 +4831,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -4045,13 +4848,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.873Z",
     "criado_em": "2026-07-20T10:18:52.873Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:31:57.985Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -4065,9 +4868,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.873Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784655117990_801392",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:31:57.985Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:31:57.985Z",
+    "encerradaEm": "2026-07-21T17:31:57.985Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_602528a2-5012-4ce8-84d2-51cf501de2cf",
@@ -4083,7 +4897,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -4100,13 +4914,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.875Z",
     "criado_em": "2026-07-20T10:18:52.875Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:32:01.192Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -4120,9 +4934,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.875Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784655121196_891859",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:32:01.192Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:32:01.192Z",
+    "encerradaEm": "2026-07-21T17:32:01.192Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_a4d43fab-bf32-4d60-8852-00868a01fe19",
@@ -4138,7 +4963,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -4155,13 +4980,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.875Z",
     "criado_em": "2026-07-20T10:18:52.875Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:32:03.910Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -4175,9 +5000,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.875Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784655123917_221009",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:32:03.910Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:32:03.910Z",
+    "encerradaEm": "2026-07-21T17:32:03.910Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_3e8dade7-f625-483c-a609-883344d62bc6",
@@ -4193,7 +5029,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -4210,13 +5046,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.875Z",
     "criado_em": "2026-07-20T10:18:52.875Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:32:06.870Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -4230,9 +5066,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.875Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784655126875_226610",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:32:06.870Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:32:06.870Z",
+    "encerradaEm": "2026-07-21T17:32:06.870Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_e6a88057-24db-4b73-b9e8-5887297a9cbd",
@@ -4248,7 +5095,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -4265,13 +5112,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.876Z",
     "criado_em": "2026-07-20T10:18:52.876Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:32:10.219Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -4285,9 +5132,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.876Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784655130223_705002",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:32:10.219Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:32:10.219Z",
+    "encerradaEm": "2026-07-21T17:32:10.219Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_8cc0551c-b4ee-4325-96c9-ab012eeb1151",
@@ -4303,7 +5161,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -4320,13 +5178,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.876Z",
     "criado_em": "2026-07-20T10:18:52.876Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:32:13.802Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -4340,9 +5198,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.876Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784655133810_356919",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:32:13.802Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:32:13.802Z",
+    "encerradaEm": "2026-07-21T17:32:13.802Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_5bbb851a-4de8-4bcd-9f07-ca56c847d0e9",
@@ -4358,7 +5227,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -4375,13 +5244,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.884Z",
     "criado_em": "2026-07-20T10:18:52.884Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:32:17.010Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -4395,9 +5264,20 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.884Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784655137014_785648",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:32:17.010Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:32:17.010Z",
+    "encerradaEm": "2026-07-21T17:32:17.010Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
   },
   {
     "id": "mat_imp_0559915f-542e-4844-b46a-f4642fcc5e8b",
@@ -4413,7 +5293,7 @@
     "plano": "MUSCULAÇÃO",
     "tipoPlano": "Mensal",
     "tipoCobranca": "Mensal",
-    "status": "Ativa",
+    "status": "Cancelada",
     "statusFinanceiroInicial": "Sem lancamento no piloto",
     "dataMatricula": "2026-07-20",
     "data_matricula": "2026-07-20",
@@ -4430,13 +5310,13 @@
     "valorMensalTotal": 65,
     "valorTotalInicial": 0,
     "formaPagamento": "",
-    "renovacaoAutomatica": true,
-    "gerarMensalidadeAutomatica": true,
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
     "importadoAccess": true,
     "observacao": "Importacao Access para piloto: aluno ativo, sem lancamento financeiro inicial.",
     "criadoEm": "2026-07-20T10:18:52.885Z",
     "criado_em": "2026-07-20T10:18:52.885Z",
-    "atualizadoEm": "2026-07-20T10:18:53.196Z",
+    "atualizadoEm": "2026-07-21T17:32:21.914Z",
     "atualizado_em": "2026-07-20T10:18:53.196Z",
     "historico": [
       {
@@ -4450,8 +5330,448 @@
         },
         "usuario": "importador-access",
         "criadoEm": "2026-07-20T10:18:52.885Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784655141922_933943",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:32:21.914Z"
       }
     ],
-    "auditoria": []
+    "auditoria": [],
+    "canceladaEm": "2026-07-21T17:32:21.914Z",
+    "encerradaEm": "2026-07-21T17:32:21.914Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
+  },
+  {
+    "id": "mat_1784653591392_703395",
+    "numero": "MAT-202607-000001",
+    "numeroMatricula": "MAT-202607-000001",
+    "alunoId": "b77a7e4d-e831-493d-86bb-16341689fbeb",
+    "alunoNome": "PAULO FRANCISCO DANTAS LIMA JUNIOR",
+    "aluno": "PAULO FRANCISCO DANTAS LIMA JUNIOR",
+    "planoId": "6980ab38-5a58-4d8d-89eb-ce088e52255d",
+    "plano": "MUSCULAÇÃO",
+    "planoNome": "MUSCULAÇÃO",
+    "valorMensal": 65,
+    "valorMensalTotal": 65,
+    "valorPlano": 65,
+    "valorServicos": 0,
+    "dataMatricula": "2026-07-21",
+    "dataInicio": "2026-07-21",
+    "vencimentoInicial": "2026-07-21",
+    "proximoVencimento": "2026-08-21",
+    "status": "Cancelada",
+    "statusPagamento": "Pago",
+    "statusFinanceiroInicial": "Pago",
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
+    "origem": "reativacao_aluno",
+    "tipoCobranca": "Mensal",
+    "tipoPlano": "Mensal",
+    "matriculaAnteriorId": "",
+    "reativacaoNovaMatricula": true,
+    "criadoEm": "2026-07-21T17:06:31.381Z",
+    "atualizadoEm": "2026-07-21T17:32:38.007Z",
+    "historico": [
+      {
+        "id": "hist_mat_nova_reat_1784653591396_834376",
+        "acao": "nova_matricula_reativacao",
+        "descricao": "Nova matrícula criada para reativação. A matrícula anterior permanece congelada como histórico.",
+        "matriculaAnteriorId": "",
+        "usuario": "operador",
+        "motivo": "Reativação pelo cadastro de alunos com cobrança no caixa.",
+        "criadoEm": "2026-07-21T17:06:31.381Z"
+      },
+      {
+        "id": "hist_mat_reat_cob_1784653591397_72893",
+        "acao": "reativacao_cobranca_aberta",
+        "descricao": "Cobrança de reativação criada. Matrícula será ativada após pagamento.",
+        "motivo": "Reativação pelo cadastro de alunos com cobrança no caixa.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:06:31.381Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784655158011_853378",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:32:38.007Z"
+      }
+    ],
+    "bloqueada": false,
+    "bloqueioCheckin": false,
+    "mensalidadeInicialId": "men_reat_1784653591397_539385",
+    "financeiroInicialId": "fin_men_reat_1784653591397_539385",
+    "recebimentoInicialId": "rec_men_reat_1784653591397_539385",
+    "diaVencimento": 21,
+    "mensalidadeProximaId": "men_rec_1784653591400_88338",
+    "financeiroProximoId": "fin_men_rec_1784653591400_88338",
+    "ativadaEm": "2026-07-21T17:23:03.053Z",
+    "canceladaEm": "2026-07-21T17:32:38.007Z",
+    "encerradaEm": "2026-07-21T17:32:38.007Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
+  },
+  {
+    "id": "mat_1784653690854_988548",
+    "numero": "MAT-202607-000002",
+    "numeroMatricula": "MAT-202607-000002",
+    "alunoId": "663d8dcc-d01a-4ca3-8d99-62bc382bdd63",
+    "alunoNome": "MARIA ARIANNE DA SILVA CAVALCANTE",
+    "aluno": "MARIA ARIANNE DA SILVA CAVALCANTE",
+    "planoId": "6980ab38-5a58-4d8d-89eb-ce088e52255d",
+    "plano": "MUSCULAÇÃO",
+    "planoNome": "MUSCULAÇÃO",
+    "valorMensal": 65,
+    "valorMensalTotal": 65,
+    "valorPlano": 65,
+    "valorServicos": 0,
+    "dataMatricula": "2026-07-21",
+    "dataInicio": "2026-07-21",
+    "vencimentoInicial": "2026-07-21",
+    "proximoVencimento": "2026-09-21",
+    "status": "Cancelada",
+    "statusPagamento": "Pago",
+    "statusFinanceiroInicial": "Pago",
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
+    "origem": "reativacao_aluno",
+    "tipoCobranca": "Mensal",
+    "tipoPlano": "Mensal",
+    "matriculaAnteriorId": "",
+    "reativacaoNovaMatricula": true,
+    "criadoEm": "2026-07-21T17:08:10.828Z",
+    "atualizadoEm": "2026-07-21T17:32:26.830Z",
+    "historico": [
+      {
+        "id": "hist_mat_nova_reat_1784653690858_792444",
+        "acao": "nova_matricula_reativacao",
+        "descricao": "Nova matrícula criada para reativação. A matrícula anterior permanece congelada como histórico.",
+        "matriculaAnteriorId": "",
+        "usuario": "operador",
+        "motivo": "Reativação pelo cadastro de alunos com cobrança no caixa.",
+        "criadoEm": "2026-07-21T17:08:10.828Z"
+      },
+      {
+        "id": "hist_mat_reat_cob_1784653690859_881310",
+        "acao": "reativacao_cobranca_aberta",
+        "descricao": "Cobrança de reativação criada. Matrícula será ativada após pagamento.",
+        "motivo": "Reativação pelo cadastro de alunos com cobrança no caixa.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:08:10.828Z"
+      },
+      {
+        "id": "hist_mat_1784654480577_315876",
+        "acao": "mensalidade_automatica",
+        "descricao": "Mensalidade 2026-09 gerada automaticamente. Periodicidade: Mensal.",
+        "mensalidadeId": "men_auto_1784654480574_296681",
+        "financeiroId": "fin_men_auto_1784654480574_296681",
+        "vencimento": "2026-09-21",
+        "periodicidade": {
+          "nome": "Mensal",
+          "meses": 1
+        },
+        "usuario": "financeiro",
+        "criadoEm": "2026-07-21T17:21:20.577Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784655146841_234342",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:32:26.830Z"
+      }
+    ],
+    "bloqueada": false,
+    "bloqueioCheckin": false,
+    "mensalidadeInicialId": "men_reat_1784653690859_120526",
+    "financeiroInicialId": "fin_men_reat_1784653690859_120526",
+    "recebimentoInicialId": "rec_men_reat_1784653690859_120526",
+    "diaVencimento": 21,
+    "mensalidadeProximaId": "men_rec_1784653690862_531859",
+    "financeiroProximoId": "fin_men_rec_1784653690862_531859",
+    "ativadaEm": "2026-07-21T17:21:20.461Z",
+    "ultimoPagamentoEm": "2026-08-21",
+    "ultimaMensalidadeGeradaId": "men_auto_1784654480574_296681",
+    "periodicidade": "Mensal",
+    "periodicidadeMeses": 1,
+    "canceladaEm": "2026-07-21T17:32:26.830Z",
+    "encerradaEm": "2026-07-21T17:32:26.830Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
+  },
+  {
+    "id": "mat_1784654624521_306606",
+    "numero": "MAT-202607-000003",
+    "numeroMatricula": "MAT-202607-000003",
+    "alunoId": "482bdd3b-5bde-4282-b609-fc555a5845b8",
+    "alunoNome": "MARIA CÍCERA DA SILVA",
+    "aluno": "MARIA CÍCERA DA SILVA",
+    "planoId": "6980ab38-5a58-4d8d-89eb-ce088e52255d",
+    "plano": "MUSCULAÇÃO",
+    "planoNome": "MUSCULAÇÃO",
+    "valorMensal": 65,
+    "valorMensalTotal": 65,
+    "valorPlano": 65,
+    "valorServicos": 0,
+    "dataMatricula": "2026-07-21",
+    "dataInicio": "2026-07-21",
+    "vencimentoInicial": "2026-07-21",
+    "proximoVencimento": "2026-08-21",
+    "status": "Cancelada",
+    "statusPagamento": "Pago",
+    "statusFinanceiroInicial": "Pago",
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
+    "origem": "reativacao_aluno",
+    "tipoCobranca": "Mensal",
+    "tipoPlano": "Mensal",
+    "matriculaAnteriorId": "",
+    "reativacaoNovaMatricula": true,
+    "criadoEm": "2026-07-21T17:23:44.459Z",
+    "atualizadoEm": "2026-07-21T17:32:31.185Z",
+    "historico": [
+      {
+        "id": "hist_mat_nova_reat_1784654624525_301559",
+        "acao": "nova_matricula_reativacao",
+        "descricao": "Nova matrícula criada para reativação. A matrícula anterior permanece congelada como histórico.",
+        "matriculaAnteriorId": "",
+        "usuario": "operador",
+        "motivo": "Reativação pelo cadastro de alunos com cobrança no caixa.",
+        "criadoEm": "2026-07-21T17:23:44.459Z"
+      },
+      {
+        "id": "hist_mat_reat_cob_1784654624525_976522",
+        "acao": "reativacao_cobranca_aberta",
+        "descricao": "Cobrança de reativação criada. Matrícula será ativada após pagamento.",
+        "motivo": "Reativação pelo cadastro de alunos com cobrança no caixa.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:23:44.459Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784655151189_141076",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:32:31.185Z"
+      }
+    ],
+    "bloqueada": false,
+    "bloqueioCheckin": false,
+    "mensalidadeInicialId": "men_reat_1784654624525_631876",
+    "financeiroInicialId": "fin_men_reat_1784654624525_631876",
+    "recebimentoInicialId": "rec_men_reat_1784654624525_631876",
+    "diaVencimento": 21,
+    "mensalidadeProximaId": "men_rec_1784654624528_242254",
+    "financeiroProximoId": "fin_men_rec_1784654624528_242254",
+    "ativadaEm": "2026-07-21T17:24:01.260Z",
+    "canceladaEm": "2026-07-21T17:32:31.185Z",
+    "encerradaEm": "2026-07-21T17:32:31.185Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
+  },
+  {
+    "id": "mat_1784654806499_78877",
+    "numero": "MAT-202607-000004",
+    "numeroMatricula": "MAT-202607-000004",
+    "alunoId": "76c07441-4eda-47bd-8ae2-a0c763ef75dc",
+    "alunoNome": "ARICREMIS PEDRO DA SILVA",
+    "aluno": "ARICREMIS PEDRO DA SILVA",
+    "planoId": "6980ab38-5a58-4d8d-89eb-ce088e52255d",
+    "plano": "MUSCULAÇÃO",
+    "planoNome": "MUSCULAÇÃO",
+    "valorMensal": 65,
+    "valorMensalTotal": 65,
+    "valorPlano": 65,
+    "valorServicos": 0,
+    "dataMatricula": "2026-07-21",
+    "dataInicio": "2026-07-21",
+    "vencimentoInicial": "2026-07-21",
+    "proximoVencimento": "2026-08-21",
+    "status": "Cancelada",
+    "statusPagamento": "Pago",
+    "statusFinanceiroInicial": "Pago",
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
+    "origem": "reativacao_aluno",
+    "tipoCobranca": "Mensal",
+    "tipoPlano": "Mensal",
+    "matriculaAnteriorId": "mat_imp_3a569454-7d07-403e-a1bf-d7c400b702c9",
+    "reativacaoNovaMatricula": true,
+    "criadoEm": "2026-07-21T17:26:46.485Z",
+    "atualizadoEm": "2026-07-21T17:27:07.968Z",
+    "historico": [
+      {
+        "id": "hist_mat_nova_reat_1784654806501_753366",
+        "acao": "nova_matricula_reativacao",
+        "descricao": "Nova matrícula criada para reativação. A matrícula anterior permanece congelada como histórico.",
+        "matriculaAnteriorId": "mat_imp_3a569454-7d07-403e-a1bf-d7c400b702c9",
+        "usuario": "operador",
+        "motivo": "Reativação pelo cadastro de alunos com cobrança no caixa.",
+        "criadoEm": "2026-07-21T17:26:46.485Z"
+      },
+      {
+        "id": "hist_mat_reat_cob_1784654806502_733742",
+        "acao": "reativacao_cobranca_aberta",
+        "descricao": "Cobrança de reativação criada. Matrícula será ativada após pagamento.",
+        "motivo": "Reativação pelo cadastro de alunos com cobrança no caixa.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:26:46.485Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784654827979_231021",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T17:27:07.968Z"
+      }
+    ],
+    "bloqueada": false,
+    "bloqueioCheckin": false,
+    "mensalidadeInicialId": "men_reat_1784654806502_469138",
+    "financeiroInicialId": "fin_men_reat_1784654806502_469138",
+    "recebimentoInicialId": "rec_men_reat_1784654806502_469138",
+    "diaVencimento": 21,
+    "mensalidadeProximaId": "men_rec_1784654806504_1455",
+    "financeiroProximoId": "fin_men_rec_1784654806504_1455",
+    "ativadaEm": "2026-07-21T17:26:56.112Z",
+    "canceladaEm": "2026-07-21T17:27:07.968Z",
+    "encerradaEm": "2026-07-21T17:27:07.968Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
+  },
+  {
+    "id": "mat_1784658618170_596887",
+    "numero": "MAT-202607-000005",
+    "numeroMatricula": "MAT-202607-000005",
+    "alunoId": "e1209c22-7f29-450b-87ca-0f2a97ea8170",
+    "alunoNome": "DANIELA MORAIS TENÓRIO DE OLIVEIRA",
+    "aluno": "DANIELA MORAIS TENÓRIO DE OLIVEIRA",
+    "planoId": "6980ab38-5a58-4d8d-89eb-ce088e52255d",
+    "plano": "MUSCULAÇÃO",
+    "planoNome": "MUSCULAÇÃO",
+    "valorMensal": 65,
+    "valorMensalTotal": 65,
+    "valorPlano": 65,
+    "valorServicos": 0,
+    "dataMatricula": "2026-07-21",
+    "dataInicio": "2026-07-21",
+    "vencimentoInicial": "2026-07-21",
+    "proximoVencimento": "2026-08-21",
+    "status": "Cancelada",
+    "statusPagamento": "Pago",
+    "statusFinanceiroInicial": "Pago",
+    "renovacaoAutomatica": false,
+    "gerarMensalidadeAutomatica": false,
+    "origem": "reativacao_aluno",
+    "tipoCobranca": "Mensal",
+    "tipoPlano": "Mensal",
+    "matriculaAnteriorId": "mat_imp_b3607b91-0da0-48a0-ac22-643a11c99bfb",
+    "reativacaoNovaMatricula": true,
+    "criadoEm": "2026-07-21T18:30:18.144Z",
+    "atualizadoEm": "2026-07-21T18:44:02.359Z",
+    "historico": [
+      {
+        "id": "hist_mat_nova_reat_1784658618171_185683",
+        "acao": "nova_matricula_reativacao",
+        "descricao": "Nova matrícula criada para reativação. A matrícula anterior permanece congelada como histórico.",
+        "matriculaAnteriorId": "mat_imp_b3607b91-0da0-48a0-ac22-643a11c99bfb",
+        "usuario": "operador",
+        "motivo": "Reativação pelo cadastro de alunos com cobrança no caixa.",
+        "criadoEm": "2026-07-21T18:30:18.144Z"
+      },
+      {
+        "id": "hist_mat_reat_cob_1784658618171_291455",
+        "acao": "reativacao_cobranca_aberta",
+        "descricao": "Cobrança de reativação criada. Matrícula será ativada após pagamento.",
+        "motivo": "Reativação pelo cadastro de alunos com cobrança no caixa.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T18:30:18.144Z"
+      },
+      {
+        "id": "hist_mat_cancel_1784659442371_91399",
+        "acao": "cancelamento_por_desligamento_aluno",
+        "descricao": "Matrícula cancelada automaticamente pelo desligamento/exclusão do aluno.",
+        "motivo": "Cancelamento rápido pelo cadastro de alunos.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T18:44:02.359Z"
+      }
+    ],
+    "bloqueada": false,
+    "bloqueioCheckin": false,
+    "mensalidadeInicialId": "men_reat_1784658618171_685975",
+    "financeiroInicialId": "fin_men_reat_1784658618171_685975",
+    "recebimentoInicialId": "rec_men_reat_1784658618171_685975",
+    "diaVencimento": 21,
+    "mensalidadeProximaId": "men_rec_1784658618173_192971",
+    "financeiroProximoId": "fin_men_rec_1784658618173_192971",
+    "ativadaEm": "2026-07-21T18:31:11.412Z",
+    "ultimoPagamentoEm": "2026-07-21",
+    "canceladaEm": "2026-07-21T18:44:02.359Z",
+    "encerradaEm": "2026-07-21T18:44:02.359Z",
+    "motivoCancelamento": "Cancelamento rápido pelo cadastro de alunos."
+  },
+  {
+    "id": "mat_1784676049506_278205",
+    "numero": "MAT-202607-000006",
+    "numeroMatricula": "MAT-202607-000006",
+    "alunoId": "4b626753-0cf3-4724-95b9-a92bd605ea2d",
+    "alunoNome": "ALAN JAMES",
+    "aluno": "ALAN JAMES",
+    "planoId": "6980ab38-5a58-4d8d-89eb-ce088e52255d",
+    "plano": "MUSCULAÇÃO",
+    "planoNome": "MUSCULAÇÃO",
+    "valorMensal": 65,
+    "valorMensalTotal": 65,
+    "valorPlano": 65,
+    "valorServicos": 0,
+    "dataMatricula": "2026-07-21",
+    "dataInicio": "2026-07-21",
+    "vencimentoInicial": "2026-07-21",
+    "proximoVencimento": "2026-08-21",
+    "status": "Ativa",
+    "statusPagamento": "Pago",
+    "statusFinanceiroInicial": "Pago",
+    "renovacaoAutomatica": true,
+    "gerarMensalidadeAutomatica": true,
+    "origem": "reativacao_aluno",
+    "tipoCobranca": "Mensal",
+    "tipoPlano": "Mensal",
+    "matriculaAnteriorId": "",
+    "reativacaoNovaMatricula": true,
+    "criadoEm": "2026-07-21T23:20:49.495Z",
+    "atualizadoEm": "2026-07-21T23:21:58.419Z",
+    "historico": [
+      {
+        "id": "hist_mat_nova_reat_1784676049512_372619",
+        "acao": "nova_matricula_reativacao",
+        "descricao": "Nova matrícula criada para reativação. A matrícula anterior permanece congelada como histórico.",
+        "matriculaAnteriorId": "",
+        "usuario": "operador",
+        "motivo": "Reativação pelo cadastro de alunos com cobrança no caixa.",
+        "criadoEm": "2026-07-21T23:20:49.495Z"
+      },
+      {
+        "id": "hist_mat_reat_cob_1784676049513_17210",
+        "acao": "reativacao_cobranca_aberta",
+        "descricao": "Cobrança de reativação criada. Matrícula será ativada após pagamento.",
+        "motivo": "Reativação pelo cadastro de alunos com cobrança no caixa.",
+        "usuario": "operador",
+        "criadoEm": "2026-07-21T23:20:49.495Z"
+      }
+    ],
+    "bloqueada": false,
+    "bloqueioCheckin": false,
+    "mensalidadeInicialId": "men_reat_1784676049514_435647",
+    "financeiroInicialId": "fin_men_reat_1784676049514_435647",
+    "recebimentoInicialId": "rec_men_reat_1784676049514_435647",
+    "diaVencimento": 21,
+    "mensalidadeProximaId": "men_rec_1784676049516_384167",
+    "financeiroProximoId": "fin_men_rec_1784676049516_384167",
+    "ativadaEm": "2026-07-21T23:21:58.359Z",
+    "ultimoPagamentoEm": "2026-07-21"
   }
 ]

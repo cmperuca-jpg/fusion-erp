@@ -576,33 +576,10 @@ async function confirmarBaixa(event) {
     if (!resp.ok) throw new Error(await obterMensagemErroResposta(resp, `Erro HTTP ${resp.status}`));
     if (json.ok === false) throw new Error(json.mensagem || json.erro || "Não foi possível confirmar o recebimento.");
 
+    const motor = json?.cobrancaAutomatica || {};
     let mensagemMotor = "";
-    try {
-      const motorPayload = {
-        financeiroId: id,
-        mensalidadeId: valor("baixaMensalidadeId") || json?.lancamento?.mensalidadeId || baixaAtual?.mensalidadeId || "",
-        alunoId: json?.lancamento?.alunoId || baixaAtual?.alunoId || "",
-        usuario: "financeiro"
-      };
-
-      const respMotor = await fetch("/api/cobranca/gerar-proxima", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(motorPayload)
-      });
-
-      const jsonMotor = await respMotor.json().catch(() => ({}));
-
-      if (respMotor.ok && jsonMotor.ok && jsonMotor.gerada) {
-        mensagemMotor = `\n\nPróxima mensalidade gerada: ${jsonMotor.proximoVencimento || ""}`;
-      } else if (respMotor.ok && jsonMotor.ok && jsonMotor.motivo) {
-        mensagemMotor = `\n\nMotor de cobrança: ${jsonMotor.motivo}`;
-      } else if (!respMotor.ok) {
-        mensagemMotor = "\n\nPagamento registrado, mas o motor de cobrança não conseguiu gerar a próxima mensalidade.";
-      }
-    } catch {
-      mensagemMotor = "\n\nPagamento registrado. Motor de cobrança não executado automaticamente.";
-    }
+    if (motor.gerada) mensagemMotor = `\n\nPróxima mensalidade gerada automaticamente: ${motor.proximoVencimento || ""}`;
+    else if (motor.aviso && motor.motivo) mensagemMotor = `\n\nAtenção na recorrência: ${motor.motivo}`;
 
     fecharModalBaixa();
     limparParametrosBaixaDaUrl();

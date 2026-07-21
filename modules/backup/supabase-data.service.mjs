@@ -314,5 +314,5 @@ export function statusPersistencia() {
 export async function encerrarPersistenciaSupabase() {
   if (timer) clearInterval(timer);
   timer = null;
-  if (configurado()) await sincronizarTudoAgora();
+  if (inicializado && configurado()) await sincronizarTudoAgora();
 }

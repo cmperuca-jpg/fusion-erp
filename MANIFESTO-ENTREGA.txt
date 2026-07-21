@@ -1,0 +1,9 @@
+﻿Fusion ERP Local - Reconstrucao Cadastro/Financeiro
+Data: 2026-07-21
+
+Este ZIP contem somente arquivos criados ou alterados nesta entrega.
+Aplicacao: extrair na raiz do Fusion ERP piloto existente e substituir quando solicitado.
+
+Validacao: npm.cmd run check aprovado; servidor local testado com /api/health, /api/sistema/diagnostico, /api/financeiro/estrutura/configuracao e pagina /pages/financeiro/index.html.
+
+Observacao: node_modules, logs e dados gerados em teste nao foram incluidos.

@@ -1,4 +1,42 @@
 {
-  "caixas": [],
-  "movimentos": []
+  "caixas": [
+    {
+      "id": "cx_1784676088270_78a460",
+      "dataAbertura": "2026-07-21",
+      "valorAbertura": 0,
+      "valorAberturaCentavos": 0,
+      "responsavel": "Administrador",
+      "observacaoAbertura": "",
+      "status": "aberto",
+      "abertoEm": "2026-07-21T23:21:28.270Z",
+      "fechadoEm": "",
+      "valorFechamentoInformado": null,
+      "diferenca": null,
+      "observacaoFechamento": ""
+    }
+  ],
+  "movimentos": [
+    {
+      "id": "movrec_fca22b37-d10e-4bc7-8444-53abfce994c4",
+      "caixaId": "cx_1784676088270_78a460",
+      "tipo": "entrada",
+      "descricao": "Recibo 00000007 - ALAN JAMES",
+      "categoria": "Recebimentos",
+      "planoContaId": "pc_1_01",
+      "pessoa": "ALAN JAMES",
+      "alunoId": "4b626753-0cf3-4724-95b9-a92bd605ea2d",
+      "reciboId": "rec_c4aaeee5-647a-476a-9bb4-046768a2fe3e",
+      "formaPagamento": "PIX",
+      "valorCentavos": 6500,
+      "valor": 65,
+      "taxaCentavos": 0,
+      "taxaOperadoraValor": 0,
+      "valorLiquidoCentavos": 6500,
+      "valorLiquido": 65,
+      "data": "2026-07-10",
+      "status": "ativo",
+      "origem": "recibo",
+      "criadoEm": "2026-07-21T23:21:58.360Z"
+    }
+  ]
 }

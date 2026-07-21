@@ -1,0 +1,114 @@
+[
+  {
+    "id": "pc_1_01",
+    "codigo": "1.01",
+    "nome": "Mensalidades",
+    "tipo": "receita",
+    "ativo": true,
+    "excluido": false
+  },
+  {
+    "id": "pc_1_02",
+    "codigo": "1.02",
+    "nome": "Taxa de matrícula",
+    "tipo": "receita",
+    "ativo": true,
+    "excluido": false
+  },
+  {
+    "id": "pc_1_03",
+    "codigo": "1.03",
+    "nome": "Avaliação física",
+    "tipo": "receita",
+    "ativo": true,
+    "excluido": false
+  },
+  {
+    "id": "pc_1_04",
+    "codigo": "1.04",
+    "nome": "Venda de produtos",
+    "tipo": "receita",
+    "ativo": true,
+    "excluido": false
+  },
+  {
+    "id": "pc_1_99",
+    "codigo": "1.99",
+    "nome": "Outras receitas",
+    "tipo": "receita",
+    "ativo": true,
+    "excluido": false
+  },
+  {
+    "id": "pc_2_01",
+    "codigo": "2.01",
+    "nome": "Funcionários",
+    "tipo": "despesa",
+    "ativo": true,
+    "excluido": false
+  },
+  {
+    "id": "pc_2_02",
+    "codigo": "2.02",
+    "nome": "Água",
+    "tipo": "despesa",
+    "ativo": true,
+    "excluido": false
+  },
+  {
+    "id": "pc_2_03",
+    "codigo": "2.03",
+    "nome": "Energia",
+    "tipo": "despesa",
+    "ativo": true,
+    "excluido": false
+  },
+  {
+    "id": "pc_2_04",
+    "codigo": "2.04",
+    "nome": "Aluguel",
+    "tipo": "despesa",
+    "ativo": true,
+    "excluido": false
+  },
+  {
+    "id": "pc_2_05",
+    "codigo": "2.05",
+    "nome": "Internet",
+    "tipo": "despesa",
+    "ativo": true,
+    "excluido": false
+  },
+  {
+    "id": "pc_2_06",
+    "codigo": "2.06",
+    "nome": "Manutenção",
+    "tipo": "despesa",
+    "ativo": true,
+    "excluido": false
+  },
+  {
+    "id": "pc_2_07",
+    "codigo": "2.07",
+    "nome": "Material de consumo",
+    "tipo": "despesa",
+    "ativo": true,
+    "excluido": false
+  },
+  {
+    "id": "pc_2_08",
+    "codigo": "2.08",
+    "nome": "Impostos e taxas",
+    "tipo": "despesa",
+    "ativo": true,
+    "excluido": false
+  },
+  {
+    "id": "pc_2_99",
+    "codigo": "2.99",
+    "nome": "Outras despesas",
+    "tipo": "despesa",
+    "ativo": true,
+    "excluido": false
+  }
+]

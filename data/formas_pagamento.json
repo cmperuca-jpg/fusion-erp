@@ -1,0 +1,58 @@
+[
+  {
+    "id": "fp_1",
+    "codigo": "01",
+    "nome": "Dinheiro",
+    "ativo": true,
+    "ordem": 1
+  },
+  {
+    "id": "fp_2",
+    "codigo": "02",
+    "nome": "Cheque",
+    "ativo": true,
+    "ordem": 2
+  },
+  {
+    "id": "fp_3",
+    "codigo": "03",
+    "nome": "Boleto",
+    "ativo": true,
+    "ordem": 3
+  },
+  {
+    "id": "fp_4",
+    "codigo": "04",
+    "nome": "Cartão de crédito",
+    "ativo": true,
+    "ordem": 4
+  },
+  {
+    "id": "fp_5",
+    "codigo": "05",
+    "nome": "Cartão de débito",
+    "ativo": true,
+    "ordem": 5
+  },
+  {
+    "id": "fp_6",
+    "codigo": "06",
+    "nome": "Depósito",
+    "ativo": true,
+    "ordem": 6
+  },
+  {
+    "id": "fp_7",
+    "codigo": "07",
+    "nome": "Transferência",
+    "ativo": true,
+    "ordem": 7
+  },
+  {
+    "id": "fp_8",
+    "codigo": "08",
+    "nome": "PIX",
+    "ativo": true,
+    "ordem": 8
+  }
+]

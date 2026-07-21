@@ -1,0 +1,205 @@
+[
+  {
+    "id": "rec_c4aaeee5-647a-476a-9bb4-046768a2fe3e",
+    "numero": "00000007",
+    "operacaoId": "oprec_161c42de-4691-41e7-b1dc-3f568f19877e",
+    "data": "2026-07-10",
+    "hora": "20:21:58",
+    "alunoId": "4b626753-0cf3-4724-95b9-a92bd605ea2d",
+    "aluno": "ALAN JAMES",
+    "caixaId": "cx_1784676088270_78a460",
+    "valorPagoCentavos": 6500,
+    "valorPago": 65,
+    "valorAplicadoCentavos": 6500,
+    "valorAplicado": 65,
+    "diferencaCentavos": 0,
+    "troco": 0,
+    "creditoGerado": 0,
+    "formasPagamento": [
+      {
+        "formaPagamento": "PIX",
+        "valor": 65,
+        "referencia": "",
+        "taxa": 0
+      }
+    ],
+    "cancelado": false,
+    "usuario": "sistema",
+    "observacao": "",
+    "criadoEm": "2026-07-21T23:21:58.358Z"
+  },
+  {
+    "id": "rec_77a4a7f5-5ea5-4139-8651-0e506e7ed46e",
+    "numero": "00000006",
+    "operacaoId": "oprec_9a1b79d5-f078-4a51-81f4-2349547654dc",
+    "data": "2026-07-21",
+    "hora": "15:31:11",
+    "alunoId": "e1209c22-7f29-450b-87ca-0f2a97ea8170",
+    "aluno": "DANIELA MORAIS TENÓRIO DE OLIVEIRA",
+    "caixaId": "cx_1784653653536_a25c76",
+    "valorPagoCentavos": 6500,
+    "valorPago": 65,
+    "valorAplicadoCentavos": 6500,
+    "valorAplicado": 65,
+    "diferencaCentavos": 0,
+    "troco": 0,
+    "creditoGerado": 0,
+    "formasPagamento": [
+      {
+        "formaPagamento": "PIX",
+        "valor": 65,
+        "referencia": "",
+        "taxa": 0
+      }
+    ],
+    "cancelado": false,
+    "usuario": "sistema",
+    "observacao": "",
+    "criadoEm": "2026-07-21T18:31:11.411Z"
+  },
+  {
+    "id": "rec_e443620e-4135-411b-873e-945bb3846880",
+    "numero": "00000005",
+    "operacaoId": "oprec_7b3ade8f-5c7b-4c8e-80eb-869cbbfb7eaa",
+    "data": "2026-07-21",
+    "hora": "14:26:56",
+    "alunoId": "76c07441-4eda-47bd-8ae2-a0c763ef75dc",
+    "aluno": "ARICREMIS PEDRO DA SILVA",
+    "caixaId": "cx_1784653653536_a25c76",
+    "valorPagoCentavos": 6500,
+    "valorPago": 65,
+    "valorAplicadoCentavos": 6500,
+    "valorAplicado": 65,
+    "diferencaCentavos": 0,
+    "troco": 0,
+    "creditoGerado": 0,
+    "formasPagamento": [
+      {
+        "formaPagamento": "Dinheiro",
+        "valor": 65,
+        "referencia": "",
+        "taxa": 0
+      }
+    ],
+    "cancelado": false,
+    "usuario": "sistema",
+    "observacao": "",
+    "criadoEm": "2026-07-21T17:26:56.112Z"
+  },
+  {
+    "id": "rec_ddcbfb78-42dd-43a7-a9a9-95df389da942",
+    "numero": "00000004",
+    "operacaoId": "oprec_07110aad-5190-431a-8f01-1e81f1602a27",
+    "data": "2026-07-21",
+    "hora": "14:24:01",
+    "alunoId": "482bdd3b-5bde-4282-b609-fc555a5845b8",
+    "aluno": "MARIA CÍCERA DA SILVA",
+    "caixaId": "cx_1784653653536_a25c76",
+    "valorPagoCentavos": 6500,
+    "valorPago": 65,
+    "valorAplicadoCentavos": 6500,
+    "valorAplicado": 65,
+    "diferencaCentavos": 0,
+    "troco": 0,
+    "creditoGerado": 0,
+    "formasPagamento": [
+      {
+        "formaPagamento": "PIX",
+        "valor": 65,
+        "referencia": "",
+        "taxa": 0
+      }
+    ],
+    "cancelado": false,
+    "usuario": "sistema",
+    "observacao": "",
+    "criadoEm": "2026-07-21T17:24:01.259Z"
+  },
+  {
+    "id": "rec_3b7417d7-a16b-48a7-93d3-5f1d8563a1f3",
+    "numero": "00000003",
+    "operacaoId": "oprec_c397b038-18b8-4f10-943b-0c70e4c2f784",
+    "data": "2026-07-21",
+    "hora": "14:23:03",
+    "alunoId": "b77a7e4d-e831-493d-86bb-16341689fbeb",
+    "aluno": "PAULO FRANCISCO DANTAS LIMA JUNIOR",
+    "caixaId": "cx_1784653653536_a25c76",
+    "valorPagoCentavos": 6500,
+    "valorPago": 65,
+    "valorAplicadoCentavos": 6500,
+    "valorAplicado": 65,
+    "diferencaCentavos": 0,
+    "troco": 0,
+    "creditoGerado": 0,
+    "formasPagamento": [
+      {
+        "formaPagamento": "PIX",
+        "valor": 65,
+        "referencia": "",
+        "taxa": 0
+      }
+    ],
+    "cancelado": false,
+    "usuario": "sistema",
+    "observacao": "",
+    "criadoEm": "2026-07-21T17:23:03.052Z"
+  },
+  {
+    "id": "rec_ec51375a-b7a8-497c-a519-e32642b338db",
+    "numero": "00000002",
+    "operacaoId": "oprec_71401e3d-7d06-4e0f-a495-aed123911914",
+    "data": "2026-07-21",
+    "hora": "14:21:20",
+    "alunoId": "663d8dcc-d01a-4ca3-8d99-62bc382bdd63",
+    "aluno": "MARIA ARIANNE DA SILVA CAVALCANTE",
+    "caixaId": "cx_1784653653536_a25c76",
+    "valorPagoCentavos": 6500,
+    "valorPago": 65,
+    "valorAplicadoCentavos": 6500,
+    "valorAplicado": 65,
+    "diferencaCentavos": 0,
+    "troco": 0,
+    "creditoGerado": 0,
+    "formasPagamento": [
+      {
+        "formaPagamento": "Dinheiro",
+        "valor": 65,
+        "referencia": "",
+        "taxa": 0
+      }
+    ],
+    "cancelado": false,
+    "usuario": "sistema",
+    "observacao": "",
+    "criadoEm": "2026-07-21T17:21:20.459Z"
+  },
+  {
+    "id": "rec_48299551-a593-4d28-bd4a-7f47e5dca5af",
+    "numero": "00000001",
+    "operacaoId": "oprec_54eb5c63-4081-4ede-995f-e2618e37ab4e",
+    "data": "2026-07-21",
+    "hora": "14:08:24",
+    "alunoId": "663d8dcc-d01a-4ca3-8d99-62bc382bdd63",
+    "aluno": "MARIA ARIANNE DA SILVA CAVALCANTE",
+    "caixaId": "cx_1784653653536_a25c76",
+    "valorPagoCentavos": 6500,
+    "valorPago": 65,
+    "valorAplicadoCentavos": 6500,
+    "valorAplicado": 65,
+    "diferencaCentavos": 0,
+    "troco": 0,
+    "creditoGerado": 0,
+    "formasPagamento": [
+      {
+        "formaPagamento": "Dinheiro",
+        "valor": 65,
+        "referencia": "",
+        "taxa": 0
+      }
+    ],
+    "cancelado": false,
+    "usuario": "sistema",
+    "observacao": "",
+    "criadoEm": "2026-07-21T17:08:24.431Z"
+  }
+]

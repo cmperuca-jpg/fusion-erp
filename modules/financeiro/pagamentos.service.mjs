@@ -1,9 +1,8 @@
 import {
   atualizarPagamentoRaw,
+  atualizarPagamentoComMovimentoCaixa,
   inserirPagamentoRaw,
   listarPagamentosRaw,
-  registrarMovimentoCaixa,
-  removerPagamentoRaw,
   lerDb,
   salvarDb
 } from "./pagamentos.repository.mjs";
@@ -137,7 +136,8 @@ export async function editarPagamento(id, payload = {}) {
 }
 
 export async function excluirPagamento(id) {
-  return removerPagamentoRaw(id);
+  const pagamento = await cancelarPagamento(id, "Cancelamento solicitado pela exclusão legada.");
+  return { id: String(id), removido: false, cancelado: true, pagamento };
 }
 
 export async function baixarPagamento(id, payload = {}) {
@@ -148,7 +148,8 @@ export async function baixarPagamento(id, payload = {}) {
     throw erro;
   }
 
-  const atualizado = await atualizarPagamentoRaw(id, (item) => {
+  const operacaoId = String(payload.operacaoId || payload.idempotencyKey || `baixa-pagamento-${id}-${Date.now()}`);
+  const resultado = await atualizarPagamentoComMovimentoCaixa(id, (item) => {
     const atual = montarPagamento(item);
     if (["cancelado", "estornado"].includes(normalizarStatus(atual.status))) {
       const erro = new Error("Pagamento cancelado ou estornado não pode receber baixa.");
@@ -182,10 +183,8 @@ export async function baixarPagamento(id, payload = {}) {
       historico: [...(Array.isArray(atual.historico) ? atual.historico : []), movimento],
       updatedAt: new Date().toISOString()
     };
-  });
-
-  await registrarMovimentoCaixa({
-    id: `cx_pag_${Date.now()}_${Math.floor(Math.random() * 999999)}`,
+  }, (atualizado) => ({
+    id: `cx_${operacaoId}`,
     tipo: "saida",
     origem: "pagamentos",
     referenciaId: id,
@@ -194,22 +193,47 @@ export async function baixarPagamento(id, payload = {}) {
     formaPagamento: payload.formaPagamento || payload.forma || atualizado.formaPagamento,
     data: new Date().toISOString(),
     observacao: payload.observacao || "Baixa de conta a pagar"
-  });
+  }), operacaoId);
 
-  return atualizado;
+  return { ...resultado.pagamento, movimentoCaixa: resultado.movimento };
 }
 
 export async function estornarPagamento(id, motivo = "") {
-  return atualizarPagamentoRaw(id, (item) => {
+  const operacaoId = `estorno-pagamento-${id}-${Date.now()}`;
+  let valorEstornado = 0;
+  const resultado = await atualizarPagamentoComMovimentoCaixa(id, (item) => {
     const atual = montarPagamento(item);
-    const movimento = { id: `est_pag_${Date.now()}`, tipo: "estorno", data: new Date().toISOString(), valor: valorPago(atual), observacao: motivo || "Estorno de pagamento" };
-    return { ...atual, valorPago: 0, valorLiquido: 0, valorRestante: valorTotal(atual), status: "estornado", historico: [...(Array.isArray(atual.historico) ? atual.historico : []), movimento], updatedAt: new Date().toISOString() };
-  });
+    const pago = valorPago(atual);
+    if (!(pago > 0) || !["pago", "parcial"].includes(normalizarStatus(atual.status))) {
+      const erro = new Error("Somente um pagamento baixado pode ser estornado.");
+      erro.status = 400;
+      throw erro;
+    }
+    valorEstornado = pago;
+    const movimento = { id: `est_pag_${Date.now()}`, tipo: "estorno", data: new Date().toISOString(), valor: pago, observacao: motivo || "Estorno de pagamento" };
+    return { ...atual, valorPago: 0, valorLiquido: 0, valorRestante: valorTotal(atual), status: "aberto", estornadoEm: movimento.data, motivoEstorno: motivo || "Estorno de pagamento", historico: [...(Array.isArray(atual.historico) ? atual.historico : []), movimento], updatedAt: new Date().toISOString() };
+  }, (atualizado) => ({
+    id: `cx_${operacaoId}`,
+    tipo: "entrada",
+    origem: "estorno_pagamentos",
+    referenciaId: id,
+    descricao: `Estorno: ${atualizado.descricao || "Pagamento"}`,
+    valor: valorEstornado,
+    formaPagamento: atualizado.formaPagamento || atualizado.forma || "",
+    data: new Date().toISOString(),
+    observacao: motivo || "Estorno de conta a pagar"
+  }), operacaoId);
+  return { ...resultado.pagamento, movimentoCaixa: resultado.movimento };
 }
 
 export async function cancelarPagamento(id, motivo = "") {
   return atualizarPagamentoRaw(id, (item) => {
     const atual = montarPagamento(item);
+    if (valorPago(atual) > 0 || ["pago", "parcial"].includes(normalizarStatus(atual.status))) {
+      const erro = new Error("Pagamento com baixa não pode ser cancelado. Faça o estorno primeiro.");
+      erro.status = 409;
+      throw erro;
+    }
     const movimento = { id: `can_pag_${Date.now()}`, tipo: "cancelamento", data: new Date().toISOString(), valor: 0, observacao: motivo || "Cancelamento de pagamento" };
     return { ...atual, status: "cancelado", historico: [...(Array.isArray(atual.historico) ? atual.historico : []), movimento], updatedAt: new Date().toISOString() };
   });
