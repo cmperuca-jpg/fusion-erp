@@ -467,6 +467,106 @@ html, body { max-width:100%; overflow-x:hidden !important; }
   .alunos-page .alunos-kpis{grid-template-columns:1fr!important}
 }
 
+/* Lista operacional: foto visivel e acoes compactas sem rolagem lateral. */
+.alunos-page .table-wrap{
+  overflow-x:hidden!important;
+}
+.alunos-page .alunos-table{
+  table-layout:fixed!important;
+  min-width:0!important;
+}
+.alunos-page .alunos-table th,
+.alunos-page .alunos-table td{
+  padding:8px 6px!important;
+}
+.alunos-page .alunos-table th:nth-child(1),
+.alunos-page .alunos-table td:nth-child(1){width:34%!important}
+.alunos-page .alunos-table th:nth-child(2),
+.alunos-page .alunos-table td:nth-child(2){width:11%!important}
+.alunos-page .alunos-table th:nth-child(3),
+.alunos-page .alunos-table td:nth-child(3){width:12%!important}
+.alunos-page .alunos-table th:nth-child(4),
+.alunos-page .alunos-table td:nth-child(4){width:10%!important}
+.alunos-page .alunos-table th:nth-child(5),
+.alunos-page .alunos-table td:nth-child(5){width:9%!important}
+.alunos-page .alunos-table th:nth-child(6),
+.alunos-page .alunos-table td:nth-child(6){width:24%!important}
+.aluno-lista-identidade,
+.aluno-mobile-identidade{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  min-width:0;
+}
+.aluno-lista-texto,
+.aluno-mobile-identidade>div{
+  min-width:0;
+}
+.aluno-lista-texto strong,
+.aluno-lista-texto small{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.aluno-lista-foto{
+  width:32px;
+  height:32px;
+  flex:0 0 32px;
+  border-radius:7px;
+  border:1px solid rgba(125,211,252,.35);
+  object-fit:cover;
+  background:#0f5663;
+  color:#ffffff;
+  display:grid;
+  place-items:center;
+  font-size:11px;
+  font-weight:900;
+  line-height:1;
+}
+.aluno-lista-foto-fallback{
+  text-transform:uppercase;
+}
+.aluno-actions-inline{
+  display:flex;
+  justify-content:flex-end;
+  align-items:center;
+  gap:4px;
+  width:100%;
+}
+.alunos-page .btn-row{
+  min-width:0!important;
+  margin-left:0!important;
+  padding:6px 8px!important;
+  border-radius:6px!important;
+  font-size:11px!important;
+  line-height:1.1!important;
+  font-weight:900!important;
+  white-space:nowrap!important;
+}
+.alunos-page .text-right{
+  white-space:normal!important;
+}
+@media(max-width:1100px){
+  .alunos-page .alunos-table th:nth-child(2),
+  .alunos-page .alunos-table td:nth-child(2){display:none!important}
+  .alunos-page .alunos-table th:nth-child(1),
+  .alunos-page .alunos-table td:nth-child(1){width:38%!important}
+  .alunos-page .alunos-table th:nth-child(6),
+  .alunos-page .alunos-table td:nth-child(6){width:27%!important}
+  .alunos-page .btn-row{padding:6px 7px!important;font-size:10px!important}
+}
+@media(max-width:900px){
+  .aluno-mobile-identidade .aluno-lista-foto{
+    width:40px;
+    height:40px;
+    flex-basis:40px;
+    border-radius:10px;
+  }
+  .aluno-mobile-head{
+    align-items:center!important;
+  }
+}
+
 
 /* Fusion ERP 2.8.0 — cadastro separado da matrícula */
 .cadastro-sem-matricula{

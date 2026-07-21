@@ -241,6 +241,15 @@ function opcoesComerciaisMatricula() {
 
 function alunoId(aluno) { return aluno.id ?? aluno._id ?? aluno.codigo ?? ""; }
 function alunoNome(aluno) { return aluno.nome ?? aluno.nomeCompleto ?? aluno.aluno ?? "Sem nome"; }
+function alunoFoto(aluno) { return aluno.foto_base64 ?? aluno.foto ?? aluno.fotoUrl ?? aluno.foto_url ?? aluno.avatar ?? aluno.imagem ?? ""; }
+function alunoIniciais(aluno) {
+  return alunoNome(aluno).split(/\s+/).filter(Boolean).slice(0, 2).map(parte => parte[0]).join("").toUpperCase() || "AL";
+}
+function alunoFotoListaHtml(aluno) {
+  const foto = alunoFoto(aluno);
+  if (foto) return `<img class="aluno-lista-foto" src="${escapeAttr(foto)}" alt="Foto de ${escapeAttr(alunoNome(aluno))}">`;
+  return `<span class="aluno-lista-foto aluno-lista-foto-fallback" aria-hidden="true">${escapeHtml(alunoIniciais(aluno))}</span>`;
+}
 function alunoCpf(aluno) { return aluno.cpf ?? aluno.documento ?? ""; }
 function alunoTelefone(aluno) { return aluno.telefone ?? aluno.celular ?? aluno.whatsapp ?? ""; }
 function alunoEmail(aluno) { return aluno.email ?? ""; }
@@ -376,16 +385,23 @@ function renderizarTabela() {
     const st = alunoStatus(a);
 
     return `<tr>
-      <td><strong>${escapeHtml(alunoNome(a))}</strong><small>${escapeHtml(alunoEmail(a))}</small></td>
+      <td>
+        <div class="aluno-lista-identidade">
+          ${alunoFotoListaHtml(a)}
+          <div class="aluno-lista-texto"><strong>${escapeHtml(alunoNome(a))}</strong><small>${escapeHtml(alunoEmail(a))}</small></div>
+        </div>
+      </td>
       <td>${escapeHtml(formatarCpfVisual(alunoCpf(a)))}</td>
       <td>${escapeHtml(formatarTelefoneVisual(alunoTelefone(a)))}</td>
       <td>${escapeHtml(alunoPlano(a))}</td>
       <td>${statusAlunoHtml(id, st)}</td>
       <td class="text-right">
-        <button class="btn-row" type="button" onclick="abrirProntuarioAluno('${escapeAttr(id)}')">Abrir</button>
-        <button class="btn-row" type="button" onclick="abrirEdicao('${escapeAttr(id)}')">Editar</button>
-        ${botaoStatusAluno(id, st)}
-        <button class="btn-row danger" type="button" onclick="excluirAluno('${escapeAttr(id)}')">Excluir</button>
+        <div class="aluno-actions-inline">
+          <button class="btn-row" type="button" onclick="abrirProntuarioAluno('${escapeAttr(id)}')">Abrir</button>
+          <button class="btn-row" type="button" onclick="abrirEdicao('${escapeAttr(id)}')">Editar</button>
+          ${botaoStatusAluno(id, st)}
+          <button class="btn-row danger" type="button" onclick="excluirAluno('${escapeAttr(id)}')">Excluir</button>
+        </div>
       </td>
     </tr>`;
   }).join("");
@@ -442,9 +458,12 @@ function renderizarCardsMobileAlunos(itens = [], total = 0) {
     const st = alunoStatus(a);
     return `<article class="aluno-mobile-card status-${escapeHtml(st)}">
       <div class="aluno-mobile-head">
-        <div>
-          <strong>${escapeHtml(alunoNome(a))}</strong>
-          <small>${escapeHtml(alunoEmail(a) || alunoCpf(a) || '-')}</small>
+        <div class="aluno-mobile-identidade">
+          ${alunoFotoListaHtml(a)}
+          <div>
+            <strong>${escapeHtml(alunoNome(a))}</strong>
+            <small>${escapeHtml(alunoEmail(a) || alunoCpf(a) || '-')}</small>
+          </div>
         </div>
         ${statusAlunoHtml(id, st)}
       </div>
