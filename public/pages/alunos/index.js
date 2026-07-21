@@ -351,16 +351,18 @@ function alunosFiltrados() {
 
 function renderizarTabela() {
   const lista = alunosFiltrados();
-  const totalPaginas = Math.max(Math.ceil(lista.length / porPagina), 1);
-  if (pagina > totalPaginas) pagina = totalPaginas;
+  const totalPaginas = 1;
+  pagina = 1;
 
-  const inicio = (pagina - 1) * porPagina;
-  const itens = lista.slice(inicio, inicio + porPagina);
+  const itens = lista;
 
   $("#contadorRegistros").textContent = `${lista.length} registro(s)`;
   $("#paginaAtual").textContent = `Página ${pagina} de ${totalPaginas}`;
-  $("#btnAnterior").disabled = pagina <= 1;
-  $("#btnProxima").disabled = pagina >= totalPaginas;
+  const btnAnterior = $("#btnAnterior");
+  const btnProxima = $("#btnProxima");
+  if (btnAnterior) btnAnterior.hidden = true;
+  if (btnProxima) btnProxima.hidden = true;
+  $("#paginaAtual").textContent = `Mostrando todos os ${lista.length} registro(s)`;
 
   renderizarCardsMobileAlunos(itens, lista.length);
 
