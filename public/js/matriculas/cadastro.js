@@ -63,6 +63,26 @@
   }
   function planoSelecionado() { return planos.find((p) => String(p.id) === String($("plano_id")?.value)) || null; }
   function turmaSelecionadaId() { return $("turma_id")?.value || ""; }
+  function turmaValor(turma) {
+    return turma?.id ?? turma?.turmaId ?? turma?.turma_id ?? turma?.codigo ?? turma?.nome ?? "";
+  }
+  function turmaNome(turma) {
+    return turma?.nome || turma?.turma || turma?.descricao || turma?.modalidade || "";
+  }
+  function turmaSelecionada() {
+    const valor = turmaSelecionadaId();
+    return turmas.find((t) => String(turmaValor(t)) === String(valor)) || null;
+  }
+  function turmaPayload() {
+    const turmaId = turmaSelecionadaId();
+    const turma = turmaSelecionada();
+    const nome = turmaNome(turma);
+    return {
+      turmaIds: turmaId ? [turmaId] : [],
+      turmaNome: nome,
+      turmaNomes: nome ? [nome] : []
+    };
+  }
   function statusMatriculaEditavel(status) {
     return ["ativa", "pendente", "trancada"].includes(norm(status));
   }
@@ -94,7 +114,7 @@
 
     preencherSelect("aluno_id", alunos, "Selecione o aluno", (a) => a.id, alunoNome);
     preencherSelect("plano_id", planos, "Selecione o plano", (p) => p.id, (p) => `${p.nome || p.id} - ${br(valorPlano(p))}`);
-    preencherSelect("turma_id", turmas, "Sem turma vinculada", (t) => t.id, (t) => {
+    preencherSelect("turma_id", turmas, "Sem turma vinculada", turmaValor, (t) => {
       const partes = [t.nome, t.modalidade, t.professor, t.horario].filter(Boolean);
       return partes.join(" - ");
     });
@@ -187,7 +207,6 @@
 
     const alunoId = $("aluno_id").value;
     const planoId = $("plano_id").value;
-    const turmaId = turmaSelecionadaId();
     const planoAtual = matriculaAtual?.planoId || matriculaAtual?.plano_id || "";
     const tipo = tipoPlano(planoSelecionado());
 
@@ -210,7 +229,7 @@
       alunoId,
       planoId,
       novoPlanoId: planoId,
-      turmaIds: turmaId ? [turmaId] : [],
+      ...turmaPayload(),
       tipoCobranca: tipo,
       tipoPlano: tipo,
       status: $("status").value,
@@ -239,7 +258,7 @@
         const resTurma = await fetch(`/api/matriculas/${encodeURIComponent(matriculaAtual.id)}/turmas`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ turmaIds: turmaId ? [turmaId] : [], usuario: "Administrador" })
+          body: JSON.stringify({ ...turmaPayload(), usuario: "Administrador" })
         });
         const jsonTurma = await resTurma.json().catch(() => ({}));
         if (!resTurma.ok || jsonTurma.ok === false) throw new Error(jsonTurma.erro || jsonTurma.mensagem || "Erro ao salvar turma.");

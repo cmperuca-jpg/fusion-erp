@@ -20,11 +20,66 @@ function mesesPlano(plano){ const t=tipoPlano(plano); if(t==='Semestral') return
 function planoGeraMensalidade(plano){ if(plano?.geraMensalidade !== undefined) return plano.geraMensalidade !== false && plano.geraMensalidade !== 'false'; return ['Mensal','Semestral','Anual'].includes(tipoPlano(plano)); }
 function planoCobraMatricula(plano){ if(plano?.cobraMatricula !== undefined) return plano.cobraMatricula !== false && plano.cobraMatricula !== 'false'; return ['Mensal','Semestral','Anual'].includes(tipoPlano(plano)); }
 function valorMatriculaPlano(plano){ return dinheiro(plano?.valorMatricula ?? plano?.valorBaseMatricula ?? plano?.taxaMatricula ?? 0); }
-function normalizarIds(opcoes={}){ const bruto=opcoes.turmaIds ?? opcoes.turmasIds ?? opcoes.turmasSelecionadas ?? opcoes.turmas ?? opcoes.turmaId ?? []; const arr=Array.isArray(bruto)?bruto:String(bruto||'').split(','); return [...new Set(arr.map(id=>String(id||'').trim()).filter(Boolean))]; }
+function normalizarListaTexto(valor){ const bruto=valor ?? []; const arr=Array.isArray(bruto)?bruto:String(bruto||'').split(','); return arr.map(v=>String(v||'').trim()).filter(Boolean); }
+function normalizarIds(opcoes={}){ return [...new Set(normalizarListaTexto(opcoes.turmaIds ?? opcoes.turmasIds ?? opcoes.turmasSelecionadas ?? opcoes.turmas ?? opcoes.turmaId))]; }
+function normalizarNomesTurmas(opcoes={}){ return [...new Set(normalizarListaTexto(opcoes.turmaNomes ?? opcoes.turmasNomes ?? opcoes.nomesTurmas ?? opcoes.turmaNome).map(normalizar).filter(Boolean))]; }
+function idTurma(turma={}){ return txt(turma.id ?? turma.turmaId ?? turma.turma_id ?? turma.codigo ?? turma.cod ?? turma.value ?? turma.nome ?? turma.turma ?? ''); }
+function nomeTurma(turma={}){ return txt(turma.nome || turma.turma || turma.descricao || turma.modalidade || idTurma(turma)); }
 function valorTurmaPorTipo(turma,tipo){ return 0; }
 function normalizarTurma(turma,tipo){ return { id: turma.id, turmaId: turma.id, nome: turma.nome || turma.turma || '', modalidade: turma.modalidade || '', professorId: turma.professorId || turma.professor_id || '', professor: turma.professor || '', diasSemana: turma.diasSemana || turma.dias_semana || '', horario: turma.horario || [turma.hora_inicio,turma.hora_fim].filter(Boolean).join(' às '), sala: turma.sala || turma.local || '', capacidade: Number(turma.capacidade||0), alunosMatriculados: Number(turma.alunosMatriculados||0), valor: valorTurmaPorTipo(turma,tipo), valorMensal: dinheiro(turma.valorMensal ?? turma.valor ?? 0), valorPrePago: dinheiro(turma.valorPrePago ?? turma.valorMensal ?? turma.valor ?? 0), valorDiarista: dinheiro(turma.valorDiarista ?? turma.valorAvulso ?? 0), tipoCobranca: tipo, status: turma.status || 'Ativa' }; }
 function turmaAtiva(t){ return !['inativa','inativo','cancelada','cancelado','encerrada','encerrado'].includes(normalizar(t?.status||'Ativa')); }
-function montarServicos(base, plano, opcoes={}){ const tipo=opcoes.tipoCobranca || opcoes.tipoPlano || tipoPlano(plano); const ids=normalizarIds(opcoes); return ids.map(id=>{ const t=(base.turmas||[]).find(x=>String(x.id)===String(id)); if(!t){ const e=new Error(`Turma/serviço não encontrado: ${id}.`); e.status=404; throw e; } if(!turmaAtiva(t)){ const e=new Error(`Turma/serviço inativo: ${t.nome||id}.`); e.status=400; throw e; } return normalizarTurma(t,tipo); }); }
+function montarServicosLegado(base, plano, opcoes={}){ const tipo=opcoes.tipoCobranca || opcoes.tipoPlano || tipoPlano(plano); const ids=normalizarIds(opcoes); return ids.map(id=>{ const t=(base.turmas||[]).find(x=>String(x.id)===String(id)); if(!t){ const e=new Error(`Turma/serviço não encontrado: ${id}.`); e.status=404; throw e; } if(!turmaAtiva(t)){ const e=new Error(`Turma/serviço inativo: ${t.nome||id}.`); e.status=400; throw e; } return normalizarTurma(t,tipo); }); }
+function normalizarTurmaOperacional(turma,tipo){
+  const id=idTurma(turma);
+  return {
+    id,
+    turmaId:id,
+    nome:nomeTurma(turma),
+    modalidade:turma.modalidade || '',
+    professorId:turma.professorId || turma.professor_id || '',
+    professor:turma.professor || '',
+    diasSemana:turma.diasSemana || turma.dias_semana || '',
+    horario:turma.horario || [turma.hora_inicio,turma.hora_fim].filter(Boolean).join(' as '),
+    sala:turma.sala || turma.local || '',
+    capacidade:Number(turma.capacidade||0),
+    alunosMatriculados:Number(turma.alunosMatriculados||0),
+    valor:valorTurmaPorTipo(turma,tipo),
+    valorMensal:dinheiro(turma.valorMensal ?? turma.valor ?? 0),
+    valorPrePago:dinheiro(turma.valorPrePago ?? turma.valorMensal ?? turma.valor ?? 0),
+    valorDiarista:dinheiro(turma.valorDiarista ?? turma.valorAvulso ?? 0),
+    tipoCobranca:tipo,
+    status:turma.status || 'Ativa'
+  };
+}
+function buscarTurma(base, id, nomes=[]){
+  const alvo=txt(id);
+  const alvoNorm=normalizar(alvo);
+  return (base.turmas||[]).find(t=>{
+    const ids=[t.id,t.turmaId,t.turma_id,t.codigo,t.cod,t.value].map(txt).filter(Boolean);
+    if(ids.some(v=>v===alvo || normalizar(v)===alvoNorm)) return true;
+    const nomesTurma=[t.nome,t.turma,t.descricao,t.modalidade].map(normalizar).filter(Boolean);
+    return nomes.length>0 && nomesTurma.some(n=>nomes.includes(n));
+  });
+}
+function criarTurmaOperacional(id,nome,tipo){
+  const rotulo=txt(nome || id || 'Turma operacional');
+  return normalizarTurmaOperacional({ id:txt(id || rotulo), nome:rotulo, status:'Ativa' }, tipo);
+}
+function montarServicos(base, plano, opcoes={}){
+  const tipo=opcoes.tipoCobranca || opcoes.tipoPlano || tipoPlano(plano);
+  const ids=normalizarIds(opcoes);
+  const nomes=normalizarNomesTurmas(opcoes);
+  return ids.map((id,idx)=>{
+    const t=buscarTurma(base,id,nomes);
+    if(!t) return criarTurmaOperacional(id, nomes[idx] || id, tipo);
+    if(!turmaAtiva(t)){
+      const e=new Error(`Turma/servico inativo: ${nomeTurma(t)||id}.`);
+      e.status=400;
+      throw e;
+    }
+    return normalizarTurmaOperacional(t,tipo);
+  });
+}
 function resumoServicos(servicos=[]){ const s=Array.isArray(servicos)?servicos:[]; return { turmaIds:s.map(x=>x.id), turma:s.map(x=>x.nome).filter(Boolean).join(', '), modalidade:[...new Set(s.map(x=>x.modalidade).filter(Boolean))].join(', '), professor:[...new Set(s.map(x=>x.professor).filter(Boolean))].join(', '), horario:s.map(x=>[x.nome,x.diasSemana,x.horario].filter(Boolean).join(' - ')).join(' | '), sala:[...new Set(s.map(x=>x.sala).filter(Boolean))].join(', '), valorServicos:0 }; }
 function numeroMatricula(matriculas,dataISO){ const ym=String(dataISO||hojeISO()).slice(0,7).replace('-',''); const prefix=`MAT-${ym}-`; const nums=(matriculas||[]).map(m=>String(m.numero||'')).filter(n=>n.startsWith(prefix)).map(n=>Number(n.split('-').pop())).filter(Number.isFinite); return `${prefix}${String(nums.length?Math.max(...nums)+1:1).padStart(6,'0')}`; }
 function matriculaAtivaDoAluno(matriculas, alunoId){ return (matriculas||[]).find(m=>String(m.alunoId)===String(alunoId)&&['Ativa','Pendente','Trancada'].includes(String(m.status||''))); }
@@ -127,9 +182,35 @@ function limparPendenciasMatricula(base, matricula, motivo = '', usuario = 'sist
   return resumo;
 }
 
-function resumirMatricula(m, completo=false){ const servicos=Array.isArray(m.servicos)?m.servicos:(Array.isArray(m.turmas)?m.turmas:[]); const r=resumoServicos(servicos); const out={ id:m.id, numero:m.numero, alunoId:m.alunoId, aluno:m.aluno, cpf:m.cpf||'', planoId:m.planoId, plano:m.plano, tipoPlano:m.tipoPlano || m.tipoCobranca || 'Mensal', tipoCobranca:m.tipoCobranca || m.tipoPlano || 'Mensal', status:m.status, dataMatricula:m.dataMatricula||'', vencimentoInicial:m.vencimentoInicial||'', dataInicio:m.dataInicio||'', dataFim:m.dataFim||'', valorMatricula:dinheiro(m.valorMatricula), valorServicos:dinheiro(m.valorServicos ?? r.valorServicos), valorMensal:dinheiro(m.valorMensalTotal ?? m.valorMensal), valorMensalTotal:dinheiro(m.valorMensalTotal ?? m.valorMensal), valorTotalInicial:dinheiro(m.valorTotalInicial), taxaMatricula:dinheiro(m.taxaMatricula), descontoMatricula:dinheiro(m.descontoMatricula), resumoValoresEntrada:m.resumoValoresEntrada||'', itensFinanceirosIniciais:Array.isArray(m.itensFinanceirosIniciais)?m.itensFinanceirosIniciais:[], turmaId:m.turmaId||r.turmaIds[0]||'', turmaIds:Array.isArray(m.turmaIds)?m.turmaIds:r.turmaIds, turma:m.turma||r.turma, turmas:servicos, servicos, modalidade:m.modalidade||r.modalidade, professor:m.professor||r.professor, horario:m.horario||r.horario, sala:m.sala||r.sala, formaPagamento:m.formaPagamento||'', mensalidadeInicialId:m.mensalidadeInicialId||null, financeiroInicialId:m.financeiroInicialId||null, recebimentoInicialId:m.recebimentoInicialId||null, criadoEm:m.criadoEm, atualizadoEm:m.atualizadoEm } ; if(completo){ out.historico=Array.isArray(m.historico)?m.historico:[]; out.auditoria=Array.isArray(m.auditoria)?m.auditoria:[]; } return out; }
+function resumirMatricula(m, completo=false){ const servicos=Array.isArray(m.servicos)?m.servicos:(Array.isArray(m.turmas)?m.turmas:[]); const r=resumoServicos(servicos); const out={ id:m.id, numero:m.numero, alunoId:m.alunoId, aluno:m.aluno, cpf:m.cpf||'', planoId:m.planoId, plano:m.plano, tipoPlano:m.tipoPlano || m.tipoCobranca || 'Mensal', tipoCobranca:m.tipoCobranca || m.tipoPlano || 'Mensal', status:m.status, dataMatricula:m.dataMatricula||'', vencimentoInicial:m.vencimentoInicial||'', proximoVencimento:m.proximoVencimento||'', diaVencimento:m.diaVencimento||'', dataInicio:m.dataInicio||'', dataFim:m.dataFim||'', valorMatricula:dinheiro(m.valorMatricula), valorServicos:dinheiro(m.valorServicos ?? r.valorServicos), valorMensal:dinheiro(m.valorMensalTotal ?? m.valorMensal), valorMensalTotal:dinheiro(m.valorMensalTotal ?? m.valorMensal), valorTotalInicial:dinheiro(m.valorTotalInicial), taxaMatricula:dinheiro(m.taxaMatricula), descontoMatricula:dinheiro(m.descontoMatricula), resumoValoresEntrada:m.resumoValoresEntrada||'', itensFinanceirosIniciais:Array.isArray(m.itensFinanceirosIniciais)?m.itensFinanceirosIniciais:[], turmaId:m.turmaId||r.turmaIds[0]||'', turmaIds:Array.isArray(m.turmaIds)?m.turmaIds:r.turmaIds, turma:m.turma||r.turma, turmas:servicos, servicos, modalidade:m.modalidade||r.modalidade, professor:m.professor||r.professor, horario:m.horario||r.horario, sala:m.sala||r.sala, formaPagamento:m.formaPagamento||'', mensalidadeInicialId:m.mensalidadeInicialId||null, financeiroInicialId:m.financeiroInicialId||null, recebimentoInicialId:m.recebimentoInicialId||null, mensalidadeProximaId:m.mensalidadeProximaId||null, financeiroProximoId:m.financeiroProximoId||null, criadoEm:m.criadoEm, atualizadoEm:m.atualizadoEm } ; if(completo){ out.historico=Array.isArray(m.historico)?m.historico:[]; out.auditoria=Array.isArray(m.auditoria)?m.auditoria:[]; } return out; }
 export async function listarMatriculas(filtros={}){ const base=await carregarBaseMatricula(); const termo=String(filtros.q||filtros.busca||'').toLowerCase(); const status=String(filtros.status||''); const alunoId=String(filtros.alunoId||filtros.aluno_id||''); let dados=base.matriculas||[]; if(status) dados=dados.filter(m=>String(m.status)===status); if(alunoId) dados=dados.filter(m=>String(m.alunoId)===alunoId); if(termo) dados=dados.filter(m=>[m.numero,m.aluno,m.plano,m.turma,m.status].join(' ').toLowerCase().includes(termo)); return { ok:true, success:true, total:dados.length, dados:dados.map(m=>resumirMatricula(m)).sort((a,b)=>String(b.criadoEm||'').localeCompare(String(a.criadoEm||''))) }; }
-export async function obterMatricula(id){ const base=await carregarBaseMatricula(); const m=(base.matriculas||[]).find(x=>String(x.id)===String(id)||String(x.numero)===String(id)); if(!m){ const e=new Error('Matrícula não encontrada.'); e.status=404; throw e; } return { ok:true, success:true, dados:resumirMatricula(m,true) }; }
+function mensalidadeFuturaMatricula(base,m){
+  const matriculaId=String(m.id || '');
+  const idProxima=String(m.mensalidadeProximaId || '');
+  const futuras=(base.mensalidades||[]).filter(x=>{
+    const mesmaMatricula=String(x.matriculaId || x.matricula_id || '')===matriculaId;
+    const idConfere=idProxima && String(x.id || '')===idProxima;
+    const recorrente=normalizar(x.origem || '').includes('recorrencia') || normalizar(x.recorrencia || '').includes('mensal');
+    return idConfere || (mesmaMatricula && recorrente);
+  });
+  return futuras.filter(x=>!statusPagoMatricula(x)).sort((a,b)=>String(a.vencimento||'').localeCompare(String(b.vencimento||'')))[0] || futuras[0] || null;
+}
+export async function obterMatricula(id){
+  const base=await carregarBaseMatricula();
+  const m=(base.matriculas||[]).find(x=>String(x.id)===String(id)||String(x.numero)===String(id));
+  if(!m){ const e=new Error('Matrícula não encontrada.'); e.status=404; throw e; }
+  const dados=resumirMatricula(m,true);
+  const mensalidadeProxima=mensalidadeFuturaMatricula(base,m);
+  const financeiroProximo=(base.financeiro||[]).find(f=>
+    String(f.id || '')===String(m.financeiroProximoId || '') ||
+    (mensalidadeProxima && String(f.mensalidadeId || f.mensalidade_id || '')===String(mensalidadeProxima.id || ''))
+  ) || null;
+  dados.mensalidadeProxima=mensalidadeProxima;
+  dados.financeiroProximo=financeiroProximo;
+  dados.mensalidadeProximaId=mensalidadeProxima?.id || m.mensalidadeProximaId || null;
+  dados.financeiroProximoId=financeiroProximo?.id || m.financeiroProximoId || null;
+  return { ok:true, success:true, dados };
+}
 export async function integrarMatriculaAluno(alunoId, planoId, opcoes={}){
   const base=await carregarBaseMatricula();
   if(!Array.isArray(base.recebimentos)) base.recebimentos=[];
@@ -449,6 +530,9 @@ export async function integrarMatriculaAluno(alunoId, planoId, opcoes={}){
         valorMensal:valorMensalTotal,
         diaVencimento,
     valorMensalTotal,
+    proximoVencimento,
+    mensalidadeProximaId:matricula.mensalidadeProximaId,
+    financeiroProximoId:matricula.financeiroProximoId,
     statusMatricula:matricula.status,
     status:valorEntradaUnica > 0 ? 'pre-matriculado' : 'ativo',
     matriculaId:matricula.id,
@@ -469,7 +553,7 @@ export async function integrarMatriculaAluno(alunoId, planoId, opcoes={}){
   const payloadChk={ tipo:'vinculo_matricula', alunoId:aluno.id, aluno:nome, matriculaId:matricula.id, numeroMatricula:matricula.numero, planoId:plano.id || '', plano:plano.nome || 'SEM PLANO', tipoPlano:tipo, turmaIds:matricula.turmaIds, turmas:servicos, servicos, status:'Bloqueado', atualizadoEm:agoraISO() };
   if(chk) Object.assign(chk,payloadChk); else base.checkins.push({ id:`chk_vinc_${Date.now()}_${Math.floor(Math.random()*999999)}`, ...payloadChk, criadoEm:agoraISO() });
 
-  for(const t of base.turmas){ t.alunosMatriculados=(base.matriculas||[]).filter(m=>['Ativa','Pendente','Trancada'].includes(String(m.status||'')) && Array.isArray(m.turmaIds) && m.turmaIds.some(id=>String(id)===String(t.id))).length; }
+  for(const t of base.turmas){ t.alunosMatriculados=(base.matriculas||[]).filter(m=>['Ativa','Pendente','Trancada'].includes(String(m.status||'')) && Array.isArray(m.turmaIds) && m.turmaIds.some(id=>String(id)===String(idTurma(t)))).length; }
 
   await salvarBaseMatricula(base);
   return { ok:true, success:true, aluno, plano, matricula:resumirMatricula(matricula), mensalidadeGerada:mensalidadeInicial, mensalidadeProxima, financeiroInicial, recebimentoInicial, financeiroProximo, mensagem:'Matrícula pendente criada. Receba a entrada única para ativar o aluno.' };
@@ -556,10 +640,10 @@ export async function atualizarTurmasMatricula(id, opcoes={}, usuario='sistema')
   }
   const chk=(base.checkins||[]).find(c=>String(c.matriculaId||'')===String(m.id)&&c.tipo==='vinculo_matricula');
   if(chk) Object.assign(chk,{ turmaIds:m.turmaIds, turmas, servicos:turmas, atualizadoEm:agoraISO() });
-  for(const t of base.turmas){ t.alunosMatriculados=(base.matriculas||[]).filter(mat=>['Ativa','Pendente','Trancada'].includes(String(mat.status||'')) && Array.isArray(mat.turmaIds) && mat.turmaIds.some(tid=>String(tid)===String(t.id))).length; }
+  for(const t of base.turmas){ t.alunosMatriculados=(base.matriculas||[]).filter(mat=>['Ativa','Pendente','Trancada'].includes(String(mat.status||'')) && Array.isArray(mat.turmaIds) && mat.turmaIds.some(tid=>String(tid)===String(idTurma(t)))).length; }
   historico(m,'atualizar_turmas','Turmas da matricula atualizadas sem alterar financeiro.',{ turmaIds:m.turmaIds },usuario);
   await salvarBaseMatricula(base);
   return { ok:true, success:true, dados:resumirMatricula(m,true), mensagem:'Turmas atualizadas. O financeiro nao foi alterado.' };
 }
 
-export async function removerTurmasMatricula(id, usuario='sistema'){ const base=await carregarBaseMatricula(); const m=base.matriculas.find(x=>String(x.id)===String(id)||String(x.numero)===String(id)); if(!m){ const e=new Error('Matricula nao encontrada.'); e.status=404; throw e; } m.servicos=[]; m.turmas=[]; m.turmaIds=[]; m.turmaId=''; m.turma=''; m.modalidade=''; m.professor=''; m.horario=''; m.sala=''; m.valorServicos=0; m.atualizadoEm=agoraISO(); const aluno=base.alunos.find(a=>String(a.id)===String(m.alunoId)); if(aluno){ Object.assign(aluno,{ turmaId:'', turma:'', turmaIds:[], turmas:[], servicosContratados:[], professor:'', horario:'', valorServicos:0, atualizadoEm:agoraISO() }); } for(const t of base.turmas){ t.alunosMatriculados=(base.matriculas||[]).filter(mat=>['Ativa','Pendente','Trancada'].includes(String(mat.status||'')) && Array.isArray(mat.turmaIds) && mat.turmaIds.some(tid=>String(tid)===String(t.id))).length; } historico(m,'remover_turmas','Aluno removido de todas as turmas sem alterar financeiro.',{},usuario); await salvarBaseMatricula(base); return { ok:true, success:true, dados:resumirMatricula(m,true), mensagem:'Aluno removido de todas as turmas. O financeiro foi mantido.' }; }
+export async function removerTurmasMatricula(id, usuario='sistema'){ const base=await carregarBaseMatricula(); const m=base.matriculas.find(x=>String(x.id)===String(id)||String(x.numero)===String(id)); if(!m){ const e=new Error('Matricula nao encontrada.'); e.status=404; throw e; } m.servicos=[]; m.turmas=[]; m.turmaIds=[]; m.turmaId=''; m.turma=''; m.modalidade=''; m.professor=''; m.horario=''; m.sala=''; m.valorServicos=0; m.atualizadoEm=agoraISO(); const aluno=base.alunos.find(a=>String(a.id)===String(m.alunoId)); if(aluno){ Object.assign(aluno,{ turmaId:'', turma:'', turmaIds:[], turmas:[], servicosContratados:[], professor:'', horario:'', valorServicos:0, atualizadoEm:agoraISO() }); } for(const t of base.turmas){ t.alunosMatriculados=(base.matriculas||[]).filter(mat=>['Ativa','Pendente','Trancada'].includes(String(mat.status||'')) && Array.isArray(mat.turmaIds) && mat.turmaIds.some(tid=>String(tid)===String(idTurma(t)))).length; } historico(m,'remover_turmas','Aluno removido de todas as turmas sem alterar financeiro.',{},usuario); await salvarBaseMatricula(base); return { ok:true, success:true, dados:resumirMatricula(m,true), mensagem:'Aluno removido de todas as turmas. O financeiro foi mantido.' }; }

@@ -5,7 +5,33 @@ router.get("/api/matriculas/integracao/status", (req,res)=>res.json({ ok:true, m
 async function listar(req,res){ try{ res.json(await listarMatriculas(req.query||{})); }catch(err){ res.status(err.status||500).json({ok:false,success:false,erro:err.message||"Erro ao listar matrículas."}); } }
 router.get("/api/matriculas", listar); router.get("/api/matriculas/listar", listar); router.get("/api/matriculas/todas", listar);
 router.get("/api/matriculas/:id", async (req,res)=>{ try{ res.json(await obterMatricula(req.params.id)); }catch(err){ res.status(err.status||500).json({ok:false,success:false,erro:err.message||"Erro ao carregar matrícula."}); } });
-function comum(body={}){ return { turmaId:body.turmaId, turmaIds:body.turmaIds || body.turmasIds || body.turmasSelecionadas, tipoCobranca:body.tipoCobranca || body.tipoPlano, tipoPlano:body.tipoPlano, vencimento:body.vencimento, gerarMensalidade:body.gerarMensalidade, contratoId:body.contratoId, observacao:body.observacao, dataMatricula:body.dataMatricula, dataInicio:body.dataInicio, dataFim:body.dataFim, status:body.status, usuario:body.usuario, cobrarMatricula:body.cobrarMatricula, cobrarTaxaMatricula:body.cobrarTaxaMatricula, valorMatricula:body.valorMatricula ?? body.valorTaxaMatricula ?? body.taxaMatricula ?? body.valorBaseMatricula, valorTaxaMatricula:body.valorTaxaMatricula ?? body.valorMatricula ?? body.taxaMatricula, descontoMatricula:body.descontoMatricula, valorTotalInicial:body.valorTotalInicial, formaPagamento:body.formaPagamento, decisaoComercialEm:body.decisaoComercialEm }; }
+function comum(body={}){
+  return {
+    turmaId:body.turmaId,
+    turmaIds:body.turmaIds || body.turmasIds || body.turmasSelecionadas,
+    turmaNome:body.turmaNome || body.turma || body.nomeTurma,
+    turmaNomes:body.turmaNomes || body.turmasNomes || body.nomesTurmas,
+    tipoCobranca:body.tipoCobranca || body.tipoPlano,
+    tipoPlano:body.tipoPlano,
+    vencimento:body.vencimento,
+    gerarMensalidade:body.gerarMensalidade,
+    contratoId:body.contratoId,
+    observacao:body.observacao,
+    dataMatricula:body.dataMatricula,
+    dataInicio:body.dataInicio,
+    dataFim:body.dataFim,
+    status:body.status,
+    usuario:body.usuario,
+    cobrarMatricula:body.cobrarMatricula,
+    cobrarTaxaMatricula:body.cobrarTaxaMatricula,
+    valorMatricula:body.valorMatricula ?? body.valorTaxaMatricula ?? body.taxaMatricula ?? body.valorBaseMatricula,
+    valorTaxaMatricula:body.valorTaxaMatricula ?? body.valorMatricula ?? body.taxaMatricula,
+    descontoMatricula:body.descontoMatricula,
+    valorTotalInicial:body.valorTotalInicial,
+    formaPagamento:body.formaPagamento,
+    decisaoComercialEm:body.decisaoComercialEm
+  };
+}
 router.post("/api/matriculas/integrar", async (req,res)=>{ try{ const {alunoId, planoId}=req.body||{}; if(!alunoId) return res.status(400).json({ok:false,success:false,erro:"Informe alunoId."}); res.json(await integrarMatriculaAluno(alunoId, planoId || "", comum(req.body))); }catch(err){ res.status(err.status||500).json({ok:false,success:false,erro:err.message||"Erro ao integrar matrícula."}); } });
 router.post("/api/matriculas/trocar-plano", async (req,res)=>{ try{ const {alunoId, novoPlanoId, planoId}=req.body||{}; const destino=novoPlanoId||planoId; if(!alunoId||!destino) return res.status(400).json({ok:false,success:false,erro:"Informe alunoId e novoPlanoId."}); res.json(await trocarPlanoAluno(alunoId, destino, comum(req.body))); }catch(err){ res.status(err.status||500).json({ok:false,success:false,erro:err.message||"Erro ao trocar plano/serviços."}); } });
 router.patch("/api/matriculas/:id/turmas", async (req,res)=>{ try{ res.json(await atualizarTurmasMatricula(req.params.id, comum(req.body), req.body?.usuario || "sistema")); }catch(err){ res.status(err.status||500).json({ok:false,success:false,erro:err.message||"Erro ao atualizar turmas."}); } });
