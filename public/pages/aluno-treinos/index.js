@@ -4,6 +4,8 @@ const fotoFallback = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`<
 const fotoAlunoFallback = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><rect width='100%' height='100%' rx='90' fill='#e8eef8'/><text x='50%' y='54%' text-anchor='middle' font-size='24' font-family='Arial' font-weight='700' fill='#64748b'>Aluno</text></svg>`);
 
 let alunoDetalhe = null;
+let matriculaAlunoDetalhe = null;
+let professoresPortal = [];
 let treinoAtual = null;
 let divisaoAtual = 0;
 let exercicioAtual = 0;
@@ -78,6 +80,7 @@ function moeda(v) {
 function extrairLista(payload) {
   if (Array.isArray(payload)) return payload;
   if (Array.isArray(payload.alunos)) return payload.alunos;
+  if (Array.isArray(payload.professores)) return payload.professores;
   if (Array.isArray(payload.avaliacoes)) return payload.avaliacoes;
   if (Array.isArray(payload.mensalidades)) return payload.mensalidades;
   if (Array.isArray(payload.pagamentos)) return payload.pagamentos;
@@ -120,6 +123,79 @@ async function carregarAlunoDetalhe(sessao) {
   const listaPayload = await safeFetchJson("/api/alunos");
   const lista = extrairLista(listaPayload || {});
   return lista.find((a) => idAlunoRegistro(a) === String(sessao.alunoId)) || null;
+}
+
+async function carregarMatriculaAluno(sessao) {
+  if (!sessao?.alunoId) return null;
+  const prontuario = await safeFetchJson(`/api/alunos/${encodeURIComponent(sessao.alunoId)}/prontuario`);
+  const matriculas = Array.isArray(prontuario?.matriculas) ? prontuario.matriculas : [];
+  return matriculas.find((matricula) => ["ativa", "ativo"].includes(String(matricula?.status || "").trim().toLowerCase()))
+    || matriculas[0]
+    || null;
+}
+
+async function carregarProfessoresPortal() {
+  const payload = await safeFetchJson("/api/professores");
+  return extrairLista(payload || {});
+}
+
+function nomeProfessorValido(...valores) {
+  for (const valor of valores.flat(Infinity)) {
+    const nome = String(valor || "").trim();
+    const normalizado = nome.toLowerCase();
+    if (!nome || ["-", "todos", "todas", "sem professor", "nao informado", "não informado"].includes(normalizado)) continue;
+    return nome;
+  }
+  return "";
+}
+
+function professorResponsavelPortal() {
+  const servicos = [
+    ...(Array.isArray(matriculaAlunoDetalhe?.servicos) ? matriculaAlunoDetalhe.servicos : []),
+    ...(Array.isArray(matriculaAlunoDetalhe?.turmas) ? matriculaAlunoDetalhe.turmas : [])
+  ];
+  const nomeExplicito = nomeProfessorValido(
+    treinoAtual?.professorNome,
+    treinoAtual?.professor,
+    alunoDetalhe?.professorNome,
+    alunoDetalhe?.professor_responsavel,
+    alunoDetalhe?.professorResponsavel,
+    alunoDetalhe?.professor,
+    matriculaAlunoDetalhe?.professorNome,
+    matriculaAlunoDetalhe?.professor_responsavel,
+    matriculaAlunoDetalhe?.professorResponsavel,
+    matriculaAlunoDetalhe?.professor,
+    servicos.map((servico) => servico?.professorNome || servico?.professor_responsavel || servico?.professorResponsavel || servico?.professor)
+  );
+  if (nomeExplicito) return nomeExplicito;
+
+  const idsVinculados = nomeProfessorValido(
+    treinoAtual?.professorId,
+    treinoAtual?.professor_id,
+    alunoDetalhe?.professorId,
+    alunoDetalhe?.professor_id,
+    matriculaAlunoDetalhe?.professorId,
+    matriculaAlunoDetalhe?.professor_id,
+    servicos.map((servico) => servico?.professorId || servico?.professor_id)
+  );
+  if (idsVinculados) {
+    const cadastrado = professoresPortal.find((professor) => String(
+      professor?.id || professor?._id || professor?.professorId || professor?.professor_id || ""
+    ) === String(idsVinculados));
+    const nomeCadastrado = nomeProfessorValido(cadastrado?.nome, cadastrado?.professorNome, cadastrado?.professor);
+    if (nomeCadastrado) return nomeCadastrado;
+  }
+
+  // Sem professor individual, exibe somente o responsável técnico oficial.
+  // Não escolhe um professor comum ao acaso.
+  const responsavelTecnico = professoresPortal.find((professor) => {
+    const perfil = String(professor?.perfil || professor?.tipoPerfil || professor?.funcao || "").trim().toLowerCase();
+    const ativo = !["inativo", "inativa", "bloqueado", "bloqueada", "cancelado", "cancelada"].includes(
+      String(professor?.status || "ativo").trim().toLowerCase()
+    );
+    return ativo && (professor?.acessoTodosAlunos === true || ["responsavel_tecnico", "responsavel-tecnico"].includes(perfil));
+  });
+  return nomeProfessorValido(responsavelTecnico?.nome, responsavelTecnico?.professorNome, responsavelTecnico?.professor);
 }
 
 function renderFotoAluno() {
@@ -209,11 +285,12 @@ function exerciciosDaDivisao() {
 
 function renderCabecalho() {
   const nomeAluno = nomeAlunoRegistro(alunoDetalhe) || treinoAtual?.alunoNome || sessaoAluno()?.alunoNome;
+  const professor = professorResponsavelPortal();
   setTexto("alunoNomeTitulo", nomeAluno);
-  setTexto("professorNome", treinoAtual?.professorNome);
+  setTexto("professorNome", professor);
   setTexto("objetivoTreino", treinoAtual?.objetivo);
   setTexto("validadeTreino", dataBR(treinoAtual?.validade));
-  $("subtituloAluno").textContent = `Professor: ${treinoAtual?.professorNome || "não informado"}`;
+  $("subtituloAluno").textContent = `Professor: ${professor || "não informado"}`;
   renderFotoAluno();
 }
 
@@ -267,13 +344,15 @@ function renderExercicio() {
 }
 
 function renderTudo() {
+  // O professor pertence ao aluno/matrícula e deve aparecer mesmo quando o
+  // primeiro treino ainda não foi prescrito.
+  renderCabecalho();
   if (!treinoAtual || !divisoesValidas(treinoAtual).length) {
     $("semTreino").classList.remove("hidden");
     $("cardExercicio").classList.add("hidden");
     $("tabsDivisoes").innerHTML = "";
     return;
   }
-  renderCabecalho();
   renderTabs();
   renderExercicio();
 }
@@ -361,7 +440,14 @@ async function carregar() {
   const sessao = exigirLogin();
   if (!sessao) return;
 
-  alunoDetalhe = await carregarAlunoDetalhe(sessao);
+  const [alunoCarregado, matriculaCarregada, professoresCarregados] = await Promise.all([
+    carregarAlunoDetalhe(sessao),
+    carregarMatriculaAluno(sessao),
+    carregarProfessoresPortal()
+  ]);
+  alunoDetalhe = alunoCarregado;
+  matriculaAlunoDetalhe = matriculaCarregada;
+  professoresPortal = professoresCarregados;
   setTexto("alunoNomeTitulo", nomeAlunoRegistro(alunoDetalhe) || sessao.alunoNome || "Aluno");
   renderFotoAluno();
 
