@@ -420,21 +420,77 @@ function encontrarFinanceiroRelacionado(financeiro = [], recebimento = {}) {
   ) || {};
 }
 
-function taxaRecebimento(item = {}, financeiro = {}) {
+function taxaMovimentoCaixa(movimento = {}) {
+  if (Number.isInteger(movimento.taxaCentavos)) return Number((movimento.taxaCentavos / 100).toFixed(2));
+  if (Number.isInteger(movimento.taxaOperadoraValorCentavos)) return Number((movimento.taxaOperadoraValorCentavos / 100).toFixed(2));
+  return numero(movimento.taxaOperadoraValor ?? movimento.taxaValor ?? movimento.taxa, 0);
+}
+
+function referenciasRecebimento(item = {}, financeiro = {}) {
+  return [
+    item.movimentoCaixaId,
+    item.reciboId,
+    item.ultimoReciboId,
+    item.id,
+    item.lancamentoFinanceiroId,
+    item.financeiroId,
+    item.mensalidadeId,
+    financeiro.movimentoCaixaId,
+    financeiro.reciboId,
+    financeiro.ultimoReciboId,
+    financeiro.id,
+    financeiro.mensalidadeId
+  ].map(v => String(v || '').trim()).filter(Boolean);
+}
+
+function indexarMovimentosCaixa(caixa = { movimentos: [] }) {
+  const indice = new Map();
+  const movimentos = Array.isArray(caixa.movimentos) ? caixa.movimentos : [];
+  for (const movimento of movimentos) {
+    const tipo = normalizar(movimento.tipo).normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    if (!tipo.includes('entrada')) continue;
+    if (['cancelado', 'estornado'].includes(normalizar(movimento.status))) continue;
+    const refs = [
+      movimento.id,
+      movimento.movimentoCaixaId,
+      movimento.reciboId,
+      movimento.recebimentoId,
+      movimento.lancamentoFinanceiroId,
+      movimento.financeiroId,
+      movimento.referenciaId,
+      movimento.mensalidadeId
+    ].map(v => String(v || '').trim()).filter(Boolean);
+    for (const ref of refs) if (!indice.has(ref)) indice.set(ref, movimento);
+  }
+  return indice;
+}
+
+function encontrarMovimentoCaixaRelacionado(indiceMovimentos, item = {}, financeiro = {}) {
+  for (const ref of referenciasRecebimento(item, financeiro)) {
+    const movimento = indiceMovimentos.get(ref);
+    if (movimento) return movimento;
+  }
+  return {};
+}
+
+function taxaRecebimento(item = {}, financeiro = {}, movimento = {}) {
   return numero(
     item.taxaOperadoraValor ?? item.taxaValor ?? item.taxa ??
-    financeiro.taxaOperadoraValor ?? financeiro.taxaValor ?? financeiro.taxa,
+    financeiro.taxaOperadoraValor ?? financeiro.taxaValor ?? financeiro.taxa ??
+    taxaMovimentoCaixa(movimento),
     0
   );
 }
 
-function normalizarRecebimentoConsolidado(item = {}, financeiro = {}) {
+function normalizarRecebimentoConsolidado(item = {}, financeiro = {}, movimento = {}) {
   const status = statusRecebimento(item.status || financeiro.status);
-  const recebido = numero(item.valorRecebido ?? item.recebido ?? financeiro.valorRecebido ?? financeiro.valorPago, 0);
-  const taxa = taxaRecebimento(item, financeiro);
+  const recebido = numero(item.valorRecebido ?? item.recebido ?? financeiro.valorRecebido ?? financeiro.valorPago ?? movimento.valorBruto ?? movimento.valor, 0);
+  const taxa = taxaRecebimento(item, financeiro, movimento);
+  const dataRecebimento = item.dataRecebimento || item.dataPagamento || item.pagamento || item.dataBaixa || item.recebidoEm || item.pagoEm ||
+    financeiro.dataPagamento || financeiro.pagamento || movimento.data || movimento.dataPagamento || '';
   const originalInformado = numero(
     item.valorBruto ?? item.valor ?? item.valorDevido ?? item.total ??
-    financeiro.valorBruto ?? financeiro.valor ?? financeiro.total ?? financeiro.valorDevido,
+    financeiro.valorBruto ?? financeiro.valor ?? financeiro.total ?? financeiro.valorDevido ?? movimento.valorBruto ?? movimento.valor,
     0
   );
   const abertoInformado = numero(item.valorRestante ?? item.saldo ?? financeiro.valorRestante, NaN);
@@ -459,6 +515,9 @@ function normalizarRecebimentoConsolidado(item = {}, financeiro = {}) {
     taxaValor: taxa,
     taxaOperadoraValor: taxa,
     taxaOperadoraPercentual: numero(item.taxaOperadoraPercentual ?? item.taxaPercentual ?? financeiro.taxaOperadoraPercentual ?? financeiro.taxaPercentual, 0),
+    dataRecebimento: ['recebido', 'parcial'].includes(status) ? dataRecebimento : (item.dataRecebimento || financeiro.dataPagamento || ''),
+    caixaId: item.caixaId || financeiro.caixaId || movimento.caixaId || '',
+    movimentoCaixaId: item.movimentoCaixaId || financeiro.movimentoCaixaId || movimento.id || '',
     lancamentoFinanceiroId: item.lancamentoFinanceiroId || item.financeiroId || financeiro.id || '',
     mensalidadeId: item.mensalidadeId || financeiro.mensalidadeId || '',
     matriculaId: item.matriculaId || financeiro.matriculaId || '',
@@ -470,9 +529,16 @@ function normalizarRecebimentoConsolidado(item = {}, financeiro = {}) {
 async function montarBaseRecebimentos() {
   const recebimentos = await lerJson(RECEBIMENTOS_FILE, []);
   const financeiro = await lerJson(FINANCEIRO_FILE, []);
+  const caixa = await lerCaixa();
+  const indiceMovimentos = indexarMovimentosCaixa(caixa);
+  const listaFinanceiro = Array.isArray(financeiro) ? financeiro : [];
 
   const lista = Array.isArray(recebimentos)
-    ? recebimentos.map(r => normalizarRecebimentoConsolidado(r, encontrarFinanceiroRelacionado(Array.isArray(financeiro) ? financeiro : [], r)))
+    ? recebimentos.map((r) => {
+      const lancamento = encontrarFinanceiroRelacionado(listaFinanceiro, r);
+      const movimento = encontrarMovimentoCaixaRelacionado(indiceMovimentos, r, lancamento);
+      return normalizarRecebimentoConsolidado(r, lancamento, movimento);
+    })
     : [];
   const chaves = new Set();
 
@@ -482,7 +548,7 @@ async function montarBaseRecebimentos() {
     if (r?.reciboId) chaves.add(String(r.reciboId));
   }
 
-  for (const lancamento of Array.isArray(financeiro) ? financeiro : []) {
+  for (const lancamento of listaFinanceiro) {
     if (normalizar(lancamento?.tipo) !== 'receber') continue;
 
     const idFinanceiro = String(lancamento.id || '');
@@ -491,7 +557,9 @@ async function montarBaseRecebimentos() {
 
     if (chaves.has(idFinanceiro) || chaves.has(idRecebimento) || (idRecibo && chaves.has(idRecibo))) continue;
 
-    lista.push(normalizarRecebimentoConsolidado(recebimentoDeFinanceiro(lancamento), lancamento));
+    const recebimento = recebimentoDeFinanceiro(lancamento);
+    const movimento = encontrarMovimentoCaixaRelacionado(indiceMovimentos, recebimento, lancamento);
+    lista.push(normalizarRecebimentoConsolidado(recebimento, lancamento, movimento));
     if (idFinanceiro) chaves.add(idFinanceiro);
     if (idRecebimento) chaves.add(idRecebimento);
     if (idRecibo) chaves.add(idRecibo);

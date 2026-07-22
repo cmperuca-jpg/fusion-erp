@@ -1,4 +1,5 @@
 import { lerJsonDuravel, salvarJsonMultiplosAtomico } from "../core/persistence/durable-json.mjs";
+import { persistenciaAtiva, verificarPersistenciaTransacional } from "../core/persistence/collection-store.mjs";
 
 const COL = Object.freeze({
   financeiro: "financeiro.json",
@@ -99,6 +100,33 @@ function existeMovimentoPagamento(caixa, pagamentoId) {
   });
 }
 
+function existeMovimentoRecebimento(caixa, recebimento = {}) {
+  const refs = [
+    recebimento.movimentoCaixaId,
+    recebimento.reciboId,
+    recebimento.ultimoReciboId,
+    recebimento.id,
+    recebimento.financeiroId,
+    recebimento.lancamentoFinanceiroId
+  ].map(txt).filter(Boolean);
+  if (!refs.length) return false;
+  return caixa.movimentos.some((movimento) => {
+    if (!movimentoAtivo(movimento)) return false;
+    if (!norm(movimento.tipo).includes("entrada")) return false;
+    const movimentoRefs = [
+      movimento.id,
+      movimento.movimentoCaixaId,
+      movimento.reciboId,
+      movimento.recebimentoId,
+      movimento.lancamentoFinanceiroId,
+      movimento.financeiroId,
+      movimento.referenciaId,
+      movimento.mensalidadeId
+    ].map(txt).filter(Boolean);
+    return refs.some((ref) => movimentoRefs.includes(ref));
+  });
+}
+
 function categoriaDoRecibo(recibo, itens, titulos) {
   const relacionados = itens.filter((item) => txt(item.reciboId) === txt(recibo.id));
   const categorias = new Set();
@@ -186,6 +214,68 @@ function movimentoDePagamento(lancamento, caixaId) {
   };
 }
 
+function dataRecebimento(item = {}) {
+  return dataISO(item.dataPagamento || item.pagamento || item.dataBaixa || item.recebidoEm || item.pagoEm || item.atualizadoEm || item.criadoEm || item.vencimento || item.dataVencimento || item.data);
+}
+
+function tituloDoRecebimento(recebimento, titulos) {
+  const refs = [
+    recebimento.financeiroId,
+    recebimento.lancamentoFinanceiroId,
+    recebimento.tituloId,
+    recebimento.contaReceberId
+  ].map(txt).filter(Boolean);
+  const porId = titulos.find((lancamento) => refs.includes(txt(lancamento.id)));
+  if (porId) return porId;
+  const reciboId = txt(recebimento.reciboId || recebimento.ultimoReciboId);
+  if (reciboId) {
+    const porRecibo = titulos.find((lancamento) => txt(lancamento.reciboId || lancamento.ultimoReciboId) === reciboId);
+    if (porRecibo) return porRecibo;
+  }
+  const mensalidadeId = txt(recebimento.mensalidadeId);
+  if (mensalidadeId) return titulos.find((lancamento) => txt(lancamento.mensalidadeId) === mensalidadeId) || {};
+  return {};
+}
+
+function movimentoDeRecebimento(recebimento, caixaId, titulo = {}) {
+  const bruto = valorPago(recebimento) || valorTitulo(recebimento);
+  const taxa = Math.min(bruto, moeda(recebimento.ultimaTaxaOperadoraValor ?? recebimento.taxaOperadoraValor ?? recebimento.taxaValor ?? recebimento.taxa ?? 0));
+  const liquido = moeda(bruto - taxa);
+  const baseId = txt(recebimento.reciboId || recebimento.ultimoReciboId || recebimento.id).replace(/[^a-zA-Z0-9_-]/g, "");
+  return {
+    id: `mov_rec_reconc_${baseId || Date.now()}_recebimento`,
+    caixaId,
+    tipo: "entrada",
+    descricao: `Recebimento ${recebimento.reciboNumero || recebimento.numeroRecibo || recebimento.reciboId || recebimento.id}`,
+    categoria: recebimento.categoria || titulo.categoria || "Recebimentos",
+    pessoa: recebimento.aluno || recebimento.alunoNome || recebimento.pessoa || titulo.alunoFornecedor || titulo.pessoa || "",
+    alunoId: recebimento.alunoId || titulo.alunoId || "",
+    reciboId: recebimento.reciboId || recebimento.ultimoReciboId || "",
+    recebimentoId: recebimento.id || "",
+    lancamentoFinanceiroId: titulo.id || recebimento.financeiroId || recebimento.lancamentoFinanceiroId || "",
+    mensalidadeId: recebimento.mensalidadeId || titulo.mensalidadeId || "",
+    matriculaId: recebimento.matriculaId || titulo.matriculaId || "",
+    formaPagamento: recebimento.formaPagamento || recebimento.forma || titulo.formaPagamento || "Dinheiro",
+    bandeiraCartao: recebimento.bandeiraCartao || "",
+    modalidadeCartao: recebimento.modalidadeCartao || "",
+    parcelasCartao: recebimento.parcelasCartao || "",
+    valor: bruto,
+    valorCentavos: centavos(bruto),
+    valorBruto: bruto,
+    taxaOperadoraValor: taxa,
+    taxaCentavos: centavos(taxa),
+    valorLiquido: liquido,
+    valorLiquidoCentavos: centavos(liquido),
+    data: dataRecebimento(recebimento) || new Date().toISOString().slice(0, 10),
+    status: "ativo",
+    origem: "recebimento",
+    reconciliado: true,
+    observacao: "Movimento reconstruido a partir de recebimento confirmado.",
+    criadoEm: agora(),
+    atualizadoEm: agora()
+  };
+}
+
 function vincularMovimento(registros, predicado, movimento) {
   for (let i = 0; i < registros.length; i += 1) {
     if (!predicado(registros[i])) continue;
@@ -198,7 +288,17 @@ function vincularMovimento(registros, predicado, movimento) {
   }
 }
 
-export async function reconciliarFinanceiroCaixa({ aplicar = false, usuario = "sistema" } = {}) {
+async function garantirPersistenciaSupabase(exigirSupabase) {
+  if (!exigirSupabase) return { ok: true, provider: persistenciaAtiva() };
+  const status = await verificarPersistenciaTransacional();
+  if (status.provider !== "supabase") {
+    throw new Error("Reconciliação financeira exige Supabase. Configure SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY e FUSION_DATABASE_PROVIDER=supabase.");
+  }
+  return status;
+}
+
+export async function reconciliarFinanceiroCaixa({ aplicar = false, usuario = "sistema", exigirSupabase = true } = {}) {
+  const persistencia = await garantirPersistenciaSupabase(exigirSupabase);
   const [recibos, itens, financeiro, recebimentos, caixaRaw, auditoriaRaw] = await Promise.all([
     lerJsonDuravel(COL.recibos, []),
     lerJsonDuravel(COL.itens, []),
@@ -220,6 +320,9 @@ export async function reconciliarFinanceiroCaixa({ aplicar = false, usuario = "s
   const resumo = {
     ok: true,
     modo: aplicar ? "aplicado" : "simulacao",
+    provider: persistencia.provider,
+    tenantId: persistencia.tenantId || "",
+    tabela: persistencia.tabela || "",
     caixasCriados: 0,
     entradasCriadas: 0,
     saidasCriadas: 0,
@@ -245,6 +348,20 @@ export async function reconciliarFinanceiroCaixa({ aplicar = false, usuario = "s
     vincularMovimento(listaFinanceiro, (item) => txt(item.ultimoReciboId || item.reciboId) === txt(recibo.id), primeiro);
     resumo.recebimentosVinculados += listaRecebimentos.filter((item) => txt(item.reciboId || item.ultimoReciboId) === txt(recibo.id)).length;
     resumo.financeiroVinculado += listaFinanceiro.filter((item) => txt(item.ultimoReciboId || item.reciboId) === txt(recibo.id)).length;
+  }
+
+  for (const recebimento of listaRecebimentos.filter((item) => statusPago(item) && !statusCancelado(item))) {
+    if (existeMovimentoRecebimento(caixa, recebimento)) continue;
+    const data = dataRecebimento(recebimento) || new Date().toISOString().slice(0, 10);
+    const titulo = tituloDoRecebimento(recebimento, listaFinanceiro);
+    const caixaRegistro = garantirCaixaHistorico(caixa, recebimento.caixaId || titulo.caixaId, data, resumo);
+    const movimento = movimentoDeRecebimento(recebimento, caixaRegistro.id, titulo);
+    caixa.movimentos.push(movimento);
+    resumo.entradasCriadas += 1;
+    vincularMovimento(listaRecebimentos, (item) => txt(item.id) === txt(recebimento.id), movimento);
+    vincularMovimento(listaFinanceiro, (item) => txt(item.id) === txt(titulo.id), movimento);
+    resumo.recebimentosVinculados += 1;
+    if (titulo.id) resumo.financeiroVinculado += 1;
   }
 
   for (const lancamento of listaFinanceiro.filter((item) => tipoPagar(item) && statusPago(item) && !statusCancelado(item))) {

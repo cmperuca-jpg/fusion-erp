@@ -57,6 +57,10 @@ function statusAberto(item = {}) {
   const st = normalizar(item.status || 'aberto');
   return !statusPago(item) && !['cancelado', 'cancelada', 'estornado', 'estornada'].includes(st);
 }
+function statusProgramado(item = {}) {
+  const st = normalizar(item.status || item.situacao || '');
+  return st.includes('programad') || st.includes('agendad') || st.includes('previst');
+}
 function tipoReceita(item = {}) {
   const t = normalizar(item.tipo || item.natureza || item.categoriaTipo);
   if (t.includes('entrada') || t.includes('receber') || t.includes('receita')) return true;
@@ -189,6 +193,13 @@ export async function movimentoDiarioCaixa(filtros = {}) {
 
   const entradas = movimentosPeriodo.filter(m => normalizar(m.tipo).includes('entrada'));
   const saidas = movimentosPeriodo.filter(m => normalizar(m.tipo).includes('saida') || normalizar(m.tipo).includes('saída'));
+  const vistosEntradasGlobais = new Set();
+  const vistosSaidasGlobais = new Set();
+  movimentos.filter(statusAtivo).forEach((m) => {
+    const tipo = normalizar(m.tipo);
+    if (tipo.includes('entrada')) marcarVisto(vistosEntradasGlobais, m);
+    if (tipo.includes('saida') || tipo.includes('saída')) marcarVisto(vistosSaidasGlobais, m);
+  });
   const quantidadeMovimentosPorRecibo = new Map();
   for (const entrada of entradas) {
     const reciboId = String(entrada.reciboId || '').trim();
@@ -256,6 +267,7 @@ export async function movimentoDiarioCaixa(filtros = {}) {
     .filter(r => dentroPeriodo(dataPagamento(r) || dataVencimento(r), dataInicio, dataFim))
     .filter(r => passaFormaFiltro(r, formaFiltro) && passaCategoriaFiltro(r, categoriaFiltro))
     .filter(r => !jaVisto(vistosRecebimentos, r))
+    .filter(r => !jaVisto(vistosEntradasGlobais, r))
     .map(r => {
       const item = {
         id: r.id,
@@ -284,6 +296,7 @@ export async function movimentoDiarioCaixa(filtros = {}) {
     .filter(p => dentroPeriodo(dataPagamento(p) || dataVencimento(p), dataInicio, dataFim))
     .filter(p => passaFormaFiltro(p, formaFiltro) && passaCategoriaFiltro(p, categoriaFiltro))
     .filter(p => !jaVisto(vistosPagamentos, p))
+    .filter(p => !jaVisto(vistosSaidasGlobais, p))
     .map(p => {
       const item = {
         id: p.id,
@@ -305,6 +318,7 @@ export async function movimentoDiarioCaixa(filtros = {}) {
     .filter(f => dentroPeriodo(dataPagamento(f) || dataVencimento(f), dataInicio, dataFim))
     .filter(f => passaFormaFiltro(f, formaFiltro) && passaCategoriaFiltro(f, categoriaFiltro))
     .filter(f => !jaVisto(vistosPagamentos, f))
+    .filter(f => !jaVisto(vistosSaidasGlobais, f))
     .map(f => {
       const item = {
         id: f.id,
@@ -370,7 +384,7 @@ export async function movimentoDiarioCaixa(filtros = {}) {
 
 export async function biFinanceiro(filtros = {}) {
   const inicio = dataISO(filtros.inicio || filtros.dataInicio || '');
-  const fim = dataISO(filtros.fim || filtros.dataFim || hojeISO());
+  const fim = dataISO(filtros.fim || filtros.dataFim || (inicio ? hojeISO() : ''));
   const hoje = hojeISO();
 
   const financeiroRaw = await lerJson(FINANCEIRO_FILE, []);
@@ -379,8 +393,8 @@ export async function biFinanceiro(filtros = {}) {
   const caixaRaw = await lerJson(CAIXA_FILE, { caixas: [], movimentos: [] });
 
   const financeiro = arrayDe(financeiroRaw, 'lancamentos').filter(statusAtivo);
-  const recebimentos = arrayDe(recebimentosRaw, 'recebimentos').filter(statusAtivo);
-  const pagamentos = arrayDe(pagamentosRaw, 'pagamentos').filter(statusAtivo);
+  const recebimentos = arrayDe(recebimentosRaw, 'recebimentos').filter(statusAtivo).filter(statusPago);
+  const pagamentos = arrayDe(pagamentosRaw, 'pagamentos').filter(statusAtivo).filter(statusPago);
   const movimentos = arrayDe(caixaRaw.movimentos || [], 'movimentos').filter(statusAtivo);
 
   const linhas = [];
@@ -392,14 +406,16 @@ export async function biFinanceiro(filtros = {}) {
   for (const f of financeiro) {
     const receita = tipoReceita(f);
     const dVenc = dataVencimento(f);
-    const dPag = dataPagamento(f);
+    const pagoStatus = statusPago(f);
+    const dPag = pagoStatus ? dataPagamento(f) : '';
     const base = valorOriginal(f);
-    const pago = valorPago(f) || (statusPago(f) ? valorLiquido(f) : 0);
-    const valorRealizado = statusPago(f) ? valorLiquido(f) : pago;
+    const pago = valorPago(f) || (pagoStatus ? valorLiquido(f) : 0);
+    const valorRealizado = pagoStatus ? valorLiquido(f) : pago;
+    const programado = statusProgramado(f);
     linhas.push({
       origem: 'financeiro', id: f.id, tipo: receita ? 'receita' : 'despesa', status: f.status || 'Aberto',
-      data: dPag || dVenc, vencimento: dVenc, realizado: statusPago(f), valor: base,
-      valorRealizado, taxa: calcularTaxa(f), categoria: categoria(f, receita ? 'Receitas' : 'Despesas'), descricao: descricao(f), pessoa: pessoa(f), referencias: referencias(f)
+      data: dPag || dVenc, vencimento: dVenc, realizado: pagoStatus, valor: base,
+      valorRealizado, programado, taxa: calcularTaxa(f), categoria: categoria(f, receita ? 'Receitas' : 'Despesas'), descricao: descricao(f), pessoa: pessoa(f), referencias: referencias(f)
     });
   }
 
@@ -426,10 +442,26 @@ export async function biFinanceiro(filtros = {}) {
 
   // A mesma baixa existe em financeiro, recebimentos e caixa. Consolida pelos
   // IDs cruzados e prioriza a fonte operacional mais específica.
-  const prioridade = { recebimentos: 1, pagamentos: 1, financeiro: 2, caixa: 3 };
+  function prioridadeLinha(linha = {}) {
+    const valor = numero(linha.valorRealizado || linha.valor);
+    if (linha.realizado && valor <= 0) return 90;
+    if (linha.realizado && linha.tipo === 'receita') {
+      if (linha.origem === 'caixa') return 1;
+      if (linha.origem === 'recebimentos') return 2;
+      if (linha.origem === 'financeiro') return 3;
+    }
+    if (linha.realizado && linha.tipo === 'despesa') {
+      if (linha.origem === 'pagamentos') return 1;
+      if (linha.origem === 'caixa') return 2;
+      if (linha.origem === 'financeiro') return 3;
+    }
+    return ({ financeiro: 1, recebimentos: 2, pagamentos: 2, caixa: 3 }[linha.origem] || 9);
+  }
   const vistos = new Set();
-  const consolidadas = [...linhas].sort((a, b) => (prioridade[a.origem] || 9) - (prioridade[b.origem] || 9)).filter(linha => {
+  const consolidadas = [...linhas].sort((a, b) => prioridadeLinha(a) - prioridadeLinha(b)).filter(linha => {
     if (!linha.realizado) return true;
+    const valor = numero(linha.valorRealizado || linha.valor);
+    if (valor <= 0) return true;
     const refs = linha.referencias || [];
     if (refs.some(ref => vistos.has(ref))) return false;
     refs.forEach(ref => vistos.add(ref));
@@ -439,12 +471,18 @@ export async function biFinanceiro(filtros = {}) {
   const receitas = periodo.filter(l => l.tipo === 'receita');
   const despesas = periodo.filter(l => l.tipo === 'despesa');
 
+  const receitasAbertas = receitas.filter(l => !l.realizado && !l.programado);
+  const despesasAbertas = despesas.filter(l => !l.realizado && !l.programado);
+  const receitasProgramadas = receitas.filter(l => !l.realizado && l.programado);
+  const despesasProgramadas = despesas.filter(l => !l.realizado && l.programado);
   const recebido = arred(receitas.filter(l => l.realizado).reduce((s, l) => s + numero(l.valorRealizado || l.valor), 0));
-  const receber = arred(receitas.filter(l => !l.realizado).reduce((s, l) => s + numero(l.valor), 0));
+  const receber = arred(receitasAbertas.reduce((s, l) => s + numero(l.valor), 0));
   const pago = arred(despesas.filter(l => l.realizado).reduce((s, l) => s + numero(l.valorRealizado || l.valor), 0));
-  const pagar = arred(despesas.filter(l => !l.realizado).reduce((s, l) => s + numero(l.valor), 0));
-  const vencidoReceber = arred(receitas.filter(l => !l.realizado && l.vencimento && l.vencimento < hoje).reduce((s, l) => s + numero(l.valor), 0));
-  const vencidoPagar = arred(despesas.filter(l => !l.realizado && l.vencimento && l.vencimento < hoje).reduce((s, l) => s + numero(l.valor), 0));
+  const pagar = arred(despesasAbertas.reduce((s, l) => s + numero(l.valor), 0));
+  const vencidoReceber = arred(receitasAbertas.filter(l => l.vencimento && l.vencimento < hoje).reduce((s, l) => s + numero(l.valor), 0));
+  const vencidoPagar = arred(despesasAbertas.filter(l => l.vencimento && l.vencimento < hoje).reduce((s, l) => s + numero(l.valor), 0));
+  const programadoReceber = arred(receitasProgramadas.reduce((s, l) => s + numero(l.valor), 0));
+  const programadoPagar = arred(despesasProgramadas.reduce((s, l) => s + numero(l.valor), 0));
 
   const receitasMes = new Map();
   const despesasMes = new Map();
@@ -456,16 +494,18 @@ export async function biFinanceiro(filtros = {}) {
   for (const l of periodo) {
     const valor = numero(l.realizado ? (l.valorRealizado || l.valor) : l.valor);
     const mes = mesISO(l.data || l.vencimento);
-    if (l.tipo === 'receita') {
-      somaPorMapa(receitasMes, mes, 'valor', valor);
-      somaPorMapa(fluxoMes, mes, 'receitas', valor);
-      mapCategoria(receitaCategoria, l.categoria, valor);
-    } else {
-      somaPorMapa(despesasMes, mes, 'valor', valor);
-      somaPorMapa(fluxoMes, mes, 'despesas', valor);
-      mapCategoria(despesaCategoria, l.categoria, valor);
+    if (!l.programado) {
+      if (l.tipo === 'receita') {
+        somaPorMapa(receitasMes, mes, 'valor', valor);
+        somaPorMapa(fluxoMes, mes, 'receitas', valor);
+        mapCategoria(receitaCategoria, l.categoria, valor);
+      } else {
+        somaPorMapa(despesasMes, mes, 'valor', valor);
+        somaPorMapa(fluxoMes, mes, 'despesas', valor);
+        mapCategoria(despesaCategoria, l.categoria, valor);
+      }
     }
-    const st = l.realizado ? (l.tipo === 'receita' ? 'Recebido' : 'Pago') : (l.vencimento && l.vencimento < hoje ? 'Vencido' : 'Aberto');
+    const st = l.programado ? 'Programado' : (l.realizado ? (l.tipo === 'receita' ? 'Recebido' : 'Pago') : (l.vencimento && l.vencimento < hoje ? 'Vencido' : 'Aberto'));
     const atual = statusMapa.get(st) || { status: st, quantidade: 0, valor: 0 };
     atual.quantidade += 1;
     atual.valor = arred(atual.valor + valor);
@@ -474,15 +514,15 @@ export async function biFinanceiro(filtros = {}) {
 
   const fluxo = [...fluxoMes.entries()].map(([mes, v]) => ({ mes, receitas: arred(v.receitas || 0), despesas: arred(v.despesas || 0), saldo: arred((v.receitas || 0) - (v.despesas || 0)) })).sort((a, b) => a.mes.localeCompare(b.mes));
 
-  const vencidos = periodo.filter(l => !l.realizado && l.vencimento && l.vencimento < hoje)
+  const vencidos = periodo.filter(l => !l.realizado && !l.programado && l.vencimento && l.vencimento < hoje)
     .sort((a, b) => a.vencimento.localeCompare(b.vencimento))
     .slice(0, 20);
-  const topReceitas = receitas.sort((a, b) => numero(b.valorRealizado || b.valor) - numero(a.valorRealizado || a.valor)).slice(0, 20);
+  const topReceitas = receitas.filter(l => !l.programado).sort((a, b) => numero(b.valorRealizado || b.valor) - numero(a.valorRealizado || a.valor)).slice(0, 20);
 
   return {
     ok: true,
     filtros: { inicio, fim },
-    resumo: { recebido, receber, pago, pagar, vencidoReceber, vencidoPagar, saldoRealizado: arred(recebido - pago), saldoPrevisto: arred((recebido + receber) - (pago + pagar)), totalLancamentos: periodo.length, taxasFinanceiras: arred(periodo.reduce((s, l) => s + numero(l.taxa || 0), 0)), qtdReceitas: receitas.length, qtdDespesas: despesas.length },
+    resumo: { recebido, receber, pago, pagar, vencidoReceber, vencidoPagar, programadoReceber, programadoPagar, saldoRealizado: arred(recebido - pago), saldoPrevisto: arred((recebido + receber) - (pago + pagar)), totalLancamentos: periodo.length, taxasFinanceiras: arred(periodo.reduce((s, l) => s + numero(l.taxa || 0), 0)), qtdReceitas: receitas.length, qtdDespesas: despesas.length },
     receitasPorMes: [...receitasMes.values()].sort((a, b) => a.chave.localeCompare(b.chave)).map(x => ({ mes: x.chave, valor: x.valor })),
     despesasPorMes: [...despesasMes.values()].sort((a, b) => a.chave.localeCompare(b.chave)).map(x => ({ mes: x.chave, valor: x.valor })),
     fluxo,
