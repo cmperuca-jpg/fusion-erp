@@ -11,7 +11,6 @@
     return (document.title || 'Fusion ERP').replace(/\s*[-|].*$/,'').trim() || 'Fusion ERP';
   }
   function ensureTopbar(){
-    if (document.body.classList.contains('fusion-ui-ready') || document.querySelector('.fusion-ui-sidebar')) return;
     if (document.querySelector('.fusion-mobile-final-bar')) return;
     var bar = document.createElement('div');
     bar.className = 'fusion-mobile-final-bar';
@@ -31,10 +30,25 @@
     overlay.className = 'fusion-mobile-final-overlay';
     document.body.appendChild(overlay);
 
-    function close(){ document.body.classList.remove('fusion-menu-open'); }
-    btn.addEventListener('click', function(){ document.body.classList.toggle('fusion-menu-open'); });
+    function close(){
+      document.body.classList.remove('fusion-menu-open');
+      btn.setAttribute('aria-label','Abrir menu');
+      btn.setAttribute('aria-expanded','false');
+      btn.innerHTML = '☰';
+    }
+    function toggle(){
+      var aberto = document.body.classList.toggle('fusion-menu-open');
+      btn.setAttribute('aria-label', aberto ? 'Fechar menu' : 'Abrir menu');
+      btn.setAttribute('aria-expanded', aberto ? 'true' : 'false');
+      btn.innerHTML = aberto ? '×' : '☰';
+    }
+    btn.setAttribute('aria-expanded','false');
+    btn.addEventListener('click', toggle);
     overlay.addEventListener('click', close);
     document.addEventListener('keydown', function(ev){ if(ev.key === 'Escape') close(); });
+    document.querySelectorAll('.sidebar a,.fusion-sidebar a,.side-menu a,.menu-lateral a').forEach(function(link){
+      link.addEventListener('click', close);
+    });
   }
   function wrapTables(){
     document.querySelectorAll('table').forEach(function(tbl){
