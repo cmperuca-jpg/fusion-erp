@@ -64,7 +64,11 @@ function tipoReceita(item = {}) {
   return true;
 }
 function tipoDespesa(item = {}) { return !tipoReceita(item); }
-function calcularTaxa(item = {}) { return arred(item.taxaOperadoraValor ?? item.taxaValor ?? item.taxa ?? 0); }
+function calcularTaxa(item = {}) {
+  if (Number.isInteger(item.taxaCentavos)) return arred(item.taxaCentavos / 100);
+  if (Number.isInteger(item.taxaOperadoraValorCentavos)) return arred(item.taxaOperadoraValorCentavos / 100);
+  return arred(item.taxaOperadoraValor ?? item.taxaValor ?? item.taxa ?? 0);
+}
 function valorBruto(item = {}) { return arred(item.valorBrutoRecebido ?? item.valorRecebido ?? item.valorPago ?? item.totalPago ?? item.valor ?? item.valorBruto ?? item.valorTotal ?? 0); }
 function valorLiquido(item = {}) {
   const liquido = numero(item.valorLiquido ?? item.valorRecebidoLiquido ?? 0);
@@ -136,7 +140,9 @@ function referencias(item = {}) {
     item.recebimentoId,
     item.pagamentoId,
     item.referenciaId,
-    item.mensalidadeId
+    item.mensalidadeId,
+    item.reciboId,
+    item.ultimoReciboId
   ].map(v => String(v || '').trim()).filter(Boolean))];
 }
 
@@ -164,6 +170,13 @@ export async function movimentoDiarioCaixa(filtros = {}) {
   const recebimentosBase = arrayDe(recebimentosRaw, 'recebimentos');
   const pagamentosBase = arrayDe(pagamentosRaw, 'pagamentos');
 
+  const recebimentosPorRecibo = new Map();
+  for (const recebimento of recebimentosBase) {
+    const reciboId = String(recebimento.reciboId || recebimento.ultimoReciboId || '').trim();
+    if (!reciboId) continue;
+    recebimentosPorRecibo.set(reciboId, [...(recebimentosPorRecibo.get(reciboId) || []), recebimento]);
+  }
+
   const movimentosPeriodo = movimentos.filter((m) => {
     const data = dataISO(m.data || m.dataPagamento || m.criadoEm);
     if (!data || data < dataInicio || data > dataFim) return false;
@@ -175,24 +188,44 @@ export async function movimentoDiarioCaixa(filtros = {}) {
 
   const entradas = movimentosPeriodo.filter(m => normalizar(m.tipo).includes('entrada'));
   const saidas = movimentosPeriodo.filter(m => normalizar(m.tipo).includes('saida') || normalizar(m.tipo).includes('saída'));
+  const quantidadeMovimentosPorRecibo = new Map();
+  for (const entrada of entradas) {
+    const reciboId = String(entrada.reciboId || '').trim();
+    if (reciboId) quantidadeMovimentosPorRecibo.set(reciboId, (quantidadeMovimentosPorRecibo.get(reciboId) || 0) + 1);
+  }
 
   const financeiroPorMovimento = new Map();
+  const financeiroPorId = new Map();
   for (const f of Array.isArray(financeiro) ? financeiro : []) {
     if (f.movimentoCaixaId) financeiroPorMovimento.set(String(f.movimentoCaixaId), f);
+    if (f.id) financeiroPorId.set(String(f.id), f);
   }
 
   let recebimentos = entradas.map((m) => {
-    const fin = financeiroPorMovimento.get(String(m.id)) || {};
-    const bruto = valorBruto(fin.valor ? fin : m);
-    const taxa = calcularTaxa(fin);
-    const liquido = taxa > 0 ? arred(bruto - taxa) : valorLiquido(fin.valor ? fin : m);
+    const fin = financeiroPorMovimento.get(String(m.id)) || financeiroPorId.get(String(m.lancamentoFinanceiroId || m.financeiroId || '')) || {};
+    const relacionados = recebimentosPorRecibo.get(String(m.reciboId || '')) || [];
+    const categoriasRelacionadas = [...new Set(relacionados.map((item) => categoria(item, '')).filter(Boolean))];
+    const categoriaMovimento = normalizar(m.categoria) === 'recebimentos'
+      ? (fin.categoria || (categoriasRelacionadas.length === 1 ? categoriasRelacionadas[0] : '') || m.categoria)
+      : (m.categoria || fin.categoria);
+    const bruto = valorBruto(m) || valorBruto(fin);
+    const taxaRelacionada = quantidadeMovimentosPorRecibo.get(String(m.reciboId || '')) === 1
+      ? arred(relacionados.reduce((soma, item) => soma + numero(item.ultimaTaxaOperadoraValor ?? item.taxaOperadoraValor ?? item.taxaValor ?? 0), 0))
+      : 0;
+    const taxa = calcularTaxa(m) || calcularTaxa(fin) || taxaRelacionada;
+    const liquidoInformado = numero(m.valorLiquido ?? m.valorRecebidoLiquido);
+    const liquido = liquidoInformado > 0 ? arred(liquidoInformado) : arred(bruto - taxa);
     return {
       id: m.id,
+      reciboId: m.reciboId || '',
+      recebimentoId: m.recebimentoId || '',
+      lancamentoFinanceiroId: m.lancamentoFinanceiroId || m.financeiroId || '',
+      mensalidadeId: m.mensalidadeId || '',
       hora: horaItem(m),
       data: dataISO(m.data || m.criadoEm),
       cliente: m.pessoa || fin.alunoFornecedor || fin.pessoa || fin.pessoaFornecedor || '',
       descricao: m.descricao || fin.descricao || 'Recebimento',
-      categoria: m.categoria || fin.categoria || 'Recebimentos',
+      categoria: categoriaMovimento || 'Recebimentos',
       formaPagamento: m.formaPagamento || fin.formaPagamento || '',
       bruto,
       taxa,

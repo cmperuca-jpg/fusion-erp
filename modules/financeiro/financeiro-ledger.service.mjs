@@ -6,6 +6,7 @@ const COL = Object.freeze({
   mensalidades: "mensalidades.json", recebimentos: "recebimentos.json", caixa: "caixa.json",
   recibos: "recibos.json", itens: "recibos_itens.json", formas: "formas_pagamento.json",
   plano: "plano_contas.json", auditoria: "auditoria_financeira.json", creditos: "creditos.json",
+  taxasCartao: "taxas_cartao.json",
   checkins: "checkin.json",
   pagamentosLegacy: "pagamentos.json", dbLegacy: "db.json"
 });
@@ -44,6 +45,114 @@ function erro(mensagem, codigo = 400) { const e = new Error(mensagem); e.status 
 function caixaVazio() { return { caixas: [], movimentos: [] }; }
 function caixaAberto(base = {}) { return (base.caixas || []).find((x) => status(x) === "aberto") || null; }
 function mesmo(a, b) { return txt(a) && txt(a) === txt(b); }
+
+function campoInformado(objeto = {}, campo = "") {
+  return Object.prototype.hasOwnProperty.call(objeto, campo) && objeto[campo] !== null && txt(objeto[campo]) !== "";
+}
+
+function modalidadePagamento(forma = "", modalidade = "") {
+  const informada = norm(modalidade);
+  if (informada) return informada;
+  const f = norm(forma);
+  if (f.includes("debito")) return "debito";
+  if (f.includes("credito") || f.includes("cartao")) return "credito";
+  if (f.includes("pix")) return "pix";
+  if (f.includes("boleto")) return "boleto";
+  return "";
+}
+
+function pagamentoComCartao(forma = "") {
+  const f = norm(forma);
+  return f.includes("cartao") || f.includes("credito") || f.includes("debito");
+}
+
+function localizarTaxaConfigurada(taxas = [], meio = {}) {
+  const modalidade = modalidadePagamento(meio.formaPagamento || meio.forma, meio.modalidadeCartao || meio.modalidade);
+  const parcelas = Math.max(1, Number(meio.parcelasCartao || meio.parcelas || 1));
+  const bandeira = norm(meio.bandeiraCartao || meio.bandeira);
+  let candidatas = (Array.isArray(taxas) ? taxas : []).filter((taxa) => {
+    return norm(taxa.modalidade || "credito") === modalidade && Math.max(1, Number(taxa.parcelas || 1)) === parcelas;
+  });
+  if (bandeira) candidatas = candidatas.filter((taxa) => norm(taxa.bandeira) === bandeira);
+  return candidatas.length === 1 ? candidatas[0] : null;
+}
+
+function normalizarMeioComTaxa(meioEntrada = {}, dadosGerais = {}, taxas = {}) {
+  const meio = { ...meioEntrada };
+  const formaPagamento = txt(meio.formaPagamento || meio.forma || dadosGerais.formaPagamento || dadosGerais.forma) || "Dinheiro";
+  const valorCentavos = centavos(meio.valor ?? dadosGerais.valorEntregue ?? dadosGerais.valorPago ?? 0);
+  const bandeiraCartao = txt(meio.bandeiraCartao || meio.bandeira || dadosGerais.bandeiraCartao || dadosGerais.bandeira);
+  const modalidadeCartao = modalidadePagamento(
+    formaPagamento,
+    meio.modalidadeCartao || meio.modalidade || dadosGerais.modalidadeCartao || dadosGerais.modalidade
+  );
+  const parcelasCartao = Math.max(1, Number(meio.parcelasCartao || meio.parcelas || dadosGerais.parcelasCartao || dadosGerais.parcelas || 1));
+  const taxaConfigurada = localizarTaxaConfigurada(taxas, { formaPagamento, bandeiraCartao, modalidadeCartao, parcelasCartao });
+
+  const valorTaxaInformado = campoInformado(meio, "taxa") || campoInformado(meio, "taxaOperadoraValor") || campoInformado(meio, "taxaValor") ||
+    campoInformado(dadosGerais, "taxaOperadoraValor") || campoInformado(dadosGerais, "taxaValor");
+
+  const percentual = moeda(
+    meio.taxaOperadoraPercentual ?? meio.taxaPercentual ?? dadosGerais.taxaOperadoraPercentual ??
+    dadosGerais.taxaPercentual ?? taxaConfigurada?.percentual ?? 0
+  );
+  const taxaFixa = moeda(
+    meio.taxaOperadoraFixa ?? meio.taxaFixa ?? dadosGerais.taxaOperadoraFixa ??
+    dadosGerais.taxaFixa ?? taxaConfigurada?.taxaFixa ?? 0
+  );
+
+  let taxaCentavos = valorTaxaInformado
+    ? centavos(meio.taxa ?? meio.taxaOperadoraValor ?? meio.taxaValor ?? dadosGerais.taxaOperadoraValor ?? dadosGerais.taxaValor)
+    : Math.round((valorCentavos * percentual / 100) + centavos(taxaFixa));
+
+  // Uma tela antiga pode enviar taxa zero mesmo havendo configuração válida.
+  // Nesse caso o servidor é a autoridade e refaz o cálculo no momento da baixa.
+  if (taxaCentavos <= 0 && taxaConfigurada) {
+    const percentualConfigurado = moeda(taxaConfigurada.percentual || 0);
+    const fixaConfigurada = moeda(taxaConfigurada.taxaFixa || 0);
+    taxaCentavos = Math.round((valorCentavos * percentualConfigurado / 100) + centavos(fixaConfigurada));
+  }
+
+  if (pagamentoComCartao(formaPagamento) && taxaCentavos <= 0 && !taxaConfigurada && percentual <= 0 && taxaFixa <= 0) {
+    throw erro(`Não foi possível calcular a taxa do cartão ${bandeiraCartao || "sem bandeira"} (${modalidadeCartao || "modalidade não informada"}, ${parcelasCartao}x). Confira as taxas de recebimento antes de confirmar.`);
+  }
+
+  taxaCentavos = Math.max(0, Math.min(valorCentavos, taxaCentavos));
+  return {
+    ...meio,
+    formaPagamento,
+    valorCentavos,
+    valor: reais(valorCentavos),
+    bandeiraCartao: bandeiraCartao || txt(taxaConfigurada?.bandeira),
+    modalidadeCartao,
+    parcelasCartao,
+    taxaOperadoraPercentual: percentual || moeda(taxaConfigurada?.percentual || 0),
+    taxaOperadoraFixa: taxaFixa || moeda(taxaConfigurada?.taxaFixa || 0),
+    taxaCentavos,
+    taxa: reais(taxaCentavos),
+    taxaOperadoraValor: reais(taxaCentavos),
+    valorLiquidoCentavos: valorCentavos - taxaCentavos,
+    valorLiquido: reais(valorCentavos - taxaCentavos)
+  };
+}
+
+function distribuirCentavos(total = 0, bases = []) {
+  const totalInteiro = Math.max(0, Math.round(Number(total) || 0));
+  const pesos = bases.map((base) => Math.max(0, Math.round(Number(base) || 0)));
+  const soma = pesos.reduce((acc, valor) => acc + valor, 0);
+  if (!totalInteiro || !soma) return pesos.map(() => 0);
+  const partes = pesos.map((peso, indice) => {
+    const exato = totalInteiro * peso / soma;
+    return { indice, valor: Math.floor(exato), resto: exato - Math.floor(exato) };
+  });
+  let restante = totalInteiro - partes.reduce((acc, parte) => acc + parte.valor, 0);
+  for (const parte of [...partes].sort((a, b) => b.resto - a.resto || a.indice - b.indice)) {
+    if (restante <= 0) break;
+    parte.valor += 1;
+    restante -= 1;
+  }
+  return partes.sort((a, b) => a.indice - b.indice).map((parte) => parte.valor);
+}
 
 function tituloNormalizado(item = {}) {
   const totalC = valorTituloC(item); const pagoC = Math.min(totalC, Math.max(0, valorPagoC(item)));
@@ -228,8 +337,8 @@ export async function receberTitulos(dados = {}) {
   const operacaoId = txt(dados.operacaoId || dados.idempotencyKey) || uid("oprec");
   return executarTransacaoJson(async () => {
     const recibos = await ler(COL.recibos, []); const repetido = recibos.find((x) => x.operacaoId === operacaoId); if (repetido) return { ok: true, idempotente: true, recibo: repetido };
-    const [titulos, itensRecibo, caixa, mensalidades, recebimentos, matriculas, alunos, creditos, checkins] = await Promise.all([
-      ler(COL.titulos, []), ler(COL.itens, []), ler(COL.caixa, caixaVazio()), ler(COL.mensalidades, []), ler(COL.recebimentos, []), ler(COL.matriculas, []), ler(COL.alunos, []), ler(COL.creditos, []), ler(COL.checkins, [])
+    const [titulos, itensRecibo, caixa, mensalidades, recebimentos, matriculas, alunos, creditos, checkins, taxasCartao] = await Promise.all([
+      ler(COL.titulos, []), ler(COL.itens, []), ler(COL.caixa, caixaVazio()), ler(COL.mensalidades, []), ler(COL.recebimentos, []), ler(COL.matriculas, []), ler(COL.alunos, []), ler(COL.creditos, []), ler(COL.checkins, []), ler(COL.taxasCartao, [])
     ]);
     const cx = caixaAberto(caixa); if (!cx) throw erro("Abra o caixa antes de registrar recebimentos.", 409);
     const itensEntrada = Array.isArray(dados.itens) && dados.itens.length ? dados.itens : [{ tituloId: dados.tituloId || dados.id, valor: dados.valorAplicado ?? dados.valor, desconto: dados.desconto, acrescimo: dados.acrescimo ?? dados.juros ?? dados.multa }];
@@ -253,24 +362,101 @@ export async function receberTitulos(dados = {}) {
       if (aplicadoC <= 0 || aplicadoC > devidoC) throw erro(`Valor inválido para ${titulo.descricao}. Saldo devido: ${reais(devidoC).toFixed(2)}.`);
       totalAplicadoC += aplicadoC; alocacoes.push({ indice: i, titulo, aplicadoC, descontoC, acrescimoC, devidoC });
     }
-    const meios = Array.isArray(dados.pagamentos) && dados.pagamentos.length ? dados.pagamentos : [{ formaPagamento: dados.formaPagamento || "Dinheiro", valor: dados.valorEntregue ?? dados.valorPago ?? reais(totalAplicadoC), taxa: dados.taxaOperadoraValor || 0 }];
-    const totalMeiosC = meios.reduce((s, x) => s + centavos(x.valor), 0);
+    const meiosEntrada = Array.isArray(dados.pagamentos) && dados.pagamentos.length
+      ? dados.pagamentos
+      : [{
+          formaPagamento: dados.formaPagamento || "Dinheiro",
+          valor: dados.valorEntregue ?? dados.valorPago ?? reais(totalAplicadoC),
+          bandeiraCartao: dados.bandeiraCartao,
+          modalidadeCartao: dados.modalidadeCartao,
+          parcelasCartao: dados.parcelasCartao,
+          taxaOperadoraPercentual: dados.taxaOperadoraPercentual,
+          taxaOperadoraFixa: dados.taxaOperadoraFixa,
+          taxaOperadoraValor: dados.taxaOperadoraValor
+        }];
+    const meios = meiosEntrada.map((meio) => normalizarMeioComTaxa(meio, meiosEntrada.length === 1 ? dados : {}, taxasCartao));
+    const totalMeiosC = meios.reduce((s, x) => s + x.valorCentavos, 0);
+    const totalTaxasC = meios.reduce((s, x) => s + x.taxaCentavos, 0);
     if (totalMeiosC < totalAplicadoC) throw erro("A soma das formas de pagamento não cobre o valor aplicado nos títulos.");
     const diferencaC = totalMeiosC - totalAplicadoC;
     const destinoDiferenca = norm(dados.destinoDiferenca);
     if (diferencaC > 0 && !["troco", "credito"].includes(destinoDiferenca)) throw erro("Informe se a diferença será devolvida como troco ou mantida como crédito.");
     if (diferencaC > 0 && destinoDiferenca === "troco" && (meios.length !== 1 || norm(meios[0].formaPagamento || meios[0].forma) !== "dinheiro")) throw erro("Troco somente é permitido quando todo o pagamento é em dinheiro.");
     const aluno = alunos.find((x) => String(x.id) === alunoUnico) || {};
-    const recibo = { id: uid("rec"), numero: proximoRecibo(recibos), operacaoId, data: txt(dados.dataPagamento || dados.dataRecebimento) || hoje(), hora: new Date().toTimeString().slice(0, 8), alunoId: alunoUnico, aluno: txt(aluno.nome || alocacoes[0]?.titulo.alunoFornecedor || alocacoes[0]?.titulo.pessoa), caixaId: cx.id, valorPagoCentavos: totalMeiosC, valorPago: reais(totalMeiosC), valorAplicadoCentavos: totalAplicadoC, valorAplicado: reais(totalAplicadoC), diferencaCentavos: diferencaC, troco: destinoDiferenca === "troco" ? reais(diferencaC) : 0, creditoGerado: destinoDiferenca === "credito" ? reais(diferencaC) : 0, formasPagamento: meios.map((x) => ({ formaPagamento: txt(x.formaPagamento || x.forma), valor: moeda(x.valor), referencia: txt(x.referencia), taxa: moeda(x.taxa || 0) })), cancelado: false, usuario: txt(dados.usuario) || "sistema", observacao: txt(dados.observacao), criadoEm: agora() };
+    const recibo = {
+      id: uid("rec"),
+      numero: proximoRecibo(recibos),
+      operacaoId,
+      data: txt(dados.dataPagamento || dados.dataRecebimento) || hoje(),
+      hora: new Date().toTimeString().slice(0, 8),
+      alunoId: alunoUnico,
+      aluno: txt(aluno.nome || alocacoes[0]?.titulo.alunoFornecedor || alocacoes[0]?.titulo.pessoa),
+      caixaId: cx.id,
+      valorPagoCentavos: totalMeiosC,
+      valorPago: reais(totalMeiosC),
+      valorBrutoRecebido: reais(totalMeiosC),
+      valorAplicadoCentavos: totalAplicadoC,
+      valorAplicado: reais(totalAplicadoC),
+      taxaOperadoraValorCentavos: totalTaxasC,
+      taxaOperadoraValor: reais(totalTaxasC),
+      valorLiquidoCentavos: totalMeiosC - totalTaxasC,
+      valorLiquido: reais(totalMeiosC - totalTaxasC),
+      diferencaCentavos: diferencaC,
+      troco: destinoDiferenca === "troco" ? reais(diferencaC) : 0,
+      creditoGerado: destinoDiferenca === "credito" ? reais(diferencaC) : 0,
+      formasPagamento: meios.map((x) => ({
+        formaPagamento: x.formaPagamento,
+        valor: x.valor,
+        referencia: txt(x.referencia),
+        bandeiraCartao: x.bandeiraCartao,
+        modalidadeCartao: x.modalidadeCartao,
+        parcelasCartao: x.parcelasCartao,
+        taxaOperadoraPercentual: x.taxaOperadoraPercentual,
+        taxaOperadoraFixa: x.taxaOperadoraFixa,
+        taxaOperadoraValor: x.taxaOperadoraValor,
+        taxa: x.taxaOperadoraValor,
+        valorLiquido: x.valorLiquido
+      })),
+      cancelado: false,
+      usuario: txt(dados.usuario) || "sistema",
+      observacao: txt(dados.observacao),
+      criadoEm: agora()
+    };
+    const taxaAplicadaTitulosC = totalMeiosC > 0 ? Math.round(totalTaxasC * Math.min(totalAplicadoC, totalMeiosC) / totalMeiosC) : 0;
+    const taxasPorTituloC = distribuirCentavos(taxaAplicadaTitulosC, alocacoes.map((alocacao) => alocacao.aplicadoC));
+    const meioUnico = meios.length === 1 ? meios[0] : null;
     const novosItens = [];
-    for (const a of alocacoes) {
+    for (const [indiceAlocacao, a] of alocacoes.entries()) {
       const novoPagoC = Math.min(valorTituloC(a.titulo), valorPagoC(a.titulo) + a.aplicadoC + a.descontoC - a.acrescimoC);
-      titulos[a.indice] = tituloNormalizado({ ...a.titulo, valorPagoCentavos: novoPagoC, ultimoReciboId: recibo.id, dataPagamento: recibo.data, formaPagamento: meios.length === 1 ? meios[0].formaPagamento : "Múltiplas", atualizadoEm: agora() });
-      const item = { id: uid("reci"), reciboId: recibo.id, tituloId: a.titulo.id, alunoId: alunoUnico, matriculaId: idMatricula(a.titulo), mensalidadeId: txt(a.titulo.mensalidadeId), valorOriginalCentavos: valorTituloC(a.titulo), saldoAnteriorCentavos: saldoC(a.titulo), descontoCentavos: a.descontoC, acrescimoCentavos: a.acrescimoC, valorAplicadoCentavos: a.aplicadoC, valorAplicado: reais(a.aplicadoC), cancelado: false, criadoEm: agora() };
+      const taxaAnteriorC = Number.isInteger(a.titulo.taxaOperadoraValorCentavos)
+        ? a.titulo.taxaOperadoraValorCentavos
+        : centavos(a.titulo.taxaOperadoraValor || a.titulo.taxaValor || 0);
+      const taxaAtualC = taxasPorTituloC[indiceAlocacao] || 0;
+      const taxaAcumuladaC = taxaAnteriorC + taxaAtualC;
+      titulos[a.indice] = tituloNormalizado({
+        ...a.titulo,
+        valorPagoCentavos: novoPagoC,
+        valorBrutoRecebido: reais(novoPagoC),
+        taxaOperadoraValorCentavos: taxaAcumuladaC,
+        taxaOperadoraValor: reais(taxaAcumuladaC),
+        ultimaTaxaOperadoraValor: reais(taxaAtualC),
+        valorLiquido: reais(Math.max(0, novoPagoC - taxaAcumuladaC)),
+        valorRecebidoLiquido: reais(Math.max(0, novoPagoC - taxaAcumuladaC)),
+        taxaOperadoraPercentual: meioUnico?.taxaOperadoraPercentual || 0,
+        taxaOperadoraFixa: meioUnico?.taxaOperadoraFixa || 0,
+        bandeiraCartao: meioUnico?.bandeiraCartao || "",
+        modalidadeCartao: meioUnico?.modalidadeCartao || "",
+        parcelasCartao: meioUnico?.parcelasCartao || "",
+        ultimoReciboId: recibo.id,
+        dataPagamento: recibo.data,
+        formaPagamento: meioUnico?.formaPagamento || "Múltiplas",
+        atualizadoEm: agora()
+      });
+      const item = { id: uid("reci"), reciboId: recibo.id, tituloId: a.titulo.id, alunoId: alunoUnico, matriculaId: idMatricula(a.titulo), mensalidadeId: txt(a.titulo.mensalidadeId), valorOriginalCentavos: valorTituloC(a.titulo), saldoAnteriorCentavos: saldoC(a.titulo), descontoCentavos: a.descontoC, acrescimoCentavos: a.acrescimoC, valorAplicadoCentavos: a.aplicadoC, valorAplicado: reais(a.aplicadoC), taxaOperadoraValorCentavos: taxaAtualC, taxaOperadoraValor: reais(taxaAtualC), valorLiquidoAplicadoCentavos: Math.max(0, a.aplicadoC - taxaAtualC), valorLiquidoAplicado: reais(Math.max(0, a.aplicadoC - taxaAtualC)), cancelado: false, criadoEm: agora() };
       novosItens.push(item); itensRecibo.push(item);
-      for (let m = 0; m < mensalidades.length; m += 1) if (mesmo(mensalidades[m].id, item.mensalidadeId) || mesmo(mensalidades[m].lancamentoFinanceiroId || mensalidades[m].financeiroId, item.tituloId)) mensalidades[m] = { ...mensalidades[m], valorPago: titulos[a.indice].valorPago, valorRestante: titulos[a.indice].valorRestante, status: titulos[a.indice].status === "Pago" ? "paga" : "parcial", ultimoReciboId: recibo.id, dataPagamento: recibo.data, atualizadoEm: agora() };
+      for (let m = 0; m < mensalidades.length; m += 1) if (mesmo(mensalidades[m].id, item.mensalidadeId) || mesmo(mensalidades[m].lancamentoFinanceiroId || mensalidades[m].financeiroId, item.tituloId)) mensalidades[m] = { ...mensalidades[m], valorPago: titulos[a.indice].valorPago, valorBrutoRecebido: titulos[a.indice].valorBrutoRecebido, valorRestante: titulos[a.indice].valorRestante, taxaOperadoraValor: titulos[a.indice].taxaOperadoraValor, ultimaTaxaOperadoraValor: titulos[a.indice].ultimaTaxaOperadoraValor, taxaOperadoraPercentual: titulos[a.indice].taxaOperadoraPercentual, taxaOperadoraFixa: titulos[a.indice].taxaOperadoraFixa, valorLiquido: titulos[a.indice].valorLiquido, bandeiraCartao: titulos[a.indice].bandeiraCartao, modalidadeCartao: titulos[a.indice].modalidadeCartao, parcelasCartao: titulos[a.indice].parcelasCartao, formaPagamento: titulos[a.indice].formaPagamento, status: titulos[a.indice].status === "Pago" ? "paga" : "parcial", ultimoReciboId: recibo.id, dataPagamento: recibo.data, atualizadoEm: agora() };
       const r = recebimentos.findIndex((x) => mesmo(x.lancamentoFinanceiroId || x.financeiroId, item.tituloId) || mesmo(x.mensalidadeId, item.mensalidadeId));
-      const receb = { ...(r >= 0 ? recebimentos[r] : {}), id: r >= 0 ? recebimentos[r].id : uid("recv"), alunoId: alunoUnico, matriculaId: item.matriculaId, mensalidadeId: item.mensalidadeId, lancamentoFinanceiroId: item.tituloId, reciboId: recibo.id, numeroRecibo: recibo.numero, valorRecebido: titulos[a.indice].valorPago, valorRestante: titulos[a.indice].valorRestante, status: titulos[a.indice].status === "Pago" ? "recebido" : "parcial", dataRecebimento: recibo.data, formaPagamento: meios.length === 1 ? meios[0].formaPagamento : "Múltiplas", atualizadoEm: agora(), criadoEm: r >= 0 ? recebimentos[r].criadoEm : agora() };
+      const receb = { ...(r >= 0 ? recebimentos[r] : {}), id: r >= 0 ? recebimentos[r].id : uid("recv"), alunoId: alunoUnico, matriculaId: item.matriculaId, mensalidadeId: item.mensalidadeId, lancamentoFinanceiroId: item.tituloId, reciboId: recibo.id, numeroRecibo: recibo.numero, valorRecebido: titulos[a.indice].valorPago, valorBrutoRecebido: titulos[a.indice].valorBrutoRecebido, valorRestante: titulos[a.indice].valorRestante, taxaOperadoraValor: titulos[a.indice].taxaOperadoraValor, ultimaTaxaOperadoraValor: titulos[a.indice].ultimaTaxaOperadoraValor, taxaOperadoraPercentual: titulos[a.indice].taxaOperadoraPercentual, taxaOperadoraFixa: titulos[a.indice].taxaOperadoraFixa, valorLiquido: titulos[a.indice].valorLiquido, bandeiraCartao: titulos[a.indice].bandeiraCartao, modalidadeCartao: titulos[a.indice].modalidadeCartao, parcelasCartao: titulos[a.indice].parcelasCartao, status: titulos[a.indice].status === "Pago" ? "recebido" : "parcial", dataRecebimento: recibo.data, formaPagamento: meioUnico?.formaPagamento || "Múltiplas", atualizadoEm: agora(), criadoEm: r >= 0 ? recebimentos[r].criadoEm : agora() };
       if (r >= 0) recebimentos[r] = receb; else recebimentos.push(receb);
       const deveAtivarMatricula = titulos[a.indice].status === "Pago" && (a.titulo.ativarMatriculaAoReceber === true || norm(a.titulo.origem).includes("matricula_inicial") || status(matriculas.find((x) => mesmo(x.id, item.matriculaId)) || {}) === "pendente");
       if (deveAtivarMatricula) {
@@ -331,9 +517,11 @@ export async function receberTitulos(dados = {}) {
         }
       }
     }
+    const categorias = [...new Set(alocacoes.map((a) => txt(a.titulo.categoria)).filter(Boolean))];
+    const categoriaMovimento = categorias.length === 1 ? categorias[0] : "Recebimentos";
     for (const meio of meios) {
-      const brutoC = centavos(meio.valor); const taxaC = centavos(meio.taxa || 0);
-      caixa.movimentos.push({ id: uid("movrec"), caixaId: cx.id, tipo: "entrada", descricao: `Recibo ${recibo.numero} - ${recibo.aluno || "Cliente"}`, categoria: "Recebimentos", planoContaId: alocacoes[0]?.titulo.planoContaId || "pc_1_01", pessoa: recibo.aluno, alunoId: alunoUnico, reciboId: recibo.id, formaPagamento: txt(meio.formaPagamento || meio.forma) || "Dinheiro", valorCentavos: brutoC, valor: reais(brutoC), taxaCentavos: taxaC, taxaOperadoraValor: reais(taxaC), valorLiquidoCentavos: brutoC - taxaC, valorLiquido: reais(brutoC - taxaC), data: recibo.data, status: "ativo", origem: "recibo", criadoEm: agora() });
+      const brutoC = meio.valorCentavos; const taxaC = meio.taxaCentavos;
+      caixa.movimentos.push({ id: uid("movrec"), caixaId: cx.id, tipo: "entrada", descricao: `Recibo ${recibo.numero} - ${recibo.aluno || "Cliente"}`, categoria: categoriaMovimento, planoContaId: alocacoes[0]?.titulo.planoContaId || "pc_1_01", pessoa: recibo.aluno, alunoId: alunoUnico, reciboId: recibo.id, lancamentoFinanceiroId: alocacoes.length === 1 ? alocacoes[0].titulo.id : "", mensalidadeId: alocacoes.length === 1 ? txt(alocacoes[0].titulo.mensalidadeId) : "", formaPagamento: meio.formaPagamento, bandeiraCartao: meio.bandeiraCartao, modalidadeCartao: meio.modalidadeCartao, parcelasCartao: meio.parcelasCartao, valorCentavos: brutoC, valor: reais(brutoC), valorBruto: reais(brutoC), taxaCentavos: taxaC, taxaOperadoraPercentual: meio.taxaOperadoraPercentual, taxaOperadoraFixa: meio.taxaOperadoraFixa, taxaOperadoraValor: reais(taxaC), valorLiquidoCentavos: brutoC - taxaC, valorLiquido: reais(brutoC - taxaC), data: recibo.data, status: "ativo", origem: "recibo", criadoEm: agora() });
     }
     if (diferencaC > 0 && destinoDiferenca === "troco") caixa.movimentos.push({ id: uid("movtroco"), caixaId: cx.id, tipo: "saida", descricao: `Troco do recibo ${recibo.numero}`, categoria: "Troco", pessoa: recibo.aluno, alunoId: alunoUnico, reciboId: recibo.id, formaPagamento: "Dinheiro", valorCentavos: diferencaC, valor: reais(diferencaC), data: recibo.data, status: "ativo", origem: "troco_recibo", criadoEm: agora() });
     if (diferencaC > 0 && destinoDiferenca === "credito") creditos.push({ id: uid("cred"), alunoId: alunoUnico, reciboId: recibo.id, valorOriginalCentavos: diferencaC, saldoCentavos: diferencaC, valor: reais(diferencaC), saldo: reais(diferencaC), status: "ativo", origem: "diferenca_recebimento", criadoEm: agora() });
@@ -354,8 +542,10 @@ export async function estornarRecibo(id, dados = {}) {
     for (const item of relacionados) {
       const ti = titulos.findIndex((x) => String(x.id) === String(item.tituloId)); if (ti >= 0) {
         const t = tituloNormalizado(titulos[ti]); const novoPagoC = Math.max(0, valorPagoC(t) - Number(item.valorAplicadoCentavos || 0) - Number(item.descontoCentavos || 0) + Number(item.acrescimoCentavos || 0));
-        titulos[ti] = tituloNormalizado({ ...t, valorPagoCentavos: novoPagoC, ultimoReciboId: "", atualizadoEm: agora() });
-        for (let m = 0; m < mensalidades.length; m += 1) if (mesmo(mensalidades[m].id, item.mensalidadeId) || mesmo(mensalidades[m].lancamentoFinanceiroId || mensalidades[m].financeiroId, item.tituloId)) mensalidades[m] = { ...mensalidades[m], valorPago: titulos[ti].valorPago, valorRestante: titulos[ti].valorRestante, status: titulos[ti].status === "Parcial" ? "parcial" : "aberto", estornadoEm: agora(), atualizadoEm: agora() };
+        const taxaAnteriorC = Number.isInteger(t.taxaOperadoraValorCentavos) ? t.taxaOperadoraValorCentavos : centavos(t.taxaOperadoraValor || t.taxaValor || 0);
+        const novaTaxaC = Math.max(0, taxaAnteriorC - Number(item.taxaOperadoraValorCentavos || 0));
+        titulos[ti] = tituloNormalizado({ ...t, valorPagoCentavos: novoPagoC, valorBrutoRecebido: reais(novoPagoC), taxaOperadoraValorCentavos: novaTaxaC, taxaOperadoraValor: reais(novaTaxaC), ultimaTaxaOperadoraValor: 0, valorLiquido: reais(Math.max(0, novoPagoC - novaTaxaC)), valorRecebidoLiquido: reais(Math.max(0, novoPagoC - novaTaxaC)), ultimoReciboId: "", atualizadoEm: agora() });
+        for (let m = 0; m < mensalidades.length; m += 1) if (mesmo(mensalidades[m].id, item.mensalidadeId) || mesmo(mensalidades[m].lancamentoFinanceiroId || mensalidades[m].financeiroId, item.tituloId)) mensalidades[m] = { ...mensalidades[m], valorPago: titulos[ti].valorPago, valorBrutoRecebido: titulos[ti].valorBrutoRecebido, valorRestante: titulos[ti].valorRestante, taxaOperadoraValor: titulos[ti].taxaOperadoraValor, ultimaTaxaOperadoraValor: 0, valorLiquido: titulos[ti].valorLiquido, status: titulos[ti].status === "Parcial" ? "parcial" : "aberto", estornadoEm: agora(), atualizadoEm: agora() };
       }
       item.cancelado = true; item.estornadoEm = agora(); item.motivoEstorno = motivo;
     }
