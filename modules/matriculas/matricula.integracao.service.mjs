@@ -13,20 +13,28 @@ function proximoMesNoDia(dataISO, dia){
   return d.toISOString().slice(0,10);
 }
 function validarDiaVencimento(valor, { permitirVazio = false } = {}){
-  const texto = String(valor ?? '').trim();
+  const texto=String(valor ?? '').trim();
   if(!texto && permitirVazio) return null;
-  if(!/^\d+$/.test(texto)){
+  if(!/^\d{1,2}$/.test(texto)){
     const e=new Error('Informe o dia de vencimento mensal com um número inteiro de 1 a 28.');
     e.status=400;
     throw e;
   }
   const dia=Number(texto);
   if(!Number.isInteger(dia) || dia < 1 || dia > 28){
-    const e=new Error('O dia de vencimento mensal deve ser um número inteiro de 1 a 28.');
+    const e=new Error('O dia de vencimento mensal deve ficar entre 1 e 28.');
     e.status=400;
     throw e;
   }
   return dia;
+}
+function aplicarDiaNaData(dataISO, dia){
+  const base=String(dataISO || '').slice(0,10);
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(base)) return proximoMesNoDia(hojeISO(),dia);
+  const d=new Date(`${base}T12:00:00`);
+  d.setDate(1);
+  d.setDate(validarDiaVencimento(dia));
+  return d.toISOString().slice(0,10);
 }
 function alunoNome(a){ return a?.nome || a?.name || a?.nomeCompleto || ''; }
 function normalizar(v){ return String(v||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
@@ -577,7 +585,7 @@ export async function integrarMatriculaAluno(alunoId, planoId, opcoes={}){
 }
 
 export async function trocarPlanoAluno(alunoId, novoPlanoId, opcoes={}){ return integrarMatriculaAluno(alunoId, novoPlanoId, {...opcoes, permitirTroca:true}); }
-export async function alterarStatusMatricula(id,status,motivo='',usuario='sistema', opcoes={}){
+export async function alterarStatusMatricula(id,status,motivo='',usuario='sistema',opcoes={}){
   const base=await carregarBaseMatricula();
   const idx=base.matriculas.findIndex(x=>String(x.id)===String(id)||String(x.numero)===String(id));
   if(idx < 0){ const e=new Error('Matrícula não encontrada.'); e.status=404; throw e; }
@@ -597,8 +605,8 @@ export async function alterarStatusMatricula(id,status,motivo='',usuario='sistem
       haPagamento
     });
   } else {
-    const ativando = ['ativa','ativo'].includes(stNorm) && !['ativa','ativo'].includes(normalizar(ant));
-    const diaInformado = opcoes?.diaVencimento;
+    const ativando=['ativa','ativo'].includes(stNorm) && !['ativa','ativo'].includes(normalizar(ant));
+    const diaInformado=opcoes?.diaVencimento;
     if(ativando && (diaInformado === undefined || String(diaInformado).trim() === '')){
       const e=new Error('Informe o dia de vencimento mensal de 1 a 28 antes de ativar a matrícula.');
       e.status=400;
@@ -635,16 +643,17 @@ export async function alterarStatusMatricula(id,status,motivo='',usuario='sistem
   await salvarBaseMatricula(base);
   return { ok:true, success:true, dados:resumirMatricula(m,true), removida:false, resumoLimpeza, mensagem:'Status da matrícula atualizado; pendências abertas foram canceladas e preservadas para auditoria.' };
 }
-export async function atualizarDiaVencimentoMatricula(id, diaInformado, usuario='sistema'){
+export async function atualizarDiaVencimentoMatricula(id,diaInformado,usuario='sistema'){
   const base=await carregarBaseMatricula();
   const m=base.matriculas.find(x=>String(x.id)===String(id)||String(x.numero)===String(id));
   if(!m){ const e=new Error('Matrícula não encontrada.'); e.status=404; throw e; }
   const diaVencimento=validarDiaVencimento(diaInformado);
   const anterior=m.diaVencimento || null;
+  const referencia=m.proximoVencimento || proximoMesNoDia(hojeISO(),diaVencimento);
   m.diaVencimento=diaVencimento;
-  m.proximoVencimento=proximoMesNoDia(hojeISO(),diaVencimento);
+  m.proximoVencimento=aplicarDiaNaData(referencia,diaVencimento);
   m.atualizadoEm=agoraISO();
-  historico(m,'atualizar_dia_vencimento','Dia de vencimento mensal configurado antes da próxima fatura.',{ anterior, diaVencimento, proximoVencimento:m.proximoVencimento },usuario);
+  historico(m,'atualizar_dia_vencimento','Dia de vencimento mensal configurado antes da próxima fatura.',{ anterior,diaVencimento,proximoVencimento:m.proximoVencimento },usuario);
   const aluno=base.alunos.find(a=>String(a.id)===String(m.alunoId));
   if(aluno){
     aluno.diaVencimento=diaVencimento;

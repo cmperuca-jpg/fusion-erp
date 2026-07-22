@@ -138,8 +138,8 @@
           <input id="vencimento" type="date">
         </label>
         <label>Dia de vencimento mensal *
-          <input id="dia_vencimento" type="number" min="1" max="28" step="1" inputmode="numeric" required placeholder="Digite de 1 a 28">
-          <span class="hint">Digite o dia desejado pelo aluno. Será usado na próxima fatura; não cria cobrança agora.</span>
+          <input id="dia_vencimento" type="text" inputmode="numeric" maxlength="2" autocomplete="off" required placeholder="1 a 28">
+          <span class="hint">Dia escolhido pelo aluno para as próximas faturas. Não gera cobrança futura agora.</span>
         </label>
         <label>Cobrar taxa de matrícula
           <select id="cobrar_taxa_matricula">
@@ -172,7 +172,7 @@
   </form>
 </section>
 </main>
-<script src="/js/matriculas/cadastro.js"></script>
+<script src="/js/matriculas/cadastro.js?v=20260721-dia-vencimento-2"></script>
 <script src="/assets/js/fusion-layout.js"></script>
 
 <script src="/assets/pwa/fusion-pwa-install.js" defer></script>

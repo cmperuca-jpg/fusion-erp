@@ -180,6 +180,13 @@ function parseMoeda(valor) {
   return Number.isFinite(numero) ? numero : 0;
 }
 
+function diaVencimentoValido(valor) {
+  const texto = String(valor ?? "").trim();
+  if (!/^\d{1,2}$/.test(texto)) return null;
+  const dia = Number(texto);
+  return Number.isInteger(dia) && dia >= 1 && dia <= 28 ? dia : null;
+}
+
 function planoSelecionado() {
   const id = $("#plano")?.value || "";
   if (!id) return null;
@@ -542,6 +549,7 @@ async function abrirNovoAluno() {
   $("#alunoId").value = "";
   $("#status").value = "inativo";
   $("#data_matricula").value = dataParaCampo(dataHojeISO());
+  $("#dia_vencimento_mensal").value = "";
   fotoBase64Atual = "";
   atualizarPreviewFoto("");
   renderizarHistorico([]);
@@ -598,6 +606,7 @@ function preencherFormulario(a) {
   $("#professor_responsavel").value = a.professor_responsavel ?? "";
   preencherSelectPlanos(alunoPlanoId(a) || alunoPlano(a));
   $("#data_matricula").value = dataParaCampo((a.data_matricula ?? "").slice(0, 10) || dataHojeISO());
+  $("#dia_vencimento_mensal").value = a.diaVencimento ?? a.dia_vencimento ?? "";
   $("#status").value = alunoStatus(a);
   $("#responsavel").value = a.responsavel ?? "";
   $("#contato_emergencia").value = a.contato_emergencia ?? a.contatoEmergencia ?? "";
@@ -765,12 +774,26 @@ window.reativarAluno = async function(id) {
     return;
   }
 
+  const diaInformado = prompt(
+    `Dia de vencimento mensal de ${nome} (1 a 28):`,
+    String(a?.diaVencimento || a?.dia_vencimento || "")
+  );
+
+  if (diaInformado === null) return;
+
+  const diaVencimento = diaVencimentoValido(diaInformado);
+  if (!diaVencimento) {
+    mostrarAlerta("Informe um dia de vencimento mensal inteiro de 1 a 28.", "erro");
+    return;
+  }
+
   try {
     const resp = await fetch(`${API_ALUNOS}/${encodeURIComponent(id)}/reativar-cobranca`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         valor,
+        diaVencimento,
         usuario: "operador",
         motivo: "Reativação pelo cadastro de alunos com cobrança no caixa."
       })
@@ -867,6 +890,7 @@ async function integrarMatriculaAposCadastro(aluno, dadosFormulario) {
       alunoId: idAluno,
       planoId: planoSelecionadoId,
       dataMatricula: dadosFormulario.data_matricula || dataHojeISO(),
+      diaVencimento: dadosFormulario.diaVencimento,
       gerarMensalidade: true,
       usuario: "operador",
       ...opcoesComerciaisMatricula()
@@ -876,6 +900,25 @@ async function integrarMatriculaAposCadastro(aluno, dadosFormulario) {
   const payload = await safeJson(resp);
   if (!resp.ok || payload.ok === false) {
     throw new Error(payload.erro || payload.mensagem || `Erro HTTP ${resp.status}`);
+  }
+  return payload;
+}
+
+async function atualizarDiaVencimentoDaMatricula(alunoIdAtual, diaVencimento) {
+  if (!alunoIdAtual || !diaVencimento) return null;
+  const lista = await carregarMatriculasDoAluno(alunoIdAtual);
+  const matricula = lista.find((item) => ["ativa", "ativo", "pendente", "trancada"].includes(normalizarTexto(item?.status))) || lista[0];
+  const id = matriculaId(matricula);
+  if (!id) return null;
+
+  const resp = await fetch(`${API_MATRICULAS}/${encodeURIComponent(id)}/vencimento`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ diaVencimento, usuario: "operador" })
+  });
+  const payload = await safeJson(resp);
+  if (!resp.ok || payload.ok === false) {
+    throw new Error(payload.erro || payload.mensagem || "Erro ao salvar o dia de vencimento da matrícula.");
   }
   return payload;
 }
@@ -935,6 +978,10 @@ async function salvarAluno(ev) {
     const idSalvo = alunoId(salvo) || id;
     registrarHistoricoLocal(idSalvo, id ? "edicao" : "cadastro", id ? "Cadastro do aluno atualizado" : "Aluno cadastrado no sistema");
 
+    if (id && dados.diaVencimento) {
+      await atualizarDiaVencimentoDaMatricula(idSalvo, dados.diaVencimento);
+    }
+
     fecharModal();
     await carregarAlunos();
 
@@ -976,6 +1023,9 @@ function coletarDadosFormulario() {
     foto_base64: fotoBase64Atual || ""
   };
 
+  const diaVencimento = diaVencimentoValido($("#dia_vencimento_mensal")?.value);
+  if (diaVencimento) dados.diaVencimento = diaVencimento;
+
   ids.forEach(id => dados[id] = $(`#${id}`).value.trim());
   dados.data_nascimento = dataParaISO(dados.data_nascimento);
   dados.data_matricula = dataParaISO(dados.data_matricula) || dataHojeISO();
@@ -1012,6 +1062,8 @@ function coletarDadosFormulario() {
 function validarAluno(d) {
   if (!d.nome || d.nome.length < 3) return "Informe o nome completo do aluno.";
   if (!$("#alunoId").value && !d.planoId) return "Selecione o plano para criar a matricula do aluno.";
+  const possuiMatricula = !$("#alunoId").value || Boolean(d.planoId) || ["ativo", "pre-matriculado", "pendente"].includes(normalizarTexto(d.status));
+  if (possuiMatricula && !diaVencimentoValido($("#dia_vencimento_mensal")?.value)) return "Informe o dia de vencimento mensal com um número inteiro de 1 a 28.";
   if (d.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email)) return "E-mail inválido.";
   if (d.telefone && d.telefone.length < 10) return "Telefone inválido.";
   if (d.whatsapp && d.whatsapp.length < 10) return "WhatsApp inválido.";
@@ -1425,6 +1477,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   $("#cpf").addEventListener("input", e => e.target.value = formatarCpfVisual(e.target.value));
   $("#telefone").addEventListener("input", e => e.target.value = formatarTelefoneVisual(e.target.value));
   $("#whatsapp").addEventListener("input", e => e.target.value = formatarTelefoneVisual(e.target.value));
+  $("#dia_vencimento_mensal")?.addEventListener("input", e => {
+    e.target.value = String(e.target.value || "").replace(/\D/g, "").slice(0, 2);
+  });
 
   $("#buscaAluno").addEventListener("input", () => { pagina = 1; renderizarTabela(); });
   $("#filtroStatus").addEventListener("change", () => { pagina = 1; renderizarTabela(); });

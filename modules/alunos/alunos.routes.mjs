@@ -60,7 +60,7 @@ router.post("/:id/reativar-cobranca", async (req, res) => {
       ok: true,
       sucesso: true,
       resultado,
-      mensagem: "Cobranca de reativacao criada. A mensalidade recorrente do proximo mes ja fica gerada; apos baixa no caixa/recebimentos, o aluno sera ativado."
+      mensagem: "Cobrança de reativação criada. O próximo vencimento ficou apenas programado; após a baixa no caixa, o aluno será ativado sem criar dívida futura antecipada."
     });
   } catch (error) {
     erro(res, error, 400);

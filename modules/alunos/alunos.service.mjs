@@ -40,12 +40,7 @@ function estaCancelado(status) {
 }
 
 function podeCancelarCobranca(item = {}) {
-  // Dados antigos podem trazer status "Pago" sem qualquer baixa real.
-  // Em cancelamento, só preservamos o título como pago quando existe valor,
-  // recibo, caixa ou data de pagamento efetivamente registrada.
-  const valorPago = Number(String(item.valorPago ?? item.valorRecebido ?? item.valorPagoCentavos / 100 ?? 0).replace(',', '.')) || 0;
-  const temPagamentoReal = valorPago > 0 || Boolean(item.reciboId || item.ultimoReciboId || item.movimentoCaixaId || item.caixaId || item.dataPagamento || item.dataRecebimento);
-  if (estaPago(item.status) && temPagamentoReal) return false;
+  if (estaPago(item.status)) return false;
   if (estaCancelado(item.status)) return false;
   return true;
 }
@@ -107,90 +102,21 @@ function proximoMesAluno(data = hojeISO(), diaVencimento = null) {
   return base.toISOString().slice(0, 10);
 }
 
-function gerarRecorrenteReativacao({ aluno, matricula, mensalidades, financeiro, planoId, planoNome, valorPlano, hoje, agora }) {
-  const valor = numeroAluno(valorPlano, 0);
-  if (!(valor > 0) || !matricula?.id) return { mensalidadeProxima: null, financeiroProximo: null };
-  const alunoId = aluno?.id || aluno?._id || aluno?.codigo || matricula.alunoId || matricula.aluno_id || "";
-  if (!alunoId) return { mensalidadeProxima: null, financeiroProximo: null };
-
-  const diaVencimento = Math.max(1, Math.min(28, Number(matricula.diaVencimento || aluno?.diaVencimento) || Number(String(hoje || hojeISO()).slice(8, 10)) || 1));
-  const vencimento = proximoMesAluno(hoje, diaVencimento);
-  const competencia = competenciaAtualAluno(vencimento);
-  let mensalidadeProxima = mensalidades.find(m =>
-    mesmoId(m.matriculaId, matricula.id) &&
-    String(m.competencia || "").slice(0, 7) === competencia &&
-    normalizar(m.origem || "").includes("recorrencia") &&
-    statusAbertoCobrancaAluno(m.status)
-  ) || null;
-  let financeiroProximo = null;
-
-  if (!mensalidadeProxima) {
-    const mensalidadeId = gerarIdLocal("men_rec");
-    const financeiroId = `fin_${mensalidadeId}`;
-    mensalidadeProxima = {
-      id: mensalidadeId,
-      alunoId,
-      alunoNome: nomeAluno(aluno),
-      aluno: nomeAluno(aluno),
-      matriculaId: matricula.id,
-      planoId,
-      planoNome,
-      plano: planoNome,
-      competencia,
-      vencimento,
-      valor,
-      valorOriginal: valor,
-      total: valor,
-      valorRestante: valor,
-      saldoRestante: valor,
-      status: "Aberta",
-      descricao: `Mensalidade ${competencia} - ${nomeAluno(aluno)}`,
-      origem: "recorrencia_mensal",
-      recorrencia: "mensal",
-      lancamentoFinanceiroId: financeiroId,
-      criadoEm: agora,
-      atualizadoEm: agora
-    };
-    financeiroProximo = {
-      id: financeiroId,
-      tipo: "receber",
-      descricao: mensalidadeProxima.descricao,
-      categoria: "Mensalidades",
-      centroCusto: "Academia",
-      alunoFornecedor: nomeAluno(aluno),
-      pessoa: nomeAluno(aluno),
-      pessoaFornecedor: nomeAluno(aluno),
-      alunoId,
-      matriculaId: matricula.id,
-      mensalidadeId,
-      planoId,
-      plano: planoNome,
-      valor,
-      valorBruto: valor,
-      valorLiquido: 0,
-      valorPago: 0,
-      valorRecebido: 0,
-      valorRestante: valor,
-      vencimento,
-      pagamento: "",
-      dataPagamento: "",
-      formaPagamento: "",
-      status: "Aberto",
-      origem: "recorrencia_mensal",
-      criadoEm: agora,
-      atualizadoEm: agora
-    };
-    mensalidades.push(mensalidadeProxima);
-    financeiro.push(financeiroProximo);
-  } else {
-    financeiroProximo = financeiro.find(f => mesmoId(f.id, mensalidadeProxima.lancamentoFinanceiroId) || mesmoId(f.mensalidadeId, mensalidadeProxima.id)) || null;
+function validarDiaVencimentoAluno(valor, { permitirVazio = false } = {}) {
+  const texto = String(valor ?? "").trim();
+  if (!texto && permitirVazio) return null;
+  if (!/^\d{1,2}$/.test(texto)) {
+    const erro = new Error("Informe o dia de vencimento mensal com um número inteiro de 1 a 28.");
+    erro.status = 400;
+    throw erro;
   }
-
-  matricula.diaVencimento = diaVencimento;
-  matricula.mensalidadeProximaId = mensalidadeProxima.id;
-  matricula.financeiroProximoId = financeiroProximo?.id || mensalidadeProxima.lancamentoFinanceiroId || "";
-  matricula.proximoVencimento = mensalidadeProxima.vencimento;
-  return { mensalidadeProxima, financeiroProximo };
+  const dia = Number(texto);
+  if (!Number.isInteger(dia) || dia < 1 || dia > 28) {
+    const erro = new Error("O dia de vencimento mensal deve ficar entre 1 e 28.");
+    erro.status = 400;
+    throw erro;
+  }
+  return dia;
 }
 
 function numeroMatriculaAluno(matriculas = [], data = hojeISO()) {
@@ -259,6 +185,11 @@ async function reativarFluxoCompletoAluno(id, opcoes = {}) {
         .sort((a, b) => String(b.criadoEm || b.criado_em || b.dataMatricula || b.data_matricula || "").localeCompare(String(a.criadoEm || a.criado_em || a.dataMatricula || a.data_matricula || "")))[0]
     : null;
 
+  const diaVencimento = validarDiaVencimentoAluno(
+    opcoes.diaVencimento ?? opcoes.dia_vencimento ?? matricula?.diaVencimento ?? aluno.diaVencimento ?? Number(String(hoje).slice(8, 10))
+  );
+  const proximoVencimentoProgramado = proximoMesAluno(hoje, diaVencimento);
+
   const planoId = opcoes.planoId || aluno.planoId || matricula?.planoId || "";
   const plano = Array.isArray(planos) ? planos.find(p => mesmoId(p.id, planoId) || mesmoId(p.codigo, planoId)) : null;
   const planoNome = opcoes.planoNome || aluno.plano || aluno.nomePlano || matricula?.plano || matricula?.planoNome || plano?.nome || plano?.descricao || "";
@@ -314,6 +245,10 @@ async function reativarFluxoCompletoAluno(id, opcoes = {}) {
   matricula.valorMensal = valor || numeroAluno(matricula.valorMensal, 0);
   matricula.valorMensalTotal = valor || numeroAluno(matricula.valorMensalTotal, 0);
   matricula.valorPlano = valor || numeroAluno(matricula.valorPlano, 0);
+  matricula.diaVencimento = diaVencimento;
+  matricula.proximoVencimento = proximoVencimentoProgramado;
+  matricula.mensalidadeProximaId = "";
+  matricula.financeiroProximoId = "";
   matricula.atualizadoEm = agora;
   matricula.historico = Array.isArray(matricula.historico) ? matricula.historico : [];
   matricula.historico.push({
@@ -445,9 +380,8 @@ async function reativarFluxoCompletoAluno(id, opcoes = {}) {
   matricula.mensalidadeInicialId = mensalidade.id;
   matricula.financeiroInicialId = financeiroItem?.id || mensalidade.lancamentoFinanceiroId || "";
   matricula.recebimentoInicialId = recebimento?.id || mensalidade.recebimentoId || "";
-  const recorrente = gerarRecorrenteReativacao({ aluno, matricula, mensalidades, financeiro, planoId, planoNome, valorPlano: valor, hoje, agora });
-  const mensalidadeProxima = recorrente.mensalidadeProxima || mensalidade;
-  const financeiroProximo = recorrente.financeiroProximo || financeiroItem;
+  const mensalidadeProxima = null;
+  const financeiroProximo = null;
 
   for (const c of checkins) {
     if (!mesmoId(c.alunoId, id) && !mesmoId(c.matriculaId, matricula.id)) continue;
@@ -476,9 +410,10 @@ async function reativarFluxoCompletoAluno(id, opcoes = {}) {
     valorMensal: valor || aluno.valorMensal || 0,
     valorPlano: valor || aluno.valorPlano || 0,
     valorMensalTotal: valor || aluno.valorMensalTotal || 0,
-    proximoVencimento: mensalidadeProxima.vencimento || hoje,
-    mensalidadeProximaId: mensalidadeProxima.id,
-    financeiroProximoId: financeiroProximo?.id || mensalidadeProxima.lancamentoFinanceiroId || "",
+    diaVencimento,
+    proximoVencimento: proximoVencimentoProgramado,
+    mensalidadeProximaId: "",
+    financeiroProximoId: "",
     recebimentoProximoId: recebimento?.id || mensalidade.recebimentoId || "",
     renovacaoAutomatica: true,
     reativadoEm: agora,
@@ -496,11 +431,13 @@ async function reativarFluxoCompletoAluno(id, opcoes = {}) {
     resumo: {
       matriculaId: matricula.id,
       mensalidadeId: mensalidade.id,
-      mensalidadeProximaId: mensalidadeProxima.id,
+      mensalidadeProximaId: "",
       financeiroId: financeiroItem?.id || mensalidade.lancamentoFinanceiroId || "",
-      financeiroProximoId: financeiroProximo?.id || mensalidadeProxima.lancamentoFinanceiroId || "",
+      financeiroProximoId: "",
       recebimentoId: recebimento?.id || mensalidade.recebimentoId || "",
       competencia,
+      diaVencimento,
+      proximoVencimento: proximoVencimentoProgramado,
       valor
     }
   });
@@ -803,6 +740,8 @@ export async function criarCobrancaReativacao(id, opcoes = {}) {
   const hoje = somenteDataAluno(opcoes.vencimento || opcoes.dataReativacao || hojeISO()) || hojeISO();
   const usuario = opcoes.usuario || opcoes.atualizadoPor || "sistema";
   const motivo = opcoes.motivo || opcoes.motivoReativacao || "Reativação com cobrança no caixa.";
+  const diaVencimento = validarDiaVencimentoAluno(opcoes.diaVencimento ?? opcoes.dia_vencimento);
+  const proximoVencimentoProgramado = proximoMesAluno(hoje, diaVencimento);
 
   const [matriculas, mensalidades, financeiro, recebimentos, planos] = await Promise.all([
     lerJson("matriculas.json", []),
@@ -886,7 +825,8 @@ export async function criarCobrancaReativacao(id, opcoes = {}) {
       dataMatricula: hoje,
       dataInicio: hoje,
       vencimentoInicial: hoje,
-      proximoVencimento: "",
+      diaVencimento,
+      proximoVencimento: proximoVencimentoProgramado,
       status: "Pendente",
       statusPagamento: "Aberto",
       statusFinanceiroInicial: "Aberto",
@@ -926,6 +866,10 @@ export async function criarCobrancaReativacao(id, opcoes = {}) {
   matricula.valorMensal = valorPlano || numeroAluno(matricula.valorMensal, valor);
   matricula.valorMensalTotal = valorPlano || numeroAluno(matricula.valorMensalTotal, valor);
   matricula.valorPlano = valorPlano || numeroAluno(matricula.valorPlano, valor);
+  matricula.diaVencimento = diaVencimento;
+  matricula.proximoVencimento = proximoVencimentoProgramado;
+  matricula.mensalidadeProximaId = "";
+  matricula.financeiroProximoId = "";
   matricula.atualizadoEm = agora;
   matricula.historico = Array.isArray(matricula.historico) ? matricula.historico : [];
   matricula.historico.push({
@@ -1050,9 +994,8 @@ export async function criarCobrancaReativacao(id, opcoes = {}) {
   matricula.mensalidadeInicialId = mensalidade?.id || recebimento.mensalidadeId || matricula.mensalidadeInicialId || "";
   matricula.financeiroInicialId = financeiroItem?.id || recebimento.lancamentoFinanceiroId || matricula.financeiroInicialId || "";
   matricula.recebimentoInicialId = recebimento.id;
-  const recorrente = gerarRecorrenteReativacao({ aluno, matricula, mensalidades, financeiro, planoId, planoNome, valorPlano: valorPlano || valor, hoje, agora });
-  const mensalidadeProxima = recorrente.mensalidadeProxima;
-  const financeiroProximo = recorrente.financeiroProximo;
+  const mensalidadeProxima = null;
+  const financeiroProximo = null;
 
   await salvarJson("matriculas.json", matriculas);
   await salvarJson("mensalidades.json", mensalidades);
@@ -1071,9 +1014,10 @@ export async function criarCobrancaReativacao(id, opcoes = {}) {
     valorMensal: valorPlano || aluno.valorMensal || valor,
     valorPlano: valorPlano || aluno.valorPlano || valor,
     valorMensalTotal: valorPlano || aluno.valorMensalTotal || valor,
-    proximoVencimento: mensalidadeProxima?.vencimento || matricula.proximoVencimento || "",
-    mensalidadeProximaId: mensalidadeProxima?.id || matricula.mensalidadeProximaId || "",
-    financeiroProximoId: financeiroProximo?.id || matricula.financeiroProximoId || "",
+    diaVencimento,
+    proximoVencimento: proximoVencimentoProgramado,
+    mensalidadeProximaId: "",
+    financeiroProximoId: "",
     reativacaoPendenteEm: agora,
     recebimentoReativacaoId: recebimento.id,
     atualizadoEm: agora
@@ -1088,11 +1032,13 @@ export async function criarCobrancaReativacao(id, opcoes = {}) {
     resumo: {
       matriculaId: matricula.id,
       mensalidadeId: mensalidade?.id || recebimento.mensalidadeId || "",
-      mensalidadeProximaId: mensalidadeProxima?.id || "",
+      mensalidadeProximaId: "",
       financeiroId: financeiroItem?.id || recebimento.lancamentoFinanceiroId || "",
-      financeiroProximoId: financeiroProximo?.id || "",
+      financeiroProximoId: "",
       recebimentoId: recebimento.id,
-      valor
+      valor,
+      diaVencimento,
+      proximoVencimento: proximoVencimentoProgramado
     }
   });
 
@@ -1107,7 +1053,7 @@ export async function criarCobrancaReativacao(id, opcoes = {}) {
     financeiro: financeiroItem,
     financeiroProximo,
     recebimento,
-    mensagem: "Cobranca de reativacao criada com nova matricula. A mensalidade recorrente do proximo mes ja foi gerada; confirme o recebimento no Financeiro para ativar o aluno."
+    mensagem: "Cobrança de reativação criada. O próximo vencimento ficou programado; a mensalidade futura ainda não foi gerada."
   };
 }
 

@@ -32,7 +32,7 @@
   }
   function diaVencimentoValido(valor) {
     const texto = String(valor ?? "").trim();
-    if (!/^\d+$/.test(texto)) return null;
+    if (!/^\d{1,2}$/.test(texto)) return null;
     const dia = Number(texto);
     return Number.isInteger(dia) && dia >= 1 && dia <= 28 ? dia : null;
   }
@@ -226,6 +226,7 @@
       $("plano_id")?.focus();
       return setAlerta("Informe o plano antes de salvar a matrícula.", "erro");
     }
+
     const diaVencimento = diaVencimentoValido($("dia_vencimento")?.value);
     if (!diaVencimento) {
       tab("financeiro");
@@ -275,7 +276,9 @@
           body: JSON.stringify({ diaVencimento, usuario: "Administrador" })
         });
         const jsonVencimento = await resVencimento.json().catch(() => ({}));
-        if (!resVencimento.ok || jsonVencimento.ok === false) throw new Error(jsonVencimento.erro || jsonVencimento.mensagem || "Erro ao salvar o dia de vencimento.");
+        if (!resVencimento.ok || jsonVencimento.ok === false) {
+          throw new Error(jsonVencimento.erro || jsonVencimento.mensagem || "Erro ao salvar o dia de vencimento.");
+        }
 
         const resTurma = await fetch(`/api/matriculas/${encodeURIComponent(matriculaAtual.id)}/turmas`, {
           method: "PATCH",
@@ -286,11 +289,15 @@
         if (!resTurma.ok || jsonTurma.ok === false) throw new Error(jsonTurma.erro || jsonTurma.mensagem || "Erro ao salvar turma.");
 
         if (matriculaAtual.status && norm(matriculaAtual.status) !== norm(payload.status)) {
-          await fetch(`/api/matriculas/${encodeURIComponent(matriculaAtual.id)}/status`, {
+          const resStatus = await fetch(`/api/matriculas/${encodeURIComponent(matriculaAtual.id)}/status`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ status: payload.status, diaVencimento, usuario: "Administrador" })
-          }).catch(() => null);
+          });
+          const jsonStatus = await resStatus.json().catch(() => ({}));
+          if (!resStatus.ok || jsonStatus.ok === false) {
+            throw new Error(jsonStatus.erro || jsonStatus.mensagem || "Erro ao atualizar o status da matrícula.");
+          }
         }
 
         setAlerta(jsonTurma.mensagem || "Matrícula salva sem alterar o financeiro.", "ok");
@@ -334,6 +341,10 @@
     $("data_inicio").value = data;
     $("vencimento").value = addMes(data);
     $("dia_vencimento").value = "";
+
+    $("dia_vencimento")?.addEventListener("input", (event) => {
+      event.target.value = String(event.target.value || "").replace(/\D/g, "").slice(0, 2);
+    });
 
     if (alunoIdUrl && alunoIdUrl !== "undefined") {
       $("aluno_id").value = alunoIdUrl;

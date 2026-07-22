@@ -569,18 +569,16 @@ export async function gerarProximaMensalidadeAposPagamento({ mensalidadeId = "",
     vencimentoAtual = mensalidadeAtual.vencimento || mensalidadeAtual.dataVencimento || vencimentoAtual;
   }
 
-  const cicloReativacao = ehReativacao(mensalidadeAtual || {}) || ehReativacao(lancamentoAtual || {}) || ehReativacao(matricula || {});
-  const diaVencimento = cicloReativacao
-    ? diaMes(vencimentoAtual)
-    : (
-      matricula.diaVencimento ||
-      aluno.diaVencimento ||
-      diaMes(vencimentoAtual) ||
-      diaMes(matricula.vencimentoInicial) ||
-      diaMes(matricula.dataMatricula) ||
-      diaMes(aluno.dataMatricula) ||
-      null
-    );
+  // O dia escolhido na matrícula vale também para reativação. A data do
+  // pagamento define a competência-base, mas nunca substitui o dia acordado.
+  const diaVencimento =
+    matricula.diaVencimento ||
+    aluno.diaVencimento ||
+    diaMes(vencimentoAtual) ||
+    diaMes(matricula.vencimentoInicial) ||
+    diaMes(matricula.dataMatricula) ||
+    diaMes(aluno.dataMatricula) ||
+    null;
 
   const proximoVencimento = somenteData(vencimentoProgramado) || adicionarMeses(vencimentoAtual, periodicidade.meses, diaVencimento);
   const proximaCompetencia = competencia(proximoVencimento);
