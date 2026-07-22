@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import { executarTransacaoJson, lerJsonDuravel, salvarJsonDuravel, salvarJsonMultiplosAtomico } from "../core/persistence/durable-json.mjs";
+import { biFinanceiro } from "./relatorios.service.mjs";
 
 const COL = Object.freeze({
   alunos: "alunos.json", matriculas: "matriculas.json", titulos: "financeiro.json",
@@ -268,16 +269,31 @@ export async function listarTitulos(filtros = {}) {
 }
 
 export async function resumoFinanceiro() {
-  const lista = await listarTitulos(); const hojeIso = hoje();
-  const r = { totalLancamentos: lista.length, receitasPagas: 0, receitasAbertas: 0, receitasVencidas: 0, despesasPagas: 0, despesasAbertas: 0, saldoRealizado: 0, saldoPrevisto: 0 };
-  for (const x of lista) {
-    if (finalizado(x)) continue; const pago = reais(valorPagoC(x)); const aberto = reais(saldoC(x));
-    if (tipoTitulo(x) === "receber") { r.receitasPagas += pago; r.receitasAbertas += aberto; if (aberto && dataVencimento(x) < hojeIso) r.receitasVencidas += aberto; }
-    else { r.despesasPagas += pago; r.despesasAbertas += aberto; }
-  }
-  r.saldoRealizado = r.receitasPagas - r.despesasPagas; r.saldoPrevisto = r.receitasPagas + r.receitasAbertas - r.despesasPagas - r.despesasAbertas;
-  Object.keys(r).forEach((k) => { if (typeof r[k] === "number" && k !== "totalLancamentos") r[k] = moeda(r[k]); });
-  return { ...r, receitasLiquidasPagas: r.receitasPagas, receitasBrutasPagas: r.receitasPagas, saldoLiquidoPrevisto: r.saldoPrevisto, taxasFinanceiras: 0 };
+  const relatorio = await biFinanceiro({});
+  const r = relatorio.resumo || {};
+  const receitasLiquidasPagas = moeda(r.recebido || 0);
+  const taxasFinanceiras = moeda(r.taxasFinanceiras || 0);
+  const receitasBrutasPagas = moeda(receitasLiquidasPagas + taxasFinanceiras);
+  const receitasAbertas = moeda(r.receber || 0);
+  const despesasPagas = moeda(r.pago || 0);
+  const despesasAbertas = moeda(r.pagar || 0);
+  const saldoRealizado = moeda(receitasLiquidasPagas - despesasPagas);
+  const saldoPrevisto = moeda((receitasLiquidasPagas + receitasAbertas) - (despesasPagas + despesasAbertas));
+
+  return {
+    totalLancamentos: Number(r.totalLancamentos || 0),
+    receitasPagas: receitasLiquidasPagas,
+    receitasAbertas,
+    receitasVencidas: moeda(r.vencidoReceber || 0),
+    despesasPagas,
+    despesasAbertas,
+    saldoRealizado,
+    saldoPrevisto,
+    receitasLiquidasPagas,
+    receitasBrutasPagas,
+    saldoLiquidoPrevisto: saldoPrevisto,
+    taxasFinanceiras
+  };
 }
 
 export async function criarTitulo(dados = {}) {

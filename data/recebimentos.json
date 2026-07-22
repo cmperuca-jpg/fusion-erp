@@ -21,11 +21,13 @@
     "ativarMatriculaAoReceber": true,
     "gerarProximaMensalidadeAposPagamento": true,
     "criadoEm": "2026-07-21T17:06:31.381Z",
-    "atualizadoEm": "2026-07-21T17:23:03.053Z",
+    "atualizadoEm": "2026-07-22T09:28:11.754Z",
     "reciboId": "rec_3b7417d7-a16b-48a7-93d3-5f1d8563a1f3",
     "numeroRecibo": "00000003",
     "dataRecebimento": "2026-07-21",
-    "formaPagamento": "PIX"
+    "formaPagamento": "PIX",
+    "caixaId": "cx_1784653653536_a25c76",
+    "movimentoCaixaId": "mov_rec_reconc_rec_3b7417d7-a16b-48a7-93d3-5f1d8563a1f3_1"
   },
   {
     "id": "rec_men_reat_1784653690859_120526",
@@ -49,11 +51,13 @@
     "ativarMatriculaAoReceber": true,
     "gerarProximaMensalidadeAposPagamento": true,
     "criadoEm": "2026-07-21T17:08:10.828Z",
-    "atualizadoEm": "2026-07-21T17:08:24.431Z",
+    "atualizadoEm": "2026-07-22T09:28:11.754Z",
     "reciboId": "rec_48299551-a593-4d28-bd4a-7f47e5dca5af",
     "numeroRecibo": "00000001",
     "dataRecebimento": "2026-07-21",
-    "formaPagamento": "Dinheiro"
+    "formaPagamento": "Dinheiro",
+    "caixaId": "cx_1784653653536_a25c76",
+    "movimentoCaixaId": "mov_rec_reconc_rec_48299551-a593-4d28-bd4a-7f47e5dca5af_1"
   },
   {
     "id": "recv_c04a0c38-862b-48ba-8724-e897a53089a4",
@@ -68,8 +72,10 @@
     "status": "recebido",
     "dataRecebimento": "2026-07-21",
     "formaPagamento": "Dinheiro",
-    "atualizadoEm": "2026-07-21T17:21:20.460Z",
-    "criadoEm": "2026-07-21T17:21:20.460Z"
+    "atualizadoEm": "2026-07-22T09:28:11.754Z",
+    "criadoEm": "2026-07-21T17:21:20.460Z",
+    "caixaId": "cx_1784653653536_a25c76",
+    "movimentoCaixaId": "mov_rec_reconc_rec_ec51375a-b7a8-497c-a519-e32642b338db_1"
   },
   {
     "id": "rec_men_reat_1784654624525_631876",
@@ -93,11 +99,13 @@
     "ativarMatriculaAoReceber": true,
     "gerarProximaMensalidadeAposPagamento": true,
     "criadoEm": "2026-07-21T17:23:44.459Z",
-    "atualizadoEm": "2026-07-21T17:24:01.260Z",
+    "atualizadoEm": "2026-07-22T09:28:11.754Z",
     "reciboId": "rec_ddcbfb78-42dd-43a7-a9a9-95df389da942",
     "numeroRecibo": "00000004",
     "dataRecebimento": "2026-07-21",
-    "formaPagamento": "PIX"
+    "formaPagamento": "PIX",
+    "caixaId": "cx_1784653653536_a25c76",
+    "movimentoCaixaId": "mov_rec_reconc_rec_ddcbfb78-42dd-43a7-a9a9-95df389da942_1"
   },
   {
     "id": "rec_men_reat_1784654806502_469138",
@@ -121,11 +129,13 @@
     "ativarMatriculaAoReceber": true,
     "gerarProximaMensalidadeAposPagamento": true,
     "criadoEm": "2026-07-21T17:26:46.485Z",
-    "atualizadoEm": "2026-07-21T17:26:56.112Z",
+    "atualizadoEm": "2026-07-22T09:28:11.753Z",
     "reciboId": "rec_e443620e-4135-411b-873e-945bb3846880",
     "numeroRecibo": "00000005",
     "dataRecebimento": "2026-07-21",
-    "formaPagamento": "Dinheiro"
+    "formaPagamento": "Dinheiro",
+    "caixaId": "cx_1784653653536_a25c76",
+    "movimentoCaixaId": "mov_rec_reconc_rec_e443620e-4135-411b-873e-945bb3846880_1"
   },
   {
     "id": "rec_men_reat_1784658618171_685975",
@@ -149,11 +159,13 @@
     "ativarMatriculaAoReceber": true,
     "gerarProximaMensalidadeAposPagamento": true,
     "criadoEm": "2026-07-21T18:30:18.144Z",
-    "atualizadoEm": "2026-07-21T18:31:11.412Z",
+    "atualizadoEm": "2026-07-22T09:28:11.753Z",
     "reciboId": "rec_77a4a7f5-5ea5-4139-8651-0e506e7ed46e",
     "numeroRecibo": "00000006",
     "dataRecebimento": "2026-07-21",
-    "formaPagamento": "PIX"
+    "formaPagamento": "PIX",
+    "caixaId": "cx_1784653653536_a25c76",
+    "movimentoCaixaId": "mov_rec_reconc_rec_77a4a7f5-5ea5-4139-8651-0e506e7ed46e_1"
   },
   {
     "id": "rec_men_reat_1784676049514_435647",

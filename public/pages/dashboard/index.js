@@ -1,4 +1,4 @@
-const dadosFallback = { alunos: [], mensalidades: [], avaliacoes: [], lancamentos: [] };
+const dadosFallback = { alunos: [], mensalidades: [], avaliacoes: [], lancamentos: [], resumo: {} };
 
 async function buscar(url, chave) {
   try {
@@ -12,6 +12,19 @@ async function buscar(url, chave) {
   }
 }
 
+async function buscarObjeto(url, chave = '') {
+  try {
+    const resp = await (window.FusionAuth?.fetchAuth ? FusionAuth.fetchAuth(url, { cache: 'no-store' }) : fetch(url, { cache: 'no-store' }));
+    if (!resp.ok) return {};
+    const json = await resp.json();
+    if (chave && json?.[chave] && typeof json[chave] === 'object') return json[chave];
+    if (json && !Array.isArray(json) && typeof json === 'object') return json;
+    return {};
+  } catch {
+    return {};
+  }
+}
+
 function moeda(v) {
   return Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
@@ -22,18 +35,21 @@ function setText(id, value) {
 }
 
 (async function carregarDashboard() {
-  const [alunos, mensalidades, avaliacoes, financeiro] = await Promise.all([
+  const hoje = new Date();
+  const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString().slice(0, 10);
+  const hojeIso = hoje.toISOString().slice(0, 10);
+  const [alunos, mensalidadesResumo, avaliacoes, financeiroResumo] = await Promise.all([
     buscar('/api/alunos', 'alunos'),
-    buscar('/api/mensalidades', 'mensalidades'),
+    buscarObjeto('/api/mensalidades/resumo'),
     buscar('/api/avaliacoes', 'avaliacoes'),
-    buscar('/api/financeiro', 'lancamentos')
+    buscarObjeto(`/api/financeiro/relatorios/bi-financeiro?inicio=${inicioMes}&fim=${hojeIso}`, 'resumo')
   ]);
 
   const ativos = alunos.filter(a => String(a.status || 'ativo').toLowerCase() === 'ativo').length;
-  const abertas = mensalidades.filter(m => String(m.status || '').toLowerCase().includes('aberto')).length;
-  const receita = financeiro
-    .filter(f => String(f.status || '').toLowerCase() === 'pago')
-    .reduce((s, f) => s + Number(f.valorLiquido || f.valorPago || f.valor || 0), 0);
+  const abertas = Number(mensalidadesResumo.abertas || 0) +
+    Number(mensalidadesResumo.atrasadas || 0) +
+    Number(mensalidadesResumo.parciais || 0);
+  const receita = Number(financeiroResumo.recebido || financeiroResumo.receitasLiquidasPagas || 0);
 
   setText('kpiAlunos', ativos);
   setText('kpiAbertas', abertas);

@@ -1,5 +1,22 @@
 [
   {
+    "id": "aud_reconc_1784712491756_bd9884",
+    "dataHora": "2026-07-22T09:28:11.757Z",
+    "usuario": "script-reconciliacao",
+    "acao": "reconciliar_financeiro_caixa",
+    "entidade": "caixa",
+    "entidadeId": "historico",
+    "detalhes": {
+      "ok": true,
+      "modo": "aplicado",
+      "caixasCriados": 1,
+      "entradasCriadas": 6,
+      "saidasCriadas": 1,
+      "recebimentosVinculados": 6,
+      "financeiroVinculado": 7
+    }
+  },
+  {
     "id": "audfin_c3ce43a1-0890-442b-ba9e-a98ba55692a5",
     "dataHora": "2026-07-21T23:21:58.363Z",
     "usuario": "sistema",

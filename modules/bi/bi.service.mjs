@@ -1,4 +1,5 @@
 import { carregarBaseBI } from "./bi.repository.mjs";
+import { biFinanceiro as gerarRelatorioFinanceiroConsolidado } from "../financeiro/relatorios.service.mjs";
 
 function texto(valor) {
   return String(valor ?? "").trim();
@@ -244,28 +245,22 @@ export async function gerarDashboardExecutivo(filtros = {}) {
 }
 
 export async function gerarBIFinanceiro(filtros = {}) {
-  const base = await carregarBaseBI();
-  let recebido = 0;
-  let receber = 0;
-  let pagoTotal = 0;
-  let pagar = 0;
-
-  for (const item of base.financeiro) {
-    if (cancelado(item)) continue;
-    const tipo = normalizar(item.tipo);
-    const valor = valorFinanceiro(item);
-    const valorPago = valorPagoFinanceiro(item) || valorLiquidoFinanceiro(item);
-
-    if (tipo === "receber" && pago(item)) recebido += valorPago || valor;
-    if (tipo === "receber" && !pago(item)) receber += Math.max(0, valor - valorPagoFinanceiro(item));
-    if (tipo === "pagar" && pago(item)) pagoTotal += valorPago || valor;
-    if (tipo === "pagar" && !pago(item)) pagar += Math.max(0, valor - valorPagoFinanceiro(item));
-  }
+  const consolidado = await gerarRelatorioFinanceiroConsolidado(filtros);
+  const resumo = consolidado.resumo || {};
 
   return {
-    kpis: { recebido: Number(recebido.toFixed(2)), contasReceber: Number(receber.toFixed(2)), pago: Number(pagoTotal.toFixed(2)), contasPagar: Number(pagar.toFixed(2)) },
-    graficos: {},
-    tabelas: {}
+    ...consolidado,
+    kpis: {
+      recebido: resumo.recebido || 0,
+      contasReceber: resumo.receber || 0,
+      pago: resumo.pago || 0,
+      contasPagar: resumo.pagar || 0,
+      taxasFinanceiras: resumo.taxasFinanceiras || 0,
+      saldoRealizado: resumo.saldoRealizado || 0,
+      saldoPrevisto: resumo.saldoPrevisto || 0
+    },
+    graficos: consolidado.graficos || {},
+    tabelas: consolidado.tabelas || {}
   };
 }
 

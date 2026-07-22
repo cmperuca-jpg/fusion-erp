@@ -116,6 +116,11 @@ try {
   assert.equal(linhasCartao[0].liquido, 63.06);
   assert.equal(linhasCartao[0].categoria, "Reativação");
 
+  const biDia = await relatorios.biFinanceiro({ inicio: dataRelatorio, fim: dataRelatorio });
+  const linhasBICartao = biDia.linhas.filter((item) => (item.referencias || []).includes(cartao.recibo.id));
+  assert.equal(linhasBICartao.length, 1, "BI financeiro não pode somar o recibo e o movimento de caixa como duas receitas.");
+  assert.equal(biDia.resumo.taxasFinanceiras >= 1.94, true);
+
   // Reativação mensal paga deve religar a recorrência e somente agendar a
   // próxima data. Também cobre a reparação dos registros afetados pela versão
   // anterior, sem criar dívida futura no momento da correção.

@@ -398,16 +398,88 @@ function recebimentoDeFinanceiro(lancamento = {}) {
   };
 }
 
+function chaveFinanceiraRecebimento(item = {}) {
+  return [
+    item.lancamentoFinanceiroId,
+    item.financeiroId,
+    item.financeiro_id,
+    item.id
+  ].map(v => String(v || '').trim()).find(Boolean) || '';
+}
+
+function encontrarFinanceiroRelacionado(financeiro = [], recebimento = {}) {
+  const financeiroId = chaveFinanceiraRecebimento(recebimento);
+  const mensalidadeId = String(recebimento.mensalidadeId || '').trim();
+  const reciboId = String(recebimento.reciboId || recebimento.ultimoReciboId || '').trim();
+
+  return financeiro.find(l =>
+    (financeiroId && String(l.id || '') === financeiroId) ||
+    (financeiroId && String(l.recebimentoId || '') === financeiroId) ||
+    (mensalidadeId && String(l.mensalidadeId || '') === mensalidadeId) ||
+    (reciboId && String(l.ultimoReciboId || l.reciboId || '') === reciboId)
+  ) || {};
+}
+
+function taxaRecebimento(item = {}, financeiro = {}) {
+  return numero(
+    item.taxaOperadoraValor ?? item.taxaValor ?? item.taxa ??
+    financeiro.taxaOperadoraValor ?? financeiro.taxaValor ?? financeiro.taxa,
+    0
+  );
+}
+
+function normalizarRecebimentoConsolidado(item = {}, financeiro = {}) {
+  const status = statusRecebimento(item.status || financeiro.status);
+  const recebido = numero(item.valorRecebido ?? item.recebido ?? financeiro.valorRecebido ?? financeiro.valorPago, 0);
+  const taxa = taxaRecebimento(item, financeiro);
+  const originalInformado = numero(
+    item.valorBruto ?? item.valor ?? item.valorDevido ?? item.total ??
+    financeiro.valorBruto ?? financeiro.valor ?? financeiro.total ?? financeiro.valorDevido,
+    0
+  );
+  const abertoInformado = numero(item.valorRestante ?? item.saldo ?? financeiro.valorRestante, NaN);
+  const aberto = Number.isFinite(abertoInformado)
+    ? Math.max(0, abertoInformado)
+    : (status === 'recebido' ? 0 : Math.max(0, originalInformado - recebido));
+  const valorDevido = Math.max(originalInformado, recebido + aberto);
+  const valorLiquido = ['recebido', 'parcial'].includes(status)
+    ? Math.max(0, Number((recebido - taxa).toFixed(2)))
+    : 0;
+
+  return {
+    ...financeiro,
+    ...item,
+    status,
+    valor: valorDevido,
+    valorBruto: valorDevido,
+    valorDevido,
+    valorRecebido: recebido,
+    valorLiquido,
+    valorRestante: status === 'recebido' ? 0 : aberto,
+    taxaValor: taxa,
+    taxaOperadoraValor: taxa,
+    taxaOperadoraPercentual: numero(item.taxaOperadoraPercentual ?? item.taxaPercentual ?? financeiro.taxaOperadoraPercentual ?? financeiro.taxaPercentual, 0),
+    lancamentoFinanceiroId: item.lancamentoFinanceiroId || item.financeiroId || financeiro.id || '',
+    mensalidadeId: item.mensalidadeId || financeiro.mensalidadeId || '',
+    matriculaId: item.matriculaId || financeiro.matriculaId || '',
+    alunoId: item.alunoId || financeiro.alunoId || '',
+    reciboId: item.reciboId || item.ultimoReciboId || financeiro.reciboId || financeiro.ultimoReciboId || ''
+  };
+}
+
 async function montarBaseRecebimentos() {
   const recebimentos = await lerJson(RECEBIMENTOS_FILE, []);
   const financeiro = await lerJson(FINANCEIRO_FILE, []);
 
-  const lista = Array.isArray(recebimentos) ? [...recebimentos] : [];
+  const lista = Array.isArray(recebimentos)
+    ? recebimentos.map(r => normalizarRecebimentoConsolidado(r, encontrarFinanceiroRelacionado(Array.isArray(financeiro) ? financeiro : [], r)))
+    : [];
   const chaves = new Set();
 
   for (const r of lista) {
     if (r?.id) chaves.add(String(r.id));
     if (r?.lancamentoFinanceiroId) chaves.add(String(r.lancamentoFinanceiroId));
+    if (r?.reciboId) chaves.add(String(r.reciboId));
   }
 
   for (const lancamento of Array.isArray(financeiro) ? financeiro : []) {
@@ -415,12 +487,14 @@ async function montarBaseRecebimentos() {
 
     const idFinanceiro = String(lancamento.id || '');
     const idRecebimento = String(lancamento.recebimentoId || `rec_${idFinanceiro}`);
+    const idRecibo = String(lancamento.reciboId || lancamento.ultimoReciboId || '');
 
-    if (chaves.has(idFinanceiro) || chaves.has(idRecebimento)) continue;
+    if (chaves.has(idFinanceiro) || chaves.has(idRecebimento) || (idRecibo && chaves.has(idRecibo))) continue;
 
-    lista.push(recebimentoDeFinanceiro(lancamento));
+    lista.push(normalizarRecebimentoConsolidado(recebimentoDeFinanceiro(lancamento), lancamento));
     if (idFinanceiro) chaves.add(idFinanceiro);
     if (idRecebimento) chaves.add(idRecebimento);
+    if (idRecibo) chaves.add(idRecibo);
   }
 
   return lista;
@@ -626,9 +700,11 @@ export async function resumoRecebimentos(filtros = {}) {
 
   for (const r of lista) {
     const status = statusRecebimento(r.status);
-    const bruto = numero(r.valorBruto ?? r.valor, 0);
-    const liquido = numero(r.valorLiquido ?? r.valorRecebido, 0);
-    const aberto = numero(r.valorRestante ?? Math.max(0, bruto - numero(r.valorRecebido, 0)), 0);
+    const bruto = numero(r.valorBruto ?? r.valor ?? r.valorDevido, 0);
+    const recebido = numero(r.valorRecebido ?? r.recebido, 0);
+    const taxa = taxaRecebimento(r);
+    const liquido = Math.max(0, Number((recebido - taxa).toFixed(2)));
+    const aberto = numero(r.valorRestante ?? Math.max(0, bruto - recebido), 0);
 
     if (status === 'aberto') resumo.abertos++;
     if (status === 'recebido') resumo.recebidos++;
@@ -638,10 +714,12 @@ export async function resumoRecebimentos(filtros = {}) {
     if (['aberto', 'parcial'].includes(status) && String(r.vencimento || '').slice(0, 10) < hoje) resumo.vencidos++;
 
     if (!['cancelado', 'estornado'].includes(status)) {
-      resumo.valorBruto += bruto;
-      resumo.valorLiquido += liquido;
-      resumo.valorAberto += aberto;
-      resumo.taxas += Math.max(0, bruto - liquido - aberto);
+      if (['recebido', 'parcial'].includes(status)) {
+        resumo.valorBruto += recebido;
+        resumo.valorLiquido += liquido;
+        resumo.taxas += taxa;
+      }
+      if (['aberto', 'parcial'].includes(status)) resumo.valorAberto += aberto;
     }
   }
 

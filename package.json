@@ -23,6 +23,8 @@
     "test:financeiro": "node scripts/test-financeiro-ledger.mjs",
     "test:localhost": "node scripts/test-localhost-financeiro.mjs",
     "test:cobranca-automatica": "node scripts/test-cobranca-automatica-http.mjs",
+    "reconciliar:financeiro:simular": "node scripts/reconciliar-financeiro-caixa.mjs",
+    "reconciliar:financeiro": "node scripts/reconciliar-financeiro-caixa.mjs --apply",
     "piloto:280": "npm run check && npm run backup:data",
     "access:agent": "node scripts/fusion-access-agent.mjs"
   },

@@ -142,7 +142,8 @@ function referencias(item = {}) {
     item.referenciaId,
     item.mensalidadeId,
     item.reciboId,
-    item.ultimoReciboId
+    item.ultimoReciboId,
+    item.reciboEstornadoId
   ].map(v => String(v || '').trim()).filter(Boolean))];
 }
 
@@ -298,7 +299,28 @@ export async function movimentoDiarioCaixa(filtros = {}) {
       marcarVisto(vistosPagamentos, p);
       return item;
     });
-  pagamentos = [...pagamentos, ...pagamentosExtras];
+
+  const pagamentosFinanceiroExtras = (Array.isArray(financeiro) ? financeiro : [])
+    .filter(f => statusAtivo(f) && statusPago(f) && tipoDespesa(f))
+    .filter(f => dentroPeriodo(dataPagamento(f) || dataVencimento(f), dataInicio, dataFim))
+    .filter(f => passaFormaFiltro(f, formaFiltro) && passaCategoriaFiltro(f, categoriaFiltro))
+    .filter(f => !jaVisto(vistosPagamentos, f))
+    .map(f => {
+      const item = {
+        id: f.id,
+        hora: horaItem(f),
+        data: dataPagamento(f) || dataVencimento(f),
+        pessoa: pessoa(f),
+        descricao: descricao(f, 'Pagamento'),
+        categoria: categoria(f, 'Pagamentos'),
+        formaPagamento: f.formaPagamento || f.forma || '',
+        valor: valorPago(f) || valorOriginal(f),
+        status: f.status || 'pago'
+      };
+      marcarVisto(vistosPagamentos, f);
+      return item;
+    });
+  pagamentos = [...pagamentos, ...pagamentosExtras, ...pagamentosFinanceiroExtras];
 
   const porForma = new Map();
   const acumularForma = (forma, bruto, taxa, liquido) => {
@@ -364,7 +386,8 @@ export async function biFinanceiro(filtros = {}) {
   const linhas = [];
   const referencias = item => [...new Set([
     item.id, item.lancamentoFinanceiroId, item.financeiroId, item.recebimentoId,
-    item.pagamentoId, item.movimentoCaixaId, item.caixaId, item.mensalidadeId
+    item.pagamentoId, item.referenciaId, item.movimentoCaixaId, item.mensalidadeId,
+    item.reciboId, item.ultimoReciboId, item.reciboEstornadoId
   ].map(v => String(v || '').trim()).filter(Boolean))];
   for (const f of financeiro) {
     const receita = tipoReceita(f);

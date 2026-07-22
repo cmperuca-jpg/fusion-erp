@@ -30,13 +30,15 @@
     "origem": "reativacao_aluno",
     "ativarMatriculaAoReceber": true,
     "criadoEm": "2026-07-21T17:06:31.381Z",
-    "atualizadoEm": "2026-07-21T17:23:03.052Z",
+    "atualizadoEm": "2026-07-22T09:28:11.754Z",
     "valorCentavos": 6500,
     "valorPagoCentavos": 6500,
     "saldoCentavos": 0,
     "planoContaId": "",
     "excluido": false,
-    "ultimoReciboId": "rec_3b7417d7-a16b-48a7-93d3-5f1d8563a1f3"
+    "ultimoReciboId": "rec_3b7417d7-a16b-48a7-93d3-5f1d8563a1f3",
+    "caixaId": "cx_1784653653536_a25c76",
+    "movimentoCaixaId": "mov_rec_reconc_rec_3b7417d7-a16b-48a7-93d3-5f1d8563a1f3_1"
   },
   {
     "id": "fin_men_rec_1784653591400_88338",
@@ -105,13 +107,15 @@
     "origem": "reativacao_aluno",
     "ativarMatriculaAoReceber": true,
     "criadoEm": "2026-07-21T17:08:10.828Z",
-    "atualizadoEm": "2026-07-21T17:08:24.431Z",
+    "atualizadoEm": "2026-07-22T09:28:11.754Z",
     "valorCentavos": 6500,
     "valorPagoCentavos": 6500,
     "saldoCentavos": 0,
     "planoContaId": "",
     "excluido": false,
-    "ultimoReciboId": "rec_48299551-a593-4d28-bd4a-7f47e5dca5af"
+    "ultimoReciboId": "rec_48299551-a593-4d28-bd4a-7f47e5dca5af",
+    "caixaId": "cx_1784653653536_a25c76",
+    "movimentoCaixaId": "mov_rec_reconc_rec_48299551-a593-4d28-bd4a-7f47e5dca5af_1"
   },
   {
     "id": "fin_men_rec_1784653690862_531859",
@@ -140,13 +144,15 @@
     "status": "Pago",
     "origem": "recorrencia_mensal",
     "criadoEm": "2026-07-21T17:08:10.828Z",
-    "atualizadoEm": "2026-07-21T17:21:20.460Z",
+    "atualizadoEm": "2026-07-22T09:28:11.754Z",
     "valorCentavos": 6500,
     "valorPagoCentavos": 6500,
     "saldoCentavos": 0,
     "planoContaId": "",
     "excluido": false,
-    "ultimoReciboId": "rec_ec51375a-b7a8-497c-a519-e32642b338db"
+    "ultimoReciboId": "rec_ec51375a-b7a8-497c-a519-e32642b338db",
+    "caixaId": "cx_1784653653536_a25c76",
+    "movimentoCaixaId": "mov_rec_reconc_rec_ec51375a-b7a8-497c-a519-e32642b338db_1"
   },
   {
     "id": "fin_men_auto_1784654480574_296681",
@@ -217,13 +223,15 @@
     "origem": "reativacao_aluno",
     "ativarMatriculaAoReceber": true,
     "criadoEm": "2026-07-21T17:23:44.459Z",
-    "atualizadoEm": "2026-07-21T17:24:01.260Z",
+    "atualizadoEm": "2026-07-22T09:28:11.754Z",
     "valorCentavos": 6500,
     "valorPagoCentavos": 6500,
     "saldoCentavos": 0,
     "planoContaId": "",
     "excluido": false,
-    "ultimoReciboId": "rec_ddcbfb78-42dd-43a7-a9a9-95df389da942"
+    "ultimoReciboId": "rec_ddcbfb78-42dd-43a7-a9a9-95df389da942",
+    "caixaId": "cx_1784653653536_a25c76",
+    "movimentoCaixaId": "mov_rec_reconc_rec_ddcbfb78-42dd-43a7-a9a9-95df389da942_1"
   },
   {
     "id": "fin_men_rec_1784654624528_242254",
@@ -292,13 +300,15 @@
     "origem": "reativacao_aluno",
     "ativarMatriculaAoReceber": true,
     "criadoEm": "2026-07-21T17:26:46.485Z",
-    "atualizadoEm": "2026-07-21T17:26:56.112Z",
+    "atualizadoEm": "2026-07-22T09:28:11.753Z",
     "valorCentavos": 6500,
     "valorPagoCentavos": 6500,
     "saldoCentavos": 0,
     "planoContaId": "",
     "excluido": false,
-    "ultimoReciboId": "rec_e443620e-4135-411b-873e-945bb3846880"
+    "ultimoReciboId": "rec_e443620e-4135-411b-873e-945bb3846880",
+    "caixaId": "cx_1784653653536_a25c76",
+    "movimentoCaixaId": "mov_rec_reconc_rec_e443620e-4135-411b-873e-945bb3846880_1"
   },
   {
     "id": "fin_men_rec_1784654806504_1455",
@@ -367,13 +377,15 @@
     "origem": "reativacao_aluno",
     "ativarMatriculaAoReceber": true,
     "criadoEm": "2026-07-21T18:30:18.144Z",
-    "atualizadoEm": "2026-07-21T18:31:11.411Z",
+    "atualizadoEm": "2026-07-22T09:28:11.753Z",
     "valorCentavos": 6500,
     "valorPagoCentavos": 6500,
     "saldoCentavos": 0,
     "planoContaId": "",
     "excluido": false,
-    "ultimoReciboId": "rec_77a4a7f5-5ea5-4139-8651-0e506e7ed46e"
+    "ultimoReciboId": "rec_77a4a7f5-5ea5-4139-8651-0e506e7ed46e",
+    "caixaId": "cx_1784653653536_a25c76",
+    "movimentoCaixaId": "mov_rec_reconc_rec_77a4a7f5-5ea5-4139-8651-0e506e7ed46e_1"
   },
   {
     "id": "fin_men_rec_1784658618173_192971",
@@ -427,7 +439,7 @@
     "valorCentavos": 39000,
     "valorPagoCentavos": 39000,
     "criadoEm": "2026-07-21T18:34:49.021Z",
-    "atualizadoEm": "2026-07-21T18:35:00.000Z",
+    "atualizadoEm": "2026-07-22T09:28:11.756Z",
     "excluido": false,
     "valorBruto": 390,
     "valorPago": 390,
@@ -435,7 +447,9 @@
     "saldoCentavos": 0,
     "valorRestante": 0,
     "matriculaId": "",
-    "planoContaId": ""
+    "planoContaId": "",
+    "caixaId": "cx_1784676088270_78a460",
+    "movimentoCaixaId": "mov_pag_reconc_tit_78598d77-6e40-440d-8829-b6755df02a99"
   },
   {
     "id": "fin_men_reat_1784676049514_435647",
