@@ -137,6 +137,10 @@
         <label>Primeiro vencimento
           <input id="vencimento" type="date">
         </label>
+        <label>Dia de vencimento mensal *
+          <input id="dia_vencimento" type="number" min="1" max="28" step="1" inputmode="numeric" required placeholder="Digite de 1 a 28">
+          <span class="hint">Digite o dia desejado pelo aluno. Será usado na próxima fatura; não cria cobrança agora.</span>
+        </label>
         <label>Cobrar taxa de matrícula
           <select id="cobrar_taxa_matricula">
             <option value="true">Sim</option>

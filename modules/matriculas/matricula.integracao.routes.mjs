@@ -1,5 +1,5 @@
 import express from "express";
-import { alterarStatusMatricula, atualizarTurmasMatricula, integrarMatriculaAluno, listarMatriculas, obterMatricula, removerTurmasMatricula, trocarPlanoAluno } from "./matricula.integracao.service.mjs";
+import { alterarStatusMatricula, atualizarDiaVencimentoMatricula, atualizarTurmasMatricula, integrarMatriculaAluno, listarMatriculas, obterMatricula, removerTurmasMatricula, trocarPlanoAluno } from "./matricula.integracao.service.mjs";
 const router = express.Router();
 router.get("/api/matriculas/integracao/status", (req,res)=>res.json({ ok:true, modulo:"matriculas.integracao", status:"Online", modelo:"matricula_plano_turma_operacional", rotas:["GET /api/matriculas","GET /api/matriculas/:id","POST /api/matriculas/integrar","POST /api/matriculas/trocar-plano","PATCH /api/matriculas/:id/turmas","DELETE /api/matriculas/:id/turmas","PATCH /api/matriculas/:id/status"] }));
 async function listar(req,res){ try{ res.json(await listarMatriculas(req.query||{})); }catch(err){ res.status(err.status||500).json({ok:false,success:false,erro:err.message||"Erro ao listar matrículas."}); } }
@@ -14,6 +14,7 @@ function comum(body={}){
     tipoCobranca:body.tipoCobranca || body.tipoPlano,
     tipoPlano:body.tipoPlano,
     vencimento:body.vencimento,
+    diaVencimento:body.diaVencimento ?? body.dia_vencimento,
     gerarMensalidade:body.gerarMensalidade,
     contratoId:body.contratoId,
     observacao:body.observacao,
@@ -36,5 +37,6 @@ router.post("/api/matriculas/integrar", async (req,res)=>{ try{ const {alunoId, 
 router.post("/api/matriculas/trocar-plano", async (req,res)=>{ try{ const {alunoId, novoPlanoId, planoId}=req.body||{}; const destino=novoPlanoId||planoId; if(!alunoId||!destino) return res.status(400).json({ok:false,success:false,erro:"Informe alunoId e novoPlanoId."}); res.json(await trocarPlanoAluno(alunoId, destino, comum(req.body))); }catch(err){ res.status(err.status||500).json({ok:false,success:false,erro:err.message||"Erro ao trocar plano/serviços."}); } });
 router.patch("/api/matriculas/:id/turmas", async (req,res)=>{ try{ res.json(await atualizarTurmasMatricula(req.params.id, comum(req.body), req.body?.usuario || "sistema")); }catch(err){ res.status(err.status||500).json({ok:false,success:false,erro:err.message||"Erro ao atualizar turmas."}); } });
 router.delete("/api/matriculas/:id/turmas", async (req,res)=>{ try{ res.json(await removerTurmasMatricula(req.params.id, req.body?.usuario || "sistema")); }catch(err){ res.status(err.status||500).json({ok:false,success:false,erro:err.message||"Erro ao remover turmas."}); } });
-router.patch("/api/matriculas/:id/status", async (req,res)=>{ try{ const {status,motivo,usuario}=req.body||{}; if(!status) return res.status(400).json({ok:false,success:false,erro:"Informe o status."}); res.json(await alterarStatusMatricula(req.params.id,status,motivo||"",usuario||"sistema")); }catch(err){ res.status(err.status||500).json({ok:false,success:false,erro:err.message||"Erro ao alterar status da matrícula."}); } });
+router.patch("/api/matriculas/:id/status", async (req,res)=>{ try{ const {status,motivo,usuario,diaVencimento,dia_vencimento}=req.body||{}; if(!status) return res.status(400).json({ok:false,success:false,erro:"Informe o status."}); res.json(await alterarStatusMatricula(req.params.id,status,motivo||"",usuario||"sistema",{ diaVencimento:diaVencimento ?? dia_vencimento })); }catch(err){ res.status(err.status||500).json({ok:false,success:false,erro:err.message||"Erro ao alterar status da matrícula."}); } });
+router.patch("/api/matriculas/:id/vencimento", async (req,res)=>{ try{ const {diaVencimento,dia_vencimento,usuario}=req.body||{}; res.json(await atualizarDiaVencimentoMatricula(req.params.id,diaVencimento ?? dia_vencimento,usuario||"sistema")); }catch(err){ res.status(err.status||500).json({ok:false,success:false,erro:err.message||"Erro ao atualizar o dia de vencimento."}); } });
 export default router;

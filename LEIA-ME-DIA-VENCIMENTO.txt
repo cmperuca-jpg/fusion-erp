@@ -1,0 +1,16 @@
+DIA DE VENCIMENTO MENSAL
+
+Este pacote contem somente 4 arquivos alterados.
+
+COMO APLICAR
+1. Extraia este ZIP na raiz do Fusion ERP.
+2. Confirme a substituicao dos arquivos existentes.
+3. Execute npm start.
+
+REGRA APLICADA
+- O campo "Dia de vencimento mensal" fica em Nova Matricula e Edicao/Ativacao.
+- E um campo livre: digite apenas um numero inteiro de 1 a 28.
+- O sistema bloqueia valores vazios, letras, 0 e numeros acima de 28.
+- O dia fica salvo na matricula e no aluno.
+- A proxima fatura usara esse dia quando o motor de cobranca a gerar.
+- Nenhuma divida futura e criada ao salvar ou ativar a matricula.

@@ -30,6 +30,12 @@
     const numero = Number(String(valor ?? 0).replace(",", "."));
     return Number.isFinite(numero) ? numero : 0;
   }
+  function diaVencimentoValido(valor) {
+    const texto = String(valor ?? "").trim();
+    if (!/^\d+$/.test(texto)) return null;
+    const dia = Number(texto);
+    return Number.isInteger(dia) && dia >= 1 && dia <= 28 ? dia : null;
+  }
   function br(valor) { return dinheiro(valor).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }); }
   function hoje() { return new Date().toISOString().slice(0, 10); }
   function addMes(data) {
@@ -175,6 +181,7 @@
     $("desconto_matricula").value = dinheiro(m.descontoMatricula).toFixed(2);
     $("forma_pagamento").value = m.formaPagamento || "Dinheiro";
     $("vencimento").value = String(m.vencimentoInicial || addMes(hoje())).slice(0, 10);
+    $("dia_vencimento").value = m.diaVencimento || "";
     $("observacoes").value = m.observacao || m.observacoes || "";
     mostrarExistente(m);
     recalcular();
@@ -219,6 +226,12 @@
       $("plano_id")?.focus();
       return setAlerta("Informe o plano antes de salvar a matrícula.", "erro");
     }
+    const diaVencimento = diaVencimentoValido($("dia_vencimento")?.value);
+    if (!diaVencimento) {
+      tab("financeiro");
+      $("dia_vencimento")?.focus();
+      return setAlerta("Informe o dia de vencimento mensal com um número inteiro de 1 a 28.", "erro");
+    }
 
     if (matriculaAtual && String(planoAtual) !== String(planoId)) {
       const ok = confirm("Voce alterou o plano. Isso encerra a matricula atual e cria nova cobranca pelo novo plano. Continuar?");
@@ -237,6 +250,7 @@
       dataInicio: $("data_inicio").value,
       dataFim: $("data_fim").value,
       vencimento: $("vencimento").value,
+      diaVencimento,
       gerarMensalidade: !["Pre-pago", "Diarista"].includes(tipo),
       cobrarMatricula: $("cobrar_taxa_matricula").value !== "false",
       valorMatricula: dinheiro($("taxa_matricula").value),
@@ -255,6 +269,14 @@
     try {
       setSalvando(true);
       if (matriculaAtual && String(planoAtual) === String(planoId)) {
+        const resVencimento = await fetch(`/api/matriculas/${encodeURIComponent(matriculaAtual.id)}/vencimento`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ diaVencimento, usuario: "Administrador" })
+        });
+        const jsonVencimento = await resVencimento.json().catch(() => ({}));
+        if (!resVencimento.ok || jsonVencimento.ok === false) throw new Error(jsonVencimento.erro || jsonVencimento.mensagem || "Erro ao salvar o dia de vencimento.");
+
         const resTurma = await fetch(`/api/matriculas/${encodeURIComponent(matriculaAtual.id)}/turmas`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -267,7 +289,7 @@
           await fetch(`/api/matriculas/${encodeURIComponent(matriculaAtual.id)}/status`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ status: payload.status, usuario: "Administrador" })
+            body: JSON.stringify({ status: payload.status, diaVencimento, usuario: "Administrador" })
           }).catch(() => null);
         }
 
@@ -311,6 +333,7 @@
     $("data_matricula").value = data;
     $("data_inicio").value = data;
     $("vencimento").value = addMes(data);
+    $("dia_vencimento").value = "";
 
     if (alunoIdUrl && alunoIdUrl !== "undefined") {
       $("aluno_id").value = alunoIdUrl;

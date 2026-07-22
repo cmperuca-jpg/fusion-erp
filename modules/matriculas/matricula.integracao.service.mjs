@@ -12,6 +12,22 @@ function proximoMesNoDia(dataISO, dia){
   d.setDate(Math.max(1,Math.min(28,Number(dia)||1)));
   return d.toISOString().slice(0,10);
 }
+function validarDiaVencimento(valor, { permitirVazio = false } = {}){
+  const texto = String(valor ?? '').trim();
+  if(!texto && permitirVazio) return null;
+  if(!/^\d+$/.test(texto)){
+    const e=new Error('Informe o dia de vencimento mensal com um número inteiro de 1 a 28.');
+    e.status=400;
+    throw e;
+  }
+  const dia=Number(texto);
+  if(!Number.isInteger(dia) || dia < 1 || dia > 28){
+    const e=new Error('O dia de vencimento mensal deve ser um número inteiro de 1 a 28.');
+    e.status=400;
+    throw e;
+  }
+  return dia;
+}
 function alunoNome(a){ return a?.nome || a?.name || a?.nomeCompleto || ''; }
 function normalizar(v){ return String(v||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
 function tipoPlano(plano){ const n=normalizar(plano?.tipoPlano || plano?.tipo || 'Mensal'); if(n.includes('pre')) return 'Pré-pago'; if(n.includes('diar')) return 'Diarista'; if(n.includes('semes')) return 'Semestral'; if(n.includes('anual')) return 'Anual'; return 'Mensal'; }
@@ -231,7 +247,7 @@ export async function integrarMatriculaAluno(alunoId, planoId, opcoes={}){
   const tipo=opcoes.tipoCobranca || opcoes.tipoPlano || tipoPlano(plano);
   const dataMatricula=opcoes.dataMatricula || hojeISO();
   const dataInicio=opcoes.dataInicio || dataMatricula;
-  const diaVencimento=Math.max(1,Math.min(28,Number(opcoes.diaVencimento)||Number(String(dataMatricula).slice(8,10))||1));
+  const diaVencimento=validarDiaVencimento(opcoes.diaVencimento);
   const vencimentoInicial=opcoes.vencimento || dataMatricula;
   const proximoVencimento=opcoes.diaVencimento ? proximoMesNoDia(dataMatricula,diaVencimento) : addMeses(vencimentoInicial, 1);
   const dataFim=opcoes.dataFim || (mesesPlano(plano)>0 ? addMeses(dataInicio, mesesPlano(plano)) : '');
@@ -561,7 +577,7 @@ export async function integrarMatriculaAluno(alunoId, planoId, opcoes={}){
 }
 
 export async function trocarPlanoAluno(alunoId, novoPlanoId, opcoes={}){ return integrarMatriculaAluno(alunoId, novoPlanoId, {...opcoes, permitirTroca:true}); }
-export async function alterarStatusMatricula(id,status,motivo='',usuario='sistema'){
+export async function alterarStatusMatricula(id,status,motivo='',usuario='sistema', opcoes={}){
   const base=await carregarBaseMatricula();
   const idx=base.matriculas.findIndex(x=>String(x.id)===String(id)||String(x.numero)===String(id));
   if(idx < 0){ const e=new Error('Matrícula não encontrada.'); e.status=404; throw e; }
@@ -581,6 +597,18 @@ export async function alterarStatusMatricula(id,status,motivo='',usuario='sistem
       haPagamento
     });
   } else {
+    const ativando = ['ativa','ativo'].includes(stNorm) && !['ativa','ativo'].includes(normalizar(ant));
+    const diaInformado = opcoes?.diaVencimento;
+    if(ativando && (diaInformado === undefined || String(diaInformado).trim() === '')){
+      const e=new Error('Informe o dia de vencimento mensal de 1 a 28 antes de ativar a matrícula.');
+      e.status=400;
+      throw e;
+    }
+    if(diaInformado !== undefined && String(diaInformado).trim() !== ''){
+      const diaVencimento=validarDiaVencimento(diaInformado);
+      m.diaVencimento=diaVencimento;
+      m.proximoVencimento=proximoMesNoDia(hojeISO(),diaVencimento);
+    }
     m.status=status;
     m.atualizadoEm=agoraISO();
     historico(m,'alterar_status',`Status alterado de ${ant} para ${status}.`,{motivo,statusAnterior:ant,statusAtual:status},usuario);
@@ -599,11 +627,32 @@ export async function alterarStatusMatricula(id,status,motivo='',usuario='sistem
     } else {
       aluno.statusMatricula = status;
       aluno.matriculaStatus = status;
+      if(m.diaVencimento) aluno.diaVencimento=m.diaVencimento;
+      if(m.proximoVencimento) aluno.proximoVencimento=m.proximoVencimento;
     }
     aluno.atualizadoEm=agoraISO();
   }
   await salvarBaseMatricula(base);
   return { ok:true, success:true, dados:resumirMatricula(m,true), removida:false, resumoLimpeza, mensagem:'Status da matrícula atualizado; pendências abertas foram canceladas e preservadas para auditoria.' };
+}
+export async function atualizarDiaVencimentoMatricula(id, diaInformado, usuario='sistema'){
+  const base=await carregarBaseMatricula();
+  const m=base.matriculas.find(x=>String(x.id)===String(id)||String(x.numero)===String(id));
+  if(!m){ const e=new Error('Matrícula não encontrada.'); e.status=404; throw e; }
+  const diaVencimento=validarDiaVencimento(diaInformado);
+  const anterior=m.diaVencimento || null;
+  m.diaVencimento=diaVencimento;
+  m.proximoVencimento=proximoMesNoDia(hojeISO(),diaVencimento);
+  m.atualizadoEm=agoraISO();
+  historico(m,'atualizar_dia_vencimento','Dia de vencimento mensal configurado antes da próxima fatura.',{ anterior, diaVencimento, proximoVencimento:m.proximoVencimento },usuario);
+  const aluno=base.alunos.find(a=>String(a.id)===String(m.alunoId));
+  if(aluno){
+    aluno.diaVencimento=diaVencimento;
+    aluno.proximoVencimento=m.proximoVencimento;
+    aluno.atualizadoEm=agoraISO();
+  }
+  await salvarBaseMatricula(base);
+  return { ok:true, success:true, dados:resumirMatricula(m,true), mensagem:'Dia de vencimento mensal salvo para a próxima fatura.' };
 }
 export async function atualizarTurmasMatricula(id, opcoes={}, usuario='sistema'){
   const base=await carregarBaseMatricula();
