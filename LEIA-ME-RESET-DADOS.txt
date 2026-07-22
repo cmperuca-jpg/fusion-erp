@@ -1,0 +1,14 @@
+FUSION ERP - RESET TOTAL DE DADOS DE USO
+
+1. Copie estes arquivos sobre a raiz do projeto, mantendo as pastas.
+2. Reinicie o Fusion ERP.
+3. Entre como administrador.
+4. Abra Painel Administrativo > Reset de dados de teste.
+   Link direto: /pages/reset-dados/index.html
+5. Informe a senha do administrador.
+6. Digite exatamente: APAGAR TODOS OS DADOS
+7. Confirme a exclusão.
+
+O reset NÃO cria backup.
+O reset preserva o administrador, código, páginas, tabelas e configurações técnicas.
+O reset limpa dados locais, fusion_v3_records do tenant e o bucket de fotos alunos-fotos.

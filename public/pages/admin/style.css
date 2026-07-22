@@ -7,3 +7,5 @@
 .acoes-form{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
 .table-top{display:flex;justify-content:space-between;align-items:center;gap:12px}
 .table-wrap{overflow:auto}
+
+.reset-link{display:inline-block;text-decoration:none;padding:10px 14px;text-align:center}.table-top p{margin:6px 0 0;color:#596579}

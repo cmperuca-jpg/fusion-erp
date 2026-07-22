@@ -48,6 +48,7 @@ import accessBridgeRoutes from "./modules/access-bridge/access-bridge.routes.mjs
 import reconhecimentoFacialRoutes from "./modules/reconhecimento-facial/reconhecimento-facial.routes.mjs";
 import accessOnboardingRoutes from "./modules/access-onboarding/access-onboarding.routes.mjs";
 import whatsappRoutes from "./modules/whatsapp/whatsapp.routes.mjs";
+import resetDadosRoutes from "./modules/reset-dados/reset-dados.routes.mjs";
 import { executarLembretesVencimento } from "./modules/whatsapp/whatsapp.service.mjs";
 import { inicializarPersistenciaSupabase, encerrarPersistenciaSupabase } from "./modules/backup/supabase-data.service.mjs";
 import { iniciarBackupAutomatico } from "./modules/backup/backup.service.mjs";
@@ -687,6 +688,7 @@ app.use("/api/access-bridge", accessBridgeRoutes);
 app.use("/api/reconhecimento-facial", reconhecimentoFacialRoutes);
 app.use("/api/access-onboarding", accessOnboardingRoutes);
 app.use("/api/whatsapp", whatsappRoutes);
+app.use("/api/reset-dados", resetDadosRoutes);
 
 // Aliases legados de páginas: evitam 404 em favoritos/menus antigos.
 app.get(['/pages/bi-comercial', '/pages/bi-comercial/', '/pages/bi-comercial/index.html'], (req, res) => {
