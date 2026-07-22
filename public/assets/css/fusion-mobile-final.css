@@ -20,6 +20,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto;}
 input,select,textarea,button{font:inherit;}
 input,select,textarea{max-width:100%;}
 button,.btn,a.button,[role="button"],input[type="button"],input[type="submit"]{touch-action:manipulation;}
+.fusion-mobile-final-bar,.fusion-mobile-final-overlay,.fusion-menu-fechar{display:none;}
 
 /* Containers */
 main,.main,.content,.conteudo,.container,.wrapper,.wrap,.page,.page-content,.main-content,.fusion-main,.fusion-content,.painel,.dashboard{
@@ -194,6 +195,24 @@ main table,.content table,.conteudo table,.page-content table,.fusion-main table
     align-items:center;
     justify-content:center;
   }
+  .fusion-menu-fechar{
+    display:inline-flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    width:42px!important;
+    min-width:42px!important;
+    height:42px!important;
+    min-height:42px!important;
+    padding:0!important;
+    margin-left:auto!important;
+    border:1px solid rgba(255,255,255,.28)!important;
+    border-radius:10px!important;
+    background:rgba(255,255,255,.08)!important;
+    color:#fff!important;
+    font-size:27px!important;
+    line-height:1!important;
+    box-shadow:none!important;
+  }
   .fusion-mobile-final-title{
     min-width:0;
     overflow:hidden;
@@ -288,6 +307,7 @@ body.fusion-no-sidebar .fusion-main{width:100%!important;max-width:100%!importan
     overflow-x:hidden!important;
     overflow-y:auto!important;
     overscroll-behavior:contain;
+    touch-action:pan-y!important;
     padding:16px!important;
     z-index:10000!important;
     transform:translateX(-110%)!important;

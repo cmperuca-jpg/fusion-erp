@@ -5,6 +5,7 @@
     const estilos = [
       ["fusion-app-global", "/assets/css/fusion-app.css"],
       ["fusion-menu-global", "/assets/css/fusion-menu-global.css"],
+      ["fusion-mobile-final", "/assets/css/fusion-mobile-final.css"],
       ["fusion-premium-final", "/assets/css/fusion-premium-final.css"],
       ["fusion-correcoes-visuais", "/assets/css/fusion-correcoes-visuais.css"],
       ["fusion-notificacoes", "/assets/css/fusion-notificacoes.css"]
@@ -108,7 +109,7 @@
   }
 
   function removerMenusExistentes() {
-    document.querySelectorAll(".sidebar,.fusion-sidebar,#fusionSidebar,#fusionMenuGlobal,.fusion-menu-global,.fusion-v3-menu-toggle,.fusion-v3-menu-backdrop,.fusion-breadcrumb,.topbar,.fusion-topbar").forEach(el => el.remove());
+    document.querySelectorAll(".sidebar,.fusion-sidebar,#fusionSidebar,#fusionMenuGlobal,.fusion-menu-global,.fusion-v3-menu-toggle,.fusion-v3-menu-backdrop,.fusion-mobile-final-bar,.fusion-mobile-final-overlay,.fusion-breadcrumb,.topbar,.fusion-topbar").forEach(el => el.remove());
     document.body.classList.add("fusion-sem-menu");
     document.body.classList.remove("fusion-menu-open");
     document.body.classList.remove("fusion-com-sidebar");
@@ -167,34 +168,52 @@
   }
 
   function montarMenuMobile() {
-    document.querySelectorAll(".fusion-v3-menu-toggle,.fusion-v3-menu-backdrop").forEach(el => el.remove());
+    document.querySelectorAll(".fusion-v3-menu-toggle,.fusion-v3-menu-backdrop,.fusion-mobile-final-bar,.fusion-mobile-final-overlay").forEach(el => el.remove());
+    document.body.classList.remove("fusion-menu-open");
 
+    const barra = document.createElement("div");
+    barra.className = "fusion-mobile-final-bar";
     const botao = document.createElement("button");
     botao.type = "button";
-    botao.className = "fusion-v3-menu-toggle";
+    botao.className = "fusion-mobile-final-menu-btn";
     botao.setAttribute("aria-label", "Abrir menu");
     botao.setAttribute("aria-expanded", "false");
     botao.setAttribute("aria-controls", "fusionSidebar");
-    botao.textContent = "Menu";
+    botao.textContent = "☰";
+    const titulo = document.createElement("div");
+    titulo.className = "fusion-mobile-final-title";
+    titulo.textContent = itemMenuAtual()?.label || document.title.replace(/\s*[-|].*$/, "").trim() || "Fusion ERP";
+    barra.append(botao, titulo);
 
     const fundo = document.createElement("div");
-    fundo.className = "fusion-v3-menu-backdrop";
+    fundo.className = "fusion-mobile-final-overlay";
+    fundo.setAttribute("aria-hidden", "true");
 
     function alternarMenu(forcar) {
       const aberto = typeof forcar === "boolean" ? forcar : !document.body.classList.contains("fusion-menu-open");
       document.body.classList.toggle("fusion-menu-open", aberto);
       botao.setAttribute("aria-expanded", aberto ? "true" : "false");
       botao.setAttribute("aria-label", aberto ? "Fechar menu" : "Abrir menu");
+      botao.textContent = aberto ? "×" : "☰";
+      fundo.setAttribute("aria-hidden", aberto ? "false" : "true");
     }
 
     botao.addEventListener("click", () => alternarMenu());
     fundo.addEventListener("click", () => alternarMenu(false));
+    document.querySelector("#fusionSidebar [data-fusion-menu-close]")?.addEventListener("click", () => alternarMenu(false));
     document.addEventListener("keydown", (ev) => {
       if (ev.key === "Escape") alternarMenu(false);
     });
+    window.addEventListener("pageshow", () => alternarMenu(false));
+    window.addEventListener("pagehide", () => alternarMenu(false));
+    window.addEventListener("orientationchange", () => alternarMenu(false));
+    window.matchMedia("(min-width: 901px)").addEventListener?.("change", ev => {
+      if (ev.matches) alternarMenu(false);
+    });
 
+    window.FusionMenuMobile = { fechar: () => alternarMenu(false), abrir: () => alternarMenu(true), alternar: alternarMenu };
     document.body.prepend(fundo);
-    document.body.prepend(botao);
+    document.body.prepend(barra);
   }
 
   function montarMenu() {
@@ -212,6 +231,7 @@
     marca.className = "brand fusion-brand";
     marca.innerHTML = `
       <span class="fusion-brand-texto"><strong>Fusion ERP</strong><small>Menu inteligente</small></span>
+      <button class="fusion-menu-fechar" data-fusion-menu-close type="button" aria-label="Fechar menu">×</button>
       <button class="fusion-menu-sair" type="button" aria-label="Sair do Fusion ERP">Sair</button>
     `;
     marca.querySelector(".fusion-menu-sair")?.addEventListener("click", () => {
@@ -262,7 +282,7 @@
           a.rel = "noopener noreferrer";
           a.title = `${item.label} — abrir em nova aba`;
         }
-        a.addEventListener("click", () => document.body.classList.remove("fusion-menu-open"));
+        a.addEventListener("click", () => window.FusionMenuMobile?.fechar?.());
         if (itemAtivo(item.href)) {
           a.classList.add("active");
           a.setAttribute("aria-current", "page");

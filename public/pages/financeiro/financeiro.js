@@ -576,7 +576,10 @@ window.editarLancamento = function editarLancamento(id) {
 };
 
 function abrirModalBaixa(lancamento) {
-  baixaAtual = lancamento;
+  baixaAtual = {
+    ...lancamento,
+    operacaoRecebimentoId: globalThis.crypto?.randomUUID?.() || `oprec_${Date.now()}_${Math.random().toString(16).slice(2)}`
+  };
   const total = valorTotalLancamento(lancamento);
   const saldo = saldoLancamento(lancamento) || total;
   setValor("baixaLancamentoId", lancamento.id);
@@ -631,6 +634,7 @@ async function confirmarBaixa(event) {
     const dadosCartao = calcularDadosCartao();
     const formaPagamento = valor("baixaFormaPagamento");
     const payload = {
+      operacaoId: baixaAtual?.operacaoRecebimentoId,
       valorPago,
       valorEntregue: valorPago,
       valorAplicado: saldoAplicado,

@@ -1,42 +1,36 @@
-import fs from "node:fs/promises";
-import path from "node:path";
 import {
   listarCheckins,
   salvarCheckins,
   buscarCheckinPorId
 } from "./checkin.repository.mjs";
 import { listarFrequencias, salvarFrequencias } from "../frequencia/frequencia.repository.mjs";
-
-const DATA_DIR = path.resolve(process.cwd(), "data");
-const COMERCIAL_DIR = path.join(DATA_DIR, "comercial");
+import { lerJsonDuravel } from "../core/persistence/durable-json.mjs";
 
 const ARQUIVOS = {
   contratos: [
-    path.join(COMERCIAL_DIR, "contratos.json"),
-    path.join(DATA_DIR, "comercial_contratos.json")
+    "contratos.json",
+    "comercial_contratos.json"
   ],
   servicosContratados: [
-    path.join(COMERCIAL_DIR, "servicos_contratados.json"),
-    path.join(DATA_DIR, "comercial_servicos_contratados.json")
+    "servicos_contratados.json",
+    "comercial_servicos_contratados.json"
   ],
-  alunos: [path.join(DATA_DIR, "alunos.json")],
-  matriculas: [path.join(DATA_DIR, "matriculas.json")],
-  mensalidades: [path.join(DATA_DIR, "mensalidades.json")],
-  financeiro: [path.join(DATA_DIR, "financeiro.json")],
-  acessos: [path.join(DATA_DIR, "access_logs.json")]
+  alunos: ["alunos.json"],
+  matriculas: ["matriculas.json"],
+  mensalidades: ["mensalidades.json"],
+  financeiro: ["financeiro.json"],
+  acessos: ["access_logs.json"]
 };
 
 const TIMEZONE_SISTEMA = process.env.FUSION_TIMEZONE || "America/Maceio";
 let filaSincronizacaoAcessos = Promise.resolve();
 
 async function lerPrimeiroJson(candidatos, padrao = []) {
-  for (const arquivo of candidatos) {
+  for (const colecao of candidatos) {
     try {
-      const raw = await fs.readFile(arquivo, "utf8");
-      return JSON.parse(raw || "null") ?? padrao;
-    } catch (erro) {
-      if (erro?.code !== "ENOENT") return padrao;
-    }
+      const dados = await lerJsonDuravel(colecao, padrao);
+      if (Array.isArray(dados) ? dados.length : dados && Object.keys(dados).length) return dados;
+    } catch {}
   }
   return padrao;
 }
@@ -433,9 +427,11 @@ async function registrarFrequenciaMusculacao({ aluno, contrato, matricula, servi
 
 async function localizarTreinoAtivoAluno(alunoId) {
   const arquivosTreino = [
-    path.join(DATA_DIR, "treinos.json"),
-    path.join(DATA_DIR, "treinos-interno.json"),
-    path.join(DATA_DIR, "treinos_operacional.json")
+    "treinos_prescritos.json",
+    "treinos_integrados.json",
+    "treinos.json",
+    "treinos-interno.json",
+    "treinos_operacional.json"
   ];
 
   const treinos = await lerPrimeiroJson(arquivosTreino, []);

@@ -82,7 +82,7 @@ async function carregarBackups() {
 
 async function fazerBackupAgora() {
   bloquearBackup(true);
-  mostrarResultadoBackup("Criando e enviando backup para o Supabase...");
+  mostrarResultadoBackup("Copiando o estado atual do banco e dos arquivos para um novo backup no Supabase...");
   try {
     const resp = await FusionAuth.fetchAuth("/api/backup/supabase", { method: "POST" });
     const json = await resp.json().catch(() => ({}));

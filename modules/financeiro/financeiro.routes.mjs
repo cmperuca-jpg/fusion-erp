@@ -94,9 +94,27 @@ router.patch("/:id/baixar", async (req, res) => {
     }
     const resultado = await receberTitulos({ ...(req.body || {}), tituloId: req.params.id });
     const lancamento = { ...(resultado.lancamento || {}), recibo: resultado.recibo, itensRecibo: resultado.itens };
-    const cobrancaAutomatica = !resultado.idempotente
-      ? await programarProximaCobrancaAposPagamento({ financeiroId: req.params.id, mensalidadeId: lancamento.mensalidadeId || '', alunoId: lancamento.alunoId || '', usuario: req.body?.usuario || 'financeiro' })
-      : { ok: true, programada: false, motivo: 'Recebimento já processado.' };
+    let cobrancaAutomatica = { ok: true, programada: false, motivo: 'Recebimento já processado.' };
+    if (!resultado.idempotente) {
+      try {
+        cobrancaAutomatica = await programarProximaCobrancaAposPagamento({
+          financeiroId: req.params.id,
+          mensalidadeId: lancamento.mensalidadeId || '',
+          alunoId: lancamento.alunoId || '',
+          usuario: req.body?.usuario || 'financeiro'
+        });
+      } catch (erroCobranca) {
+        // A baixa já foi confirmada atomicamente no banco. Uma falha na agenda
+        // da próxima cobrança não pode devolver erro de pagamento e induzir o
+        // operador a tentar receber o mesmo valor novamente.
+        cobrancaAutomatica = {
+          ok: false,
+          aviso: true,
+          programada: false,
+          motivo: `Pagamento confirmado no Supabase, mas a próxima cobrança não pôde ser programada: ${erroCobranca.message}`
+        };
+      }
+    }
 
     if (!lancamento) {
       return res.status(404).json({

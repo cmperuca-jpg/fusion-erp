@@ -1,42 +1,26 @@
-import fs from "node:fs/promises";
-import path from "node:path";
-
-const ROOT = process.cwd();
-const DATA_DIR = path.join(ROOT, "data");
+import {
+  executarTransacaoJson,
+  lerJsonDuravel,
+  salvarJsonDuravel,
+  salvarJsonMultiplosAtomico
+} from "../core/persistence/durable-json.mjs";
 
 const FILES = {
-  mensalidades: path.join(DATA_DIR, "mensalidades.json"),
-  financeiro: path.join(DATA_DIR, "financeiro.json"),
-  matriculas: path.join(DATA_DIR, "matriculas.json"),
-  alunos: path.join(DATA_DIR, "alunos.json"),
-  planos: path.join(DATA_DIR, "planos.json"),
-  cobrancaLog: path.join(DATA_DIR, "cobranca_log.json"),
-  creditos: path.join(DATA_DIR, "creditos.json")
+  mensalidades: "mensalidades.json",
+  financeiro: "financeiro.json",
+  matriculas: "matriculas.json",
+  alunos: "alunos.json",
+  planos: "planos.json",
+  cobrancaLog: "cobranca_log.json",
+  creditos: "creditos.json"
 };
 
-async function garantirArquivo(arquivo, padrao = []) {
-  try {
-    await fs.access(arquivo);
-  } catch {
-    await fs.mkdir(path.dirname(arquivo), { recursive: true });
-    await fs.writeFile(arquivo, JSON.stringify(padrao, null, 2), "utf8");
-  }
-}
-
 async function lerJson(arquivo, padrao = []) {
-  await garantirArquivo(arquivo, padrao);
-  const txt = await fs.readFile(arquivo, "utf8");
-  if (!txt.trim()) return padrao;
-  try {
-    return JSON.parse(txt) ?? padrao;
-  } catch {
-    return padrao;
-  }
+  return lerJsonDuravel(arquivo, padrao);
 }
 
 async function salvarJson(arquivo, dados) {
-  await fs.mkdir(path.dirname(arquivo), { recursive: true });
-  await fs.writeFile(arquivo, JSON.stringify(dados, null, 2), "utf8");
+  return salvarJsonDuravel(arquivo, dados);
 }
 
 function hojeISO() {
@@ -497,6 +481,7 @@ function montarLancamentoFinanceiro(mensalidade) {
 }
 
 export async function gerarProximaMensalidadeAposPagamento({ mensalidadeId = "", financeiroId = "", alunoId = "", vencimentoProgramado = "", usuario = "sistema" } = {}) {
+  return executarTransacaoJson(async () => {
   const [mensalidades, financeiro, matriculas, alunos, planos, creditos] = await Promise.all([
     lerJson(FILES.mensalidades, []),
     lerJson(FILES.financeiro, []),
@@ -629,10 +614,12 @@ export async function gerarProximaMensalidadeAposPagamento({ mensalidadeId = "",
     criadoEm: agoraISO()
   });
 
-  await salvarJson(FILES.mensalidades, mensalidades);
-  await salvarJson(FILES.financeiro, financeiro);
-  await salvarJson(FILES.matriculas, matriculas);
-  await salvarJson(FILES.creditos, creditos);
+  await salvarJsonMultiplosAtomico({
+    [FILES.mensalidades]: mensalidades,
+    [FILES.financeiro]: financeiro,
+    [FILES.matriculas]: matriculas,
+    [FILES.creditos]: creditos
+  });
 
   await registrarLog({
     acao: "gerar_proxima_mensalidade",
@@ -660,11 +647,13 @@ export async function gerarProximaMensalidadeAposPagamento({ mensalidadeId = "",
     creditoAplicado,
     mensagem: creditoAplicado.valorAplicado > 0 ? "Próxima mensalidade gerada com crédito do aluno aplicado." : "Próxima mensalidade gerada automaticamente."
   };
+  }, { operacaoId: `cobranca-gerar-${alunoId || mensalidadeId || financeiroId}-${vencimentoProgramado || hojeISO()}` });
 }
 
 // Registra somente a agenda da recorrência. Esta função não cria título,
 // mensalidade, recebimento nem movimento de caixa.
 export async function programarProximaCobrancaAposPagamento({ mensalidadeId = "", financeiroId = "", alunoId = "", usuario = "sistema" } = {}) {
+  return executarTransacaoJson(async () => {
   const [mensalidades, financeiro, matriculas, alunos, planos] = await Promise.all([
     lerJson(FILES.mensalidades, []), lerJson(FILES.financeiro, []), lerJson(FILES.matriculas, []), lerJson(FILES.alunos, []), lerJson(FILES.planos, [])
   ]);
@@ -685,6 +674,7 @@ export async function programarProximaCobrancaAposPagamento({ mensalidadeId = ""
   await salvarJson(FILES.matriculas, matriculas);
   await registrarLog({ acao: 'programar_proxima_cobranca', sucesso: true, alunoId: aluno.id, matriculaId: matricula.id, mensalidadeId, financeiroId, vencimento: proximoVencimento, usuario });
   return { ok: true, programada: true, proximoVencimento, motivo: 'Próxima cobrança somente programada.' };
+  }, { operacaoId: `cobranca-programar-${alunoId || mensalidadeId || financeiroId}-${mensalidadeId || financeiroId}` });
 }
 
 export async function executarMotorCobranca(filtros = {}) {

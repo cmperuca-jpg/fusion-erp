@@ -6,6 +6,7 @@ const COL = Object.freeze({
   mensalidades: "mensalidades.json", recebimentos: "recebimentos.json", caixa: "caixa.json",
   recibos: "recibos.json", itens: "recibos_itens.json", formas: "formas_pagamento.json",
   plano: "plano_contas.json", auditoria: "auditoria_financeira.json", creditos: "creditos.json",
+  checkins: "checkin.json",
   pagamentosLegacy: "pagamentos.json", dbLegacy: "db.json"
 });
 
@@ -227,8 +228,8 @@ export async function receberTitulos(dados = {}) {
   const operacaoId = txt(dados.operacaoId || dados.idempotencyKey) || uid("oprec");
   return executarTransacaoJson(async () => {
     const recibos = await ler(COL.recibos, []); const repetido = recibos.find((x) => x.operacaoId === operacaoId); if (repetido) return { ok: true, idempotente: true, recibo: repetido };
-    const [titulos, itensRecibo, caixa, mensalidades, recebimentos, matriculas, alunos, creditos] = await Promise.all([
-      ler(COL.titulos, []), ler(COL.itens, []), ler(COL.caixa, caixaVazio()), ler(COL.mensalidades, []), ler(COL.recebimentos, []), ler(COL.matriculas, []), ler(COL.alunos, []), ler(COL.creditos, [])
+    const [titulos, itensRecibo, caixa, mensalidades, recebimentos, matriculas, alunos, creditos, checkins] = await Promise.all([
+      ler(COL.titulos, []), ler(COL.itens, []), ler(COL.caixa, caixaVazio()), ler(COL.mensalidades, []), ler(COL.recebimentos, []), ler(COL.matriculas, []), ler(COL.alunos, []), ler(COL.creditos, []), ler(COL.checkins, [])
     ]);
     const cx = caixaAberto(caixa); if (!cx) throw erro("Abra o caixa antes de registrar recebimentos.", 409);
     const itensEntrada = Array.isArray(dados.itens) && dados.itens.length ? dados.itens : [{ tituloId: dados.tituloId || dados.id, valor: dados.valorAplicado ?? dados.valor, desconto: dados.desconto, acrescimo: dados.acrescimo ?? dados.juros ?? dados.multa }];
@@ -275,9 +276,58 @@ export async function receberTitulos(dados = {}) {
       if (deveAtivarMatricula) {
         const mi = matriculas.findIndex((x) => mesmo(x.id, item.matriculaId));
         if (mi >= 0 && !["cancelada", "encerrada"].includes(status(matriculas[mi]))) {
-          matriculas[mi] = { ...matriculas[mi], status: "Ativa", statusPagamento: "Pago", statusFinanceiroInicial: "Pago", bloqueada: false, bloqueioCheckin: false, ativadaEm: matriculas[mi].ativadaEm || agora(), atualizadoEm: agora() };
+          const atualizadoEm = agora();
+          matriculas[mi] = {
+            ...matriculas[mi],
+            status: "Ativa",
+            statusPagamento: "Pago",
+            statusFinanceiroInicial: "Pago",
+            bloqueada: false,
+            bloqueioCheckin: false,
+            motivoBloqueio: "",
+            motivoBloqueioCheckin: "",
+            ativadaEm: matriculas[mi].ativadaEm || atualizadoEm,
+            liberadaAcessoEm: atualizadoEm,
+            liberadaPorPagamentoEm: atualizadoEm,
+            cacheAcessoLimpoEm: atualizadoEm,
+            atualizadoEm
+          };
           const ai = alunos.findIndex((x) => mesmo(x.id, alunoUnico));
-          if (ai >= 0) alunos[ai] = { ...alunos[ai], status: "ativo", statusMatricula: "Ativa", matriculaStatus: "Ativa", matriculaId: matriculas[mi].id, numeroMatricula: matriculas[mi].numero || alunos[ai].numeroMatricula, bloqueioCheckin: false, atualizadoEm: agora() };
+          if (ai >= 0) alunos[ai] = {
+            ...alunos[ai],
+            status: "ativo",
+            situacao: "ativo",
+            ativo: true,
+            status_legado_access: "ativo",
+            statusMatricula: "Ativa",
+            matriculaStatus: "Ativa",
+            matriculaId: matriculas[mi].id,
+            numeroMatricula: matriculas[mi].numero || matriculas[mi].numeroMatricula || alunos[ai].numeroMatricula,
+            bloqueado: false,
+            bloqueioCheckin: false,
+            inadimplente: false,
+            emAtraso: false,
+            motivoBloqueio: "",
+            motivoBloqueioCheckin: "",
+            reativacaoPendenteEm: "",
+            recebimentoReativacaoId: "",
+            liberadoAcessoEm: atualizadoEm,
+            liberadoPorPagamentoEm: atualizadoEm,
+            cacheAcessoLimpoEm: atualizadoEm,
+            atualizadoEm
+          };
+          for (const checkin of checkins) {
+            const mesmoAluno = mesmo(checkin.alunoId, alunoUnico);
+            const mesmaMatricula = mesmo(checkin.matriculaId, matriculas[mi].id);
+            if (!mesmoAluno && !mesmaMatricula) continue;
+            checkin.status = "Ativo";
+            checkin.bloqueado = false;
+            checkin.bloqueioCheckin = false;
+            checkin.motivoBloqueio = "";
+            checkin.motivoBloqueioCheckin = "";
+            checkin.cacheAcessoLimpoEm = atualizadoEm;
+            checkin.atualizadoEm = atualizadoEm;
+          }
         }
       }
     }
@@ -288,7 +338,7 @@ export async function receberTitulos(dados = {}) {
     if (diferencaC > 0 && destinoDiferenca === "troco") caixa.movimentos.push({ id: uid("movtroco"), caixaId: cx.id, tipo: "saida", descricao: `Troco do recibo ${recibo.numero}`, categoria: "Troco", pessoa: recibo.aluno, alunoId: alunoUnico, reciboId: recibo.id, formaPagamento: "Dinheiro", valorCentavos: diferencaC, valor: reais(diferencaC), data: recibo.data, status: "ativo", origem: "troco_recibo", criadoEm: agora() });
     if (diferencaC > 0 && destinoDiferenca === "credito") creditos.push({ id: uid("cred"), alunoId: alunoUnico, reciboId: recibo.id, valorOriginalCentavos: diferencaC, saldoCentavos: diferencaC, valor: reais(diferencaC), saldo: reais(diferencaC), status: "ativo", origem: "diferenca_recebimento", criadoEm: agora() });
     recibos.unshift(recibo);
-    await salvarJsonMultiplosAtomico({ [COL.titulos]: titulos, [COL.itens]: itensRecibo, [COL.recibos]: recibos, [COL.caixa]: caixa, [COL.mensalidades]: mensalidades, [COL.recebimentos]: recebimentos, [COL.matriculas]: matriculas, [COL.alunos]: alunos, [COL.creditos]: creditos });
+    await salvarJsonMultiplosAtomico({ [COL.titulos]: titulos, [COL.itens]: itensRecibo, [COL.recibos]: recibos, [COL.caixa]: caixa, [COL.mensalidades]: mensalidades, [COL.recebimentos]: recebimentos, [COL.matriculas]: matriculas, [COL.alunos]: alunos, [COL.creditos]: creditos, [COL.checkins]: checkins });
     await auditar("emitir_recibo", "recibo", recibo.id, { numero: recibo.numero, valor: recibo.valorPago, tituloIds: novosItens.map((x) => x.tituloId), caixaId: cx.id }, dados.usuario);
     return { ok: true, recibo, itens: novosItens, titulos: alocacoes.map((a) => titulos[a.indice]), lancamento: titulos[alocacoes[0].indice] };
   }, { operacaoId });

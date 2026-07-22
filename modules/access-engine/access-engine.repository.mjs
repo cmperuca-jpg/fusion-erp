@@ -1,12 +1,15 @@
-import fs from 'fs/promises';
-import path from 'path';
 import crypto from 'crypto';
+import {
+  executarTransacaoJson,
+  lerJsonDuravel,
+  salvarJsonDuravel
+} from '../core/persistence/durable-json.mjs';
 
-const DATA_DIR = path.resolve(process.cwd(), 'data');
 const ARQUIVOS = {
   alunos: 'alunos.json',
   matriculas: 'matriculas.json',
   mensalidades: 'mensalidades.json',
+  financeiro: 'financeiro.json',
   dispositivos: 'access_dispositivos.json',
   logs: 'access_logs.json',
   regras: 'access_regras.json',
@@ -14,28 +17,13 @@ const ARQUIVOS = {
   eventos: 'access_eventos.json'
 };
 
-async function garantirArquivo(nome, padrao = []) {
-  await fs.mkdir(DATA_DIR, { recursive: true });
-  const arquivo = path.join(DATA_DIR, nome);
-  try { await fs.access(arquivo); }
-  catch { await fs.writeFile(arquivo, JSON.stringify(padrao, null, 2), 'utf-8'); }
-  return arquivo;
-}
-
 async function lerJson(nome, padrao = []) {
-  const arquivo = await garantirArquivo(nome, padrao);
-  const raw = await fs.readFile(arquivo, 'utf-8').catch(() => '[]');
-  try {
-    const dados = raw.trim() ? JSON.parse(raw) : padrao;
-    return Array.isArray(dados) ? dados : padrao;
-  } catch {
-    return padrao;
-  }
+  const dados = await lerJsonDuravel(nome, padrao);
+  return Array.isArray(dados) ? dados : padrao;
 }
 
 async function salvarJson(nome, dados) {
-  const arquivo = await garantirArquivo(nome, []);
-  await fs.writeFile(arquivo, JSON.stringify(dados, null, 2), 'utf-8');
+  return salvarJsonDuravel(nome, Array.isArray(dados) ? dados : []);
 }
 
 export function normalizar(valor) {
@@ -53,6 +41,7 @@ export function novoId(prefixo = 'acc') {
 export async function listarAlunos() { return lerJson(ARQUIVOS.alunos); }
 export async function listarMatriculas() { return lerJson(ARQUIVOS.matriculas); }
 export async function listarMensalidades() { return lerJson(ARQUIVOS.mensalidades); }
+export async function listarFinanceiro() { return lerJson(ARQUIVOS.financeiro); }
 export async function listarDispositivos() { return lerJson(ARQUIVOS.dispositivos); }
 export async function listarLogs() { return lerJson(ARQUIVOS.logs); }
 export async function listarRegras() { return lerJson(ARQUIVOS.regras); }
@@ -75,56 +64,118 @@ export async function buscarAlunoPorIdentificador(identificador) {
   }) || null;
 }
 
+export async function buscarMatriculaAtualDoAluno(aluno = {}) {
+  const matriculas = await listarMatriculas();
+  const alunoId = String(aluno.id || aluno._id || aluno.alunoId || '');
+  const matriculaId = String(aluno.matriculaId || '');
+  const candidatas = matriculas
+    .filter((matricula = {}) =>
+      (matriculaId && String(matricula.id || '') === matriculaId) ||
+      (alunoId && String(matricula.alunoId || matricula.aluno_id || '') === alunoId)
+    )
+    .sort((a, b) => {
+      const aVinculada = matriculaId && String(a.id || '') === matriculaId ? 1 : 0;
+      const bVinculada = matriculaId && String(b.id || '') === matriculaId ? 1 : 0;
+      if (aVinculada !== bVinculada) return bVinculada - aVinculada;
+      return String(b.atualizadoEm || b.criadoEm || b.dataMatricula || '')
+        .localeCompare(String(a.atualizadoEm || a.criadoEm || a.dataMatricula || ''));
+    });
+  return candidatas[0] || null;
+}
+
+export async function regularizarAlunoComMatriculaAtiva(alunoId, matricula = {}) {
+  if (!alunoId || !matricula?.id) return null;
+  return executarTransacaoJson(async () => {
+    const alunos = await listarAlunos();
+    const indice = alunos.findIndex((aluno = {}) => String(aluno.id || aluno._id || '') === String(alunoId));
+    if (indice < 0) return null;
+    const aluno = alunos[indice];
+    const statusAluno = normalizar(aluno.status);
+    const statusMatricula = normalizar(matricula.status);
+    if (!['ativo', 'ativa'].includes(statusAluno) || !['ativo', 'ativa'].includes(statusMatricula) || aluno.bloqueado === true || matricula.bloqueada === true) {
+      return aluno;
+    }
+    const agora = new Date().toISOString();
+    alunos[indice] = {
+      ...aluno,
+      ativo: true,
+      situacao: 'ativo',
+      statusMatricula: 'Ativa',
+      matriculaStatus: 'Ativa',
+      matriculaId: matricula.id,
+      numeroMatricula: matricula.numero || matricula.numeroMatricula || aluno.numeroMatricula || '',
+      bloqueado: false,
+      bloqueioCheckin: false,
+      inadimplente: false,
+      emAtraso: false,
+      motivoBloqueio: '',
+      motivoBloqueioCheckin: '',
+      reativacaoPendenteEm: '',
+      recebimentoReativacaoId: '',
+      cacheAcessoLimpoEm: agora,
+      atualizadoEm: agora
+    };
+    await salvarJson(ARQUIVOS.alunos, alunos);
+    return alunos[indice];
+  }, { operacaoId: `regularizar-acesso-${alunoId}-${matricula.id}` });
+}
+
 export async function obterDispositivo(id) {
   const lista = await listarDispositivos();
   return lista.find(d => String(d.id) === String(id)) || null;
 }
 
 export async function salvarDispositivo(dados) {
-  const lista = await listarDispositivos();
-  const agora = new Date().toISOString();
-  const id = dados.id || novoId('disp');
-  const existente = lista.findIndex(d => String(d.id) === String(id));
-  const dispositivo = {
-    id,
-    nome: String(dados.nome || 'Catraca Simulador').trim(),
-    fabricante: String(dados.fabricante || 'Simulador').trim(),
-    modelo: String(dados.modelo || 'Genérico').trim(),
-    driver: String(dados.driver || 'simulador').trim(),
-    ip: String(dados.ip || '').trim(),
-    porta: String(dados.porta || '').trim(),
-    sentido: String(dados.sentido || 'entrada_saida').trim(),
-    status: String(dados.status || 'ativo').trim(),
-    criadoEm: dados.criadoEm || agora,
-    atualizadoEm: agora
-  };
-  if (existente >= 0) lista[existente] = { ...lista[existente], ...dispositivo };
-  else lista.push(dispositivo);
-  await salvarDispositivos(lista);
-  return dispositivo;
+  return executarTransacaoJson(async () => {
+    const lista = await listarDispositivos();
+    const agora = new Date().toISOString();
+    const id = dados.id || novoId('disp');
+    const existente = lista.findIndex(d => String(d.id) === String(id));
+    const dispositivo = {
+      id,
+      nome: String(dados.nome || 'Catraca Simulador').trim(),
+      fabricante: String(dados.fabricante || 'Simulador').trim(),
+      modelo: String(dados.modelo || 'Genérico').trim(),
+      driver: String(dados.driver || 'simulador').trim(),
+      ip: String(dados.ip || '').trim(),
+      porta: String(dados.porta || '').trim(),
+      sentido: String(dados.sentido || 'entrada_saida').trim(),
+      status: String(dados.status || 'ativo').trim(),
+      criadoEm: dados.criadoEm || agora,
+      atualizadoEm: agora
+    };
+    if (existente >= 0) lista[existente] = { ...lista[existente], ...dispositivo };
+    else lista.push(dispositivo);
+    await salvarDispositivos(lista);
+    return dispositivo;
+  });
 }
 
 export async function registrarLog(log) {
-  const lista = await listarLogs();
-  const registro = { id: log.id || novoId('log'), criadoEm: new Date().toISOString(), ...log };
-  lista.unshift(registro);
-  await salvarLogs(lista.slice(0, 5000));
-  return registro;
+  return executarTransacaoJson(async () => {
+    const lista = await listarLogs();
+    const registro = { id: log.id || novoId('log'), criadoEm: new Date().toISOString(), ...log };
+    lista.unshift(registro);
+    await salvarLogs(lista.slice(0, 5000));
+    return registro;
+  });
 }
 
 export async function marcarPresenca({ aluno, direcao, logId }) {
-  const lista = await listarPresentes();
-  const alunoId = String(aluno?.id || aluno?.matriculaId || aluno?.numeroMatricula || '');
-  if (!alunoId) return lista;
-  const agora = new Date().toISOString();
-  const idx = lista.findIndex(p => String(p.alunoId) === alunoId);
-  if (String(direcao || 'entrada') === 'saida') {
-    if (idx >= 0) lista.splice(idx, 1);
-  } else if (idx >= 0) {
-    lista[idx] = { ...lista[idx], atualizadoEm: agora, ultimoLogId: logId };
-  } else {
-    lista.push({ alunoId, nome: aluno.nome, numeroMatricula: aluno.numeroMatricula, entradaEm: agora, atualizadoEm: agora, ultimoLogId: logId });
-  }
-  await salvarPresentes(lista);
-  return lista;
+  return executarTransacaoJson(async () => {
+    const lista = await listarPresentes();
+    const alunoId = String(aluno?.id || aluno?.matriculaId || aluno?.numeroMatricula || '');
+    if (!alunoId) return lista;
+    const agora = new Date().toISOString();
+    const idx = lista.findIndex(p => String(p.alunoId) === alunoId);
+    if (String(direcao || 'entrada') === 'saida') {
+      if (idx >= 0) lista.splice(idx, 1);
+    } else if (idx >= 0) {
+      lista[idx] = { ...lista[idx], atualizadoEm: agora, ultimoLogId: logId };
+    } else {
+      lista.push({ alunoId, nome: aluno.nome, numeroMatricula: aluno.numeroMatricula, entradaEm: agora, atualizadoEm: agora, ultimoLogId: logId });
+    }
+    await salvarPresentes(lista);
+    return lista;
+  });
 }

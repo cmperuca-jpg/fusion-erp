@@ -81,8 +81,11 @@ function dataLocalISO(valor = new Date()) {
 
 function logContaComoAcessoPortal(log = {}, alunoId = "", dataAlvo = dataLocalISO()) {
   if (log.autorizado !== true) return false;
-  if (String(log.origem || "") !== "portal-aluno-botao") return false;
   if (String(log.alunoId || log.identificador || "") !== String(alunoId)) return false;
+  const origem = String(log.origem || "").trim().toLowerCase();
+  const direcao = String(log.direcao || log.movimento || "entrada").trim().toLowerCase();
+  if (direcao === "saida") return false;
+  if (origem.includes("teste") || origem.includes("diagnostico") || origem.includes("simulador")) return false;
   return dataLocalISO(log.criadoEm || log.data || log.timestamp) === dataAlvo;
 }
 

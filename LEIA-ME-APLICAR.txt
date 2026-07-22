@@ -1,0 +1,26 @@
+FUSION ERP — CORREÇÃO DE SINCRONIA, ACESSO, CHECK-IN, BACKUP E MENU MÓVEL
+
+Este pacote contém somente os arquivos alterados. Não contém data, uploads,
+.env, chaves, node_modules nem o restante do site.
+
+COMO APLICAR
+1. Crie um backup no Painel administrativo antes de publicar.
+2. Extraia este ZIP diretamente na raiz do projeto Fusion ERP.
+3. Confirme a substituição dos 14 arquivos existentes.
+4. Execute: npm run check
+5. Teste localmente com: npm start
+6. Faça commit e push no GitHub para o Render publicar.
+
+Não execute o publicador de dados locais para instalar esta correção. O pacote
+altera código, não os registros dos alunos. Em produção, o Supabase continua
+sendo a fonte oficial.
+
+TESTE DEPOIS DO DEPLOY
+- No celular, o menu deve iniciar fechado e abrir pelo botão de menu.
+- Receba um título de teste e confirme título, recibo, caixa e aluno no sistema.
+- Um aluno reativado e pago deve liberar a catraca sem permanecer pendente.
+- Abra Check-in: entradas autorizadas do app/catraca devem aparecer na lista.
+- No Painel administrativo, use "Criar backup do Supabase agora".
+
+Se o celular mostrar a tela antiga uma única vez, feche a aba, abra novamente
+e atualize a página para descartar o cache anterior.

@@ -98,9 +98,36 @@ async function pendenciaFinanceiraAluno(aluno = {}) {
   return pendencias[0] || null;
 }
 
-function bloqueioManualAluno(aluno = {}) {
-  if (aluno.ativo === false || aluno.bloqueado === true) return true;
-  return statusBloqueado(aluno.situacao) || statusBloqueado(aluno.matriculaStatus);
+async function cobrancaDeAtivacaoPendente(aluno = {}, matricula = null) {
+  const alunoId = String(aluno.id || aluno._id || '');
+  const matriculaId = String(matricula?.id || aluno.matriculaId || '');
+  const titulos = await repo.listarFinanceiro();
+  return titulos.find((titulo = {}) => {
+    const mesmoAluno = alunoId && String(titulo.alunoId || titulo.aluno_id || '') === alunoId;
+    const mesmaMatricula = matriculaId && String(titulo.matriculaId || titulo.matricula_id || '') === matriculaId;
+    if (!mesmoAluno && !mesmaMatricula) return false;
+    const exigeAtivacao = titulo.ativarMatriculaAoReceber === true || repo.normalizar(titulo.origem).includes('reativacao');
+    if (!exigeAtivacao) return false;
+    const situacao = repo.normalizar(titulo.status || titulo.situacao || 'aberto');
+    return !['pago', 'paga', 'recebido', 'recebida', 'baixado', 'baixada', 'quitado', 'quitada', 'cancelado', 'cancelada', 'estornado', 'estornada'].includes(situacao);
+  }) || null;
+}
+
+function bloqueioManualAluno(aluno = {}, matricula = null) {
+  if (aluno.bloqueado === true || aluno.bloqueioCheckin === true) return true;
+  if (matricula?.bloqueada === true || matricula?.bloqueioCheckin === true) return true;
+  if (statusBloqueado(aluno.situacao)) return true;
+  if (!matricula && statusBloqueado(aluno.matriculaStatus)) return true;
+
+  // Registros importados podem conservar ativo=false mesmo depois de uma
+  // reativação paga. Nesse conflito, status=ativo + matrícula ativa é a fonte
+  // mais recente; um false legado isolado não deve bloquear a catraca.
+  if (aluno.ativo === false) {
+    const cadastroAtivo = statusAtivo(aluno.status);
+    const matriculaAtiva = statusAtivo(matricula?.status || aluno.statusMatricula || aluno.matriculaStatus);
+    return !(cadastroAtivo && matriculaAtiva);
+  }
+  return false;
 }
 
 async function obterDispositivoOuPadrao(id) {
@@ -173,24 +200,34 @@ export async function dashboard() {
 
 async function executarAvaliacao({ aluno, identificador = '', dispositivoId = '', direcao = 'entrada', origem = 'simulador' } = {}) {
   const dispositivo = await obterDispositivoOuPadrao(dispositivoId || 'disp_henry7x_01');
+  const matricula = aluno ? await repo.buscarMatriculaAtualDoAluno(aluno) : null;
 
   let autorizado = true;
   let motivo = 'Acesso liberado';
+  const statusMatricula = matricula?.status || aluno?.statusMatricula || aluno?.matriculaStatus || '';
 
   if (!aluno) {
     autorizado = false;
     motivo = 'Aluno não encontrado';
-  } else if (statusBloqueado(aluno.status) || statusBloqueado(aluno.statusMatricula)) {
+  } else if (statusBloqueado(aluno.status) || statusBloqueado(statusMatricula)) {
     autorizado = false;
     motivo = 'Aluno ou matrícula bloqueada';
-  } else if (!statusAtivo(aluno.statusMatricula || aluno.status || 'Ativa')) {
+  } else if (!statusAtivo(statusMatricula || aluno.status || 'Ativa')) {
     autorizado = false;
     motivo = 'Matrícula pendente, cancelada ou inativa';
   }
 
-  if (autorizado && aluno && bloqueioManualAluno(aluno)) {
+  if (autorizado && aluno && bloqueioManualAluno(aluno, matricula)) {
     autorizado = false;
     motivo = 'Aluno ou matricula bloqueada';
+  }
+
+  if (autorizado && aluno) {
+    const ativacaoPendente = await cobrancaDeAtivacaoPendente(aluno, matricula);
+    if (ativacaoPendente) {
+      autorizado = false;
+      motivo = 'Pagamento de ativação ou reativação pendente';
+    }
   }
 
   if (autorizado && aluno) {
@@ -199,6 +236,11 @@ async function executarAvaliacao({ aluno, identificador = '', dispositivoId = ''
       autorizado = false;
       motivo = `Pagamento em atraso${pendencia.vencimento ? ` desde ${pendencia.vencimento}` : ''}`;
     }
+  }
+
+  if (autorizado && aluno && matricula && aluno.ativo === false && statusAtivo(aluno.status) && statusAtivo(matricula.status)) {
+    const regularizado = await repo.regularizarAlunoComMatriculaAtiva(aluno.id || aluno._id, matricula);
+    if (regularizado) aluno = regularizado;
   }
 
   const driverInfo = obterDriver(dispositivo?.driver || 'henry7x');
@@ -232,6 +274,7 @@ async function executarAvaliacao({ aluno, identificador = '', dispositivoId = ''
     alunoId: aluno?.id || null,
     alunoNome: aluno?.nome || '',
     numeroMatricula: aluno?.numeroMatricula || '',
+    matriculaId: matricula?.id || aluno?.matriculaId || '',
     dispositivoId: dispositivo?.id || '',
     dispositivoNome: dispositivo?.nome || '',
     driver: dispositivo?.driver || 'henry7x',
@@ -242,7 +285,7 @@ async function executarAvaliacao({ aluno, identificador = '', dispositivoId = ''
   });
 
   if (autorizado && aluno) await repo.marcarPresenca({ aluno, direcao, logId: log.id });
-  return { ok: true, autorizado, motivo, aluno, dispositivo, driver: driverInfo, comando, catraca, log };
+  return { ok: true, autorizado, motivo, aluno, matricula, dispositivo, driver: driverInfo, comando, catraca, log };
 }
 
 export async function avaliarAcessoAluno({ aluno, dispositivoId = 'disp_henry7x_01', direcao = 'entrada', origem = 'access-engine' } = {}) {
