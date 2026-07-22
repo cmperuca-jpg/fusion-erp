@@ -62,6 +62,12 @@ function estaPago(obj = {}) {
     Boolean(obj.dataPagamento || obj.pagamento || obj.baixadoEm);
 }
 
+function estaProgramada(obj = {}) {
+  return ["programada", "programado", "agendada", "agendado", "futura", "futuro"].includes(
+    String(obj.status || obj.situacao || "").trim().toLowerCase()
+  ) || obj.programada === true;
+}
+
 function statusMatriculaAtivo(status) {
   return ["ativa", "ativo"].includes(String(status || "").trim().toLowerCase());
 }
@@ -451,6 +457,25 @@ function montarMensalidade({ aluno, matricula, plano, vencimento, periodicidade 
   };
 }
 
+function montarMensalidadeProgramada({ aluno, matricula, plano, vencimento, periodicidade, usuario = "sistema" }) {
+  const mensalidade = montarMensalidade({ aluno, matricula, plano, vencimento, periodicidade });
+  mensalidade.status = "programada";
+  mensalidade.programada = true;
+  mensalidade.emitida = false;
+  mensalidade.emitirEm = vencimento;
+  mensalidade.origem = "recorrencia_programada";
+  mensalidade.lancamentoFinanceiroId = "";
+  mensalidade.descricao = `Fatura futura ${mensalidade.competencia} - ${mensalidade.aluno || aluno.id}`;
+  mensalidade.historico = [{
+    id: gerarId("hist_men"),
+    acao: "programar_fatura_futura",
+    descricao: `Fatura da competência ${mensalidade.competencia} programada sem gerar saldo financeiro em aberto.`,
+    usuario,
+    criadoEm: agoraISO()
+  }];
+  return mensalidade;
+}
+
 function montarLancamentoFinanceiro(mensalidade) {
   return {
     id: `fin_${mensalidade.id}`,
@@ -543,8 +568,18 @@ export async function gerarProximaMensalidadeAposPagamento({ mensalidadeId = "",
 
   const plano = encontrarPlano(planos, matricula, aluno);
   const periodicidade = normalizarPeriodicidadePlano(plano || {}, matricula || {});
+  const idProgramadaVinculada = matricula.mensalidadeProximaId || aluno.mensalidadeProximaId || "";
+  const mensalidadeProgramadaVinculada = mensalidades.find((item) =>
+    String(item.id || "") === String(idProgramadaVinculada) &&
+    String(item.alunoId || "") === String(aluno.id) &&
+    estaProgramada(item) &&
+    statusNormalizado(item.status) !== "cancelado"
+  ) || null;
 
-  if (!planoRenovaAutomaticamente(plano || {}, matricula || {})) {
+  // Uma renovação manual também pode ter uma única fatura já programada.
+  // Nesse caso o motor apenas emite o registro previamente acordado; ele não
+  // cria uma recorrência indefinida por conta própria.
+  if (!planoRenovaAutomaticamente(plano || {}, matricula || {}) && !mensalidadeProgramadaVinculada) {
     await registrarLog({ acao: "gerar_proxima_mensalidade", sucesso: true, gerada: false, motivo: "Plano ou matrícula sem renovação automática.", alunoId: aluno.id, matriculaId: matricula.id, periodicidade, usuario });
     return { ok: true, gerada: false, motivo: "Plano ou matrícula sem renovação automática.", periodicidade };
   }
@@ -570,10 +605,23 @@ export async function gerarProximaMensalidadeAposPagamento({ mensalidadeId = "",
     diaMes(aluno.dataMatricula) ||
     null;
 
-  const proximoVencimento = somenteData(vencimentoProgramado) || adicionarMeses(vencimentoAtual, periodicidade.meses, diaVencimento);
+  const proximoVencimento = somenteData(vencimentoProgramado) ||
+    somenteData(mensalidadeProgramadaVinculada?.vencimento || mensalidadeProgramadaVinculada?.dataVencimento) ||
+    adicionarMeses(vencimentoAtual, periodicidade.meses, diaVencimento);
   const proximaCompetencia = competencia(proximoVencimento);
 
-  if (existeMensalidadeCompetencia(mensalidades, aluno.id, matricula.id, proximaCompetencia)) {
+  const indicesCompetencia = mensalidades
+    .map((item, indice) => ({ item, indice }))
+    .filter(({ item }) => {
+      const mesmoAluno = String(item.alunoId) === String(aluno.id);
+      const mesmaMatricula = !item.matriculaId || String(item.matriculaId) === String(matricula.id);
+      const compItem = String(item.competencia || competencia(item.vencimento || item.dataVencimento || "")).slice(0, 7);
+      return mesmoAluno && mesmaMatricula && compItem === proximaCompetencia && statusNormalizado(item.status) !== "cancelado";
+    });
+  const prevista = indicesCompetencia.find(({ item }) => estaProgramada(item));
+  const existenteEmitida = indicesCompetencia.find(({ item }) => !estaProgramada(item));
+
+  if (existenteEmitida) {
     await registrarLog({
       acao: "gerar_proxima_mensalidade",
       sucesso: true,
@@ -589,22 +637,50 @@ export async function gerarProximaMensalidadeAposPagamento({ mensalidadeId = "",
     return { ok: true, gerada: false, motivo: "Competência futura já existe para este aluno.", proximoVencimento, competencia: proximaCompetencia, periodicidade };
   }
 
-  const novaMensalidade = montarMensalidade({ aluno, matricula, plano, vencimento: proximoVencimento, periodicidade });
+  let novaMensalidade = montarMensalidade({ aluno, matricula, plano, vencimento: proximoVencimento, periodicidade });
+  if (prevista) {
+    novaMensalidade = {
+      ...prevista.item,
+      ...novaMensalidade,
+      id: prevista.item.id,
+      criadoEm: prevista.item.criadoEm || novaMensalidade.criadoEm,
+      programada: false,
+      emitida: true,
+      emitidaEm: agoraISO(),
+      status: "aberto",
+      origem: "mensalidade_automatica",
+      historico: [
+        ...(Array.isArray(prevista.item.historico) ? prevista.item.historico : []),
+        {
+          id: gerarId("hist_men"),
+          acao: "emissao_fatura_programada",
+          descricao: `Fatura programada da competência ${proximaCompetencia} emitida na data prevista.`,
+          criadoEm: agoraISO()
+        }
+      ]
+    };
+  }
   const creditoAplicado = aplicarCreditosNaMensalidade(novaMensalidade, creditos, usuario);
   const novoLancamento = montarLancamentoFinanceiro(novaMensalidade);
 
   novaMensalidade.lancamentoFinanceiroId = novoLancamento.id;
 
-  mensalidades.push(novaMensalidade);
+  if (prevista) mensalidades[prevista.indice] = novaMensalidade;
+  else mensalidades.push(novaMensalidade);
   financeiro.push(novoLancamento);
 
   matricula.ultimoPagamentoEm = vencimentoAtual || hojeISO();
   matricula.ultimaMensalidadeGeradaId = novaMensalidade.id;
+  matricula.mensalidadeProximaId = "";
+  matricula.financeiroProximoId = novoLancamento.id;
   matricula.proximoVencimento = proximoVencimento;
   matricula.periodicidade = periodicidade.nome;
   matricula.periodicidadeMeses = periodicidade.meses;
   matricula.renovacaoAutomatica = true;
   matricula.atualizadoEm = agoraISO();
+  aluno.mensalidadeProximaId = "";
+  aluno.financeiroProximoId = novoLancamento.id;
+  aluno.atualizadoEm = agoraISO();
 
   if (!Array.isArray(matricula.historico)) matricula.historico = [];
   matricula.historico.push({
@@ -623,6 +699,7 @@ export async function gerarProximaMensalidadeAposPagamento({ mensalidadeId = "",
     [FILES.mensalidades]: mensalidades,
     [FILES.financeiro]: financeiro,
     [FILES.matriculas]: matriculas,
+    [FILES.alunos]: alunos,
     [FILES.creditos]: creditos
   });
 
@@ -655,8 +732,8 @@ export async function gerarProximaMensalidadeAposPagamento({ mensalidadeId = "",
   }, { operacaoId: `cobranca-gerar-${alunoId || mensalidadeId || financeiroId}-${vencimentoProgramado || hojeISO()}` });
 }
 
-// Registra somente a agenda da recorrência. Esta função não cria título,
-// mensalidade, recebimento nem movimento de caixa.
+// Cria a fatura futura como previsão programada. Ela ainda não possui título
+// financeiro, saldo em aberto, recebimento ou movimento de caixa.
 export async function programarProximaCobrancaAposPagamento({ mensalidadeId = "", financeiroId = "", alunoId = "", usuario = "sistema" } = {}) {
   return executarTransacaoJson(async () => {
   const [mensalidades, financeiro, matriculas, alunos, planos] = await Promise.all([
@@ -678,29 +755,56 @@ export async function programarProximaCobrancaAposPagamento({ mensalidadeId = ""
     aluno.renovacaoAutomatica = true;
     aluno.gerarMensalidadeAutomatica = true;
   }
-  if (!planoRenovaAutomaticamente(plano || {}, matricula)) return { ok: true, programada: false, motivo: 'Plano sem renovação automática.' };
   const periodicidade = normalizarPeriodicidadePlano(plano || {}, matricula);
+  if (periodicidade.meses <= 0) return { ok: true, programada: false, motivo: 'Plano sem ciclo mensal para programar.' };
   const referencia = somenteData(dataReferenciaParaProximaCobranca(cobrancaPaga, matricula, aluno));
   const diaVencimento = matricula.diaVencimento || aluno.diaVencimento || diaMes(referencia);
   const proximoVencimento = adicionarMeses(referencia, periodicidade.meses, diaVencimento);
+  const proximaCompetencia = competencia(proximoVencimento);
+  let mensalidadeProgramada = mensalidades.find((item) => {
+    const mesmoAluno = String(item.alunoId || "") === String(aluno.id);
+    const mesmaMatricula = !item.matriculaId || String(item.matriculaId) === String(matricula.id);
+    const compItem = String(item.competencia || competencia(item.vencimento || item.dataVencimento || "")).slice(0, 7);
+    return mesmoAluno && mesmaMatricula && compItem === proximaCompetencia && estaProgramada(item) && statusNormalizado(item.status) !== "cancelado";
+  }) || null;
+  if (!mensalidadeProgramada) {
+    mensalidadeProgramada = montarMensalidadeProgramada({
+      aluno,
+      matricula,
+      plano,
+      vencimento: proximoVencimento,
+      periodicidade,
+      usuario
+    });
+    mensalidades.push(mensalidadeProgramada);
+  } else {
+    mensalidadeProgramada.vencimento = proximoVencimento;
+    mensalidadeProgramada.emitirEm = proximoVencimento;
+    mensalidadeProgramada.atualizadoEm = agoraISO();
+  }
   matricula.proximoVencimento = proximoVencimento;
+  matricula.mensalidadeProximaId = mensalidadeProgramada.id;
+  matricula.financeiroProximoId = "";
   matricula.ultimoPagamentoEm = hojeISO();
   matricula.atualizadoEm = agoraISO();
   aluno.proximoVencimento = proximoVencimento;
+  aluno.mensalidadeProximaId = mensalidadeProgramada.id;
+  aluno.financeiroProximoId = "";
   aluno.diaVencimento = diaVencimento || aluno.diaVencimento || "";
   aluno.atualizadoEm = agoraISO();
   await salvarJsonMultiplosAtomico({
     [FILES.matriculas]: matriculas,
-    [FILES.alunos]: alunos
+    [FILES.alunos]: alunos,
+    [FILES.mensalidades]: mensalidades
   });
   await registrarLog({ acao: 'programar_proxima_cobranca', sucesso: true, alunoId: aluno.id, matriculaId: matricula.id, mensalidadeId, financeiroId, vencimento: proximoVencimento, usuario });
-  return { ok: true, programada: true, proximoVencimento, motivo: 'Próxima cobrança somente programada.' };
+  return { ok: true, programada: true, mensalidadeProgramada, proximoVencimento, motivo: 'Fatura do próximo mês criada como programada, sem saldo financeiro em aberto.' };
   }, { operacaoId: `cobranca-programar-${alunoId || mensalidadeId || financeiroId}-${mensalidadeId || financeiroId}` });
 }
 
-// Corrige reativações já pagas que ficaram sem agenda por terem herdado da
-// matrícula cancelada os indicadores de renovação manual. A reparação apenas
-// agenda a data futura; não cria título, mensalidade, recebimento ou caixa.
+// Corrige pagamentos já confirmados que ficaram sem a fatura programada.
+// A reparação apenas agenda a próxima competência; não cria título financeiro,
+// recebimento, saldo em aberto nem movimento de caixa.
 export async function repararReativacoesPagasSemAgenda(filtros = {}) {
   return executarTransacaoJson(async () => {
     const [mensalidades, financeiro, matriculas, alunos, planos, log] = await Promise.all([
@@ -717,18 +821,20 @@ export async function repararReativacoesPagasSemAgenda(filtros = {}) {
     for (const matricula of matriculas) {
       if (!statusMatriculaAtivo(matricula.status)) continue;
       if (filtros.alunoId && String(matricula.alunoId) !== String(filtros.alunoId)) continue;
-      if (!(matricula.reativacaoNovaMatricula === true || ehReativacao(matricula))) continue;
 
       const aluno = alunos.find((item) => String(item.id) === String(matricula.alunoId));
       if (!aluno) continue;
       const plano = encontrarPlano(planos, matricula, aluno);
-      if (!planoPermiteRecorrencia(plano || {}, matricula)) continue;
+      const periodicidade = normalizarPeriodicidadePlano(plano || {}, matricula);
+      if (periodicidade.meses <= 0) continue;
+      const reativacao = matricula.reativacaoNovaMatricula === true || ehReativacao(matricula);
 
       const fontesPagas = [...mensalidades, ...financeiro]
         .filter((item) => {
           const mesmoAluno = String(item.alunoId || "") === String(aluno.id);
           const mesmaMatricula = !item.matriculaId || String(item.matriculaId) === String(matricula.id);
-          return mesmoAluno && mesmaMatricula && ehReativacao(item) && estaPago(item);
+          const cobrancaDoPlano = ehMensalidadeRecorrente(item) || ehCobrancaInicialOuTaxa(item);
+          return mesmoAluno && mesmaMatricula && cobrancaDoPlano && estaPago(item);
         })
         .sort((a, b) => String(
           b.dataPagamento || b.pagamento || b.dataRecebimento || b.baixadoEm || b.atualizadoEm || b.vencimento || ""
@@ -739,30 +845,58 @@ export async function repararReativacoesPagasSemAgenda(filtros = {}) {
       if (!cobrancaPaga) continue;
 
       const agendaAtual = somenteData(matricula.proximoVencimento || aluno.proximoVencimento || "");
-      const precisaReparar = matricula.renovacaoAutomatica === false ||
-        matricula.gerarMensalidadeAutomatica === false ||
-        aluno.renovacaoAutomatica === false ||
-        aluno.gerarMensalidadeAutomatica === false ||
-        !agendaAtual || agendaAtual <= hoje;
+      const faturaAbertaFuturaAtual = mensalidades.find((item) => {
+        const mesmoAluno = String(item.alunoId || "") === String(aluno.id);
+        const mesmaMatricula = !item.matriculaId || String(item.matriculaId) === String(matricula.id);
+        const vencimento = somenteData(item.vencimento || item.dataVencimento || "");
+        return mesmoAluno && mesmaMatricula && !estaPago(item) && !estaProgramada(item) &&
+          statusNormalizado(item.status) !== "cancelado" && vencimento >= hoje;
+      }) || null;
+      // Preserva títulos futuros já emitidos por versões anteriores e nunca
+      // cria uma segunda cobrança para a mesma matrícula.
+      if (faturaAbertaFuturaAtual) continue;
+      const faturaProgramadaAtual = mensalidades.find((item) => {
+        const mesmoAluno = String(item.alunoId || "") === String(aluno.id);
+        const mesmaMatricula = !item.matriculaId || String(item.matriculaId) === String(matricula.id);
+        return mesmoAluno && mesmaMatricula && estaProgramada(item) && statusNormalizado(item.status) !== "cancelado";
+      }) || null;
+      const precisaReparar = !agendaAtual || agendaAtual <= hoje || !faturaProgramadaAtual;
       if (!precisaReparar) continue;
 
-      const periodicidade = normalizarPeriodicidadePlano(plano || {}, matricula);
       const referencia = somenteData(dataReferenciaParaProximaCobranca(cobrancaPaga, matricula, aluno));
       const diaVencimento = matricula.diaVencimento || aluno.diaVencimento || diaMes(referencia);
       const proximoVencimento = agendaAtual && agendaAtual > hoje
         ? agendaAtual
         : adicionarMeses(referencia, periodicidade.meses, diaVencimento);
       const reparadaEm = agoraISO();
+      let faturaProgramada = faturaProgramadaAtual;
+      if (!faturaProgramada) {
+        faturaProgramada = montarMensalidadeProgramada({
+          aluno,
+          matricula,
+          plano,
+          vencimento: proximoVencimento,
+          periodicidade,
+          usuario: filtros.usuario || "motor"
+        });
+        mensalidades.push(faturaProgramada);
+      }
 
-      matricula.renovacaoAutomatica = true;
-      matricula.gerarMensalidadeAutomatica = true;
+      if (reativacao) {
+        matricula.renovacaoAutomatica = true;
+        matricula.gerarMensalidadeAutomatica = true;
+        aluno.renovacaoAutomatica = true;
+        aluno.gerarMensalidadeAutomatica = true;
+      }
       matricula.proximoVencimento = proximoVencimento;
+      matricula.mensalidadeProximaId = faturaProgramada.id;
+      matricula.financeiroProximoId = "";
       matricula.diaVencimento = diaVencimento || matricula.diaVencimento || "";
       matricula.recorrenciaReparadaEm = reparadaEm;
       matricula.atualizadoEm = reparadaEm;
-      aluno.renovacaoAutomatica = true;
-      aluno.gerarMensalidadeAutomatica = true;
       aluno.proximoVencimento = proximoVencimento;
+      aluno.mensalidadeProximaId = faturaProgramada.id;
+      aluno.financeiroProximoId = "";
       aluno.diaVencimento = diaVencimento || aluno.diaVencimento || "";
       aluno.recorrenciaReparadaEm = reparadaEm;
       aluno.atualizadoEm = reparadaEm;
@@ -770,7 +904,7 @@ export async function repararReativacoesPagasSemAgenda(filtros = {}) {
       reparadas.push({ alunoId: aluno.id, matriculaId: matricula.id, proximoVencimento });
       log.unshift({
         id: gerarId("cob_log"),
-        acao: "reparar_recorrencia_reativacao_paga",
+        acao: reativacao ? "reparar_recorrencia_reativacao_paga" : "reparar_fatura_programada_ausente",
         sucesso: true,
         alunoId: aluno.id,
         matriculaId: matricula.id,
@@ -784,6 +918,7 @@ export async function repararReativacoesPagasSemAgenda(filtros = {}) {
       await salvarJsonMultiplosAtomico({
         [FILES.matriculas]: matriculas,
         [FILES.alunos]: alunos,
+        [FILES.mensalidades]: mensalidades,
         [FILES.cobrancaLog]: log.slice(0, 1000)
       });
     }

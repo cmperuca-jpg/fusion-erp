@@ -215,7 +215,12 @@ function mensalidadeFuturaMatricula(base,m){
     const recorrente=normalizar(x.origem || '').includes('recorrencia') || normalizar(x.recorrencia || '').includes('mensal');
     return idConfere || (mesmaMatricula && recorrente);
   });
-  return futuras.filter(x=>!statusPagoMatricula(x)).sort((a,b)=>String(a.vencimento||'').localeCompare(String(b.vencimento||'')))[0] || futuras[0] || null;
+  // Nunca usar uma cobrança paga como futura. O fallback antigo `futuras[0]`
+  // devolvia justamente a fatura já recebida quando não encontrava outra.
+  return futuras
+    .filter(x=>!statusPagoMatricula(x))
+    .filter(x=>!['cancelado','cancelada','estornado','estornada'].includes(normalizar(x.status)))
+    .sort((a,b)=>String(a.vencimento||'').localeCompare(String(b.vencimento||'')))[0] || null;
 }
 export async function obterMatricula(id){
   const base=await carregarBaseMatricula();

@@ -12,7 +12,7 @@ const temporario = await fs.mkdtemp(path.join(os.tmpdir(), "fusion-financeiro-te
 await fs.mkdir(path.join(temporario, "data"), { recursive: true });
 
 const aluno = { id: "aluno_teste", nome: "Aluno Teste", cpf: "12345678901", status: "pre-matriculado", planoId: "plano_teste" };
-const matricula = { id: "mat_teste", alunoId: aluno.id, numero: "MAT-TESTE", status: "Pendente", planoId: "plano_teste", plano: "Plano Mensal", valorMensal: 100, diaVencimento: 10, vencimentoInicial: "2026-08-10", renovacaoAutomatica: true };
+const matricula = { id: "mat_teste", alunoId: aluno.id, numero: "MAT-TESTE", status: "Pendente", planoId: "plano_teste", plano: "Plano Mensal", valorMensal: 100, diaVencimento: 10, vencimentoInicial: "2026-08-10", renovacaoAutomatica: false, gerarMensalidadeAutomatica: false };
 const plano = { id: "plano_teste", nome: "Plano Mensal", valorMensal: 100, periodicidade: "Mensal", renovacaoAutomatica: true };
 await fs.writeFile(path.join(temporario, "data", "alunos.json"), JSON.stringify([aluno]));
 await fs.writeFile(path.join(temporario, "data", "matriculas.json"), JSON.stringify([matricula]));
@@ -44,8 +44,19 @@ try {
   assert.equal(recebimento.lancamento.status, "Pago");
   const matriculasAposBaixa = JSON.parse(await fs.readFile(path.join(temporario, "data", "matriculas.json"), "utf8"));
   assert.equal(matriculasAposBaixa[0].status, "Ativa");
+  const agendaInicial = await cobranca.programarProximaCobrancaAposPagamento({ financeiroId: titulo1.id, alunoId: aluno.id, usuario: "teste" });
+  assert.equal(agendaInicial.programada, true);
+  assert.equal(agendaInicial.mensalidadeProgramada.status, "programada");
+  const mensalidadesAposAgenda = JSON.parse(await fs.readFile(path.join(temporario, "data", "mensalidades.json"), "utf8"));
+  const previstaInicial = mensalidadesAposAgenda.find((item) => item.id === agendaInicial.mensalidadeProgramada.id);
+  assert.equal(previstaInicial.status, "programada");
+  assert.equal(previstaInicial.lancamentoFinanceiroId, "");
+  const financeiroAposAgenda = JSON.parse(await fs.readFile(path.join(temporario, "data", "financeiro.json"), "utf8"));
+  assert.equal(financeiroAposAgenda.some((item) => item.mensalidadeId === previstaInicial.id), false, "Fatura programada não pode gerar saldo financeiro antes do vencimento.");
   const recorrencia = await cobranca.gerarProximaMensalidadeAposPagamento({ financeiroId: titulo1.id, alunoId: aluno.id, usuario: "teste" });
   assert.equal(recorrencia.gerada, true);
+  assert.equal(recorrencia.mensalidade.id, previstaInicial.id, "O motor deve emitir a previsão existente, não duplicá-la.");
+  assert.equal(recorrencia.mensalidade.status, "aberto");
 
   const repetido = await ledger.receberTitulos({ operacaoId: "op_credito_1", tituloId: titulo1.id, valorAplicado: 100, valorPago: 120, destinoDiferenca: "credito", formaPagamento: "PIX" });
   assert.equal(repetido.idempotente, true);
@@ -165,6 +176,7 @@ try {
     usuario: "teste"
   });
   assert.equal(agendaReativacao.programada, true);
+  assert.equal(agendaReativacao.mensalidadeProgramada.status, "programada");
   assert.match(agendaReativacao.proximoVencimento, /^\d{4}-\d{2}-10$/);
   assert.equal(agendaReativacao.proximoVencimento > new Date().toISOString().slice(0, 10), true);
 
@@ -183,8 +195,11 @@ try {
   matriculaReativadaSalva.renovacaoAutomatica = false;
   matriculaReativadaSalva.gerarMensalidadeAutomatica = false;
   matriculaReativadaSalva.proximoVencimento = "";
+  const mensalidadesCorrompidas = JSON.parse(await fs.readFile(path.join(temporario, "data", "mensalidades.json"), "utf8"))
+    .filter((item) => item.id !== agendaReativacao.mensalidadeProgramada.id);
   await fs.writeFile(path.join(temporario, "data", "alunos.json"), JSON.stringify(alunosAposReativacao));
   await fs.writeFile(path.join(temporario, "data", "matriculas.json"), JSON.stringify(matriculasAposReativacao));
+  await fs.writeFile(path.join(temporario, "data", "mensalidades.json"), JSON.stringify(mensalidadesCorrompidas));
 
   const reparacao = await cobranca.repararReativacoesPagasSemAgenda({ alunoId: alunoReativado.id, usuario: "teste" });
   assert.equal(reparacao.totalReparadas, 1);
@@ -195,6 +210,11 @@ try {
   assert.equal(alunoReativadoSalvo.renovacaoAutomatica, true);
   assert.equal(matriculaReativadaSalva.renovacaoAutomatica, true);
   assert.match(matriculaReativadaSalva.proximoVencimento, /^\d{4}-\d{2}-10$/);
+  const mensalidadesAposReparo = JSON.parse(await fs.readFile(path.join(temporario, "data", "mensalidades.json"), "utf8"));
+  const programadaReparada = mensalidadesAposReparo.find((item) => item.id === matriculaReativadaSalva.mensalidadeProximaId);
+  assert.equal(programadaReparada?.status, "programada");
+  const financeiroAposReparo = JSON.parse(await fs.readFile(path.join(temporario, "data", "financeiro.json"), "utf8"));
+  assert.equal(financeiroAposReparo.some((item) => item.mensalidadeId === programadaReparada.id), false);
 
   const conta = await pagamentos.criarPagamento({ fornecedor: "Fornecedor Teste", descricao: "Energia", categoria: "Energia", valor: 80, vencimento: "2026-08-20" });
   const contaBaixada = await pagamentos.baixarPagamento(conta.id, { valor: 80, formaPagamento: "PIX", operacaoId: "op_pagar_1" });

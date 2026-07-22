@@ -667,7 +667,8 @@ async function confirmarBaixa(event) {
 
     const motor = json?.cobrancaAutomatica || {};
     let mensagemMotor = "";
-    if (motor.gerada) mensagemMotor = `\n\nPróxima mensalidade gerada automaticamente: ${motor.proximoVencimento || ""}`;
+    if (motor.programada) mensagemMotor = `\n\nPróxima fatura programada para ${motor.proximoVencimento || "a data escolhida"}. Ela ainda não faz parte do saldo em aberto.`;
+    else if (motor.gerada) mensagemMotor = `\n\nPróxima mensalidade gerada automaticamente: ${motor.proximoVencimento || ""}`;
     else if (motor.aviso && motor.motivo) mensagemMotor = `\n\nAtenção na recorrência: ${motor.motivo}`;
 
     fecharModalBaixa();

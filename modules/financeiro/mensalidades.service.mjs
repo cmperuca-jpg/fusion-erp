@@ -52,6 +52,7 @@ function adicionarMeses(dataISO, qtd) {
 
 function statusInterno(status) {
   const s = normalizarTexto(status);
+  if (['programada', 'programado', 'agendada', 'agendado', 'futura', 'futuro'].includes(s)) return 'programada';
   if (s === 'pago') return 'pago';
   if (s === 'parcial') return 'parcial';
   if (s === 'cancelado') return 'cancelado';
@@ -61,6 +62,7 @@ function statusInterno(status) {
 
 function statusFinanceiro(status) {
   const s = statusInterno(status);
+  if (s === 'programada') return 'Programado';
   if (s === 'pago') return 'Pago';
   if (s === 'cancelado') return 'Cancelado';
   return 'Aberto';
@@ -68,7 +70,7 @@ function statusFinanceiro(status) {
 
 function calcularStatus(m) {
   const s = statusInterno(m.status);
-  if (s === 'pago' || s === 'cancelado' || s === 'parcial') return s;
+  if (s === 'pago' || s === 'cancelado' || s === 'parcial' || s === 'programada') return s;
   const venc = new Date(`${m.vencimento}T23:59:59`);
   return venc < new Date() ? 'atrasado' : 'aberto';
 }
@@ -437,10 +439,12 @@ export async function resumoMensalidades(filtros = {}) {
     parciais: 0,
     atrasadas: 0,
     canceladas: 0,
+    programadas: 0,
     valorAberto: 0,
     valorPago: 0,
     valorAtrasado: 0,
-    valorPrevisto: 0
+    valorPrevisto: 0,
+    valorProgramado: 0
   };
 
   for (const m of lista) {
@@ -459,6 +463,9 @@ export async function resumoMensalidades(filtros = {}) {
       resumo.valorAtrasado += numero(m.valorAtualizado ?? m.valor, 0);
     } else if (m.status === 'cancelado') {
       resumo.canceladas++;
+    } else if (m.status === 'programada') {
+      resumo.programadas++;
+      resumo.valorProgramado += numero(m.valor, 0);
     }
 
     if (m.status !== 'cancelado') resumo.valorPrevisto += numero(m.valorAtualizado ?? m.valor, 0);
@@ -607,6 +614,12 @@ export async function baixarMensalidade(id, dados = {}) {
   }
 
   const atual = mensalidades[idx];
+
+  if (statusInterno(atual.status) === 'programada') {
+    const erro = new Error('Esta fatura ainda está programada. Ela ficará disponível para baixa na data do vencimento.');
+    erro.status = 409;
+    throw erro;
+  }
 
   if (statusInterno(atual.status) === 'pago') {
     const erro = new Error('Esta mensalidade já está paga.');

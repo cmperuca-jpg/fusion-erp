@@ -412,11 +412,16 @@ async function carregarPagamentos(sessao) {
     if (lista.length) break;
   }
   const hoje = new Date().toISOString().slice(0, 10);
-  const abertos = lista
-    .filter((p) => !["pago", "recebido", "baixado", "cancelado"].includes(statusPagamento(p)))
+  const programados = lista
+    .filter((p) => ["programada", "programado", "agendada", "agendado", "futura", "futuro"].includes(statusPagamento(p)))
     .filter((p) => dataPagamento(p))
     .sort((a, b) => dataPagamento(a).localeCompare(dataPagamento(b)));
-  const proximo = abertos.find((p) => dataPagamento(p) >= hoje) || abertos[0];
+  const abertos = lista
+    .filter((p) => !["pago", "recebido", "baixado", "cancelado", "programada", "programado", "agendada", "agendado", "futura", "futuro"].includes(statusPagamento(p)))
+    .filter((p) => dataPagamento(p))
+    .sort((a, b) => dataPagamento(a).localeCompare(dataPagamento(b)));
+  const proximoProgramado = programados.find((p) => dataPagamento(p) >= hoje) || programados[0];
+  const proximo = abertos.find((p) => dataPagamento(p) >= hoje) || abertos[0] || proximoProgramado;
 
   const data = dataPagamento(proximo);
   const valor = moeda(valorPagamento(proximo));
@@ -430,7 +435,7 @@ async function carregarPagamentos(sessao) {
     alerta.textContent = "Existe pagamento em atraso. Procure a recepção da academia.";
     alerta.classList.remove("hidden");
   } else {
-    st.textContent = data ? "Em aberto" : "";
+    st.textContent = proximo === proximoProgramado ? "Programado" : (data ? "Em aberto" : "");
     st.classList.remove("vencido");
     alerta.classList.add("hidden");
   }

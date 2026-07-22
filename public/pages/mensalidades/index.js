@@ -87,7 +87,8 @@ function statusTexto(status) {
     atrasado: 'Atrasado',
     parcial: 'Parcial',
     pago: 'Pago',
-    cancelado: 'Cancelado'
+    cancelado: 'Cancelado',
+    programada: 'Programada'
   }[status] || status || '-';
 }
 
@@ -118,6 +119,8 @@ function renderResumo(resumo) {
   $('#rAbertas').textContent = moeda(resumo.valorAberto || 0);
   $('#rAtrasadas').textContent = moeda(resumo.valorAtrasado || 0);
   $('#rPagas').textContent = moeda(resumo.valorPago || 0);
+  const programadas = $('#rProgramadas');
+  if (programadas) programadas.textContent = moeda(resumo.valorProgramado || 0);
 }
 
 function renderLista() {
@@ -155,7 +158,7 @@ function renderLista() {
     div.className = 'acoes';
 
     div.appendChild(criarBotao('Editar', '', 'editar', m.id));
-    if (m.status !== 'pago' && m.status !== 'cancelado') {
+    if (!['pago', 'cancelado', 'programada'].includes(m.status)) {
       div.appendChild(criarBotao('Baixar', 'baixar', 'baixar', m.id));
     }
 

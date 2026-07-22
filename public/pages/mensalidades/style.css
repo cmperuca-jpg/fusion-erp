@@ -7,3 +7,7 @@ body.fusion-com-sidebar .cards{padding:0!important;margin-bottom:18px!important}
 body.fusion-com-sidebar .filtros{margin:0 0 18px!important}
 body.fusion-com-sidebar .painel{margin:0 0 24px!important}
 @media(max-width:900px){body.fusion-com-sidebar main{margin-left:0!important;width:100%!important;padding:12px!important}}
+
+/* Fatura futura existe como previsão, mas ainda não é conta em aberto. */
+.tag.programada{background:#e6f4ff;color:#075985}
+@media(min-width:901px){.cards{grid-template-columns:repeat(5,1fr)}}
