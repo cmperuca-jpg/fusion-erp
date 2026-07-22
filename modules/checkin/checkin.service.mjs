@@ -22,8 +22,12 @@ const ARQUIVOS = {
   alunos: [path.join(DATA_DIR, "alunos.json")],
   matriculas: [path.join(DATA_DIR, "matriculas.json")],
   mensalidades: [path.join(DATA_DIR, "mensalidades.json")],
-  financeiro: [path.join(DATA_DIR, "financeiro.json")]
+  financeiro: [path.join(DATA_DIR, "financeiro.json")],
+  acessos: [path.join(DATA_DIR, "access_logs.json")]
 };
+
+const TIMEZONE_SISTEMA = process.env.FUSION_TIMEZONE || "America/Maceio";
+let filaSincronizacaoAcessos = Promise.resolve();
 
 async function lerPrimeiroJson(candidatos, padrao = []) {
   for (const arquivo of candidatos) {
@@ -47,6 +51,35 @@ function hojeISO() {
 
 function horaAtual() {
   return new Date().toTimeString().slice(0, 5);
+}
+
+function dataHoraLocal(valor) {
+  const data = valor ? new Date(valor) : new Date();
+  if (Number.isNaN(data.getTime())) {
+    return { data: hojeISO(), hora: horaAtual() };
+  }
+
+  try {
+    const partes = new Intl.DateTimeFormat("pt-BR", {
+      timeZone: TIMEZONE_SISTEMA,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23"
+    }).formatToParts(data);
+    const mapa = Object.fromEntries(partes.map((parte) => [parte.type, parte.value]));
+    return {
+      data: `${mapa.year}-${mapa.month}-${mapa.day}`,
+      hora: `${mapa.hour}:${mapa.minute}`
+    };
+  } catch {
+    return {
+      data: data.toISOString().slice(0, 10),
+      hora: data.toISOString().slice(11, 16)
+    };
+  }
 }
 
 function normalizar(valor) {
@@ -186,6 +219,109 @@ function localizarMatriculaAtiva(matriculas = [], dados = {}, alunoId = "") {
 
   lista = lista.sort((a, b) => String(b.criadoEm || b.dataMatricula || "").localeCompare(String(a.criadoEm || a.dataMatricula || "")));
   return lista.find((m) => statusMatriculaAtiva(m.status)) || lista[0] || null;
+}
+
+function acessoElegivelParaCheckin(log = {}) {
+  const alunoId = texto(log.alunoId || log.aluno_id);
+  const origem = normalizar(log.origem);
+  const acessoReal = Boolean(
+    log.catraca ||
+    origem.includes("portal-aluno") ||
+    origem.includes("henry") ||
+    origem.includes("biometr") ||
+    origem.includes("checkin")
+  );
+  const diagnostico = origem.includes("teste") || origem.includes("diagnostico") || origem.includes("simulador");
+
+  return log.autorizado === true && Boolean(alunoId) && acessoReal && !diagnostico;
+}
+
+async function executarSincronizacaoCheckinsComAcessos() {
+  const [logs, alunos, matriculas, registros] = await Promise.all([
+    lerPrimeiroJson(ARQUIVOS.acessos, []),
+    lerPrimeiroJson(ARQUIVOS.alunos, []),
+    lerPrimeiroJson(ARQUIVOS.matriculas, []),
+    listarCheckins()
+  ]);
+
+  if (!Array.isArray(logs) || !logs.length) return { importados: 0, saidas: 0 };
+
+  const idsImportados = new Set(
+    registros.flatMap((item) => [item.accessLogId, item.accessExitLogId]).filter(Boolean).map(String)
+  );
+  let importados = 0;
+  let saidas = 0;
+
+  const ordenados = logs
+    .filter(acessoElegivelParaCheckin)
+    .sort((a, b) => String(a.criadoEm || a.at || "").localeCompare(String(b.criadoEm || b.at || "")));
+
+  for (const log of ordenados) {
+    const accessLogId = texto(log.id);
+    if (!accessLogId || idsImportados.has(accessLogId)) continue;
+
+    const alunoId = texto(log.alunoId || log.aluno_id);
+    const movimento = normalizar(log.movimento || log.direcao || "entrada") === "saida" ? "saida" : "entrada";
+    const momento = log.criadoEm || log.at || log.timestamp || new Date().toISOString();
+    const horario = dataHoraLocal(momento);
+
+    if (movimento === "saida") {
+      const registroAberto = [...registros]
+        .reverse()
+        .find((item) => String(item.alunoId || "") === alunoId && !item.horaSaida && item.status === "Liberado");
+      if (registroAberto) {
+        registroAberto.horaSaida = horario.hora;
+        registroAberto.accessExitLogId = accessLogId;
+        registroAberto.atualizadoEm = new Date().toISOString();
+        idsImportados.add(accessLogId);
+        saidas += 1;
+      }
+      continue;
+    }
+
+    const aluno = localizarAluno(alunos, alunoId) || {};
+    const matricula = localizarMatriculaAtiva(matriculas, {}, alunoId) || {};
+    const origem = texto(log.origem || "catraca");
+    const peloPortal = normalizar(origem).includes("portal-aluno");
+
+    registros.push({
+      id: gerarId(),
+      alunoId,
+      aluno: log.alunoNome || aluno.nome || matricula.aluno || "",
+      matricula: log.numeroMatricula || matricula.numero || matricula.numeroMatricula || aluno.numeroMatricula || "",
+      matriculaId: matricula.id || aluno.matriculaId || "",
+      plano: matricula.plano || matricula.nomePlano || aluno.plano || "",
+      planoId: matricula.planoId || aluno.planoId || "",
+      modalidade: "Musculação",
+      turma: "Musculação livre",
+      professor: aluno.professorNome || aluno.professor_responsavel || "",
+      data: horario.data,
+      horaEntrada: horario.hora,
+      horaSaida: "",
+      tipo: peloPortal ? "Catraca pelo App de Treino" : "Catraca",
+      status: "Liberado",
+      observacoes: `Entrada sincronizada automaticamente do controle de acesso (${origem}).`,
+      origem,
+      accessLogId,
+      comandoCatracaId: log.catraca?.commandId || log.catraca?.command?.id || "",
+      criadoEm: momento,
+      sincronizadoEm: new Date().toISOString()
+    });
+    idsImportados.add(accessLogId);
+    importados += 1;
+  }
+
+  if (importados || saidas) await salvarCheckins(registros);
+  return { importados, saidas };
+}
+
+async function sincronizarCheckinsComAcessos() {
+  const tarefa = filaSincronizacaoAcessos.then(
+    executarSincronizacaoCheckinsComAcessos,
+    executarSincronizacaoCheckinsComAcessos
+  );
+  filaSincronizacaoAcessos = tarefa.catch(() => undefined);
+  return tarefa;
 }
 
 function matriculaPermiteMusculacao(matricula = {}, servicos = []) {
@@ -470,6 +606,7 @@ export async function registrarCheckinMusculacaoInteligente(dados = {}) {
 }
 
 export async function listarRegistros(filtros = {}) {
+  await sincronizarCheckinsComAcessos();
   let registros = await listarCheckins();
 
   if (filtros.status) {
@@ -506,6 +643,7 @@ export async function listarRegistros(filtros = {}) {
 }
 
 export async function obterResumoCheckin() {
+  await sincronizarCheckinsComAcessos();
   const registros = await listarCheckins();
   const hoje = hojeISO();
 
