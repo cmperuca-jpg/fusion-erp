@@ -107,6 +107,11 @@ function planoRenovaAutomaticamente(plano = {}, matricula = {}) {
   return true;
 }
 
+function planoPermiteRecorrencia(plano = {}, matricula = {}) {
+  if (plano.renovacaoAutomatica === false || plano.renovarAutomaticamente === false) return false;
+  return normalizarPeriodicidadePlano(plano, matricula).meses > 0;
+}
+
 function adicionarMeses(dataISO, meses = 1, diaVencimento = null) {
   const origem = somenteData(dataISO || hojeISO());
   const base = new Date(`${origem}T12:00:00`);
@@ -664,20 +669,130 @@ export async function programarProximaCobrancaAposPagamento({ mensalidadeId = ""
   const matricula = encontrarMatriculaAtiva(matriculas, mensalidade || lancamento || {}, aluno);
   if (!matricula) return { ok: true, programada: false, motivo: 'Aluno sem matrícula ativa.' };
   const plano = encontrarPlano(planos, matricula, aluno);
+  const cobrancaPaga = mensalidade || lancamento || {};
+  const reativacaoPaga = matricula.reativacaoNovaMatricula === true ||
+    ehReativacao(matricula) || ehReativacao(mensalidade || {}) || ehReativacao(lancamento || {});
+  if (reativacaoPaga && planoPermiteRecorrencia(plano || {}, matricula)) {
+    matricula.renovacaoAutomatica = true;
+    matricula.gerarMensalidadeAutomatica = true;
+    aluno.renovacaoAutomatica = true;
+    aluno.gerarMensalidadeAutomatica = true;
+  }
   if (!planoRenovaAutomaticamente(plano || {}, matricula)) return { ok: true, programada: false, motivo: 'Plano sem renovação automática.' };
   const periodicidade = normalizarPeriodicidadePlano(plano || {}, matricula);
-  const referencia = somenteData(mensalidade?.vencimento || lancamento?.vencimento || matricula.proximoVencimento || hojeISO());
-  const proximoVencimento = adicionarMeses(referencia, periodicidade.meses, matricula.diaVencimento || diaMes(referencia));
+  const referencia = somenteData(dataReferenciaParaProximaCobranca(cobrancaPaga, matricula, aluno));
+  const diaVencimento = matricula.diaVencimento || aluno.diaVencimento || diaMes(referencia);
+  const proximoVencimento = adicionarMeses(referencia, periodicidade.meses, diaVencimento);
   matricula.proximoVencimento = proximoVencimento;
   matricula.ultimoPagamentoEm = hojeISO();
   matricula.atualizadoEm = agoraISO();
-  await salvarJson(FILES.matriculas, matriculas);
+  aluno.proximoVencimento = proximoVencimento;
+  aluno.diaVencimento = diaVencimento || aluno.diaVencimento || "";
+  aluno.atualizadoEm = agoraISO();
+  await salvarJsonMultiplosAtomico({
+    [FILES.matriculas]: matriculas,
+    [FILES.alunos]: alunos
+  });
   await registrarLog({ acao: 'programar_proxima_cobranca', sucesso: true, alunoId: aluno.id, matriculaId: matricula.id, mensalidadeId, financeiroId, vencimento: proximoVencimento, usuario });
   return { ok: true, programada: true, proximoVencimento, motivo: 'Próxima cobrança somente programada.' };
   }, { operacaoId: `cobranca-programar-${alunoId || mensalidadeId || financeiroId}-${mensalidadeId || financeiroId}` });
 }
 
+// Corrige reativações já pagas que ficaram sem agenda por terem herdado da
+// matrícula cancelada os indicadores de renovação manual. A reparação apenas
+// agenda a data futura; não cria título, mensalidade, recebimento ou caixa.
+export async function repararReativacoesPagasSemAgenda(filtros = {}) {
+  return executarTransacaoJson(async () => {
+    const [mensalidades, financeiro, matriculas, alunos, planos, log] = await Promise.all([
+      lerJson(FILES.mensalidades, []),
+      lerJson(FILES.financeiro, []),
+      lerJson(FILES.matriculas, []),
+      lerJson(FILES.alunos, []),
+      lerJson(FILES.planos, []),
+      lerJson(FILES.cobrancaLog, [])
+    ]);
+    const hoje = somenteData(filtros.dataReferencia || hojeISO());
+    const reparadas = [];
+
+    for (const matricula of matriculas) {
+      if (!statusMatriculaAtivo(matricula.status)) continue;
+      if (filtros.alunoId && String(matricula.alunoId) !== String(filtros.alunoId)) continue;
+      if (!(matricula.reativacaoNovaMatricula === true || ehReativacao(matricula))) continue;
+
+      const aluno = alunos.find((item) => String(item.id) === String(matricula.alunoId));
+      if (!aluno) continue;
+      const plano = encontrarPlano(planos, matricula, aluno);
+      if (!planoPermiteRecorrencia(plano || {}, matricula)) continue;
+
+      const fontesPagas = [...mensalidades, ...financeiro]
+        .filter((item) => {
+          const mesmoAluno = String(item.alunoId || "") === String(aluno.id);
+          const mesmaMatricula = !item.matriculaId || String(item.matriculaId) === String(matricula.id);
+          return mesmoAluno && mesmaMatricula && ehReativacao(item) && estaPago(item);
+        })
+        .sort((a, b) => String(
+          b.dataPagamento || b.pagamento || b.dataRecebimento || b.baixadoEm || b.atualizadoEm || b.vencimento || ""
+        ).localeCompare(String(
+          a.dataPagamento || a.pagamento || a.dataRecebimento || a.baixadoEm || a.atualizadoEm || a.vencimento || ""
+        )));
+      const cobrancaPaga = fontesPagas[0];
+      if (!cobrancaPaga) continue;
+
+      const agendaAtual = somenteData(matricula.proximoVencimento || aluno.proximoVencimento || "");
+      const precisaReparar = matricula.renovacaoAutomatica === false ||
+        matricula.gerarMensalidadeAutomatica === false ||
+        aluno.renovacaoAutomatica === false ||
+        aluno.gerarMensalidadeAutomatica === false ||
+        !agendaAtual || agendaAtual <= hoje;
+      if (!precisaReparar) continue;
+
+      const periodicidade = normalizarPeriodicidadePlano(plano || {}, matricula);
+      const referencia = somenteData(dataReferenciaParaProximaCobranca(cobrancaPaga, matricula, aluno));
+      const diaVencimento = matricula.diaVencimento || aluno.diaVencimento || diaMes(referencia);
+      const proximoVencimento = agendaAtual && agendaAtual > hoje
+        ? agendaAtual
+        : adicionarMeses(referencia, periodicidade.meses, diaVencimento);
+      const reparadaEm = agoraISO();
+
+      matricula.renovacaoAutomatica = true;
+      matricula.gerarMensalidadeAutomatica = true;
+      matricula.proximoVencimento = proximoVencimento;
+      matricula.diaVencimento = diaVencimento || matricula.diaVencimento || "";
+      matricula.recorrenciaReparadaEm = reparadaEm;
+      matricula.atualizadoEm = reparadaEm;
+      aluno.renovacaoAutomatica = true;
+      aluno.gerarMensalidadeAutomatica = true;
+      aluno.proximoVencimento = proximoVencimento;
+      aluno.diaVencimento = diaVencimento || aluno.diaVencimento || "";
+      aluno.recorrenciaReparadaEm = reparadaEm;
+      aluno.atualizadoEm = reparadaEm;
+
+      reparadas.push({ alunoId: aluno.id, matriculaId: matricula.id, proximoVencimento });
+      log.unshift({
+        id: gerarId("cob_log"),
+        acao: "reparar_recorrencia_reativacao_paga",
+        sucesso: true,
+        alunoId: aluno.id,
+        matriculaId: matricula.id,
+        proximoVencimento,
+        usuario: filtros.usuario || "motor",
+        criadoEm: reparadaEm
+      });
+    }
+
+    if (reparadas.length) {
+      await salvarJsonMultiplosAtomico({
+        [FILES.matriculas]: matriculas,
+        [FILES.alunos]: alunos,
+        [FILES.cobrancaLog]: log.slice(0, 1000)
+      });
+    }
+    return { ok: true, totalReparadas: reparadas.length, reparadas };
+  });
+}
+
 export async function executarMotorCobranca(filtros = {}) {
+  const reparacao = await repararReativacoesPagasSemAgenda(filtros);
   const [matriculas, alunos] = await Promise.all([lerJson(FILES.matriculas, []), lerJson(FILES.alunos, [])]);
   const hoje = somenteData(filtros.dataReferencia || hojeISO());
   const resultados = [];
@@ -698,6 +813,8 @@ export async function executarMotorCobranca(filtros = {}) {
 
   return {
     ok: true,
+    reparadas: reparacao.totalReparadas,
+    reparacoes: reparacao.reparadas,
     totalProcessadas: resultados.length,
     geradas: resultados.filter(r => r.gerada).length,
     resultados

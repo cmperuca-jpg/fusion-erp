@@ -463,6 +463,14 @@ export async function receberTitulos(dados = {}) {
         const mi = matriculas.findIndex((x) => mesmo(x.id, item.matriculaId));
         if (mi >= 0 && !["cancelada", "encerrada"].includes(status(matriculas[mi]))) {
           const atualizadoEm = agora();
+          const textoReativacao = [
+            a.titulo.origem,
+            a.titulo.descricao,
+            a.titulo.categoria,
+            matriculas[mi].origem
+          ].map(norm).join(" ");
+          const reativacaoPaga = matriculas[mi].reativacaoNovaMatricula === true ||
+            textoReativacao.includes("reativacao") || textoReativacao.includes("reativar");
           matriculas[mi] = {
             ...matriculas[mi],
             status: "Ativa",
@@ -478,6 +486,14 @@ export async function receberTitulos(dados = {}) {
             cacheAcessoLimpoEm: atualizadoEm,
             atualizadoEm
           };
+          // O cancelamento desliga a recorrência. Uma reativação paga inicia um
+          // novo ciclo mensal e precisa religá-la; do contrário o aluno aparece
+          // como "Renovação manual" e a agenda da próxima cobrança é ignorada.
+          if (reativacaoPaga) {
+            matriculas[mi].renovacaoAutomatica = true;
+            matriculas[mi].gerarMensalidadeAutomatica = true;
+            matriculas[mi].reativacaoPagaEm = recibo.data;
+          }
           const ai = alunos.findIndex((x) => mesmo(x.id, alunoUnico));
           if (ai >= 0) alunos[ai] = {
             ...alunos[ai],
@@ -502,6 +518,13 @@ export async function receberTitulos(dados = {}) {
             cacheAcessoLimpoEm: atualizadoEm,
             atualizadoEm
           };
+          if (ai >= 0 && reativacaoPaga) {
+            alunos[ai].renovacaoAutomatica = true;
+            alunos[ai].gerarMensalidadeAutomatica = true;
+            alunos[ai].diaVencimento = matriculas[mi].diaVencimento || alunos[ai].diaVencimento || "";
+            alunos[ai].proximoVencimento = matriculas[mi].proximoVencimento || alunos[ai].proximoVencimento || "";
+            alunos[ai].reativacaoPagaEm = recibo.data;
+          }
           for (const checkin of checkins) {
             const mesmoAluno = mesmo(checkin.alunoId, alunoUnico);
             const mesmaMatricula = mesmo(checkin.matriculaId, matriculas[mi].id);

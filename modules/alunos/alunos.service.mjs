@@ -1235,6 +1235,15 @@ export async function prontuario(id) {
   const historicoPlanos = Array.isArray(historicoPlanosRaw) ? historicoPlanosRaw.filter(h => mesmoId(h.alunoId, id) || mesmoId(h.aluno_id, id)) : [];
 
   const resumoFinanceiro = calcularResumoFinanceiroAluno(mensalidades, financeiro);
+  // Uma recorrência programada ainda não é dívida e, por isso, não existe na
+  // lista de mensalidades abertas. Mesmo assim ela deve aparecer no prontuário
+  // como próximo vencimento contratado.
+  if (!resumoFinanceiro.proximoVencimento) {
+    const matriculaAtiva = matriculas.find(m => ["ativa", "ativo"].includes(normalizar(m.status)));
+    resumoFinanceiro.proximoVencimento = somenteDataAluno(
+      matriculaAtiva?.proximoVencimento || aluno.proximoVencimento || ""
+    );
+  }
   const ultimaAvaliacao = ordenarPorDataDesc(avaliacoes, ["data", "criadoEm", "criado_em"])[0] || null;
   const ultimoTreino = ordenarPorDataDesc(treinos, ["atualizado_em", "atualizadoEm", "criado_em", "criadoEm"])[0] || null;
   const ultimoCheckin = ordenarPorDataDesc(checkins, ["data", "criadoEm", "criado_em"])[0] || null;
