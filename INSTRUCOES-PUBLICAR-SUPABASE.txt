@@ -1,0 +1,24 @@
+PUBLICAR DADOS LOCAIS NO SUPABASE
+
+Este comando substitui, no Supabase, os dados atuais pelas informacoes da pasta data do computador.
+Ele cria um backup de seguranca antes da publicacao.
+
+ANTES DE EXECUTAR
+1. Confirme que voce esta na pasta do Fusion ligada ao GitHub.
+2. Confirme que o arquivo .env dessa pasta possui as credenciais reais do Supabase e:
+   FUSION_TENANT_ID=academia-piloto
+3. Nao envie o arquivo .env a ninguem.
+
+COMO APLICAR
+1. Copie scripts/publicar-dados-locais-no-supabase.mjs deste ZIP para a pasta scripts do Fusion.
+2. Abra o Prompt de Comando na raiz do Fusion.
+3. Execute:
+
+   set FUSION_CONFIRMAR_PUBLICACAO_SUPABASE=SIM
+   node scripts/publicar-dados-locais-no-supabase.mjs
+
+4. Espere a mensagem final com "ok": true.
+5. No Render, faça Manual Deploy > Deploy latest commit para reiniciar o sistema.
+
+SE APARECER ERRO
+Nao execute novamente. Cole aqui apenas o texto do erro, sem mostrar as chaves do .env.
