@@ -690,3 +690,74 @@ html, body { max-width:100%; overflow-x:hidden !important; }
   }
 }
 /* /Fusion ERP 2.9.3C */
+
+
+/* ==========================================================================
+   CORREÇÃO — VÍNCULO DE PROFESSOR E CONTRASTE DA ABA MATRÍCULAS
+   ========================================================================== */
+
+#professor_responsavel{
+  width:100%!important;
+  min-height:42px!important;
+  background:#fff!important;
+  color:#0f172a!important;
+  border:1px solid #94a3b8!important;
+  border-radius:10px!important;
+  opacity:1!important;
+}
+
+#professor_responsavel option{
+  background:#fff!important;
+  color:#0f172a!important;
+}
+
+/* O tema premium estava deixando o conteúdo dos cartões quase branco. */
+#tab-matriculas,
+#tab-matriculas *{
+  text-shadow:none!important;
+}
+
+#tab-matriculas .mini-card{
+  background:#f8fafc!important;
+  border:1px solid #b8c7d1!important;
+  color:#0f172a!important;
+  opacity:1!important;
+  box-shadow:0 6px 18px rgba(15,23,42,.08)!important;
+}
+
+#tab-matriculas .mini-card h4,
+#tab-matriculas .mini-card strong{
+  color:#0f172a!important;
+  opacity:1!important;
+}
+
+#tab-matriculas .mini-card p,
+#tab-matriculas .mini-card span:not(.badge){
+  color:#334155!important;
+  opacity:1!important;
+}
+
+#tab-matriculas .mini-card .badge{
+  opacity:1!important;
+}
+
+#tab-matriculas .mini-card .btn-light{
+  background:#fff!important;
+  color:#0f172a!important;
+  border:1px solid #cbd5e1!important;
+  opacity:1!important;
+}
+
+#tab-matriculas .mini-card .btn-light:hover{
+  background:#e2e8f0!important;
+}
+
+#tab-matriculas .timeline-empty{
+  background:#f8fafc!important;
+  color:#334155!important;
+  border:1px dashed #94a3b8!important;
+  padding:16px!important;
+  border-radius:12px!important;
+  opacity:1!important;
+}
+

@@ -1004,3 +1004,802 @@ body.modo-professor-avaliacao .modal-actions{
     min-width:820px!important;
   }
 }
+
+/* ==========================================================================
+   FUSION ERP — AVALIAÇÃO FÍSICA
+   Camada canônica de layout e contraste.
+   Deve permanecer no final deste arquivo.
+   ========================================================================== */
+
+/* 1. Layout */
+:root{
+  --aval-bg:#f4f7f9;
+  --aval-surface:#ffffff;
+  --aval-surface-soft:#f8fafc;
+  --aval-panel:#0a2a34;
+  --aval-panel-2:#103944;
+  --aval-border:#cbd5e1;
+  --aval-border-soft:#e2e8f0;
+  --aval-text:#0f172a;
+  --aval-muted:#475569;
+  --aval-primary:#0891b2;
+  --aval-primary-dark:#0e7490;
+  --aval-warning-bg:#fff7ed;
+  --aval-warning-border:#fdba74;
+  --aval-warning-text:#9a3412;
+  --aval-radius:16px;
+}
+
+html,
+body.aval-admin{
+  max-width:100%;
+  overflow-x:hidden;
+}
+
+body.aval-admin{
+  background:var(--aval-bg)!important;
+  color:var(--aval-text)!important;
+}
+
+.aval-page{
+  width:100%;
+  max-width:1440px;
+  margin:0 auto;
+  padding:20px;
+  gap:16px;
+}
+
+.aval-page *,
+.modal-avaliacao *{
+  box-sizing:border-box;
+}
+
+/* 2. Header */
+.aval-header-card{
+  width:100%;
+  background:var(--aval-panel)!important;
+  color:#fff!important;
+  border:1px solid #2d5a65!important;
+  border-radius:20px!important;
+  padding:20px!important;
+  box-shadow:0 10px 28px rgba(3,18,24,.14)!important;
+}
+
+.aval-header-card h1,
+.aval-header-card h2,
+.aval-header-card h3,
+.aval-header-card strong{
+  color:#fff!important;
+  opacity:1!important;
+}
+
+.aval-header-card p{
+  color:#d6e6ea!important;
+  opacity:1!important;
+}
+
+/* 3. KPIs */
+.aval-kpis{
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  gap:12px!important;
+}
+
+.aval-kpis>div{
+  min-width:0;
+  background:var(--aval-panel)!important;
+  color:#fff!important;
+  border:1px solid #2d5a65!important;
+  border-radius:18px!important;
+  padding:16px!important;
+}
+
+.aval-kpis span{
+  color:#c8dde2!important;
+}
+
+.aval-kpis strong{
+  color:#fff!important;
+}
+
+/* 4. Toolbar */
+.aval-toolbar{
+  width:100%;
+  grid-template-columns:minmax(260px,1fr) minmax(180px,240px) minmax(170px,210px) auto!important;
+  align-items:end!important;
+  gap:12px!important;
+  border-radius:18px!important;
+}
+
+.aval-toolbar .field{
+  min-width:0;
+}
+
+.aval-toolbar label,
+.aval-page .field label{
+  color:var(--aval-text)!important;
+  opacity:1!important;
+}
+
+.aval-toolbar input,
+.aval-toolbar select{
+  width:100%!important;
+  min-height:46px!important;
+  background:#fff!important;
+  color:var(--aval-text)!important;
+  border:1px solid var(--aval-border)!important;
+  border-radius:12px!important;
+}
+
+/* 5. Histórico */
+.aval-page .fusion-card{
+  width:100%;
+  min-width:0;
+  color:var(--aval-text)!important;
+  border-radius:18px!important;
+}
+
+.table-top,
+.table-top h3,
+.table-top span{
+  color:var(--aval-text)!important;
+}
+
+.table-wrap{
+  width:100%;
+  max-width:100%;
+  overflow-x:auto!important;
+}
+
+.table-wrap table{
+  width:100%;
+  min-width:820px;
+}
+
+.table-wrap th{
+  color:#e6f3f6!important;
+  background:#0f4c5c!important;
+}
+
+.table-wrap td{
+  color:var(--aval-text)!important;
+  background:#fff!important;
+}
+
+/* 6. Modal */
+.modal-backdrop{
+  padding:24px!important;
+  align-items:center!important;
+  justify-content:center!important;
+  overflow:auto!important;
+  background:rgba(2,6,23,.66)!important;
+}
+
+.modal-avaliacao{
+  width:min(1180px,calc(100vw - 48px))!important;
+  max-width:1180px!important;
+  height:auto!important;
+  max-height:calc(100dvh - 48px)!important;
+  margin:auto!important;
+  overflow:auto!important;
+  background:var(--aval-surface)!important;
+  color:var(--aval-text)!important;
+  border:1px solid var(--aval-border-soft)!important;
+  border-radius:20px!important;
+  box-shadow:0 28px 80px rgba(2,6,23,.34)!important;
+}
+
+.modal-avaliacao,
+.modal-avaliacao p,
+.modal-avaliacao span,
+.modal-avaliacao label,
+.modal-avaliacao h1,
+.modal-avaliacao h2,
+.modal-avaliacao h3,
+.modal-avaliacao h4,
+.modal-avaliacao h5,
+.modal-avaliacao strong,
+.modal-avaliacao small{
+  color:var(--aval-text);
+  opacity:1;
+  text-shadow:none;
+}
+
+.sca-titlebar{
+  background:#fff!important;
+  color:var(--aval-text)!important;
+  border-bottom:1px solid var(--aval-border-soft)!important;
+}
+
+.sca-titlebar strong{
+  color:#ea580c!important;
+}
+
+.sca-topline.aval-meta-grid{
+  grid-template-columns:minmax(120px,.8fr) minmax(240px,1.5fr) minmax(150px,.9fr) minmax(145px,.85fr) minmax(120px,.7fr)!important;
+}
+
+.sca-topline.aval-meta-grid .field{
+  min-width:0!important;
+}
+
+.modal-avaliacao input,
+.modal-avaliacao select,
+.modal-avaliacao textarea{
+  width:100%;
+  background:#fff!important;
+  color:var(--aval-text)!important;
+  border:1px solid #94a3b8!important;
+  opacity:1!important;
+  caret-color:var(--aval-text);
+}
+
+.modal-avaliacao input::placeholder,
+.modal-avaliacao textarea::placeholder{
+  color:#64748b!important;
+  opacity:1!important;
+}
+
+.modal-avaliacao input:disabled,
+.modal-avaliacao select:disabled,
+.modal-avaliacao textarea:disabled,
+.modal-avaliacao input[readonly]{
+  background:#f1f5f9!important;
+  color:#334155!important;
+  opacity:1!important;
+}
+
+.professor-lock{
+  background:var(--aval-warning-bg)!important;
+  border-color:var(--aval-warning-border)!important;
+  color:var(--aval-warning-text)!important;
+}
+
+.professor-lock strong{
+  color:var(--aval-warning-text)!important;
+}
+
+/* 7. Tabs */
+.sca-tabs{
+  display:flex!important;
+  width:auto!important;
+  max-width:calc(100% - 36px)!important;
+  overflow-x:auto!important;
+  background:var(--aval-panel)!important;
+  border:1px solid #2d5a65!important;
+  border-radius:16px!important;
+  padding:9px!important;
+}
+
+.sca-tabs .tab{
+  flex:0 0 auto;
+  background:transparent!important;
+  color:#d9ebef!important;
+  border:1px solid #73929a!important;
+  border-radius:999px!important;
+}
+
+.sca-tabs .tab:hover{
+  background:rgba(255,255,255,.08)!important;
+  color:#fff!important;
+}
+
+.sca-tabs .tab.active{
+  background:var(--aval-primary)!important;
+  border-color:var(--aval-primary)!important;
+  color:#fff!important;
+}
+
+/* 8. Anamnese */
+.tab-panel{
+  min-width:0;
+}
+
+.sca-panel{
+  min-width:0;
+  background:#fff!important;
+  color:var(--aval-text)!important;
+  border:1px solid var(--aval-border-soft)!important;
+  border-radius:16px!important;
+}
+
+.sca-panel h4{
+  color:#0f4c5c!important;
+}
+
+.two-col{
+  grid-template-columns:minmax(0,1.15fr) minmax(320px,.85fr)!important;
+}
+
+.parq-list,
+.parq-item,
+.parq-item label,
+.parq-item span{
+  color:var(--aval-text)!important;
+}
+
+.parq-item{
+  grid-template-columns:minmax(0,1fr) 72px 72px!important;
+  background:#fff!important;
+  border-bottom:1px solid var(--aval-border-soft)!important;
+}
+
+.parq-item input[type="radio"]{
+  width:22px!important;
+  height:22px!important;
+  min-height:22px!important;
+  accent-color:var(--aval-primary);
+}
+
+/* 9. Risco */
+.risco-grid,
+.resultado-card,
+.risk-score,
+.info{
+  color:var(--aval-text)!important;
+}
+
+.resultado-card{
+  background:var(--aval-surface-soft)!important;
+  border:1px solid var(--aval-border-soft)!important;
+}
+
+.risk-score span{
+  color:var(--aval-muted)!important;
+}
+
+.risk-score strong,
+.rcq-value strong,
+.sum-value strong{
+  color:#0369a1!important;
+}
+
+.info{
+  background:#eff6ff!important;
+  border:1px solid #bfdbfe!important;
+  border-radius:12px!important;
+  padding:10px!important;
+}
+
+/* 10. Composição */
+.grid-2,
+.grid-3,
+.grid-4,
+.perimetros-layout,
+.protocol-list{
+  min-width:0;
+}
+
+.measure-row{
+  background:#fff!important;
+  color:var(--aval-text)!important;
+  border:1px solid var(--aval-border-soft)!important;
+  border-radius:12px!important;
+}
+
+.measure-row label{
+  color:var(--aval-text)!important;
+}
+
+/* 11. Neuromotores */
+.neuro-list{
+  min-width:0;
+}
+
+.neuro-item{
+  min-width:0;
+  grid-template-columns:minmax(180px,220px) minmax(150px,180px) minmax(0,1fr)!important;
+  background:#fff!important;
+  color:var(--aval-text)!important;
+  border:1px solid var(--aval-border-soft)!important;
+  border-radius:14px!important;
+}
+
+.neuro-item strong{
+  color:#0f4c5c!important;
+}
+
+.neuro-item span{
+  color:var(--aval-muted)!important;
+}
+
+/* 12. Relatório */
+.relatorio-preview{
+  max-width:100%;
+  overflow:auto;
+  background:#fff!important;
+  color:var(--aval-text)!important;
+  border:1px solid var(--aval-border-soft)!important;
+  border-radius:16px!important;
+}
+
+.relatorio-preview h1,
+.relatorio-preview h2,
+.relatorio-preview h3,
+.relatorio-preview h4{
+  color:var(--aval-text)!important;
+}
+
+.relatorio-preview table{
+  min-width:680px;
+}
+
+.modal-actions{
+  position:sticky!important;
+  bottom:0!important;
+  z-index:8!important;
+  background:#fff!important;
+  border-top:1px solid var(--aval-border-soft)!important;
+}
+
+/* 13. Mobile */
+@media (max-width:1100px){
+  .aval-toolbar{
+    grid-template-columns:minmax(0,1fr) minmax(170px,220px)!important;
+  }
+
+  .btn-field{
+    grid-column:1/-1;
+  }
+
+  .btn-field .fusion-button{
+    width:100%;
+  }
+
+  .sca-topline.aval-meta-grid{
+    grid-template-columns:1fr 1fr!important;
+  }
+
+  .sca-topline.aval-meta-grid .aluno-box{
+    grid-column:1/-1;
+  }
+
+  .two-col,
+  .perimetros-layout{
+    grid-template-columns:1fr!important;
+  }
+
+  .neuro-item{
+    grid-template-columns:1fr!important;
+  }
+}
+
+@media (max-width:860px){
+  .aval-page{
+    padding:12px!important;
+  }
+
+  .aval-kpis{
+    grid-template-columns:1fr 1fr!important;
+  }
+
+  .aval-toolbar{
+    grid-template-columns:1fr!important;
+  }
+
+  .modal-backdrop{
+    padding:0!important;
+    align-items:stretch!important;
+  }
+
+  .modal-avaliacao{
+    width:100vw!important;
+    max-width:none!important;
+    height:100dvh!important;
+    max-height:none!important;
+    border:0!important;
+    border-radius:0!important;
+  }
+
+  .sca-topline.aval-meta-grid{
+    grid-template-columns:1fr!important;
+    padding:12px!important;
+  }
+
+  .sca-tabs{
+    max-width:calc(100% - 24px)!important;
+    margin:0 12px 10px!important;
+  }
+
+  .tab-panel{
+    padding:12px!important;
+  }
+
+  .two-col,
+  .grid-2,
+  .grid-3,
+  .grid-4,
+  .postural-panel,
+  .protocol-list{
+    grid-template-columns:1fr!important;
+  }
+
+  .parq-item{
+    grid-template-columns:minmax(0,1fr) 64px 64px!important;
+  }
+
+  .modal-actions{
+    display:grid!important;
+    grid-template-columns:1fr 1fr!important;
+    padding:10px 12px!important;
+  }
+
+  .modal-actions button{
+    width:100%!important;
+  }
+}
+
+@media (max-width:560px){
+  .aval-header-card{
+    padding:15px!important;
+  }
+
+  .aval-kpis{
+    grid-template-columns:1fr!important;
+  }
+
+  .avaliacao-mode{
+    grid-template-columns:1fr!important;
+  }
+
+  .parq-item{
+    grid-template-columns:1fr 1fr!important;
+  }
+
+  .parq-item>span:first-child,
+  .parq-item>label:first-child{
+    grid-column:1/-1;
+  }
+
+  .measure-row.single,
+  .measure-row.pair{
+    grid-template-columns:1fr!important;
+  }
+
+  .modal-actions{
+    grid-template-columns:1fr!important;
+  }
+}
+
+/* Portal do professor: mantém o formulário em largura controlada no desktop. */
+body.modo-embed-avaliacao .modal-backdrop{
+  padding:18px!important;
+  background:var(--aval-bg)!important;
+}
+
+body.modo-embed-avaliacao .modal-avaliacao{
+  width:min(1180px,calc(100vw - 36px))!important;
+  max-width:1180px!important;
+  height:calc(100dvh - 36px)!important;
+  max-height:calc(100dvh - 36px)!important;
+  margin:auto!important;
+  border:1px solid var(--aval-border-soft)!important;
+  border-radius:20px!important;
+}
+
+@media (max-width:860px){
+  body.modo-embed-avaliacao .modal-backdrop{
+    padding:0!important;
+  }
+
+  body.modo-embed-avaliacao .modal-avaliacao{
+    width:100vw!important;
+    height:100dvh!important;
+    max-height:none!important;
+    border:0!important;
+    border-radius:0!important;
+  }
+}
+
+/* ==========================================================================
+   PATCH V2 — CONTRASTE TOTAL DOS PAINÉIS INTERNOS
+   ========================================================================== */
+
+/* Impede o tema premium de deixar rótulos e textos quase brancos. */
+body.aval-admin .modal-avaliacao .tab-panel,
+body.aval-admin .modal-avaliacao .tab-panel *,
+body.modo-embed-avaliacao .modal-avaliacao .tab-panel,
+body.modo-embed-avaliacao .modal-avaliacao .tab-panel *{
+  text-shadow:none!important;
+}
+
+body.aval-admin .modal-avaliacao .tab-panel label,
+body.aval-admin .modal-avaliacao .tab-panel p,
+body.aval-admin .modal-avaliacao .tab-panel span,
+body.aval-admin .modal-avaliacao .tab-panel small,
+body.modo-embed-avaliacao .modal-avaliacao .tab-panel label,
+body.modo-embed-avaliacao .modal-avaliacao .tab-panel p,
+body.modo-embed-avaliacao .modal-avaliacao .tab-panel span,
+body.modo-embed-avaliacao .modal-avaliacao .tab-panel small{
+  color:#1e293b!important;
+  opacity:1!important;
+}
+
+/* Títulos e nomes dos testes. */
+body.aval-admin .modal-avaliacao .tab-panel h3,
+body.aval-admin .modal-avaliacao .tab-panel h4,
+body.aval-admin .modal-avaliacao .tab-panel strong,
+body.modo-embed-avaliacao .modal-avaliacao .tab-panel h3,
+body.modo-embed-avaliacao .modal-avaliacao .tab-panel h4,
+body.modo-embed-avaliacao .modal-avaliacao .tab-panel strong{
+  color:#0f3f4b!important;
+  opacity:1!important;
+}
+
+/* Rótulos dos campos. */
+body.aval-admin .modal-avaliacao .field>label,
+body.aval-admin .modal-avaliacao .sca-panel>label,
+body.aval-admin .modal-avaliacao .grid-2 label,
+body.aval-admin .modal-avaliacao .grid-3 label,
+body.aval-admin .modal-avaliacao .grid-4 label,
+body.modo-embed-avaliacao .modal-avaliacao .field>label,
+body.modo-embed-avaliacao .modal-avaliacao .sca-panel>label,
+body.modo-embed-avaliacao .modal-avaliacao .grid-2 label,
+body.modo-embed-avaliacao .modal-avaliacao .grid-3 label,
+body.modo-embed-avaliacao .modal-avaliacao .grid-4 label{
+  color:#334155!important;
+  font-weight:800!important;
+  opacity:1!important;
+}
+
+/* Composição corporal. */
+#tab-composicao .subtab{
+  color:#334155!important;
+  opacity:1!important;
+  background:#fff!important;
+}
+
+#tab-composicao .subtab.active{
+  color:#0369a1!important;
+  border-bottom:3px solid #06b6d4!important;
+}
+
+#tab-composicao .field label,
+#tab-composicao .result-row label{
+  color:#334155!important;
+  opacity:1!important;
+}
+
+#tab-composicao input[readonly]{
+  background:#eaf0f6!important;
+  color:#1e293b!important;
+}
+
+/* Cardiorrespiratória. */
+#tab-cardio .inline-options label,
+#tab-cardio .protocol-list label{
+  color:#1e293b!important;
+  opacity:1!important;
+  background:#fff!important;
+}
+
+#tab-cardio input[type="radio"],
+#tab-anamnese input[type="radio"]{
+  width:22px!important;
+  height:22px!important;
+  min-height:22px!important;
+  accent-color:#0891b2!important;
+  opacity:1!important;
+}
+
+#tab-cardio .resultado-card label,
+#tab-cardio .resultado-card h4{
+  color:#0f3f4b!important;
+  opacity:1!important;
+}
+
+#tab-cardio .resultado-card input[readonly]{
+  background:#eaf0f6!important;
+  color:#1e293b!important;
+}
+
+/* Neuromotores. */
+#tab-neuromotores .neuro-item{
+  background:#fff!important;
+}
+
+#tab-neuromotores .neuro-item strong{
+  color:#075985!important;
+  opacity:1!important;
+}
+
+#tab-neuromotores .neuro-item span,
+#tab-neuromotores .neuro-item label{
+  color:#334155!important;
+  opacity:1!important;
+}
+
+#tab-neuromotores .neuro-item .info{
+  color:#0f172a!important;
+  background:#eff6ff!important;
+  border-color:#bfdbfe!important;
+  opacity:1!important;
+}
+
+/* Anamnese/PAR-Q. */
+#tab-anamnese .sca-panel h4{
+  color:#075985!important;
+}
+
+#tab-anamnese .parq-item,
+#tab-anamnese .parq-item *,
+#tab-anamnese .sca-panel label{
+  color:#0f172a!important;
+  opacity:1!important;
+}
+
+/* Risco coronariano. */
+#tab-risco .risco-grid label,
+#tab-risco .resultado-card,
+#tab-risco .resultado-card *{
+  color:#0f172a!important;
+  opacity:1!important;
+}
+
+/* Relatório. */
+#tab-relatorio .relatorio-preview,
+#tab-relatorio .relatorio-preview *{
+  color:#0f172a!important;
+  opacity:1!important;
+}
+
+#tab-relatorio .relatorio-preview h1{
+  color:#0f172a!important;
+}
+
+#tab-relatorio .relatorio-preview h2,
+#tab-relatorio .relatorio-preview h3,
+#tab-relatorio .relatorio-preview h4,
+#tab-relatorio .relatorio-preview strong{
+  color:#0f172a!important;
+}
+
+#tab-relatorio .relatorio-preview .report-grid>div{
+  background:#f8fafc!important;
+}
+
+#tab-relatorio .relatorio-preview .muted,
+#tab-relatorio .relatorio-preview small{
+  color:#475569!important;
+}
+
+/* Campos em todos os painéis. */
+body.aval-admin .modal-avaliacao .tab-panel input,
+body.aval-admin .modal-avaliacao .tab-panel select,
+body.aval-admin .modal-avaliacao .tab-panel textarea,
+body.modo-embed-avaliacao .modal-avaliacao .tab-panel input,
+body.modo-embed-avaliacao .modal-avaliacao .tab-panel select,
+body.modo-embed-avaliacao .modal-avaliacao .tab-panel textarea{
+  color:#0f172a!important;
+  opacity:1!important;
+}
+
+body.aval-admin .modal-avaliacao .tab-panel input::placeholder,
+body.aval-admin .modal-avaliacao .tab-panel textarea::placeholder,
+body.modo-embed-avaliacao .modal-avaliacao .tab-panel input::placeholder,
+body.modo-embed-avaliacao .modal-avaliacao .tab-panel textarea::placeholder{
+  color:#64748b!important;
+  opacity:1!important;
+}
+
+/* Botões Nova/Editar: texto e ícone sem caracteres corrompidos visualmente. */
+.avaliacao-mode .modo-card,
+.avaliacao-mode .modo-card strong{
+  color:#fff!important;
+  opacity:1!important;
+}
+
+.avaliacao-mode .modo-card small{
+  color:#f0fbfd!important;
+  opacity:1!important;
+}
+
+.avaliacao-mode .modo-card .modo-icon{
+  color:#fff!important;
+}
+
+/* Rodapé sempre legível. */
+.modal-actions button{
+  opacity:1!important;
+}
+
+

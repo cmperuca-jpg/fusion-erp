@@ -298,6 +298,7 @@ async function upsertFinanceiro(recebimento) {
 
 async function atualizarMensalidadeAposRecebimento(recebimento) {
   if (!recebimento.mensalidadeId) return null;
+  if (normalizar(recebimento.origem) === 'ajuste_matricula_online_sem_prorrata') return null;
 
   const mensalidades = await lerJson(MENSALIDADES_FILE, []);
   const idx = mensalidades.findIndex(m => String(m.id) === String(recebimento.mensalidadeId));
@@ -402,8 +403,7 @@ function chaveFinanceiraRecebimento(item = {}) {
   return [
     item.lancamentoFinanceiroId,
     item.financeiroId,
-    item.financeiro_id,
-    item.id
+    item.financeiro_id
   ].map(v => String(v || '').trim()).find(Boolean) || '';
 }
 
@@ -411,13 +411,27 @@ function encontrarFinanceiroRelacionado(financeiro = [], recebimento = {}) {
   const financeiroId = chaveFinanceiraRecebimento(recebimento);
   const mensalidadeId = String(recebimento.mensalidadeId || '').trim();
   const reciboId = String(recebimento.reciboId || recebimento.ultimoReciboId || '').trim();
+  const recebimentoId = String(recebimento.id || '').trim();
 
-  return financeiro.find(l =>
-    (financeiroId && String(l.id || '') === financeiroId) ||
-    (financeiroId && String(l.recebimentoId || '') === financeiroId) ||
-    (mensalidadeId && String(l.mensalidadeId || '') === mensalidadeId) ||
-    (reciboId && String(l.ultimoReciboId || l.reciboId || '') === reciboId)
-  ) || {};
+  if (financeiroId) {
+    const porFinanceiro = financeiro.find(l =>
+      String(l.id || '') === financeiroId ||
+      String(l.recebimentoId || '') === financeiroId
+    );
+    if (porFinanceiro) return porFinanceiro;
+  }
+
+  if (recebimentoId || reciboId) {
+    const porRecebimento = financeiro.find(l =>
+      (recebimentoId && String(l.recebimentoId || '') === recebimentoId) ||
+      (reciboId && String(l.ultimoReciboId || l.reciboId || '') === reciboId)
+    );
+    if (porRecebimento) return porRecebimento;
+  }
+
+  return mensalidadeId
+    ? financeiro.find(l => String(l.mensalidadeId || '') === mensalidadeId) || {}
+    : {};
 }
 
 function taxaMovimentoCaixa(movimento = {}) {

@@ -2,6 +2,7 @@ import "dotenv/config";
 import fs from "node:fs/promises";
 import path from "node:path";
 import crypto from "node:crypto";
+import bcrypt from "bcrypt";
 import { createClient } from "@supabase/supabase-js";
 
 const ROOT = process.cwd();
@@ -25,6 +26,7 @@ const IDS = Object.freeze({
 });
 
 const SENHAS = Object.freeze({ admin: "Admin@123", recepcao: "Recepcao@123", tecnico: "Tecnico@123", aluno: "Aluno@123" });
+const BCRYPT_ROUNDS = Math.min(Math.max(Number(process.env.FUSION_BCRYPT_ROUNDS || 12), 10), 14);
 
 const PRESERVAR = new Set([
   "backup_config", "planos", "modalidades", "modelos-treino", "exercicios",
@@ -32,7 +34,6 @@ const PRESERVAR = new Set([
   "access_regras", "access_integracoes_sdk"
 ]);
 
-function sha256(valor) { return crypto.createHash("sha256").update(String(valor || "")).digest("hex"); }
 function hashProfessor(senha, salt = crypto.randomBytes(16).toString("hex")) {
   const hash = crypto.pbkdf2Sync(String(senha), salt, 100000, 64, "sha512").toString("hex");
   return `${salt}:${hash}`;
@@ -42,7 +43,7 @@ function tenantId() {
     .trim().toLowerCase().replace(/[^a-z0-9_-]+/g, "-").replace(/^-+|-+$/g, "") || "academia-piloto";
 }
 function usuario({ id, nome, email, senha, perfil, permissoes }) {
-  return { id, nome, email, senhaHash: sha256(senha), perfil, status: "ativo", permissoes,
+  return { id, nome, email, senhaHash: bcrypt.hashSync(String(senha), BCRYPT_ROUNDS), perfil, status: "ativo", permissoes,
     trocarSenhaNoPrimeiroAcesso: true, criadoEm: agoraIso, atualizadoEm: agoraIso };
 }
 function exercicio(id, ordem, nome, grupo, series, repeticoes, descanso = "75s", observacao = "") {

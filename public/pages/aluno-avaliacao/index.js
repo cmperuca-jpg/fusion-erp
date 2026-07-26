@@ -25,6 +25,10 @@ function sessaoAluno(){
   const alunoNome = p.get("alunoNome") || p.get("nome") || "Aluno";
   return alunoId ? { alunoId, alunoNome } : null;
 }
+function headersAluno(headers = {}) {
+  const sessao = sessaoAluno();
+  return sessao?.token ? { ...headers, Authorization: `Bearer ${sessao.token}` } : { ...headers };
+}
 function dataISO(v){ if(!v) return ""; const s=String(v).slice(0,10); const m=s.match(/^(\d{4})-(\d{2})-(\d{2})$/); if(m) return s; const b=s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/); return b ? `${b[3]}-${b[2]}-${b[1]}` : s; }
 function dataBR(v){ const s=dataISO(v); const m=s.match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? `${m[3]}/${m[2]}/${m[1]}` : (v || "-"); }
 function valor(obj, key){ return obj?.[key] ?? obj?.[key.replaceAll("_","")] ?? obj?.[key.replaceAll("_","").toLowerCase()] ?? ""; }
@@ -36,7 +40,7 @@ function extrairLista(payload){ if(Array.isArray(payload)) return payload; for(c
 async function buscarAvaliacoes(alunoId){
   const urls = [`/api/avaliacoes?alunoId=${encodeURIComponent(alunoId)}`, `/api/avaliacoes?aluno_id=${encodeURIComponent(alunoId)}`];
   for (const url of urls) {
-    try { const r = await fetch(url, { cache:"no-store" }); const j = await r.json().catch(()=>({})); if(r.ok){ const l=extrairLista(j); if(l.length || url.includes("aluno_id")) return l; } } catch {}
+    try { const r = await fetch(url, { cache:"no-store", headers: headersAluno() }); const j = await r.json().catch(()=>({})); if(r.ok){ const l=extrairLista(j); if(l.length || url.includes("aluno_id")) return l; } } catch {}
   }
   return [];
 }

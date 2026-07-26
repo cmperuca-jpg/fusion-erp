@@ -71,13 +71,17 @@ function escaparHtml(valor) {
   return String(valor ?? "").replace(/[&<>'"]/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]));
 }
 
+function headersPortal(sessao, headers = {}) {
+  return sessao?.token ? { ...headers, Authorization: `Bearer ${sessao.token}` } : { ...headers };
+}
+
 function headersResponsavel(sessao) {
-  return {
+  return headersPortal(sessao, {
     "Content-Type": "application/json",
     "x-fusion-professor-id": String(sessao.professorId || ""),
     "x-fusion-perfil": "responsavel_tecnico",
     "x-fusion-acesso-global": "true"
-  };
+  });
 }
 
 async function carregarProfessores() {
@@ -87,7 +91,7 @@ async function carregarProfessores() {
   const msgEl = $("mensagemProfessores");
   msgEl.textContent = "Carregando professores...";
   try {
-    const resp = await fetch("/api/professores", { cache: "no-store" });
+    const resp = await fetch("/api/professores", { cache: "no-store", headers: headersPortal(sessao) });
     const professores = await resp.json().catch(() => []);
     if (!resp.ok) throw new Error(professores.mensagem || "Erro ao carregar professores.");
     const lista = Array.isArray(professores) ? professores : (professores.dados || []);

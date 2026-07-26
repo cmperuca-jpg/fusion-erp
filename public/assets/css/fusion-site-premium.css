@@ -1,0 +1,146 @@
+/* Fusion ERP - acabamento premium para paginas publicas e comerciais sem menu */
+body.fusion-site-premium{
+  background:
+    radial-gradient(circle at 78% 0,rgba(42,184,202,.12),transparent 34%),
+    linear-gradient(145deg,#061219,#071b24 70%)!important;
+  color:#f4fbfc!important;
+  font-family:Arial,Helvetica,sans-serif!important;
+}
+
+body.fusion-site-premium main,
+body.fusion-site-premium .page{
+  color:#f4fbfc!important;
+}
+
+body.fusion-site-premium .card,
+body.fusion-site-premium .lead-card,
+body.fusion-site-premium .plano,
+body.fusion-site-premium .benefit-grid article,
+body.fusion-site-premium .offer-card,
+body.fusion-site-premium .loading{
+  background:linear-gradient(145deg,rgba(13,51,64,.96),rgba(8,35,43,.96))!important;
+  border:1px solid #255763!important;
+  border-radius:14px!important;
+  color:#f6fbfc!important;
+  box-shadow:0 18px 45px rgba(0,0,0,.26)!important;
+}
+
+body.fusion-site-premium h1,
+body.fusion-site-premium h2,
+body.fusion-site-premium h3,
+body.fusion-site-premium strong{
+  color:#ffffff!important;
+  text-shadow:0 1px 1px rgba(0,0,0,.26)!important;
+}
+
+body.fusion-site-premium p,
+body.fusion-site-premium small,
+body.fusion-site-premium .muted,
+body.fusion-site-premium .plano-descricao,
+body.fusion-site-premium .plano-tipo,
+body.fusion-site-premium .section-head>p,
+body.fusion-site-premium .benefit-grid p,
+body.fusion-site-premium .lead-card p{
+  color:#d3e2e6!important;
+  opacity:1!important;
+}
+
+body.fusion-site-premium input,
+body.fusion-site-premium select,
+body.fusion-site-premium textarea{
+  background:#071c24!important;
+  border:1px solid #4e7280!important;
+  border-radius:8px!important;
+  color:#ffffff!important;
+  min-height:42px!important;
+  outline:none!important;
+}
+
+body.fusion-site-premium input::placeholder,
+body.fusion-site-premium textarea::placeholder{
+  color:#b9cbd2!important;
+  opacity:1!important;
+}
+
+body.fusion-site-premium input:focus,
+body.fusion-site-premium select:focus,
+body.fusion-site-premium textarea:focus{
+  border-color:#45d8e9!important;
+  box-shadow:0 0 0 3px rgba(69,216,233,.16)!important;
+}
+
+body.fusion-site-premium button,
+body.fusion-site-premium .cta,
+body.fusion-site-premium .plano-cta{
+  background:#20aabd!important;
+  border:1px solid #35c5d7!important;
+  border-radius:7px!important;
+  color:#ffffff!important;
+  font-weight:900!important;
+  text-decoration:none!important;
+  box-shadow:0 7px 16px rgba(0,0,0,.24)!important;
+}
+
+body.fusion-site-premium button:hover,
+body.fusion-site-premium .cta:hover,
+body.fusion-site-premium .plano-cta:hover{
+  background:#1f98aa!important;
+  border-color:#67dcea!important;
+}
+
+body.fusion-site-premium .plano-cta-secundaria{
+  background:#0d3340!important;
+  border-color:#67dcea!important;
+  color:#ffffff!important;
+}
+
+body.fusion-site-premium .cta-secondary{
+  background:#0d3340!important;
+  border-color:#67dcea!important;
+  color:#ffffff!important;
+}
+
+body.fusion-site-premium .plano-cta-secundaria:hover{
+  background:#124452!important;
+}
+
+body.fusion-site-premium .cta-secondary:hover{
+  background:#124452!important;
+}
+
+body.fusion-site-premium .tag,
+body.fusion-site-premium .eyebrow,
+body.fusion-site-premium .plano-destaque{
+  background:rgba(42,184,202,.14)!important;
+  border:1px solid #327d89!important;
+  color:#9af2fb!important;
+  border-radius:999px!important;
+}
+
+body.fusion-site-premium .promo-hero{
+  background:
+    radial-gradient(circle at 80% 8%,rgba(255,102,0,.24),transparent 30%),
+    linear-gradient(135deg,#07151d 0%,#0a303b 64%,#123f48 100%)!important;
+}
+
+body.fusion-site-premium .brand span{
+  border-radius:8px!important;
+  background:#20aabd!important;
+}
+
+body.fusion-site-premium .promo-footer{
+  background:#061219!important;
+  border-top:1px solid #214c58!important;
+}
+
+body.fusion-site-premium .alerta.sucesso{
+  background:#102e25!important;
+  border:1px solid #2b8d68!important;
+  color:#93efbc!important;
+}
+
+body.fusion-site-premium .alerta.erro{
+  background:#351a21!important;
+  border:1px solid #a9404c!important;
+  color:#ff9da8!important;
+}

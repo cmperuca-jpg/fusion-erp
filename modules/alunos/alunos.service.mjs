@@ -1171,7 +1171,7 @@ export async function prontuario(id) {
   const aluno = await buscarAlunoPorId(id);
   if (!aluno) return null;
 
-  const [matriculasRaw, mensalidadesRaw, financeiroRaw, recebimentosRaw, caixaRaw, checkinsRaw, avaliacoesRaw, treinosLegadosRaw, treinosPrescritosRaw, historicoPlanosRaw] = await Promise.all([
+  const [matriculasRaw, mensalidadesRaw, financeiroRaw, recebimentosRaw, caixaRaw, checkinsRaw, avaliacoesRaw, treinosLegadosRaw, treinosPrescritosRaw, execucoesTreinoRaw, historicoPlanosRaw] = await Promise.all([
     lerJson("matriculas.json", []),
     lerJson("mensalidades.json", []),
     lerJson("financeiro.json", []),
@@ -1181,6 +1181,7 @@ export async function prontuario(id) {
     lerJson("avaliacoes.json", []),
     lerJson("treinos.json", []),
     obterTreinos({}),
+    lerJson("treinos_execucoes.json", []),
     lerJson("alunos_historico_planos.json", [])
   ]);
 
@@ -1232,6 +1233,31 @@ export async function prontuario(id) {
     .filter(pertenceAoAlunoTreino)
     .filter((treino, index, lista) => lista.findIndex(item => String(item.id || item._id || "") === String(treino.id || treino._id || "")) === index);
 
+  const execucoesTreino = (Array.isArray(execucoesTreinoRaw) ? execucoesTreinoRaw : [])
+    .filter(execucao => pertenceAoAlunoTreino(execucao));
+
+  const treinoPorId = new Map(
+    treinos
+      .filter(t => t?.id || t?._id)
+      .map(t => [String(t.id || t._id), t])
+  );
+
+  const nomeTreinoExecucao = (execucao = {}) => {
+    const treino = treinoPorId.get(String(execucao.treinoId || execucao.treino_id || ""));
+    return execucao.treinoNome ||
+      execucao.nomeTreino ||
+      treino?.nome ||
+      treino?.titulo ||
+      "Treino prescrito";
+  };
+
+  const percentualExecucaoTreino = (execucao = {}) => {
+    const exercicios = Array.isArray(execucao.exercicios) ? execucao.exercicios : [];
+    if (!exercicios.length) return 0;
+    const concluidos = exercicios.filter(ex => ex.concluido === true || normalizar(ex.status) === "concluido").length;
+    return Math.round((concluidos / exercicios.length) * 100);
+  };
+
   const historicoPlanos = Array.isArray(historicoPlanosRaw) ? historicoPlanosRaw.filter(h => mesmoId(h.alunoId, id) || mesmoId(h.aluno_id, id)) : [];
 
   const resumoFinanceiro = calcularResumoFinanceiroAluno(mensalidades, financeiro);
@@ -1253,7 +1279,36 @@ export async function prontuario(id) {
     ...mensalidades.map(m => ({ tipo: "mensalidade", data: m.vencimento || m.criadoEm || m.criado_em || "", titulo: `Mensalidade ${m.competencia || ""}`.trim(), descricao: `${m.status || ""} · R$ ${numeroAluno(m.total ?? m.valor, 0).toFixed(2)}` })),
     ...financeiro.filter(f => statusPagoAluno(f.status)).map(f => ({ tipo: "financeiro", data: f.dataPagamento || f.pagamento || f.atualizadoEm || "", titulo: "Baixa financeira", descricao: `${f.descricao || "Lançamento"} · R$ ${numeroAluno(f.valorBrutoRecebido ?? f.valorPago ?? f.valor, 0).toFixed(2)}` })),
     ...avaliacoes.map(a => ({ tipo: "avaliacao", data: a.data || a.criadoEm || a.criado_em || "", titulo: "Avaliação física", descricao: `Peso ${a.peso || "-"} · IMC ${a.imc || "-"}` })),
-    ...treinos.map(t => ({ tipo: "treino", data: t.atualizado_em || t.atualizadoEm || t.criado_em || t.criadoEm || "", titulo: t.nome || "Treino", descricao: `${t.objetivo || ""} · ${t.status || ""}` })),
+    ...treinos.map(t => {
+      const nome = t.nome || t.titulo || t.tipoDivisao || "Treino prescrito";
+      const objetivo = t.objetivo || "Objetivo não informado";
+      const professor = t.professorNome || t.professor || "";
+      return {
+        tipo: "treino_prescrito",
+        data: t.criado_em || t.criadoEm || t.dataPrescricao || t.data || t.atualizado_em || t.atualizadoEm || "",
+        titulo: `Treino prescrito: ${nome}`,
+        descricao: [objetivo, professor ? `Professor: ${professor}` : "", t.status || "Ativo"].filter(Boolean).join(" · ")
+      };
+    }),
+    ...execucoesTreino.map(execucao => {
+      const percentual = percentualExecucaoTreino(execucao);
+      const concluida = normalizar(execucao.status) === "concluido" || percentual >= 100;
+      const nome = nomeTreinoExecucao(execucao);
+      const tempoSegundos = numeroAluno(execucao.tempoSegundos, 0);
+      const minutos = tempoSegundos > 0 ? Math.max(1, Math.round(tempoSegundos / 60)) : 0;
+      const volume = numeroAluno(execucao.volumeTotal, 0);
+      return {
+        tipo: concluida ? "treino_concluido" : "treino_iniciado",
+        data: execucao.concluidoEm || execucao.atualizadoEm || execucao.criadoEm || execucao.data || "",
+        titulo: concluida ? `Treino concluído: ${nome}` : `Treino iniciado: ${nome}`,
+        descricao: [
+          `${percentual}% concluído`,
+          minutos ? `${minutos} min` : "",
+          volume ? `Volume ${Math.round(volume)}` : "",
+          execucao.origem === "portal_aluno" ? "Portal do Aluno" : (execucao.origem || "")
+        ].filter(Boolean).join(" · ")
+      };
+    }),
     ...checkins.map(c => ({ tipo: "checkin", data: c.data || c.criadoEm || c.criado_em || "", titulo: "Check-in", descricao: `${c.status || ""} · ${c.modalidade || c.plano || ""}` }))
   ].filter(i => i.data || i.titulo).sort((a, b) => String(b.data || "").localeCompare(String(a.data || ""))).slice(0, 80);
 
@@ -1279,6 +1334,7 @@ export async function prontuario(id) {
     checkins: ordenarPorDataDesc(checkins, ["data", "criadoEm"]),
     avaliacoes: ordenarPorDataDesc(avaliacoes, ["data", "criadoEm", "criado_em"]),
     treinos: ordenarPorDataDesc(treinos, ["atualizado_em", "atualizadoEm", "criado_em", "criadoEm"]),
+    execucoesTreino: ordenarPorDataDesc(execucoesTreino, ["concluidoEm", "atualizadoEm", "criadoEm", "data"]),
     historicoPlanos: ordenarPorDataDesc(historicoPlanos, ["criadoEm", "data"]),
     linhaDoTempo
   };

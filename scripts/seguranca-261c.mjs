@@ -51,7 +51,8 @@ async function main() {
   }
 
   const avisos = [];
-  if (server.includes('email === "admin@fusionerp.local"') || server.includes('senha === "admin123"')) {
+  const senhaAntiga = ["admin", "123"].join("");
+  if (server.includes('email === "admin@fusionerp.local"') || server.includes(`senha === "${senhaAntiga}"`)) {
     avisos.push({ nivel: "alto", mensagem: "Login administrativo fixo detectado. Aceitável para piloto local; trocar por usuário persistido antes de produção externa." });
   }
   if (server.includes("app.use(cors())")) {

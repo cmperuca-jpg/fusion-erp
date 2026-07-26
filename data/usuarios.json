@@ -1,72 +1,16 @@
 [
   {
-    "id": "usr_modelo_admin",
+    "id": "usr_admin",
     "nome": "Administrador Fusion",
     "email": "admin@fusionerp.local",
-    "senhaHash": "e86f78a8a3caf0b60d8e74e5942aa6d86dc150cd3c03338aef25b7d2d7e3acc7",
+    "senhaHash": "$2b$12$h2RVYkjBvV1QLEnjHv/bE.CINzPU/scqReiue8tDCz2MyGnnyLEOO",
     "perfil": "Administrador",
     "status": "ativo",
     "permissoes": [
       "*"
     ],
     "trocarSenhaNoPrimeiroAcesso": true,
-    "criadoEm": "2026-07-16T12:14:17.917Z",
-    "atualizadoEm": "2026-07-16T12:14:17.917Z"
-  },
-  {
-    "id": "usr_modelo_recepcao",
-    "nome": "Recepção Modelo",
-    "email": "recepcao@fusionerp.local",
-    "senhaHash": "70f96b3ae3688b9d67735d3d01b5564dd487be0839e7c8659481b15a49f60066",
-    "perfil": "Recepcao",
-    "status": "ativo",
-    "permissoes": [
-      "dashboard",
-      "alunos",
-      "matriculas",
-      "matriculas-pendentes",
-      "financeiro",
-      "mensalidades",
-      "caixa",
-      "comercial",
-      "comercial-painel",
-      "site-chat",
-      "checkin"
-    ],
-    "trocarSenhaNoPrimeiroAcesso": true,
-    "criadoEm": "2026-07-16T12:14:17.917Z",
-    "atualizadoEm": "2026-07-16T12:14:17.917Z"
-  },
-  {
-    "id": "usr_modelo_responsavel_tecnico",
-    "nome": "Responsável Técnico Modelo",
-    "email": "tecnico@fusionerp.local",
-    "senhaHash": "858fdfdbaef1fbd70aedeb97f794f44ce8f52c3cb3f7616243c88de11ad4ea40",
-    "perfil": "Professor",
-    "status": "ativo",
-    "permissoes": [
-      "professor-area",
-      "avaliacoes",
-      "treinos",
-      "aluno-treinos"
-    ],
-    "trocarSenhaNoPrimeiroAcesso": true,
-    "criadoEm": "2026-07-16T12:14:17.917Z",
-    "atualizadoEm": "2026-07-16T12:14:17.917Z"
-  },
-  {
-    "id": "usr_modelo_aluno",
-    "nome": "Aluno Modelo",
-    "email": "aluno@fusionerp.local",
-    "senhaHash": "7e0bbb00b4e5ead1760fe87c9f485d2228cf8af4152f149de682f071897a76fd",
-    "perfil": "Aluno",
-    "status": "ativo",
-    "permissoes": [
-      "aluno-treinos",
-      "aluno-avaliacao"
-    ],
-    "trocarSenhaNoPrimeiroAcesso": true,
-    "criadoEm": "2026-07-16T12:14:17.917Z",
-    "atualizadoEm": "2026-07-16T12:14:17.917Z"
+    "criadoEm": "2026-07-24T15:05:36.868Z",
+    "atualizadoEm": "2026-07-24T15:05:36.869Z"
   }
 ]

@@ -52,6 +52,35 @@ async function copiarCodigoInstalacao() {
   $('mensagemInstalacao').textContent = 'Código copiado.';
 }
 
+async function baixarInstalador() {
+  const box = $('mensagemInstalacao');
+  try {
+    box.className = 'access-result access-muted';
+    box.textContent = 'Preparando download do instalador...';
+    const request = window.FusionAuth?.fetchAuth ? FusionAuth.fetchAuth(`${API}/instalador`, { cache: 'no-store' }) : fetch(`${API}/instalador`);
+    const response = await request;
+    if (!response.ok) {
+      const erro = await response.json().catch(() => ({}));
+      throw new Error(erro.mensagem || erro.erro || 'Falha ao baixar instalador');
+    }
+
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'FusionAccessSetup.exe';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    box.className = 'access-result access-ok';
+    box.textContent = 'Download iniciado. Use o instalador no computador da academia.';
+  } catch (erro) {
+    box.className = 'access-result access-no';
+    box.textContent = erro.message;
+  }
+}
+
 async function carregarDrivers() {
   const data = await json(`${API}/drivers`);
   const el = $('listaDrivers');
@@ -126,6 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
   $('btnInstalar').addEventListener('click', () => { $('instalacaoAgente').hidden = !$('instalacaoAgente').hidden; });
   $('btnGerarCodigo').addEventListener('click', gerarCodigoInstalacao);
   $('btnCopiarCodigo').addEventListener('click', copiarCodigoInstalacao);
+  $('btnBaixarInstalador').addEventListener('click', baixarInstalador);
   $('btnSimular').addEventListener('click', simular);
   $('btnLiberarManual').addEventListener('click', liberarManual);
   $('btnSalvarEquipamento').addEventListener('click', salvarEquipamento);

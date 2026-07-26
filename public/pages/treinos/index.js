@@ -36,6 +36,11 @@ function sessaoProfessorLogado() {
   return null;
 }
 
+function headersAutenticados(headers = {}) {
+  const sessao = sessaoProfessorLogado();
+  return sessao?.token ? { ...headers, Authorization: `Bearer ${sessao.token}` } : { ...headers };
+}
+
 function normalizarTexto(valor) {
   return String(valor || "")
     .trim()
@@ -123,8 +128,8 @@ function filtrarAlunosDoProfessor(lista = []) {
   });
 }
 
-async function api(url, opts) {
-  const r = await fetch(url, opts);
+async function api(url, opts = {}) {
+  const r = await fetch(url, { ...opts, headers: headersAutenticados(opts.headers || {}) });
   const data = await r.json().catch(() => ({}));
   if (!r.ok) return { ok: false, mensagem: data.mensagem || data.erro || `Erro HTTP ${r.status}`, ...data };
   return data;
@@ -161,6 +166,29 @@ function normalizarExercicio(ex) {
     foto: ex.foto || ex.gif || `/assets/exercicios/flash/${codigo}.gif`,
     gif: ex.gif || ex.foto || `/assets/exercicios/flash/${codigo}.gif`
   };
+}
+
+
+function bibliotecaLocalFlash() {
+  const fonte = window.FUSION_EXERCICIOS_FLASH || {};
+  const gruposFonte = fonte.grupos || {};
+  const grupos = Array.isArray(gruposFonte)
+    ? gruposFonte.map((g, i) => typeof g === "string" ? { id: String(i + 1), nome: g } : g)
+    : Object.entries(gruposFonte).map(([id, nome]) => ({ id: String(id), nome: String(nome) }));
+
+  const objetivos = Array.isArray(fonte.objetivos)
+    ? fonte.objetivos.map((o, i) => typeof o === "string" ? { id: String(i + 1), nome: o } : o)
+    : [];
+
+  const exercicios = Array.isArray(fonte.exercicios)
+    ? fonte.exercicios.map(normalizarExercicio)
+    : [];
+
+  return { grupos, objetivos, exercicios };
+}
+
+function bibliotecaValida(valor) {
+  return Boolean(valor && Array.isArray(valor.exercicios) && valor.exercicios.length);
 }
 
 function popularFiltros() {
@@ -363,11 +391,30 @@ function alunoSelecionadoAtual() {
 }
 
 function professorSelecionadoAtual() {
-  return selecionado(professores, "professorSelect");
+  const selecionadoNaLista = selecionado(professores, "professorSelect");
+  if (selecionadoNaLista) return selecionadoNaLista;
+
+  // No portal do professor, o select pode conter o profissional da sessão
+  // mesmo quando /api/professores não o devolve na lista permitida.
+  const sessao = sessaoProfessorLogado();
+  const valorSelect = $("professorSelect")?.value || "";
+  const professorId = String(valorSelect || sessao?.professorId || "").trim();
+
+  if (!professorId) return null;
+
+  return {
+    id: professorId,
+    professorId,
+    nome: sessao?.professorNome || "Professor responsável",
+    professorNome: sessao?.professorNome || "Professor responsável",
+    perfil: sessao?.perfil || sessao?.tipoPerfil || sessao?.funcao || ""
+  };
 }
 
 function prescricaoLiberada() {
-  return Boolean(alunoSelecionadoAtual() && professorSelecionadoAtual());
+  const aluno = alunoSelecionadoAtual();
+  const professor = professorSelecionadoAtual();
+  return Boolean(aluno && idPessoa(aluno) && professor && idPessoa(professor));
 }
 
 function atualizarLinkAluno() {
@@ -393,9 +440,17 @@ function atualizarEstadoPrescricao() {
   ["salvarTreino", "salvarTreinoRodape"].forEach((id) => {
     const botao = $(id);
     if (!botao) return;
+    const alunoOk = Boolean(alunoSelecionadoAtual());
+    const professorOk = Boolean(professorSelecionadoAtual());
     botao.disabled = !liberado;
     botao.classList.toggle("disabled", !liberado);
-    botao.title = liberado ? "Salvar treino prescrito" : "Selecione aluno e professor para liberar a prescrição.";
+    botao.title = liberado
+      ? "Salvar treino prescrito"
+      : (!alunoOk
+          ? "Selecione um aluno para liberar a prescrição."
+          : (!professorOk
+              ? "Professor responsável não identificado."
+              : "Complete os dados obrigatórios para liberar a prescrição."));
   });
   atualizarLinkAluno();
 }
@@ -445,8 +500,21 @@ async function carregarProfessores() {
 async function init() {
   $("dataPrescricao").value = new Date().toISOString().slice(0, 10);
   const r = await api("/api/treinos/biblioteca");
-  biblioteca = r.dados || biblioteca;
+  const bibliotecaApi = r?.dados || null;
+  const bibliotecaFlash = bibliotecaLocalFlash();
+
+  // A API continua sendo a fonte principal. Quando a coleção ainda não foi
+  // inicializada, usa o catálogo local já distribuído com 664 exercícios.
+  biblioteca = bibliotecaValida(bibliotecaApi) ? bibliotecaApi : bibliotecaFlash;
+  biblioteca.grupos = Array.isArray(biblioteca.grupos) ? biblioteca.grupos : bibliotecaFlash.grupos;
+  biblioteca.objetivos = Array.isArray(biblioteca.objetivos) && biblioteca.objetivos.length
+    ? biblioteca.objetivos
+    : bibliotecaFlash.objetivos;
   biblioteca.exercicios = (biblioteca.exercicios || []).map(normalizarExercicio);
+
+  if (!biblioteca.exercicios.length) {
+    console.error("Biblioteca de exercícios vazia: API e catálogo local indisponíveis.");
+  }
   popularFiltros();
   renderExercicios();
   renderDivisoes();

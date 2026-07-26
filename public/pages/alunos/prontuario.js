@@ -283,7 +283,11 @@ document.addEventListener('DOMContentLoaded',()=>{
   const btnContrato = $('#btnSalvarChecklistComercial');
   if (btnContrato) btnContrato.addEventListener('click',()=> alerta('Contrato comercial atualizado com os dados já vinculados ao aluno.', 'sucesso'));
 
-  const abaInicial = document.querySelector('[data-tab="servicos-contratados"]');
+  const abaSolicitada = String(params.get("tab") || "").trim();
+  const abaInicial =
+    (abaSolicitada && document.querySelector(`[data-tab="${CSS.escape(abaSolicitada)}"]`)) ||
+    document.querySelector('[data-tab="servicos-contratados"]');
+
   if (abaInicial) abaInicial.click();
   carregar();
 });

@@ -11,10 +11,74 @@ function erro(res, error, status = 500) {
   });
 }
 
+function texto(valor) {
+  return String(valor || "").trim();
+}
+
+function normalizar(valor) {
+  return texto(valor).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+function mesmo(a, b) {
+  return texto(a) && texto(a) === texto(b);
+}
+
+function usuarioPortalProfessor(req) {
+  return req.usuario?.portal === true && req.usuario?.portalTipo === "professor";
+}
+
+function responsavelTecnico(req) {
+  const usuario = req.usuario || {};
+  const perfil = normalizar(usuario.perfil);
+  const permissoes = Array.isArray(usuario.permissoes) ? usuario.permissoes : [];
+  return usuario.acessoTodosAlunos === true ||
+    perfil === "responsavel_tecnico" ||
+    perfil === "responsavel-tecnico" ||
+    perfil === "responsavel tecnico" ||
+    permissoes.includes("professores") ||
+    permissoes.includes("*");
+}
+
+function alunoPertenceAoProfessor(aluno = {}, usuario = {}) {
+  const professorId = texto(usuario.id);
+  const professorNome = normalizar(usuario.nome);
+  const ids = [
+    aluno.professorId,
+    aluno.professor_id,
+    aluno.idProfessor,
+    aluno.professorResponsavelId,
+    aluno.professor_responsavel_id,
+    aluno.professor_responsavel
+  ];
+  if (ids.some(id => mesmo(id, professorId))) return true;
+
+  const nomes = [
+    aluno.professorNome,
+    aluno.professor_nome,
+    aluno.professor,
+    aluno.professorResponsavel,
+    aluno.professor_responsavel_nome,
+    aluno.nomeProfessor
+  ].map(normalizar).filter(Boolean);
+  return Boolean(professorNome && nomes.some(nome => nome === professorNome || nome.includes(professorNome) || professorNome.includes(nome)));
+}
+
+function filtrarAlunosPorPortal(req, alunos = []) {
+  if (!usuarioPortalProfessor(req) || responsavelTecnico(req)) return alunos;
+  return alunos.filter(aluno => alunoPertenceAoProfessor(aluno, req.usuario));
+}
+
+function exigirAcessoPortalProfessor(req, res, aluno) {
+  if (!usuarioPortalProfessor(req) || responsavelTecnico(req)) return true;
+  if (aluno && alunoPertenceAoProfessor(aluno, req.usuario)) return true;
+  res.status(403).json({ ok: false, mensagem: "Professor sem acesso a este aluno." });
+  return false;
+}
+
 router.get("/", async (req, res) => {
   try {
     const alunos = await alunosService.listar();
-    res.json(alunos);
+    res.json(filtrarAlunosPorPortal(req, alunos));
   } catch (error) {
     erro(res, error);
   }
@@ -69,10 +133,10 @@ router.post("/:id/reativar-cobranca", async (req, res) => {
 
 router.post("/:id/reativar", async (req, res) => {
   try {
-    const resultado = await alunosService.reativar(req.params.id, {
+    const resultado = await alunosService.criarCobrancaReativacao(req.params.id, {
       ...req.body,
       usuario: req.body?.usuario || "sistema",
-      motivo: req.body?.motivo || req.body?.motivoReativacao || "Reativação manual do aluno."
+      motivo: req.body?.motivo || req.body?.motivoReativacao || "Reativação com cobrança pendente."
     });
 
     if (!resultado) {
@@ -83,7 +147,7 @@ router.post("/:id/reativar", async (req, res) => {
       ok: true,
       sucesso: true,
       resultado,
-      mensagem: "Aluno reativado. Matrícula ativa, mensalidade, financeiro e recebimento em aberto foram sincronizados."
+      mensagem: "Cobrança de reativação criada. O aluno só será ativado após o recebimento confirmado no financeiro."
     });
   } catch (error) {
     erro(res, error, 400);
@@ -99,6 +163,7 @@ router.get("/:id/prontuario", async (req, res) => {
       return res.status(404).json({ ok: false, erro: "Aluno não encontrado", mensagem: "Aluno não encontrado" });
     }
 
+    if (!exigirAcessoPortalProfessor(req, res, resultado.aluno || resultado.dados || resultado)) return;
     res.json(resultado);
   } catch (error) {
     erro(res, error);
@@ -113,6 +178,7 @@ router.get("/:id", async (req, res) => {
       return res.status(404).json({ ok: false, erro: "Aluno não encontrado", mensagem: "Aluno não encontrado" });
     }
 
+    if (!exigirAcessoPortalProfessor(req, res, aluno)) return;
     res.json(aluno);
   } catch (error) {
     erro(res, error);
@@ -130,6 +196,12 @@ router.post("/", async (req, res) => {
 
 router.put("/:id", async (req, res) => {
   try {
+    const atual = await alunosService.buscar(req.params.id);
+    const solicitaAtivacao = ["ativo", "ativa", "active"].includes(normalizar(req.body?.status || req.body?.situacao));
+    const jaAtivo = ["ativo", "ativa", "active"].includes(normalizar(atual?.status || atual?.situacao));
+    if (solicitaAtivacao && !jaAtivo) {
+      return res.status(409).json({ ok: false, mensagem: "Não ative o aluno pela edição. Use Reativar para criar a cobrança e confirme o pagamento no Financeiro." });
+    }
     const aluno = await alunosService.atualizar(req.params.id, req.body);
 
     if (!aluno) {

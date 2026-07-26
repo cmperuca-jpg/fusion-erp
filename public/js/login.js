@@ -1,29 +1,36 @@
 const form = document.querySelector("form");
 
-form.addEventListener("submit", (e) => {
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
 
-    e.preventDefault();
+  const email = document.querySelector('input[type="email"]').value.trim();
+  const senha = document.querySelector('input[type="password"]').value.trim();
 
-    const email = document.querySelector('input[type="email"]').value.trim();
-    const senha = document.querySelector('input[type="password"]').value.trim();
+  if (!email || !senha) {
+    alert("Informe o e-mail e a senha.");
+    return;
+  }
 
-    if (email === "" || senha === "") {
-        alert("Informe o e-mail e a senha.");
-        return;
-    }
-
-    // Login provisório para desenvolvimento
-    if (email === "admin@fusion.com" && senha === "123456") {
-
-        localStorage.setItem("usuarioLogado", "true");
-        localStorage.setItem("usuarioNome", "Administrador");
-
-        window.location.href = "/pages/dashboard/";
-
+  try {
+    if (window.FusionAuth?.login) {
+      await window.FusionAuth.login(email, senha);
     } else {
+      const resposta = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, senha })
+      });
+      const payload = await resposta.json().catch(() => ({}));
+      if (!resposta.ok || payload.ok === false) throw new Error(payload.mensagem || "E-mail ou senha invalidos.");
 
-        alert("E-mail ou senha inválidos.");
-
+      localStorage.setItem("fusionToken", payload.token || "");
+      localStorage.setItem("fusionUsuario", JSON.stringify(payload.usuario || {}));
+      localStorage.setItem("usuarioLogado", "true");
+      localStorage.setItem("usuarioNome", payload.usuario?.nome || "Usuario");
     }
 
+    window.location.href = "/pages/dashboard/";
+  } catch (erro) {
+    alert(erro.message || "E-mail ou senha invalidos.");
+  }
 });

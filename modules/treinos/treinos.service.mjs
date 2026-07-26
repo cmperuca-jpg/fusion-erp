@@ -447,6 +447,26 @@ function normalizarTreinosParaPortal(lista = [], catalogo = null) {
   return [combinado, ...estruturados];
 }
 
+function textoPessoa(valor = "") {
+  return String(valor || "").trim();
+}
+
+function normalizarPessoa(valor = "") {
+  return textoPessoa(valor).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+function treinoDoProfessor(treino = {}, professorId = "", professorNome = "") {
+  const id = textoPessoa(professorId);
+  const nome = normalizarPessoa(professorNome);
+  const ids = [treino.professorId, treino.professor_id, treino.idProfessor, treino.treinadorId].map(textoPessoa);
+  if (id && ids.includes(id)) return true;
+
+  const nomes = [treino.professorNome, treino.professor_nome, treino.professor, treino.treinador, treino.treinadorNome]
+    .map(normalizarPessoa)
+    .filter(Boolean);
+  return Boolean(nome && nomes.some(item => item === nome || item.includes(nome) || nome.includes(item)));
+}
+
 export async function obterTreinos(filtros = {}) {
   const [treinos, bibliotecaTreinos, bibliotecaAtual] = await Promise.all([
     listarTreinos(),
@@ -457,9 +477,14 @@ export async function obterTreinos(filtros = {}) {
   // mantém compatibilidade com treinos antigos sem gravar caminhos duplicados.
   const catalogo = criarCatalogoMidias(bibliotecaAtual, bibliotecaTreinos);
   const alunoId = filtros.alunoId ? String(filtros.alunoId) : "";
-  const filtrados = alunoId
+  const professorId = filtros.professorId ? String(filtros.professorId) : "";
+  const professorNome = filtros.professorNome ? String(filtros.professorNome) : "";
+  let filtrados = alunoId
     ? treinos.filter((t) => String(t.alunoId || t.aluno_id || "") === alunoId)
     : treinos;
+  if (professorId || professorNome) {
+    filtrados = filtrados.filter((t) => treinoDoProfessor(t, professorId, professorNome));
+  }
   const ativos = filtrados.filter(treinoEstaAtivo);
   return normalizarTreinosParaPortal(ativos.length ? ativos : filtrados, catalogo);
 }

@@ -7,6 +7,8 @@
   function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c]));}
   function moeda(v){return Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});}
   function vazio(txt){return `<div class="empty">${esc(txt)}</div>`;}
+  function dataBr(v){const s=String(v||"").slice(0,10);return s?s.split("-").reverse().join("/"):"-";}
+  function itemFin(f, usarSaldo=false){const valor=usarSaldo?(f.saldoPortal??f.valorRestante??f.saldoRestante??0):(f.valorPortal??f.total??f.valorOriginal??f.valor??0);return `<div class="item"><strong>${esc(f.descricao || f.plano || f.competencia || "Cobranca")}</strong><div>${moeda(valor)} - ${esc(f.statusExibicao || f.status || "-")} - ${dataBr(f.vencimento)}</div></div>`;}
 
   async function carregar(){
     const alunoId = $("alunoId").value.trim();
@@ -21,7 +23,7 @@
       <div class="metric">Aluno<b>${esc(json.aluno?.nome || json.aluno?.aluno || "-")}</b></div>
       <div class="metric">Serviços<b>${json.resumo?.totalServicos || 0}</b></div>
       <div class="metric">Aulas hoje<b>${json.resumo?.aulasHoje || 0}</b></div>
-      <div class="metric">Aberto<b>${moeda(json.resumo?.financeiroAberto || 0)}</b></div>
+      <div class="metric">Divida ativa<b>${moeda(json.resumo?.financeiroAberto || 0)}</b></div>
     `;
 
     $("agendaHoje").innerHTML = json.agendaHoje?.length ? json.agendaHoje.map(a => `
@@ -37,8 +39,11 @@
     `).join("") : vazio("Nenhum treino ativo.");
 
     $("financeiro").innerHTML = `
-      <div class="item"><strong>Total em aberto</strong><div>${moeda(json.financeiro?.totalAberto || 0)}</div></div>
-      ${(json.financeiro?.abertos || []).slice(0,6).map(f => `<div class="item"><strong>${esc(f.descricao || f.plano || "Cobrança")}</strong><div>${moeda(f.total || f.valorOriginal || f.valor || 0)} · ${esc(f.status || "-")}</div></div>`).join("")}
+      <div class="item destaque"><strong>Proxima mensalidade</strong><div>${json.financeiro?.proximaMensalidade ? `${moeda(json.financeiro.proximaMensalidade.valorPortal || 0)} - ${esc(json.financeiro.proximaMensalidade.statusExibicao || "Programada")} - ${dataBr(json.financeiro.proximaMensalidade.vencimento)}` : "Sem mensalidade programada"}</div></div>
+      <div class="item"><strong>Divida ativa</strong><div>${moeda(json.financeiro?.totalDividaAtiva || 0)}</div></div>
+      ${(json.financeiro?.dividaAtiva || []).slice(0,6).map(f => itemFin(f, true)).join("")}
+      ${(json.financeiro?.venceHoje || []).length ? `<div class="item"><strong>Vence hoje</strong></div>${(json.financeiro.venceHoje || []).slice(0,6).map(f => itemFin(f, true)).join("")}` : ""}
+      ${(json.financeiro?.aVencer || []).length ? `<div class="item"><strong>A vencer</strong></div>${(json.financeiro.aVencer || []).slice(0,6).map(f => itemFin(f, true)).join("")}` : ""}
     `;
 
     $("frequencia").innerHTML = json.frequencias?.length ? json.frequencias.slice(0,10).map(f => `

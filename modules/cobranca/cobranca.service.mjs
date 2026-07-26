@@ -50,6 +50,7 @@ function competencia(dataISO) {
 
 function statusNormalizado(status) {
   const s = String(status || "").trim().toLowerCase();
+  if (["programado", "programada", "agendado", "agendada", "previsto", "prevista"].includes(s)) return "programado";
   if (["pago", "recebido", "quitado", "baixado"].includes(s)) return "pago";
   if (["cancelado", "cancelada"].includes(s)) return "cancelado";
   if (["parcial", "parcialmente pago"].includes(s)) return "parcial";
@@ -463,8 +464,14 @@ function montarMensalidadeProgramada({ aluno, matricula, plano, vencimento, peri
   mensalidade.programada = true;
   mensalidade.emitida = false;
   mensalidade.emitirEm = vencimento;
+  mensalidade.valorPago = 0;
+  mensalidade.valorRestante = 0;
+  mensalidade.saldoRestante = 0;
   mensalidade.origem = "recorrencia_programada";
-  mensalidade.lancamentoFinanceiroId = "";
+  // A previsão também possui título financeiro, mas este permanece
+  // explicitamente Programado: aparece na consulta sem entrar em caixa,
+  // receita realizada, inadimplência ou saldo em aberto.
+  mensalidade.lancamentoFinanceiroId = `fin_${mensalidade.id}`;
   mensalidade.descricao = `Fatura futura ${mensalidade.competencia} - ${mensalidade.aluno || aluno.id}`;
   mensalidade.historico = [{
     id: gerarId("hist_men"),
@@ -477,6 +484,7 @@ function montarMensalidadeProgramada({ aluno, matricula, plano, vencimento, peri
 }
 
 function montarLancamentoFinanceiro(mensalidade) {
+  const programada = estaProgramada(mensalidade);
   return {
     id: `fin_${mensalidade.id}`,
     tipo: "receber",
@@ -496,12 +504,14 @@ function montarLancamentoFinanceiro(mensalidade) {
     valorBruto: numero(mensalidade.total ?? mensalidade.valor),
     valorPago: mensalidade.status === "pago" ? numero(mensalidade.valorAntesCredito ?? mensalidade.valor ?? 0) : 0,
     valorLiquido: mensalidade.status === "pago" ? numero(mensalidade.valorAntesCredito ?? mensalidade.valor ?? 0) : 0,
-    valorRestante: numero(mensalidade.total ?? mensalidade.valor),
+    valorRestante: programada ? 0 : numero(mensalidade.total ?? mensalidade.valor),
     vencimento: mensalidade.vencimento,
     pagamento: mensalidade.pagamento || "",
     dataPagamento: mensalidade.dataPagamento || "",
     formaPagamento: mensalidade.formaPagamento || "",
-    status: mensalidade.status === "pago" ? "Pago" : "Aberto",
+    status: mensalidade.status === "pago" ? "Pago" : (programada ? "Programado" : "Aberto"),
+    programado: programada,
+    previsto: programada,
     origem: "mensalidade_automatica",
     periodicidade: mensalidade.periodicidade,
     periodicidadeMeses: mensalidade.periodicidadeMeses,
@@ -667,7 +677,9 @@ export async function gerarProximaMensalidadeAposPagamento({ mensalidadeId = "",
 
   if (prevista) mensalidades[prevista.indice] = novaMensalidade;
   else mensalidades.push(novaMensalidade);
-  financeiro.push(novoLancamento);
+  const indiceFinanceiro = financeiro.findIndex((item) => String(item.id) === String(novoLancamento.id));
+  if (indiceFinanceiro >= 0) financeiro[indiceFinanceiro] = { ...financeiro[indiceFinanceiro], ...novoLancamento, status: "Aberto", programado: false, previsto: false, atualizadoEm: agoraISO() };
+  else financeiro.push(novoLancamento);
 
   matricula.ultimoPagamentoEm = vencimentoAtual || hojeISO();
   matricula.ultimaMensalidadeGeradaId = novaMensalidade.id;
@@ -780,25 +792,37 @@ export async function programarProximaCobrancaAposPagamento({ mensalidadeId = ""
   } else {
     mensalidadeProgramada.vencimento = proximoVencimento;
     mensalidadeProgramada.emitirEm = proximoVencimento;
+    mensalidadeProgramada.status = "programada";
+    mensalidadeProgramada.programada = true;
+    mensalidadeProgramada.emitida = false;
+    mensalidadeProgramada.valorPago = 0;
+    mensalidadeProgramada.valorRestante = 0;
+    mensalidadeProgramada.saldoRestante = 0;
     mensalidadeProgramada.atualizadoEm = agoraISO();
   }
+  const tituloProgramado = montarLancamentoFinanceiro(mensalidadeProgramada);
+  mensalidadeProgramada.lancamentoFinanceiroId = tituloProgramado.id;
+  const indiceTitulo = financeiro.findIndex((item) => String(item.id) === String(tituloProgramado.id) || String(item.mensalidadeId || "") === String(mensalidadeProgramada.id));
+  if (indiceTitulo >= 0) financeiro[indiceTitulo] = { ...financeiro[indiceTitulo], ...tituloProgramado, status: "Programado", programado: true, previsto: true, atualizadoEm: agoraISO() };
+  else financeiro.push(tituloProgramado);
   matricula.proximoVencimento = proximoVencimento;
   matricula.mensalidadeProximaId = mensalidadeProgramada.id;
-  matricula.financeiroProximoId = "";
+  matricula.financeiroProximoId = tituloProgramado.id;
   matricula.ultimoPagamentoEm = hojeISO();
   matricula.atualizadoEm = agoraISO();
   aluno.proximoVencimento = proximoVencimento;
   aluno.mensalidadeProximaId = mensalidadeProgramada.id;
-  aluno.financeiroProximoId = "";
+  aluno.financeiroProximoId = tituloProgramado.id;
   aluno.diaVencimento = diaVencimento || aluno.diaVencimento || "";
   aluno.atualizadoEm = agoraISO();
   await salvarJsonMultiplosAtomico({
     [FILES.matriculas]: matriculas,
     [FILES.alunos]: alunos,
-    [FILES.mensalidades]: mensalidades
+    [FILES.mensalidades]: mensalidades,
+    [FILES.financeiro]: financeiro
   });
   await registrarLog({ acao: 'programar_proxima_cobranca', sucesso: true, alunoId: aluno.id, matriculaId: matricula.id, mensalidadeId, financeiroId, vencimento: proximoVencimento, usuario });
-  return { ok: true, programada: true, mensalidadeProgramada, proximoVencimento, motivo: 'Fatura do próximo mês criada como programada, sem saldo financeiro em aberto.' };
+  return { ok: true, programada: true, mensalidadeProgramada, financeiro: tituloProgramado, proximoVencimento, motivo: 'Fatura do próximo mês criada como programada, visível no Financeiro sem saldo em aberto.' };
   }, { operacaoId: `cobranca-programar-${alunoId || mensalidadeId || financeiroId}-${mensalidadeId || financeiroId}` });
 }
 
@@ -860,7 +884,21 @@ export async function repararReativacoesPagasSemAgenda(filtros = {}) {
         const mesmaMatricula = !item.matriculaId || String(item.matriculaId) === String(matricula.id);
         return mesmoAluno && mesmaMatricula && estaProgramada(item) && statusNormalizado(item.status) !== "cancelado";
       }) || null;
-      const precisaReparar = !agendaAtual || agendaAtual <= hoje || !faturaProgramadaAtual;
+      const tituloProgramadoAtual = faturaProgramadaAtual ? financeiro.find((item) =>
+        String(item.id) === String(faturaProgramadaAtual.lancamentoFinanceiroId || faturaProgramadaAtual.financeiroId || "") ||
+        String(item.mensalidadeId || "") === String(faturaProgramadaAtual.id)
+      ) || null : null;
+      const programadaComSaldo = faturaProgramadaAtual && (
+        numero(faturaProgramadaAtual.valorRestante ?? faturaProgramadaAtual.saldoRestante, 0) > 0 ||
+        numero(faturaProgramadaAtual.valorPago, 0) > 0 ||
+        faturaProgramadaAtual.emitida === true
+      );
+      const tituloProgramadoComSaldo = tituloProgramadoAtual && (
+        numero(tituloProgramadoAtual.valorRestante, 0) > 0 ||
+        numero(tituloProgramadoAtual.valorPago ?? tituloProgramadoAtual.valorLiquido, 0) > 0 ||
+        !estaProgramada(tituloProgramadoAtual)
+      );
+      const precisaReparar = !agendaAtual || agendaAtual <= hoje || !faturaProgramadaAtual || programadaComSaldo || tituloProgramadoComSaldo;
       if (!precisaReparar) continue;
 
       const referencia = somenteData(dataReferenciaParaProximaCobranca(cobrancaPaga, matricula, aluno));
@@ -880,6 +918,37 @@ export async function repararReativacoesPagasSemAgenda(filtros = {}) {
           usuario: filtros.usuario || "motor"
         });
         mensalidades.push(faturaProgramada);
+      } else {
+        faturaProgramada.vencimento = proximoVencimento;
+        faturaProgramada.emitirEm = proximoVencimento;
+        faturaProgramada.competencia = competencia(proximoVencimento);
+        faturaProgramada.status = "programada";
+        faturaProgramada.programada = true;
+        faturaProgramada.emitida = false;
+        faturaProgramada.valorPago = 0;
+        faturaProgramada.valorRestante = 0;
+        faturaProgramada.atualizadoEm = reparadaEm;
+      }
+      const tituloProgramado = montarLancamentoFinanceiro(faturaProgramada);
+      faturaProgramada.lancamentoFinanceiroId = tituloProgramado.id;
+      const indiceTitulo = financeiro.findIndex((item) =>
+        String(item.id) === String(tituloProgramado.id) ||
+        String(item.mensalidadeId || "") === String(faturaProgramada.id)
+      );
+      if (indiceTitulo >= 0) {
+        financeiro[indiceTitulo] = {
+          ...financeiro[indiceTitulo],
+          ...tituloProgramado,
+          status: "Programado",
+          programado: true,
+          previsto: true,
+          valorPago: 0,
+          valorLiquido: 0,
+          valorRestante: 0,
+          atualizadoEm: reparadaEm
+        };
+      } else {
+        financeiro.push(tituloProgramado);
       }
 
       if (reativacao) {
@@ -890,18 +959,18 @@ export async function repararReativacoesPagasSemAgenda(filtros = {}) {
       }
       matricula.proximoVencimento = proximoVencimento;
       matricula.mensalidadeProximaId = faturaProgramada.id;
-      matricula.financeiroProximoId = "";
+      matricula.financeiroProximoId = tituloProgramado.id;
       matricula.diaVencimento = diaVencimento || matricula.diaVencimento || "";
       matricula.recorrenciaReparadaEm = reparadaEm;
       matricula.atualizadoEm = reparadaEm;
       aluno.proximoVencimento = proximoVencimento;
       aluno.mensalidadeProximaId = faturaProgramada.id;
-      aluno.financeiroProximoId = "";
+      aluno.financeiroProximoId = tituloProgramado.id;
       aluno.diaVencimento = diaVencimento || aluno.diaVencimento || "";
       aluno.recorrenciaReparadaEm = reparadaEm;
       aluno.atualizadoEm = reparadaEm;
 
-      reparadas.push({ alunoId: aluno.id, matriculaId: matricula.id, proximoVencimento });
+      reparadas.push({ alunoId: aluno.id, matriculaId: matricula.id, mensalidadeId: faturaProgramada.id, financeiroId: tituloProgramado.id, proximoVencimento });
       log.unshift({
         id: gerarId("cob_log"),
         acao: reativacao ? "reparar_recorrencia_reativacao_paga" : "reparar_fatura_programada_ausente",
@@ -919,6 +988,7 @@ export async function repararReativacoesPagasSemAgenda(filtros = {}) {
         [FILES.matriculas]: matriculas,
         [FILES.alunos]: alunos,
         [FILES.mensalidades]: mensalidades,
+        [FILES.financeiro]: financeiro,
         [FILES.cobrancaLog]: log.slice(0, 1000)
       });
     }

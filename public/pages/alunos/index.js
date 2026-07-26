@@ -1,4 +1,5 @@
 const API_ALUNOS = "/api/alunos";
+const API_PROFESSORES = "/api/professores";
 const API_FINANCEIRO = "/api/financeiro";
 const API_MATRICULAS_INTEGRAR = "/api/matriculas/integrar";
 const API_MATRICULAS = "/api/matriculas";
@@ -6,6 +7,7 @@ let matriculasAlunoAtual = [];
 const API_PLANOS_CANDIDATAS = ["/api/planos", "/api/financeiro/planos", "/api/cadastros/planos"];
 
 let alunos = [];
+let professoresCadastrados = [];
 let planosCadastrados = [];
 let pagina = 1;
 const porPagina = 10;
@@ -193,23 +195,42 @@ function planoSelecionado() {
   return planosCadastrados.find((plano) => String(planoId(plano)) === String(id) || planoNome(plano) === id) || null;
 }
 
+function valorTaxaMatriculaPlano(plano = {}) {
+  return Math.max(0, parseMoeda(
+    plano.taxaMatricula ??
+    plano.valorMatricula ??
+    plano.valorTaxaMatricula ??
+    plano.taxa_matricula ??
+    plano.valor_matricula ??
+    plano.adesao ??
+    plano.taxaAdesao ??
+    0
+  ));
+}
+
 function atualizarPainelComercialMatricula() {
   const plano = planoSelecionado();
   const valorMensal = plano ? parseMoeda(planoValor(plano)) : 0;
+  const taxaConfiguradaPlano = plano ? valorTaxaMatriculaPlano(plano) : 0;
   const cobrar = $("#cobrar_taxa_matricula")?.value !== "nao";
   const taxaInput = $("#valor_taxa_matricula");
   const descontoInput = $("#desconto_matricula");
 
-  // Taxa de matrícula é livre e não depende do plano.
-  // Só preenche com 0,00 na primeira abertura do formulário.
-  if (taxaInput && !taxaInput.dataset.inicializado) {
-    taxaInput.value = taxaInput.value || "0,00";
+  const taxaAtual = Math.max(0, parseMoeda(taxaInput?.value || 0));
+  const taxaFoiEditada = taxaInput?.dataset.editado === "1";
+
+  if (taxaInput && cobrar && (!taxaFoiEditada || taxaAtual <= 0)) {
+    taxaInput.value = formatarMoeda(taxaConfiguradaPlano);
     taxaInput.dataset.inicializado = "1";
   }
 
-  const taxaInformada = Math.max(0, parseMoeda(taxaInput?.value || 0));
+  if (taxaInput && !cobrar) {
+    taxaInput.value = "0,00";
+  }
+
+  const taxaInformada = Math.max(0, parseMoeda(taxaInput?.value || taxaConfiguradaPlano));
   const desconto = Math.max(0, parseMoeda(descontoInput?.value || 0));
-  const taxaCobrada = cobrar ? taxaInformada : 0;
+  const taxaCobrada = cobrar ? (taxaInformada > 0 ? taxaInformada : taxaConfiguradaPlano) : 0;
   const total = Math.max(0, valorMensal + taxaCobrada - desconto);
 
   const mensalidadePreview = $("#valor_mensal_preview");
@@ -222,7 +243,7 @@ function atualizarPainelComercialMatricula() {
     planoOpcional: !plano,
     valorMensal,
     valorPlano: valorMensal,
-    taxaPlano: 0,
+    taxaPlano: taxaConfiguradaPlano,
     cobrarTaxaMatricula: cobrar,
     valorTaxaMatricula: taxaCobrada,
     valorMatricula: taxaCobrada,
@@ -313,6 +334,85 @@ function mostrarAlerta(msg, tipo = "info") {
   el.className = `alunos-alert ${tipo}`;
   el.classList.remove("hidden");
   setTimeout(() => el.classList.add("hidden"), 9000);
+}
+
+
+function professorIdRegistro(p = {}) {
+  return String(p.id || p._id || p.professorId || p.professor_id || "").trim();
+}
+
+function professorNomeRegistro(p = {}) {
+  return String(p.nome || p.professorNome || p.name || p.professor || "Professor").trim();
+}
+
+function preencherSelectProfessores(selecionadoId = "", selecionadoNome = "") {
+  const select = $("#professor_responsavel");
+  if (!select) return;
+
+  const idAlvo = String(selecionadoId || "").trim();
+  const nomeAlvo = String(selecionadoNome || "").trim();
+
+  const opcoes = ['<option value="">Sem professor vinculado</option>'];
+
+  professoresCadastrados
+    .slice()
+    .sort((a, b) => professorNomeRegistro(a).localeCompare(professorNomeRegistro(b), "pt-BR"))
+    .forEach((p) => {
+      const id = professorIdRegistro(p);
+      const nome = professorNomeRegistro(p);
+      if (!id) return;
+      opcoes.push(`<option value="${escapeAttr(id)}" data-nome="${escapeAttr(nome)}">${escapeHtml(nome)}</option>`);
+    });
+
+  if (nomeAlvo && !professoresCadastrados.some(p =>
+      professorIdRegistro(p) === idAlvo ||
+      normalizarTexto(professorNomeRegistro(p)) === normalizarTexto(nomeAlvo))) {
+    opcoes.push(`<option value="${escapeAttr(idAlvo || nomeAlvo)}" data-nome="${escapeAttr(nomeAlvo)}">${escapeHtml(nomeAlvo)} (cadastro anterior)</option>`);
+  }
+
+  select.innerHTML = opcoes.join("");
+
+  if (idAlvo && [...select.options].some(o => o.value === idAlvo)) {
+    select.value = idAlvo;
+  } else if (nomeAlvo) {
+    const porNome = [...select.options].find(o =>
+      normalizarTexto(o.dataset.nome || o.textContent) === normalizarTexto(nomeAlvo));
+    select.value = porNome?.value || "";
+  } else {
+    select.value = "";
+  }
+
+  const opt = select.selectedOptions?.[0];
+  const hidden = $("#professorId");
+  if (hidden) hidden.value = select.value || "";
+  select.dataset.professorNome = opt?.dataset?.nome || "";
+}
+
+async function carregarProfessores(selecionadoId = "", selecionadoNome = "") {
+  try {
+    const resp = await fetch(API_PROFESSORES, { cache: "no-store" });
+    const payload = await safeJson(resp);
+    if (!resp.ok || payload.ok === false) {
+      throw new Error(payload.erro || payload.mensagem || `Erro HTTP ${resp.status}`);
+    }
+    professoresCadastrados = extrairLista(payload);
+  } catch (erro) {
+    professoresCadastrados = [];
+    console.warn("Não foi possível carregar professores:", erro);
+  }
+
+  preencherSelectProfessores(selecionadoId, selecionadoNome);
+}
+
+function sincronizarProfessorSelecionado() {
+  const select = $("#professor_responsavel");
+  const hidden = $("#professorId");
+  if (!select) return;
+
+  const opt = select.selectedOptions?.[0];
+  const nome = opt?.dataset?.nome || "";
+  select.dataset.professorNome = nome;
+  if (hidden) hidden.value = select.value || "";
 }
 
 async function carregarAlunos() {
@@ -603,7 +703,10 @@ function preencherFormulario(a) {
   $("#telefone").value = formatarTelefoneVisual(alunoTelefone(a));
   $("#whatsapp").value = formatarTelefoneVisual(a.whatsapp ?? "");
   $("#email").value = alunoEmail(a);
-  $("#professor_responsavel").value = a.professor_responsavel ?? "";
+  preencherSelectProfessores(
+    a.professorId || a.professor_id || a.professorResponsavelId || a.professor_responsavel_id || "",
+    a.professor_responsavel || a.professorNome || a.professor_responsavel_nome || ""
+  );
   preencherSelectPlanos(alunoPlanoId(a) || alunoPlano(a));
   $("#data_matricula").value = dataParaCampo((a.data_matricula ?? "").slice(0, 10) || dataHojeISO());
   $("#dia_vencimento_mensal").value = a.diaVencimento ?? a.dia_vencimento ?? "";
@@ -868,13 +971,17 @@ window.excluirAluno = async function(id) {
 
 function resumoFinanceiroMatricula(resultado) {
   const matricula = resultado?.matricula || {};
-  const mensalidade = resultado?.mensalidadeGerada || {};
+  const mensalidade = resultado?.mensalidadeGerada || resultado?.mensalidadeInicial || {};
+  const financeiro = resultado?.financeiroInicial || resultado?.financeiro || {};
+  const recebimento = resultado?.recebimentoInicial || resultado?.recebimento || {};
   const plano = resultado?.plano || {};
-  const valor = Number(mensalidade.valor ?? matricula.valorMensal ?? plano.valorMensal ?? 0) || 0;
-  const taxa = Number(mensalidade.taxaMatricula ?? matricula.taxaMatricula ?? plano.taxaMatricula ?? 0) || 0;
-  const desconto = Number(mensalidade.descontoMatricula ?? matricula.descontoMatricula ?? 0) || 0;
-  const total = Number(mensalidade.total ?? matricula.valorTotalInicial ?? Math.max(0, valor + taxa - desconto)) || 0;
-  return { matricula, mensalidade, valor, taxa, desconto, total };
+
+  const valor = Number(matricula.valorMensal ?? mensalidade.valorMensal ?? plano.valorMensal ?? plano.valor ?? 0) || 0;
+  const taxa = Number(matricula.taxaMatricula ?? matricula.valorMatricula ?? mensalidade.taxaMatricula ?? plano.taxaMatricula ?? plano.valorMatricula ?? 0) || 0;
+  const desconto = Number(matricula.descontoMatricula ?? mensalidade.descontoMatricula ?? 0) || 0;
+  const total = Number(financeiro.valor ?? recebimento.valor ?? mensalidade.valor ?? mensalidade.total ?? matricula.valorTotalInicial ?? Math.max(0, valor + taxa - desconto)) || 0;
+
+  return { matricula, mensalidade, financeiro, recebimento, valor, taxa, desconto, total };
 }
 
 async function integrarMatriculaAposCadastro(aluno, dadosFormulario) {
@@ -924,12 +1031,31 @@ async function atualizarDiaVencimentoDaMatricula(alunoIdAtual, diaVencimento) {
 }
 
 function abrirRecebimentoMatricula(resultado) {
-  const { matricula, mensalidade } = resumoFinanceiroMatricula(resultado);
+  const { matricula, mensalidade, financeiro, recebimento } = resumoFinanceiroMatricula(resultado);
   const params = new URLSearchParams();
-  if (matricula.financeiroInicialId) params.set("financeiroId", matricula.financeiroInicialId);
-  if (matricula.mensalidadeInicialId || mensalidade.id) params.set("mensalidadeId", matricula.mensalidadeInicialId || mensalidade.id);
+
+  const financeiroId =
+    financeiro.id ||
+    resultado?.financeiroId ||
+    matricula.financeiroInicialId ||
+    mensalidade.lancamentoFinanceiroId ||
+    recebimento.lancamentoFinanceiroId ||
+    "";
+
+  const mensalidadeId =
+    mensalidade.id ||
+    resultado?.mensalidadeId ||
+    matricula.mensalidadeInicialId ||
+    recebimento.mensalidadeId ||
+    "";
+
+  if (financeiroId) params.set("financeiroId", financeiroId);
+  if (mensalidadeId) params.set("mensalidadeId", mensalidadeId);
+  if (matricula.id) params.set("matriculaId", matricula.id);
   if (matricula.alunoId) params.set("alunoId", matricula.alunoId);
+  params.set("receberAgora", "1");
   params.set("origem", "matricula");
+
   location.href = `/pages/financeiro/index.html?${params.toString()}`;
 }
 
@@ -1009,7 +1135,7 @@ async function salvarAluno(ev) {
 
 function coletarDadosFormulario() {
   const ids = [
-    "nome", "rg", "data_nascimento", "sexo", "email", "professor_responsavel",
+    "nome", "rg", "data_nascimento", "sexo", "email",
     "plano", "data_matricula", "status", "responsavel", "contato_emergencia",
     "cep", "cidade", "estado", "endereco", "objetivo", "observacoes",
     "tipo_sanguineo", "peso", "altura", "alergias", "restricoes_medicas",
@@ -1027,6 +1153,17 @@ function coletarDadosFormulario() {
   if (diaVencimento) dados.diaVencimento = diaVencimento;
 
   ids.forEach(id => dados[id] = $(`#${id}`).value.trim());
+
+  const professorSelect = $("#professor_responsavel");
+  const professorOption = professorSelect?.selectedOptions?.[0];
+  const professorId = String(professorSelect?.value || "").trim();
+  const professorNome = String(professorOption?.dataset?.nome || "").trim();
+
+  dados.professorId = professorId;
+  dados.professor_responsavel = professorNome;
+  dados.professorNome = professorNome;
+  dados.professorResponsavelId = professorId;
+
   dados.data_nascimento = dataParaISO(dados.data_nascimento);
   dados.data_matricula = dataParaISO(dados.data_matricula) || dataHojeISO();
   if (!dados.data_nascimento) delete dados.data_nascimento;
@@ -1454,7 +1591,7 @@ function prepararAlunosMobile() {
 document.addEventListener("DOMContentLoaded", async () => {
   prepararAlunosMobile();
   $("#btnNovoAluno").addEventListener("click", abrirNovoAluno);
-  $("#btnAtualizar").addEventListener("click", async () => { await carregarPlanos(); await carregarAlunos(); });
+  $("#btnAtualizar").addEventListener("click", async () => { await carregarProfessores(); await carregarPlanos(); await carregarAlunos(); });
   $("#btnFecharModal").addEventListener("click", fecharModal);
   $("#btnCancelar").addEventListener("click", fecharModal);
   $("#btnFicha").addEventListener("click", imprimirFichaAtual);
@@ -1477,6 +1614,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   $("#cpf").addEventListener("input", e => e.target.value = formatarCpfVisual(e.target.value));
   $("#telefone").addEventListener("input", e => e.target.value = formatarTelefoneVisual(e.target.value));
   $("#whatsapp").addEventListener("input", e => e.target.value = formatarTelefoneVisual(e.target.value));
+  $("#professor_responsavel")?.addEventListener("change", sincronizarProfessorSelecionado);
   $("#dia_vencimento_mensal")?.addEventListener("input", e => {
     e.target.value = String(e.target.value || "").replace(/\D/g, "").slice(0, 2);
   });
@@ -1493,6 +1631,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   $("#modalAluno").addEventListener("click", e => { if (e.target.id === "modalAluno") fecharModal(); });
 
+  await carregarProfessores();
   await carregarPlanos();
   await carregarAlunos();
 });
@@ -1506,7 +1645,13 @@ function inicializarPainelComercialMatricula() {
     el.dataset.painelComercialOk = "1";
     const evento = id === "plano" || id === "cobrar_taxa_matricula" ? "change" : "input";
     el.addEventListener(evento, () => {
-      if (id === "valor_taxa_matricula") el.dataset.editado = "1";
+      const taxaInput = document.getElementById("valor_taxa_matricula");
+      if (id === "valor_taxa_matricula") {
+        taxaInput.dataset.editado = "1";
+      } else if (id === "plano" || id === "cobrar_taxa_matricula") {
+        delete taxaInput?.dataset.editado;
+        delete taxaInput?.dataset.inicializado;
+      }
       atualizarPainelComercialMatricula();
     });
   });

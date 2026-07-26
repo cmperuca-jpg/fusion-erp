@@ -4,6 +4,38 @@ import * as service from './professores.service.mjs';
 const router = Router();
 function tratar(res, e, status=500) { return res.status(e.status || status).json({ ok:false, erro:e.message, mensagem:e.message }); }
 
+function ehAdminPainel(usuario = {}) {
+  const perfil = String(usuario.perfil || '').toLowerCase();
+  const permissoes = Array.isArray(usuario.permissoes) ? usuario.permissoes : [];
+  return perfil === 'administrador' || perfil === 'admin' || permissoes.includes('*');
+}
+
+function solicitanteStatus(req) {
+  const usuario = req.usuario || {};
+  if (usuario.portal) {
+    return {
+      id: usuario.id,
+      professorId: usuario.id,
+      perfil: usuario.perfil,
+      acessoTodosAlunos: usuario.acessoTodosAlunos === true
+    };
+  }
+  if (ehAdminPainel(usuario)) {
+    return {
+      id: usuario.id,
+      professorId: usuario.id,
+      perfil: 'responsavel_tecnico',
+      acessoTodosAlunos: true
+    };
+  }
+  return {
+    id: usuario.id,
+    professorId: usuario.id,
+    perfil: usuario.perfil,
+    acessoTodosAlunos: false
+  };
+}
+
 router.post('/login', async (req, res) => { try { res.json(await service.login(req.body || {})); } catch(e) { tratar(res,e, e.status || 401); } });
 router.get('/sessao', async (req, res) => {
   try {
@@ -19,12 +51,7 @@ router.put('/:id', async (req, res) => { try { const professor = await service.a
 
 router.put('/:id/status', async (req, res) => {
   try {
-    const solicitante = {
-      id: req.headers['x-fusion-professor-id'] || req.body?.solicitanteId,
-      professorId: req.headers['x-fusion-professor-id'] || req.body?.solicitanteId,
-      perfil: req.headers['x-fusion-perfil'] || req.body?.solicitantePerfil,
-      acessoTodosAlunos: String(req.headers['x-fusion-acesso-global'] || req.body?.acessoTodosAlunos || '') === 'true'
-    };
+    const solicitante = solicitanteStatus(req);
     const professor = await service.alterarStatus(req.params.id, req.body?.status, solicitante);
     if (!professor) return res.status(404).json({ ok:false, mensagem:'Professor não encontrado' });
     res.json({ ok:true, professor, mensagem: professor.status === 'Ativo' ? 'Professor desbloqueado com sucesso' : 'Professor bloqueado com sucesso' });

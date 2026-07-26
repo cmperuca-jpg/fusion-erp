@@ -138,7 +138,11 @@
   async function carregar(area, ctx = contexto()){
     const id = conversaId(ctx);
     if (!id) return;
-    const resp = await fetch(`/api/site-chat/mensagens?conversaId=${encodeURIComponent(id)}&limite=80`, { cache:"no-store" });
+    const params = new URLSearchParams({ conversaId:id, limite:"80", origem:ctx.origem || origem });
+    ["alunoId", "clienteId", "contato"].forEach((campo) => {
+      if (ctx[campo]) params.set(campo, ctx[campo]);
+    });
+    const resp = await fetch(`/api/site-chat/mensagens?${params.toString()}`, { cache:"no-store" });
     const json = await resp.json().catch(() => ({}));
     (json.mensagens || []).forEach(msg => adicionarMensagem(area, msg));
   }

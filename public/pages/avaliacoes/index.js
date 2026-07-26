@@ -39,6 +39,16 @@ const PORTAL_PROFESSOR = Boolean(
   SESSAO_PROFESSOR_PORTAL?.professorId
 );
 
+function headersAutenticados(headers = {}) {
+  return SESSAO_PROFESSOR_PORTAL?.token
+    ? { ...headers, Authorization: `Bearer ${SESSAO_PROFESSOR_PORTAL.token}` }
+    : { ...headers };
+}
+
+function opcoesAutenticadas(opcoes = {}) {
+  return { ...opcoes, headers: headersAutenticados(opcoes.headers || {}) };
+}
+
 if (PORTAL_PROFESSOR) {
   document.documentElement.classList.add('modo-professor-avaliacao-html');
   document.body?.classList.add('modo-professor-avaliacao');
@@ -201,7 +211,7 @@ function mostrarAlerta(msg, tipo = "erro") {
 async function carregarJsonLista(urls = [], chave = '') {
   for (const url of urls) {
     try {
-      const resp = await fetch(url, { cache: "no-store" });
+      const resp = await fetch(url, opcoesAutenticadas({ cache: "no-store" }));
       const json = await safeJson(resp);
       if (!resp.ok) continue;
       const lista = extrairLista(json, chave);
@@ -537,7 +547,7 @@ async function salvar(ev) {
     }
     if (!dados.professor_id) return mostrarAlerta("Este aluno não possui professor responsável vinculado. Vincule o professor no cadastro do aluno antes de avaliar.", "erro");
     const id = avaliacaoAtual?.id || valorCampo("id");
-    const resp = await fetch(id ? `${API_AVALIACOES}/${encodeURIComponent(id)}` : API_AVALIACOES, { method: id ? "PUT" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(dados) });
+    const resp = await fetch(id ? `${API_AVALIACOES}/${encodeURIComponent(id)}` : API_AVALIACOES, opcoesAutenticadas({ method: id ? "PUT" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(dados) }));
     const j = await safeJson(resp);
     if (!resp.ok || j.ok === false || j.erro) return mostrarAlerta(j.mensagem || j.erro || `Erro HTTP ${resp.status}`, "erro");
     mostrarAlerta(id ? "Avaliação atualizada." : "Avaliação cadastrada.", "sucesso");
@@ -555,7 +565,7 @@ function preencher(av) {
   setRadio("condicao_fisica", av.condicao_fisica); setRadio("protocolo_cardio", av.protocolo_cardio); if (av.fotos) { Object.entries(av.fotos).forEach(([k,v])=>{ setCampo(`${k}_base64`, v); renderFoto(k, v); }); } calcular();
 }
 window.editarAvaliacao = function(id) { const av = avaliacoes.find(a => String(a.id) === String(id)); if (!av) return mostrarAlerta("Avaliação não encontrada.", "erro"); preencher(av); abrirModal("Editar avaliação"); trocarTab("anamnese"); };
-window.excluirAvaliacao = async function(id) { if (!confirm("Excluir esta avaliação?")) return; const resp = await fetch(`${API_AVALIACOES}/${encodeURIComponent(id)}`, { method: "DELETE" }); const j = await safeJson(resp); if (!resp.ok || j.erro) return mostrarAlerta(j.mensagem || j.erro || `Erro HTTP ${resp.status}`, "erro"); mostrarAlerta("Avaliação excluída.", "sucesso"); await carregarBases(); };
+window.excluirAvaliacao = async function(id) { if (!confirm("Excluir esta avaliação?")) return; const resp = await fetch(`${API_AVALIACOES}/${encodeURIComponent(id)}`, opcoesAutenticadas({ method: "DELETE" })); const j = await safeJson(resp); if (!resp.ok || j.erro) return mostrarAlerta(j.mensagem || j.erro || `Erro HTTP ${resp.status}`, "erro"); mostrarAlerta("Avaliação excluída.", "sucesso"); await carregarBases(); };
 window.imprimirAvaliacao = function(id) { const av = avaliacoes.find(a => String(a.id) === String(id)); if (av) preencher(av); atualizarRelatorio(); const w = window.open("", "_blank"); w.document.write(`<html><head><title>Avaliação</title><style>body{font-family:Arial;padding:24px}h1{color:#ff6600}.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}table{width:100%;border-collapse:collapse}td,th{border:1px solid #ddd;padding:6px}</style></head><body>${$("#relatorioPreview").innerHTML}</body></html>`); w.document.close(); w.print(); };
 
 function atualizarRelatorio() {

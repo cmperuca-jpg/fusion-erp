@@ -14,6 +14,11 @@ function esconderMsg(){ $('#alerta').classList.add('hidden'); }
 function vazio(msg){return `<p class="muted">${esc(msg)}</p>`;}
 function num(v){return Number(v||0).toLocaleString('pt-BR');}
 function pct(v){return Math.max(0, Math.min(100, Number(v)||0));}
+function valorPortal(p, preferirSaldo=false){const v=preferirSaldo?(p?.saldoPortal??p?.valorRestante??p?.saldoRestante??p?.saldo):(p?.valorPortal??p?.valor??p?.total??p?.valorBruto);return Number(String(v??0).replace(',','.'))||0;}
+function statusFinanceiroPortal(p){return p?.statusExibicao||p?.status||'aberto';}
+function classeFinanceiroPortal(p){return statusClass(p?.estadoFinanceiro||p?.statusPortal||p?.statusExibicao||p?.status);}
+function itemFinanceiroPortal(p, opcoes={}){const valor=valorPortal(p,opcoes.saldo);const extra=p?.estadoFinanceiro==='programada'?'<small>Previsao do proximo ciclo. Ainda nao e divida nem saldo em aberto.</small>':(p?.estadoFinanceiro==='a_vencer'?'<small>Cobranca emitida antes do prazo. Ainda nao esta atrasada.</small>':'');return `<div class="item financeiro-item"><strong>${esc(p?.descricao||p?.competencia||'Cobranca')}</strong><small>Vencimento: ${data(p?.vencimento)} &middot; Valor: ${fmt(valor)} <span class="badge ${esc(classeFinanceiroPortal(p))}">${esc(statusFinanceiroPortal(p))}</span></small>${extra}</div>`;}
+function secaoFinanceiraPortal(titulo, lista=[], vazioMsg, opcoes={}){return `<div class="financeiro-section"><h4>${titulo}</h4>${lista.length?lista.map(p=>itemFinanceiroPortal(p,opcoes)).join(''):vazio(vazioMsg)}</div>`;}
 
 async function acessar(ev){
   ev.preventDefault(); esconderMsg();
@@ -47,7 +52,7 @@ function render(){
   $('#kpiExecucoes').textContent=d.resumo.execucoes||0;
   $('#kpiFrequencia').textContent=d.resumo.frequenciaMes?.presentes||0;
   $('#kpiStreak').textContent=`${d.resumo.streak?.atual||0} dias`;
-  $('#kpiAberto').textContent=d.resumo.financeiroAberto||0;
+  $('#kpiAberto').textContent=fmt(d.resumo.financeiroAbertoValor||0);
   $('#kpiVencimento').textContent=data(d.resumo.proximoVencimento);
   $('#kpiVolume').textContent=`${num(d.resumo.volumeTotal||0)} kg`;
   $('#resumoInicio').innerHTML=`<div class="item"><strong>Plano</strong><small>${esc(d.aluno.plano||'-')}</small></div><div class="item"><strong>Professor responsável</strong><small>${esc(d.aluno.professorNome||'-')}</small></div><div class="item"><strong>Frequência no mês</strong><small>${d.resumo.frequenciaMes?.presentes||0} presença(s)</small></div><div class="item"><strong>Sequência atual</strong><small>${d.resumo.streak?.atual||0} dia(s)</small></div>`;
@@ -506,7 +511,23 @@ window.imprimirAvaliacaoAluno = function(){
   win.document.close();
   setTimeout(()=>win.print(),500);
 };
-function renderPagamentos(){const lista=[...(dadosPortal.financeiro||[]),...(dadosPortal.mensalidades||[])];$('#listaPagamentos').innerHTML=lista.length?lista.map(p=>`<div class="item"><strong>${esc(p.descricao||p.competencia||'Cobrança')}</strong><small>Vencimento: ${data(p.vencimento)} · Valor: ${fmt(p.valor||p.total||p.valorBruto)} <span class="badge ${statusClass(p.status)}">${esc(p.status||'aberto')}</span></small></div>`).join(''):vazio('Nenhum pagamento encontrado.');}
+function renderPagamentos(){
+  const fp=dadosPortal.financeiroPortal;
+  if(fp){
+    const partes=[];
+    if(fp.proximaMensalidade){
+      partes.push(`<div class="item financeiro-proxima"><strong>Proxima mensalidade</strong><small>Vencimento: ${data(fp.proximaMensalidade.vencimento)} &middot; Valor: ${fmt(valorPortal(fp.proximaMensalidade))} <span class="badge ${esc(classeFinanceiroPortal(fp.proximaMensalidade))}">${esc(statusFinanceiroPortal(fp.proximaMensalidade))}</span></small><small>Esta previsao ainda nao e divida ativa.</small></div>`);
+    }
+    partes.push(secaoFinanceiraPortal('Divida ativa',fp.dividaAtiva||[],'Nenhuma divida ativa.',{saldo:true}));
+    partes.push(secaoFinanceiraPortal('Vence hoje',fp.venceHoje||[],'Nenhuma cobranca vencendo hoje.',{saldo:true}));
+    partes.push(secaoFinanceiraPortal('A vencer',fp.aVencer||[],'Nenhuma cobranca emitida a vencer.',{saldo:true}));
+    partes.push(secaoFinanceiraPortal('Historico recente',fp.pagos||[],'Nenhum pagamento encontrado.'));
+    $('#listaPagamentos').innerHTML=partes.join('');
+    return;
+  }
+  const lista=[...(dadosPortal.financeiro||[]),...(dadosPortal.mensalidades||[])];
+  $('#listaPagamentos').innerHTML=lista.length?lista.map(p=>`<div class="item"><strong>${esc(p.descricao||p.competencia||'Cobranca')}</strong><small>Vencimento: ${data(p.vencimento)} &middot; Valor: ${fmt(p.valor||p.total||p.valorBruto)} <span class="badge ${statusClass(p.status)}">${esc(p.status||'aberto')}</span></small></div>`).join(''):vazio('Nenhum pagamento encontrado.');
+}
 function renderPerfil(){const a=dadosPortal.aluno;$('#dadosPerfil').innerHTML=`<div class="item"><strong>Nome</strong><small>${esc(a.nome)}</small></div><div class="item"><strong>Plano</strong><small>${esc(a.plano||'-')}</small></div><div class="item"><strong>Professor</strong><small>${esc(a.professorNome||'-')}</small></div><div class="item"><strong>Status</strong><small>${esc(a.status||'-')}</small></div>`;}
 
 document.querySelectorAll('.nav').forEach(btn=>btn.addEventListener('click',()=>{ ativarAbaAluno(btn.dataset.tab); }));

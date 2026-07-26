@@ -40,6 +40,11 @@ function exigirLogin() {
   return sessao;
 }
 
+function headersAluno(headers = {}) {
+  const sessao = sessaoAluno();
+  return sessao?.token ? { ...headers, Authorization: `Bearer ${sessao.token}` } : { ...headers };
+}
+
 function dataBR(valor) {
   if (!valor) return "-";
   const s = String(valor).slice(0, 10);
@@ -106,7 +111,7 @@ function fotoAlunoRegistro(a) {
 
 async function safeFetchJson(url) {
   try {
-    const resp = await fetch(url, { cache: "no-store" });
+    const resp = await fetch(url, { cache: "no-store", headers: headersAluno() });
     const json = await resp.json().catch(() => ({}));
     if (!resp.ok) return null;
     return json;
@@ -456,7 +461,7 @@ async function carregar() {
   setTexto("alunoNomeTitulo", nomeAlunoRegistro(alunoDetalhe) || sessao.alunoNome || "Aluno");
   renderFotoAluno();
 
-  const resp = await fetch(`/api/treinos?alunoId=${encodeURIComponent(sessao.alunoId)}`, { cache: "no-store" });
+  const resp = await fetch(`/api/treinos?alunoId=${encodeURIComponent(sessao.alunoId)}`, { cache: "no-store", headers: headersAluno() });
   const json = await resp.json().catch(() => ({}));
   const treinos = Array.isArray(json.dados) ? json.dados : [];
   treinoAtual = treinos.find((t) => t.ativo !== false) || treinos[0] || null;
@@ -530,7 +535,7 @@ async function liberarCatracaPortal() {
   try {
     const resp = await fetch("/api/treinos/aluno-liberar-catraca", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: headersAluno({ "Content-Type": "application/json" }),
       body: JSON.stringify({
         alunoId: sessao.alunoId,
         token: sessao.token,

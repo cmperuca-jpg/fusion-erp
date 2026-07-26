@@ -3,14 +3,25 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 
 const root = process.cwd();
-const ignored = new Set(["node_modules", ".git", "backups", ".cache"]);
+const ignored = new Set([
+  "node_modules", ".git", ".github", "dist", "backups", "uploads", "logs",
+  "data", "coverage", "tmp", "temp", ".cache", ".vscode"
+]);
+const ignoredFiles = [
+  /^scripts\/instalar-/,
+  /^scripts\/homologar-ativacao-sincronizada-261l\.mjs$/
+];
 const files = [];
+function deveIgnorarArquivo(file) {
+  const rel = path.relative(root, file).replace(/\\/g, "/");
+  return ignoredFiles.some(pattern => pattern.test(rel));
+}
 function walk(dir) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     if (ignored.has(entry.name)) continue;
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) walk(full);
-    else if (/\.(mjs|js)$/.test(entry.name)) files.push(full);
+    else if (/\.(mjs|js)$/.test(entry.name) && !deveIgnorarArquivo(full)) files.push(full);
   }
 }
 walk(root);

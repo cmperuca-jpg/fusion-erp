@@ -1,13 +1,22 @@
 import crypto from "node:crypto";
+import fs from "node:fs/promises";
+import path from "node:path";
+import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { lerJsonDuravel, salvarJsonDuravel } from "../core/persistence/durable-json.mjs";
 
 const SEGREDO_DESENVOLVIMENTO = "fusion-erp-dev-secret-trocar-em-producao";
-const JWT_SECRET = process.env.JWT_SECRET || process.env.FUSION_JWT_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY || SEGREDO_DESENVOLVIMENTO;
+const JWT_SECRET_CONFIGURADO = process.env.JWT_SECRET || process.env.FUSION_JWT_SECRET || "";
+const JWT_SECRET = JWT_SECRET_CONFIGURADO || SEGREDO_DESENVOLVIMENTO;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "12h";
+const BCRYPT_ROUNDS = Math.min(Math.max(Number(process.env.FUSION_BCRYPT_ROUNDS || 12), 10), 14);
 
-if (process.env.NODE_ENV === "production" && JWT_SECRET === SEGREDO_DESENVOLVIMENTO) {
-  throw new Error("Produção exige JWT_SECRET, FUSION_JWT_SECRET ou SUPABASE_SERVICE_ROLE_KEY para proteger as sessões.");
+if (process.env.NODE_ENV === "production" && !JWT_SECRET_CONFIGURADO) {
+  throw new Error("Producao exige JWT_SECRET ou FUSION_JWT_SECRET para proteger as sessoes.");
+}
+
+if (process.env.NODE_ENV === "production" && JWT_SECRET_CONFIGURADO.length < 32) {
+  throw new Error("JWT_SECRET/FUSION_JWT_SECRET deve ter pelo menos 32 caracteres em producao.");
 }
 
 const PERFIS_PADRAO = {
@@ -42,12 +51,44 @@ function normalizar(valor) {
   return texto(valor).toLowerCase();
 }
 
-function senhaHash(senha) {
+function senhaHashLegado(senha) {
   return crypto.createHash("sha256").update(String(senha || "")).digest("hex");
 }
 
+async function senhaBcrypt(senha) {
+  return bcrypt.hash(String(senha || ""), BCRYPT_ROUNDS);
+}
+
+function pareceBcrypt(hash = "") {
+  return /^\$2[aby]\$\d{2}\$/.test(String(hash || ""));
+}
+
+function textoSeguroIgual(a = "", b = "") {
+  const aa = Buffer.from(String(a || ""));
+  const bb = Buffer.from(String(b || ""));
+  return aa.length === bb.length && aa.length > 0 && crypto.timingSafeEqual(aa, bb);
+}
+
+async function verificarSenhaUsuario(usuario = {}, senha = "") {
+  const hashAtual = String(usuario.senhaHash || "");
+  const hashBcrypt = String(usuario.senhaBcrypt || "");
+
+  for (const hash of [hashAtual, hashBcrypt].filter(pareceBcrypt)) {
+    if (await bcrypt.compare(String(senha || ""), hash)) {
+      return { ok: true, migrar: hash !== hashAtual };
+    }
+  }
+
+  const hashLegado = String(usuario.senhaHashLegado || (!pareceBcrypt(hashAtual) ? hashAtual : ""));
+  if (hashLegado && textoSeguroIgual(hashLegado, senhaHashLegado(senha))) {
+    return { ok: true, migrar: true };
+  }
+
+  return { ok: false, migrar: false };
+}
+
 function semSenha(usuario = {}) {
-  const { senha, senhaHash: _, ...limpo } = usuario;
+  const { senha, senhaHash: _, senhaBcrypt: __, senhaHashLegado: ___, ...limpo } = usuario;
   return limpo;
 }
 
@@ -59,16 +100,48 @@ function erro(mensagem, status = 500) {
   return Object.assign(new Error(mensagem), { status });
 }
 
+function senhaInicialAdmin() {
+  const configurada = texto(process.env.FUSION_BOOTSTRAP_ADMIN_PASSWORD || process.env.FUSION_ADMIN_PASSWORD);
+  if (configurada) {
+    if (configurada.length < 10) {
+      throw erro("FUSION_BOOTSTRAP_ADMIN_PASSWORD/FUSION_ADMIN_PASSWORD precisa ter pelo menos 10 caracteres.", 500);
+    }
+    return { senha: configurada, gerada: false };
+  }
+
+  return { senha: crypto.randomBytes(18).toString("base64url"), gerada: true };
+}
+
+async function gravarCredenciaisIniciais(senha) {
+  const dataDir = path.resolve(process.cwd(), "data");
+  const arquivo = path.join(dataDir, "CREDENCIAIS-INICIAIS.txt");
+  const conteudo = [
+    "FUSION ERP - CREDENCIAIS INICIAIS",
+    "",
+    "Administrador",
+    "E-mail: admin@fusionerp.local",
+    `Senha: ${senha}`,
+    "",
+    "Troque esta senha no primeiro acesso e remova este arquivo depois."
+  ].join("\n");
+
+  await fs.mkdir(dataDir, { recursive: true });
+  await fs.writeFile(arquivo, `${conteudo}\n`, "utf8");
+  console.warn("[Auth] Credenciais iniciais geradas em data/CREDENCIAIS-INICIAIS.txt. Troque a senha no primeiro acesso.");
+}
+
 async function garantirArquivoUsuarios() {
   const existentes = await lerJsonDuravel("usuarios.json", []);
   if (Array.isArray(existentes) && existentes.length) return;
   if (process.env.NODE_ENV === "production") throw erro("Nenhum usuário foi migrado para o Supabase. Implantação bloqueada por segurança.", 503);
+  const senhaInicial = senhaInicialAdmin();
   const admin = {
     id: "usr_admin", nome: "Administrador Fusion", email: "admin@fusionerp.local",
-    senhaHash: senhaHash("admin123"), perfil: "Administrador", status: "ativo",
-    permissoes: ["*"], criadoEm: agoraISO(), atualizadoEm: agoraISO()
+    senhaHash: await senhaBcrypt(senhaInicial.senha), perfil: "Administrador", status: "ativo",
+    permissoes: ["*"], trocarSenhaNoPrimeiroAcesso: true, criadoEm: agoraISO(), atualizadoEm: agoraISO()
   };
   await salvarJsonDuravel("usuarios.json", [admin]);
+  if (senhaInicial.gerada) await gravarCredenciaisIniciais(senhaInicial.senha);
 }
 
 async function lerUsuarios() {
@@ -119,10 +192,10 @@ function extrairToken(authorization = "") {
   return valor;
 }
 
-export function gerarTokenPortal({ sub, tipo, perfil = "", permissoes = [] } = {}) {
+export function gerarTokenPortal({ sub, tipo, perfil = "", permissoes = [], nome = "" } = {}) {
   if (!sub || !tipo) throw erro("Não foi possível criar a sessão do portal.", 500);
   return jwt.sign(
-    { sub: String(sub), tipo: String(tipo), perfil, permissoes },
+    { sub: String(sub), tipo: String(tipo), perfil, permissoes, nome },
     JWT_SECRET,
     { expiresIn: JWT_EXPIRES_IN }
   );
@@ -167,7 +240,7 @@ export async function criarUsuario(payload = {}) {
     id: gerarId(),
     nome: dados.nome,
     email: dados.email,
-    senhaHash: senhaHash(dados.senha),
+    senhaHash: await senhaBcrypt(dados.senha),
     perfil: dados.perfil,
     status: dados.status,
     permissoes: dados.permissoes,
@@ -199,7 +272,11 @@ export async function atualizarUsuario(id, payload = {}) {
     atualizadoEm: agoraISO()
   };
 
-  if (dados.senha) usuarios[idx].senhaHash = senhaHash(dados.senha);
+  if (dados.senha) {
+    usuarios[idx].senhaHash = await senhaBcrypt(dados.senha);
+    delete usuarios[idx].senhaBcrypt;
+    delete usuarios[idx].senhaHashLegado;
+  }
 
   await salvarUsuarios(usuarios);
   return semSenha(usuarios[idx]);
@@ -230,13 +307,22 @@ export async function removerUsuario(id) {
 export async function autenticar(email, senha) {
   const usuarios = await lerUsuarios();
   const usuario = usuarios.find(u => normalizar(u.email) === normalizar(email));
+  const verificacao = usuario ? await verificarSenhaUsuario(usuario, senha) : { ok: false };
 
-  if (!usuario || usuario.senhaHash !== senhaHash(senha)) {
+  if (!usuario || !verificacao.ok) {
     throw erro("E-mail ou senha inválidos.", 401);
   }
 
   if (normalizar(usuario.status) !== "ativo") {
     throw erro("Usuário inativo. Procure o administrador.", 403);
+  }
+
+  if (verificacao.migrar) {
+    usuario.senhaHash = await senhaBcrypt(senha);
+    delete usuario.senhaBcrypt;
+    delete usuario.senhaHashLegado;
+    usuario.atualizadoEm = agoraISO();
+    await salvarUsuarios(usuarios);
   }
 
   const usuarioSessao = semSenha(usuario);

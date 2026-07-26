@@ -272,9 +272,28 @@ export async function integrarMatriculaAluno(alunoId, planoId, opcoes={}){
     ? opcoes.cobrarMatricula !== false && opcoes.cobrarMatricula !== 'false'
     : planoCobraMatricula(plano);
 
+  const valorMatriculaInformado = dinheiro(
+    opcoes.valorMatricula ??
+    opcoes.taxaMatricula ??
+    opcoes.valorTaxaMatricula ??
+    opcoes.valorEntradaMatricula ??
+    opcoes.valorBaseMatricula ??
+    0
+  );
+  const valorMatriculaConfigurado = valorMatriculaPlano(plano);
+
+  // Quando a taxa está habilitada, zero/vazio no formulário não pode apagar
+  // a taxa configurada no plano. Valor positivo informado continua permitido
+  // para descontos, promoções ou ajustes autorizados.
   const valorMatricula = cobrarMatricula
-    ? dinheiro(opcoes.valorMatricula ?? opcoes.taxaMatricula ?? opcoes.valorTaxaMatricula ?? opcoes.valorEntradaMatricula ?? opcoes.valorBaseMatricula ?? valorMatriculaPlano(plano))
+    ? dinheiro(valorMatriculaInformado > 0 ? valorMatriculaInformado : valorMatriculaConfigurado)
     : 0;
+
+  if (cobrarMatricula && valorMatricula <= 0) {
+    const e = new Error("A cobrança da taxa de matrícula está habilitada, mas o plano não possui uma taxa válida.");
+    e.status = 400;
+    throw e;
+  }
 
   const desconto=dinheiro(opcoes.descontoMatricula ?? 0);
   const valorServicos=r.valorServicos;

@@ -173,6 +173,26 @@
     return salvarSessao(json.token, json.usuario);
   }
 
+  const fetchOriginal = window.fetch.bind(window);
+
+  function urlApiInterna(input) {
+    try {
+      const raw = typeof input === "string" ? input : input?.url;
+      const url = new URL(raw, location.origin);
+      return url.origin === location.origin && url.pathname.startsWith("/api/");
+    } catch {
+      return false;
+    }
+  }
+
+  window.fetch = function fusionFetch(input, opcoes = {}) {
+    const token = tokenAtual();
+    if (!token || !urlApiInterna(input)) return fetchOriginal(input, opcoes);
+    const headers = new Headers(opcoes.headers || (input instanceof Request ? input.headers : undefined));
+    if (!headers.has("Authorization")) headers.set("Authorization", `Bearer ${token}`);
+    return fetchOriginal(input, { ...opcoes, headers });
+  };
+
   window.FusionAuth = { login, salvarSessao, usuarioAtual, tokenAtual, estaLogado, validarSessao, temPermissao, permissoesAtual, cabecalhoAuth, fetchAuth, filtrarElementosPorPermissao, proteger, sair, limparSessao, destinoPorPerfil };
   window.protegerPagina = function protegerPagina(perfisPermitidos) { return proteger(perfisPermitidos); };
   window.sair = sair;

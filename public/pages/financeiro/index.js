@@ -48,7 +48,7 @@ let baixaAutomaticaUrlProcessada = false;
 
 function limparParametrosBaixaDaUrl() {
   const params = new URLSearchParams(location.search);
-  const chaves = ["financeiroId", "financeiroid", "lancamentoId", "mensalidadeId", "mensalidadeid", "id", "receberAgora", "origem"];
+  const chaves = ["financeiroId", "financeiroid", "lancamentoId", "mensalidadeId", "mensalidadeid", "matriculaId", "alunoId", "id", "receberAgora", "origem"];
   let alterou = false;
   chaves.forEach((chave) => {
     if (params.has(chave)) {
@@ -610,20 +610,34 @@ function abrirBaixaPorUrlSeExistir() {
   const params = new URLSearchParams(location.search);
   const financeiroId = params.get("financeiroId") || params.get("financeiroid") || params.get("lancamentoId") || params.get("id");
   const mensalidadeId = params.get("mensalidadeId") || params.get("mensalidadeid");
-  if (!financeiroId && !mensalidadeId) return;
+  const matriculaId = params.get("matriculaId");
+  const alunoId = params.get("alunoId");
+  if (!financeiroId && !mensalidadeId && !matriculaId && !alunoId) return;
 
   baixaAutomaticaUrlProcessada = true;
 
   let lancamento = null;
   if (financeiroId) lancamento = lancamentos.find((item) => String(item.id) === String(financeiroId));
   if (!lancamento && mensalidadeId) lancamento = lancamentos.find((item) => String(item.mensalidadeId) === String(mensalidadeId));
+  if (!lancamento && matriculaId) {
+    lancamento = lancamentos.find((item) =>
+      String(item.matriculaId || item.matricula_id || "") === String(matriculaId) &&
+      !lancamentoPago(item)
+    );
+  }
+  if (!lancamento && alunoId) {
+    lancamento = lancamentos
+      .filter((item) => String(item.alunoId || item.aluno_id || "") === String(alunoId))
+      .filter((item) => !lancamentoPago(item))
+      .sort((a, b) => String(a.vencimento || a.data || "").localeCompare(String(b.vencimento || b.data || "")))[0] || null;
+  }
 
   // Remove os parâmetros logo depois de processar a chamada automática.
   // Assim, se o operador atualizar a página, o modal não abre novamente.
   limparParametrosBaixaDaUrl();
 
   if (!lancamento) {
-    alert("Lançamento financeiro da matrícula não foi encontrado. Atualize a página ou confira se o financeiroId existe.");
+    alert("Lançamento financeiro da matrícula não foi encontrado pelos identificadores recebidos. Confira a ficha da matrícula e o lançamento inicial.");
     return;
   }
 

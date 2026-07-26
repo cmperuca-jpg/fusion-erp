@@ -4,6 +4,8 @@ node_modules/
 .env
 .env.*
 !.env.example
+render-environment.txt
+data/
 database/
 backups/
 uploads/

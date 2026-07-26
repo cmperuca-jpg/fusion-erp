@@ -135,6 +135,20 @@ body{background:var(--crm-bg)!important;color:var(--crm-text)!important}
 }
 .crm .lead small{color:var(--crm-muted)!important}
 .crm .lead .valor{color:#ffb07c!important}
+.crm .lead .lead-agenda{
+  display:inline-flex!important;
+  width:max-content!important;
+  max-width:100%!important;
+  margin-top:6px!important;
+  padding:4px 7px!important;
+  border:1px solid #327d89!important;
+  border-radius:999px!important;
+  background:rgba(42,184,202,.13)!important;
+  color:#9af2fb!important;
+  font-size:11px!important;
+  font-weight:850!important;
+  overflow-wrap:normal!important;
+}
 .crm .card-actions{
   display:grid!important;
   grid-template-columns:repeat(3,minmax(0,1fr))!important;

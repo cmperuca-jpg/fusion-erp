@@ -54,6 +54,10 @@
 
   function shouldEnhance(input){
     if(!input || input.dataset.fusionDateReady === '1') return false;
+    if(input.dataset.fusionDate === '0') return false;
+    if(input.dataset.money === '1') return false;
+    if(String(input.inputMode || '').toLowerCase() === 'decimal') return false;
+    if(['number', 'range'].includes(String(input.type || '').toLowerCase())) return false;
     if(input.type === 'date') return true;
     if(input.classList.contains('fusion-date-input')) return true;
     if(input.dataset.fusionDate === '1') return true;

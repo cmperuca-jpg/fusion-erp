@@ -1,24 +1,25 @@
-import { validarToken } from "../auth/auth.service.mjs";
+import { validarToken, validarTokenPortal } from "../auth/auth.service.mjs";
 
 const PUBLIC_RULES = [
   ["GET", "/api/health"],
   ["GET", "/api/v3/architecture/status"],
   ["GET", "/api/v3/persistence/status"],
   ["POST", "/api/auth/login"],
-  ["POST", "/api/matricula-online"],
-  ["GET", "/api/matricula-online"],
-  ["POST", "/api/leads"],
-  ["POST", "/api/chat"],
-  ["GET", "/api/chat"],
-  ["POST", "/api/site-chat"],
-  ["GET", "/api/site-chat"],
+  ["POST", "/api/professores/login"],
   ["POST", "/api/treinos/aluno-login"],
+  ["POST", "/api/matricula-online"],
+  ["GET", "/api/matricula-online/validar-cpf"],
+  ["GET", "/api/planos"],
+  ["POST", "/api/leads"],
+  ["POST", "/api/site-chat"],
+  ["POST", "/api/site-chat/mensagens"],
+  ["GET", "/api/site-chat/mensagens"],
   ["POST", "/api/aluno-login"],
   ["POST", "/api/access-onboarding/ativar"],
-  ["GET", "/api/reconhecimento-facial/terminal"],
-  ["POST", "/api/reconhecimento-facial/terminal"],
-  ["GET", "/api/reconhecimento-facial/agent"],
-  ["POST", "/api/reconhecimento-facial/agent"],
+  ["GET", "/api/reconhecimento-facial/terminal", "prefix"],
+  ["POST", "/api/reconhecimento-facial/terminal", "prefix"],
+  ["GET", "/api/reconhecimento-facial/agent", "prefix"],
+  ["POST", "/api/reconhecimento-facial/agent", "prefix"],
   ["GET", "/api/aparencia"]
 ];
 
@@ -30,6 +31,7 @@ const ADMIN_PREFIXES = [
   "/api/access-engine",
   "/api/henry7x",
   "/api/access-bridge",
+  "/api/sistema",
   "/api/v3/persistence/migrate",
   "/api/v3/access",
   "/api/aparencia"
@@ -44,7 +46,10 @@ function pathMatches(pathname, prefix) {
 }
 
 function isPublic(req) {
-  return PUBLIC_RULES.some(([method, prefix]) => req.method === method && pathMatches(req.path, prefix));
+  return PUBLIC_RULES.some(([method, routePath, match = "exact"]) => {
+    if (req.method !== method) return false;
+    return match === "prefix" ? pathMatches(req.path, routePath) : req.path === routePath;
+  });
 }
 
 function isAdmin(user = {}) {
@@ -53,8 +58,111 @@ function isAdmin(user = {}) {
   return perfil === "administrador" || perfil === "admin" || permissions.includes("*");
 }
 
+function isPortal(user = {}, tipo = "") {
+  if (!user.portal) return false;
+  return tipo ? String(user.portalTipo || user.perfil || "").toLowerCase() === tipo : true;
+}
+
+function isResponsavelTecnico(user = {}) {
+  const perfil = String(user.perfil || "").toLowerCase();
+  const permissions = Array.isArray(user.permissoes) ? user.permissoes : [];
+  return user.acessoTodosAlunos === true ||
+    perfil === "responsavel_tecnico" ||
+    perfil === "responsavel-tecnico" ||
+    perfil === "responsavel tecnico" ||
+    permissions.includes("professores") ||
+    permissions.includes("*");
+}
+
+function mesmoId(a, b) {
+  return String(a || "").trim() && String(a || "").trim() === String(b || "").trim();
+}
+
+function alunoIdDaRequisicao(req) {
+  return req.query?.alunoId || req.query?.aluno_id || req.body?.alunoId || req.body?.aluno_id || "";
+}
+
+function alunoIdNoPath(req) {
+  const match = String(req.path || "").match(/^\/api\/alunos\/([^/]+)(?:\/prontuario)?$/);
+  return match?.[1] || "";
+}
+
+function portalAlunoPermitido(req, user = {}) {
+  if (!isPortal(user, "aluno")) return false;
+  const alunoId = String(user.id || "");
+
+  if (req.method === "GET" && alunoIdNoPath(req)) return mesmoId(alunoIdNoPath(req), alunoId);
+  if (req.method === "GET" && req.path === "/api/treinos") return mesmoId(alunoIdDaRequisicao(req), alunoId);
+  if (req.method === "GET" && req.path === "/api/avaliacoes") return mesmoId(alunoIdDaRequisicao(req), alunoId);
+  if (req.method === "GET" && req.path === "/api/mensalidades") return mesmoId(alunoIdDaRequisicao(req), alunoId);
+  if (req.method === "GET" && pathMatches(req.path, "/api/mensalidades/aluno")) return mesmoId(req.path.split("/").pop(), alunoId);
+  if (req.method === "GET" && req.path === "/api/financeiro") return mesmoId(alunoIdDaRequisicao(req), alunoId);
+  if (req.method === "GET" && req.path === "/api/treinos/aluno-sessao") return mesmoId(alunoIdDaRequisicao(req), alunoId);
+  if (req.method === "GET" && req.path === "/api/treinos/aluno-catraca-contador") return mesmoId(alunoIdDaRequisicao(req), alunoId);
+  if (req.method === "POST" && req.path === "/api/treinos/aluno-liberar-catraca") return mesmoId(alunoIdDaRequisicao(req), alunoId);
+
+  return false;
+}
+
+function portalProfessorPermitido(req, user = {}) {
+  if (!isPortal(user, "professor")) return false;
+  const tecnico = isResponsavelTecnico(user);
+
+  if (req.method === "GET" && req.path === "/api/professores/sessao") return true;
+  if (req.method === "GET" && req.path === "/api/treinos/biblioteca") return true;
+
+  if (pathMatches(req.path, "/api/professores")) {
+    if (req.method === "GET" && req.path === "/api/professores") return tecnico;
+    if (req.method === "PUT" && /\/status$/i.test(req.path)) return tecnico;
+    return false;
+  }
+
+  if (pathMatches(req.path, "/api/alunos")) return req.method === "GET";
+  if (pathMatches(req.path, "/api/avaliacoes")) return ["GET", "POST", "PUT", "DELETE"].includes(req.method);
+  if (pathMatches(req.path, "/api/treinos")) return ["GET", "POST", "PUT"].includes(req.method);
+
+  return false;
+}
+
+function portalPermitido(req, user = {}) {
+  return portalAlunoPermitido(req, user) || portalProfessorPermitido(req, user);
+}
+
 function clientKey(req) {
   return String(req.ip || req.socket?.remoteAddress || "unknown");
+}
+
+function extrairToken(authorization = "") {
+  const valor = String(authorization || "").trim();
+  if (!valor) return "";
+  if (valor.toLowerCase().startsWith("bearer ")) return valor.slice(7).trim();
+  return valor;
+}
+
+async function autenticarSessao(req) {
+  const authorization = req.headers.authorization || "";
+  try {
+    const usuario = await validarToken(authorization);
+    return { ...usuario, origemSessao: "painel" };
+  } catch (erroPainel) {
+    const token = extrairToken(authorization);
+    if (!token) throw erroPainel;
+    try {
+      const portal = validarTokenPortal(token);
+      return {
+        id: portal.sub,
+        nome: portal.nome || "",
+        perfil: portal.perfil || portal.tipo,
+        permissoes: Array.isArray(portal.permissoes) ? portal.permissoes : [],
+        portal: true,
+        portalTipo: portal.tipo,
+        acessoTodosAlunos: isResponsavelTecnico(portal),
+        origemSessao: "portal"
+      };
+    } catch {
+      throw erroPainel;
+    }
+  }
 }
 
 export function loginRateLimit(req, res, next) {
@@ -107,18 +215,25 @@ export async function apiSecurity(req, res, next) {
   if (req.method === "OPTIONS" || isPublic(req)) return next();
 
   try {
-    req.usuario = await validarToken(req.headers.authorization || "");
+    req.usuario = await autenticarSessao(req);
   } catch (error) {
     return res.status(error.status || 401).json({
       ok: false,
-      mensagem: error.message || "Autenticação necessária."
+      mensagem: error.message || "Autenticacao necessaria."
+    });
+  }
+
+  if (isPortal(req.usuario) && !portalPermitido(req, req.usuario)) {
+    return res.status(403).json({
+      ok: false,
+      mensagem: "Este portal nao tem acesso a esta operacao."
     });
   }
 
   if (ADMIN_PREFIXES.some(prefix => pathMatches(req.path, prefix)) && !isAdmin(req.usuario)) {
     return res.status(403).json({
       ok: false,
-      mensagem: "Esta operação exige perfil de administrador."
+      mensagem: "Esta operacao exige perfil de administrador."
     });
   }
 

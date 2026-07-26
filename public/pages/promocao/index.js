@@ -2,6 +2,9 @@ const listaPlanos = document.getElementById('listaPlanos');
 const formLead = document.getElementById('formLead');
 const alertaLead = document.getElementById('alertaLead');
 const leadPlano = document.getElementById('leadPlano');
+const leadIntencao = document.getElementById('leadIntencao');
+const leadDataAula = document.getElementById('leadDataAula');
+const leadSubmit = document.getElementById('leadSubmit');
 let planos = [];
 let assinaturaPlanos = '';
 let atualizacaoPlanosEmAndamento = false;
@@ -96,6 +99,36 @@ function mensagem(texto, tipo = 'info') {
   alertaLead.classList.remove('hidden');
 }
 
+function intencaoAtual() {
+  return leadIntencao?.value === 'aula_experimental' ? 'aula_experimental' : 'promocao';
+}
+
+function etapaPorIntencao() {
+  if (intencaoAtual() === 'aula_experimental') return 'aula_experimental';
+  return document.getElementById('leadHorario').value.trim() ? 'agendado' : 'novo';
+}
+
+function origemPorIntencao() {
+  return intencaoAtual() === 'aula_experimental'
+    ? 'site_academia_aula_experimental'
+    : 'site_academia_promocao';
+}
+
+function atualizarTextoIntencao() {
+  if (!leadSubmit) return;
+  leadSubmit.textContent = intencaoAtual() === 'aula_experimental'
+    ? 'Solicitar aula experimental'
+    : 'Solicitar promoção';
+}
+
+function selecionarAulaExperimental(planoId = '') {
+  if (leadPlano && planoId) leadPlano.value = planoId;
+  if (leadIntencao) leadIntencao.value = 'aula_experimental';
+  atualizarTextoIntencao();
+  document.getElementById('interesse')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  setTimeout(() => document.getElementById('leadNome')?.focus(), 250);
+}
+
 function classeTemplatePlano(plano, indice) {
   const tipo = textoNormalizado(tipoPlano(plano));
   if (tipo.includes('diar')) return 'plano-template-diaria';
@@ -146,9 +179,14 @@ function renderizarPlanos() {
           ${taxa > 0 ? `<li><strong>Taxa de matrícula:</strong> ${esc(moeda(taxa))}</li>` : '<li><strong>Taxa de matrícula:</strong> sem taxa adicional</li>'}
         </ul>
 
-        <a class="plano-cta" href="/pages/matricula-online/index.html?planoId=${encodeURIComponent(idPlano(plano))}">
-          Escolher este plano
-        </a>
+        <div class="plano-acoes">
+          <a class="plano-cta" href="/pages/matricula-online/index.html?planoId=${encodeURIComponent(idPlano(plano))}">
+            Matricular online
+          </a>
+          <a class="plano-cta plano-cta-secundaria" href="#interesse" data-aula-experimental="1" data-plano-id="${esc(idPlano(plano))}">
+            Aula experimental
+          </a>
+        </div>
       </article>`;
   }).join('');
 
@@ -211,6 +249,8 @@ formLead.addEventListener('submit', async (evento) => {
   evento.preventDefault();
 
   const plano = planos.find((item) => String(idPlano(item)) === String(leadPlano.value));
+  const objetivo = document.getElementById('leadObjetivo').value.trim();
+  const aulaExperimental = intencaoAtual() === 'aula_experimental';
   const payload = {
     nome: document.getElementById('leadNome').value.trim(),
     telefone: document.getElementById('leadTelefone').value.trim(),
@@ -218,10 +258,12 @@ formLead.addEventListener('submit', async (evento) => {
     planoId: leadPlano.value,
     plano: plano ? nomePlano(plano) : '',
     valorPrevisto: plano ? valorPlano(plano) : 0,
+    dataAgendada: leadDataAula?.value || '',
     horarioAgendado: document.getElementById('leadHorario').value.trim(),
-    objetivo: document.getElementById('leadObjetivo').value.trim(),
-    origem: 'site_academia_promocao',
-    etapa: document.getElementById('leadHorario').value.trim() ? 'agendado' : 'novo'
+    objetivo,
+    observacao: aulaExperimental ? `Interesse em aula experimental. ${objetivo}`.trim() : objetivo,
+    origem: origemPorIntencao(),
+    etapa: etapaPorIntencao()
   };
 
   try {
@@ -237,12 +279,23 @@ formLead.addEventListener('submit', async (evento) => {
     }
 
     formLead.reset();
-    mensagem('Interesse enviado. A recepção entrará em contato.', 'sucesso');
+    atualizarTextoIntencao();
+    mensagem(aulaExperimental ? 'Aula experimental solicitada. A recepção entrará em contato.' : 'Interesse enviado. A recepção entrará em contato.', 'sucesso');
   } catch (erro) {
     mensagem(erro.message, 'erro');
   }
 });
 
+leadIntencao?.addEventListener('change', atualizarTextoIntencao);
+
+document.addEventListener('click', (evento) => {
+  const botao = evento.target.closest('[data-aula-experimental]');
+  if (!botao) return;
+  evento.preventDefault();
+  selecionarAulaExperimental(botao.dataset.planoId || '');
+});
+
+atualizarTextoIntencao();
 carregarPlanos({ forcar: true });
 
 /* Mantem as caixas sincronizadas sem editar esta pagina: a consulta ocorre

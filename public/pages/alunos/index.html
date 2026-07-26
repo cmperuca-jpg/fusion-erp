@@ -95,7 +95,17 @@
           <div class="grid-2"><div class="field"><label for="nome">Nome completo *</label><input id="nome" required></div><div class="field"><label for="cpf">CPF</label><input id="cpf" maxlength="14"></div></div>
           <div class="grid-3"><div class="field"><label for="rg">RG</label><input id="rg"></div><div class="field"><label for="data_nascimento">Nascimento</label><input id="data_nascimento" type="text" inputmode="numeric" autocomplete="off" placeholder="DD/MM/AAAA" data-fusion-date="1"></div><div class="field"><label for="sexo">Sexo</label><select id="sexo"><option value="">Não informado</option><option value="feminino">Feminino</option><option value="masculino">Masculino</option><option value="outro">Outro</option></select></div></div>
           <div class="grid-2"><div class="field"><label for="telefone">Telefone</label><input id="telefone" maxlength="15"></div><div class="field"><label for="whatsapp">WhatsApp</label><input id="whatsapp" maxlength="15"></div></div>
-          <div class="grid-2"><div class="field"><label for="email">E-mail</label><input id="email" type="email"></div><div class="field"><label for="professor_responsavel">Professor responsável</label><input id="professor_responsavel"></div></div>
+          <div class="grid-2">
+            <div class="field"><label for="email">E-mail</label><input id="email" type="email"></div>
+            <div class="field">
+              <label for="professor_responsavel">Professor responsável</label>
+              <select id="professor_responsavel">
+                <option value="">Sem professor vinculado</option>
+              </select>
+              <input id="professorId" type="hidden">
+              <small>Selecione o profissional responsável pelo acompanhamento e prescrição do aluno.</small>
+            </div>
+          </div>
           <div class="fusion-card cadastro-matricula-vinculada">
             <strong>Matricula vinculada ao plano</strong>
             <p>Todo novo aluno precisa de plano. A matricula e o financeiro inicial sao gerados pelo plano; turma e apenas vinculo operacional.</p>
@@ -109,8 +119,8 @@
           </div>
           <div class="grid-3">
             <div class="field"><label for="cobrar_taxa_matricula">Cobrar taxa de matricula</label><select id="cobrar_taxa_matricula"><option value="sim">Sim</option><option value="nao">Nao</option></select></div>
-            <div class="field"><label for="valor_taxa_matricula">Taxa de matricula</label><input id="valor_taxa_matricula" value="0,00" inputmode="decimal"></div>
-            <div class="field"><label for="desconto_matricula">Desconto inicial</label><input id="desconto_matricula" value="0,00" inputmode="decimal"></div>
+            <div class="field"><label for="valor_taxa_matricula">Taxa de matricula</label><input id="valor_taxa_matricula" type="text" value="0,00" inputmode="decimal" autocomplete="off" data-fusion-date="0" data-money="1"></div>
+            <div class="field"><label for="desconto_matricula">Desconto inicial</label><input id="desconto_matricula" type="text" value="0,00" inputmode="decimal" autocomplete="off" data-fusion-date="0" data-money="1"></div>
           </div>
           <div class="grid-2">
             <div class="field"><label for="total_matricula_preview">Total inicial</label><input id="total_matricula_preview" readonly></div>

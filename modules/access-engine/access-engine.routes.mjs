@@ -1,13 +1,34 @@
 import { Router } from 'express';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import * as service from './access-engine.service.mjs';
 
 const router = Router();
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const raizProjeto = path.resolve(__dirname, '../..');
+const instaladorAccessPath = path.join(raizProjeto, 'public', 'downloads', 'FusionAccessSetup.exe');
+
 function tratar(res, e, status = 500) {
   return res.status(e.status || status).json({ ok: false, erro: e.message, mensagem: e.message });
 }
 
+function baixarInstalador(_req, res) {
+  const stat = fs.statSync(instaladorAccessPath, { throwIfNoEntry: false });
+  if (!stat?.isFile()) {
+    return res.status(404).json({ ok: false, mensagem: 'Instalador nao encontrado nesta distribuicao.' });
+  }
+
+  res.setHeader('Cache-Control', 'private, no-store');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  return res.download(instaladorAccessPath, 'FusionAccessSetup.exe', (erro) => {
+    if (erro && !res.headersSent) tratar(res, erro);
+  });
+}
+
 router.get('/dashboard', async (req, res) => { try { res.json(await service.dashboard()); } catch (e) { tratar(res, e); } });
 router.get('/drivers', async (req, res) => { try { res.json(await service.listarDriversDisponiveis()); } catch (e) { tratar(res, e); } });
+router.get('/instalador', baixarInstalador);
 router.get('/dispositivos', async (req, res) => { try { res.json({ ok: true, dados: await service.listarDispositivos() }); } catch (e) { tratar(res, e); } });
 router.post('/dispositivos', async (req, res) => { try { res.status(201).json({ ok: true, dados: await service.salvarDispositivo(req.body || {}) }); } catch (e) { tratar(res, e, 400); } });
 router.put('/dispositivos/:id', async (req, res) => { try { res.json({ ok: true, dados: await service.salvarDispositivo({ ...(req.body || {}), id: req.params.id }) }); } catch (e) { tratar(res, e, 400); } });

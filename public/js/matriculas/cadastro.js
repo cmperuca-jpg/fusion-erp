@@ -132,13 +132,27 @@
     const taxaInput = $("taxa_matricula");
     const planoIdAtual = String(plano?.id || "");
 
-    if (plano && taxaInput && taxaInput.dataset.manual !== "true" && ultimoPlanoTaxaSincronizada !== planoIdAtual) {
-      taxaInput.value = valorMatriculaPlano(plano).toFixed(2);
+    const taxaConfiguradaPlano = valorMatriculaPlano(plano);
+    const taxaDigitada = dinheiro(taxaInput?.value);
+    const deveSincronizarTaxa = Boolean(
+      plano &&
+      taxaInput &&
+      cobrarTaxa &&
+      (
+        ultimoPlanoTaxaSincronizada !== planoIdAtual ||
+        taxaInput.dataset.manual !== "true" ||
+        taxaDigitada <= 0
+      )
+    );
+
+    if (deveSincronizarTaxa) {
+      taxaInput.value = taxaConfiguradaPlano.toFixed(2);
+      taxaInput.dataset.manual = "";
     }
     ultimoPlanoTaxaSincronizada = planoIdAtual;
 
     const mensalidade = valorPlano(plano);
-    const taxa = cobrarTaxa ? dinheiro(taxaInput?.value) : 0;
+    const taxa = cobrarTaxa ? dinheiro(taxaInput?.value || taxaConfiguradaPlano) : 0;
     const desconto = dinheiro($("desconto_matricula")?.value);
     const total = Math.max(0, mensalidade + taxa - desconto);
 
@@ -227,6 +241,24 @@
       return setAlerta("Informe o plano antes de salvar a matrícula.", "erro");
     }
 
+    const cobrarTaxa = $("cobrar_taxa_matricula")?.value !== "false";
+    const planoSelecionadoAtual = planoSelecionado();
+    const taxaConfigurada = valorMatriculaPlano(planoSelecionadoAtual);
+    let taxaMatricula = dinheiro($("taxa_matricula")?.value);
+
+    if (cobrarTaxa && taxaMatricula <= 0 && taxaConfigurada > 0) {
+      taxaMatricula = taxaConfigurada;
+      $("taxa_matricula").value = taxaConfigurada.toFixed(2);
+      $("taxa_matricula").dataset.manual = "";
+      recalcular();
+    }
+
+    if (cobrarTaxa && taxaMatricula <= 0) {
+      tab("financeiro");
+      $("taxa_matricula")?.focus();
+      return setAlerta("A taxa de matrícula está habilitada, mas o plano não possui um valor válido. Configure a taxa no plano ou selecione Não para a cobrança.", "erro");
+    }
+
     const diaVencimento = diaVencimentoValido($("dia_vencimento")?.value);
     if (!diaVencimento) {
       tab("financeiro");
@@ -253,10 +285,10 @@
       vencimento: $("vencimento").value,
       diaVencimento,
       gerarMensalidade: !["Pre-pago", "Diarista"].includes(tipo),
-      cobrarMatricula: $("cobrar_taxa_matricula").value !== "false",
-      valorMatricula: dinheiro($("taxa_matricula").value),
-      valorTaxaMatricula: dinheiro($("taxa_matricula").value),
-      taxaMatricula: dinheiro($("taxa_matricula").value),
+      cobrarMatricula: cobrarTaxa,
+      valorMatricula: cobrarTaxa ? taxaMatricula : 0,
+      valorTaxaMatricula: cobrarTaxa ? taxaMatricula : 0,
+      taxaMatricula: cobrarTaxa ? taxaMatricula : 0,
       valorMensal: dinheiro($("valor").value),
       valorPlano: dinheiro($("valor").value),
       valorMensalPlano: dinheiro($("valor").value),
@@ -326,7 +358,13 @@
     await carregarBase();
 
     $("plano_id")?.addEventListener("change", recalcular);
-    $("cobrar_taxa_matricula")?.addEventListener("change", recalcular);
+    $("cobrar_taxa_matricula")?.addEventListener("change", () => {
+      if ($("cobrar_taxa_matricula").value !== "false") {
+        $("taxa_matricula").dataset.manual = "";
+        ultimoPlanoTaxaSincronizada = "";
+      }
+      recalcular();
+    });
     $("taxa_matricula")?.addEventListener("input", () => {
       $("taxa_matricula").dataset.manual = "true";
       recalcular();

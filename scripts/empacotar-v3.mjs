@@ -13,9 +13,9 @@ const ZIP = path.join(OUT_DIR, "FusionERP_V3_DISTRIBUICAO_LIMPA.zip");
 
 const EXCLUDED_DIRS = new Set([
   ".git", ".github", "node_modules", "dist", "coverage", "backups",
-  "uploads", "logs", "tmp", "temp", ".cache", ".vscode"
+  "uploads", "logs", "data", "tmp", "temp", ".cache", ".vscode"
 ]);
-const EXCLUDED_FILES = new Set([".env", "Thumbs.db", ".DS_Store"]);
+const EXCLUDED_FILES = new Set([".env", "render-environment.txt", "Thumbs.db", ".DS_Store"]);
 const EXCLUDED_EXT = new Set([".log", ".tmp", ".bak", ".old", ".orig", ".zip"]);
 
 function deveIgnorar(rel, dirent) {

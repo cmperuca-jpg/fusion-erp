@@ -224,6 +224,7 @@ export async function login(dados = {}) {
       sub: prof.id,
       tipo: 'professor',
       perfil: prof.perfil,
+      nome: prof.nome || prof.professorNome || prof.name || '',
       permissoes: prof.acessoTodosAlunos === true ? ['professores', 'avaliacoes', 'treinos'] : ['avaliacoes', 'treinos']
     }),
     professor: prof,

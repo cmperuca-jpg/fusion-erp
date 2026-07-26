@@ -72,7 +72,8 @@ function limparParametrosBaixaDaUrl() {
 
 function lancamentoPago(item) {
   const st = String(item?.status || "").toLowerCase();
-  return ["pago", "recebido", "quitado", "baixado"].includes(st) || saldoLancamento(item) <= 0;
+  const programado = ["programado", "programada", "agendado", "agendada", "previsto", "prevista"].includes(st) || item?.programado === true || item?.previsto === true;
+  return !programado && (["pago", "recebido", "quitado", "baixado"].includes(st) || saldoLancamento(item) <= 0);
 }
 
 function moeda(valor) {
@@ -451,8 +452,10 @@ function valorLiquidoRecebidoLancamento(item) {
 function valorPagoLancamento(item) { return numero(item.valorPago ?? item.valorRecebido ?? item.valorLiquido ?? 0); }
 function valorTotalLancamento(item) { return numero(item.valor ?? item.valorBruto ?? item.total ?? 0); }
 function saldoLancamento(item) {
+  const st = String(item.status || "").toLowerCase();
+  if (["programado", "programada", "agendado", "agendada", "previsto", "prevista"].includes(st) || item.programado === true || item.previsto === true) return 0;
   if (item.valorRestante !== undefined && item.valorRestante !== null) return Math.max(0, numero(item.valorRestante));
-  const status = String(item.status || "").toLowerCase();
+  const status = st;
   if (["pago", "recebido"].includes(status)) return 0;
   return Math.max(0, valorTotalLancamento(item) - valorPagoLancamento(item));
 }
@@ -470,12 +473,13 @@ function renderizarTabela() {
     ? lancamentos.filter((item) => lancamentoPago(item) && taxaOperadoraLancamento(item) > 0)
     : lancamentos;
   if (!listaExibida.length) {
-    els.tabela.innerHTML = `<tr><td colspan="10">Nenhum lançamento encontrado.</td></tr>`;
+    els.tabela.innerHTML = `<tr><td colspan="11">Nenhum lançamento encontrado.</td></tr>`;
     return;
   }
   els.tabela.innerHTML = listaExibida.map((item) => {
     const st = statusClasse(item.status);
     const jaPago = lancamentoPago(item);
+    const programado = ["programado", "programada", "agendado", "agendada", "previsto", "prevista"].includes(st) || item.programado === true || item.previsto === true;
     return `<tr>
       <td><span class="tipo ${escapeHtml(item.tipo)}">${item.tipo === "receber" ? "Receber" : "Pagar"}</span></td>
       <td>${escapeHtml(item.descricao)}</td>
@@ -489,9 +493,9 @@ function renderizarTabela() {
       <td><span class="badge ${escapeHtml(st)}">${escapeHtml(item.status || "Aberto")}</span></td>
       <td><div class="acoes">
         <button class="btn-secondary" onclick="editarLancamento('${escapeHtml(item.id)}')">Editar</button>
-        <button class="btn-light" ${jaPago ? "disabled" : ""} onclick="baixarLancamento('${escapeHtml(item.id)}')">${item.tipo === "pagar" ? "Pagar" : "Receber"}</button>
-        <button class="btn-light" ${jaPago ? "disabled" : ""} onclick="alterarVencimentoLancamento('${escapeHtml(item.id)}')">Vencimento</button>
-        <button class="btn-danger" ${jaPago ? "disabled" : ""} onclick="excluirLancamento('${escapeHtml(item.id)}')">Cancelar</button>
+        <button class="btn-light" ${jaPago || programado ? "disabled" : ""} onclick="baixarLancamento('${escapeHtml(item.id)}')">${item.tipo === "pagar" ? "Pagar" : "Receber"}</button>
+        <button class="btn-light" ${jaPago || programado ? "disabled" : ""} onclick="alterarVencimentoLancamento('${escapeHtml(item.id)}')">Vencimento</button>
+        <button class="btn-danger" ${jaPago || programado ? "disabled" : ""} onclick="excluirLancamento('${escapeHtml(item.id)}')">Cancelar</button>
       </div></td>
     </tr>`;
   }).join("");
@@ -511,7 +515,7 @@ async function carregarResumo() {
   }
   if (els.kpiCaixaReal && respCaixa?.ok) {
     const caixaJson = await respCaixa.json().catch(() => ({}));
-    els.kpiCaixaReal.textContent = moeda(caixaJson?.totais?.saldoAtual || 0);
+    els.kpiCaixaReal.textContent = moeda(caixaJson?.totais?.saldoAtualLiquido ?? caixaJson?.totais?.saldoLiquido ?? caixaJson?.totais?.saldoAtual ?? 0);
   }
 }
 

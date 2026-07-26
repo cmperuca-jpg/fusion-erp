@@ -1,49 +1,45 @@
 [
   {
-    "id": "prof_modelo_responsavel_tecnico",
+    "id": "8a43e182-0629-4820-9921-777476e782cc",
+    "status": "Ativo",
+    "criadoEm": "2026-07-24T15:18:57.626Z",
+    "atualizadoEm": "2026-07-24T15:24:27.130Z",
     "nome": "Responsável Técnico",
-    "cpf": "04877315497",
+    "cpf": "10020030000",
     "rg": "2000001220025",
-    "cref": "ESTAGIARIO",
-    "email": "cmperuca@gmail.com",
-    "login": "tecnico@fusionerp.local",
+    "cref": "222-09",
+    "email": "cmmarechais1@gmail.com",
     "telefone": "82988450407",
-    "whatsapp": "82988450407",
-    "especialidade": "Musculação e Hipertrofia",
+    "whatsapp": "(82) 98845-0407",
+    "dataNascimento": "1981-12-12",
+    "especialidade": "preparação fisica",
     "especialidades": [
-      "Musculação",
-      "Hipertrofia",
-      "Avaliação física"
+      "CAPOEIRA",
+      "MUSCULAÇÃO",
+      "NATAÇÃO"
     ],
     "modalidades": [
-      "Musculação"
+      "TODAS"
     ],
-    "perfil": "responsavel_tecnico",
-    "acessoTodosAlunos": false,
-    "status": "Ativo",
-    "bloqueado": false,
-    "senhaHash": "e581d17ef36f0f2556ea321a6c708c41:1dee58aad3aaf374764bda22e763dc5d5b0d1cdc72ff6e2a5b459502de243e56841b6963f70c8fd2ed5608a064e117c012880c650914c41ebcc1fde3ace2d22e",
-    "criadoEm": "2026-07-16T12:14:17.917Z",
-    "atualizadoEm": "2026-07-21T23:09:16.456Z",
-    "observacoes": "",
-    "dataNascimento": "1981-10-06",
     "diasTrabalho": [
       "SEGUNDA",
       "TERÇA",
       "QUARTA",
       "QUINTA",
-      "SEXTA",
-      "SABADO E DOMINGO"
+      "SEXTA"
     ],
     "horarioInicio": "05:30",
     "horarioFim": "22:00",
-    "tipoContrato": "Parceria",
+    "tipoContrato": "Autônomo",
     "valorHora": "10,00",
-    "banco": "BANCO INTER",
+    "banco": "",
     "agencia": "",
     "conta": "",
-    "chavePix": "82988450407",
+    "chavePix": "",
     "endereco": "Rua Mensageiro José Raimundo dos Santos, 260",
-    "documentos": []
+    "observacoes": "",
+    "documentos": [],
+    "acessoTodosAlunos": false,
+    "senhaHash": "453deee480aa365cdffa2546b64986bc:e7fa30b8bb9b38cb3cd09a3b8f72c14cb7b4c3c37471905ed164d0ed4691032fc90f26f0e3f2ef41f01debc607f856e9cfd1a0080840a96111d696b2add86869"
   }
 ]

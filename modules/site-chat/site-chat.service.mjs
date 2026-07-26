@@ -112,6 +112,28 @@ export async function listarMensagensChat(filtros = {}) {
   return { ok: true, total: mensagens.length, mensagens: mensagens.slice(-limite) };
 }
 
+export async function listarMensagensChatPublico(filtros = {}) {
+  const conversaId = texto(filtros.conversaId || filtros.chatId || "", 120);
+  const participante = chaveParticipante(filtros);
+  if (!conversaId || !participante) {
+    const erro = new Error("Informe a identificacao da conversa.");
+    erro.status = 401;
+    throw erro;
+  }
+
+  const todas = await lerMensagens();
+  const mensagens = filtrarMensagens(todas, { conversaId });
+  const donoRegistrado = mensagens.find(m => m.participanteChave)?.participanteChave || "";
+  if (!donoRegistrado || donoRegistrado !== participante) {
+    const erro = new Error("Conversa nao encontrada para este participante.");
+    erro.status = 403;
+    throw erro;
+  }
+
+  const limite = Math.max(1, Math.min(100, Number(filtros.limite || 80)));
+  return { ok: true, total: mensagens.length, mensagens: mensagens.slice(-limite) };
+}
+
 export async function listarConversasChat() {
   const mensagens = await lerMensagens();
   const mapa = new Map();

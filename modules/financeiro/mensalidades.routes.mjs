@@ -5,12 +5,12 @@ import {
   criarMensalidade,
   gerarMensalidades,
   atualizarMensalidade,
-  baixarMensalidade,
-  estornarBaixaMensalidade,
   cancelarMensalidade,
   excluirMensalidade,
   historicoAluno
 } from './mensalidades.service.mjs';
+import { listarTitulos, receberTitulos, estornarRecibo } from './financeiro-ledger.service.mjs';
+import { programarProximaCobrancaAposPagamento } from '../cobranca/cobranca.service.mjs';
 
 const router = express.Router();
 
@@ -72,7 +72,28 @@ router.put('/:id', async (req, res) => {
 
 router.post('/:id/baixar', async (req, res) => {
   try {
-    res.json(await baixarMensalidade(req.params.id, req.body || {}));
+    const mensalidades = await listarMensalidades({});
+    const mensalidade = (Array.isArray(mensalidades) ? mensalidades : mensalidades.mensalidades || [])
+      .find((item) => String(item.id) === String(req.params.id));
+    if (!mensalidade) return res.status(404).json({ erro: true, mensagem: 'Mensalidade não encontrada.' });
+    const titulos = await listarTitulos({});
+    const titulo = titulos.find((item) => String(item.mensalidadeId) === String(mensalidade.id) ||
+      String(item.id) === String(mensalidade.lancamentoFinanceiroId || mensalidade.financeiroId));
+    if (!titulo) return res.status(409).json({ erro: true, mensagem: 'Esta mensalidade não possui título financeiro vinculado. Reconcilie o cadastro antes de baixar.' });
+    const resultado = await receberTitulos({
+      ...(req.body || {}),
+      tituloId: titulo.id,
+      valor: req.body?.valorPago ?? req.body?.valor,
+      operacaoId: req.body?.operacaoId || `mensalidade-${mensalidade.id}-${Date.now()}`
+    });
+    let cobrancaAutomatica = { ok: true, programada: false };
+    if (!resultado.idempotente) try {
+      cobrancaAutomatica = await programarProximaCobrancaAposPagamento({
+        financeiroId: titulo.id, mensalidadeId: mensalidade.id, alunoId: titulo.alunoId || mensalidade.alunoId,
+        usuario: req.body?.usuario || 'mensalidades'
+      });
+    } catch (erroAgenda) { cobrancaAutomatica = { ok: false, aviso: true, programada: false, motivo: erroAgenda.message }; }
+    res.json({ ok: true, ...resultado, cobrancaAutomatica });
   } catch (erro) {
     tratarErro(res, erro);
   }
@@ -80,7 +101,16 @@ router.post('/:id/baixar', async (req, res) => {
 
 router.post('/:id/estornar', async (req, res) => {
   try {
-    res.json(await estornarBaixaMensalidade(req.params.id, req.body || {}));
+    const mensalidades = await listarMensalidades({});
+    const mensalidade = (Array.isArray(mensalidades) ? mensalidades : mensalidades.mensalidades || [])
+      .find((item) => String(item.id) === String(req.params.id));
+    if (!mensalidade) return res.status(404).json({ erro: true, mensagem: 'Mensalidade não encontrada.' });
+    const titulos = await listarTitulos({});
+    const titulo = titulos.find((item) => String(item.mensalidadeId) === String(mensalidade.id) ||
+      String(item.id) === String(mensalidade.lancamentoFinanceiroId || mensalidade.financeiroId));
+    const reciboId = mensalidade.ultimoReciboId || titulo?.ultimoReciboId;
+    if (!reciboId) return res.status(409).json({ erro: true, mensagem: 'Baixa legada sem recibo. Não é seguro estornar por esta tela: use a reconciliação antes de alterar caixa ou financeiro.' });
+    res.json(await estornarRecibo(reciboId, req.body || {}));
   } catch (erro) {
     tratarErro(res, erro);
   }

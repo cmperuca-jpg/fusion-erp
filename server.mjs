@@ -49,6 +49,7 @@ import reconhecimentoFacialRoutes from "./modules/reconhecimento-facial/reconhec
 import accessOnboardingRoutes from "./modules/access-onboarding/access-onboarding.routes.mjs";
 import whatsappRoutes from "./modules/whatsapp/whatsapp.routes.mjs";
 import resetDadosRoutes from "./modules/reset-dados/reset-dados.routes.mjs";
+import { apiSecurity, loginRateLimit, securityHeaders } from "./modules/security/api-security.middleware.mjs";
 import { executarLembretesVencimento } from "./modules/whatsapp/whatsapp.service.mjs";
 import { inicializarPersistenciaSupabase, encerrarPersistenciaSupabase } from "./modules/backup/supabase-data.service.mjs";
 import { iniciarBackupAutomatico } from "./modules/backup/backup.service.mjs";
@@ -331,10 +332,41 @@ function calcularStatusPagamento(valorBase, totalPago) {
   return "parcial";
 }
 
+const corsOrigins = String(process.env.CORS_ORIGINS || "")
+  .split(",")
+  .map((origem) => origem.trim())
+  .filter(Boolean);
+const isProduction = String(process.env.NODE_ENV || "").toLowerCase() === "production";
+const jsonBodyLimit = process.env.FUSION_JSON_BODY_LIMIT || "10mb";
+const urlEncodedBodyLimit = process.env.FUSION_FORM_BODY_LIMIT || "2mb";
 
-app.use(cors());
-app.use(express.json({ limit: "50mb" }));
-app.use(express.urlencoded({ extended: true, limit: "50mb" }));
+function origemLocalPermitida(origin) {
+  try {
+    const url = new URL(origin);
+    return ["localhost", "127.0.0.1", "::1"].includes(url.hostname);
+  } catch {
+    return false;
+  }
+}
+
+const corsOptions = {
+  origin(origin, callback) {
+    if (!origin) return callback(null, true);
+    if (corsOrigins.includes(origin)) return callback(null, true);
+    if (!isProduction && origemLocalPermitida(origin)) return callback(null, true);
+    return callback(null, false);
+  },
+  credentials: true
+};
+
+app.use(securityHeaders);
+app.use(cors(corsOptions));
+app.use(express.json({ limit: jsonBodyLimit }));
+app.use(express.urlencoded({ extended: true, limit: urlEncodedBodyLimit }));
+app.use("/api/auth/login", loginRateLimit);
+app.use("/api/professores/login", loginRateLimit);
+app.use("/api/treinos/aluno-login", loginRateLimit);
+app.use(apiSecurity);
 
 
 app.get("/api/health", (req, res) => {
@@ -357,6 +389,8 @@ app.get("/api/health", (req, res) => {
 });
 
 const legacyPageRedirects = new Map([
+  ["/index_teste_antigo.html", "/pages/promocao/index.html"],
+  ["/pages_cadastro.html", "/pages/matriculas/index.html"],
   ["/pages/login/login.html", "/pages/login/index.html"],
   ["/pages/login.html", "/pages/login/index.html"],
   ["/pages/agenda/cadastro.html", "/pages/agenda/index.html"],
@@ -408,8 +442,50 @@ app.use((req, res, next) => {
   return next();
 });
 
-app.use(express.static(path.join(__dirname, "public")));
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+const uploadExtensionsPermitidas = new Set([".jpg", ".jpeg", ".png", ".gif", ".webp", ".pdf"]);
+
+function bloquearDownloadPublico(req, res, next) {
+  if (
+    ["GET", "HEAD"].includes(req.method) &&
+    String(req.path || "").toLowerCase() === "/downloads/fusionaccesssetup.exe"
+  ) {
+    return res.status(404).send("Arquivo indisponivel.");
+  }
+  return next();
+}
+
+function cabecalhosEstaticos(res, filePath) {
+  const nome = path.basename(filePath || "").toLowerCase();
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  if (nome.endsWith(".html") || nome.startsWith("fusion-sw")) {
+    res.setHeader("Cache-Control", "no-store");
+  }
+}
+
+function protegerUploads(req, res, next) {
+  const ext = path.extname(req.path || "").toLowerCase();
+  if (!uploadExtensionsPermitidas.has(ext)) {
+    return res.status(404).json({ ok: false, mensagem: "Arquivo indisponivel." });
+  }
+  res.setHeader("Cache-Control", "private, no-store");
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  return next();
+}
+
+app.use(bloquearDownloadPublico);
+app.use(express.static(path.join(__dirname, "public"), {
+  dotfiles: "deny",
+  setHeaders: cabecalhosEstaticos
+}));
+app.use("/uploads", protegerUploads, express.static(path.join(__dirname, "uploads"), {
+  dotfiles: "deny",
+  fallthrough: false,
+  index: false,
+  setHeaders(res) {
+    res.setHeader("Cache-Control", "private, no-store");
+    res.setHeader("X-Content-Type-Options", "nosniff");
+  }
+}));
 
 app.get("/", (req, res) => {
   res.redirect(302, "/pages/promocao/index.html");
@@ -828,16 +904,29 @@ app.get("/api/sistema/seguranca", async (req, res) => {
   const rotasPublicasPermitidas = [
     "GET /",
     "GET /api",
+    "GET /api/health",
     "POST /api/auth/login",
-    "GET /api/sistema/diagnostico",
-    "GET /api/sistema/performance",
-    "GET /api/sistema/seguranca"
+    "POST /api/professores/login",
+    "POST /api/treinos/aluno-login",
+    "POST /api/aluno-login",
+    "GET /api/planos",
+    "POST /api/matricula-online",
+    "GET /api/matricula-online/validar-cpf",
+    "POST /api/leads",
+    "POST /api/site-chat",
+    "POST /api/site-chat/mensagens",
+    "GET /api/site-chat/mensagens",
+    "GET /api/aparencia",
+    "POST /api/access-onboarding/ativar",
+    "GET/POST /api/reconhecimento-facial/terminal/*",
+    "GET/POST /api/reconhecimento-facial/agent/*"
   ];
 
   const avisos = [];
-  avisos.push("Ambiente recomendado para piloto: rede local ou VPN.");
-  avisos.push("Antes de produção externa, restringir CORS por origem e trocar login fixo por autenticação persistida.");
-  avisos.push("Fazer backup da pasta data antes de atualizar versões.");
+  avisos.push("Configure JWT_SECRET/FUSION_JWT_SECRET forte antes de publicar.");
+  avisos.push("Configure CORS_ORIGINS com os dominios reais do sistema.");
+  avisos.push("Rotacione qualquer segredo que ja tenha sido compartilhado fora do ambiente seguro.");
+  avisos.push("Fazer backup da pasta data antes de atualizar versoes.");
 
   res.json({
     ok: true,
@@ -845,12 +934,12 @@ app.get("/api/sistema/seguranca", async (req, res) => {
     modulo: "seguranca",
     status: "Homologação de segurança ativa",
     limites: {
-      json: "50mb",
-      urlencoded: "50mb"
+      json: jsonBodyLimit,
+      urlencoded: urlEncodedBodyLimit
     },
     rotasPublicasPermitidas,
     avisos,
-    recomendacao: "Aprovado para piloto local após execução de npm run homologacao."
+    recomendacao: "Aprovado para piloto apos executar a validacao do projeto e configurar os segredos do ambiente."
   });
 });
 
