@@ -6,7 +6,6 @@ const COL = Object.freeze({
   mensalidades: "mensalidades.json", recebimentos: "recebimentos.json", caixa: "caixa.json",
   recibos: "recibos.json", itens: "recibos_itens.json", formas: "formas_pagamento.json",
   plano: "plano_contas.json", auditoria: "auditoria_financeira.json", creditos: "creditos.json",
-  checkins: "checkin.json",
   pagamentosLegacy: "pagamentos.json", dbLegacy: "db.json"
 });
 
@@ -328,74 +327,25 @@ export async function receberTitulos(dados = {}) {
 
 export async function estornarRecibo(id, dados = {}) {
   return executarTransacaoJson(async () => {
-    const [recibos, itens, titulos, caixa, mensalidades, recebimentos, creditos, matriculas, alunos, checkins] = await Promise.all([
-      ler(COL.recibos, []), ler(COL.itens, []), ler(COL.titulos, []), ler(COL.caixa, caixaVazio()), ler(COL.mensalidades, []), ler(COL.recebimentos, []), ler(COL.creditos, []), ler(COL.matriculas, []), ler(COL.alunos, []), ler(COL.checkins, [])
-    ]);
+    const [recibos, itens, titulos, caixa, mensalidades, recebimentos, creditos] = await Promise.all([ler(COL.recibos, []), ler(COL.itens, []), ler(COL.titulos, []), ler(COL.caixa, caixaVazio()), ler(COL.mensalidades, []), ler(COL.recebimentos, []), ler(COL.creditos, [])]);
     const ri = recibos.findIndex((x) => String(x.id) === String(id) || String(x.numero) === String(id)); if (ri < 0) throw erro("Recibo não encontrado.", 404); if (recibos[ri].cancelado) throw erro("Recibo já estornado.", 409);
     const cx = caixaAberto(caixa); if (!cx) throw erro("Abra o caixa para registrar o estorno.", 409);
     const motivo = txt(dados.motivo); if (motivo.length < 3) throw erro("Informe o motivo do estorno.");
     const relacionados = itens.filter((x) => String(x.reciboId) === String(recibos[ri].id) && !x.cancelado);
-    const matriculasParaReverter = new Map();
-    const titulosIniciaisEstornados = new Set();
     for (const item of relacionados) {
       const ti = titulos.findIndex((x) => String(x.id) === String(item.tituloId)); if (ti >= 0) {
         const t = tituloNormalizado(titulos[ti]); const novoPagoC = Math.max(0, valorPagoC(t) - Number(item.valorAplicadoCentavos || 0) - Number(item.descontoCentavos || 0) + Number(item.acrescimoCentavos || 0));
         titulos[ti] = tituloNormalizado({ ...t, valorPagoCentavos: novoPagoC, ultimoReciboId: "", atualizadoEm: agora() });
         for (let m = 0; m < mensalidades.length; m += 1) if (mesmo(mensalidades[m].id, item.mensalidadeId) || mesmo(mensalidades[m].lancamentoFinanceiroId || mensalidades[m].financeiroId, item.tituloId)) mensalidades[m] = { ...mensalidades[m], valorPago: titulos[ti].valorPago, valorRestante: titulos[ti].valorRestante, status: titulos[ti].status === "Parcial" ? "parcial" : "aberto", estornadoEm: agora(), atualizadoEm: agora() };
-        if (t.origem === "matricula_inicial_unificada" && t.ativarMatriculaAoReceber === true) {
-          matriculasParaReverter.set(idMatricula(t) || txt(item.matriculaId), idAluno(t) || txt(item.alunoId));
-          titulosIniciaisEstornados.add(t.id);
-        }
       }
       item.cancelado = true; item.estornadoEm = agora(); item.motivoEstorno = motivo;
-    }
-    for (const [matriculaId, alunoIdDoTitulo] of matriculasParaReverter) {
-      const mi = matriculas.findIndex((x) => mesmo(x.id, matriculaId));
-      if (mi < 0) continue;
-      const matricula = matriculas[mi]; const alunoId = alunoIdDoTitulo || idAluno(matricula);
-      matriculas[mi] = {
-        ...matricula,
-        status: "Pendente", statusPagamento: "Pendente", statusFinanceiroInicial: "Aberto",
-        bloqueada: true, bloqueioCheckin: true,
-        motivoBloqueio: "Pagamento inicial estornado", motivoBloqueioCheckin: "Pagamento inicial estornado",
-        ativadaEm: "", liberadaAcessoEm: "", liberadaPorPagamentoEm: "", cacheAcessoLimpoEm: "", ultimoPagamentoEm: "",
-        atualizadoEm: agora()
-      };
-      const ai = alunos.findIndex((x) => mesmo(x.id, alunoId));
-      if (ai >= 0) alunos[ai] = {
-        ...alunos[ai],
-        status: "pre-matriculado", situacao: "pre-matriculado", ativo: false,
-        statusMatricula: "Pendente", matriculaStatus: "Pendente",
-        bloqueado: true, bloqueioCheckin: true,
-        motivoBloqueio: "Pagamento inicial estornado", motivoBloqueioCheckin: "Pagamento inicial estornado",
-        atualizadoEm: agora()
-      };
-      for (let c = 0; c < checkins.length; c += 1) {
-        if (idAluno(checkins[c]) === alunoId || idMatricula(checkins[c]) === matriculaId) checkins[c] = {
-          ...checkins[c], status: "Bloqueado", bloqueado: true, bloqueioCheckin: true,
-          motivoBloqueio: "Pagamento inicial estornado", motivoBloqueioCheckin: "Pagamento inicial estornado", atualizadoEm: agora()
-        };
-      }
-      const mensalidadeFuturaIds = new Set([matricula.mensalidadeProximaId, matricula.proximaMensalidadeId].map(txt).filter(Boolean));
-      const financeiroFuturoIds = new Set([matricula.financeiroProximoId, matricula.proximoFinanceiroId].map(txt).filter(Boolean));
-      if (!mensalidadeFuturaIds.size && !financeiroFuturoIds.size) {
-        const proxima = mensalidades
-          .filter((x) => idMatricula(x) === matriculaId && !finalizado(x) && !quitado(x) && !titulosIniciaisEstornados.has(txt(x.lancamentoFinanceiroId || x.financeiroId)))
-          .sort((a, b) => dataVencimento(a).localeCompare(dataVencimento(b)))[0];
-        if (proxima) mensalidadeFuturaIds.add(txt(proxima.id));
-      }
-      for (let m = 0; m < mensalidades.length; m += 1) {
-        const mensalidade = mensalidades[m];
-        if (!mensalidadeFuturaIds.has(txt(mensalidade.id)) && !financeiroFuturoIds.has(txt(mensalidade.lancamentoFinanceiroId || mensalidade.financeiroId))) continue;
-        mensalidades[m] = { ...mensalidade, status: "cancelada", canceladaPorEstorno: true, canceladaEm: agora(), motivoCancelamento: "Estorno da matrícula inicial", atualizadoEm: agora() };
-      }
     }
     for (const r of recebimentos) if (String(r.reciboId) === String(recibos[ri].id)) { r.status = "estornado"; r.motivoEstorno = motivo; r.estornadoEm = agora(); r.atualizadoEm = agora(); }
     recibos[ri] = { ...recibos[ri], cancelado: true, status: "Estornado", motivoEstorno: motivo, estornadoPor: txt(dados.usuario) || "sistema", estornadoEm: agora() };
     for (const meio of recibos[ri].formasPagamento || []) caixa.movimentos.push({ id: uid("movest"), caixaId: cx.id, tipo: "saida", descricao: `Estorno recibo ${recibos[ri].numero}`, categoria: "Estorno de recebimento", pessoa: recibos[ri].aluno, alunoId: recibos[ri].alunoId, reciboId: recibos[ri].id, reciboEstornadoId: recibos[ri].id, formaPagamento: meio.formaPagamento, valorCentavos: centavos(meio.valor), valor: moeda(meio.valor), data: hoje(), status: "ativo", origem: "estorno_recibo", criadoEm: agora() });
     if (centavos(recibos[ri].troco) > 0) caixa.movimentos.push({ id: uid("movesttroco"), caixaId: cx.id, tipo: "entrada", descricao: `Reversão do troco do recibo ${recibos[ri].numero}`, categoria: "Estorno de troco", pessoa: recibos[ri].aluno, alunoId: recibos[ri].alunoId, reciboId: recibos[ri].id, formaPagamento: "Dinheiro", valorCentavos: centavos(recibos[ri].troco), valor: moeda(recibos[ri].troco), data: hoje(), status: "ativo", origem: "estorno_troco", criadoEm: agora() });
     for (const credito of creditos) if (String(credito.reciboId) === String(recibos[ri].id) && status(credito) === "ativo") { credito.status = "estornado"; credito.saldoCentavos = 0; credito.saldo = 0; credito.estornadoEm = agora(); credito.motivoEstorno = motivo; }
-    await salvarJsonMultiplosAtomico({ [COL.recibos]: recibos, [COL.itens]: itens, [COL.titulos]: titulos, [COL.caixa]: caixa, [COL.mensalidades]: mensalidades, [COL.recebimentos]: recebimentos, [COL.creditos]: creditos, [COL.matriculas]: matriculas, [COL.alunos]: alunos, [COL.checkins]: checkins });
+    await salvarJsonMultiplosAtomico({ [COL.recibos]: recibos, [COL.itens]: itens, [COL.titulos]: titulos, [COL.caixa]: caixa, [COL.mensalidades]: mensalidades, [COL.recebimentos]: recebimentos, [COL.creditos]: creditos });
     await auditar("estornar_recibo", "recibo", recibos[ri].id, { numero: recibos[ri].numero, motivo, valor: recibos[ri].valorPago, caixaId: cx.id }, dados.usuario); return { ok: true, recibo: recibos[ri] };
   });
 }

@@ -10,9 +10,6 @@ const FINANCEIRO_FILE = path.join(DATA_DIR, 'financeiro.json');
 const ALUNOS_FILE = path.join(DATA_DIR, 'alunos.json');
 const PLANOS_FILE = path.join(DATA_DIR, 'planos.json');
 const CAIXA_FILE = path.join(DATA_DIR, 'caixa.json');
-const MATRICULAS_FILE = path.join(DATA_DIR, 'matriculas.json');
-const CHECKIN_FILE = path.join(DATA_DIR, 'checkin.json');
-const CHECKINS_FILE = path.join(DATA_DIR, 'checkins.json');
 
 async function lerJson(arquivo, padrao = []) {
   return lerJsonDuravel(arquivo, padrao);
@@ -56,12 +53,9 @@ function adicionarMeses(dataISO, qtd) {
 function statusInterno(status) {
   const s = normalizarTexto(status);
   if (['programada', 'programado', 'agendada', 'agendado', 'futura', 'futuro'].includes(s)) return 'programada';
-  // O armazenamento histórico possui as duas grafias. Internamente há apenas
-  // um estado canônico, evitando que uma mensalidade paga seja relida como
-  // aberta e volte a ser somada no Dashboard/BI.
-  if (['pago', 'paga', 'recebido', 'recebida', 'quitado', 'quitada'].includes(s)) return 'pago';
+  if (s === 'pago') return 'pago';
   if (s === 'parcial') return 'parcial';
-  if (['cancelado', 'cancelada'].includes(s)) return 'cancelado';
+  if (s === 'cancelado') return 'cancelado';
   if (s === 'atrasado') return 'atrasado';
   return 'aberto';
 }
@@ -84,10 +78,7 @@ function calcularStatus(m) {
 function calcularValorAtualizado(m, config = {}) {
   const multaPercentual = numero(config.multaPercentual, 2);
   const jurosDiaPercentual = numero(config.jurosDiaPercentual, 0.033);
-  // A cobrança inicial unificada contém matrícula + primeira mensalidade.
-  // `valor` guarda somente a mensalidade do plano, enquanto o total devido
-  // está em `total`/`valorTotalInicial`/`valorOriginal`.
-  const valorBase = valorPrincipalMensalidade(m);
+  const valorBase = numero(m.valor, 0);
   const status = calcularStatus(m);
 
   if (status !== 'atrasado') {
@@ -163,97 +154,6 @@ function valorPrincipalMensalidade(mensalidade = {}) {
     return numero(mensalidade.valor, 0);
   }
   return numero(mensalidade.valorOriginal ?? mensalidade.valor, 0);
-}
-
-function idsIguais(a, b) {
-  return String(a || '') !== '' && String(a) === String(b || '');
-}
-
-function ehPagamentoInicialUnificado(mensalidade = {}) {
-  return normalizarTexto(mensalidade.origem) === 'matricula_inicial_unificada' &&
-    mensalidade.ativarMatriculaAoReceber === true;
-}
-
-async function aplicarAtivacaoOperacionalDaMatricula(mensalidade, dataPagamento) {
-  if (!ehPagamentoInicialUnificado(mensalidade)) return { ativada: false };
-
-  const [matriculas, alunos, checkin, checkins] = await Promise.all([
-    lerJson(MATRICULAS_FILE, []), lerJson(ALUNOS_FILE, []), lerJson(CHECKIN_FILE, []), lerJson(CHECKINS_FILE, [])
-  ]);
-  const matriculaIndex = matriculas.findIndex((item) => idsIguais(item.id, mensalidade.matriculaId));
-  if (matriculaIndex < 0) return { ativada: false, motivo: 'Matrícula não encontrada.' };
-
-  const quando = agoraISO();
-  const matricula = matriculas[matriculaIndex];
-  matriculas[matriculaIndex] = {
-    ...matricula,
-    status: 'Ativa', statusPagamento: 'Pago', statusFinanceiroInicial: 'Pago',
-    bloqueada: false, bloqueioCheckin: false, motivoBloqueio: '', motivoBloqueioCheckin: '',
-    ativadaEm: matricula.ativadaEm || quando, liberadaAcessoEm: quando,
-    liberadaPorPagamentoEm: quando, cacheAcessoLimpoEm: quando,
-    ultimoPagamentoEm: dataPagamento || hojeISO(), atualizadoEm: quando
-  };
-
-  const alunoId = mensalidade.alunoId || matricula.alunoId;
-  const alunoIndex = alunos.findIndex((item) => idsIguais(item.id || item._id, alunoId));
-  if (alunoIndex >= 0) {
-    alunos[alunoIndex] = {
-      ...alunos[alunoIndex], status: 'ativo', situacao: 'Ativa', ativo: true,
-      statusMatricula: 'Ativa', matriculaStatus: 'Ativa', matriculaId: matricula.id,
-      bloqueado: false, bloqueioCheckin: false, motivoBloqueio: '', motivoBloqueioCheckin: '',
-      inadimplente: false, atualizadoEm: quando
-    };
-  }
-  for (const lista of [checkin, checkins]) for (const registro of lista) {
-    if (!idsIguais(registro.alunoId, alunoId) && !idsIguais(registro.matriculaId, matricula.id)) continue;
-    registro.status = 'Ativo'; registro.bloqueado = false; registro.bloqueioCheckin = false;
-    registro.motivoBloqueio = ''; registro.motivoBloqueioCheckin = '';
-    registro.cacheAcessoLimpoEm = quando; registro.atualizadoEm = quando;
-  }
-  await Promise.all([
-    salvarJson(MATRICULAS_FILE, matriculas), salvarJson(ALUNOS_FILE, alunos),
-    salvarJson(CHECKIN_FILE, checkin), salvarJson(CHECKINS_FILE, checkins)
-  ]);
-  return { ativada: true, matriculaId: matricula.id, alunoId };
-}
-
-async function aplicarRollbackOperacionalDaMatricula(mensalidade) {
-  if (!ehPagamentoInicialUnificado(mensalidade)) return { revertida: false };
-  const [matriculas, alunos, checkin, checkins, todasMensalidades] = await Promise.all([
-    lerJson(MATRICULAS_FILE, []), lerJson(ALUNOS_FILE, []), lerJson(CHECKIN_FILE, []), lerJson(CHECKINS_FILE, []), lerJson(MENSALIDADES_FILE, [])
-  ]);
-  const matriculaIndex = matriculas.findIndex((item) => idsIguais(item.id, mensalidade.matriculaId));
-  if (matriculaIndex < 0) return { revertida: false, motivo: 'Matrícula não encontrada.' };
-  const quando = agoraISO(); const motivo = 'Pagamento inicial estornado'; const matricula = matriculas[matriculaIndex];
-  matriculas[matriculaIndex] = {
-    ...matricula, status: 'Pendente', statusPagamento: 'Pendente', statusFinanceiroInicial: 'Aberto',
-    bloqueada: true, bloqueioCheckin: true, motivoBloqueio: motivo, motivoBloqueioCheckin: motivo,
-    ativadaEm: '', liberadaAcessoEm: '', liberadaPorPagamentoEm: '', cacheAcessoLimpoEm: '', ultimoPagamentoEm: '', atualizadoEm: quando
-  };
-  const alunoId = mensalidade.alunoId || matricula.alunoId;
-  const alunoIndex = alunos.findIndex((item) => idsIguais(item.id || item._id, alunoId));
-  if (alunoIndex >= 0) alunos[alunoIndex] = {
-    ...alunos[alunoIndex], status: 'pre-matriculado', situacao: 'pre-matriculado', ativo: false,
-    statusMatricula: 'Pendente', matriculaStatus: 'Pendente', bloqueado: true, bloqueioCheckin: true,
-    motivoBloqueio: motivo, motivoBloqueioCheckin: motivo, atualizadoEm: quando
-  };
-  for (const lista of [checkin, checkins]) for (const registro of lista) {
-    if (!idsIguais(registro.alunoId, alunoId) && !idsIguais(registro.matriculaId, matricula.id)) continue;
-    registro.status = 'Bloqueado'; registro.bloqueado = true; registro.bloqueioCheckin = true;
-    registro.motivoBloqueio = motivo; registro.motivoBloqueioCheckin = motivo; registro.atualizadoEm = quando;
-  }
-  for (const futura of todasMensalidades) {
-    if (idsIguais(futura.id, mensalidade.id)) continue;
-    if (!idsIguais(futura.matriculaId, matricula.id) && !idsIguais(futura.alunoId, alunoId)) continue;
-    if (!['programada', 'aberto', 'atrasado', 'parcial'].includes(statusInterno(futura.status))) continue;
-    futura.status = 'cancelado'; futura.canceladaPorEstorno = true; futura.canceladaEm = quando;
-    futura.motivoCancelamento = 'Estorno da matrícula inicial'; futura.atualizadoEm = quando;
-  }
-  await Promise.all([
-    salvarJson(MATRICULAS_FILE, matriculas), salvarJson(ALUNOS_FILE, alunos), salvarJson(CHECKIN_FILE, checkin),
-    salvarJson(CHECKINS_FILE, checkins), salvarJson(MENSALIDADES_FILE, todasMensalidades)
-  ]);
-  return { revertida: true, matriculaId: matricula.id, alunoId };
 }
 
 function descricaoFinanceiraMensalidade(mensalidade = {}, nomePessoa = '') {
@@ -546,12 +446,11 @@ export async function resumoMensalidades(filtros = {}) {
     valorPrevisto: 0,
     valorProgramado: 0
   };
-  resumo.recorrentesAbertas = 0;
 
   for (const m of lista) {
     if (m.status === 'aberto') {
       resumo.abertas++;
-      resumo.valorAberto += numero(m.saldoRestante ?? m.valorAtualizado ?? valorPrincipalMensalidade(m), 0);
+      resumo.valorAberto += numero(m.valorAtualizado ?? m.valor, 0);
     } else if (m.status === 'pago') {
       resumo.pagas++;
       resumo.valorPago += numero(m.valorPago ?? m.valor, 0);
@@ -561,7 +460,7 @@ export async function resumoMensalidades(filtros = {}) {
       resumo.valorPago += numero(m.valorPago ?? 0, 0);
     } else if (m.status === 'atrasado') {
       resumo.atrasadas++;
-      resumo.valorAtrasado += numero(m.saldoRestante ?? m.valorAtualizado ?? valorPrincipalMensalidade(m), 0);
+      resumo.valorAtrasado += numero(m.valorAtualizado ?? m.valor, 0);
     } else if (m.status === 'cancelado') {
       resumo.canceladas++;
     } else if (m.status === 'programada') {
@@ -569,11 +468,7 @@ export async function resumoMensalidades(filtros = {}) {
       resumo.valorProgramado += numero(m.valor, 0);
     }
 
-    if (m.status !== 'cancelado') resumo.valorPrevisto += numero(m.saldoRestante ?? m.valorAtualizado ?? valorPrincipalMensalidade(m), 0);
-
-    // O Dashboard exibe mensalidades recorrentes, não a cobrança única de
-    // matrícula + primeira mensalidade que permanece no Financeiro.
-    if (!ehMatriculaInicial(m) && ['aberto', 'atrasado', 'parcial'].includes(m.status)) resumo.recorrentesAbertas++;
+    if (m.status !== 'cancelado') resumo.valorPrevisto += numero(m.valorAtualizado ?? m.valor, 0);
   }
 
   for (const k of Object.keys(resumo)) {
@@ -793,20 +688,13 @@ export async function baixarMensalidade(id, dados = {}) {
   mensalidades[idx] = paga;
   await salvarJson(MENSALIDADES_FILE, mensalidades);
 
-  // A tela de mensalidades também pode receber a cobrança inicial unificada.
-  // Nesse caso ela precisa produzir exatamente o mesmo estado operacional da
-  // baixa pelo Financeiro: matrícula e aluno ativos, acesso liberado.
-  const ativacaoOperacional = statusInterno(paga.status) === 'pago'
-    ? await aplicarAtivacaoOperacionalDaMatricula(paga, paga.dataPagamento)
-    : { ativada: false, motivo: 'Pagamento parcial.' };
-
   // A baixa jamais cria uma nova dívida. O próximo vencimento é apenas
   // programado; o motor o transformará em título na data correta.
   const cobrancaAutomatica = statusInterno(paga.status) === 'pago'
     ? await programarProximaCobrancaAposPagamento({ mensalidadeId: paga.id, financeiroId: paga.lancamentoFinanceiroId || '', alunoId: paga.alunoId || '', usuario: dados.usuario || 'mensalidades' })
     : { ok: true, gerada: false, programada: false, motivo: 'Pagamento parcial; vencimento mantido.' };
 
-  return { ...paga, ativacaoOperacional, cobrancaAutomatica };
+  return { ...paga, cobrancaAutomatica };
 }
 
 export async function estornarBaixaMensalidade(id, dados = {}) {
@@ -856,9 +744,7 @@ export async function estornarBaixaMensalidade(id, dados = {}) {
   mensalidades[idx] = estornada;
   await salvarJson(MENSALIDADES_FILE, mensalidades);
 
-  const rollbackOperacional = await aplicarRollbackOperacionalDaMatricula(estornada);
-
-  return { ...estornada, rollbackOperacional };
+  return estornada;
 }
 
 export async function cancelarMensalidade(id, dados = {}) {

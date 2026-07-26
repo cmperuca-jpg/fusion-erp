@@ -8,7 +8,7 @@ const COL = Object.freeze({
   recibos: "recibos.json", itens: "recibos_itens.json", formas: "formas_pagamento.json",
   plano: "plano_contas.json", auditoria: "auditoria_financeira.json", creditos: "creditos.json",
   taxasCartao: "taxas_cartao.json",
-  checkins: "checkin.json", checkinsHistorico: "checkins.json",
+  checkins: "checkin.json",
   pagamentosLegacy: "pagamentos.json", dbLegacy: "db.json"
 });
 
@@ -34,13 +34,12 @@ const reais = (valor) => Number((Number(valor || 0) / 100).toFixed(2));
 const idAluno = (x = {}) => txt(x.alunoId || x.aluno_id || (norm(x.pessoaTipo) === "aluno" ? x.pessoaId : ""));
 const idMatricula = (x = {}) => txt(x.matriculaId || x.matricula_id);
 const status = (x = {}) => norm(x.status || x.situacao || "aberto");
-const finalizado = (x = {}) => ["cancelado", "cancelada", "estornado", "estornada", "excluido", "excluida"].includes(status(x)) || x.cancelado === true || x.excluido === true;
+const finalizado = (x = {}) => ["cancelado", "cancelada", "estornado", "estornada", "excluido", "excluida"].includes(status(x)) || x.excluido === true;
 const quitado = (x = {}) => ["pago", "paga", "recebido", "recebida", "quitado", "quitada", "baixado", "baixada"].includes(status(x));
-const programado = (x = {}) => ["programado", "programada", "agendado", "agendada", "previsto", "prevista"].includes(status(x)) || x.programado === true || x.previsto === true;
 const tipoTitulo = (x = {}) => norm(x.tipo).includes("pagar") || norm(x.tipo).includes("despesa") ? "pagar" : "receber";
 const valorTituloC = (x = {}) => Number.isInteger(x.valorCentavos) ? x.valorCentavos : centavos(x.valorOriginal ?? x.valorBruto ?? x.valor ?? x.total);
 const valorPagoC = (x = {}) => Number.isInteger(x.valorPagoCentavos) ? x.valorPagoCentavos : centavos(x.valorPago ?? x.valorRecebido ?? x.valor_pago);
-const saldoC = (x = {}) => finalizado(x) || quitado(x) || programado(x) ? 0 : Math.max(0, valorTituloC(x) - valorPagoC(x));
+const saldoC = (x = {}) => finalizado(x) || quitado(x) ? 0 : Math.max(0, valorTituloC(x) - valorPagoC(x));
 const dataVencimento = (x = {}) => txt(x.vencimento || x.dataVencimento || x.data_vencimento).slice(0, 10);
 
 function erro(mensagem, codigo = 400) { const e = new Error(mensagem); e.status = codigo; return e; }
@@ -159,13 +158,11 @@ function distribuirCentavos(total = 0, bases = []) {
 function tituloNormalizado(item = {}) {
   const totalC = valorTituloC(item); const pagoC = Math.min(totalC, Math.max(0, valorPagoC(item)));
   const saldoAtualC = finalizado(item) || quitado(item) ? 0 : Math.max(0, totalC - pagoC);
-  const programadoTitulo = programado(item);
-  const saldoExibidoC = programadoTitulo ? 0 : saldoAtualC;
-  let situacao = finalizado(item) ? (status(item).startsWith("estorn") ? "Estornado" : "Cancelado") : programadoTitulo ? "Programado" : pagoC >= totalC && totalC > 0 ? "Pago" : pagoC > 0 ? "Parcial" : "Aberto";
+  let situacao = finalizado(item) ? (status(item).startsWith("estorn") ? "Estornado" : "Cancelado") : pagoC >= totalC && totalC > 0 ? "Pago" : pagoC > 0 ? "Parcial" : "Aberto";
   return {
     ...item, id: txt(item.id) || uid("tit"), tipo: tipoTitulo(item), valorCentavos: totalC,
     valor: reais(totalC), valorBruto: reais(totalC), valorPagoCentavos: pagoC, valorPago: reais(pagoC),
-    valorRecebido: reais(pagoC), saldoCentavos: saldoExibidoC, valorRestante: reais(saldoExibidoC), status: situacao,
+    valorRecebido: reais(pagoC), saldoCentavos: saldoAtualC, valorRestante: reais(saldoAtualC), status: situacao,
     alunoId: idAluno(item), matriculaId: idMatricula(item), vencimento: dataVencimento(item),
     descricao: txt(item.descricao || item.historico || "Lançamento financeiro"), categoria: txt(item.categoria || "Outras receitas"),
     planoContaId: txt(item.planoContaId || item.plano_conta_id), excluido: Boolean(item.excluido)
@@ -473,16 +470,11 @@ export async function receberTitulos(dados = {}) {
       });
       const item = { id: uid("reci"), reciboId: recibo.id, tituloId: a.titulo.id, alunoId: alunoUnico, matriculaId: idMatricula(a.titulo), mensalidadeId: txt(a.titulo.mensalidadeId), valorOriginalCentavos: valorTituloC(a.titulo), saldoAnteriorCentavos: saldoC(a.titulo), descontoCentavos: a.descontoC, acrescimoCentavos: a.acrescimoC, valorAplicadoCentavos: a.aplicadoC, valorAplicado: reais(a.aplicadoC), taxaOperadoraValorCentavos: taxaAtualC, taxaOperadoraValor: reais(taxaAtualC), valorLiquidoAplicadoCentavos: Math.max(0, a.aplicadoC - taxaAtualC), valorLiquidoAplicado: reais(Math.max(0, a.aplicadoC - taxaAtualC)), cancelado: false, criadoEm: agora() };
       novosItens.push(item); itensRecibo.push(item);
-      for (let m = 0; m < mensalidades.length; m += 1) if (mesmo(mensalidades[m].id, item.mensalidadeId) || mesmo(mensalidades[m].lancamentoFinanceiroId || mensalidades[m].financeiroId, item.tituloId)) mensalidades[m] = { ...mensalidades[m], valorPago: titulos[a.indice].valorPago, valorBrutoRecebido: titulos[a.indice].valorBrutoRecebido, valorRestante: titulos[a.indice].valorRestante, taxaOperadoraValor: titulos[a.indice].taxaOperadoraValor, ultimaTaxaOperadoraValor: titulos[a.indice].ultimaTaxaOperadoraValor, taxaOperadoraPercentual: titulos[a.indice].taxaOperadoraPercentual, taxaOperadoraFixa: titulos[a.indice].taxaOperadoraFixa, valorLiquido: titulos[a.indice].valorLiquido, bandeiraCartao: titulos[a.indice].bandeiraCartao, modalidadeCartao: titulos[a.indice].modalidadeCartao, parcelasCartao: titulos[a.indice].parcelasCartao, formaPagamento: titulos[a.indice].formaPagamento, status: titulos[a.indice].status === "Pago" ? "pago" : "parcial", ultimoReciboId: recibo.id, dataPagamento: recibo.data, atualizadoEm: agora() };
+      for (let m = 0; m < mensalidades.length; m += 1) if (mesmo(mensalidades[m].id, item.mensalidadeId) || mesmo(mensalidades[m].lancamentoFinanceiroId || mensalidades[m].financeiroId, item.tituloId)) mensalidades[m] = { ...mensalidades[m], valorPago: titulos[a.indice].valorPago, valorBrutoRecebido: titulos[a.indice].valorBrutoRecebido, valorRestante: titulos[a.indice].valorRestante, taxaOperadoraValor: titulos[a.indice].taxaOperadoraValor, ultimaTaxaOperadoraValor: titulos[a.indice].ultimaTaxaOperadoraValor, taxaOperadoraPercentual: titulos[a.indice].taxaOperadoraPercentual, taxaOperadoraFixa: titulos[a.indice].taxaOperadoraFixa, valorLiquido: titulos[a.indice].valorLiquido, bandeiraCartao: titulos[a.indice].bandeiraCartao, modalidadeCartao: titulos[a.indice].modalidadeCartao, parcelasCartao: titulos[a.indice].parcelasCartao, formaPagamento: titulos[a.indice].formaPagamento, status: titulos[a.indice].status === "Pago" ? "paga" : "parcial", ultimoReciboId: recibo.id, dataPagamento: recibo.data, atualizadoEm: agora() };
       const r = recebimentos.findIndex((x) => mesmo(x.lancamentoFinanceiroId || x.financeiroId, item.tituloId) || mesmo(x.mensalidadeId, item.mensalidadeId));
       const receb = { ...(r >= 0 ? recebimentos[r] : {}), id: r >= 0 ? recebimentos[r].id : uid("recv"), alunoId: alunoUnico, matriculaId: item.matriculaId, mensalidadeId: item.mensalidadeId, lancamentoFinanceiroId: item.tituloId, reciboId: recibo.id, numeroRecibo: recibo.numero, valorRecebido: titulos[a.indice].valorPago, valorBrutoRecebido: titulos[a.indice].valorBrutoRecebido, valorRestante: titulos[a.indice].valorRestante, taxaOperadoraValor: titulos[a.indice].taxaOperadoraValor, ultimaTaxaOperadoraValor: titulos[a.indice].ultimaTaxaOperadoraValor, taxaOperadoraPercentual: titulos[a.indice].taxaOperadoraPercentual, taxaOperadoraFixa: titulos[a.indice].taxaOperadoraFixa, valorLiquido: titulos[a.indice].valorLiquido, bandeiraCartao: titulos[a.indice].bandeiraCartao, modalidadeCartao: titulos[a.indice].modalidadeCartao, parcelasCartao: titulos[a.indice].parcelasCartao, status: titulos[a.indice].status === "Pago" ? "recebido" : "parcial", dataRecebimento: recibo.data, formaPagamento: meioUnico?.formaPagamento || "Múltiplas", atualizadoEm: agora(), criadoEm: r >= 0 ? recebimentos[r].criadoEm : agora() };
       if (r >= 0) recebimentos[r] = receb; else recebimentos.push(receb);
-      const origemAtivadora = norm(a.titulo.origem);
-      const deveAtivarMatricula = titulos[a.indice].status === "Pago" && (
-        a.titulo.ativarMatriculaAoReceber === true ||
-        origemAtivadora.includes("matricula_inicial") ||
-        origemAtivadora.includes("reativacao")
-      );
+      const deveAtivarMatricula = titulos[a.indice].status === "Pago" && (a.titulo.ativarMatriculaAoReceber === true || norm(a.titulo.origem).includes("matricula_inicial") || status(matriculas.find((x) => mesmo(x.id, item.matriculaId)) || {}) === "pendente");
       if (deveAtivarMatricula) {
         const mi = matriculas.findIndex((x) => mesmo(x.id, item.matriculaId));
         if (mi >= 0 && !["cancelada", "encerrada"].includes(status(matriculas[mi]))) {
@@ -581,74 +573,27 @@ export async function receberTitulos(dados = {}) {
 
 export async function estornarRecibo(id, dados = {}) {
   return executarTransacaoJson(async () => {
-    const [recibos, itens, titulos, caixa, mensalidades, recebimentos, creditos, matriculas, alunos, checkins, checkinsHistorico] = await Promise.all([ler(COL.recibos, []), ler(COL.itens, []), ler(COL.titulos, []), ler(COL.caixa, caixaVazio()), ler(COL.mensalidades, []), ler(COL.recebimentos, []), ler(COL.creditos, []), ler(COL.matriculas, []), ler(COL.alunos, []), ler(COL.checkins, []), ler(COL.checkinsHistorico, [])]);
+    const [recibos, itens, titulos, caixa, mensalidades, recebimentos, creditos] = await Promise.all([ler(COL.recibos, []), ler(COL.itens, []), ler(COL.titulos, []), ler(COL.caixa, caixaVazio()), ler(COL.mensalidades, []), ler(COL.recebimentos, []), ler(COL.creditos, [])]);
     const ri = recibos.findIndex((x) => String(x.id) === String(id) || String(x.numero) === String(id)); if (ri < 0) throw erro("Recibo não encontrado.", 404); if (recibos[ri].cancelado) throw erro("Recibo já estornado.", 409);
     const cx = caixaAberto(caixa); if (!cx) throw erro("Abra o caixa para registrar o estorno.", 409);
     const motivo = txt(dados.motivo); if (motivo.length < 3) throw erro("Informe o motivo do estorno.");
     const relacionados = itens.filter((x) => String(x.reciboId) === String(recibos[ri].id) && !x.cancelado);
-    const matriculasParaRollback = new Set(); const mensalidadesIniciaisParaManter = new Set();
     for (const item of relacionados) {
       const ti = titulos.findIndex((x) => String(x.id) === String(item.tituloId)); if (ti >= 0) {
         const t = tituloNormalizado(titulos[ti]); const novoPagoC = Math.max(0, valorPagoC(t) - Number(item.valorAplicadoCentavos || 0) - Number(item.descontoCentavos || 0) + Number(item.acrescimoCentavos || 0));
         const taxaAnteriorC = Number.isInteger(t.taxaOperadoraValorCentavos) ? t.taxaOperadoraValorCentavos : centavos(t.taxaOperadoraValor || t.taxaValor || 0);
         const novaTaxaC = Math.max(0, taxaAnteriorC - Number(item.taxaOperadoraValorCentavos || 0));
-        titulos[ti] = tituloNormalizado({
-          ...t,
-          // O status anterior ainda era "Pago". Sem limpar o status antes da
-          // normalização, saldoC() mantinha o título com saldo zero mesmo após
-          // devolver todo o valor para aberto.
-          status: novoPagoC > 0 ? "Parcial" : "Aberto",
-          valorPagoCentavos: novoPagoC,
-          valorPago: reais(novoPagoC),
-          valorRecebido: reais(novoPagoC),
-          valorBrutoRecebido: reais(novoPagoC),
-          taxaOperadoraValorCentavos: novaTaxaC,
-          taxaOperadoraValor: reais(novaTaxaC),
-          ultimaTaxaOperadoraValor: 0,
-          valorLiquido: reais(Math.max(0, novoPagoC - novaTaxaC)),
-          valorRecebidoLiquido: reais(Math.max(0, novoPagoC - novaTaxaC)),
-          ultimoReciboId: "",
-          caixaId: "",
-          movimentoCaixaId: "",
-          atualizadoEm: agora()
-        });
-        if (titulos[ti].status === "Aberto" && norm(t.origem) === "matricula_inicial_unificada" && t.ativarMatriculaAoReceber === true) {
-          matriculasParaRollback.add(String(t.matriculaId || item.matriculaId || ''));
-          mensalidadesIniciaisParaManter.add(String(item.mensalidadeId || t.mensalidadeId || ''));
-        }
+        titulos[ti] = tituloNormalizado({ ...t, valorPagoCentavos: novoPagoC, valorBrutoRecebido: reais(novoPagoC), taxaOperadoraValorCentavos: novaTaxaC, taxaOperadoraValor: reais(novaTaxaC), ultimaTaxaOperadoraValor: 0, valorLiquido: reais(Math.max(0, novoPagoC - novaTaxaC)), valorRecebidoLiquido: reais(Math.max(0, novoPagoC - novaTaxaC)), ultimoReciboId: "", atualizadoEm: agora() });
         for (let m = 0; m < mensalidades.length; m += 1) if (mesmo(mensalidades[m].id, item.mensalidadeId) || mesmo(mensalidades[m].lancamentoFinanceiroId || mensalidades[m].financeiroId, item.tituloId)) mensalidades[m] = { ...mensalidades[m], valorPago: titulos[ti].valorPago, valorBrutoRecebido: titulos[ti].valorBrutoRecebido, valorRestante: titulos[ti].valorRestante, taxaOperadoraValor: titulos[ti].taxaOperadoraValor, ultimaTaxaOperadoraValor: 0, valorLiquido: titulos[ti].valorLiquido, status: titulos[ti].status === "Parcial" ? "parcial" : "aberto", estornadoEm: agora(), atualizadoEm: agora() };
       }
       item.cancelado = true; item.estornadoEm = agora(); item.motivoEstorno = motivo;
     }
     for (const r of recebimentos) if (String(r.reciboId) === String(recibos[ri].id)) { r.status = "estornado"; r.motivoEstorno = motivo; r.estornadoEm = agora(); r.atualizadoEm = agora(); }
-
-    // A entrada original permanece ativa no histórico do caixa.
-    // O estorno é registrado por uma saída ativa de mesmo valor. O BI ignora
-    // os dois movimentos quando o recibo relacionado está estornado.
     recibos[ri] = { ...recibos[ri], cancelado: true, status: "Estornado", motivoEstorno: motivo, estornadoPor: txt(dados.usuario) || "sistema", estornadoEm: agora() };
     for (const meio of recibos[ri].formasPagamento || []) caixa.movimentos.push({ id: uid("movest"), caixaId: cx.id, tipo: "saida", descricao: `Estorno recibo ${recibos[ri].numero}`, categoria: "Estorno de recebimento", pessoa: recibos[ri].aluno, alunoId: recibos[ri].alunoId, reciboId: recibos[ri].id, reciboEstornadoId: recibos[ri].id, formaPagamento: meio.formaPagamento, valorCentavos: centavos(meio.valor), valor: moeda(meio.valor), data: hoje(), status: "ativo", origem: "estorno_recibo", criadoEm: agora() });
     if (centavos(recibos[ri].troco) > 0) caixa.movimentos.push({ id: uid("movesttroco"), caixaId: cx.id, tipo: "entrada", descricao: `Reversão do troco do recibo ${recibos[ri].numero}`, categoria: "Estorno de troco", pessoa: recibos[ri].aluno, alunoId: recibos[ri].alunoId, reciboId: recibos[ri].id, formaPagamento: "Dinheiro", valorCentavos: centavos(recibos[ri].troco), valor: moeda(recibos[ri].troco), data: hoje(), status: "ativo", origem: "estorno_troco", criadoEm: agora() });
     for (const credito of creditos) if (String(credito.reciboId) === String(recibos[ri].id) && status(credito) === "ativo") { credito.status = "estornado"; credito.saldoCentavos = 0; credito.saldo = 0; credito.estornadoEm = agora(); credito.motivoEstorno = motivo; }
-    const motivoBloqueio = "Pagamento inicial estornado";
-    for (const matriculaId of matriculasParaRollback) {
-      if (!matriculaId) continue;
-      const mi = matriculas.findIndex((m) => mesmo(m.id, matriculaId));
-      if (mi < 0) continue;
-      const alunoId = matriculas[mi].alunoId || matriculas[mi].aluno_id;
-      matriculas[mi] = { ...matriculas[mi], status: "Pendente", statusPagamento: "Pendente", statusFinanceiroInicial: "Aberto", bloqueada: true, bloqueioCheckin: true, motivoBloqueio, motivoBloqueioCheckin: motivoBloqueio, ativadaEm: "", liberadaAcessoEm: "", liberadaPorPagamentoEm: "", cacheAcessoLimpoEm: "", ultimoPagamentoEm: "", atualizadoEm: agora() };
-      const ai = alunos.findIndex((a) => mesmo(a.id || a._id, alunoId));
-      if (ai >= 0) alunos[ai] = { ...alunos[ai], status: "pre-matriculado", situacao: "pre-matriculado", ativo: false, statusMatricula: "Pendente", matriculaStatus: "Pendente", bloqueado: true, bloqueioCheckin: true, motivoBloqueio, motivoBloqueioCheckin: motivoBloqueio, atualizadoEm: agora() };
-      for (const lista of [checkins, checkinsHistorico]) for (const registro of lista) {
-        if (!mesmo(registro.alunoId, alunoId) && !mesmo(registro.matriculaId, matriculaId)) continue;
-        registro.status = "Bloqueado"; registro.bloqueado = true; registro.bloqueioCheckin = true; registro.motivoBloqueio = motivoBloqueio; registro.motivoBloqueioCheckin = motivoBloqueio; registro.atualizadoEm = agora();
-      }
-      for (const futura of mensalidades) {
-        if (mensalidadesIniciaisParaManter.has(String(futura.id)) || !mesmo(futura.matriculaId, matriculaId)) continue;
-        if (!["programada", "aberto", "atrasado", "parcial"].includes(norm(futura.status))) continue;
-        futura.status = "cancelado"; futura.canceladaPorEstorno = true; futura.canceladaEm = agora(); futura.motivoCancelamento = "Estorno da matrícula inicial"; futura.atualizadoEm = agora();
-      }
-    }
-    await salvarJsonMultiplosAtomico({ [COL.recibos]: recibos, [COL.itens]: itens, [COL.titulos]: titulos, [COL.caixa]: caixa, [COL.mensalidades]: mensalidades, [COL.recebimentos]: recebimentos, [COL.matriculas]: matriculas, [COL.alunos]: alunos, [COL.checkins]: checkins, [COL.checkinsHistorico]: checkinsHistorico, [COL.creditos]: creditos });
+    await salvarJsonMultiplosAtomico({ [COL.recibos]: recibos, [COL.itens]: itens, [COL.titulos]: titulos, [COL.caixa]: caixa, [COL.mensalidades]: mensalidades, [COL.recebimentos]: recebimentos, [COL.creditos]: creditos });
     await auditar("estornar_recibo", "recibo", recibos[ri].id, { numero: recibos[ri].numero, motivo, valor: recibos[ri].valorPago, caixaId: cx.id }, dados.usuario); return { ok: true, recibo: recibos[ri] };
   });
 }
@@ -661,7 +606,7 @@ export async function extratoAluno(alunoId) {
   const [alunos, matriculas, titulos, recibos, itens, creditos] = await Promise.all([ler(COL.alunos, []), ler(COL.matriculas, []), ler(COL.titulos, []), ler(COL.recibos, []), ler(COL.itens, []), ler(COL.creditos, [])]);
   const aluno = alunos.find((x) => String(x.id) === String(alunoId)); if (!aluno) throw erro("Aluno não encontrado.", 404);
   const ts = titulos.map(tituloNormalizado).filter((x) => idAluno(x) === String(alunoId)); const rs = recibos.filter((x) => String(x.alunoId) === String(alunoId));
-  const totais = ts.filter((x) => !finalizado(x) && !programado(x)).reduce((r, x) => { r.cobradoC += valorTituloC(x); r.recebidoC += valorPagoC(x); r.abertoC += saldoC(x); if (saldoC(x) && dataVencimento(x) < hoje()) r.vencidoC += saldoC(x); return r; }, { cobradoC: 0, recebidoC: 0, abertoC: 0, vencidoC: 0 });
+  const totais = ts.filter((x) => !finalizado(x)).reduce((r, x) => { r.cobradoC += valorTituloC(x); r.recebidoC += valorPagoC(x); r.abertoC += saldoC(x); if (saldoC(x) && dataVencimento(x) < hoje()) r.vencidoC += saldoC(x); return r; }, { cobradoC: 0, recebidoC: 0, abertoC: 0, vencidoC: 0 });
   return { ok: true, aluno, matriculas: matriculas.filter((x) => String(x.alunoId || x.aluno_id) === String(alunoId)), titulos: ts, recibos: rs, recibosItens: itens.filter((x) => String(x.alunoId) === String(alunoId)), creditos: creditos.filter((x) => String(x.alunoId) === String(alunoId)), totais: { cobrado: reais(totais.cobradoC), recebido: reais(totais.recebidoC), aberto: reais(totais.abertoC), vencido: reais(totais.vencidoC) } };
 }
 
@@ -677,7 +622,7 @@ export async function verificarIntegridadeFinanceira() {
   }
   for (const m of matriculas) if (!alunoIds.has(String(m.alunoId || m.aluno_id))) falhas.push({ nivel: "erro", codigo: "MATRICULA_SEM_ALUNO", registroId: m.id });
   for (const t0 of titulosBrutos) { const t = tituloNormalizado(t0); if (idAluno(t) && !alunoIds.has(idAluno(t))) falhas.push({ nivel: "erro", codigo: "TITULO_SEM_ALUNO", registroId: t.id }); if (idMatricula(t) && !matriculaIds.has(idMatricula(t))) falhas.push({ nivel: "erro", codigo: "TITULO_SEM_MATRICULA", registroId: t.id }); if (valorPagoC(t) > valorTituloC(t)) falhas.push({ nivel: "erro", codigo: "TITULO_PAGO_ACIMA_VALOR", registroId: t.id }); }
-  for (const i of itens.filter((item) => !finalizado(item))) { if (!reciboIds.has(String(i.reciboId))) falhas.push({ nivel: "erro", codigo: "ITEM_SEM_RECIBO", registroId: i.id }); if (!tituloIds.has(String(i.tituloId))) falhas.push({ nivel: "erro", codigo: "ITEM_SEM_TITULO", registroId: i.id }); }
+  for (const i of itens) { if (!reciboIds.has(String(i.reciboId))) falhas.push({ nivel: "erro", codigo: "ITEM_SEM_RECIBO", registroId: i.id }); if (!tituloIds.has(String(i.tituloId))) falhas.push({ nivel: "erro", codigo: "ITEM_SEM_TITULO", registroId: i.id }); }
   const nums = new Map(); for (const r of recibos) if (!r.cancelado) { if (nums.has(String(r.numero))) falhas.push({ nivel: "erro", codigo: "RECIBO_NUMERO_DUPLICADO", registros: [nums.get(String(r.numero)), r.id] }); else nums.set(String(r.numero), r.id); }
   if ((caixa.caixas || []).filter((x) => status(x) === "aberto").length > 1) falhas.push({ nivel: "erro", codigo: "MULTIPLOS_CAIXAS_ABERTOS" });
   for (const r of recibos.filter((x) => !x.cancelado)) if (!(caixa.movimentos || []).some((m) => String(m.reciboId) === String(r.id) && norm(m.origem) === "recibo")) falhas.push({ nivel: "erro", codigo: "RECIBO_SEM_MOVIMENTO_CAIXA", registroId: r.id });

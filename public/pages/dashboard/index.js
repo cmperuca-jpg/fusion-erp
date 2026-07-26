@@ -46,13 +46,9 @@ function setText(id, value) {
   ]);
 
   const ativos = alunos.filter(a => String(a.status || 'ativo').toLowerCase() === 'ativo').length;
-  // A cobrança inicial unificada é uma entrada financeira, não uma segunda
-  // mensalidade recorrente. O backend já a exclui deste campo específico.
-  const abertas = mensalidadesResumo.recorrentesAbertas !== undefined
-    ? Number(mensalidadesResumo.recorrentesAbertas || 0)
-    : Number(mensalidadesResumo.abertas || 0) +
-      Number(mensalidadesResumo.atrasadas || 0) +
-      Number(mensalidadesResumo.parciais || 0);
+  const abertas = Number(mensalidadesResumo.abertas || 0) +
+    Number(mensalidadesResumo.atrasadas || 0) +
+    Number(mensalidadesResumo.parciais || 0);
   const receita = Number(financeiroResumo.recebido || financeiroResumo.receitasLiquidasPagas || 0);
 
   setText('kpiAlunos', ativos);

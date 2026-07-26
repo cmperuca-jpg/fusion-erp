@@ -3,7 +3,6 @@ import {
   executarMotorCobranca,
   gerarProximaMensalidadeAposPagamento,
   previsaoCobrancaAluno,
-  repararReativacoesPagasSemAgenda,
   statusMotorCobranca
 } from "./cobranca.service.mjs";
 
@@ -43,14 +42,6 @@ router.post("/gerar-proxima", async (req, res) => {
 router.post("/executar", async (req, res) => {
   try {
     return res.json(await executarMotorCobranca(req.body || {}));
-  } catch (err) {
-    return erro(res, err);
-  }
-});
-
-router.post("/reparar-programadas", async (req, res) => {
-  try {
-    return res.json(await repararReativacoesPagasSemAgenda(req.body || {}));
   } catch (err) {
     return erro(res, err);
   }

@@ -133,10 +133,10 @@ router.post("/:id/reativar-cobranca", async (req, res) => {
 
 router.post("/:id/reativar", async (req, res) => {
   try {
-    const resultado = await alunosService.criarCobrancaReativacao(req.params.id, {
+    const resultado = await alunosService.reativar(req.params.id, {
       ...req.body,
       usuario: req.body?.usuario || "sistema",
-      motivo: req.body?.motivo || req.body?.motivoReativacao || "Reativação com cobrança pendente."
+      motivo: req.body?.motivo || req.body?.motivoReativacao || "Reativação manual do aluno."
     });
 
     if (!resultado) {
@@ -147,7 +147,7 @@ router.post("/:id/reativar", async (req, res) => {
       ok: true,
       sucesso: true,
       resultado,
-      mensagem: "Cobrança de reativação criada. O aluno só será ativado após o recebimento confirmado no financeiro."
+      mensagem: "Aluno reativado. Matrícula ativa, mensalidade, financeiro e recebimento em aberto foram sincronizados."
     });
   } catch (error) {
     erro(res, error, 400);
@@ -196,12 +196,6 @@ router.post("/", async (req, res) => {
 
 router.put("/:id", async (req, res) => {
   try {
-    const atual = await alunosService.buscar(req.params.id);
-    const solicitaAtivacao = ["ativo", "ativa", "active"].includes(normalizar(req.body?.status || req.body?.situacao));
-    const jaAtivo = ["ativo", "ativa", "active"].includes(normalizar(atual?.status || atual?.situacao));
-    if (solicitaAtivacao && !jaAtivo) {
-      return res.status(409).json({ ok: false, mensagem: "Não ative o aluno pela edição. Use Reativar para criar a cobrança e confirme o pagamento no Financeiro." });
-    }
     const aluno = await alunosService.atualizar(req.params.id, req.body);
 
     if (!aluno) {

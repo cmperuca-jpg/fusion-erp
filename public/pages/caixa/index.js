@@ -23,28 +23,6 @@ function moeda(valor) {
   });
 }
 
-function numero(valor, padrao = 0) {
-  const n = Number(String(valor ?? '').replace(',', '.'));
-  return Number.isFinite(n) ? n : padrao;
-}
-
-function valorBrutoMovimento(movimento = {}) {
-  return numero(movimento.valorBruto ?? movimento.valor, 0);
-}
-
-function taxaMovimento(movimento = {}) {
-  const taxa = numero(movimento.taxaOperadoraValor ?? movimento.taxaValor, 0);
-  if (taxa > 0) return taxa;
-  return Math.max(0, Number((valorBrutoMovimento(movimento) - valorLiquidoMovimento(movimento)).toFixed(2)));
-}
-
-function valorLiquidoMovimento(movimento = {}) {
-  const bruto = valorBrutoMovimento(movimento);
-  const liquido = numero(movimento.valorLiquido ?? movimento.valorRecebidoLiquido, NaN);
-  if (Number.isFinite(liquido) && liquido > 0) return liquido;
-  return Math.max(0, Number((bruto - numero(movimento.taxaOperadoraValor ?? movimento.taxaValor, 0)).toFixed(2)));
-}
-
 function hojeISO() {
   return new Date().toISOString().slice(0, 10);
 }
@@ -87,28 +65,18 @@ function filtros() {
 function renderCaixa() {
   const aberto = Boolean(estado.caixa && estado.caixa.status === 'aberto');
   const totais = estado.totais || {};
-  const entradasBrutas = numero(totais.entradasBrutas ?? totais.entradas);
-  const taxas = numero(totais.taxas);
-  const entradasLiquidas = numero(totais.entradasLiquidas ?? (entradasBrutas - taxas));
-  const saidasBrutas = numero(totais.saidasBrutas ?? totais.saidas);
-  const saldoBruto = numero(totais.saldoAtualBruto ?? totais.saldoBruto ?? (entradasBrutas - saidasBrutas));
-  const saldoLiquido = numero(totais.saldoAtualLiquido ?? totais.saldoLiquido ?? totais.saldoAtual ?? (entradasLiquidas - numero(totais.saidasLiquidas ?? saidasBrutas)));
   const btnAbrir = $('#btnAbrir');
   const btnFechar = $('#btnFechar');
   const btnNovoMovimento = $('#btnNovoMovimento');
 
   $('#cStatus').textContent = aberto ? 'Aberto' : 'Fechado';
-  $('#cEntradas').textContent = moeda(entradasBrutas);
-  $('#cTaxas').textContent = moeda(taxas);
-  $('#cEntradasLiquidas').textContent = moeda(entradasLiquidas);
-  $('#cSaidas').textContent = moeda(saidasBrutas);
-  $('#cSaldoBruto').textContent = moeda(saldoBruto);
-  $('#cSaldo').textContent = moeda(saldoLiquido);
-  $('#cMovimentos').textContent = String(totais.quantidadeMovimentos || 0);
-  $('#cDinheiro').textContent = moeda(totais.dinheiroLiquido ?? totais.dinheiro ?? 0);
-  $('#cPix').textContent = moeda(totais.pixLiquido ?? totais.pix ?? 0);
-  $('#cCartao').textContent = moeda(totais.cartaoLiquido ?? totais.cartao ?? 0);
-  $('#cOutros').textContent = moeda(totais.outrosLiquido ?? totais.outros ?? 0);
+  $('#cEntradas').textContent = moeda(totais.entradas || 0);
+  $('#cSaidas').textContent = moeda(totais.saidas || 0);
+  $('#cSaldo').textContent = moeda(totais.saldoAtual || 0);
+  $('#cDinheiro').textContent = moeda(totais.dinheiro || 0);
+  $('#cPix').textContent = moeda(totais.pix || 0);
+  $('#cCartao').textContent = moeda(totais.cartao || 0);
+  $('#cOutros').textContent = moeda(totais.outros || 0);
 
   if (btnAbrir) {
     btnAbrir.textContent = 'Abrir Caixa';
@@ -137,7 +105,7 @@ function renderMovimentos() {
   if (!estado.movimentos.length) {
     const tr = document.createElement('tr');
     const td = criarCelula('Nenhum movimento encontrado.');
-    td.colSpan = 10;
+    td.colSpan = 8;
     tr.appendChild(td);
     tbody.appendChild(tr);
     return;
@@ -155,9 +123,7 @@ function renderMovimentos() {
     tr.appendChild(criarCelula(m.pessoa || '-'));
     tr.appendChild(criarCelula(m.formaPagamento || '-'));
     tr.appendChild(criarCelula(m.data || '-'));
-    tr.appendChild(criarCelula(moeda(valorBrutoMovimento(m))));
-    tr.appendChild(criarCelula(moeda(taxaMovimento(m))));
-    tr.appendChild(criarCelula(moeda(valorLiquidoMovimento(m))));
+    tr.appendChild(criarCelula(moeda(m.valor)));
 
     const tdAcoes = document.createElement('td');
     const div = document.createElement('div');
@@ -254,9 +220,9 @@ $('#formMovimento').addEventListener('submit', async ev => {
 });
 
 $('#btnFechar').addEventListener('click', () => {
-  const saldo = numero(estado.totais?.saldoAtualLiquido ?? estado.totais?.saldoLiquido ?? estado.totais?.saldoAtual);
+  const saldo = estado.totais?.saldoAtual || 0;
   $('#formFechar').reset();
-  $('#saldoSistema').textContent = `Saldo liquido do sistema: ${moeda(saldo)}`;
+  $('#saldoSistema').textContent = `Saldo do sistema: ${moeda(saldo)}`;
   $('#valorFechamento').value = saldo.toFixed(2);
   $('#modalFechar').showModal();
 });

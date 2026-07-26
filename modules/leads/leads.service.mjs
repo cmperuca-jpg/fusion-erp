@@ -43,127 +43,6 @@ function etapaValida(etapa = '') {
 function nomePlano(plano = {}) { return texto(plano.nome || plano.descricao || plano.titulo || plano.plano || ''); }
 function valorPlano(plano = {}) { return numero(plano.valorMensal ?? plano.valor ?? plano.mensalidade ?? plano.preco ?? 0); }
 
-function leadIdMatriculaOnline(s = {}) {
-  const origem = texto(s.id || s.protocolo || `${s.cpf || ''}-${s.criadoEm || ''}`) || crypto.randomUUID();
-  return `lead_mo_${origem.replace(/[^a-zA-Z0-9_-]/g, '_')}`;
-}
-
-function etapaMatriculaOnline(s = {}) {
-  const status = normalizar(s.status || 'aguardando');
-  if (status === 'aprovada') return 'convertido';
-  if (['rejeitada', 'cancelada', 'cancelado'].includes(status)) return 'perdido';
-  return 'matricula_online';
-}
-
-function statusLeadMatriculaOnline(s = {}) {
-  return etapaMatriculaOnline(s) === 'perdido' ? 'perdido' : 'ativo';
-}
-
-function historicoMatriculaOnline(s = {}, existente = {}) {
-  const historico = Array.isArray(existente.historico) ? existente.historico : [];
-  if (historico.length) return historico;
-  const itens = [{
-    id: crypto.randomUUID(),
-    acao: 'matricula_online_recebida',
-    etapa: 'matricula_online',
-    protocolo: s.protocolo || '',
-    criadoEm: s.criadoEm || agoraISO()
-  }];
-  if (normalizar(s.status) === 'aprovada') {
-    itens.unshift({
-      id: crypto.randomUUID(),
-      acao: 'matricula_online_aprovada',
-      etapa: 'convertido',
-      alunoId: s.alunoId || '',
-      matriculaId: s.matriculaId || '',
-      financeiroId: s.financeiroId || '',
-      criadoEm: s.aprovadoEm || s.atualizadoEm || agoraISO()
-    });
-  }
-  if (['rejeitada', 'cancelada', 'cancelado'].includes(normalizar(s.status))) {
-    itens.unshift({
-      id: crypto.randomUUID(),
-      acao: 'matricula_online_perdida',
-      etapa: 'perdido',
-      motivo: s.motivoRejeicao || '',
-      criadoEm: s.rejeitadoEm || s.atualizadoEm || agoraISO()
-    });
-  }
-  return itens;
-}
-
-function montarLeadMatriculaOnline(s = {}, existente = {}) {
-  const etapa = etapaMatriculaOnline(s);
-  const atualizadoEm = s.atualizadoEm || s.aprovadoEm || s.rejeitadoEm || s.correcaoSolicitadaEm || s.criadoEm || agoraISO();
-  return {
-    ...existente,
-    id: existente.id || leadIdMatriculaOnline(s),
-    nome: texto(s.nome || existente.nome || 'Matrícula online'),
-    telefone: numeros(s.telefone || s.whatsapp || existente.telefone || ''),
-    whatsapp: numeros(s.whatsapp || s.telefone || existente.whatsapp || ''),
-    email: texto(s.email || existente.email || '').toLowerCase(),
-    cpf: numeros(s.cpf || existente.cpf || ''),
-    origem: 'matricula_online',
-    etapa,
-    status: statusLeadMatriculaOnline(s),
-    planoId: texto(s.planoId || existente.planoId || ''),
-    plano: texto(s.plano || existente.plano || ''),
-    valorPrevisto: numero(s.valorPrevisto ?? s.valorPlano ?? existente.valorPrevisto, 0),
-    modalidade: texto(s.modalidade || existente.modalidade || ''),
-    objetivo: texto(s.objetivo || existente.objetivo || ''),
-    observacao: texto(s.observacao || existente.observacao || ''),
-    dataAgendada: existente.dataAgendada || '',
-    horarioAgendado: texto(s.horarioPreferido || existente.horarioAgendado || ''),
-    professor: existente.professor || '',
-    matriculaOnlineId: s.id || existente.matriculaOnlineId || '',
-    protocolo: s.protocolo || existente.protocolo || '',
-    alunoId: s.alunoId || existente.alunoId || '',
-    matriculaId: s.matriculaId || existente.matriculaId || '',
-    financeiroId: s.financeiroId || existente.financeiroId || '',
-    mensalidadeId: s.mensalidadeId || existente.mensalidadeId || '',
-    convertidoEm: etapa === 'convertido' ? (s.aprovadoEm || existente.convertidoEm || atualizadoEm) : (existente.convertidoEm || ''),
-    perdidoEm: etapa === 'perdido' ? (s.rejeitadoEm || existente.perdidoEm || atualizadoEm) : (existente.perdidoEm || ''),
-    criadoEm: s.criadoEm || existente.criadoEm || agoraISO(),
-    atualizadoEm,
-    historico: historicoMatriculaOnline(s, existente)
-  };
-}
-
-async function sincronizarMatriculasOnlineComLeads() {
-  const [leads, matriculasOnline] = await Promise.all([
-    lerJson(LEADS_FILE, []),
-    lerJson(MATRICULAS_ONLINE_FILE, [])
-  ]);
-  if (!Array.isArray(matriculasOnline) || !matriculasOnline.length) return leads;
-
-  let alterou = false;
-  for (const solicitacao of matriculasOnline) {
-    if (!solicitacao?.id && !solicitacao?.protocolo) continue;
-    const idEsperado = leadIdMatriculaOnline(solicitacao);
-    const idx = leads.findIndex(l =>
-      mesmoId(l.matriculaOnlineId, solicitacao.id) ||
-      mesmoId(l.id, idEsperado)
-    );
-    const lead = montarLeadMatriculaOnline(solicitacao, idx >= 0 ? leads[idx] : {});
-    if (idx >= 0) {
-      if (JSON.stringify(leads[idx]) !== JSON.stringify(lead)) {
-        leads[idx] = lead;
-        alterou = true;
-      }
-    } else {
-      leads.unshift(lead);
-      alterou = true;
-    }
-  }
-
-  if (alterou) await salvarJson(LEADS_FILE, leads);
-  return leads;
-}
-
-function matriculaOnlinePendente(m = {}) {
-  return !['aprovada', 'rejeitada', 'cancelada', 'cancelado'].includes(normalizar(m.status));
-}
-
 function exporLead(l = {}) {
   return {
     id: l.id,
@@ -185,13 +64,7 @@ function exporLead(l = {}) {
     horarioAgendado: l.horarioAgendado || '',
     professor: l.professor || '',
     matriculaOnlineId: l.matriculaOnlineId || '',
-    protocolo: l.protocolo || '',
     alunoId: l.alunoId || '',
-    matriculaId: l.matriculaId || '',
-    financeiroId: l.financeiroId || '',
-    mensalidadeId: l.mensalidadeId || '',
-    convertidoEm: l.convertidoEm || '',
-    perdidoEm: l.perdidoEm || '',
     criadoEm: l.criadoEm || '',
     atualizadoEm: l.atualizadoEm || '',
     historico: Array.isArray(l.historico) ? l.historico : []
@@ -227,7 +100,7 @@ function validarLead(dados = {}, parcial = false) {
 }
 
 export async function listarLeads(filtros = {}) {
-  const leads = await sincronizarMatriculasOnlineComLeads();
+  const leads = await lerJson(LEADS_FILE, []);
   const q = normalizar(filtros.q || filtros.busca || '');
   const etapa = normalizar(filtros.etapa || filtros.statusComercial || '');
   const origem = normalizar(filtros.origem || '');
@@ -247,14 +120,14 @@ export async function listarLeads(filtros = {}) {
 }
 
 export async function obterLead(id) {
-  const leads = await sincronizarMatriculasOnlineComLeads();
+  const leads = await lerJson(LEADS_FILE, []);
   const lead = leads.find(l => mesmoId(l.id, id));
   if (!lead) erro('Lead não encontrado.', 404);
   return exporLead(lead);
 }
 
 export async function criarLead(dados = {}) {
-  const leads = await sincronizarMatriculasOnlineComLeads();
+  const leads = await lerJson(LEADS_FILE, []);
   const planos = await lerJson(PLANOS_FILE, []);
   const base = validarLead(dados);
 
@@ -301,7 +174,7 @@ export async function criarLead(dados = {}) {
 }
 
 export async function atualizarLead(id, dados = {}) {
-  const leads = await sincronizarMatriculasOnlineComLeads();
+  const leads = await lerJson(LEADS_FILE, []);
   const idx = leads.findIndex(l => mesmoId(l.id, id));
   if (idx < 0) erro('Lead não encontrado.', 404);
   const base = validarLead(dados, true);
@@ -313,7 +186,7 @@ export async function atualizarLead(id, dados = {}) {
 }
 
 export async function moverLead(id, dados = {}) {
-  const leads = await sincronizarMatriculasOnlineComLeads();
+  const leads = await lerJson(LEADS_FILE, []);
   const idx = leads.findIndex(l => mesmoId(l.id, id));
   if (idx < 0) erro('Lead não encontrado.', 404);
   const etapaAnterior = leads[idx].etapa || 'novo';
@@ -332,7 +205,7 @@ export async function moverLead(id, dados = {}) {
 }
 
 export async function registrarContato(id, dados = {}) {
-  const leads = await sincronizarMatriculasOnlineComLeads();
+  const leads = await lerJson(LEADS_FILE, []);
   const idx = leads.findIndex(l => mesmoId(l.id, id));
   if (idx < 0) erro('Lead não encontrado.', 404);
   const contato = {
@@ -353,7 +226,7 @@ export async function registrarContato(id, dados = {}) {
 }
 
 export async function excluirLead(id) {
-  const leads = await sincronizarMatriculasOnlineComLeads();
+  const leads = await lerJson(LEADS_FILE, []);
   const idx = leads.findIndex(l => mesmoId(l.id, id));
   if (idx < 0) erro('Lead não encontrado.', 404);
   leads[idx].status = 'excluido';
@@ -365,25 +238,22 @@ export async function excluirLead(id) {
 }
 
 export async function resumoComercial() {
-  const leads = await sincronizarMatriculasOnlineComLeads();
+  const leads = await lerJson(LEADS_FILE, []);
   const matriculas = await lerJson(MATRICULAS_ONLINE_FILE, []);
   const ativos = leads.filter(l => normalizar(l.status || 'ativo') !== 'excluido');
   const hoje = hojeISO();
   const mes = hoje.slice(0, 7);
   const porEtapa = Object.fromEntries(ETAPAS.map(e => [e, 0]));
   let receitaPrevista = 0;
-  let receitaConvertida = 0;
   for (const l of ativos) {
     const etapa = etapaValida(l.etapa);
     porEtapa[etapa] += 1;
-    if (etapa === 'convertido') receitaConvertida += numero(l.valorPrevisto, 0);
     if (!['convertido', 'perdido'].includes(etapa)) receitaPrevista += numero(l.valorPrevisto, 0);
   }
   const leadsMes = ativos.filter(l => String(l.criadoEm || '').slice(0,7) === mes).length;
   const leadsHoje = ativos.filter(l => String(l.criadoEm || '').slice(0,10) === hoje).length;
   const convertidos = ativos.filter(l => etapaValida(l.etapa) === 'convertido').length;
-  const pendentesMatricula = matriculas.filter(matriculaOnlinePendente).length;
-  const matriculasRealizadas = matriculas.filter(m => normalizar(m.status) === 'aprovada').length;
+  const pendentesMatricula = matriculas.filter(m => normalizar(m.status) === 'aguardando').length;
   const taxaConversao = ativos.length ? Number(((convertidos / ativos.length) * 100).toFixed(1)) : 0;
-  return { total: ativos.length, leadsHoje, leadsMes, convertidos, taxaConversao, receitaPrevista: Number(receitaPrevista.toFixed(2)), receitaConvertida: Number(receitaConvertida.toFixed(2)), pendentesMatricula, matriculasRealizadas, porEtapa };
+  return { total: ativos.length, leadsHoje, leadsMes, convertidos, taxaConversao, receitaPrevista: Number(receitaPrevista.toFixed(2)), pendentesMatricula, porEtapa };
 }

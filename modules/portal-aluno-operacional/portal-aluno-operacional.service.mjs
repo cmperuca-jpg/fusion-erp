@@ -6,57 +6,6 @@ function normalizar(v) { return texto(v).toLowerCase().normalize("NFD").replace(
 function ativo(item) { return !["cancelado","cancelada","encerrado","encerrada","inativo","inativa","bloqueado","bloqueada","removido","removida"].includes(normalizar(item?.status || "Ativo")); }
 function alunoNome(a = {}) { return texto(a.nome || a.aluno || a.name || a.nomeCompleto || "Aluno"); }
 function dinheiro(v) { const n = Number(String(v ?? 0).replace(",", ".")); return Number.isFinite(n) ? Number(n.toFixed(2)) : 0; }
-function dataISO(v) { return texto(v).slice(0, 10); }
-function pago(item = {}) { return ["pago","recebido","quitado","baixado"].includes(normalizar(item.status || item.statusPagamento)); }
-function cancelado(item = {}) { return ["cancelado","cancelada","estornado","estornada","excluido","excluida"].includes(normalizar(item.status || item.situacao)) || item.cancelado === true || item.excluido === true; }
-function programado(item = {}) {
-  const s = normalizar(item.status || item.situacao);
-  return ["programado","programada","agendado","agendada","previsto","prevista","futura","futuro"].includes(s) ||
-    item.programada === true || item.programado === true || item.previsto === true;
-}
-function valorCobranca(item = {}) { return dinheiro(item.total ?? item.valorOriginal ?? item.valorBruto ?? item.valor); }
-function valorRecebido(item = {}) { return dinheiro(item.valorPago ?? item.valorRecebido ?? item.recebido ?? item.valorLiquido); }
-function saldoCobranca(item = {}) {
-  if (pago(item) || cancelado(item) || programado(item)) return 0;
-  const campos = [item.valorRestante, item.saldoRestante, item.saldo, item.valorAberto];
-  const direto = campos.find((v) => v !== undefined && v !== null && String(v).trim() !== "");
-  if (direto !== undefined) return Math.max(0, dinheiro(direto));
-  return Math.max(0, valorCobranca(item) - valorRecebido(item));
-}
-function chaveCobranca(item = {}, origem = "") {
-  const mensalidadeId = item.mensalidadeId || (origem === "mensalidade" ? item.id : "");
-  if (mensalidadeId) return `men:${mensalidadeId}`;
-  if (item.lancamentoFinanceiroId || item.financeiroId) return `fin:${item.lancamentoFinanceiroId || item.financeiroId}`;
-  return `${origem}:${item.id || item.descricao || Math.random()}`;
-}
-function normalizarCobranca(item = {}, origem = "") {
-  const vencimento = dataISO(item.vencimento || item.dataVencimento || item.data_vencimento || item.competencia);
-  const valor = valorCobranca(item);
-  const saldo = saldoCobranca(item);
-  const hoje = hojeISO();
-  let estadoFinanceiro = "a_vencer";
-  let statusExibicao = "A vencer";
-  if (cancelado(item)) {
-    estadoFinanceiro = "cancelado";
-    statusExibicao = "Cancelado";
-  } else if (pago(item) || saldo <= 0 && !programado(item)) {
-    estadoFinanceiro = "pago";
-    statusExibicao = "Pago";
-  } else if (programado(item)) {
-    estadoFinanceiro = "programada";
-    statusExibicao = "Programada";
-  } else if (vencimento && vencimento < hoje) {
-    estadoFinanceiro = "divida_ativa";
-    statusExibicao = "Em atraso";
-  } else if (vencimento && vencimento === hoje) {
-    estadoFinanceiro = "vence_hoje";
-    statusExibicao = "Vence hoje";
-  }
-  return { ...item, origemPortal: origem, estadoFinanceiro, statusExibicao, statusPortal: estadoFinanceiro, valorPortal: valor, saldoPortal: saldo, vencimento };
-}
-function ordenarAsc(lista = []) {
-  return [...lista].sort((a,b) => String(a.vencimento || a.competencia || "").localeCompare(String(b.vencimento || b.competencia || "")));
-}
 
 function localizarAluno(alunos, alunoId) {
   return alunos.find((a) => String(a.id || a._id || a.alunoId) === String(alunoId)) || null;
@@ -106,37 +55,16 @@ function avaliacoesAluno(avaliacoes, alunoId) {
 function financeiroAluno(mensalidades, financeiro, alunoId) {
   const mensalidadesAluno = mensalidades.filter((m) => String(m.alunoId) === String(alunoId));
   const lancamentos = financeiro.filter((f) => String(f.alunoId) === String(alunoId));
-  const mapa = new Map();
-  const adicionar = (item, origem) => {
-    const registro = normalizarCobranca(item, origem);
-    const chave = chaveCobranca(item, origem);
-    const atual = mapa.get(chave);
-    if (!atual) mapa.set(chave, registro);
-    else if (atual.estadoFinanceiro === "programada" && registro.estadoFinanceiro !== "programada") mapa.set(chave, registro);
-  };
-  mensalidadesAluno.forEach((item) => adicionar(item, "mensalidade"));
-  lancamentos.forEach((item) => adicionar(item, "financeiro"));
-  const todos = [...mapa.values()];
-  const dividaAtiva = ordenarAsc(todos.filter((x) => x.estadoFinanceiro === "divida_ativa"));
-  const venceHoje = ordenarAsc(todos.filter((x) => x.estadoFinanceiro === "vence_hoje"));
-  const aVencer = ordenarAsc(todos.filter((x) => x.estadoFinanceiro === "a_vencer"));
-  const programadas = ordenarAsc(todos.filter((x) => x.estadoFinanceiro === "programada"));
-  const abertos = [...dividaAtiva, ...venceHoje, ...aVencer];
-  const totalAberto = abertos.reduce((t, x) => t + dinheiro(x.saldoPortal), 0);
-  const totalDividaAtiva = dividaAtiva.reduce((t, x) => t + dinheiro(x.saldoPortal), 0);
-  const totalProgramado = programadas.reduce((t, x) => t + dinheiro(x.valorPortal), 0);
+  const abertos = [...mensalidadesAluno, ...lancamentos].filter((x) => {
+    const s = normalizar(x.status);
+    return !["pago","recebido","quitado","baixado","cancelado","cancelada"].includes(s);
+  });
+  const totalAberto = abertos.reduce((t, x) => t + dinheiro(x.total ?? x.valorOriginal ?? x.valor ?? x.valorBruto), 0);
   return {
     mensalidades: mensalidadesAluno.slice(-12).reverse(),
     lancamentos: lancamentos.slice(-12).reverse(),
     abertos,
-    dividaAtiva,
-    venceHoje,
-    aVencer,
-    programadas,
-    proximaMensalidade: [...programadas, ...aVencer, ...venceHoje][0] || null,
-    totalAberto: dinheiro(totalAberto),
-    totalDividaAtiva: dinheiro(totalDividaAtiva),
-    totalProgramado: dinheiro(totalProgramado)
+    totalAberto: dinheiro(totalAberto)
   };
 }
 
@@ -199,9 +127,7 @@ export async function obterPortalAluno(alunoId, filtros = {}) {
       frequenciasRegistradas: frequencias.length,
       treinosAtivos: treinos.length,
       avaliacoes: avaliacoes.length,
-      financeiroAberto: financeiro.totalDividaAtiva,
-      financeiroAReceber: financeiro.totalAberto,
-      financeiroProgramado: financeiro.totalProgramado
+      financeiroAberto: financeiro.totalAberto
     }
   };
 }

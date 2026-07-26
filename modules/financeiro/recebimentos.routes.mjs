@@ -3,13 +3,13 @@ import {
   listarRecebimentos,
   resumoRecebimentos,
   criarRecebimento,
+  confirmarRecebimento,
   obterRecebimento,
   atualizarRecebimento,
+  estornarRecebimento,
   cancelarRecebimento,
   excluirRecebimento
 } from './recebimentos.service.mjs';
-import { listarTitulos, receberTitulos, estornarRecibo } from './financeiro-ledger.service.mjs';
-import { programarProximaCobrancaAposPagamento } from '../cobranca/cobranca.service.mjs';
 
 const router = express.Router();
 
@@ -62,30 +62,25 @@ router.put('/:id', async (req, res) => {
 });
 
 
-async function confirmarPeloLedger(req, res) {
+router.post('/:id/baixar', async (req, res) => {
   try {
-    const recebimento = await obterRecebimento(req.params.id);
-    if (!recebimento) return res.status(404).json({ erro: true, mensagem: 'Recebimento não encontrado.' });
-    const titulos = await listarTitulos({});
-    const titulo = titulos.find((item) => String(item.id) === String(recebimento.lancamentoFinanceiroId || recebimento.financeiroId));
-    if (!titulo) return res.status(409).json({ erro: true, mensagem: 'Recebimento sem título financeiro vinculado. Reconcilie o cadastro antes de confirmar.' });
-    const resultado = await receberTitulos({ ...(req.body || {}), tituloId: titulo.id, operacaoId: req.body?.operacaoId || `recebimento-${recebimento.id}-${Date.now()}` });
-    let cobrancaAutomatica = { ok: true, programada: false };
-    if (!resultado.idempotente) try { cobrancaAutomatica = await programarProximaCobrancaAposPagamento({ financeiroId: titulo.id, mensalidadeId: recebimento.mensalidadeId || titulo.mensalidadeId, alunoId: titulo.alunoId || recebimento.alunoId, usuario: req.body?.usuario || 'recebimentos' }); } catch (erroAgenda) { cobrancaAutomatica = { ok: false, aviso: true, programada: false, motivo: erroAgenda.message }; }
-    res.json({ ok: true, ...resultado, cobrancaAutomatica });
+    res.json(await confirmarRecebimento(req.params.id, req.body || {}));
   } catch (erro) {
     tratarErro(res, erro);
   }
-}
-router.post('/:id/baixar', confirmarPeloLedger);
-router.post('/:id/confirmar', confirmarPeloLedger);
+});
+
+router.post('/:id/confirmar', async (req, res) => {
+  try {
+    res.json(await confirmarRecebimento(req.params.id, req.body || {}));
+  } catch (erro) {
+    tratarErro(res, erro);
+  }
+});
 
 router.post('/:id/estornar', async (req, res) => {
   try {
-    const recebimento = await obterRecebimento(req.params.id);
-    if (!recebimento) return res.status(404).json({ erro: true, mensagem: 'Recebimento não encontrado.' });
-    if (!recebimento.reciboId) return res.status(409).json({ erro: true, mensagem: 'Recebimento legado sem recibo. Não é seguro estornar por esta tela: reconcilie-o antes.' });
-    res.json(await estornarRecibo(recebimento.reciboId, req.body || {}));
+    res.json(await estornarRecebimento(req.params.id, req.body || {}));
   } catch (erro) {
     tratarErro(res, erro);
   }

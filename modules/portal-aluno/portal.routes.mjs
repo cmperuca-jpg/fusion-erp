@@ -42,105 +42,6 @@ function hojeISO() { return new Date().toISOString().slice(0, 10); }
 function alunoId(a = {}) { return texto(a.id || a._id || a.alunoId || a.aluno_id); }
 function alunoNome(a = {}) { return texto(a.nome || a.alunoNome || a.aluno || a.name || 'Aluno'); }
 function numero(v) { const n = Number(String(v ?? '').replace(',', '.').match(/-?\d+(\.\d+)?/)?.[0] || 0); return Number.isFinite(n) ? n : 0; }
-function statusPagoPortal(item = {}) { return ['pago', 'recebido', 'quitado', 'baixado'].includes(normalizar(item.status || item.statusPagamento)); }
-function statusCanceladoPortal(item = {}) { return ['cancelado', 'cancelada', 'estornado', 'estornada', 'excluido', 'excluida'].includes(normalizar(item.status || item.situacao)) || item.cancelado === true || item.excluido === true; }
-function statusProgramadoPortal(item = {}) {
-  const s = normalizar(item.status || item.situacao);
-  return ['programado', 'programada', 'agendado', 'agendada', 'previsto', 'prevista', 'futura', 'futuro'].includes(s) ||
-    item.programada === true || item.programado === true || item.previsto === true;
-}
-function valorCobrancaPortal(item = {}) { return numero(item.total ?? item.valorOriginal ?? item.valorBruto ?? item.valor); }
-function valorRecebidoPortal(item = {}) { return numero(item.valorPago ?? item.valorRecebido ?? item.recebido ?? item.valorLiquido); }
-function saldoCobrancaPortal(item = {}) {
-  if (statusPagoPortal(item) || statusCanceladoPortal(item) || statusProgramadoPortal(item)) return 0;
-  const campos = [item.valorRestante, item.saldoRestante, item.saldo, item.valorAberto];
-  const direto = campos.find((v) => v !== undefined && v !== null && String(v).trim() !== '');
-  if (direto !== undefined) return Math.max(0, numero(direto));
-  return Math.max(0, valorCobrancaPortal(item) - valorRecebidoPortal(item));
-}
-function chaveCobrancaPortal(item = {}, origem = '') {
-  const mensalidadeId = item.mensalidadeId || (origem === 'mensalidade' ? item.id : '');
-  if (mensalidadeId) return `men:${mensalidadeId}`;
-  if (item.lancamentoFinanceiroId || item.financeiroId) return `fin:${item.lancamentoFinanceiroId || item.financeiroId}`;
-  return `${origem}:${item.id || item.numeroDocumento || item.descricao || Math.random()}`;
-}
-function normalizarCobrancaPortal(item = {}, origem = '') {
-  const vencimento = dataISO(item.vencimento || item.dataVencimento || item.data_vencimento || item.competencia);
-  const valor = valorCobrancaPortal(item);
-  const saldo = saldoCobrancaPortal(item);
-  const hoje = hojeISO();
-  let estadoFinanceiro = 'a_vencer';
-  let statusExibicao = 'A vencer';
-  if (statusCanceladoPortal(item)) {
-    estadoFinanceiro = 'cancelado';
-    statusExibicao = 'Cancelado';
-  } else if (statusPagoPortal(item) || saldo <= 0 && !statusProgramadoPortal(item)) {
-    estadoFinanceiro = 'pago';
-    statusExibicao = 'Pago';
-  } else if (statusProgramadoPortal(item)) {
-    estadoFinanceiro = 'programada';
-    statusExibicao = 'Programada';
-  } else if (vencimento && vencimento < hoje) {
-    estadoFinanceiro = 'divida_ativa';
-    statusExibicao = 'Em atraso';
-  } else if (vencimento && vencimento === hoje) {
-    estadoFinanceiro = 'vence_hoje';
-    statusExibicao = 'Vence hoje';
-  }
-  return {
-    ...item,
-    origemPortal: origem,
-    estadoFinanceiro,
-    statusExibicao,
-    statusPortal: estadoFinanceiro,
-    valorPortal: valor,
-    saldoPortal: saldo,
-    vencimento
-  };
-}
-function ordenarCobrancasAsc(lista = []) {
-  return [...lista].sort((a, b) => String(a.vencimento || a.competencia || '').localeCompare(String(b.vencimento || b.competencia || '')));
-}
-function consolidarFinanceiroPortal(financeiro = [], mensalidades = []) {
-  const mapa = new Map();
-  const adicionar = (item, origem) => {
-    const registro = normalizarCobrancaPortal(item, origem);
-    const chave = chaveCobrancaPortal(item, origem);
-    const atual = mapa.get(chave);
-    if (!atual) {
-      mapa.set(chave, registro);
-      return;
-    }
-    if (atual.estadoFinanceiro === 'programada' && registro.estadoFinanceiro !== 'programada') mapa.set(chave, registro);
-  };
-  mensalidades.forEach((item) => adicionar(item, 'mensalidade'));
-  financeiro.forEach((item) => adicionar(item, 'financeiro'));
-  const todos = [...mapa.values()];
-  const dividaAtiva = ordenarCobrancasAsc(todos.filter((item) => item.estadoFinanceiro === 'divida_ativa'));
-  const venceHoje = ordenarCobrancasAsc(todos.filter((item) => item.estadoFinanceiro === 'vence_hoje'));
-  const aVencer = ordenarCobrancasAsc(todos.filter((item) => item.estadoFinanceiro === 'a_vencer'));
-  const programadas = ordenarCobrancasAsc(todos.filter((item) => item.estadoFinanceiro === 'programada'));
-  const pagos = ordenarPorData(todos.filter((item) => item.estadoFinanceiro === 'pago'), ['dataPagamento', 'pagamento', 'vencimento', 'criadoEm']);
-  const cobrancasAbertas = [...dividaAtiva, ...venceHoje, ...aVencer];
-  const proximaMensalidade = [...programadas, ...aVencer, ...venceHoje].find(Boolean) || null;
-  const somarSaldo = (lista) => Number(lista.reduce((t, item) => t + numero(item.saldoPortal), 0).toFixed(2));
-  const somarValor = (lista) => Number(lista.reduce((t, item) => t + numero(item.valorPortal), 0).toFixed(2));
-  return {
-    todos: ordenarCobrancasAsc(todos).slice(0, 60),
-    dividaAtiva,
-    venceHoje,
-    aVencer,
-    cobrancasAbertas,
-    programadas,
-    pagos: pagos.slice(0, 20),
-    proximaMensalidade,
-    totalDividaAtiva: somarSaldo(dividaAtiva),
-    totalVenceHoje: somarSaldo(venceHoje),
-    totalAVencer: somarSaldo(aVencer),
-    totalAberto: somarSaldo(cobrancasAbertas),
-    totalProgramado: somarValor(programadas)
-  };
-}
 function seriesNumero(v) { const n = numero(v); return n > 0 ? n : 1; }
 function volumeExercicio(ex = {}) { return numero(ex.cargaRealizada || ex.cargaPrevista || ex.carga) * numero(ex.repeticoesRealizadas || ex.repeticoes) * seriesNumero(ex.series); }
 function volumeExecucao(exec = {}) { return (exec.exercicios || []).reduce((t, ex) => t + volumeExercicio(ex), 0); }
@@ -394,9 +295,8 @@ async function montarResumo(aluno) {
   const mens = ordenarPorData(base.mensalidades.filter(m => pertenceAoAluno(m, aluno)), ['vencimento', 'competencia', 'criadoEm']);
   const mats = ordenarPorData(base.matriculas.filter(m => pertenceAoAluno(m, aluno)), ['dataMatricula', 'data_matricula', 'criadoEm']);
 
-  const financeiroPortal = consolidarFinanceiroPortal(fins, mens);
-  const abertos = financeiroPortal.cobrancasAbertas;
-  const pagos = financeiroPortal.pagos;
+  const abertos = fins.filter(f => ['aberto', 'pendente', 'a receber'].includes(normalizar(f.status)));
+  const pagos = fins.filter(f => ['pago', 'recebido', 'quitado'].includes(normalizar(f.status)));
   const hoje = hojeISO();
   const checkinHoje = base.checkins.filter(c => pertenceAoAluno(c, aluno) && dataISO(c.data || c.dataEntrada || c.criadoEm) === hoje).sort((a,b)=>String(b.criadoEm||b.entrada||'').localeCompare(String(a.criadoEm||a.entrada||'')))[0] || null;
   const execucaoAtiva = execs.find(e => dataISO(e.data || e.criadoEm) === hoje && !['concluido','concluído','cancelado'].includes(normalizar(e.status))) || null;
@@ -420,7 +320,7 @@ async function montarResumo(aluno) {
 
   return {
     aluno: { id: alunoId(aluno), nome: alunoNome(aluno), cpf: soNumeros(aluno.cpf), plano: aluno.plano || aluno.nomePlano || aluno.planoNome || '', status: aluno.status || aluno.situacao || 'ativo', professorId: aluno.professorId || aluno.professor_id || '', professorNome: aluno.professorNome || aluno.professor_responsavel || aluno.professor || '' },
-    resumo: { avaliacoes: avs.length, treinos: trs.length, execucoes: execs.length, mensalidades: mens.length, financeiroAberto: financeiroPortal.dividaAtiva.length, financeiroAbertoValor: financeiroPortal.totalDividaAtiva, financeiroAReceber: abertos.length, financeiroAReceberValor: financeiroPortal.totalAberto, financeiroPago: pagos.length, proximoVencimento: financeiroPortal.proximaMensalidade?.vencimento || '', proximaMensalidade: financeiroPortal.proximaMensalidade || null, volumeTotal: Math.round(execs.reduce((t, e) => t + volumeExecucao(e), 0)), frequenciaMes: freqMes, streak, volume30, volume90 },
+    resumo: { avaliacoes: avs.length, treinos: trs.length, execucoes: execs.length, mensalidades: mens.length, financeiroAberto: abertos.length, financeiroPago: pagos.length, proximoVencimento: abertos[0]?.vencimento || mens.find(m => !['pago','recebido','cancelado'].includes(normalizar(m.status)))?.vencimento || '', volumeTotal: Math.round(execs.reduce((t, e) => t + volumeExecucao(e), 0)), frequenciaMes: freqMes, streak, volume30, volume90 },
     operacional: {
       checkinHoje: checkinHoje ? { id: checkinHoje.id, status: checkinHoje.status || 'Presente', aberto: checkinAberto(checkinHoje), entrada: checkinHoje.horaEntrada || checkinHoje.entrada || checkinHoje.criadoEm || '' } : null,
       treinoAtivo: execucaoAtiva ? { execucaoId: execucaoAtiva.id, treinoId: execucaoAtiva.treinoId, status: execucaoAtiva.status, resumo: resumoExecucao(execucaoAtiva), exercicioAtual: atual, proximoExercicio: (execucaoAtiva.exercicios || []).find(e => !e.concluido && e.exercicioTreinoId !== atual?.exercicioTreinoId) || null, volume: Math.round(volumeExecucao(execucaoAtiva)), progressaoAtual } : null,
@@ -435,7 +335,6 @@ async function montarResumo(aluno) {
       evolucaoResumo: { execucoes30: ultimos30.length, execucoes90: ultimos90.length, volume30, volume90, variacaoVolume: volume90 ? Math.round((volume30 / Math.max(1, volume90 / 3) - 1) * 100) : 0 },
       iaProgressao: analisarIAProgressao(execs)
     },
-    financeiroPortal,
     avaliacoes: avs.slice(0, 20), treinos: trs.slice(0, 20), execucoes: execs.slice(0, 20), financeiro: fins.slice(0, 40), mensalidades: mens.slice(0, 40), matriculas: mats.slice(0, 10)
   };
 }

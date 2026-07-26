@@ -351,12 +351,3 @@ html, body {
   .login-card h1{font-size:26px;}
   .login-card p{font-size:15px;}
 }
-
-/* Fusion ERP V11 - financeiro do aluno separado por intencao operacional */
-.financeiro-section{border-top:1px solid #e2e8f0;padding-top:12px;margin-top:12px}
-.financeiro-section h4{margin:0 0 6px;color:#0f172a}
-.financeiro-proxima{border:1px solid #bfdbfe;background:#eff6ff;border-radius:12px;padding:12px;margin-bottom:12px}
-.badge.programada,.badge.programado{background:#dbeafe;color:#1d4ed8}
-.badge.a_vencer{background:#fef3c7;color:#92400e}
-.badge.vence_hoje{background:#ffedd5;color:#c2410c}
-.badge.divida_ativa{background:#fee2e2;color:#991b1b}
