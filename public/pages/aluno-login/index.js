@@ -11,7 +11,8 @@ function destinoAposLogin(padrao) {
   const rotasAluno = [
     "/pages/aluno-treinos/",
     "/pages/aluno-avaliacao/",
-    "/pages/promocao-90-dias/"
+    "/pages/promocao-90-dias/",
+    "/pages/portal-aluno-emergencial/"
   ];
   try {
     const destino = new URL(next, location.origin);
@@ -49,7 +50,7 @@ async function entrar() {
       alunoNome: data.dados.alunoNome
     }));
     mensagem("Acesso liberado.", "ok");
-    location.href = destinoAposLogin(`/pages/aluno-treinos/index.html?alunoId=${encodeURIComponent(data.dados.alunoId)}`);
+    location.href = destinoAposLogin(`/pages/portal-aluno-emergencial/index.html?alunoId=${encodeURIComponent(data.dados.alunoId)}`);
   } catch (erro) {
     mensagem(erro.message || "Erro ao entrar.", "erro");
   } finally {

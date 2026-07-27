@@ -42,6 +42,8 @@ import accessEngineRoutes from "./modules/access-engine/access-engine.routes.mjs
 import matriculaOnlineRoutes from "./modules/matricula-online/matricula-online.routes.mjs";
 import leadsRoutes from "./modules/leads/leads.routes.mjs";
 import siteChatRoutes from "./modules/site-chat/site-chat.routes.mjs";
+import chatRoutes from "./modules/chat/chat.routes.mjs";
+import emergencyAccessRoutes from "./modules/emergency-access/emergency-access.routes.mjs";
 import notificacoesRoutes from "./modules/notificacoes/notificacoes.routes.mjs";
 import fidelidadeRoutes from "./modules/fidelidade/fidelidade.routes.mjs";
 import accessBridgeRoutes from "./modules/access-bridge/access-bridge.routes.mjs";
@@ -753,6 +755,8 @@ app.use("/api/comercial", comercialRoutes);
 app.use("/api/matricula-online", matriculaOnlineRoutes);
 app.use("/api/leads", leadsRoutes);
 app.use("/api/site-chat", siteChatRoutes);
+app.use("/api/chat", chatRoutes);
+app.use("/api/emergency-access", emergencyAccessRoutes);
 app.use("/api/notificacoes", notificacoesRoutes);
 app.use("/api/fidelidade", fidelidadeRoutes);
 app.use("/api/natacao", natacaoRoutes);

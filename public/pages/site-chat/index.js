@@ -66,6 +66,23 @@ function renderCabecalho(){
   el.innerHTML = `<strong>${esc(estado.conversa.nome || "Sem nome")}</strong><span>${esc(nomeOrigem(estado.conversa.origem))} | ${esc(estado.conversa.contato || estado.conversa.protocolo || "sem contato")}</span>`;
 }
 
+
+function renderConteudoMensagem(m){
+  const texto = String(m.mensagem || "");
+  const url = texto.match(/Comprovante:\s*(\/uploads\/emergency-receipts\/[^\s]+)/i)?.[1] || "";
+  const solicitacao = texto.match(/Solicitação:\s*([^\s]+)/i)?.[1] || "";
+  const corpo = `<div>${esc(texto).replace(/\n/g,"<br>")}</div>`;
+  const imagem = url ? `<a href="${esc(url)}" target="_blank" rel="noopener"><img src="${esc(url)}" alt="Comprovante" style="max-width:280px;max-height:280px;border-radius:10px;margin-top:8px;display:block"></a>` : "";
+  const acoes = solicitacao ? `<div class="emerg-actions" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button type="button" data-emerg-action="confirmado" data-emerg-id="${esc(solicitacao)}">Confirmar pagamento</button><button type="button" data-emerg-action="recusado" data-emerg-id="${esc(solicitacao)}">Recusar</button><button type="button" data-emerg-action="baixado" data-emerg-id="${esc(solicitacao)}">Marcar como baixado</button></div>` : "";
+  return corpo + imagem + acoes;
+}
+
+async function acaoEmergencial(id, acao){
+  const resp = await fetch(`/api/emergency-access/solicitacoes/${encodeURIComponent(id)}/${encodeURIComponent(acao)}`, { method:"POST", headers:{"Content-Type":"application/json"} });
+  const json = await resp.json().catch(()=>({}));
+  if(!resp.ok || json.ok===false) throw new Error(json.mensagem || "Não foi possível atualizar a solicitação.");
+  await abrirConversa(estado.conversa.conversaId);
+}
 function renderMensagens(){
   const area = $("mensagens");
   if(!estado.conversa){
@@ -79,14 +96,14 @@ function renderMensagens(){
   area.innerHTML = estado.mensagens.map(m => `
     <div class="msg ${esc(tipoMsg(m))}">
       <small>${esc(nomeRemetente(m))} | ${esc(dataHora(m.criadoEm))}</small>
-      ${esc(m.mensagem || "")}
+      ${renderConteudoMensagem(m)}
     </div>
   `).join("");
   area.scrollTop = area.scrollHeight;
 }
 
 async function carregarConversas(){
-  const resp = await fetch("/api/site-chat/conversas", { cache:"no-store" });
+  const resp = await fetch("/api/chat/conversas", { cache:"no-store" });
   const json = await resp.json().catch(() => ({}));
   estado.conversas = json.conversas || [];
   if(estado.conversa){
@@ -105,7 +122,7 @@ async function abrirConversa(id){
     renderMensagens();
     return;
   }
-  const resp = await fetch(`/api/site-chat/mensagens?conversaId=${encodeURIComponent(id)}&limite=120`, { cache:"no-store" });
+  const resp = await fetch(`/api/chat/mensagens?conversaId=${encodeURIComponent(id)}&limite=120`, { cache:"no-store" });
   const json = await resp.json().catch(() => ({}));
   estado.mensagens = json.mensagens || [];
   renderMensagens();
@@ -119,7 +136,7 @@ async function responder(ev){
   const btn = ev.currentTarget.querySelector("button");
   btn.disabled = true;
   try{
-    await fetch("/api/site-chat/mensagens", {
+    await fetch("/api/chat/mensagens", {
       method:"POST",
       headers:{ "Content-Type":"application/json" },
       body:JSON.stringify({
@@ -161,4 +178,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     await carregarConversas().catch(() => {});
     if(estado.conversa) await abrirConversa(estado.conversa.conversaId).catch(() => {});
   }, 15000);
+});
+
+
+document.addEventListener("click", async (ev) => {
+  const btn = ev.target.closest("[data-emerg-action]");
+  if(!btn) return;
+  btn.disabled = true;
+  try { await acaoEmergencial(btn.dataset.emergId, btn.dataset.emergAction); }
+  catch(e){ alert(e.message || "Erro ao atualizar solicitação."); }
+  finally { btn.disabled = false; }
 });

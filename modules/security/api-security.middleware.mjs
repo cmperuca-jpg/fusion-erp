@@ -16,14 +16,13 @@ const PUBLIC_RULES = [
   ["GET", "/api/site-chat/mensagens"],
   ["POST", "/api/aluno-login"],
   ["POST", "/api/access-onboarding/ativar"],
-  ["POST", "/api/access-bridge/agent/heartbeat"],
-  ["GET", "/api/access-bridge/agent/next"],
-  ["POST", "/api/access-bridge/agent/commands", "prefix"],
   ["GET", "/api/reconhecimento-facial/terminal", "prefix"],
   ["POST", "/api/reconhecimento-facial/terminal", "prefix"],
   ["GET", "/api/reconhecimento-facial/agent", "prefix"],
   ["POST", "/api/reconhecimento-facial/agent", "prefix"],
-  ["GET", "/api/aparencia"]
+  ["GET", "/api/aparencia"],
+  ["GET", "/api/emergency-access/alunos", "prefix"],
+  ["POST", "/api/emergency-access/comprovante"]
 ];
 
 const ADMIN_PREFIXES = [
@@ -103,6 +102,8 @@ function portalAlunoPermitido(req, user = {}) {
   if (req.method === "GET" && req.path === "/api/treinos/aluno-sessao") return mesmoId(alunoIdDaRequisicao(req), alunoId);
   if (req.method === "GET" && req.path === "/api/treinos/aluno-catraca-contador") return mesmoId(alunoIdDaRequisicao(req), alunoId);
   if (req.method === "POST" && req.path === "/api/treinos/aluno-liberar-catraca") return mesmoId(alunoIdDaRequisicao(req), alunoId);
+  if (req.method === "GET" && pathMatches(req.path, "/api/emergency-access/alunos")) return mesmoId(req.path.split("/")[4], alunoId);
+  if (req.method === "POST" && req.path === "/api/emergency-access/comprovante") return mesmoId(alunoIdDaRequisicao(req), alunoId);
 
   return false;
 }

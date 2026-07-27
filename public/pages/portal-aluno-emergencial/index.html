@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Portal do Aluno - Pagamento Emergencial</title>
+  <link rel="stylesheet" href="/assets/css/fusion-app.css">
+  <link rel="stylesheet" href="./style.css">
+  <meta name="theme-color" content="#16a34a">
+</head>
+<body>
+  <main class="portal">
+    <header class="portal-head">
+      <div><span>Fusion ERP</span><h1>Portal do Aluno</h1><p id="saudacao">Carregando seus dados...</p></div>
+      <button id="sair" type="button" class="secondary">Sair</button>
+    </header>
+
+    <nav class="atalhos">
+      <a id="linkTreino" href="/pages/aluno-treinos/">Meu treino</a>
+      <button id="atualizar" type="button" class="secondary">Atualizar</button>
+    </nav>
+
+    <section class="card" id="cardStatus">
+      <div class="loading">Consultando situação financeira...</div>
+    </section>
+
+    <section class="card hidden" id="cardPix">
+      <h2>Pagamento via PIX</h2>
+      <p>Copie o código abaixo, efetue o pagamento e envie uma imagem do comprovante.</p>
+      <div class="pix-meta"><span>Valor</span><strong id="pixValor">R$ 0,00</strong></div>
+      <label for="pixCodigo">PIX Copia e Cola / Chave PIX</label>
+      <textarea id="pixCodigo" readonly></textarea>
+      <button id="copiarPix" type="button">Copiar PIX</button>
+      <p class="aviso">O envio do comprovante consome a única tentativa do mês. A liberação é automática, mesmo antes da conferência da recepção.</p>
+      <label for="comprovante">Comprovante (PNG, JPG ou WEBP)</label>
+      <input id="comprovante" type="file" accept="image/png,image/jpeg,image/webp">
+      <img id="preview" class="preview hidden" alt="Prévia do comprovante">
+      <button id="enviar" type="button">Enviar comprovante e liberar acesso</button>
+      <div id="mensagem" class="mensagem"></div>
+    </section>
+  </main>
+  <script src="./index.js"></script>
+</body>
+</html>
