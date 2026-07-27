@@ -49,6 +49,7 @@ async function entrar() {
       alunoId: data.dados.alunoId,
       alunoNome: data.dados.alunoNome
     }));
+    window.FusionAlunoSessao?.registrarLogin(data.dados);
     mensagem("Acesso liberado.", "ok");
     location.href = destinoAposLogin(`/pages/portal-aluno-emergencial/index.html?alunoId=${encodeURIComponent(data.dados.alunoId)}`);
   } catch (erro) {
@@ -56,6 +57,11 @@ async function entrar() {
   } finally {
     $("entrar").disabled = false;
   }
+}
+
+const motivo = new URLSearchParams(location.search).get("motivo");
+if (motivo === "outro_acesso") {
+  mensagem("Este aluno entrou em outro aparelho ou janela. Faça login novamente.", "erro");
 }
 
 $("entrar").onclick = entrar;

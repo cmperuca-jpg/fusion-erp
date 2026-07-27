@@ -1,16 +1,14 @@
-Fusion ERP — correção de cobrança exibida para aluno/matrícula inativa
+Correção do status no Portal do Aluno
 
-Causa:
-O portal do aluno buscava mensalidades futuras sem validar primeiro se o aluno e a matrícula estavam ativos.
-Além disso, carregarMatriculaAluno usava a primeira matrícula encontrada como fallback, mesmo quando estava inativa.
+Problema corrigido:
+- o portal usava statusMatricula do cadastro do aluno para decidir se o próprio aluno estava inativo;
+- isso fazia aluno ativo aparecer como inativo, ocultava a mensalidade e deixava a tela divergente da catraca.
 
-Correção:
-- considera somente matrícula ativa;
-- não exibe próxima mensalidade quando aluno ou matrícula estiver inativo;
-- mostra "Sem cobrança ativa";
-- mantém o bloqueio da catraca;
-- preserva mensalidades históricas no financeiro, apenas deixa de apresentá-las como próxima cobrança ativa.
+Nova regra:
+- status do aluno é avaliado somente pelos campos do cadastro do aluno;
+- status da matrícula é avaliado somente pelos campos da matrícula;
+- cobrança futura aparece apenas quando ambos estão ativos;
+- matrícula inativa não é usada como fallback.
 
-Arquivos:
-- public/assets/js/aluno-portal-status-fix.js
-- public/pages/aluno-treinos/index.html
+Aplicação:
+Substitua public/assets/js/aluno-portal-status-fix.js, faça deploy e use Ctrl+F5.

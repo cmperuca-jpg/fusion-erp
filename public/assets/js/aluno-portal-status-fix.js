@@ -1,35 +1,63 @@
 (() => {
   const STATUS_ATIVOS = new Set([
     "ativo", "ativa", "active", "vigente", "regular",
-    "matriculado", "matriculada", "em andamento", "em_andamento"
+    "matriculado", "matriculada", "em andamento", "em_andamento",
+    "liberado", "liberada", "adimplente"
   ]);
 
-  function normalizarStatus(valor) {
+  const STATUS_INATIVOS = new Set([
+    "inativo", "inativa", "inactive", "cancelado", "cancelada",
+    "bloqueado", "bloqueada", "suspenso", "suspensa", "encerrado",
+    "encerrada", "excluido", "excluida", "removido", "removida"
+  ]);
+
+  function normalizar(valor) {
     return String(valor ?? "")
       .trim()
       .toLowerCase()
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[-\s]+/g, "_");
+      .replace(/[-_\s]+/g, " ");
   }
 
-  function statusDe(registro = {}) {
-    return normalizarStatus(
-      registro.statusMatricula ??
-      registro.status_matricula ??
-      registro.statusAluno ??
-      registro.status_aluno ??
-      registro.status ??
-      registro.situacao ??
-      registro.ativo
-    );
+  function primeiroStatus(registro, campos) {
+    for (const campo of campos) {
+      const valor = registro?.[campo];
+      if (valor !== undefined && valor !== null && String(valor).trim() !== "") return valor;
+    }
+    return "";
   }
 
-  function estaAtivo(registro = {}) {
-    if (!registro || typeof registro !== "object") return false;
-    if (registro.ativo === true || registro.isAtivo === true) return true;
-    if (registro.ativo === false || registro.isAtivo === false) return false;
-    return STATUS_ATIVOS.has(statusDe(registro).replace(/_/g, " "));
+  // O cadastro do aluno e a matrícula são entidades diferentes.
+  // Nunca usar statusMatricula para concluir que o cadastro do aluno está inativo.
+  function alunoAtivo(aluno = {}) {
+    if (!aluno || typeof aluno !== "object") return false;
+    if (aluno.bloqueado === true || aluno.bloqueioCheckin === true) return false;
+
+    const status = normalizar(primeiroStatus(aluno, [
+      "statusAluno", "status_aluno", "status", "situacaoAluno", "situacao"
+    ]));
+
+    if (STATUS_INATIVOS.has(status)) return false;
+    if (STATUS_ATIVOS.has(status)) return true;
+    if (aluno.ativo === true || aluno.isAtivo === true) return true;
+    if (aluno.ativo === false || aluno.isAtivo === false) return false;
+    return false;
+  }
+
+  function matriculaAtiva(matricula = {}) {
+    if (!matricula || typeof matricula !== "object") return false;
+    if (matricula.bloqueada === true || matricula.bloqueioCheckin === true) return false;
+
+    const status = normalizar(primeiroStatus(matricula, [
+      "statusMatricula", "status_matricula", "status", "situacao", "estado"
+    ]));
+
+    if (STATUS_INATIVOS.has(status)) return false;
+    if (STATUS_ATIVOS.has(status)) return true;
+    if (matricula.ativo === true || matricula.isAtiva === true) return true;
+    if (matricula.ativo === false || matricula.isAtiva === false) return false;
+    return false;
   }
 
   function obterLista(payload = {}) {
@@ -56,23 +84,23 @@
     if (!sessao?.alunoId) return null;
     const prontuario = await buscarJson(`/api/alunos/${encodeURIComponent(sessao.alunoId)}/prontuario`);
     const matriculas = obterLista(prontuario || {});
-    return matriculas.find(estaAtivo) || null;
+    return matriculas.find(matriculaAtiva) || null;
   };
 
   const carregarPagamentosOriginal = window.carregarPagamentos;
 
   window.carregarPagamentos = async function carregarPagamentosCorrigido(sessao) {
-    const alunoAtivo = estaAtivo(window.alunoDetalhe || {});
-    const matriculaAtiva = estaAtivo(window.matriculaAlunoDetalhe || {});
+    const cadastroAtivo = alunoAtivo(window.alunoDetalhe || {});
+    const inscricaoAtiva = matriculaAtiva(window.matriculaAlunoDetalhe || {});
 
-    if (!alunoAtivo || !matriculaAtiva) {
+    if (!cadastroAtivo || !inscricaoAtiva) {
       const proximo = document.getElementById("proximoPagamento");
       const status = document.getElementById("statusPagamento");
       const alerta = document.getElementById("alertaPagamento");
 
       if (proximo) proximo.textContent = "Sem cobrança ativa";
       if (status) {
-        status.textContent = !alunoAtivo ? "Aluno inativo" : "Matrícula inativa";
+        status.textContent = !cadastroAtivo ? "Aluno inativo" : "Matrícula inativa";
         status.classList.remove("vencido");
       }
       if (alerta) {
@@ -82,6 +110,15 @@
       return;
     }
 
+    // Limpa rótulo residual deixado pelo cache/execução anterior antes de
+    // carregar a cobrança real do aluno ativo.
+    const status = document.getElementById("statusPagamento");
+    if (status && ["Aluno inativo", "Matrícula inativa"].includes(status.textContent.trim())) {
+      status.textContent = "";
+    }
+
     return carregarPagamentosOriginal?.(sessao);
   };
+
+  window.FusionStatusPortalAluno = { alunoAtivo, matriculaAtiva, normalizar };
 })();

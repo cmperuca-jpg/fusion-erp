@@ -31,6 +31,8 @@ export const professorSchema = z.object({
   senha: texto,
   login: texto,
   perfil: texto,
+  foto: texto,
+  foto_base64: texto,
   acessoTodosAlunos: z.boolean().optional().default(false)
 });
 
