@@ -24,30 +24,59 @@
       <aside class="conversas">
         <div class="filtros">
           <input id="busca" placeholder="Buscar conversa">
-          <select id="origem">
-            <option value="">Todas as origens</option>
-            <option value="portal_aluno">Portal do aluno</option>
-            <option value="matricula_online">Matricula online</option>
-            <option value="site">Site</option>
-          </select>
+          <div class="filtros-linha">
+            <select id="origem">
+              <option value="">Todas as origens</option>
+              <option value="portal_aluno">Portal do aluno</option>
+              <option value="portal_professor">Portal do professor</option>
+              <option value="matricula_online">Matrícula online</option>
+              <option value="promocao">Promoções</option>
+              <option value="site">Site</option>
+            </select>
+            <select id="filtroStatus">
+              <option value="">Todos os status</option>
+              <option value="aguardando">Aguardando</option>
+              <option value="em_atendimento">Em atendimento</option>
+              <option value="resolvida">Resolvida</option>
+              <option value="encerrada">Encerrada</option>
+            </select>
+          </div>
         </div>
         <div id="listaConversas" class="lista"></div>
       </aside>
 
       <section class="janela">
         <div id="cabecalhoConversa" class="cabecalho">
-          <strong>Selecione uma conversa</strong>
-          <span>As mensagens de alunos e visitantes aparecem aqui.</span>
+          <div>
+            <strong>Selecione uma conversa</strong>
+            <span>As mensagens de alunos e visitantes aparecem aqui.</span>
+          </div>
+          <div id="acoesConversa" class="acoes-conversa" hidden>
+            <select id="statusAtendimento" aria-label="Status do atendimento">
+              <option value="aguardando">Aguardando</option>
+              <option value="em_atendimento">Em atendimento</option>
+              <option value="resolvida">Resolvida</option>
+              <option value="encerrada">Encerrada</option>
+            </select>
+            <select id="prioridade" aria-label="Prioridade">
+              <option value="baixa">Baixa</option>
+              <option value="normal">Normal</option>
+              <option value="alta">Alta</option>
+              <option value="urgente">Urgente</option>
+            </select>
+            <button id="btnAssumir" type="button">Assumir</button>
+            <button id="btnResolver" type="button">Resolver</button>
+          </div>
         </div>
         <div id="mensagens" class="mensagens"></div>
         <form id="formResposta" class="resposta">
-          <textarea id="textoResposta" placeholder="Digite a resposta da recepcao"></textarea>
+          <textarea id="textoResposta" placeholder="Digite a resposta da recepção"></textarea>
           <button type="submit">Responder</button>
         </form>
       </section>
     </section>
   </main>
-  <script src="./index.js"></script>
+  <script src="./index.js?v=20260727-chat-operacional-1"></script>
   <script src="/assets/js/fusion-layout.js"></script>
 </body>
 </html>

@@ -1,26 +1,42 @@
 *{box-sizing:border-box}
 body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f4f7fb;color:#101828}
-.chat-admin{max-width:1260px;margin:0 auto;padding:18px}
+.chat-admin{max-width:1440px;margin:0 auto;padding:18px}
 .topo{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:14px}
 .topo span{display:block;color:#667085;font-weight:900;text-transform:uppercase;font-size:12px}
 .topo h1{margin:2px 0 0;font-size:30px}
 button{border:0;border-radius:10px;background:#111827;color:#fff;padding:11px 15px;font-weight:900;cursor:pointer}
 button:disabled{opacity:.6;cursor:not-allowed}
-.layout{display:grid;grid-template-columns:360px 1fr;gap:14px;min-height:calc(100vh - 110px)}
+.layout{display:grid;grid-template-columns:minmax(360px,420px) minmax(0,1fr);gap:14px;min-height:calc(100vh - 110px)}
 .conversas,.janela{background:#fff;border:1px solid #d9e2ef;border-radius:16px;overflow:hidden;box-shadow:0 10px 26px rgba(15,23,42,.06)}
 .filtros{display:grid;gap:8px;padding:12px;border-bottom:1px solid #e2e8f0}
+.filtros-linha{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 input,select,textarea{width:100%;border:1px solid #cbd5e1;border-radius:10px;padding:10px;font:inherit}
 .lista{overflow:auto;max-height:calc(100vh - 202px)}
-.conversa-item{width:100%;display:block;text-align:left;border:0;border-radius:0;background:#fff;color:#111827;padding:12px;border-bottom:1px solid #eef2f7;box-shadow:none}
-.conversa-item.ativa{background:#eef6ff}
-.conversa-item strong{display:block;font-size:14px}
-.conversa-item span{display:block;margin-top:4px;color:#667085;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.conversa-meta{display:flex;justify-content:space-between;gap:8px;margin-top:8px;color:#475569;font-size:11px;font-weight:900;text-transform:uppercase}
-.cabecalho{padding:13px 14px;border-bottom:1px solid #e2e8f0;background:#111827;color:#fff}
-.cabecalho strong{display:block}
+.conversa-item{width:100%;display:block;text-align:left;border:0;border-radius:0;background:#fff;color:#111827;padding:13px 14px;border-bottom:1px solid #eef2f7;box-shadow:none;min-width:0}
+.conversa-item:hover{background:#f8fafc}
+.conversa-item.ativa{background:#eaf4ff;border-left:4px solid #0891b2;padding-left:10px}
+.conversa-titulo{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.conversa-item strong{display:block;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.badge-pendente{flex:none;min-width:22px;padding:3px 7px;border-radius:999px;background:#dc2626;color:#fff;font-size:11px;text-align:center}
+.conversa-item span{display:block;margin-top:5px;color:#667085;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.conversa-meta{display:flex;justify-content:space-between;gap:8px;margin-top:8px;color:#475569;font-size:10px;font-weight:900;text-transform:uppercase}
+.conversa-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}
+.tag{padding:3px 7px;border-radius:999px;background:#e2e8f0;color:#334155;font-size:10px;font-weight:900;text-transform:uppercase}
+.tag.alta,.tag.urgente{background:#fee2e2;color:#991b1b}
+.tag.aguardando{background:#fef3c7;color:#92400e}
+.tag.em_atendimento{background:#dbeafe;color:#1e40af}
+.tag.resolvida{background:#dcfce7;color:#166534}
+.tag.encerrada{background:#e5e7eb;color:#374151}
+.cabecalho{padding:12px 14px;border-bottom:1px solid #e2e8f0;background:#111827;color:#fff;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.cabecalho>div:first-child{min-width:0}
+.cabecalho strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cabecalho span{display:block;margin-top:4px;opacity:.75;font-size:12px}
-.mensagens{height:calc(100vh - 250px);overflow:auto;padding:14px;background:#f8fafc}
-.msg{max-width:76%;margin:0 0 10px;padding:10px 12px;border-radius:14px;border:1px solid #e2e8f0;background:#fff;line-height:1.35}
+.acoes-conversa{display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end}
+.acoes-conversa select{width:auto;min-width:125px;background:#fff;color:#111827;padding:8px}
+.acoes-conversa button{padding:9px 11px;background:#0891b2}
+.acoes-conversa #btnResolver{background:#15803d}
+.mensagens{height:calc(100vh - 270px);overflow:auto;padding:16px;background:#f8fafc}
+.msg{max-width:76%;margin:0 0 10px;padding:10px 12px;border-radius:14px;border:1px solid #e2e8f0;background:#fff;line-height:1.35;overflow-wrap:anywhere}
 .msg.usuario{margin-left:auto;background:#dcfce7;border-color:#bbf7d0}
 .msg.sistema{background:#eef2ff}
 .msg.atendimento{background:#fff;border-color:#c7d2fe}
@@ -28,17 +44,11 @@ input,select,textarea{width:100%;border:1px solid #cbd5e1;border-radius:10px;pad
 .resposta{display:grid;grid-template-columns:1fr auto;gap:10px;padding:12px;border-top:1px solid #e2e8f0}
 .resposta textarea{min-height:76px;resize:none}
 .empty{padding:16px;color:#64748b;font-weight:800}
-@media(max-width:900px){
-  .layout{grid-template-columns:1fr}
-  .lista{max-height:320px}
-  .mensagens{height:420px}
-  .resposta{grid-template-columns:1fr}
-}
-
-/* Encaixe no layout administrativo */
-body.fusion-com-sidebar .chat-admin{margin-right:0!important}
-body.fusion-com-sidebar .layout{grid-template-columns:minmax(280px,340px) minmax(0,1fr);min-height:calc(100vh - 150px)}
+@media(max-width:1050px){.layout{grid-template-columns:330px minmax(0,1fr)}.cabecalho{align-items:flex-start;flex-direction:column}.acoes-conversa{justify-content:flex-start}}
+@media(max-width:900px){.layout{grid-template-columns:1fr}.lista{max-height:320px}.mensagens{height:420px}.resposta{grid-template-columns:1fr}.filtros-linha{grid-template-columns:1fr}}
+body.fusion-com-sidebar .chat-admin{margin-right:0!important;max-width:none}
+body.fusion-com-sidebar .layout{grid-template-columns:minmax(360px,420px) minmax(0,1fr);min-height:calc(100vh - 150px)}
 body.fusion-com-sidebar .janela{min-width:0}
-body.fusion-com-sidebar .mensagens{height:calc(100vh - 322px);min-height:330px}
-@media(max-width:1100px){body.fusion-com-sidebar .layout{grid-template-columns:300px minmax(0,1fr)}}
+body.fusion-com-sidebar .mensagens{height:calc(100vh - 342px);min-height:330px}
+@media(max-width:1180px){body.fusion-com-sidebar .layout{grid-template-columns:340px minmax(0,1fr)}}
 @media(max-width:900px){body.fusion-com-sidebar .layout{grid-template-columns:1fr}body.fusion-com-sidebar .mensagens{height:420px}}
