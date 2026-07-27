@@ -1,13 +1,13 @@
 import { listarTurmas, buscarTurmaPorId, criarTurma, atualizarTurma, excluirTurma } from "./turmas.repository.mjs";
 import { lerJsonDuravel } from "../core/persistence/durable-json.mjs";
+import { matriculaEstaAtiva, normalizarStatusMatricula } from "../matriculas/matricula-status.util.mjs";
 
 function texto(v){ return String(v ?? "").trim(); }
 function numero(v,p=0){ const n=Number(v); return Number.isFinite(n)?Number(n.toFixed(2)):p; }
 function normalizar(v){ return texto(v).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); }
 
 function statusAtivo(item = {}) {
-  const status = normalizar(item.status ?? item.situacao ?? item.statusMatricula ?? item.matriculaStatus ?? "ativa");
-  return !["inativo","inativa","cancelado","cancelada","encerrado","encerrada","finalizado","finalizada","trancado","trancada","suspenso","suspensa","bloqueado","bloqueada"].includes(status);
+  return matriculaEstaAtiva(item);
 }
 
 function idTurma(turma = {}) { return texto(turma.id ?? turma.turmaId ?? turma.turma_id ?? turma.codigo); }
@@ -136,14 +136,14 @@ export async function obterTurmas(filtros = {}) {
   return turmas.map(t => ({ ...t, ...normalizarTurma(t, ocupacao.get(idTurma(t)) || 0) })).filter(t => {
     const textoBusca=[t.nome,t.modalidade,t.professor,t.sala].join(" ").toLowerCase();
     return (!busca || textoBusca.includes(busca)) &&
-      (!status || status === "Todos" || t.status === status) &&
+      (!status || ["todos","todas"].includes(normalizarStatusMatricula(status)) || normalizarStatusMatricula(t.status) === normalizarStatusMatricula(status)) &&
       (!modalidade || String(t.modalidade).toLowerCase() === modalidade);
   });
 }
 
 export async function obterResumoTurmas() {
   const turmas = await obterTurmas();
-  const ativas=turmas.filter(t=>t.status==="Ativa").length;
+  const ativas=turmas.filter(t=>matriculaEstaAtiva(t)).length;
   const vagas=turmas.reduce((total,t)=>total+Math.max(Number(t.capacidade||0)-Number(t.alunosMatriculados||0),0),0);
   return { total: turmas.length, ativas, inativas: turmas.length-ativas, vagas };
 }

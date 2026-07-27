@@ -1,5 +1,6 @@
 import { carregarBaseBI } from "./bi.repository.mjs";
 import { biFinanceiro as gerarRelatorioFinanceiroConsolidado } from "../financeiro/relatorios.service.mjs";
+import { matriculaEstaAtiva } from "../matriculas/matricula-status.util.mjs";
 
 function texto(valor) {
   return String(valor ?? "").trim();
@@ -49,7 +50,7 @@ function chaveAluno(item = {}) {
 
 function matriculasAtivasUnicas(matriculas = []) {
   const mapa = new Map();
-  for (const matricula of matriculas.filter(ativo)) {
+  for (const matricula of matriculas.filter(matriculaEstaAtiva)) {
     const chave = texto(matricula.id) || `${chaveAluno(matricula)}|${texto(matricula.planoId ?? matricula.plano)}|${dataMatricula(matricula)}`;
     if (chave) mapa.set(chave, matricula);
   }
@@ -57,11 +58,15 @@ function matriculasAtivasUnicas(matriculas = []) {
 }
 
 function alunosAtivosUnicos(alunos = [], matriculas = []) {
-  const idsMatriculados = new Set(matriculasAtivasUnicas(matriculas).map(chaveAluno).filter(Boolean));
+  const idsMatriculados = new Set(
+    matriculasAtivasUnicas(matriculas)
+      .map(matricula => normalizar(alunoId(matricula)))
+      .filter(Boolean)
+  );
   const mapa = new Map();
   for (const aluno of alunos) {
-    const chave = chaveAluno(aluno);
-    if (chave && (ativo(aluno) || idsMatriculados.has(chave))) mapa.set(chave, aluno);
+    const chave = normalizar(aluno.id ?? aluno.alunoId ?? aluno.aluno_id ?? aluno.cpf ?? aluno.email ?? aluno.nome);
+    if (chave && idsMatriculados.has(chave)) mapa.set(chave, aluno);
   }
   return [...mapa.values()];
 }
@@ -279,9 +284,8 @@ export async function gerarBIAcademia(filtros = {}) {
   const fim = filtros.fim || filtros.dataFim || "";
   const hoje = hojeISO();
   const matriculasAtivas = matriculasAtivasUnicas(base.matriculas);
-  // No BI Academia, o status atual do cadastro de alunos é a fonte de verdade.
-  // Matrículas antigas não podem reativar um aluno que foi desativado manualmente.
-  const alunosAtivos = alunosAtivosCadastroUnicos(base.alunos);
+  // Aluno ativo no BI é derivado exclusivamente de matrícula realmente ativa.
+  const alunosAtivos = alunosAtivosUnicos(base.alunos, matriculasAtivas);
 
   const matriculasPeriodo = filtrarPeriodo(base.matriculas, dataMatricula, inicio, fim);
   const presencasReais = base.presencas.filter(presencaReal);
@@ -402,7 +406,7 @@ export async function gerarBIAcademiaOperacional(filtros = {}) {
       if (!matriculasAtivas) {
         const id = turmaId(turma) || texto(turma.id);
         const nome = normalizar(turma.nome);
-        matriculasAtivas = base.matriculas.filter(m => ativo(m) && (texto(turmaId(m)) === id || normalizar(turmaNomeItem(m)) === nome)).length;
+        matriculasAtivas = base.matriculas.filter(m => matriculaEstaAtiva(m) && (texto(turmaId(m)) === id || normalizar(turmaNomeItem(m)) === nome)).length;
       }
       const ocupacao = capacidade > 0 ? Math.round((matriculasAtivas / capacidade) * 100) : 0;
       return { id: turma.id, nome: turma.nome || "-", modalidade: turma.modalidade || "-", capacidade, matriculasAtivas, ocupacao };
