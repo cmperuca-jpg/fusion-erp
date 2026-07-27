@@ -1,13 +1,9 @@
-import fs from "fs/promises";
-import path from "path";
+import { lerJsonDuravel } from "../core/persistence/durable-json.mjs";
 
 async function lerJSON(nomeArquivo, padrao = []) {
-  const arquivo = path.resolve("data", nomeArquivo);
-
   try {
-    const conteudo = await fs.readFile(arquivo, "utf8");
-    const json = JSON.parse(conteudo || "null");
-    return json ?? padrao;
+    const dados = await lerJsonDuravel(nomeArquivo, padrao);
+    return dados ?? padrao;
   } catch {
     return padrao;
   }

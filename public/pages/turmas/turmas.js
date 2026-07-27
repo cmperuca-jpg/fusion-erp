@@ -27,7 +27,6 @@ const campos = [
   "diasSemana",
   "horario",
   "capacidade",
-  "alunosMatriculados",
   "status",
   "observacoes"
 ];
@@ -67,7 +66,6 @@ function abrirModal(turma = null) {
   definirCampo("diasSemana", turma?.diasSemana || "");
   definirCampo("horario", turma?.horario || "");
   definirCampo("capacidade", turma?.capacidade || "");
-  definirCampo("alunosMatriculados", turma?.alunosMatriculados || 0);
   definirCampo("status", turma?.status || "Ativa");
   definirCampo("observacoes", turma?.observacoes || "");
 
@@ -87,7 +85,6 @@ function dadosDoFormulario() {
     diasSemana: valorCampo("diasSemana"),
     horario: valorCampo("horario"),
     capacidade: Number(valorCampo("capacidade")),
-    alunosMatriculados: Number(valorCampo("alunosMatriculados")),
     status: valorCampo("status"),
     observacoes: valorCampo("observacoes")
   };

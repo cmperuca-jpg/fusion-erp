@@ -57,7 +57,23 @@ function setText(id, value) {
 
   setText('kpiAlunos', ativos);
   setText('kpiAbertas', abertas);
-  setText('kpiAvaliacoes', avaliacoes.length);
+  const idsAlunosValidos = new Set(
+    alunos
+      .map(a => String(a.id ?? a._id ?? a.alunoId ?? a.aluno_id ?? "").trim())
+      .filter(Boolean)
+  );
+
+  const avaliacoesValidas = avaliacoes.filter(avaliacao => {
+    const id = String(
+      avaliacao.alunoId ??
+      avaliacao.aluno_id ??
+      avaliacao.idAluno ??
+      ""
+    ).trim();
+    return Boolean(id && idsAlunosValidos.has(id));
+  });
+
+  setText('kpiAvaliacoes', avaliacoesValidas.length);
   setText('kpiReceita', moeda(receita));
 })();
 

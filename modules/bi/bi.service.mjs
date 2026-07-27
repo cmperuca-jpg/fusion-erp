@@ -66,6 +66,15 @@ function alunosAtivosUnicos(alunos = [], matriculas = []) {
   return [...mapa.values()];
 }
 
+function alunosAtivosCadastroUnicos(alunos = []) {
+  const mapa = new Map();
+  for (const aluno of alunos) {
+    const chave = chaveAluno(aluno);
+    if (chave && ativo(aluno)) mapa.set(chave, aluno);
+  }
+  return [...mapa.values()];
+}
+
 function inativo(item = {}) {
   const st = normalizar(item.status ?? item.situacao);
   return ["inativo", "inativa", "bloqueado", "bloqueada"].includes(st);
@@ -270,7 +279,9 @@ export async function gerarBIAcademia(filtros = {}) {
   const fim = filtros.fim || filtros.dataFim || "";
   const hoje = hojeISO();
   const matriculasAtivas = matriculasAtivasUnicas(base.matriculas);
-  const alunosAtivos = alunosAtivosUnicos(base.alunos, matriculasAtivas);
+  // No BI Academia, o status atual do cadastro de alunos é a fonte de verdade.
+  // Matrículas antigas não podem reativar um aluno que foi desativado manualmente.
+  const alunosAtivos = alunosAtivosCadastroUnicos(base.alunos);
 
   const matriculasPeriodo = filtrarPeriodo(base.matriculas, dataMatricula, inicio, fim);
   const presencasReais = base.presencas.filter(presencaReal);
@@ -299,7 +310,7 @@ export async function gerarBIAcademia(filtros = {}) {
     kpis: {
       totalAlunos: base.alunos.length,
       alunosAtivos: alunosAtivos.length,
-      alunosInativos: base.alunos.filter(inativo).length,
+      alunosInativos: Math.max(0, base.alunos.length - alunosAtivos.length),
       alunosNovosPeriodo,
       totalMatriculas: base.matriculas.length,
       matriculasAtivas: matriculasAtivas.length,

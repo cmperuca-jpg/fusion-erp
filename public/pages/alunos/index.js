@@ -1589,51 +1589,90 @@ function prepararAlunosMobile() {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-  prepararAlunosMobile();
-  $("#btnNovoAluno").addEventListener("click", abrirNovoAluno);
-  $("#btnAtualizar").addEventListener("click", async () => { await carregarProfessores(); await carregarPlanos(); await carregarAlunos(); });
-  $("#btnFecharModal").addEventListener("click", fecharModal);
-  $("#btnCancelar").addEventListener("click", fecharModal);
-  $("#btnFicha").addEventListener("click", imprimirFichaAtual);
-  $("#formAluno").addEventListener("submit", salvarAluno);
-  $("#foto_base64").addEventListener("change", processarFoto);
-  $("#btnRecarregarPlanos").addEventListener("click", () => carregarPlanos($("#plano").value));
+  const ao = (seletor, evento, handler) => {
+    const elemento = $(seletor);
+    if (elemento) elemento.addEventListener(evento, handler);
+  };
 
-  $("#btnAddHistorico").addEventListener("click", adicionarHistoricoManual);
-  $("#btnLimparHistorico").addEventListener("click", limparHistoricoLocal);
-  $("#btnNovaMatriculaAluno")?.addEventListener("click", abrirMatriculaDoModal);
-  $("#btnAbrirMatriculaAtiva")?.addEventListener("click", abrirMatriculaAtivaDoAluno);
-  $("#btnAtualizarMatriculasAluno")?.addEventListener("click", atualizarMatriculasAlunoAtual);
+  try {
+    prepararAlunosMobile();
+  } catch (erro) {
+    console.warn("Falha ao preparar interface móvel de alunos:", erro);
+  }
 
-  $("#btnAbrirAvaliacoes").addEventListener("click", () => abrirIntegracao("avaliacoes"));
-  $("#btnAbrirMensalidades").addEventListener("click", () => abrirIntegracao("mensalidades"));
-  $("#btnAbrirCheckin").addEventListener("click", () => abrirIntegracao("checkin"));
+  ao("#btnNovoAluno", "click", abrirNovoAluno);
+  ao("#btnAtualizar", "click", async () => {
+    await Promise.allSettled([
+      carregarProfessores(),
+      carregarPlanos(),
+      carregarAlunos()
+    ]);
+  });
+  ao("#btnFecharModal", "click", fecharModal);
+  ao("#btnCancelar", "click", fecharModal);
+  ao("#btnFicha", "click", imprimirFichaAtual);
+  ao("#formAluno", "submit", salvarAluno);
+  ao("#foto_base64", "change", processarFoto);
+  ao("#btnRecarregarPlanos", "click", () => carregarPlanos($("#plano")?.value || ""));
 
-  document.querySelectorAll(".tab").forEach(btn => btn.addEventListener("click", () => { trocarTab(btn.dataset.tab); if (btn.dataset.tab === "matriculas") atualizarMatriculasAlunoAtual(); }));
+  ao("#btnAddHistorico", "click", adicionarHistoricoManual);
+  ao("#btnLimparHistorico", "click", limparHistoricoLocal);
+  ao("#btnNovaMatriculaAluno", "click", abrirMatriculaDoModal);
+  ao("#btnAbrirMatriculaAtiva", "click", abrirMatriculaAtivaDoAluno);
+  ao("#btnAtualizarMatriculasAluno", "click", atualizarMatriculasAlunoAtual);
 
-  $("#cpf").addEventListener("input", e => e.target.value = formatarCpfVisual(e.target.value));
-  $("#telefone").addEventListener("input", e => e.target.value = formatarTelefoneVisual(e.target.value));
-  $("#whatsapp").addEventListener("input", e => e.target.value = formatarTelefoneVisual(e.target.value));
-  $("#professor_responsavel")?.addEventListener("change", sincronizarProfessorSelecionado);
-  $("#dia_vencimento_mensal")?.addEventListener("input", e => {
+  ao("#btnAbrirAvaliacoes", "click", () => abrirIntegracao("avaliacoes"));
+  ao("#btnAbrirMensalidades", "click", () => abrirIntegracao("mensalidades"));
+  ao("#btnAbrirCheckin", "click", () => abrirIntegracao("checkin"));
+
+  document.querySelectorAll(".tab").forEach(btn => btn.addEventListener("click", () => {
+    trocarTab(btn.dataset.tab);
+    if (btn.dataset.tab === "matriculas") atualizarMatriculasAlunoAtual();
+  }));
+
+  ao("#cpf", "input", e => e.target.value = formatarCpfVisual(e.target.value));
+  ao("#telefone", "input", e => e.target.value = formatarTelefoneVisual(e.target.value));
+  ao("#whatsapp", "input", e => e.target.value = formatarTelefoneVisual(e.target.value));
+  ao("#professor_responsavel", "change", sincronizarProfessorSelecionado);
+  ao("#dia_vencimento_mensal", "input", e => {
     e.target.value = String(e.target.value || "").replace(/\D/g, "").slice(0, 2);
   });
 
-  $("#buscaAluno").addEventListener("input", () => { pagina = 1; renderizarTabela(); });
-  $("#filtroStatus").addEventListener("change", () => { pagina = 1; renderizarTabela(); });
-  $("#filtroPlano").addEventListener("change", () => { pagina = 1; renderizarTabela(); });
+  ao("#buscaAluno", "input", () => { pagina = 1; renderizarTabela(); });
+  ao("#filtroStatus", "change", () => { pagina = 1; renderizarTabela(); });
+  ao("#filtroPlano", "change", () => { pagina = 1; renderizarTabela(); });
 
-  $("#btnAnterior").addEventListener("click", () => { if (pagina > 1) { pagina--; renderizarTabela(); } });
-  $("#btnProxima").addEventListener("click", () => {
-    const total = Math.max(Math.ceil(alunosFiltrados().length / porPagina), 1);
-    if (pagina < total) { pagina++; renderizarTabela(); }
+  ao("#btnAnterior", "click", () => {
+    if (pagina > 1) {
+      pagina--;
+      renderizarTabela();
+    }
   });
 
-  $("#modalAluno").addEventListener("click", e => { if (e.target.id === "modalAluno") fecharModal(); });
+  ao("#btnProxima", "click", () => {
+    const total = Math.max(Math.ceil(alunosFiltrados().length / porPagina), 1);
+    if (pagina < total) {
+      pagina++;
+      renderizarTabela();
+    }
+  });
 
-  await carregarProfessores();
-  await carregarPlanos();
-  await carregarAlunos();
+  ao("#modalAluno", "click", e => {
+    if (e.target.id === "modalAluno") fecharModal();
+  });
+
+  const resultados = await Promise.allSettled([
+    carregarProfessores(),
+    carregarPlanos(),
+    carregarAlunos()
+  ]);
+
+  resultados.forEach((resultado, indice) => {
+    if (resultado.status === "rejected") {
+      const nomes = ["professores", "planos", "alunos"];
+      console.error(`Falha ao carregar ${nomes[indice]}:`, resultado.reason);
+    }
+  });
 });
 
 

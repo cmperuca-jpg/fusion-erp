@@ -1,0 +1,10 @@
+Substitua:
+modules/turmas/turmas.service.mjs
+public/pages/turmas/index.html
+public/pages/turmas/turmas.js
+
+A ocupação agora é calculada somente pelas matrículas ativas em matriculas.json.
+O campo manual foi removido e valores antigos em turmas.json são ignorados.
+
+Com matriculas.json vazio, a turma de capacidade 200 exibirá 200 / 200.
+Reinicie o servidor e pressione Ctrl+F5.
