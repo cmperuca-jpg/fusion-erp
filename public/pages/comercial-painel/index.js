@@ -24,7 +24,8 @@ function renderizar(){
 }
 function card(l){
  const zap=(l.whatsapp||l.telefone||'').replace(/\D/g,'');
- return `<article class="lead"><strong>${esc(l.nome)}</strong><small>${esc(l.plano||l.modalidade||'-')}</small><div>${esc(l.telefone||'-')}</div><div class="valor">${moeda(l.valorPrevisto||0)}</div><div class="card-actions"><button onclick="editar('${esc(l.id)}')">Editar</button>${zap?`<a target="_blank" href="https://wa.me/55${zap}">WhatsApp</a>`:''}<button onclick="avancar('${esc(l.id)}')">Avançar</button></div></article>`;
+ const agenda=[l.dataAgendada,l.horarioAgendado].filter(Boolean).join(' · ');
+ return `<article class="lead"><strong>${esc(l.nome)}</strong><small>${esc(l.plano||l.modalidade||'-')}</small><div>${esc(l.telefone||'-')}</div>${agenda?`<div class="lead-agenda">${esc(agenda)}</div>`:''}<div class="valor">${moeda(l.valorPrevisto||0)}</div><div class="card-actions"><button onclick="editar('${esc(l.id)}')">Editar</button>${zap?`<a target="_blank" href="https://wa.me/55${zap}">WhatsApp</a>`:''}<button onclick="avancar('${esc(l.id)}')">Avançar</button></div></article>`;
 }
 window.editar=function(id){const l=leads.find(x=>x.id===id);if(!l)return; abrirModal(); ['leadId','nome','telefone','email','cpf','origem','etapa','valorPrevisto','plano','dataAgendada','horarioAgendado','observacao'].forEach(k=>{const el=document.getElementById(k); if(!el)return; const prop=k==='leadId'?'id':k; el.value=l[prop]||'';});}
 window.avancar=async function(id){const l=leads.find(x=>x.id===id); if(!l)return; const idx=etapas.findIndex(e=>e[0]===l.etapa); const prox=etapas[Math.min(idx+1,etapas.length-1)][0]; await fetch(`/api/leads/${encodeURIComponent(id)}/mover`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({etapa:prox,usuario:'operador'})}); carregar();}

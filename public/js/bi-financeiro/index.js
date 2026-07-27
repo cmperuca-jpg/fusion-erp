@@ -10,6 +10,7 @@ function valor(id) { return document.getElementById(id)?.value || ''; }
 function setValor(id, v) { const el = document.getElementById(id); if (el) el.value = v || ''; }
 function hojeISO() { return new Date().toISOString().slice(0, 10); }
 function statusAnalitico(linha) {
+  if (linha.programado) return 'programado';
   if (linha.realizado) return 'realizado';
   if (linha.vencimento && linha.vencimento < hojeISO()) return 'vencido';
   return 'aberto';
@@ -30,8 +31,9 @@ function linhasFiltradasLocal() {
   });
 }
 function aplicarResumo(resumo = {}, linhas = []) {
-  const receitas = linhas.filter(l => l.tipo === 'receita');
-  const despesas = linhas.filter(l => l.tipo === 'despesa');
+  const operacionais = linhas.filter(l => !l.programado);
+  const receitas = operacionais.filter(l => l.tipo === 'receita');
+  const despesas = operacionais.filter(l => l.tipo === 'despesa');
   const recebidas = receitas.filter(l => l.realizado);
   const hoje = hojeISO();
   const recebido = receitas.filter(l => l.realizado).reduce((s, l) => s + numero(l.valorRealizado || l.valor), 0);
@@ -83,8 +85,9 @@ function agrupar(linhas, chaveFn, valorFn) {
   return [...mapa.entries()].map(([chave, valor]) => ({ chave, valor })).sort((a, b) => a.chave.localeCompare(b.chave));
 }
 function aplicarGraficos(linhas) {
-  const receitas = linhas.filter(l => l.tipo === 'receita');
-  const despesas = linhas.filter(l => l.tipo === 'despesa');
+  const operacionais = linhas.filter(l => !l.programado);
+  const receitas = operacionais.filter(l => l.tipo === 'receita');
+  const despesas = operacionais.filter(l => l.tipo === 'despesa');
   const receitasMes = agrupar(receitas, l => String(l.data || l.vencimento || '').slice(0, 7), l => l.realizado ? (l.valorRealizado || l.valor) : l.valor);
   const despesasMes = agrupar(despesas, l => String(l.data || l.vencimento || '').slice(0, 7), l => l.realizado ? (l.valorRealizado || l.valor) : l.valor);
   const meses = [...new Set([...receitasMes.map(x => x.chave), ...despesasMes.map(x => x.chave)])].sort();
@@ -93,7 +96,7 @@ function aplicarGraficos(linhas) {
     const d = despesasMes.find(x => x.chave === mes)?.valor || 0;
     return { mes, receitas: r, despesas: d, saldo: Number((r - d).toFixed(2)) };
   });
-  const status = agrupar(linhas, l => l.realizado ? (l.tipo === 'receita' ? 'Recebido' : 'Pago') : (statusAnalitico(l) === 'vencido' ? 'Vencido' : 'Aberto'), l => l.realizado ? (l.valorRealizado || l.valor) : l.valor);
+  const status = agrupar(linhas, l => l.programado ? 'Programado' : (l.realizado ? (l.tipo === 'receita' ? 'Recebido' : 'Pago') : (statusAnalitico(l) === 'vencido' ? 'Vencido' : 'Aberto')), l => l.realizado ? (l.valorRealizado || l.valor) : l.valor);
   const receitaCat = agrupar(receitas, l => l.categoria, l => l.realizado ? (l.valorRealizado || l.valor) : l.valor).sort((a, b) => b.valor - a.valor).slice(0, 10);
   const despesaCat = agrupar(despesas, l => l.categoria, l => l.realizado ? (l.valorRealizado || l.valor) : l.valor).sort((a, b) => b.valor - a.valor).slice(0, 10);
   graficoBarras('graficoReceitas', receitasMes.map(x => x.chave), receitasMes.map(x => x.valor), 'Receitas');
@@ -111,8 +114,8 @@ function tabelaLinhas(id, linhas, limite = 20) {
 }
 function aplicarTabelas(linhas) {
   const hoje = hojeISO();
-  const vencidos = linhas.filter(l => !l.realizado && l.vencimento && l.vencimento < hoje).sort((a, b) => String(a.vencimento).localeCompare(String(b.vencimento)));
-  const topReceitas = linhas.filter(l => l.tipo === 'receita').sort((a, b) => numero(b.valorRealizado || b.valor) - numero(a.valorRealizado || a.valor));
+  const vencidos = linhas.filter(l => !l.programado && !l.realizado && l.vencimento && l.vencimento < hoje).sort((a, b) => String(a.vencimento).localeCompare(String(b.vencimento)));
+  const topReceitas = linhas.filter(l => !l.programado && l.tipo === 'receita').sort((a, b) => numero(b.valorRealizado || b.valor) - numero(a.valorRealizado || a.valor));
   const movimentos = [...linhas].sort((a, b) => String(b.data || b.vencimento || '').localeCompare(String(a.data || a.vencimento || '')));
   tabelaLinhas('tabelaVencidos', vencidos, 20);
   tabelaLinhas('tabelaTopReceitas', topReceitas, 20);

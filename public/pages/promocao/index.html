@@ -8,9 +8,10 @@
   <title>Promoções para novos clientes</title>
   <link rel="stylesheet" href="./style.css">
   <link rel="stylesheet" href="/assets/css/fusion-site-chat.css">
-  <link rel="stylesheet" href="./contraste.css">
+  <link rel="stylesheet" href="./contraste.css?v=20260726-aula-experimental-1">
+  <link rel="stylesheet" href="/assets/css/fusion-site-premium.css?v=20260726-aula-experimental-1">
 </head>
-<body>
+<body class="fusion-site-premium">
   <header class="promo-hero">
     <nav class="promo-nav">
       <div class="brand"><span>F</span><strong>Fusion ERP</strong></div>
@@ -21,7 +22,10 @@
         <p class="tag">Oferta exclusiva para novos clientes</p>
         <h1>Comece agora com condições especiais.</h1>
         <p>Consulte os planos disponíveis, escolha a melhor opção e envie seus dados para receber atendimento da equipe comercial.</p>
-        <a class="cta" href="#planos">Ver promoções</a>
+        <div class="hero-actions">
+          <a class="cta" href="#planos">Ver promoções</a>
+          <a class="cta cta-secondary" href="#interesse" data-aula-experimental="1">Agendar aula experimental</a>
+        </div>
       </div>
       <aside class="offer-card">
         <span>Novos clientes</span>
@@ -57,9 +61,14 @@
         <input id="leadTelefone" required inputmode="tel" placeholder="WhatsApp">
         <input id="leadEmail" type="email" placeholder="E-mail">
         <select id="leadPlano"><option value="">Plano de interesse</option></select>
-        <input id="leadHorario" placeholder="Melhor horário para contato">
+        <select id="leadIntencao">
+          <option value="promocao">Receber promoção</option>
+          <option value="aula_experimental">Agendar aula experimental</option>
+        </select>
+        <input id="leadDataAula" type="date" aria-label="Data desejada para aula experimental">
+        <input id="leadHorario" placeholder="Melhor horário para contato ou aula">
         <textarea id="leadObjetivo" rows="3" placeholder="Objetivo ou observação"></textarea>
-        <button type="submit">Solicitar promoção</button>
+        <button id="leadSubmit" type="submit">Solicitar promoção</button>
       </form>
       <div id="alertaLead" class="alerta hidden"></div>
     </section>
@@ -70,7 +79,7 @@
     <span>Página exclusiva para novas matrículas</span>
   </footer>
 
-  <script src="./index.js"></script>
+  <script src="./index.js?v=20260726-aula-experimental-1"></script>
   <script src="/assets/js/fusion-site-chat.js" data-chat-origem="promocao_novos_clientes"></script>
 </body>
 </html>

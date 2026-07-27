@@ -5,6 +5,7 @@ const ROOT = process.cwd();
 const DATA_DIR = path.join(ROOT, 'data');
 const CAIXA_FILE = path.join(DATA_DIR, 'caixa.json');
 const FINANCEIRO_FILE = path.join(DATA_DIR, 'financeiro.json');
+const RECIBOS_FILE = path.join(DATA_DIR, 'recibos.json');
 
 async function lerCaixa() {
   const dados = await lerJsonDuravel(CAIXA_FILE, { caixas: [], movimentos: [] });
@@ -20,6 +21,10 @@ async function salvarCaixa(dados) {
 
 async function lerFinanceiro() {
   return lerJsonDuravel(FINANCEIRO_FILE, []);
+}
+
+async function lerRecibos() {
+  return lerJsonDuravel(RECIBOS_FILE, []);
 }
 
 async function salvarFinanceiro(dados) {
@@ -59,6 +64,34 @@ function statusAtivoMovimento(movimento = {}) {
   return !['cancelado', 'estornado'].includes(normalizar(movimento.status));
 }
 
+function reciboEstornado(recibo = {}) {
+  return recibo.cancelado === true || ['cancelado', 'cancelada', 'estornado', 'estornada'].includes(normalizar(recibo.status));
+}
+
+function idsRecibosEstornados(recibos = [], movimentos = []) {
+  const ids = new Set();
+  for (const recibo of Array.isArray(recibos) ? recibos : []) {
+    if (!reciboEstornado(recibo)) continue;
+    const id = String(recibo.id || recibo.numero || '').trim();
+    if (id) ids.add(id);
+  }
+  for (const movimento of Array.isArray(movimentos) ? movimentos : []) {
+    if (normalizar(movimento.origem) !== 'estorno_recibo') continue;
+    const id = String(movimento.reciboEstornadoId || movimento.reciboId || '').trim();
+    if (id) ids.add(id);
+  }
+  return ids;
+}
+
+function movimentoNeutroPorEstorno(movimento = {}, recibosEstornados = new Set()) {
+  const origem = normalizar(movimento.origem);
+  if (['estorno_recibo', 'estorno_troco'].includes(origem)) return true;
+
+  const reciboId = String(movimento.reciboId || movimento.reciboEstornadoId || '').trim();
+  if (!reciboId || !recibosEstornados.has(reciboId)) return false;
+  return ['recibo', 'troco_recibo'].includes(origem);
+}
+
 function pertenceAoCaixa(movimento = {}, caixa = {}) {
   const caixaId = String(caixa.id || caixa).trim();
   const movimentoCaixaId = String(movimento.caixaId || '').trim();
@@ -71,38 +104,116 @@ function pertenceAoCaixa(movimento = {}, caixa = {}) {
   return !abertura || !data || data >= abertura;
 }
 
-function calcularTotais(movimentos, caixa) {
-  const lista = movimentos.filter(m => pertenceAoCaixa(m, caixa) && statusAtivoMovimento(m));
+function valorBrutoMovimento(movimento = {}) {
+  return numero(movimento.valorBruto ?? movimento.valor, 0);
+}
 
-  const totais = {
+function taxaMovimento(movimento = {}) {
+  const taxaInformada = numero(movimento.taxaOperadoraValor ?? movimento.taxaValor, 0);
+  if (taxaInformada > 0) return taxaInformada;
+
+  const bruto = valorBrutoMovimento(movimento);
+  const liquido = numero(movimento.valorLiquido ?? movimento.valorRecebidoLiquido, bruto);
+  return Math.max(0, Number((bruto - liquido).toFixed(2)));
+}
+
+function valorLiquidoMovimento(movimento = {}) {
+  const bruto = valorBrutoMovimento(movimento);
+  const liquidoInformado = numero(movimento.valorLiquido ?? movimento.valorRecebidoLiquido, NaN);
+  if (Number.isFinite(liquidoInformado) && liquidoInformado > 0) return liquidoInformado;
+  return Math.max(0, Number((bruto - taxaMovimento(movimento)).toFixed(2)));
+}
+
+function criarTotaisZerados() {
+  return {
     entradas: 0,
+    entradasBrutas: 0,
+    entradasLiquidas: 0,
     saidas: 0,
+    saidasBrutas: 0,
+    saidasLiquidas: 0,
+    taxas: 0,
     dinheiro: 0,
+    dinheiroBruto: 0,
+    dinheiroLiquido: 0,
     pix: 0,
+    pixBruto: 0,
+    pixLiquido: 0,
     cartao: 0,
+    cartaoBruto: 0,
+    cartaoLiquido: 0,
     outros: 0,
+    outrosBruto: 0,
+    outrosLiquido: 0,
     saldoAtual: 0,
-    quantidadeMovimentos: lista.length
+    saldoAtualBruto: 0,
+    saldoAtualLiquido: 0,
+    saldoBruto: 0,
+    saldoLiquido: 0,
+    quantidadeMovimentos: 0,
+    quantidadeMovimentosHistorico: 0,
+    movimentosNeutralizadosPorEstorno: 0
   };
+}
+
+function calcularTotais(movimentos, caixa, contexto = {}) {
+  const recibosEstornados = contexto.recibosEstornados || new Set();
+  const listaHistorica = movimentos.filter(m => pertenceAoCaixa(m, caixa) && statusAtivoMovimento(m));
+  const lista = listaHistorica.filter(m => !movimentoNeutroPorEstorno(m, recibosEstornados));
+
+  const totais = criarTotaisZerados();
+  totais.quantidadeMovimentos = lista.length;
+  totais.quantidadeMovimentosHistorico = listaHistorica.length;
+  totais.movimentosNeutralizadosPorEstorno = listaHistorica.length - lista.length;
 
   for (const m of lista) {
-    const valor = numero(m.valor, 0);
+    const bruto = valorBrutoMovimento(m);
+    const liquido = valorLiquidoMovimento(m);
+    const taxa = taxaMovimento(m);
 
-    const saida = normalizar(m.tipo).includes('saida') || normalizar(m.tipo).includes('saÃ­da');
+    const tipoMovimento = normalizar(m.tipo).normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const saida = tipoMovimento.includes('saida');
     const entrada = !saida;
 
-    if (entrada) totais.entradas += valor;
-    if (saida) totais.saidas += valor;
+    if (entrada) {
+      totais.entradasBrutas += bruto;
+      totais.entradasLiquidas += liquido;
+      totais.taxas += taxa;
+    }
+    if (saida) {
+      totais.saidasBrutas += bruto;
+      totais.saidasLiquidas += liquido;
+    }
 
     const forma = normalizar(m.formaPagamento);
-    const valorLiquidoForma = saida ? -valor : valor;
-    if (forma.includes('dinheiro')) totais.dinheiro += valorLiquidoForma;
-    else if (forma.includes('pix')) totais.pix += valorLiquidoForma;
-    else if (forma.includes('cart')) totais.cartao += valorLiquidoForma;
-    else totais.outros += valorLiquidoForma;
+    const valorBrutoForma = saida ? -bruto : bruto;
+    const valorLiquidoForma = saida ? -liquido : liquido;
+    if (forma.includes('dinheiro')) {
+      totais.dinheiroBruto += valorBrutoForma;
+      totais.dinheiroLiquido += valorLiquidoForma;
+    } else if (forma.includes('pix')) {
+      totais.pixBruto += valorBrutoForma;
+      totais.pixLiquido += valorLiquidoForma;
+    } else if (forma.includes('cart')) {
+      totais.cartaoBruto += valorBrutoForma;
+      totais.cartaoLiquido += valorLiquidoForma;
+    } else {
+      totais.outrosBruto += valorBrutoForma;
+      totais.outrosLiquido += valorLiquidoForma;
+    }
   }
 
-  totais.saldoAtual = Number((totais.entradas - totais.saidas).toFixed(2));
+  totais.entradas = totais.entradasBrutas;
+  totais.saidas = totais.saidasBrutas;
+  totais.dinheiro = totais.dinheiroLiquido;
+  totais.pix = totais.pixLiquido;
+  totais.cartao = totais.cartaoLiquido;
+  totais.outros = totais.outrosLiquido;
+  totais.saldoAtualBruto = Number((totais.entradasBrutas - totais.saidasBrutas).toFixed(2));
+  totais.saldoAtualLiquido = Number((totais.entradasLiquidas - totais.saidasLiquidas).toFixed(2));
+  totais.saldoBruto = totais.saldoAtualBruto;
+  totais.saldoLiquido = totais.saldoAtualLiquido;
+  totais.saldoAtual = totais.saldoAtualLiquido;
 
   for (const k of Object.keys(totais)) {
     if (typeof totais[k] === 'number') totais[k] = Number(totais[k].toFixed(2));
@@ -168,42 +279,35 @@ async function removerLancamentoFinanceiro(movimentoId) {
 }
 
 export async function obterCaixaAtual() {
-  const dados = await lerCaixa();
+  const [dados, recibos] = await Promise.all([lerCaixa(), lerRecibos()]);
+  const recibosEstornados = idsRecibosEstornados(recibos, dados.movimentos);
   const atual = caixaAberto(dados);
 
   if (!atual) {
     return {
       aberto: false,
       caixa: null,
-      totais: {
-        entradas: 0,
-        saidas: 0,
-        dinheiro: 0,
-        pix: 0,
-        cartao: 0,
-        outros: 0,
-        saldoAtual: 0,
-        quantidadeMovimentos: 0
-      }
+      totais: criarTotaisZerados()
     };
   }
 
   return {
     aberto: true,
     caixa: atual,
-    totais: calcularTotais(dados.movimentos, atual)
+    totais: calcularTotais(dados.movimentos, atual, { recibosEstornados })
   };
 }
 
 export async function listarCaixas(filtros = {}) {
-  const dados = await lerCaixa();
+  const [dados, recibos] = await Promise.all([lerCaixa(), lerRecibos()]);
+  const recibosEstornados = idsRecibosEstornados(recibos, dados.movimentos);
   const status = normalizar(filtros.status);
   const data = String(filtros.data || '').trim();
 
   return dados.caixas
     .map(c => ({
       ...c,
-      totais: calcularTotais(dados.movimentos, c)
+      totais: calcularTotais(dados.movimentos, c, { recibosEstornados })
     }))
     .filter(c => {
       if (status && status !== 'todos' && normalizar(c.status) !== status) return false;
@@ -214,7 +318,8 @@ export async function listarCaixas(filtros = {}) {
 }
 
 export async function listarMovimentos(filtros = {}) {
-  const dados = await lerCaixa();
+  const [dados, recibos] = await Promise.all([lerCaixa(), lerRecibos()]);
+  const recibosEstornados = idsRecibosEstornados(recibos, dados.movimentos);
   const q = normalizar(filtros.q);
   const tipo = normalizar(filtros.tipo);
   const formaPagamento = normalizar(filtros.formaPagamento);
@@ -223,6 +328,7 @@ export async function listarMovimentos(filtros = {}) {
 
   return dados.movimentos
     .filter(m => {
+      if (!statusAtivoMovimento(m) || movimentoNeutroPorEstorno(m, recibosEstornados)) return false;
       if (caixaId && !pertenceAoCaixa(m, caixaFiltro || { id: caixaId, status: 'aberto' })) return false;
       if (tipo && tipo !== 'todos' && normalizar(m.tipo) !== tipo) return false;
       if (formaPagamento && formaPagamento !== 'todos' && normalizar(m.formaPagamento) !== formaPagamento) return false;
@@ -289,7 +395,8 @@ export async function abrirCaixa(dadosEntrada = {}) {
 }
 
 export async function fecharCaixa(dadosEntrada = {}) {
-  const dados = await lerCaixa();
+  const [dados, recibos] = await Promise.all([lerCaixa(), lerRecibos()]);
+  const recibosEstornados = idsRecibosEstornados(recibos, dados.movimentos);
   const atual = caixaAberto(dados);
 
   if (!atual) {
@@ -298,7 +405,7 @@ export async function fecharCaixa(dadosEntrada = {}) {
     throw erro;
   }
 
-  const totais = calcularTotais(dados.movimentos, atual);
+  const totais = calcularTotais(dados.movimentos, atual, { recibosEstornados });
   const valorFechamentoInformado = numero(dadosEntrada.valorFechamentoInformado, totais.saldoAtual);
 
   atual.status = 'fechado';
@@ -389,7 +496,7 @@ export async function cancelarMovimento(id) {
     throw erro;
   }
 
-  if (['recibo', 'estorno_recibo', 'pagamentos'].includes(normalizar(dados.movimentos[idx].origem))) {
+  if (dados.movimentos[idx].reciboId || ['recibo', 'estorno_recibo', 'pagamentos'].includes(normalizar(dados.movimentos[idx].origem))) {
     const erro = new Error('Movimento financeiro vinculado não pode ser cancelado pelo caixa. Use o estorno no módulo de origem.');
     erro.status = 409;
     throw erro;

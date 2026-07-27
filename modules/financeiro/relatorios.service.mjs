@@ -6,6 +6,7 @@ const DATA_DIR = path.join(ROOT, 'data');
 const CAIXA_FILE = path.join(DATA_DIR, 'caixa.json');
 const FINANCEIRO_FILE = path.join(DATA_DIR, 'financeiro.json');
 const RECEBIMENTOS_FILE = path.join(DATA_DIR, 'recebimentos.json');
+const RECIBOS_FILE = path.join(DATA_DIR, 'recibos.json');
 const PAGAMENTOS_FILE = path.join(DATA_DIR, 'financeiro', 'pagamentos.json');
 const PAGAMENTOS_FILE_LEGADO = path.join(DATA_DIR, 'pagamentos.json');
 
@@ -60,6 +61,33 @@ function statusAberto(item = {}) {
 function statusProgramado(item = {}) {
   const st = normalizar(item.status || item.situacao || '');
   return st.includes('programad') || st.includes('agendad') || st.includes('previst');
+}
+function reciboEstornado(item = {}) {
+  return item.cancelado === true || ['cancelado', 'cancelada', 'estornado', 'estornada'].includes(normalizar(item.status));
+}
+function idsRecibosEstornados({ recibos = [], recebimentos = [], movimentos = [] } = {}) {
+  const ids = new Set();
+  for (const recibo of recibos) {
+    if (!reciboEstornado(recibo)) continue;
+    [recibo.id, recibo.numero].map(v => String(v || '').trim()).filter(Boolean).forEach(v => ids.add(v));
+  }
+  for (const recebimento of recebimentos) {
+    if (!reciboEstornado(recebimento)) continue;
+    [recebimento.reciboId, recebimento.ultimoReciboId].map(v => String(v || '').trim()).filter(Boolean).forEach(v => ids.add(v));
+  }
+  for (const movimento of movimentos) {
+    if (normalizar(movimento.origem) !== 'estorno_recibo') continue;
+    [movimento.reciboId, movimento.reciboEstornadoId].map(v => String(v || '').trim()).filter(Boolean).forEach(v => ids.add(v));
+  }
+  return ids;
+}
+function movimentoNeutroPorEstorno(movimento = {}, recibosEstornados = new Set()) {
+  const origem = normalizar(movimento.origem);
+  if (['estorno_recibo', 'estorno_troco'].includes(origem)) return true;
+
+  const reciboId = String(movimento.reciboId || movimento.reciboEstornadoId || '').trim();
+  if (!reciboId || !recibosEstornados.has(reciboId)) return false;
+  return ['recibo', 'troco_recibo'].includes(origem);
 }
 function tipoReceita(item = {}) {
   const t = normalizar(item.tipo || item.natureza || item.categoriaTipo);
@@ -168,12 +196,15 @@ export async function movimentoDiarioCaixa(filtros = {}) {
   const caixaRaw = await lerJson(CAIXA_FILE, { caixas: [], movimentos: [] });
   const financeiro = await lerJson(FINANCEIRO_FILE, []);
   const recebimentosRaw = await lerJson(RECEBIMENTOS_FILE, []);
+  const recibosRaw = await lerJson(RECIBOS_FILE, []);
   const pagamentosRaw = await lerJsonOpcional([PAGAMENTOS_FILE, PAGAMENTOS_FILE_LEGADO], []);
 
   const caixas = Array.isArray(caixaRaw.caixas) ? caixaRaw.caixas : [];
   const movimentos = Array.isArray(caixaRaw.movimentos) ? caixaRaw.movimentos : [];
   const recebimentosBase = arrayDe(recebimentosRaw, 'recebimentos');
+  const recibosBase = arrayDe(recibosRaw, 'recibos');
   const pagamentosBase = arrayDe(pagamentosRaw, 'pagamentos');
+  const recibosEstornados = idsRecibosEstornados({ recibos: recibosBase, recebimentos: recebimentosBase, movimentos });
 
   const recebimentosPorRecibo = new Map();
   for (const recebimento of recebimentosBase) {
@@ -182,7 +213,7 @@ export async function movimentoDiarioCaixa(filtros = {}) {
     recebimentosPorRecibo.set(reciboId, [...(recebimentosPorRecibo.get(reciboId) || []), recebimento]);
   }
 
-  const movimentosPeriodo = movimentos.filter((m) => {
+  const movimentosPeriodoHistorico = movimentos.filter((m) => {
     const data = dataISO(m.data || m.dataPagamento || m.criadoEm);
     if (!data || data < dataInicio || data > dataFim) return false;
     if (!statusAtivo(m)) return false;
@@ -190,12 +221,13 @@ export async function movimentoDiarioCaixa(filtros = {}) {
     if (!passaCategoriaFiltro(m, categoriaFiltro)) return false;
     return true;
   });
+  const movimentosPeriodo = movimentosPeriodoHistorico.filter((m) => !movimentoNeutroPorEstorno(m, recibosEstornados));
 
   const entradas = movimentosPeriodo.filter(m => normalizar(m.tipo).includes('entrada'));
   const saidas = movimentosPeriodo.filter(m => normalizar(m.tipo).includes('saida') || normalizar(m.tipo).includes('saída'));
   const vistosEntradasGlobais = new Set();
   const vistosSaidasGlobais = new Set();
-  movimentos.filter(statusAtivo).forEach((m) => {
+  movimentos.filter(statusAtivo).filter((m) => !movimentoNeutroPorEstorno(m, recibosEstornados)).forEach((m) => {
     const tipo = normalizar(m.tipo);
     if (tipo.includes('entrada')) marcarVisto(vistosEntradasGlobais, m);
     if (tipo.includes('saida') || tipo.includes('saída')) marcarVisto(vistosSaidasGlobais, m);
@@ -374,7 +406,7 @@ export async function movimentoDiarioCaixa(filtros = {}) {
   return {
     ok: true,
     filtros: { dataInicio, dataFim, formaPagamento: filtros.formaPagamento || '', categoria: filtros.categoria || '' },
-    resumo: { saldoInicial, totalBrutoRecebido, totalTaxas, totalLiquidoRecebido, totalPagamentos, saldoFinal, quantidadeRecebimentos: recebimentos.length, quantidadePagamentos: pagamentos.length },
+    resumo: { saldoInicial, totalBrutoRecebido, totalTaxas, totalLiquidoRecebido, totalPagamentos, saldoFinal, quantidadeRecebimentos: recebimentos.length, quantidadePagamentos: pagamentos.length, movimentosHistoricos: movimentosPeriodoHistorico.length, movimentosNeutralizadosPorEstorno: movimentosPeriodoHistorico.length - movimentosPeriodo.length },
     recebimentos: recebimentos.sort((a, b) => `${a.data} ${a.hora}`.localeCompare(`${b.data} ${b.hora}`)),
     pagamentos: pagamentos.sort((a, b) => `${a.data} ${a.hora}`.localeCompare(`${b.data} ${b.hora}`)),
     porForma: [...porForma.values()].sort((a, b) => b.liquido - a.liquido),
@@ -389,13 +421,21 @@ export async function biFinanceiro(filtros = {}) {
 
   const financeiroRaw = await lerJson(FINANCEIRO_FILE, []);
   const recebimentosRaw = await lerJsonOpcional([RECEBIMENTOS_FILE], []);
+  const recibosRaw = await lerJson(RECIBOS_FILE, []);
   const pagamentosRaw = await lerJsonOpcional([PAGAMENTOS_FILE, PAGAMENTOS_FILE_LEGADO], []);
   const caixaRaw = await lerJson(CAIXA_FILE, { caixas: [], movimentos: [] });
 
   const financeiro = arrayDe(financeiroRaw, 'lancamentos').filter(statusAtivo);
-  const recebimentos = arrayDe(recebimentosRaw, 'recebimentos').filter(statusAtivo).filter(statusPago);
+  const recebimentosTodos = arrayDe(recebimentosRaw, 'recebimentos');
+  const recibosTodos = arrayDe(recibosRaw, 'recibos');
+  const recebimentos = recebimentosTodos.filter(statusAtivo).filter(statusPago);
   const pagamentos = arrayDe(pagamentosRaw, 'pagamentos').filter(statusAtivo).filter(statusPago);
-  const movimentos = arrayDe(caixaRaw.movimentos || [], 'movimentos').filter(statusAtivo);
+  const movimentosHistoricos = arrayDe(caixaRaw.movimentos || [], 'movimentos').filter(statusAtivo);
+
+  // Um estorno deve permanecer no histórico físico do caixa como entrada +
+  // saída, mas não pode continuar compondo receita, taxa ou despesa no BI.
+  const recibosEstornados = idsRecibosEstornados({ recibos: recibosTodos, recebimentos: recebimentosTodos, movimentos: movimentosHistoricos });
+  const movimentos = movimentosHistoricos.filter((m) => !movimentoNeutroPorEstorno(m, recibosEstornados));
 
   const linhas = [];
   const referencias = item => [...new Set([
@@ -436,6 +476,15 @@ export async function biFinanceiro(filtros = {}) {
     const receita = t.includes('entrada');
     const despesa = t.includes('saida') || t.includes('saída');
     if (!receita && !despesa) continue;
+
+    const origemMovimento = normalizar(m.origem);
+    const reciboMovimento = String(m.reciboId || m.reciboEstornadoId || '').trim();
+    const movimentoDeEstorno = origemMovimento === 'estorno_recibo';
+    const vinculadoAReciboEstornado = reciboMovimento && recibosEstornados.has(reciboMovimento);
+
+    // Entrada original e saída do estorno ficam no caixa, porém são neutras no BI.
+    if (movimentoDeEstorno || vinculadoAReciboEstornado) continue;
+
     const data = dataISO(m.data || m.dataPagamento || m.criadoEm);
     linhas.push({ origem: 'caixa', id: m.id, tipo: receita ? 'receita' : 'despesa', status: m.status || 'ativo', data, vencimento: data, realizado: true, valor: valorBruto(m), valorRealizado: valorLiquido(m), taxa: calcularTaxa(m), categoria: categoria(m, receita ? 'Caixa - entradas' : 'Caixa - saídas'), descricao: descricao(m, receita ? 'Entrada de caixa' : 'Saída de caixa'), pessoa: pessoa(m), referencias: referencias(m) });
   }

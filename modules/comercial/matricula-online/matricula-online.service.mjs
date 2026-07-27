@@ -234,7 +234,7 @@ export async function aprovarSolicitacao(id, opcoes = {}) {
     aluno = Object.assign(aluno, { planoId: solicitacao.planoId || aluno.planoId || '', plano: solicitacao.plano || aluno.plano || '', foto_base64: aluno.foto_base64 || solicitacao.fotoBase64 || '', documentos_matricula: aluno.documentos_matricula || solicitacao.documentos || {}, assinatura_matricula: aluno.assinatura_matricula || solicitacao.assinaturaBase64 || '', status: ['ativo','ativa'].includes(normalizar(aluno.status)) ? aluno.status : 'pre-matriculado', statusMatricula: ['Ativa','ativa'].includes(String(aluno.statusMatricula || '')) ? aluno.statusMatricula : 'Pendente', atualizadoEm: agoraISO() });
   }
   await salvarJson(ALUNOS_FILE, alunos);
-  const integracao = await integrarMatriculaAluno(aluno.id, solicitacao.planoId, { dataMatricula: hojeISO(), gerarMensalidade: true, usuario: opcoes.usuario || 'operador', observacao: `Matrícula online aprovada. Protocolo ${solicitacao.protocolo}.`, permitirTroca: false });
+  const integracao = await integrarMatriculaAluno(aluno.id, solicitacao.planoId, { dataMatricula: hojeISO(), gerarMensalidade: true, ajustarPrimeiraMensalidade: false, usuario: opcoes.usuario || 'operador', observacao: `Matrícula online aprovada. Protocolo ${solicitacao.protocolo}.`, permitirTroca: false });
   const matricula = integracao?.matricula || integracao?.dados || {};
   const financeiroId = integracao?.financeiroInicial?.id || matricula.financeiroInicialId || '';
   const mensalidadeId = integracao?.mensalidadeGerada?.id || matricula.mensalidadeInicialId || '';

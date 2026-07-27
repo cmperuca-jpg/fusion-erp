@@ -22,6 +22,18 @@ function valorPrincipalMensalidade(item = {}) {
   return Number(item.valorOriginal ?? item.valor ?? item.total ?? 0);
 }
 
+function valorAtualizadoMensalidade(item = {}) {
+  const alvo = String([item.origem, item.categoria, item.descricao, item.recorrencia].join(' ')).toLowerCase();
+  const entrada = alvo.includes('matricula_inicial_unificada') || alvo.includes('entrada') || alvo.includes('matrícula') || alvo.includes('matricula');
+  // Corrige registros já existentes que guardaram `valorAtualizado` apenas
+  // com o valor do plano (R$ 65), embora a cobrança inicial seja R$ 100.
+  if (entrada) {
+    const saldo = Number(item.saldoRestante ?? item.valorRestante ?? 0);
+    return saldo > 0 ? saldo : valorPrincipalMensalidade(item);
+  }
+  return Number(item.saldoRestante ?? item.valorAtualizado ?? item.valor ?? 0);
+}
+
 function moeda(valor) {
   return Number(valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
@@ -147,7 +159,7 @@ function renderLista() {
     tr.appendChild(criarCelula(m.competencia || '-'));
     tr.appendChild(criarCelula(m.vencimento || '-'));
     tr.appendChild(criarCelula(moeda(valorPrincipalMensalidade(m))));
-    tr.appendChild(criarCelula(moeda(m.valorAtualizado ?? m.valor)));
+    tr.appendChild(criarCelula(moeda(valorAtualizadoMensalidade(m))));
 
     const tdStatus = document.createElement('td');
     tdStatus.appendChild(criarTagStatus(m.status));
@@ -231,14 +243,14 @@ function abrirModalBaixa(m) {
 
   $('#baixaId').value = m.id;
   $('#baixaForma').value = 'Dinheiro';
-  $('#baixaValor').value = Number(m.valorAtualizado ?? m.valor ?? 0).toFixed(2);
+  $('#baixaValor').value = valorAtualizadoMensalidade(m).toFixed(2);
   $('#baixaDesconto').value = 0;
   $('#baixaMulta').value = Number(m.multa || 0).toFixed(2);
   $('#baixaJuros').value = Number(m.juros || 0).toFixed(2);
   $('#baixaObservacao').value = '';
 
   $('#baixaInfo').textContent =
-    `${m.alunoNome || '-'} | Competência ${m.competencia || '-'} | Valor atualizado ${moeda(m.valorAtualizado ?? m.valor)}`;
+    `${m.alunoNome || '-'} | Competência ${m.competencia || '-'} | Valor atualizado ${moeda(valorAtualizadoMensalidade(m))}`;
 
   $('#modalBaixa').showModal();
 }

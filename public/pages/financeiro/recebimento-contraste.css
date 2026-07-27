@@ -97,3 +97,89 @@
   #modalBaixaFinanceiro .grid-cartao,
   #modalBaixaFinanceiro .resultado-cartao{grid-template-columns:1fr!important}
 }
+
+/* Financeiro - contraste da pagina principal */
+.page-actions h2,
+.page-actions p,
+.financeiro-kpis .kpi-btn,
+.financeiro-kpis .kpi-btn *,
+.filtros-financeiro,
+.filtros-financeiro *,
+.tabela-container,
+.tabela-container * {
+  opacity:1!important;
+}
+
+.page-actions h2 {
+  color:#ffffff!important;
+}
+
+.page-actions p {
+  color:#d8e9ed!important;
+}
+
+.financeiro-kpis .kpi-btn {
+  background:linear-gradient(145deg,#0d3340,#08232b)!important;
+  border:1px solid #2f6571!important;
+  color:#ffffff!important;
+}
+
+.financeiro-kpis .kpi-btn span,
+.financeiro-kpis .kpi-btn small {
+  color:#e2f5f8!important;
+  font-weight:850!important;
+}
+
+.financeiro-kpis .kpi-btn strong {
+  color:#ffffff!important;
+  text-shadow:0 1px 1px rgba(0,0,0,.35)!important;
+}
+
+.tabela-container {
+  border:1px solid #2f6571!important;
+  border-radius:8px!important;
+  background:#0a2731!important;
+}
+
+.tabela-container table {
+  background:#0a2731!important;
+  color:#f5fbfc!important;
+}
+
+.tabela-container th {
+  background:#12505f!important;
+  color:#f8fdff!important;
+  border-color:#2f6571!important;
+}
+
+.tabela-container td {
+  background:transparent!important;
+  color:#f5fbfc!important;
+  border-color:rgba(83,171,187,.2)!important;
+}
+
+.tabela-container tbody tr:nth-child(even) td {
+  background:rgba(255,255,255,.018)!important;
+}
+
+.tabela-container tbody tr:hover td {
+  background:#154653!important;
+}
+
+.tipo.receber { color:#82f0b8!important; }
+.tipo.pagar { color:#ff97a4!important; }
+
+.badge.pago { background:rgba(57,201,137,.13)!important;color:#95f2bf!important;border:1px solid #2b8d68!important; }
+.badge.aberto { background:rgba(231,168,73,.14)!important;color:#ffd18a!important;border:1px solid #a87936!important; }
+.badge.programado { background:rgba(69,216,233,.12)!important;color:#9af2fb!important;border:1px solid #32808b!important; }
+.badge.cancelado { background:rgba(239,86,104,.11)!important;color:#ff9da8!important;border:1px solid #a9404c!important; }
+
+.acoes button:disabled,
+.acoes .btn:disabled,
+.tabela-container button:disabled {
+  opacity:1!important;
+  background:#263f49!important;
+  color:#b9cdd3!important;
+  border:1px solid #4b6b75!important;
+  box-shadow:none!important;
+}
