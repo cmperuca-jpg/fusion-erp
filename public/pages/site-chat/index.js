@@ -5,6 +5,21 @@ function esc(valor){
   return String(valor ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
 }
 
+function fetchAutenticado(url, opcoes = {}){
+  const fn = window.FusionAuth?.fetchAuth
+    ? window.FusionAuth.fetchAuth.bind(window.FusionAuth)
+    : window.fetch.bind(window);
+  return fn(url, { cache:"no-store", ...opcoes });
+}
+
+async function jsonObrigatorio(resp, mensagemPadrao){
+  const json = await resp.json().catch(() => ({}));
+  if(!resp.ok || json.ok === false){
+    throw new Error(json.erro || json.mensagem || mensagemPadrao);
+  }
+  return json;
+}
+
 function dataHora(valor){
   if(!valor) return "-";
   const d = new Date(valor);
@@ -13,7 +28,13 @@ function dataHora(valor){
 }
 
 function nomeOrigem(origem){
-  const mapa = { portal_aluno:"Portal do aluno", matricula_online:"Matricula online", site:"Site" };
+  const mapa = {
+    portal_aluno:"Portal do aluno",
+    portal_professor:"Portal do professor",
+    matricula_online:"Matrícula online",
+    promocao:"Promoções",
+    site:"Site"
+  };
   return mapa[origem] || origem || "Site";
 }
 
@@ -26,7 +47,7 @@ function tipoMsg(msg){
 
 function nomeRemetente(msg){
   const r = String(msg.remetente || "");
-  if(r === "atendimento") return "Recepcao";
+  if(r === "atendimento") return msg.operadorNome || "Recepção";
   if(r === "sistema") return "Sistema";
   return msg.nome || "Aluno/visitante";
 }
@@ -36,8 +57,8 @@ function aplicarFiltros(){
   const origem = $("origem").value;
   return estado.conversas.filter(c => {
     if(origem && c.origem !== origem) return false;
-    const texto = [c.nome, c.contato, c.protocolo, c.ultimaMensagem, c.assunto].join(" ").toLowerCase();
-    return !busca || texto.includes(busca);
+    const textoBusca = [c.nome, c.contato, c.protocolo, c.ultimaMensagem, c.assunto].join(" ").toLowerCase();
+    return !busca || textoBusca.includes(busca);
   });
 }
 
@@ -66,7 +87,6 @@ function renderCabecalho(){
   el.innerHTML = `<strong>${esc(estado.conversa.nome || "Sem nome")}</strong><span>${esc(nomeOrigem(estado.conversa.origem))} | ${esc(estado.conversa.contato || estado.conversa.protocolo || "sem contato")}</span>`;
 }
 
-
 function renderConteudoMensagem(m){
   const texto = String(m.mensagem || "");
   const url = texto.match(/Comprovante:\s*(\/uploads\/emergency-receipts\/[^\s]+)/i)?.[1] || "";
@@ -78,11 +98,14 @@ function renderConteudoMensagem(m){
 }
 
 async function acaoEmergencial(id, acao){
-  const resp = await fetch(`/api/emergency-access/solicitacoes/${encodeURIComponent(id)}/${encodeURIComponent(acao)}`, { method:"POST", headers:{"Content-Type":"application/json"} });
-  const json = await resp.json().catch(()=>({}));
-  if(!resp.ok || json.ok===false) throw new Error(json.mensagem || "Não foi possível atualizar a solicitação.");
+  const resp = await fetchAutenticado(`/api/emergency-access/solicitacoes/${encodeURIComponent(id)}/${encodeURIComponent(acao)}`, {
+    method:"POST",
+    headers:{"Content-Type":"application/json"}
+  });
+  await jsonObrigatorio(resp, "Não foi possível atualizar a solicitação.");
   await abrirConversa(estado.conversa.conversaId);
 }
+
 function renderMensagens(){
   const area = $("mensagens");
   if(!estado.conversa){
@@ -103,8 +126,8 @@ function renderMensagens(){
 }
 
 async function carregarConversas(){
-  const resp = await fetch("/api/chat/conversas", { cache:"no-store" });
-  const json = await resp.json().catch(() => ({}));
+  const resp = await fetchAutenticado("/api/site-chat/conversas");
+  const json = await jsonObrigatorio(resp, "Não foi possível carregar as conversas.");
   estado.conversas = json.conversas || [];
   if(estado.conversa){
     estado.conversa = estado.conversas.find(c => c.conversaId === estado.conversa.conversaId) || estado.conversa;
@@ -122,10 +145,17 @@ async function abrirConversa(id){
     renderMensagens();
     return;
   }
-  const resp = await fetch(`/api/chat/mensagens?conversaId=${encodeURIComponent(id)}&limite=120`, { cache:"no-store" });
-  const json = await resp.json().catch(() => ({}));
+
+  const resp = await fetchAutenticado(`/api/site-chat/mensagens?conversaId=${encodeURIComponent(id)}&limite=120`);
+  const json = await jsonObrigatorio(resp, "Não foi possível carregar as mensagens.");
   estado.mensagens = json.mensagens || [];
   renderMensagens();
+
+  await fetchAutenticado(`/api/site-chat/conversas/${encodeURIComponent(id)}/leitura`, {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({ leitor:"atendimento" })
+  }).catch(() => {});
 }
 
 async function responder(ev){
@@ -136,23 +166,29 @@ async function responder(ev){
   const btn = ev.currentTarget.querySelector("button");
   btn.disabled = true;
   try{
-    await fetch("/api/chat/mensagens", {
+    const resp = await fetchAutenticado("/api/site-chat/mensagens", {
       method:"POST",
       headers:{ "Content-Type":"application/json" },
       body:JSON.stringify({
         conversaId:estado.conversa.conversaId,
         origem:estado.conversa.origem,
-        nome:"Recepcao",
+        nome:"Recepção",
         remetente:"atendimento",
         alunoId:estado.conversa.alunoId || "",
+        professorId:estado.conversa.professorId || "",
+        clienteId:estado.conversa.clienteId || "",
         contato:estado.conversa.contato || "",
         protocolo:estado.conversa.protocolo || "",
         mensagem:texto
       })
     });
+    await jsonObrigatorio(resp, "Não foi possível enviar a resposta.");
     $("textoResposta").value = "";
+    const conversaId = estado.conversa.conversaId;
     await carregarConversas();
-    await abrirConversa(estado.conversa.conversaId);
+    await abrirConversa(conversaId);
+  }catch(e){
+    alert(e.message || "Erro ao responder.");
   }finally{
     btn.disabled = false;
   }
@@ -160,26 +196,42 @@ async function responder(ev){
 
 document.addEventListener("DOMContentLoaded", async () => {
   const conversaInicial = new URLSearchParams(location.search).get("conversaId") || "";
+
+  // Um link vindo do sino deve localizar a conversa independentemente do filtro salvo pelo navegador.
+  if(conversaInicial && $("origem")) $("origem").value = "";
+
   $("btnAtualizar").addEventListener("click", async () => {
-    await carregarConversas();
-    if(estado.conversa) await abrirConversa(estado.conversa.conversaId);
+    try{
+      await carregarConversas();
+      if(estado.conversa) await abrirConversa(estado.conversa.conversaId);
+    }catch(e){
+      alert(e.message || "Erro ao atualizar o chat.");
+    }
   });
   $("busca").addEventListener("input", renderConversas);
   $("origem").addEventListener("change", renderConversas);
   $("listaConversas").addEventListener("click", ev => {
     const btn = ev.target.closest("[data-id]");
-    if(btn) abrirConversa(btn.dataset.id);
+    if(btn) abrirConversa(btn.dataset.id).catch(e => alert(e.message || "Erro ao abrir a conversa."));
   });
   $("formResposta").addEventListener("submit", responder);
-  await carregarConversas();
-  if(conversaInicial) await abrirConversa(conversaInicial);
-  renderMensagens();
+
+  try{
+    await carregarConversas();
+    if(conversaInicial) await abrirConversa(conversaInicial);
+    renderMensagens();
+  }catch(e){
+    $("listaConversas").innerHTML = `<div class="empty">${esc(e.message || "Erro ao carregar o chat.")}</div>`;
+  }
+
   setInterval(async () => {
-    await carregarConversas().catch(() => {});
-    if(estado.conversa) await abrirConversa(estado.conversa.conversaId).catch(() => {});
+    try{
+      const conversaId = estado.conversa?.conversaId || "";
+      await carregarConversas();
+      if(conversaId) await abrirConversa(conversaId);
+    }catch{}
   }, 15000);
 });
-
 
 document.addEventListener("click", async (ev) => {
   const btn = ev.target.closest("[data-emerg-action]");
