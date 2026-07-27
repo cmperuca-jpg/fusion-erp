@@ -389,3 +389,29 @@ table tbody tr:hover td {
   table td{font-size:10.5px!important}
   table thead th,table th{font-size:9.5px!important}
 }
+
+
+/* Fusion ERP 2.8.1 — correção definitiva dos badges do BI Financeiro
+   O seletor descendente é necessário porque o tema global aplica color:#fff
+   diretamente a todos os elementos internos dos cards. */
+.bi-financeiro-page .bi-badge.receita,
+.bi-financeiro-page .bi-badge.receita *,
+.bi-table .bi-badge.receita,
+.bi-table .bi-badge.receita * {
+  background:#dcfce7!important;
+  color:#166534!important;
+  -webkit-text-fill-color:#166534!important;
+  text-shadow:none!important;
+  opacity:1!important;
+}
+
+.bi-financeiro-page .bi-badge.despesa,
+.bi-financeiro-page .bi-badge.despesa *,
+.bi-table .bi-badge.despesa,
+.bi-table .bi-badge.despesa * {
+  background:#fee2e2!important;
+  color:#991b1b!important;
+  -webkit-text-fill-color:#991b1b!important;
+  text-shadow:none!important;
+  opacity:1!important;
+}

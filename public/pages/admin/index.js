@@ -99,26 +99,90 @@ async function fazerBackupAgora() {
 }
 
 async function restaurarBackupSelecionado() {
-  const caminho = document.getElementById("backupSelecionado").value;
-  if (!caminho) return mostrarResultadoBackup("Selecione um backup para restaurar.", "erro");
-  const confirmacao = prompt("ATENÇÃO: os dados atuais serão substituídos. Digite RESTAURAR para confirmar:");
-  if (confirmacao !== "RESTAURAR") return;
-  if (!confirm("Confirma a restauração? Um backup de segurança será criado antes.")) return;
+  const select = document.getElementById("backupSelecionado");
+  const caminho = String(select?.value || "").trim();
+
+  if (!caminho) {
+    mostrarResultadoBackup("Selecione um backup para restaurar.", "erro");
+    select?.focus();
+    return;
+  }
+
+  const digitado = prompt(
+    "ATENÇÃO: os dados atuais serão substituídos.\n\n" +
+    "Digite RESTAURAR para confirmar:"
+  );
+
+  // Cancelar o prompt não deve iniciar nenhuma operação.
+  if (digitado === null) return;
+
+  // Aceita espaços acidentais e diferença entre maiúsculas/minúsculas.
+  const confirmacao = String(digitado).trim().toUpperCase();
+  if (confirmacao !== "RESTAURAR") {
+    mostrarResultadoBackup(
+      'Confirmação inválida. Digite exatamente "RESTAURAR".',
+      "erro"
+    );
+    return;
+  }
+
+  // Uma única confirmação é suficiente. O segundo confirm() nativo foi
+  // removido porque, em alguns navegadores, ele não era exibido depois do
+  // prompt e o fluxo terminava sem enviar a requisição.
   bloquearBackup(true);
-  mostrarResultadoBackup("Criando cópia de segurança e restaurando os dados...");
+  mostrarResultadoBackup(
+    "Restauração iniciada. Criando o backup de segurança e baixando os dados. Não feche esta página..."
+  );
+
   try {
     const resp = await FusionAuth.fetchAuth("/api/backup/restaurar", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      cache: "no-store",
       body: JSON.stringify({ caminho, confirmacao })
     });
-    const json = await resp.json().catch(() => ({}));
-    if (!resp.ok || json.ok === false) throw new Error(json.mensagem || "Erro ao restaurar backup.");
-    mostrarResultadoBackup(`Restauração concluída: ${json.totalRestaurados || 0} arquivo(s) e banco transacional restaurados. Atualize o painel.`);
-    await carregarBackups();
+
+    const texto = await resp.text();
+    let json = {};
+    try {
+      json = texto ? JSON.parse(texto) : {};
+    } catch {
+      throw new Error(
+        resp.ok
+          ? "O servidor concluiu a requisição, mas retornou uma resposta inválida."
+          : `Falha HTTP ${resp.status}: ${texto || resp.statusText || "sem detalhes"}`
+      );
+    }
+
+    if (!resp.ok || json.ok === false) {
+      throw new Error(
+        json.mensagem ||
+        json.erro ||
+        `Erro HTTP ${resp.status} ao restaurar o backup.`
+      );
+    }
+
+    mostrarResultadoBackup(
+      `Restauração concluída: ${Number(json.totalRestaurados || 0)} arquivo(s) restaurado(s). ` +
+      "O banco transacional e a persistência foram sincronizados."
+    );
+
+    await Promise.all([
+      carregarBackups(),
+      carregarStatusBackup()
+    ]);
   } catch (erro) {
-    mostrarResultadoBackup(erro.message, "erro");
-  } finally { bloquearBackup(false); }
+    console.error("[Backup] Falha na restauração:", erro);
+    mostrarResultadoBackup(
+      erro?.message || "Falha desconhecida ao restaurar o backup.",
+      "erro"
+    );
+  } finally {
+    bloquearBackup(false);
+  }
 }
 
 function renderPermissoes(selecionadas = []) {
