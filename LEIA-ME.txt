@@ -1,10 +1,17 @@
-Substitua:
-modules/turmas/turmas.service.mjs
-public/pages/turmas/index.html
-public/pages/turmas/turmas.js
+FUSION ERP - UNIFICAÇÃO DO DASHBOARD COM O BI
 
-A ocupação agora é calculada somente pelas matrículas ativas em matriculas.json.
-O campo manual foi removido e valores antigos em turmas.json são ignorados.
+Arquivo alterado:
+  public/js/dashboard-home.js
 
-Com matriculas.json vazio, a turma de capacidade 200 exibirá 200 / 200.
-Reinicie o servidor e pressione Ctrl+F5.
+O que muda:
+- Alunos ativos, total de alunos, matrículas ativas e presentes hoje passam a vir de /api/bi/executivo.
+- O Dashboard deixa de recalcular alunos ativos usando diretamente aluno.status.
+- Os gráficos de plano e status passam a usar os dados consolidados do BI.
+- Aniversariantes e últimas avaliações continuam usando os cadastros originais.
+- Nenhuma rotina financeira é alterada.
+
+Instalação:
+1. Extraia este ZIP na raiz do projeto.
+2. Permita substituir public/js/dashboard-home.js.
+3. Faça commit e deploy.
+4. Atualize o navegador com Ctrl+F5.
