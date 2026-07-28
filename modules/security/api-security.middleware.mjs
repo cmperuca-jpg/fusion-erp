@@ -92,6 +92,11 @@ function alunoIdNoPath(req) {
   return match?.[1] || "";
 }
 
+function professorIdFotoNoPath(req) {
+  const match = String(req.path || "").match(/^\/api\/professores\/([^/]+)\/foto$/);
+  return match?.[1] || "";
+}
+
 function portalAlunoPermitido(req, user = {}) {
   if (!isPortal(user, "aluno")) return false;
   const alunoId = String(user.id || "");
@@ -121,6 +126,7 @@ function portalProfessorPermitido(req, user = {}) {
   if (pathMatches(req.path, "/api/professores")) {
     if (req.method === "GET" && req.path === "/api/professores") return tecnico;
     if (req.method === "PUT" && /\/status$/i.test(req.path)) return tecnico;
+    if (req.method === "PUT" && professorIdFotoNoPath(req)) return mesmoId(professorIdFotoNoPath(req), user.id);
     return false;
   }
 

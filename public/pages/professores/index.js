@@ -3,6 +3,7 @@ const API_ALUNOS = '/api/alunos';
 let professores = [];
 let alunos = [];
 let documentos = [];
+let fotoProfessorBase64 = "";
 const $ = s => document.querySelector(s);
 
 function norm(v){return String(v||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
@@ -21,6 +22,10 @@ function nomeAluno(a){return a?.nome||a?.alunoNome||a?.name||'Aluno sem nome';}
 function planoAluno(a){return a?.plano||a?.planoNome||a?.nomePlano||'-';}
 function telefoneAluno(a){return a?.telefone||a?.whatsapp||a?.celular||'-';}
 function statusAluno(a){return a?.status||a?.situacao||'ativo';}
+function aplicarFotoProfessor(foto=''){fotoProfessorBase64=String(foto||'');const img=$('#fotoProfessorPreview');if(!img)return;if(window.FusionFotoPerfil?.aplicarImagem)FusionFotoPerfil.aplicarImagem(img,fotoProfessorBase64);else{img.src=fotoProfessorBase64||'/assets/pwa/icons/fusion-icon-192.png';img.onerror=()=>{img.src='/assets/pwa/icons/fusion-icon-192.png';};}}
+function lerArquivoDataUrl(arquivo){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result||'');reader.onerror=()=>reject(new Error('Não foi possível abrir a imagem.'));reader.readAsDataURL(arquivo);});}
+async function escolherFotoProfessor(){const arq=$('#fotoProfessorArquivo')?.files?.[0];if(!arq)return;if(!/^image\/(jpeg|png|webp)$/i.test(arq.type||''))return mostrar('Escolha uma imagem JPG, PNG ou WebP.','erro');if(arq.size>12*1024*1024)return mostrar('A imagem deve ter no máximo 12 MB.','erro');try{const foto=window.FusionFotoPerfil?.comprimir?await FusionFotoPerfil.comprimir(arq):await lerArquivoDataUrl(arq);aplicarFotoProfessor(foto);}catch(e){mostrar(e.message||'Não foi possível carregar a foto.','erro');}}
+function limparFotoProfessor(){const input=$('#fotoProfessorArquivo');if(input)input.value='';aplicarFotoProfessor('');}
 
 async function carregar(){
   $('#tabela').innerHTML='<tr><td colspan="6">Carregando...</td></tr>';
@@ -32,6 +37,7 @@ async function carregar(){
     const payload = await safeJson(respProf);
     if(!respProf.ok)throw new Error(payload.mensagem||payload.erro||`HTTP ${respProf.status}`);
     professores = extrairLista(payload);
+    window.professores = professores;
 
     if(respAlunos){
       const payloadAlunos = await safeJson(respAlunos);
@@ -115,10 +121,10 @@ function resetarCamposSenha(){
   });
 }
 function abrirModal(t='Novo professor'){ $('#modalTitulo').textContent=t; $('#modal').classList.remove('hidden'); setTimeout(()=>$('#nome').focus(),50); }
-function fechar(){ $('#modal').classList.add('hidden'); $('#form').reset(); $('#id').value=''; resetarCamposSenha(); documentos=[]; renderDocs(); $('#prontuario').textContent='Selecione um professor para carregar o prontuário.'; trocarTab('cadastro'); }
+function fechar(){ $('#modal').classList.add('hidden'); $('#form').reset(); $('#id').value=''; resetarCamposSenha(); limparFotoProfessor(); documentos=[]; renderDocs(); $('#prontuario').textContent='Selecione um professor para carregar o prontuário.'; trocarTab('cadastro'); }
 function trocarTab(tab){document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));document.querySelectorAll('.tab-panel').forEach(p=>p.classList.toggle('active',p.id===`tab-${tab}`));}
-function coletar(){const dados={nome:$('#nome').value.trim(),status:$('#status').value,cpf:$('#cpf').value,rg:$('#rg').value,cref:$('#cref').value,email:$('#email').value,telefone:$('#telefone').value,whatsapp:$('#whatsapp').value,dataNascimento:$('#dataNascimento').value,endereco:$('#endereco').value,especialidade:$('#especialidade').value,especialidades:lista($('#especialidades').value),modalidades:lista($('#modalidades').value),diasTrabalho:lista($('#diasTrabalho').value),horarioInicio:$('#horarioInicio').value,horarioFim:$('#horarioFim').value,tipoContrato:$('#tipoContrato').value,valorHora:$('#valorHora').value,banco:$('#banco').value,agencia:$('#agencia').value,conta:$('#conta').value,chavePix:$('#chavePix').value,observacoes:$('#observacoes').value,documentos};const id=$('#id')?.value||'';const senhaEl=$('#senha');const senha=senhaEl?.value||'';if((!id||senhaEl?.dataset.editado==='true')&&senha)dados.senha=senha;return dados;}
-function preencher(p){$('#id').value=idProfessor(p);['nome','status','cpf','rg','cref','email','telefone','whatsapp','dataNascimento','endereco','especialidade','horarioInicio','horarioFim','tipoContrato','valorHora','banco','agencia','conta','chavePix','observacoes'].forEach(k=>{const el=$(`#${k}`);if(el)el.value=p[k]||'';});resetarCamposSenha();setTimeout(resetarCamposSenha,80);$('#especialidades').value=joinLista(p.especialidades);$('#modalidades').value=joinLista(p.modalidades);$('#diasTrabalho').value=joinLista(p.diasTrabalho);documentos=Array.isArray(p.documentos)?p.documentos:[];renderDocs();}
+function coletar(){const dados={nome:$('#nome').value.trim(),status:$('#status').value,cpf:$('#cpf').value,rg:$('#rg').value,cref:$('#cref').value,email:$('#email').value,telefone:$('#telefone').value,whatsapp:$('#whatsapp').value,dataNascimento:$('#dataNascimento').value,endereco:$('#endereco').value,especialidade:$('#especialidade').value,especialidades:lista($('#especialidades').value),modalidades:lista($('#modalidades').value),diasTrabalho:lista($('#diasTrabalho').value),horarioInicio:$('#horarioInicio').value,horarioFim:$('#horarioFim').value,tipoContrato:$('#tipoContrato').value,valorHora:$('#valorHora').value,banco:$('#banco').value,agencia:$('#agencia').value,conta:$('#conta').value,chavePix:$('#chavePix').value,observacoes:$('#observacoes').value,documentos,foto:fotoProfessorBase64,foto_base64:fotoProfessorBase64};const id=$('#id')?.value||'';const senhaEl=$('#senha');const senha=senhaEl?.value||'';if((!id||senhaEl?.dataset.editado==='true')&&senha)dados.senha=senha;return dados;}
+function preencher(p){$('#id').value=idProfessor(p);['nome','status','cpf','rg','cref','email','telefone','whatsapp','dataNascimento','endereco','especialidade','horarioInicio','horarioFim','tipoContrato','valorHora','banco','agencia','conta','chavePix','observacoes'].forEach(k=>{const el=$(`#${k}`);if(el)el.value=p[k]||'';});resetarCamposSenha();setTimeout(resetarCamposSenha,80);aplicarFotoProfessor(p.foto||p.foto_base64||'');$('#especialidades').value=joinLista(p.especialidades);$('#modalidades').value=joinLista(p.modalidades);$('#diasTrabalho').value=joinLista(p.diasTrabalho);documentos=Array.isArray(p.documentos)?p.documentos:[];renderDocs();}
 window.editar=function(id){const p=professores.find(x=>String(idProfessor(x))===String(id));if(!p)return mostrar('Professor não encontrado.','erro');preencher(p);abrirModal('Editar professor');};
 window.abrirProntuario=async function(id){const p=professores.find(x=>String(idProfessor(x))===String(id));if(p)preencher(p);abrirModal('Prontuário do professor');trocarTab('prontuario');await carregarProntuario(id);};
 
@@ -306,5 +312,9 @@ window.removerDoc=i=>{documentos.splice(i,1);renderDocs();};
 async function adicionarDoc(){const nome=$('#nomeDocumento').value.trim();const arq=$('#arquivoDocumento').files[0];if(!nome)return mostrar('Informe o nome do documento.','erro');if(!arq){documentos.push({nome,tipo:'manual',arquivo_base64:''});renderDocs();return;}const reader=new FileReader();reader.onload=()=>{documentos.push({nome,tipo:arq.type,arquivo_base64:reader.result});$('#nomeDocumento').value='';$('#arquivoDocumento').value='';renderDocs();};reader.readAsDataURL(arq);}
 $('#senha')?.addEventListener('input',()=>{$('#senha').dataset.editado='true';});
 $('#confirmarSenha')?.addEventListener('input',()=>{$('#confirmarSenha').dataset.editado='true';});
+$('#btnEscolherFotoProfessor')?.addEventListener('click',()=>$('#fotoProfessorArquivo')?.click());
+$('#btnLimparFotoProfessor')?.addEventListener('click',limparFotoProfessor);
+$('#fotoProfessorArquivo')?.addEventListener('change',escolherFotoProfessor);
 $('#btnNovo').addEventListener('click',()=>{fechar();abrirModal();});$('#btnAtualizar').addEventListener('click',carregar);$('#btnFechar').addEventListener('click',fechar);$('#btnCancelar').addEventListener('click',fechar);$('#btnImprimir').addEventListener('click',()=>window.print());$('#form').addEventListener('submit',salvar);$('#busca').addEventListener('input',render);$('#filtroStatus').addEventListener('change',render);$('#btnAdicionarDoc').addEventListener('click',adicionarDoc);document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>trocarTab(b.dataset.tab)));
+aplicarFotoProfessor('');
 carregar();

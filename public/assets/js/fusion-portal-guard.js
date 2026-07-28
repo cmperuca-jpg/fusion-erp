@@ -45,7 +45,9 @@
       professorId: String(dados.professor.id),
       professorNome: dados.professor.nome || sessao.professorNome || "Professor",
       perfil: dados.professor.perfil || sessao.perfil || "professor",
-      acessoTodosAlunos: dados.professor.acessoTodosAlunos === true
+      acessoTodosAlunos: dados.professor.acessoTodosAlunos === true,
+      foto: dados.professor.foto || dados.professor.foto_base64 || sessao.foto || "",
+      foto_base64: dados.professor.foto_base64 || dados.professor.foto || sessao.foto_base64 || ""
     };
     localStorage.setItem("fusion_professor_sessao", JSON.stringify(atualizada));
     return { tipo: "professor", usuario: atualizada, token: sessao.token };

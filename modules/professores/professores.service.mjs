@@ -70,6 +70,17 @@ export async function atualizar(id, dados) {
   return await atualizarProfessor(id, r.data);
 }
 
+export async function atualizarFoto(id, foto = '') {
+  const valor = String(foto || '').trim();
+  if (!/^data:image\/(jpeg|png|webp);base64,/i.test(valor)) {
+    throw Object.assign(new Error('Envie uma foto JPG, PNG ou WebP.'), { status: 400 });
+  }
+  if (valor.length > 5 * 1024 * 1024) {
+    throw Object.assign(new Error('A foto deve ter no máximo 5 MB.'), { status: 400 });
+  }
+  return await atualizarProfessor(id, { foto: valor, foto_base64: valor });
+}
+
 export async function excluir(id) { return await excluirProfessor(id); }
 
 export async function prontuario(id) {

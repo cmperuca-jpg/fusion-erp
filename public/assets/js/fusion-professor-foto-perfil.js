@@ -35,7 +35,7 @@
       btn.textContent = "Salvando...";
       try {
         const foto = await FusionFotoPerfil.comprimir(arquivo);
-        const resp = await fetch(`/api/professores/${encodeURIComponent(atual.professorId)}`, {
+        const resp = await fetch(`/api/professores/${encodeURIComponent(atual.professorId)}/foto`, {
           method: "PUT",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${atual.token || ""}` },
           body: JSON.stringify({ foto, foto_base64: foto })
@@ -55,12 +55,14 @@
       }
     };
 
-    fetch(`/api/professores/${encodeURIComponent(atual.professorId)}`, {
+    fetch("/api/professores/sessao", {
       cache: "no-store",
       headers: { Authorization: `Bearer ${atual.token || ""}` }
     }).then(r => r.json()).then(p => {
       const prof = p.professor || p.dados || p;
-      FusionFotoPerfil.aplicarImagem(img, prof.foto || prof.foto_base64 || atual.foto || "");
+      const foto = prof.foto || prof.foto_base64 || atual.foto || "";
+      FusionFotoPerfil.aplicarImagem(img, foto);
+      if (foto) localStorage.setItem("fusion_professor_sessao", JSON.stringify({ ...atual, foto, foto_base64: foto }));
     }).catch(() => {});
   }
 

@@ -40,3 +40,10 @@
 .tabs .tab.active{background:#ff6600!important;color:#fff!important;border-color:#ff6600!important}
 .modal-actions button,.modal-actions .btn-light{opacity:1!important;visibility:visible!important}
 .senha-ajuda{display:block;margin-top:-6px;color:#64748b;line-height:1.4}
+.foto-professor-cadastro{display:flex;align-items:center;gap:14px;border:1px solid #dbe3ef;background:#f8fafc;border-radius:12px;padding:14px}
+.foto-professor-cadastro img{width:104px;height:104px;border-radius:50%;object-fit:cover;border:2px solid #cbd5e1;background:#fff;flex:0 0 auto}
+.foto-professor-cadastro label{display:block;font-size:13px;font-weight:800;color:#334155;margin-bottom:8px}
+.foto-professor-cadastro small{display:block;margin-top:8px;color:#64748b;line-height:1.35}
+.foto-professor-acoes{display:flex;gap:8px;flex-wrap:wrap}
+.foto-professor-acoes .btn-light{margin-left:0}
+@media(max-width:520px){.foto-professor-cadastro{align-items:flex-start;flex-direction:column}.foto-professor-cadastro img{width:96px;height:96px}}

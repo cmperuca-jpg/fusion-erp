@@ -49,6 +49,19 @@ router.get('/:id', async (req, res) => { try { const r = await service.buscar(re
 router.post('/', async (req, res) => { try { const professor = await service.criar(req.body || {}); res.status(201).json({ ok:true, professor, mensagem:'Professor cadastrado com sucesso' }); } catch(e) { tratar(res,e,400); } });
 router.put('/:id', async (req, res) => { try { const professor = await service.atualizar(req.params.id, req.body || {}); if (!professor) return res.status(404).json({ok:false,mensagem:'Professor não encontrado'}); res.json({ ok:true, professor, mensagem:'Professor atualizado com sucesso' }); } catch(e) { tratar(res,e,400); } });
 
+router.put('/:id/foto', async (req, res) => {
+  try {
+    const usuario = req.usuario || {};
+    if (usuario.portal === true && usuario.portalTipo === 'professor' && String(usuario.id || '') !== String(req.params.id || '')) {
+      return res.status(403).json({ ok:false, mensagem:'O professor só pode alterar a própria foto.' });
+    }
+    const foto = req.body?.foto || req.body?.foto_base64 || '';
+    const professor = await service.atualizarFoto(req.params.id, foto);
+    if (!professor) return res.status(404).json({ ok:false, mensagem:'Professor nÃ£o encontrado' });
+    res.json({ ok:true, professor, mensagem:'Foto do professor atualizada com sucesso' });
+  } catch(e) { tratar(res,e, e.status || 400); }
+});
+
 router.put('/:id/status', async (req, res) => {
   try {
     const solicitante = solicitanteStatus(req);

@@ -62,6 +62,8 @@ async function entrar() {
       professorNome: professor.nome || "Professor",
       cref: professor.cref || "",
       email: professor.email || "",
+      foto: professor.foto || professor.foto_base64 || "",
+      foto_base64: professor.foto_base64 || professor.foto || "",
       perfil: professor.perfil || "professor",
       acessoTodosAlunos: professor.acessoTodosAlunos === true,
       permissoes: Array.isArray(payload.usuario?.permissoes) ? payload.usuario.permissoes : [],
