@@ -8,6 +8,7 @@
   let planos = [];
   let turmas = [];
   let matriculaAtual = null;
+  let modoSomenteTurma = false;
   let ultimoPlanoTaxaSincronizada = "";
 
   function lista(payload) {
@@ -182,6 +183,9 @@
 
   function preencherFormulario(m) {
     matriculaAtual = m;
+    modoSomenteTurma = false;
+    const btn = $("btnSalvar");
+    if (btn) btn.textContent = "Salvar matricula";
     $("matriculaId").value = m.id || "";
     $("aluno_id").value = m.alunoId || m.aluno_id || m.idAluno || "";
     $("status").value = m.status || "Ativa";
@@ -201,17 +205,24 @@
     recalcular();
   }
 
+  function ativarModoSomenteTurma({ mostrarMensagem = true } = {}) {
+    if (!matriculaAtual) return;
+    modoSomenteTurma = true;
+    const btn = $("btnSalvar");
+    if (btn) btn.textContent = "Salvar turma";
+    tab("dados");
+    if (mostrarMensagem) {
+      setAlerta("Escolha a turma e clique em Salvar turma. Este ajuste nao gera cobranca nem taxa.", "ok");
+    }
+  }
+
   function mostrarExistente(m) {
     const box = $("matriculaExistenteBox");
     if (!box) return;
     box.classList.add("ativo");
     box.innerHTML = `<strong>Aluno com matricula ativa.</strong><br>Matricula: ${esc(m.numero || m.id || "-")}<br>Plano: ${esc(m.plano || "-")}<br>Turma: ${esc(m.turma || "-")}<br>Mensalidade: ${br(m.valorMensalTotal ?? m.valorMensal)}<div class="acoes-existente"><button type="button" class="dark" id="btnAbrirExistente">Abrir matricula existente</button><button type="button" class="primary" id="btnAlterarTurmaTela">Alterar turma</button></div>`;
     $("btnAbrirExistente").onclick = () => location.href = `/pages/matriculas/ficha.html?id=${encodeURIComponent(m.id || m.numero)}`;
-    $("btnAlterarTurmaTela").onclick = () => {
-      $("btnSalvar").textContent = "Salvar turma";
-      tab("dados");
-      setAlerta("Alterar turma nao muda mensalidade nem financeiro.", "ok");
-    };
+    $("btnAlterarTurmaTela").onclick = () => ativarModoSomenteTurma();
   }
 
   async function verificarAtiva() {
@@ -222,25 +233,92 @@
     if (ativa) preencherFormulario(ativa);
   }
 
+  async function salvarMatriculaExistenteSemFinanceiro({ atualizarVencimento = false, atualizarStatus = false } = {}) {
+    const matriculaId = matriculaAtual?.id || matriculaAtual?.numero;
+    if (!matriculaId) return setAlerta("Matricula ativa nao encontrada para atualizar a turma.", "erro");
+
+    let diaVencimento = null;
+    if (atualizarVencimento) {
+      diaVencimento = diaVencimentoValido($("dia_vencimento")?.value);
+      if (!diaVencimento) {
+        tab("financeiro");
+        $("dia_vencimento")?.focus();
+        return setAlerta("Informe o dia de vencimento mensal com um numero inteiro de 1 a 28.", "erro");
+      }
+    }
+
+    try {
+      setSalvando(true);
+
+      if (atualizarVencimento) {
+        const resVencimento = await fetch(`/api/matriculas/${encodeURIComponent(matriculaId)}/vencimento`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ diaVencimento, usuario: "Administrador" })
+        });
+        const jsonVencimento = await resVencimento.json().catch(() => ({}));
+        if (!resVencimento.ok || jsonVencimento.ok === false) {
+          throw new Error(jsonVencimento.erro || jsonVencimento.mensagem || "Erro ao salvar o dia de vencimento.");
+        }
+      }
+
+      const resTurma = await fetch(`/api/matriculas/${encodeURIComponent(matriculaId)}/turmas`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...turmaPayload(), usuario: "Administrador" })
+      });
+      const jsonTurma = await resTurma.json().catch(() => ({}));
+      if (!resTurma.ok || jsonTurma.ok === false) throw new Error(jsonTurma.erro || jsonTurma.mensagem || "Erro ao salvar turma.");
+
+      if (atualizarStatus && matriculaAtual.status && norm(matriculaAtual.status) !== norm($("status").value)) {
+        const resStatus = await fetch(`/api/matriculas/${encodeURIComponent(matriculaId)}/status`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: $("status").value, diaVencimento, usuario: "Administrador" })
+        });
+        const jsonStatus = await resStatus.json().catch(() => ({}));
+        if (!resStatus.ok || jsonStatus.ok === false) {
+          throw new Error(jsonStatus.erro || jsonStatus.mensagem || "Erro ao atualizar o status da matricula.");
+        }
+      }
+
+      setAlerta(jsonTurma.mensagem || "Turma/modalidade atualizada sem alterar o financeiro.", "ok");
+      setTimeout(() => location.href = `/pages/matriculas/ficha.html?id=${encodeURIComponent(matriculaId)}`, 700);
+    } catch (erro) {
+      setAlerta(erro.message || "Erro ao salvar turma.", "erro");
+    } finally {
+      setSalvando(false);
+    }
+  }
+
   async function salvar(ev) {
     ev.preventDefault();
     setAlerta("", "");
 
     const alunoId = $("aluno_id").value;
-    const planoId = $("plano_id").value;
+    const planoIdInformado = $("plano_id").value;
     const planoAtual = matriculaAtual?.planoId || matriculaAtual?.plano_id || "";
-    const tipo = tipoPlano(planoSelecionado());
+    const planoId = planoIdInformado || planoAtual;
+    const mesmoPlanoDaMatricula = Boolean(matriculaAtual && (!planoIdInformado || String(planoAtual) === String(planoIdInformado)));
 
     if (!alunoId) {
       tab("dados");
       return setAlerta("Informe o aluno da matrícula.", "erro");
     }
+    if (matriculaAtual && (modoSomenteTurma || mesmoPlanoDaMatricula)) {
+      return salvarMatriculaExistenteSemFinanceiro({
+        atualizarVencimento: !modoSomenteTurma,
+        atualizarStatus: !modoSomenteTurma
+      });
+    }
+
     if (!planoId) {
       tab("financeiro");
       $("plano_id")?.focus();
       return setAlerta("Informe o plano antes de salvar a matrícula.", "erro");
     }
 
+    const tipo = tipoPlano(planoSelecionado());
     const cobrarTaxa = $("cobrar_taxa_matricula")?.value !== "false";
     const planoSelecionadoAtual = planoSelecionado();
     const taxaConfigurada = valorMatriculaPlano(planoSelecionadoAtual);
@@ -357,7 +435,18 @@
     document.querySelectorAll(".tab").forEach((btn) => btn.addEventListener("click", () => tab(btn.dataset.tab)));
     await carregarBase();
 
-    $("plano_id")?.addEventListener("change", recalcular);
+    $("plano_id")?.addEventListener("change", () => {
+      if (modoSomenteTurma) {
+        modoSomenteTurma = false;
+        const btn = $("btnSalvar");
+        if (btn) btn.textContent = "Salvar matricula";
+        setAlerta("Plano alterado: salvar agora passa a ser troca comercial com financeiro.", "erro");
+      }
+      recalcular();
+    });
+    $("turma_id")?.addEventListener("change", () => {
+      if (matriculaAtual) ativarModoSomenteTurma({ mostrarMensagem: false });
+    });
     $("cobrar_taxa_matricula")?.addEventListener("change", () => {
       if ($("cobrar_taxa_matricula").value !== "false") {
         $("taxa_matricula").dataset.manual = "";

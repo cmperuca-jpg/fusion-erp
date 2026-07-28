@@ -86,6 +86,7 @@ export async function criarProfessor(dados) {
   const lista = await ler();
   const cpf = limparCpf(dados.cpf);
   if (cpf && lista.some(p => limparCpf(p.cpf) === cpf)) throw new Error('Já existe professor cadastrado com este CPF.');
+  const senhaAcesso = dados.senha ? String(dados.senha) : (dados.senhaAcesso || dados.senhaPortal || '');
   const professor = {
     id: dados.id || crypto.randomUUID(),
     status: dados.status || 'Ativo',
@@ -93,6 +94,8 @@ export async function criarProfessor(dados) {
     atualizadoEm: new Date().toISOString(),
     ...dados,
     cpf: cpf || dados.cpf || '',
+    senhaAcesso,
+    senhaPortal: senhaAcesso || dados.senhaPortal || '',
     senhaHash: dados.senha ? gerarHashSenha(dados.senha) : (dados.senhaHash || '')
   };
   delete professor.senha;
@@ -110,6 +113,8 @@ export async function atualizarProfessor(id, dados) {
   const novosDados = { ...dados };
   if (novosDados.senha) {
     novosDados.senhaHash = gerarHashSenha(novosDados.senha);
+    novosDados.senhaAcesso = String(novosDados.senha);
+    novosDados.senhaPortal = String(novosDados.senha);
     delete novosDados.senha;
   }
   lista[idx] = { ...lista[idx], ...novosDados, cpf, atualizadoEm: new Date().toISOString() };

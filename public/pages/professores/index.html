@@ -6,7 +6,7 @@
   <title>Fusion ERP - Professores</title>
   <link rel="stylesheet" href="/assets/css/fusion-app.css">
   <link rel="stylesheet" href="/assets/css/fusion-menu-global.css">
-  <link rel="stylesheet" href="./style.css?v=20260728-professor-foto-1">
+  <link rel="stylesheet" href="./style.css?v=20260728-senha-cpf-1">
   <script src="/assets/js/fusion-auth.js"></script>
   <script>FusionAuth.proteger();</script>
   <meta name="fusion-existing-pages" content="access-engine,admin,agenda,aluno-avaliacao,aluno-login,aluno-treinos,alunos,avaliacoes,bi-academia,bi-academia-operacional,bi-financeiro,caixa,checkin,comercial,comercial-painel,configuracoes,dashboard,financeiro,matricula-online,matriculas,matriculas-pendentes,mensalidades,modalidades,natacao-professor,planos,professor-area,professor-login,professores,recebimentos,relatorios-caixa,treinos,turmas">
@@ -96,17 +96,17 @@
           </div>
         </div>
         <div class="grid-2"><div class="field"><label for="nome">Nome completo *</label><input id="nome" required></div><div class="field"><label for="status">Status</label><select id="status"><option value="Ativo">Ativo</option><option value="Inativo">Inativo</option><option value="Cancelado">Cancelado</option></select></div></div>
-        <div class="grid-3"><div class="field"><label for="cpf">CPF</label><input id="cpf"></div><div class="field"><label for="rg">RG</label><input id="rg"></div><div class="field"><label for="dataNascimento">Nascimento</label><input id="dataNascimento" type="date"></div></div>
+        <div class="grid-3"><div class="field"><label for="cpf">CPF</label><input id="cpf" inputmode="numeric" maxlength="14" placeholder="000.000.000-00"></div><div class="field"><label for="rg">RG</label><input id="rg"></div><div class="field"><label for="dataNascimento">Nascimento</label><input id="dataNascimento" type="date"></div></div>
         <div class="grid-3"><div class="field"><label for="telefone">Telefone</label><input id="telefone"></div><div class="field"><label for="whatsapp">WhatsApp</label><input id="whatsapp"></div><div class="field"><label for="email">E-mail</label><input id="email" type="email"></div></div>
         <div class="grid-2 portal-professor-acesso">
           <div class="field">
             <label for="senha">Senha do Portal do Professor</label>
-            <input id="senha" type="password" autocomplete="new-password" minlength="6" placeholder="Digite uma nova senha">
-            <small>No cadastro, informe a senha de acesso. Na edição, deixe em branco para manter a senha atual.</small>
+            <input id="senha" type="text" autocomplete="off" minlength="6" placeholder="Digite a senha de acesso">
+            <small>A senha salva aparece aqui para consulta da recepção. Altere somente quando precisar trocar o acesso.</small>
           </div>
           <div class="field">
             <label for="confirmarSenha">Confirmar senha</label>
-            <input id="confirmarSenha" type="password" autocomplete="new-password" minlength="6" placeholder="Repita a nova senha">
+            <input id="confirmarSenha" type="text" autocomplete="off" minlength="6" placeholder="Repita a senha">
           </div>
         </div>
         <div class="grid-3"><div class="field"><label for="cep">CEP</label><input id="cep"></div><div class="field"><label for="cidade">Cidade</label><input id="cidade"></div><div class="field"><label for="estado">Estado</label><input id="estado" maxlength="2"></div></div>
@@ -148,8 +148,8 @@
     </form>
   </div>
 </div>
-<script src="/assets/js/fusion-foto-perfil.js?v=20260728-professor-foto-1"></script>
-<script src="./index.js?v=20260728-professor-foto-1"></script>
+<script src="/assets/js/fusion-foto-perfil.js?v=20260728-senha-cpf-1"></script>
+<script src="./index.js?v=20260728-senha-cpf-1"></script>
   <script src="/assets/js/fusion-ciclo-professor-aluno.js"></script>
   <script src="/assets/js/fusion-menu-global.js"></script>
     <script src="/assets/js/fusion-layout.js"></script>

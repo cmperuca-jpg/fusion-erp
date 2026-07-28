@@ -11,6 +11,9 @@ function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&l
 function enc(v){return encodeURIComponent(String(v||''));}
 function lista(v){return String(v||'').split(',').map(x=>x.trim()).filter(Boolean);}
 function joinLista(v){return Array.isArray(v)?v.join(', '):String(v||'');}
+function somenteNumeros(v){return String(v||'').replace(/\D/g,'');}
+function formatarCpf(v){const n=somenteNumeros(v).slice(0,11);return n.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2');}
+function senhaAcesso(p={}){return String(p.senhaAcesso||p.senhaPortal||p.senha||'');}
 function mostrar(msg,tipo='info'){const el=$('#alerta'); if(!el) return alert(msg); el.textContent=msg;el.className=`alert ${tipo}`;el.classList.remove('hidden');setTimeout(()=>el.classList.add('hidden'),7000);}
 async function safeJson(resp){try{return await resp.json();}catch{return {};}}
 function extrairLista(payload){if(Array.isArray(payload))return payload;return payload.professores||payload.alunos||payload.dados||payload.data||payload.itens||payload.registros||[];}
@@ -53,10 +56,11 @@ async function carregar(){
 
 function filtrados(){
   const q=norm($('#busca').value);
+  const qNum=somenteNumeros($('#busca').value);
   const st=norm($('#filtroStatus').value);
   return professores.filter(p=>{
     const alvo=norm([p.nome,p.cpf,p.cref,p.email,p.telefone,p.especialidade,joinLista(p.especialidades),joinLista(p.modalidades)].join(' '));
-    return (!q||alvo.includes(q))&&(!st||status(p)===st);
+    return (!q||alvo.includes(q)||(qNum&&somenteNumeros(p.cpf).includes(qNum)))&&(!st||status(p)===st);
   });
 }
 
@@ -111,20 +115,20 @@ function render(){
   }).join('');
 }
 
-function resetarCamposSenha(){
+function resetarCamposSenha(valor=''){
   const senha = $('#senha');
   const confirmar = $('#confirmarSenha');
   [senha, confirmar].forEach(el => {
     if (!el) return;
-    el.value = '';
+    el.value = valor;
     el.dataset.editado = '';
   });
 }
 function abrirModal(t='Novo professor'){ $('#modalTitulo').textContent=t; $('#modal').classList.remove('hidden'); setTimeout(()=>$('#nome').focus(),50); }
 function fechar(){ $('#modal').classList.add('hidden'); $('#form').reset(); $('#id').value=''; resetarCamposSenha(); limparFotoProfessor(); documentos=[]; renderDocs(); $('#prontuario').textContent='Selecione um professor para carregar o prontuário.'; trocarTab('cadastro'); }
 function trocarTab(tab){document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));document.querySelectorAll('.tab-panel').forEach(p=>p.classList.toggle('active',p.id===`tab-${tab}`));}
-function coletar(){const dados={nome:$('#nome').value.trim(),status:$('#status').value,cpf:$('#cpf').value,rg:$('#rg').value,cref:$('#cref').value,email:$('#email').value,telefone:$('#telefone').value,whatsapp:$('#whatsapp').value,dataNascimento:$('#dataNascimento').value,endereco:$('#endereco').value,especialidade:$('#especialidade').value,especialidades:lista($('#especialidades').value),modalidades:lista($('#modalidades').value),diasTrabalho:lista($('#diasTrabalho').value),horarioInicio:$('#horarioInicio').value,horarioFim:$('#horarioFim').value,tipoContrato:$('#tipoContrato').value,valorHora:$('#valorHora').value,banco:$('#banco').value,agencia:$('#agencia').value,conta:$('#conta').value,chavePix:$('#chavePix').value,observacoes:$('#observacoes').value,documentos,foto:fotoProfessorBase64,foto_base64:fotoProfessorBase64};const id=$('#id')?.value||'';const senhaEl=$('#senha');const senha=senhaEl?.value||'';if((!id||senhaEl?.dataset.editado==='true')&&senha)dados.senha=senha;return dados;}
-function preencher(p){$('#id').value=idProfessor(p);['nome','status','cpf','rg','cref','email','telefone','whatsapp','dataNascimento','endereco','especialidade','horarioInicio','horarioFim','tipoContrato','valorHora','banco','agencia','conta','chavePix','observacoes'].forEach(k=>{const el=$(`#${k}`);if(el)el.value=p[k]||'';});resetarCamposSenha();setTimeout(resetarCamposSenha,80);aplicarFotoProfessor(p.foto||p.foto_base64||'');$('#especialidades').value=joinLista(p.especialidades);$('#modalidades').value=joinLista(p.modalidades);$('#diasTrabalho').value=joinLista(p.diasTrabalho);documentos=Array.isArray(p.documentos)?p.documentos:[];renderDocs();}
+function coletar(){const dados={nome:$('#nome').value.trim(),status:$('#status').value,cpf:somenteNumeros($('#cpf').value),rg:$('#rg').value,cref:$('#cref').value,email:$('#email').value,telefone:$('#telefone').value,whatsapp:$('#whatsapp').value,dataNascimento:$('#dataNascimento').value,endereco:$('#endereco').value,especialidade:$('#especialidade').value,especialidades:lista($('#especialidades').value),modalidades:lista($('#modalidades').value),diasTrabalho:lista($('#diasTrabalho').value),horarioInicio:$('#horarioInicio').value,horarioFim:$('#horarioFim').value,tipoContrato:$('#tipoContrato').value,valorHora:$('#valorHora').value,banco:$('#banco').value,agencia:$('#agencia').value,conta:$('#conta').value,chavePix:$('#chavePix').value,observacoes:$('#observacoes').value,documentos,foto:fotoProfessorBase64,foto_base64:fotoProfessorBase64};const id=$('#id')?.value||'';const senhaEl=$('#senha');const senha=senhaEl?.value||'';if((!id||senhaEl?.dataset.editado==='true')&&senha)dados.senha=senha;return dados;}
+function preencher(p){$('#id').value=idProfessor(p);['nome','status','cpf','rg','cref','email','telefone','whatsapp','dataNascimento','endereco','especialidade','horarioInicio','horarioFim','tipoContrato','valorHora','banco','agencia','conta','chavePix','observacoes'].forEach(k=>{const el=$(`#${k}`);if(el)el.value=p[k]||'';});$('#cpf').value=formatarCpf(p.cpf||'');const senhaAtual=senhaAcesso(p);resetarCamposSenha(senhaAtual);setTimeout(()=>resetarCamposSenha(senhaAtual),80);aplicarFotoProfessor(p.foto||p.foto_base64||'');$('#especialidades').value=joinLista(p.especialidades);$('#modalidades').value=joinLista(p.modalidades);$('#diasTrabalho').value=joinLista(p.diasTrabalho);documentos=Array.isArray(p.documentos)?p.documentos:[];renderDocs();}
 window.editar=function(id){const p=professores.find(x=>String(idProfessor(x))===String(id));if(!p)return mostrar('Professor não encontrado.','erro');preencher(p);abrirModal('Editar professor');};
 window.abrirProntuario=async function(id){const p=professores.find(x=>String(idProfessor(x))===String(id));if(p)preencher(p);abrirModal('Prontuário do professor');trocarTab('prontuario');await carregarProntuario(id);};
 
@@ -312,6 +316,7 @@ window.removerDoc=i=>{documentos.splice(i,1);renderDocs();};
 async function adicionarDoc(){const nome=$('#nomeDocumento').value.trim();const arq=$('#arquivoDocumento').files[0];if(!nome)return mostrar('Informe o nome do documento.','erro');if(!arq){documentos.push({nome,tipo:'manual',arquivo_base64:''});renderDocs();return;}const reader=new FileReader();reader.onload=()=>{documentos.push({nome,tipo:arq.type,arquivo_base64:reader.result});$('#nomeDocumento').value='';$('#arquivoDocumento').value='';renderDocs();};reader.readAsDataURL(arq);}
 $('#senha')?.addEventListener('input',()=>{$('#senha').dataset.editado='true';});
 $('#confirmarSenha')?.addEventListener('input',()=>{$('#confirmarSenha').dataset.editado='true';});
+$('#cpf')?.addEventListener('input',ev=>{ev.target.value=formatarCpf(ev.target.value);});
 $('#btnEscolherFotoProfessor')?.addEventListener('click',()=>$('#fotoProfessorArquivo')?.click());
 $('#btnLimparFotoProfessor')?.addEventListener('click',limparFotoProfessor);
 $('#fotoProfessorArquivo')?.addEventListener('change',escolherFotoProfessor);

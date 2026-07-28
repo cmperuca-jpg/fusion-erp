@@ -29,6 +29,8 @@ export const professorSchema = z.object({
   documentos: z.array(z.object({ nome: texto, tipo: texto, arquivo_base64: texto })).optional().default([]),
   status: z.string().optional().default('Ativo'),
   senha: texto,
+  senhaAcesso: texto,
+  senhaPortal: texto,
   login: texto,
   perfil: texto,
   foto: texto,

@@ -84,11 +84,20 @@ async function verificarSenhaUsuario(usuario = {}, senha = "") {
     return { ok: true, migrar: true };
   }
 
+  const senhaTexto = String(usuario.senhaAcesso || usuario.senhaPortal || "");
+  if (senhaTexto && textoSeguroIgual(senhaTexto, String(senha || ""))) {
+    return { ok: true, migrar: Boolean(!hashAtual && !hashBcrypt && !hashLegado) };
+  }
+
   return { ok: false, migrar: false };
 }
 
-function semSenha(usuario = {}) {
+function semSenha(usuario = {}, opcoes = {}) {
   const { senha, senhaHash: _, senhaBcrypt: __, senhaHashLegado: ___, ...limpo } = usuario;
+  if (!opcoes.incluirSenhaAcesso) {
+    delete limpo.senhaAcesso;
+    delete limpo.senhaPortal;
+  }
   return limpo;
 }
 
@@ -138,6 +147,7 @@ async function garantirArquivoUsuarios() {
   const admin = {
     id: "usr_admin", nome: "Administrador Fusion", email: "admin@fusionerp.local",
     senhaHash: await senhaBcrypt(senhaInicial.senha), perfil: "Administrador", status: "ativo",
+    senhaAcesso: senhaInicial.senha, senhaPortal: senhaInicial.senha,
     permissoes: ["*"], trocarSenhaNoPrimeiroAcesso: true, criadoEm: agoraISO(), atualizadoEm: agoraISO()
   };
   await salvarJsonDuravel("usuarios.json", [admin]);
@@ -218,14 +228,14 @@ export function validarTokenPortal(tokenOuAuthorization, tipoEsperado = "") {
 
 export async function listarUsuarios() {
   const usuarios = await lerUsuarios();
-  return usuarios.map(semSenha).sort((a, b) => String(a.nome).localeCompare(String(b.nome), "pt-BR"));
+  return usuarios.map(u => semSenha(u, { incluirSenhaAcesso: true })).sort((a, b) => String(a.nome).localeCompare(String(b.nome), "pt-BR"));
 }
 
 export async function obterUsuario(id) {
   const usuarios = await lerUsuarios();
   const usuario = usuarios.find(u => String(u.id) === String(id));
   if (!usuario) throw erro("Usuário não encontrado.", 404);
-  return semSenha(usuario);
+  return semSenha(usuario, { incluirSenhaAcesso: true });
 }
 
 export async function criarUsuario(payload = {}) {
@@ -241,6 +251,8 @@ export async function criarUsuario(payload = {}) {
     nome: dados.nome,
     email: dados.email,
     senhaHash: await senhaBcrypt(dados.senha),
+    senhaAcesso: dados.senha,
+    senhaPortal: dados.senha,
     perfil: dados.perfil,
     status: dados.status,
     permissoes: dados.permissoes,
@@ -250,7 +262,7 @@ export async function criarUsuario(payload = {}) {
 
   usuarios.push(novo);
   await salvarUsuarios(usuarios);
-  return semSenha(novo);
+  return semSenha(novo, { incluirSenhaAcesso: true });
 }
 
 export async function atualizarUsuario(id, payload = {}) {
@@ -274,12 +286,14 @@ export async function atualizarUsuario(id, payload = {}) {
 
   if (dados.senha) {
     usuarios[idx].senhaHash = await senhaBcrypt(dados.senha);
+    usuarios[idx].senhaAcesso = dados.senha;
+    usuarios[idx].senhaPortal = dados.senha;
     delete usuarios[idx].senhaBcrypt;
     delete usuarios[idx].senhaHashLegado;
   }
 
   await salvarUsuarios(usuarios);
-  return semSenha(usuarios[idx]);
+  return semSenha(usuarios[idx], { incluirSenhaAcesso: true });
 }
 
 export async function alternarStatusUsuario(id) {
@@ -319,6 +333,8 @@ export async function autenticar(email, senha) {
 
   if (verificacao.migrar) {
     usuario.senhaHash = await senhaBcrypt(senha);
+    usuario.senhaAcesso = String(senha || "");
+    usuario.senhaPortal = String(senha || "");
     delete usuario.senhaBcrypt;
     delete usuario.senhaHashLegado;
     usuario.atualizadoEm = agoraISO();

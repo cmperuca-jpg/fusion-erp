@@ -6,6 +6,11 @@ function setStatus(texto) {
   el("status").textContent = texto;
 }
 
+function formatarCpf(valor) {
+  const n = String(valor || "").replace(/\D/g, "").slice(0, 11);
+  return n.replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+}
+
 function atualizarKpis(dados = {}) {
   el("kpiLinhas").textContent = dados.total_registros ?? dados.total_linhas ?? 0;
   el("kpiNormalizados").textContent = dados.total_normalizados ?? dados.normalizados ?? 0;
@@ -22,7 +27,7 @@ function renderPreview(lista = []) {
   tbody.innerHTML = lista.map((aluno) => `
     <tr>
       <td>${aluno.nome || ""}</td>
-      <td>${aluno.cpf || ""}</td>
+      <td>${formatarCpf(aluno.cpf) || ""}</td>
       <td>${aluno.telefone || aluno.celular || ""}</td>
       <td>${aluno.data_nascimento || ""}</td>
       <td>${aluno.matricula_promocional?.valor_formatado || "R$ 0,01"}</td>

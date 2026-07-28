@@ -24,6 +24,10 @@ export const alunoSchema = z.object({
   telefone: opcionalTexto,
   whatsapp: opcionalTexto,
   email: z.string().email("E-mail inválido").optional().or(z.literal("")),
+  senhaAluno: opcionalTexto,
+  senhaAcesso: opcionalTexto,
+  senhaPortal: opcionalTexto,
+  portalSenha: opcionalTexto,
   contato_emergencia: opcionalTexto,
   responsavel: opcionalTexto,
 

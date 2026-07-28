@@ -152,7 +152,7 @@ function loginCombina(aluno, login) {
 function senhaCombina(aluno, senha) {
   const s = String(senha || "").trim();
   const sd = somenteDigitos(s);
-  const senhaCadastrada = aluno?.senhaAluno || aluno?.senha || aluno?.password || aluno?.senhaPortal || aluno?.portalSenha;
+  const senhaCadastrada = aluno?.senhaAluno || aluno?.senhaAcesso || aluno?.senhaPortal || aluno?.portalSenha || aluno?.senha || aluno?.password;
   if (senhaCadastrada && String(senhaCadastrada) === s) return true;
 
   const cpf = somenteDigitos(aluno?.cpf);

@@ -43,7 +43,8 @@
             <input id="email" type="email" required placeholder="email@academia.com">
           </label>
           <label>Senha
-            <input id="senha" type="password" placeholder="Obrigatória no cadastro">
+            <input id="senha" type="text" autocomplete="off" placeholder="Obrigatória no cadastro">
+            <small>A senha salva aparece aqui para consulta administrativa.</small>
           </label>
           <label>Perfil
             <select id="perfil">
@@ -126,7 +127,7 @@
     </section>
   </main>
   <script src="/assets/js/fusion-layout.js"></script>
-  <script src="./index.js"></script>
+  <script src="./index.js?v=20260728-senha-cpf-1"></script>
   <script>carregarLayout("Painel Administrativo");</script>
 </body>
 </html>

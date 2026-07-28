@@ -262,7 +262,7 @@ window.editarUsuario = function(id) {
   document.getElementById("usuarioId").value = u.id;
   document.getElementById("nome").value = u.nome || "";
   document.getElementById("email").value = u.email || "";
-  document.getElementById("senha").value = "";
+  document.getElementById("senha").value = u.senhaAcesso || u.senhaPortal || u.senha || "";
   document.getElementById("perfil").value = u.perfil || "Recepcao";
   document.getElementById("status").value = u.status || "ativo";
   renderPermissoes(Array.isArray(u.permissoes) ? u.permissoes : permissoesPorPerfil(u.perfil));

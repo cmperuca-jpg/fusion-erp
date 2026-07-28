@@ -18,6 +18,18 @@ function limparCpf(valor) {
   return String(valor || "").replace(/\D/g, "");
 }
 
+function sincronizarSenhaAcessoAluno(dados = {}) {
+  const senha = dados.senhaAluno || dados.senhaAcesso || dados.senhaPortal || dados.portalSenha || dados.senha || "";
+  if (!senha) return dados;
+  return {
+    ...dados,
+    senhaAluno: String(senha),
+    senhaAcesso: String(senha),
+    senhaPortal: String(senha),
+    portalSenha: String(senha)
+  };
+}
+
 export async function listarAlunos() {
   return await lerAlunos();
 }
@@ -39,12 +51,13 @@ async function criarAlunoInterno(aluno) {
     }
   }
 
+  const dadosAluno = sincronizarSenhaAcessoAluno(aluno);
   const novoAluno = {
     id: crypto.randomUUID(),
-    status: aluno.status || "inativo",
+    status: dadosAluno.status || "inativo",
     criado_em: new Date().toISOString(),
-    ...aluno,
-    cpf: cpfNovo || aluno.cpf || ""
+    ...dadosAluno,
+    cpf: cpfNovo || dadosAluno.cpf || ""
   };
 
   alunos.push(novoAluno);
@@ -76,10 +89,11 @@ async function atualizarAlunoInterno(id, dados) {
     }
   }
 
+  const dadosAluno = sincronizarSenhaAcessoAluno(dados);
   alunos[index] = {
     ...alunos[index],
-    ...dados,
-    cpf: cpfNovo || dados.cpf || alunos[index].cpf || "",
+    ...dadosAluno,
+    cpf: cpfNovo || dadosAluno.cpf || alunos[index].cpf || "",
     atualizado_em: new Date().toISOString()
   };
 

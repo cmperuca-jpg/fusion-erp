@@ -36,6 +36,11 @@ function solicitanteStatus(req) {
   };
 }
 
+function semSenhaAdministrativa(professor = {}) {
+  const { senha, senhaHash, senhaAcesso, senhaPortal, ...limpo } = professor;
+  return limpo;
+}
+
 router.post('/login', async (req, res) => { try { res.json(await service.login(req.body || {})); } catch(e) { tratar(res,e, e.status || 401); } });
 router.get('/sessao', async (req, res) => {
   try {
@@ -43,7 +48,7 @@ router.get('/sessao', async (req, res) => {
     res.json({ ok:true, professor });
   } catch(e) { tratar(res,e, e.status || 401); }
 });
-router.get('/', async (req, res) => { try { res.json(await service.listar(req.query || {})); } catch(e) { tratar(res,e); } });
+router.get('/', async (req, res) => { try { const lista = await service.listar(req.query || {}); res.json(req.usuario?.portal ? lista.map(semSenhaAdministrativa) : lista); } catch(e) { tratar(res,e); } });
 router.get('/:id/prontuario', async (req, res) => { try { const r = await service.prontuario(req.params.id); if (!r) return res.status(404).json({ok:false,mensagem:'Professor não encontrado'}); res.json(r); } catch(e) { tratar(res,e); } });
 router.get('/:id', async (req, res) => { try { const r = await service.buscar(req.params.id); if (!r) return res.status(404).json({ok:false,mensagem:'Professor não encontrado'}); res.json(r); } catch(e) { tratar(res,e); } });
 router.post('/', async (req, res) => { try { const professor = await service.criar(req.body || {}); res.status(201).json({ ok:true, professor, mensagem:'Professor cadastrado com sucesso' }); } catch(e) { tratar(res,e,400); } });

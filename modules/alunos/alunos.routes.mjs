@@ -68,6 +68,15 @@ function filtrarAlunosPorPortal(req, alunos = []) {
   return alunos.filter(aluno => alunoPertenceAoProfessor(aluno, req.usuario));
 }
 
+function semSenhaAdministrativaAluno(aluno = {}) {
+  const { senha, senhaAluno, senhaAcesso, senhaPortal, portalSenha, password, ...limpo } = aluno;
+  return limpo;
+}
+
+function ocultarSenhaParaPortal(req, aluno = {}) {
+  return req.usuario?.portal ? semSenhaAdministrativaAluno(aluno) : aluno;
+}
+
 function exigirAcessoPortalProfessor(req, res, aluno) {
   if (!usuarioPortalProfessor(req) || responsavelTecnico(req)) return true;
   if (aluno && alunoPertenceAoProfessor(aluno, req.usuario)) return true;
@@ -78,7 +87,7 @@ function exigirAcessoPortalProfessor(req, res, aluno) {
 router.get("/", async (req, res) => {
   try {
     const alunos = await alunosService.listar();
-    res.json(filtrarAlunosPorPortal(req, alunos));
+    res.json(filtrarAlunosPorPortal(req, alunos).map(aluno => ocultarSenhaParaPortal(req, aluno)));
   } catch (error) {
     erro(res, error);
   }
@@ -164,7 +173,7 @@ router.get("/:id/prontuario", async (req, res) => {
     }
 
     if (!exigirAcessoPortalProfessor(req, res, resultado.aluno || resultado.dados || resultado)) return;
-    res.json(resultado);
+    res.json(req.usuario?.portal ? { ...resultado, aluno: semSenhaAdministrativaAluno(resultado.aluno || {}) } : resultado);
   } catch (error) {
     erro(res, error);
   }
@@ -179,7 +188,7 @@ router.get("/:id", async (req, res) => {
     }
 
     if (!exigirAcessoPortalProfessor(req, res, aluno)) return;
-    res.json(aluno);
+    res.json(ocultarSenhaParaPortal(req, aluno));
   } catch (error) {
     erro(res, error);
   }

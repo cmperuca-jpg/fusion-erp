@@ -161,7 +161,7 @@ function textoCompat(a, b) {
   return x === y || x.includes(y) || y.includes(x);
 }
 function sanitizarProfessorSessao(p = {}) {
-  const { senha, senhaHash, documentos, ...limpo } = p;
+  const { senha, senhaHash, senhaAcesso, senhaPortal, documentos, ...limpo } = p;
   return {
     ...limpo,
     perfil: ehResponsavelTecnico(p) ? 'responsavel_tecnico' : (p.perfil || 'professor'),
@@ -221,7 +221,9 @@ export async function login(dados = {}) {
   if (!professorAtivo(professor)) throw Object.assign(new Error('Professor inativo ou bloqueado.'), { status: 403 });
 
   const senhaOk = professor.senhaHash ? verificarSenha(credencial, professor.senhaHash) : false;
-  const senhaTextoOk = professor.senha ? String(professor.senha) === String(credencial) : false;
+  const senhaTextoOk = [professor.senha, professor.senhaAcesso, professor.senhaPortal]
+    .filter(v => v !== undefined && v !== null && String(v) !== '')
+    .some(v => String(v) === String(credencial));
   const legadoOk = !professor.senhaHash && credencialLegadaConfere(professor, credencial);
 
   if (!senhaOk && !senhaTextoOk && !legadoOk) {

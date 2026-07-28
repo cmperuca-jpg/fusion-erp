@@ -279,6 +279,7 @@ function alunoFotoListaHtml(aluno) {
   return `<span class="aluno-lista-foto aluno-lista-foto-fallback" aria-hidden="true">${escapeHtml(alunoIniciais(aluno))}</span>`;
 }
 function alunoCpf(aluno) { return aluno.cpf ?? aluno.documento ?? ""; }
+function senhaAcessoAluno(aluno = {}) { return String(aluno.senhaAluno ?? aluno.senhaAcesso ?? aluno.senhaPortal ?? aluno.portalSenha ?? aluno.senha ?? ""); }
 function alunoTelefone(aluno) { return aluno.telefone ?? aluno.celular ?? aluno.whatsapp ?? ""; }
 function alunoEmail(aluno) { return aluno.email ?? ""; }
 function alunoPlano(aluno) { return aluno.plano ?? aluno.nomePlano ?? aluno.modalidade ?? aluno.tipoPlano ?? ""; }
@@ -447,6 +448,7 @@ function limparMenu() {
 
 function alunosFiltrados() {
   const termo = normalizarTexto($("#buscaAluno").value);
+  const termoNumeros = somenteNumeros($("#buscaAluno").value);
   const status = $("#filtroStatus").value;
   const plano = $("#filtroPlano").value;
 
@@ -459,7 +461,7 @@ function alunosFiltrados() {
       alunoPlano(aluno)
     ].join(" "));
 
-    return (!termo || texto.includes(termo)) &&
+    return (!termo || texto.includes(termo) || (termoNumeros && somenteNumeros(alunoCpf(aluno)).includes(termoNumeros))) &&
       (!status || alunoStatus(aluno) === status) &&
       (!plano || String(alunoPlano(aluno)) === plano);
   });
@@ -569,7 +571,7 @@ function renderizarCardsMobileAlunos(itens = [], total = 0) {
           ${alunoFotoListaHtml(a)}
           <div>
             <strong>${escapeHtml(alunoNome(a))}</strong>
-            <small>${escapeHtml(alunoEmail(a) || alunoCpf(a) || '-')}</small>
+            <small>${escapeHtml(alunoEmail(a) || formatarCpfVisual(alunoCpf(a)) || '-')}</small>
           </div>
         </div>
         ${statusAlunoHtml(id, st)}
@@ -674,9 +676,19 @@ function fecharModal() {
   $("#formAluno").reset();
   const taxaLivre = $("#valor_taxa_matricula"); if (taxaLivre) { delete taxaLivre.dataset.inicializado; delete taxaLivre.dataset.editado; taxaLivre.value = "0,00"; }
   $("#alunoId").value = "";
+  preencherSenhaAluno("");
   fotoBase64Atual = "";
   atualizarPreviewFoto("");
   setSalvarLoading(false);
+}
+
+function preencherSenhaAluno(valor = "") {
+  ["senhaAluno", "confirmarSenhaAluno"].forEach(id => {
+    const campo = $(`#${id}`);
+    if (!campo) return;
+    campo.value = valor;
+    campo.dataset.editado = "";
+  });
 }
 
 window.abrirEdicao = async function(id) {
@@ -703,6 +715,7 @@ function preencherFormulario(a) {
   $("#telefone").value = formatarTelefoneVisual(alunoTelefone(a));
   $("#whatsapp").value = formatarTelefoneVisual(a.whatsapp ?? "");
   $("#email").value = alunoEmail(a);
+  preencherSenhaAluno(senhaAcessoAluno(a));
   preencherSelectProfessores(
     a.professorId || a.professor_id || a.professorResponsavelId || a.professor_responsavel_id || "",
     a.professor_responsavel || a.professorNome || a.professor_responsavel_nome || ""
@@ -1149,6 +1162,16 @@ function coletarDadosFormulario() {
     foto_base64: fotoBase64Atual || ""
   };
 
+  const senhaEl = $("#senhaAluno");
+  const senha = String(senhaEl?.value || "").trim();
+  const senhaEditada = !$("#alunoId").value || senhaEl?.dataset.editado === "true" || $("#confirmarSenhaAluno")?.dataset.editado === "true";
+  if (senha && senhaEditada) {
+    dados.senhaAluno = senha;
+    dados.senhaAcesso = senha;
+    dados.senhaPortal = senha;
+    dados.portalSenha = senha;
+  }
+
   const diaVencimento = diaVencimentoValido($("#dia_vencimento_mensal")?.value);
   if (diaVencimento) dados.diaVencimento = diaVencimento;
 
@@ -1204,6 +1227,13 @@ function validarAluno(d) {
   if (d.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email)) return "E-mail inválido.";
   if (d.telefone && d.telefone.length < 10) return "Telefone inválido.";
   if (d.whatsapp && d.whatsapp.length < 10) return "WhatsApp inválido.";
+  const senhaEl = $("#senhaAluno");
+  const confirmarEl = $("#confirmarSenhaAluno");
+  const senhaEditada = !$("#alunoId").value || senhaEl?.dataset.editado === "true" || confirmarEl?.dataset.editado === "true";
+  const senha = String(senhaEl?.value || "").trim();
+  const confirmar = String(confirmarEl?.value || "").trim();
+  if (senhaEditada && senha && senha.length < 4) return "A senha do aluno deve ter pelo menos 4 caracteres.";
+  if (senhaEditada && senha !== confirmar) return "A confirmação da senha do aluno não confere.";
   return "";
 }
 
@@ -1633,6 +1663,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   ao("#cpf", "input", e => e.target.value = formatarCpfVisual(e.target.value));
   ao("#telefone", "input", e => e.target.value = formatarTelefoneVisual(e.target.value));
   ao("#whatsapp", "input", e => e.target.value = formatarTelefoneVisual(e.target.value));
+  ao("#senhaAluno", "input", e => { e.target.dataset.editado = "true"; });
+  ao("#confirmarSenhaAluno", "input", e => { e.target.dataset.editado = "true"; });
   ao("#professor_responsavel", "change", sincronizarProfessorSelecionado);
   ao("#dia_vencimento_mensal", "input", e => {
     e.target.value = String(e.target.value || "").replace(/\D/g, "").slice(0, 2);

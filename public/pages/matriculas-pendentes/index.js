@@ -10,6 +10,7 @@ function esc(v){ return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&
 function dataBR(v){ const s=String(v||'').slice(0,10); const m=s.match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? `${m[3]}/${m[2]}/${m[1]}` : '-'; }
 function moeda(v){ return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
 function telefoneLink(v){ const n = String(v||'').replace(/\D/g,''); return n ? `https://wa.me/55${n}` : '#'; }
+function formatarCpf(v){ const n = String(v||'').replace(/\D/g,'').slice(0,11); return n.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2'); }
 function ehImagem(base64=''){ return String(base64).startsWith('data:image/'); }
 function base64Link(item){ return item?.base64 || ''; }
 function docNome(item, padrao){ return item?.nome || padrao; }
@@ -60,7 +61,7 @@ function renderizar(){
   if(!solicitacoes.length){ tabela.innerHTML = '<tr><td colspan="6">Nenhuma solicitação encontrada.</td></tr>'; cards.innerHTML=''; return; }
   tabela.innerHTML = solicitacoes.map(s=>`<tr>
     <td>${dataBR(s.criadoEm)}<br><small>${esc(s.protocolo)}</small></td>
-    <td><strong>${esc(s.nome)}</strong><br><small>CPF: ${esc(s.cpf)}</small></td>
+    <td><strong>${esc(s.nome)}</strong><br><small>CPF: ${esc(formatarCpf(s.cpf))}</small></td>
     <td>${esc(s.telefone || s.whatsapp)}<br><small>${esc(s.email || '-')}</small></td>
     <td>${esc(s.plano || '-')}<br><small>${moeda(s.valorPlano)}</small></td>
     <td><span class="badge ${esc(s.status)}">${esc(s.status)}</span></td>
@@ -68,7 +69,7 @@ function renderizar(){
   </tr>`).join('');
   cards.innerHTML = solicitacoes.map(s=>`<article class="sol-card">
     <div><strong>${esc(s.nome)}</strong><span class="badge ${esc(s.status)}">${esc(s.status)}</span></div>
-    <p>${esc(s.plano || '-')} · ${moeda(s.valorPlano)}<br>CPF: ${esc(s.cpf)} · ${esc(s.telefone || '-')}</p>
+    <p>${esc(s.plano || '-')} · ${moeda(s.valorPlano)}<br>CPF: ${esc(formatarCpf(s.cpf))} · ${esc(s.telefone || '-')}</p>
     <div class="acoes">${botoes(s)}</div>
   </article>`).join('');
 }
@@ -87,7 +88,7 @@ window.verDetalhes = function(id){
     <div class="foto-detalhe">${s.fotoBase64 ? `<img src="${esc(s.fotoBase64)}" alt="Foto">` : 'Sem foto'}</div>
     <div>
       <h3>${esc(s.nome)}</h3>
-      <p><strong>Protocolo:</strong> ${esc(s.protocolo)}<br><strong>CPF:</strong> ${esc(s.cpf)}<br><strong>Nascimento:</strong> ${dataBR(s.dataNascimento)}<br><strong>Telefone:</strong> ${esc(s.telefone || '-')}<br><strong>E-mail:</strong> ${esc(s.email || '-')}</p>
+      <p><strong>Protocolo:</strong> ${esc(s.protocolo)}<br><strong>CPF:</strong> ${esc(formatarCpf(s.cpf))}<br><strong>Nascimento:</strong> ${dataBR(s.dataNascimento)}<br><strong>Telefone:</strong> ${esc(s.telefone || '-')}<br><strong>E-mail:</strong> ${esc(s.email || '-')}</p>
       <p><strong>Endereço:</strong> ${esc([s.endereco, s.numero, s.complemento, s.bairro, s.cidade, s.estado].filter(Boolean).join(', '))}</p>
       <p><strong>Plano:</strong> ${esc(s.plano || '-')} · ${moeda(s.valorPlano)}<br><strong>Modalidade:</strong> ${esc(s.modalidade || '-')}<br><strong>Horário:</strong> ${esc(s.horarioPreferido || '-')}</p>
       <p><strong>Objetivo:</strong> ${esc(s.objetivo || '-')}<br><strong>Restrições:</strong> ${esc(s.restricoes || '-')}<br><strong>Observação:</strong> ${esc(s.observacao || '-')}</p>
