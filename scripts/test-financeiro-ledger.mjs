@@ -12,9 +12,10 @@ const temporario = await fs.mkdtemp(path.join(os.tmpdir(), "fusion-financeiro-te
 await fs.mkdir(path.join(temporario, "data"), { recursive: true });
 
 const aluno = { id: "aluno_teste", nome: "Aluno Teste", cpf: "12345678901", status: "pre-matriculado", planoId: "plano_teste" };
+const alunoDesconto = { id: "aluno_desconto", nome: "Aluno Desconto", cpf: "12345678902", status: "ativo", planoId: "plano_teste" };
 const matricula = { id: "mat_teste", alunoId: aluno.id, numero: "MAT-TESTE", status: "Pendente", planoId: "plano_teste", plano: "Plano Mensal", valorMensal: 100, diaVencimento: 10, vencimentoInicial: "2026-08-10", renovacaoAutomatica: false, gerarMensalidadeAutomatica: false };
 const plano = { id: "plano_teste", nome: "Plano Mensal", valorMensal: 100, periodicidade: "Mensal", renovacaoAutomatica: true };
-await fs.writeFile(path.join(temporario, "data", "alunos.json"), JSON.stringify([aluno]));
+await fs.writeFile(path.join(temporario, "data", "alunos.json"), JSON.stringify([aluno, alunoDesconto]));
 await fs.writeFile(path.join(temporario, "data", "matriculas.json"), JSON.stringify([matricula]));
 await fs.writeFile(path.join(temporario, "data", "planos.json"), JSON.stringify([plano]));
 await fs.writeFile(path.join(temporario, "data", "taxas_cartao.json"), JSON.stringify([
@@ -61,6 +62,30 @@ try {
   const repetido = await ledger.receberTitulos({ operacaoId: "op_credito_1", tituloId: titulo1.id, valorAplicado: 100, valorPago: 120, destinoDiferenca: "credito", formaPagamento: "PIX" });
   assert.equal(repetido.idempotente, true);
   assert.equal((await ledger.listarRecibos()).length, 1);
+
+  const tituloDesconto = await ledger.criarTitulo({ tipo: "receber", alunoId: alunoDesconto.id, descricao: "Mensalidade com desconto", categoria: "Mensalidades", valor: 100, vencimento: "2026-08-12" });
+  const baixaComDesconto = await ledger.receberTitulos({
+    operacaoId: "op_desconto_1",
+    tituloId: tituloDesconto.id,
+    valor: 100,
+    desconto: 10,
+    formaPagamento: "Dinheiro",
+    usuario: "teste"
+  });
+  assert.equal(baixaComDesconto.recibo.valorPago, 90);
+  assert.equal(baixaComDesconto.recibo.valorAplicado, 90);
+  assert.equal(baixaComDesconto.itens[0].descontoCentavos, 1000);
+  assert.equal(baixaComDesconto.lancamento.status, "Pago");
+  assert.equal(baixaComDesconto.lancamento.valorPago, 100);
+  assert.equal(baixaComDesconto.lancamento.valorBrutoRecebido, 90);
+  assert.equal(baixaComDesconto.lancamento.desconto, 10);
+  const recebimentosAposDesconto = JSON.parse(await fs.readFile(path.join(temporario, "data", "recebimentos.json"), "utf8"));
+  const recebimentoDesconto = recebimentosAposDesconto.find((item) => item.reciboId === baixaComDesconto.recibo.id);
+  assert.equal(recebimentoDesconto.valorRecebido, 90);
+  assert.equal(recebimentoDesconto.valorQuitado, 100);
+  const caixaAposDesconto = JSON.parse(await fs.readFile(path.join(temporario, "data", "caixa.json"), "utf8"));
+  const movimentoDesconto = caixaAposDesconto.movimentos.find((item) => item.reciboId === baixaComDesconto.recibo.id && item.tipo === "entrada");
+  assert.equal(movimentoDesconto.valor, 90);
 
   await ledger.estornarRecibo(recebimento.recibo.id, { motivo: "Teste de estorno", usuario: "teste" });
   const tituloReaberto = (await ledger.listarTitulos()).find((x) => x.id === titulo1.id);

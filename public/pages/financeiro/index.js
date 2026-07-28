@@ -175,6 +175,25 @@ function saldoAtualBaixa() {
   return numero(valor("baixaValorDevido"));
 }
 
+function saldoBaseBaixa() {
+  if (baixaAtual) return saldoLancamento(baixaAtual) || valorTotalLancamento(baixaAtual);
+  return saldoAtualBaixa();
+}
+
+function valorDevidoAjustadoBaixa() {
+  const base = saldoBaseBaixa();
+  const desconto = numero(valor("baixaDesconto"));
+  const acrescimo = numero(valor("baixaJuros"));
+  return Math.max(0, Number((base + acrescimo - desconto).toFixed(2)));
+}
+
+function recalcularValorRecebidoBaixa() {
+  const devido = valorDevidoAjustadoBaixa();
+  setValor("baixaValorDevido", devido.toFixed(2));
+  setValor("baixaValorPago", devido.toFixed(2));
+  calcularPreviewCartao();
+}
+
 function destinoDiferencaSelecionado() {
   const marcado = document.querySelector('input[name="destinoDiferenca"]:checked');
   return marcado?.value || "";
@@ -517,7 +536,7 @@ function abrirModalBaixa(lancamento) {
     <div>Valor original: <strong>${moeda(total)}</strong></div>
     <div>Saldo para baixa: <strong>${moeda(saldo)}</strong></div>`;
   atualizarPainelCartao();
-  calcularPreviewCartao();
+  recalcularValorRecebidoBaixa();
   els.modalBaixa.classList.add("ativo");
   setTimeout(() => document.getElementById("baixaValorPago")?.focus(), 80);
 }
@@ -546,11 +565,15 @@ async function confirmarBaixa(event) {
     // O motor financeiro abre o caixa oficial automaticamente quando necessário.
     const dadosCartao = calcularDadosCartao();
     const formaPagamento = valor("baixaFormaPagamento");
+    const valorDevido = numero(valor("baixaValorDevido"));
+    const valorAplicado = Math.min(valorPago, valorDevido);
     const payload = {
+      valorAplicado,
       valorPago,
+      valorEntregue: valorPago,
       valorRecebido: valorPago,
-      valorBaixa: valorPago,
-      valor: valorPago,
+      valorBaixa: valorAplicado,
+      valor: valorAplicado,
       pagamento: valor("baixaDataPagamento"),
       dataPagamento: valor("baixaDataPagamento"),
       formaPagamento,
@@ -566,8 +589,8 @@ async function confirmarBaixa(event) {
       taxaOperadoraValor: formaTemTaxaOperadora(formaPagamento) ? dadosCartao.taxaValor : 0,
       valorBrutoRecebido: valorPago,
       valorLiquido: formaTemTaxaOperadora(formaPagamento) ? dadosCartao.liquido : valorPago,
-      destinoDiferenca: valorPago > numero(valor("baixaValorDevido")) ? (destinoDiferencaSelecionado() || (formaEhDinheiro(formaPagamento) ? 'troco' : 'credito')) : '',
-      tratamentoDiferenca: valorPago > numero(valor("baixaValorDevido")) ? (destinoDiferencaSelecionado() || (formaEhDinheiro(formaPagamento) ? 'troco' : 'credito')) : ''
+      destinoDiferenca: valorPago > valorDevido ? (destinoDiferencaSelecionado() || (formaEhDinheiro(formaPagamento) ? 'troco' : 'credito')) : '',
+      tratamentoDiferenca: valorPago > valorDevido ? (destinoDiferencaSelecionado() || (formaEhDinheiro(formaPagamento) ? 'troco' : 'credito')) : ''
     };
     const resp = await fetch(`${API}/${encodeURIComponent(id)}/baixar`, {
       method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload)
@@ -664,6 +687,8 @@ document.getElementById("baixaParcelasCartao")?.addEventListener("change", aplic
 document.getElementById("baixaTaxaPercentual")?.addEventListener("input", calcularPreviewCartao);
 document.getElementById("baixaTaxaFixa")?.addEventListener("input", calcularPreviewCartao);
 document.getElementById("baixaValorPago")?.addEventListener("input", calcularPreviewCartao);
+document.getElementById("baixaDesconto")?.addEventListener("input", recalcularValorRecebidoBaixa);
+document.getElementById("baixaJuros")?.addEventListener("input", recalcularValorRecebidoBaixa);
 document.getElementById("baixaDestinoTroco")?.addEventListener("change", atualizarPainelDiferencaRecebimento);
 document.getElementById("baixaDestinoCredito")?.addEventListener("change", atualizarPainelDiferencaRecebimento);
 document.getElementById("btnFecharModal")?.addEventListener("click", fecharModal);

@@ -52,6 +52,12 @@ function campoInformado(objeto = {}, campo = "") {
   return Object.prototype.hasOwnProperty.call(objeto, campo) && objeto[campo] !== null && txt(objeto[campo]) !== "";
 }
 
+function centavosCampo(objeto = {}, campo = "", padrao = 0) {
+  const campoCentavos = `${campo}Centavos`;
+  if (Number.isInteger(objeto[campoCentavos])) return objeto[campoCentavos];
+  return campoInformado(objeto, campo) ? centavos(objeto[campo]) : padrao;
+}
+
 function modalidadePagamento(forma = "", modalidade = "") {
   const informada = norm(modalidade);
   if (informada) return informada;
@@ -82,7 +88,7 @@ function localizarTaxaConfigurada(taxas = [], meio = {}) {
 function normalizarMeioComTaxa(meioEntrada = {}, dadosGerais = {}, taxas = {}) {
   const meio = { ...meioEntrada };
   const formaPagamento = txt(meio.formaPagamento || meio.forma || dadosGerais.formaPagamento || dadosGerais.forma) || "Dinheiro";
-  const valorCentavos = centavos(meio.valor ?? dadosGerais.valorEntregue ?? dadosGerais.valorPago ?? 0);
+  const valorCentavos = centavos(meio.valor ?? dadosGerais.valorEntregue ?? dadosGerais.valorPago ?? dadosGerais.valorRecebido ?? dadosGerais.valorBaixa ?? 0);
   const bandeiraCartao = txt(meio.bandeiraCartao || meio.bandeira || dadosGerais.bandeiraCartao || dadosGerais.bandeira);
   const modalidadeCartao = modalidadePagamento(
     formaPagamento,
@@ -360,7 +366,15 @@ export async function receberTitulos(dados = {}) {
       ler(COL.titulos, []), ler(COL.itens, []), ler(COL.caixa, caixaVazio()), ler(COL.mensalidades, []), ler(COL.recebimentos, []), ler(COL.matriculas, []), ler(COL.alunos, []), ler(COL.creditos, []), ler(COL.checkins, []), ler(COL.taxasCartao, [])
     ]);
     const cx = caixaAberto(caixa); if (!cx) throw erro("Abra o caixa antes de registrar recebimentos.", 409);
-    const itensEntrada = Array.isArray(dados.itens) && dados.itens.length ? dados.itens : [{ tituloId: dados.tituloId || dados.id, valor: dados.valorAplicado ?? dados.valor, desconto: dados.desconto, acrescimo: dados.acrescimo ?? dados.juros ?? dados.multa }];
+    const itensEntrada = Array.isArray(dados.itens) && dados.itens.length
+      ? dados.itens
+      : [{
+          tituloId: dados.tituloId || dados.id,
+          valor: dados.valorAplicado ?? dados.valor,
+          valorAplicadoInformado: campoInformado(dados, "valorAplicado"),
+          desconto: dados.desconto,
+          acrescimo: dados.acrescimo ?? dados.juros ?? dados.multa
+        }];
     const alocacoes = []; let totalAplicadoC = 0; let alunoUnico = "";
     for (const entrada of itensEntrada) {
       const i = titulos.findIndex((x) => String(x.id) === String(entrada.tituloId)); if (i < 0) throw erro(`Título não encontrado: ${entrada.tituloId}.`, 404);
@@ -376,16 +390,29 @@ export async function receberTitulos(dados = {}) {
       if (alunoUnico && idAluno(titulo) && alunoUnico !== idAluno(titulo)) throw erro("Um recibo não pode misturar títulos de alunos diferentes.");
       alunoUnico = alunoUnico || idAluno(titulo);
       const descontoC = centavos(entrada.desconto || 0); const acrescimoC = centavos(entrada.acrescimo || entrada.juros || entrada.multa || 0);
-      const devidoC = Math.max(0, saldoC(titulo) + acrescimoC - descontoC);
-      const aplicadoC = entrada.valor === undefined || entrada.valor === "" ? devidoC : centavos(entrada.valor);
+      const baseAntesDescontoC = Math.max(0, saldoC(titulo) + acrescimoC);
+      const devidoC = Math.max(0, baseAntesDescontoC - descontoC);
+      const valorEntrada = entrada.valorAplicado ?? entrada.valor;
+      const valorAplicadoInformado = entrada.valorAplicadoInformado === true || campoInformado(entrada, "valorAplicado");
+      const valorEntradaInformado = valorEntrada !== undefined && valorEntrada !== null && txt(valorEntrada) !== "";
+      const aplicadoBrutoC = valorEntradaInformado ? centavos(valorEntrada) : devidoC;
+      const ajusteFormularioDesconto = !valorAplicadoInformado && descontoC > 0 && aplicadoBrutoC > devidoC && aplicadoBrutoC === baseAntesDescontoC;
+      const aplicadoC = ajusteFormularioDesconto ? devidoC : aplicadoBrutoC;
       if (aplicadoC <= 0 || aplicadoC > devidoC) throw erro(`Valor inválido para ${titulo.descricao}. Saldo devido: ${reais(devidoC).toFixed(2)}.`);
-      totalAplicadoC += aplicadoC; alocacoes.push({ indice: i, titulo, aplicadoC, descontoC, acrescimoC, devidoC });
+      totalAplicadoC += aplicadoC; alocacoes.push({ indice: i, titulo, aplicadoC, descontoC, acrescimoC, devidoC, ajusteFormularioDesconto });
     }
+    const usarTotalAplicadoComoMeio = alocacoes.length === 1 &&
+      alocacoes[0].ajusteFormularioDesconto &&
+      !campoInformado(dados, "valorEntregue") &&
+      !campoInformado(dados, "valorAplicado");
+    const valorMeioPadrao = usarTotalAplicadoComoMeio
+      ? reais(totalAplicadoC)
+      : (dados.valorEntregue ?? dados.valorPago ?? dados.valorRecebido ?? dados.valorBaixa ?? reais(totalAplicadoC));
     const meiosEntrada = Array.isArray(dados.pagamentos) && dados.pagamentos.length
       ? dados.pagamentos
       : [{
           formaPagamento: dados.formaPagamento || "Dinheiro",
-          valor: dados.valorEntregue ?? dados.valorPago ?? reais(totalAplicadoC),
+          valor: valorMeioPadrao,
           bandeiraCartao: dados.bandeiraCartao,
           modalidadeCartao: dados.modalidadeCartao,
           parcelasCartao: dados.parcelasCartao,
@@ -447,6 +474,12 @@ export async function receberTitulos(dados = {}) {
     const novosItens = [];
     for (const [indiceAlocacao, a] of alocacoes.entries()) {
       const novoPagoC = Math.min(valorTituloC(a.titulo), valorPagoC(a.titulo) + a.aplicadoC + a.descontoC - a.acrescimoC);
+      const valorBrutoRecebidoAnteriorC = Number.isInteger(a.titulo.valorBrutoRecebidoCentavos)
+        ? a.titulo.valorBrutoRecebidoCentavos
+        : centavos(a.titulo.valorBrutoRecebido ?? a.titulo.valorRecebidoBruto ?? a.titulo.valorPago ?? 0);
+      const valorBrutoRecebidoC = valorBrutoRecebidoAnteriorC + a.aplicadoC;
+      const descontoAcumuladoC = centavosCampo(a.titulo, "desconto", 0) + a.descontoC;
+      const acrescimoAcumuladoC = centavosCampo(a.titulo, "acrescimo", 0) + a.acrescimoC;
       const taxaAnteriorC = Number.isInteger(a.titulo.taxaOperadoraValorCentavos)
         ? a.titulo.taxaOperadoraValorCentavos
         : centavos(a.titulo.taxaOperadoraValor || a.titulo.taxaValor || 0);
@@ -455,12 +488,17 @@ export async function receberTitulos(dados = {}) {
       titulos[a.indice] = tituloNormalizado({
         ...a.titulo,
         valorPagoCentavos: novoPagoC,
-        valorBrutoRecebido: reais(novoPagoC),
+        valorBrutoRecebidoCentavos: valorBrutoRecebidoC,
+        valorBrutoRecebido: reais(valorBrutoRecebidoC),
+        descontoCentavos: descontoAcumuladoC,
+        desconto: reais(descontoAcumuladoC),
+        acrescimoCentavos: acrescimoAcumuladoC,
+        acrescimo: reais(acrescimoAcumuladoC),
         taxaOperadoraValorCentavos: taxaAcumuladaC,
         taxaOperadoraValor: reais(taxaAcumuladaC),
         ultimaTaxaOperadoraValor: reais(taxaAtualC),
-        valorLiquido: reais(Math.max(0, novoPagoC - taxaAcumuladaC)),
-        valorRecebidoLiquido: reais(Math.max(0, novoPagoC - taxaAcumuladaC)),
+        valorLiquido: reais(Math.max(0, valorBrutoRecebidoC - taxaAcumuladaC)),
+        valorRecebidoLiquido: reais(Math.max(0, valorBrutoRecebidoC - taxaAcumuladaC)),
         taxaOperadoraPercentual: meioUnico?.taxaOperadoraPercentual || 0,
         taxaOperadoraFixa: meioUnico?.taxaOperadoraFixa || 0,
         bandeiraCartao: meioUnico?.bandeiraCartao || "",
@@ -473,9 +511,9 @@ export async function receberTitulos(dados = {}) {
       });
       const item = { id: uid("reci"), reciboId: recibo.id, tituloId: a.titulo.id, alunoId: alunoUnico, matriculaId: idMatricula(a.titulo), mensalidadeId: txt(a.titulo.mensalidadeId), valorOriginalCentavos: valorTituloC(a.titulo), saldoAnteriorCentavos: saldoC(a.titulo), descontoCentavos: a.descontoC, acrescimoCentavos: a.acrescimoC, valorAplicadoCentavos: a.aplicadoC, valorAplicado: reais(a.aplicadoC), taxaOperadoraValorCentavos: taxaAtualC, taxaOperadoraValor: reais(taxaAtualC), valorLiquidoAplicadoCentavos: Math.max(0, a.aplicadoC - taxaAtualC), valorLiquidoAplicado: reais(Math.max(0, a.aplicadoC - taxaAtualC)), cancelado: false, criadoEm: agora() };
       novosItens.push(item); itensRecibo.push(item);
-      for (let m = 0; m < mensalidades.length; m += 1) if (mesmo(mensalidades[m].id, item.mensalidadeId) || mesmo(mensalidades[m].lancamentoFinanceiroId || mensalidades[m].financeiroId, item.tituloId)) mensalidades[m] = { ...mensalidades[m], valorPago: titulos[a.indice].valorPago, valorBrutoRecebido: titulos[a.indice].valorBrutoRecebido, valorRestante: titulos[a.indice].valorRestante, taxaOperadoraValor: titulos[a.indice].taxaOperadoraValor, ultimaTaxaOperadoraValor: titulos[a.indice].ultimaTaxaOperadoraValor, taxaOperadoraPercentual: titulos[a.indice].taxaOperadoraPercentual, taxaOperadoraFixa: titulos[a.indice].taxaOperadoraFixa, valorLiquido: titulos[a.indice].valorLiquido, bandeiraCartao: titulos[a.indice].bandeiraCartao, modalidadeCartao: titulos[a.indice].modalidadeCartao, parcelasCartao: titulos[a.indice].parcelasCartao, formaPagamento: titulos[a.indice].formaPagamento, status: titulos[a.indice].status === "Pago" ? "pago" : "parcial", ultimoReciboId: recibo.id, dataPagamento: recibo.data, atualizadoEm: agora() };
+      for (let m = 0; m < mensalidades.length; m += 1) if (mesmo(mensalidades[m].id, item.mensalidadeId) || mesmo(mensalidades[m].lancamentoFinanceiroId || mensalidades[m].financeiroId, item.tituloId)) mensalidades[m] = { ...mensalidades[m], valorPago: titulos[a.indice].valorBrutoRecebido, valorQuitado: titulos[a.indice].valorPago, valorBrutoRecebido: titulos[a.indice].valorBrutoRecebido, valorRestante: titulos[a.indice].valorRestante, desconto: titulos[a.indice].desconto, acrescimo: titulos[a.indice].acrescimo, taxaOperadoraValor: titulos[a.indice].taxaOperadoraValor, ultimaTaxaOperadoraValor: titulos[a.indice].ultimaTaxaOperadoraValor, taxaOperadoraPercentual: titulos[a.indice].taxaOperadoraPercentual, taxaOperadoraFixa: titulos[a.indice].taxaOperadoraFixa, valorLiquido: titulos[a.indice].valorLiquido, bandeiraCartao: titulos[a.indice].bandeiraCartao, modalidadeCartao: titulos[a.indice].modalidadeCartao, parcelasCartao: titulos[a.indice].parcelasCartao, formaPagamento: titulos[a.indice].formaPagamento, status: titulos[a.indice].status === "Pago" ? "pago" : "parcial", ultimoReciboId: recibo.id, dataPagamento: recibo.data, atualizadoEm: agora() };
       const r = recebimentos.findIndex((x) => mesmo(x.lancamentoFinanceiroId || x.financeiroId, item.tituloId) || mesmo(x.mensalidadeId, item.mensalidadeId));
-      const receb = { ...(r >= 0 ? recebimentos[r] : {}), id: r >= 0 ? recebimentos[r].id : uid("recv"), alunoId: alunoUnico, matriculaId: item.matriculaId, mensalidadeId: item.mensalidadeId, lancamentoFinanceiroId: item.tituloId, reciboId: recibo.id, numeroRecibo: recibo.numero, valorRecebido: titulos[a.indice].valorPago, valorBrutoRecebido: titulos[a.indice].valorBrutoRecebido, valorRestante: titulos[a.indice].valorRestante, taxaOperadoraValor: titulos[a.indice].taxaOperadoraValor, ultimaTaxaOperadoraValor: titulos[a.indice].ultimaTaxaOperadoraValor, taxaOperadoraPercentual: titulos[a.indice].taxaOperadoraPercentual, taxaOperadoraFixa: titulos[a.indice].taxaOperadoraFixa, valorLiquido: titulos[a.indice].valorLiquido, bandeiraCartao: titulos[a.indice].bandeiraCartao, modalidadeCartao: titulos[a.indice].modalidadeCartao, parcelasCartao: titulos[a.indice].parcelasCartao, status: titulos[a.indice].status === "Pago" ? "recebido" : "parcial", dataRecebimento: recibo.data, formaPagamento: meioUnico?.formaPagamento || "Múltiplas", atualizadoEm: agora(), criadoEm: r >= 0 ? recebimentos[r].criadoEm : agora() };
+      const receb = { ...(r >= 0 ? recebimentos[r] : {}), id: r >= 0 ? recebimentos[r].id : uid("recv"), alunoId: alunoUnico, matriculaId: item.matriculaId, mensalidadeId: item.mensalidadeId, lancamentoFinanceiroId: item.tituloId, reciboId: recibo.id, numeroRecibo: recibo.numero, valorRecebido: titulos[a.indice].valorBrutoRecebido, valorQuitado: titulos[a.indice].valorPago, valorBrutoRecebido: titulos[a.indice].valorBrutoRecebido, valorRestante: titulos[a.indice].valorRestante, desconto: titulos[a.indice].desconto, acrescimo: titulos[a.indice].acrescimo, taxaOperadoraValor: titulos[a.indice].taxaOperadoraValor, ultimaTaxaOperadoraValor: titulos[a.indice].ultimaTaxaOperadoraValor, taxaOperadoraPercentual: titulos[a.indice].taxaOperadoraPercentual, taxaOperadoraFixa: titulos[a.indice].taxaOperadoraFixa, valorLiquido: titulos[a.indice].valorLiquido, bandeiraCartao: titulos[a.indice].bandeiraCartao, modalidadeCartao: titulos[a.indice].modalidadeCartao, parcelasCartao: titulos[a.indice].parcelasCartao, status: titulos[a.indice].status === "Pago" ? "recebido" : "parcial", dataRecebimento: recibo.data, formaPagamento: meioUnico?.formaPagamento || "Múltiplas", atualizadoEm: agora(), criadoEm: r >= 0 ? recebimentos[r].criadoEm : agora() };
       if (r >= 0) recebimentos[r] = receb; else recebimentos.push(receb);
       const origemAtivadora = norm(a.titulo.origem);
       const deveAtivarMatricula = titulos[a.indice].status === "Pago" && (
@@ -592,6 +630,10 @@ export async function estornarRecibo(id, dados = {}) {
         const t = tituloNormalizado(titulos[ti]); const novoPagoC = Math.max(0, valorPagoC(t) - Number(item.valorAplicadoCentavos || 0) - Number(item.descontoCentavos || 0) + Number(item.acrescimoCentavos || 0));
         const taxaAnteriorC = Number.isInteger(t.taxaOperadoraValorCentavos) ? t.taxaOperadoraValorCentavos : centavos(t.taxaOperadoraValor || t.taxaValor || 0);
         const novaTaxaC = Math.max(0, taxaAnteriorC - Number(item.taxaOperadoraValorCentavos || 0));
+        const recebidoAnteriorC = Number.isInteger(t.valorBrutoRecebidoCentavos) ? t.valorBrutoRecebidoCentavos : centavos(t.valorBrutoRecebido ?? t.valorRecebidoBruto ?? t.valorPago ?? 0);
+        const novoRecebidoC = Math.max(0, recebidoAnteriorC - Number(item.valorAplicadoCentavos || 0));
+        const novoDescontoC = Math.max(0, centavosCampo(t, "desconto", 0) - Number(item.descontoCentavos || 0));
+        const novoAcrescimoC = Math.max(0, centavosCampo(t, "acrescimo", 0) - Number(item.acrescimoCentavos || 0));
         titulos[ti] = tituloNormalizado({
           ...t,
           // O status anterior ainda era "Pago". Sem limpar o status antes da
@@ -601,12 +643,17 @@ export async function estornarRecibo(id, dados = {}) {
           valorPagoCentavos: novoPagoC,
           valorPago: reais(novoPagoC),
           valorRecebido: reais(novoPagoC),
-          valorBrutoRecebido: reais(novoPagoC),
+          valorBrutoRecebidoCentavos: novoRecebidoC,
+          valorBrutoRecebido: reais(novoRecebidoC),
+          descontoCentavos: novoDescontoC,
+          desconto: reais(novoDescontoC),
+          acrescimoCentavos: novoAcrescimoC,
+          acrescimo: reais(novoAcrescimoC),
           taxaOperadoraValorCentavos: novaTaxaC,
           taxaOperadoraValor: reais(novaTaxaC),
           ultimaTaxaOperadoraValor: 0,
-          valorLiquido: reais(Math.max(0, novoPagoC - novaTaxaC)),
-          valorRecebidoLiquido: reais(Math.max(0, novoPagoC - novaTaxaC)),
+          valorLiquido: reais(Math.max(0, novoRecebidoC - novaTaxaC)),
+          valorRecebidoLiquido: reais(Math.max(0, novoRecebidoC - novaTaxaC)),
           ultimoReciboId: "",
           caixaId: "",
           movimentoCaixaId: "",
@@ -616,7 +663,7 @@ export async function estornarRecibo(id, dados = {}) {
           matriculasParaRollback.add(String(t.matriculaId || item.matriculaId || ''));
           mensalidadesIniciaisParaManter.add(String(item.mensalidadeId || t.mensalidadeId || ''));
         }
-        for (let m = 0; m < mensalidades.length; m += 1) if (mesmo(mensalidades[m].id, item.mensalidadeId) || mesmo(mensalidades[m].lancamentoFinanceiroId || mensalidades[m].financeiroId, item.tituloId)) mensalidades[m] = { ...mensalidades[m], valorPago: titulos[ti].valorPago, valorBrutoRecebido: titulos[ti].valorBrutoRecebido, valorRestante: titulos[ti].valorRestante, taxaOperadoraValor: titulos[ti].taxaOperadoraValor, ultimaTaxaOperadoraValor: 0, valorLiquido: titulos[ti].valorLiquido, status: titulos[ti].status === "Parcial" ? "parcial" : "aberto", estornadoEm: agora(), atualizadoEm: agora() };
+        for (let m = 0; m < mensalidades.length; m += 1) if (mesmo(mensalidades[m].id, item.mensalidadeId) || mesmo(mensalidades[m].lancamentoFinanceiroId || mensalidades[m].financeiroId, item.tituloId)) mensalidades[m] = { ...mensalidades[m], valorPago: titulos[ti].valorBrutoRecebido, valorQuitado: titulos[ti].valorPago, valorBrutoRecebido: titulos[ti].valorBrutoRecebido, valorRestante: titulos[ti].valorRestante, desconto: titulos[ti].desconto, acrescimo: titulos[ti].acrescimo, taxaOperadoraValor: titulos[ti].taxaOperadoraValor, ultimaTaxaOperadoraValor: 0, valorLiquido: titulos[ti].valorLiquido, status: titulos[ti].status === "Parcial" ? "parcial" : "aberto", estornadoEm: agora(), atualizadoEm: agora() };
       }
       item.cancelado = true; item.estornadoEm = agora(); item.motivoEstorno = motivo;
     }

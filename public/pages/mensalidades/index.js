@@ -14,6 +14,7 @@ import {
 
 const $ = seletor => document.querySelector(seletor);
 const estado = { mensalidades: [], alunos: [], planos: [] };
+let baixaMensalidadeAtual = null;
 
 function valorPrincipalMensalidade(item = {}) {
   const alvo = String([item.origem, item.categoria, item.descricao, item.recorrencia].join(' ')).toLowerCase();
@@ -32,6 +33,19 @@ function valorAtualizadoMensalidade(item = {}) {
     return saldo > 0 ? saldo : valorPrincipalMensalidade(item);
   }
   return Number(item.saldoRestante ?? item.valorAtualizado ?? item.valor ?? 0);
+}
+
+function valorDevidoBaixaMensalidade() {
+  const base = valorAtualizadoMensalidade(baixaMensalidadeAtual || {});
+  const desconto = Number($('#baixaDesconto')?.value || 0);
+  const multa = Number($('#baixaMulta')?.value || 0);
+  const juros = Number($('#baixaJuros')?.value || 0);
+  return Math.max(0, Number((base + multa + juros - desconto).toFixed(2)));
+}
+
+function recalcularBaixaMensalidade() {
+  const input = $('#baixaValor');
+  if (input) input.value = valorDevidoBaixaMensalidade().toFixed(2);
 }
 
 function moeda(valor) {
@@ -239,6 +253,7 @@ function montarPayload() {
 }
 
 function abrirModalBaixa(m) {
+  baixaMensalidadeAtual = m;
   $('#formBaixa').reset();
 
   $('#baixaId').value = m.id;
@@ -252,6 +267,7 @@ function abrirModalBaixa(m) {
   $('#baixaInfo').textContent =
     `${m.alunoNome || '-'} | Competência ${m.competencia || '-'} | Valor atualizado ${moeda(valorAtualizadoMensalidade(m))}`;
 
+  recalcularBaixaMensalidade();
   $('#modalBaixa').showModal();
 }
 
@@ -262,7 +278,10 @@ $('#btnSair').addEventListener('click', () => {
 
 $('#btnNova').addEventListener('click', () => abrirModal());
 $('#btnCancelar').addEventListener('click', () => $('#modal').close());
-$('#btnCancelarBaixa').addEventListener('click', () => $('#modalBaixa').close());
+$('#btnCancelarBaixa').addEventListener('click', () => { baixaMensalidadeAtual = null; $('#modalBaixa').close(); });
+['#baixaDesconto', '#baixaMulta', '#baixaJuros'].forEach(id => {
+  $(id)?.addEventListener('input', recalcularBaixaMensalidade);
+});
 
 $('#btnFiltrar').addEventListener('click', carregar);
 
@@ -315,11 +334,19 @@ $('#formBaixa').addEventListener('submit', async ev => {
   ev.preventDefault();
 
   const id = $('#baixaId').value;
+  const valorPago = Number($('#baixaValor').value || 0);
+  const valorDevido = valorDevidoBaixaMensalidade();
+  const valorAplicado = Math.min(valorPago, valorDevido);
 
   try {
     await baixarMensalidade(id, {
       formaPagamento: $('#baixaForma').value,
-      valorPago: Number($('#baixaValor').value || 0),
+      valorAplicado,
+      valorPago,
+      valorEntregue: valorPago,
+      valorRecebido: valorPago,
+      valorBaixa: valorAplicado,
+      valor: valorAplicado,
       desconto: Number($('#baixaDesconto').value || 0),
       multa: Number($('#baixaMulta').value || 0),
       juros: Number($('#baixaJuros').value || 0),
@@ -328,6 +355,7 @@ $('#formBaixa').addEventListener('submit', async ev => {
     });
 
     $('#modalBaixa').close();
+    baixaMensalidadeAtual = null;
     await carregar();
 
     alert('Baixa concluída. Movimento criado no Caixa e lançamento atualizado no Financeiro.');
