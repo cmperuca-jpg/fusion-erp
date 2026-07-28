@@ -396,15 +396,15 @@ export async function receberTitulos(dados = {}) {
       const valorAplicadoInformado = entrada.valorAplicadoInformado === true || campoInformado(entrada, "valorAplicado");
       const valorEntradaInformado = valorEntrada !== undefined && valorEntrada !== null && txt(valorEntrada) !== "";
       const aplicadoBrutoC = valorEntradaInformado ? centavos(valorEntrada) : devidoC;
-      const ajusteFormularioDesconto = !valorAplicadoInformado && descontoC > 0 && aplicadoBrutoC > devidoC && aplicadoBrutoC === baseAntesDescontoC;
+      const ajusteFormularioDesconto = descontoC > 0 && aplicadoBrutoC > devidoC && aplicadoBrutoC === baseAntesDescontoC;
       const aplicadoC = ajusteFormularioDesconto ? devidoC : aplicadoBrutoC;
       if (aplicadoC <= 0 || aplicadoC > devidoC) throw erro(`Valor inválido para ${titulo.descricao}. Saldo devido: ${reais(devidoC).toFixed(2)}.`);
       totalAplicadoC += aplicadoC; alocacoes.push({ indice: i, titulo, aplicadoC, descontoC, acrescimoC, devidoC, ajusteFormularioDesconto });
     }
     const usarTotalAplicadoComoMeio = alocacoes.length === 1 &&
       alocacoes[0].ajusteFormularioDesconto &&
-      !campoInformado(dados, "valorEntregue") &&
-      !campoInformado(dados, "valorAplicado");
+      !(Array.isArray(dados.pagamentos) && dados.pagamentos.length) &&
+      !norm(dados.destinoDiferenca || dados.tratamentoDiferenca || dados.destinoTrocoCredito);
     const valorMeioPadrao = usarTotalAplicadoComoMeio
       ? reais(totalAplicadoC)
       : (dados.valorEntregue ?? dados.valorPago ?? dados.valorRecebido ?? dados.valorBaixa ?? reais(totalAplicadoC));

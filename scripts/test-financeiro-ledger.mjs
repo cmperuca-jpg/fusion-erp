@@ -87,6 +87,24 @@ try {
   const movimentoDesconto = caixaAposDesconto.movimentos.find((item) => item.reciboId === baixaComDesconto.recibo.id && item.tipo === "entrada");
   assert.equal(movimentoDesconto.valor, 90);
 
+  const tituloReativacaoComDesconto = await ledger.criarTitulo({ tipo: "receber", alunoId: alunoDesconto.id, descricao: "Reativação - Aluno Desconto", categoria: "Reativação", valor: 65, vencimento: "2026-08-12" });
+  const baixaReativacaoComDesconto = await ledger.receberTitulos({
+    operacaoId: "op_desconto_reativacao_1",
+    tituloId: tituloReativacaoComDesconto.id,
+    valorAplicado: 65,
+    valorPago: 65,
+    valorEntregue: 65,
+    desconto: 15,
+    formaPagamento: "PIX",
+    usuario: "teste"
+  });
+  assert.equal(baixaReativacaoComDesconto.recibo.valorPago, 50);
+  assert.equal(baixaReativacaoComDesconto.recibo.valorAplicado, 50);
+  assert.equal(baixaReativacaoComDesconto.lancamento.status, "Pago");
+  assert.equal(baixaReativacaoComDesconto.lancamento.valorPago, 65);
+  assert.equal(baixaReativacaoComDesconto.lancamento.valorBrutoRecebido, 50);
+  assert.equal(baixaReativacaoComDesconto.lancamento.desconto, 15);
+
   await ledger.estornarRecibo(recebimento.recibo.id, { motivo: "Teste de estorno", usuario: "teste" });
   const tituloReaberto = (await ledger.listarTitulos()).find((x) => x.id === titulo1.id);
   assert.equal(tituloReaberto.status, "Aberto");

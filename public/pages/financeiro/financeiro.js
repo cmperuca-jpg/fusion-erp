@@ -150,6 +150,26 @@ function formaTemTaxaOperadora(forma) {
   return formaEhCartao(forma) || formaEhPix(forma) || formaEhBoleto(forma);
 }
 
+function saldoBaseBaixa() {
+  if (baixaAtual) return numero(baixaAtual.saldoBaseBaixa ?? (saldoLancamento(baixaAtual) || valorTotalLancamento(baixaAtual)));
+  return numero(valor("baixaValorDevido"));
+}
+
+function valorDevidoAjustadoBaixa() {
+  const base = saldoBaseBaixa();
+  const desconto = numero(valor("baixaDesconto"));
+  const acrescimo = numero(valor("baixaJuros"));
+  return Math.max(0, Number((base + acrescimo - desconto).toFixed(2)));
+}
+
+function recalcularValorRecebidoBaixa() {
+  const devido = valorDevidoAjustadoBaixa();
+  setValor("baixaValorDevido", devido.toFixed(2));
+  setValor("baixaValorPago", devido.toFixed(2));
+  calcularPreviewCartao();
+  atualizarDiferencaRecebimento();
+}
+
 function normalizarModalidadePorForma(forma) {
   const f = String(forma || "").toLowerCase();
   if (f.includes("pix")) return "pix";
@@ -586,6 +606,7 @@ function abrirModalBaixa(lancamento) {
   };
   const total = valorTotalLancamento(lancamento);
   const saldo = saldoLancamento(lancamento) || total;
+  baixaAtual.saldoBaseBaixa = saldo;
   setValor("baixaLancamentoId", lancamento.id);
   setValor("baixaMensalidadeId", lancamento.mensalidadeId || "");
   setValor("baixaValorDevido", saldo.toFixed(2));
@@ -601,8 +622,7 @@ function abrirModalBaixa(lancamento) {
     <div>Valor original: <strong>${moeda(total)}</strong></div>
     <div>Saldo para baixa: <strong>${moeda(saldo)}</strong></div>`;
   atualizarPainelCartao();
-  calcularPreviewCartao();
-  atualizarDiferencaRecebimento();
+  recalcularValorRecebidoBaixa();
   els.modalBaixa.classList.add("ativo");
   setTimeout(() => document.getElementById("baixaValorPago")?.focus(), 80);
 }
@@ -622,7 +642,8 @@ async function confirmarBaixa(event) {
   event.preventDefault();
   const id = valor("baixaLancamentoId");
   const valorPago = numero(valor("baixaValorPago"));
-  const saldoAplicado = Math.min(valorPago, numero(valor("baixaValorDevido")));
+  const valorDevido = valorDevidoAjustadoBaixa();
+  const saldoAplicado = Math.min(valorPago, valorDevido);
   if (!id) return alert("Lançamento não informado.");
   if (valorPago <= 0) return alert("Informe um valor pago maior que zero.");
   const btn = document.getElementById("btnConfirmarBaixa");
@@ -641,13 +662,16 @@ async function confirmarBaixa(event) {
       operacaoId: baixaAtual?.operacaoRecebimentoId,
       valorPago,
       valorEntregue: valorPago,
+      valorRecebido: valorPago,
       valorAplicado: saldoAplicado,
+      valorBaixa: saldoAplicado,
       valor: saldoAplicado,
       pagamento: valor("baixaDataPagamento"),
       dataPagamento: valor("baixaDataPagamento"),
       formaPagamento,
       desconto: numero(valor("baixaDesconto")),
       juros: numero(valor("baixaJuros")),
+      acrescimo: numero(valor("baixaJuros")),
       observacao: valor("baixaObservacao"),
       bandeiraCartao: formaTemTaxaOperadora(formaPagamento) ? valor("baixaBandeiraCartao") : "",
       modalidadeCartao: formaTemTaxaOperadora(formaPagamento) ? valor("baixaModalidadeCartao") : "",
@@ -833,6 +857,8 @@ document.getElementById("baixaTaxaPercentual")?.addEventListener("input", calcul
 document.getElementById("baixaTaxaFixa")?.addEventListener("input", calcularPreviewCartao);
 document.getElementById("baixaValorPago")?.addEventListener("input", calcularPreviewCartao);
 document.getElementById("baixaValorPago")?.addEventListener("input", atualizarDiferencaRecebimento);
+document.getElementById("baixaDesconto")?.addEventListener("input", recalcularValorRecebidoBaixa);
+document.getElementById("baixaJuros")?.addEventListener("input", recalcularValorRecebidoBaixa);
 document.getElementById("btnFecharModal")?.addEventListener("click", fecharModal);
 document.getElementById("btnCancelar")?.addEventListener("click", fecharModal);
 document.getElementById("alunoFornecedor")?.addEventListener("change", sincronizarPessoaSelecionada);
