@@ -2,7 +2,7 @@
   const STATUS_ATIVOS = new Set([
     "ativo", "ativa", "active", "vigente", "regular",
     "matriculado", "matriculada", "em andamento", "em_andamento",
-    "liberado", "liberada", "adimplente"
+    "liberado", "liberada", "adimplente", "reativado", "reativada"
   ]);
 
   const STATUS_INATIVOS = new Set([
@@ -26,6 +26,42 @@
       if (valor !== undefined && valor !== null && String(valor).trim() !== "") return valor;
     }
     return "";
+  }
+
+  function registroComDados(registro) {
+    return Boolean(registro && typeof registro === "object" && Object.keys(registro).length);
+  }
+
+  function possuiStatusAluno(aluno = {}) {
+    return aluno.bloqueado === true ||
+      aluno.bloqueioCheckin === true ||
+      aluno.ativo !== undefined ||
+      aluno.isAtivo !== undefined ||
+      Boolean(primeiroStatus(aluno, ["statusAluno", "status_aluno", "status", "situacaoAluno", "situacao"]));
+  }
+
+  function possuiStatusMatricula(matricula = {}) {
+    return matricula.bloqueada === true ||
+      matricula.bloqueioCheckin === true ||
+      matricula.ativo !== undefined ||
+      matricula.isAtiva !== undefined ||
+      Boolean(primeiroStatus(matricula, ["statusMatricula", "status_matricula", "status", "situacao", "estado"]));
+  }
+
+  function alunoDetalheAtual() {
+    if (registroComDados(window.alunoDetalhe)) return window.alunoDetalhe;
+    try {
+      if (typeof alunoDetalhe !== "undefined" && registroComDados(alunoDetalhe)) return alunoDetalhe;
+    } catch {}
+    return {};
+  }
+
+  function matriculaDetalheAtual() {
+    if (registroComDados(window.matriculaAlunoDetalhe)) return window.matriculaAlunoDetalhe;
+    try {
+      if (typeof matriculaAlunoDetalhe !== "undefined" && registroComDados(matriculaAlunoDetalhe)) return matriculaAlunoDetalhe;
+    } catch {}
+    return {};
   }
 
   // O cadastro do aluno e a matrícula são entidades diferentes.
@@ -83,6 +119,7 @@
   window.carregarMatriculaAluno = async function carregarMatriculaAlunoCorrigida(sessao) {
     if (!sessao?.alunoId) return null;
     const prontuario = await buscarJson(`/api/alunos/${encodeURIComponent(sessao.alunoId)}/prontuario`);
+    window.prontuarioAlunoDetalhe = prontuario || null;
     const matriculas = obterLista(prontuario || {});
     return matriculas.find(matriculaAtiva) || null;
   };
@@ -90,10 +127,14 @@
   const carregarPagamentosOriginal = window.carregarPagamentos;
 
   window.carregarPagamentos = async function carregarPagamentosCorrigido(sessao) {
-    const cadastroAtivo = alunoAtivo(window.alunoDetalhe || {});
-    const inscricaoAtiva = matriculaAtiva(window.matriculaAlunoDetalhe || {});
+    const aluno = alunoDetalheAtual();
+    const matricula = matriculaDetalheAtual();
+    const cadastroInformado = registroComDados(aluno) && possuiStatusAluno(aluno);
+    const matriculaInformada = registroComDados(matricula) && possuiStatusMatricula(matricula);
+    const cadastroAtivo = !cadastroInformado || alunoAtivo(aluno);
+    const inscricaoAtiva = !matriculaInformada || matriculaAtiva(matricula);
 
-    if (!cadastroAtivo || !inscricaoAtiva) {
+    if ((cadastroInformado && !cadastroAtivo) || (matriculaInformada && !inscricaoAtiva)) {
       const proximo = document.getElementById("proximoPagamento");
       const status = document.getElementById("statusPagamento");
       const alerta = document.getElementById("alertaPagamento");

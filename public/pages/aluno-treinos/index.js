@@ -5,6 +5,7 @@ const fotoAlunoFallback = "data:image/svg+xml;charset=utf-8," + encodeURICompone
 
 let alunoDetalhe = null;
 let matriculaAlunoDetalhe = null;
+let prontuarioAlunoDetalhe = null;
 let professoresPortal = [];
 let treinoAtual = null;
 let divisaoAtual = 0;
@@ -13,6 +14,14 @@ let installPrompt = null;
 let touchStartX = 0;
 let touchStartY = 0;
 let controleCatracaAtual = null;
+
+function sincronizarDetalhesPortal() {
+  window.alunoDetalhe = alunoDetalhe;
+  window.matriculaAlunoDetalhe = matriculaAlunoDetalhe;
+  window.prontuarioAlunoDetalhe = prontuarioAlunoDetalhe || window.prontuarioAlunoDetalhe || null;
+}
+
+sincronizarDetalhesPortal();
 
 function esc(v) {
   return String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[c]));
@@ -133,6 +142,8 @@ async function carregarAlunoDetalhe(sessao) {
 async function carregarMatriculaAluno(sessao) {
   if (!sessao?.alunoId) return null;
   const prontuario = await safeFetchJson(`/api/alunos/${encodeURIComponent(sessao.alunoId)}/prontuario`);
+  prontuarioAlunoDetalhe = prontuario || null;
+  sincronizarDetalhesPortal();
   const matriculas = Array.isArray(prontuario?.matriculas) ? prontuario.matriculas : [];
   return matriculas.find((matricula) => ["ativa", "ativo"].includes(String(matricula?.status || "").trim().toLowerCase()))
     || matriculas[0]
@@ -403,6 +414,26 @@ function statusPagamento(item) {
   return String(item.statusPagamento || item.status || item.situacao || "").toLowerCase();
 }
 
+function proximoVencimentoFallback() {
+  const prontuario = prontuarioAlunoDetalhe || window.prontuarioAlunoDetalhe || {};
+  const candidatos = [
+    prontuario?.resumoFinanceiro?.proximoVencimento,
+    prontuario?.indicadores?.proximoVencimento,
+    matriculaAlunoDetalhe?.proximoVencimento,
+    matriculaAlunoDetalhe?.proximo_vencimento,
+    alunoDetalhe?.proximoVencimento,
+    alunoDetalhe?.proximo_vencimento,
+    alunoDetalhe?.mensalidadeProxima?.vencimento,
+    alunoDetalhe?.proximaMensalidade?.vencimento
+  ];
+
+  for (const valor of candidatos) {
+    const data = dataISO(valor);
+    if (data) return data;
+  }
+  return "";
+}
+
 async function carregarPagamentos(sessao) {
   const urls = [
     `/api/mensalidades?alunoId=${encodeURIComponent(sessao.alunoId)}`,
@@ -428,7 +459,7 @@ async function carregarPagamentos(sessao) {
   const proximoProgramado = programados.find((p) => dataPagamento(p) >= hoje) || programados[0];
   const proximo = abertos.find((p) => dataPagamento(p) >= hoje) || abertos[0] || proximoProgramado;
 
-  const data = dataPagamento(proximo);
+  const data = dataPagamento(proximo) || proximoVencimentoFallback();
   const valor = moeda(valorPagamento(proximo));
   setTexto("proximoPagamento", data ? `${dataBR(data)}${valor ? " · " + valor : ""}` : "Não localizado");
 
@@ -440,7 +471,7 @@ async function carregarPagamentos(sessao) {
     alerta.textContent = "Existe pagamento em atraso. Procure a recepção da academia.";
     alerta.classList.remove("hidden");
   } else {
-    st.textContent = proximo === proximoProgramado ? "Programado" : (data ? "Em aberto" : "");
+    st.textContent = data ? (proximo === proximoProgramado ? "Programado" : "Em aberto") : "";
     st.classList.remove("vencido");
     alerta.classList.add("hidden");
   }
@@ -458,6 +489,7 @@ async function carregar() {
   alunoDetalhe = alunoCarregado;
   matriculaAlunoDetalhe = matriculaCarregada;
   professoresPortal = professoresCarregados;
+  sincronizarDetalhesPortal();
   setTexto("alunoNomeTitulo", nomeAlunoRegistro(alunoDetalhe) || sessao.alunoNome || "Aluno");
   renderFotoAluno();
 
