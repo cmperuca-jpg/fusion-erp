@@ -7,8 +7,10 @@ const CAIXA_FILE = path.join(DATA_DIR, 'caixa.json');
 const FINANCEIRO_FILE = path.join(DATA_DIR, 'financeiro.json');
 const RECEBIMENTOS_FILE = path.join(DATA_DIR, 'recebimentos.json');
 const RECIBOS_FILE = path.join(DATA_DIR, 'recibos.json');
+const RECIBOS_ITENS_FILE = path.join(DATA_DIR, 'recibos_itens.json');
 const PAGAMENTOS_FILE = path.join(DATA_DIR, 'financeiro', 'pagamentos.json');
 const PAGAMENTOS_FILE_LEGADO = path.join(DATA_DIR, 'pagamentos.json');
+const TIMEZONE_OPERACAO = 'America/Sao_Paulo';
 
 async function lerJson(arquivo, padrao) {
   try { return await lerJsonDuravel(arquivo, padrao); } catch { return padrao; }
@@ -29,8 +31,27 @@ function arrayDe(raw, chave) {
   return [];
 }
 
-function hojeISO() { return new Date().toISOString().slice(0, 10); }
-function dataISO(v) { return String(v || '').slice(0, 10); }
+function dataLocalISO(valor = new Date()) {
+  const data = valor instanceof Date ? valor : new Date(valor);
+  if (Number.isNaN(data.getTime())) return String(valor || '').slice(0, 10);
+  const partes = new Intl.DateTimeFormat('pt-BR', {
+    timeZone: TIMEZONE_OPERACAO,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).formatToParts(data).reduce((acc, parte) => {
+    if (parte.type !== 'literal') acc[parte.type] = parte.value;
+    return acc;
+  }, {});
+  return `${partes.year}-${partes.month}-${partes.day}`;
+}
+function hojeISO() { return dataLocalISO(new Date()); }
+function dataISO(v) {
+  const txt = String(v || '');
+  if (!txt) return '';
+  if (txt.includes('T')) return dataLocalISO(txt);
+  return txt.slice(0, 10);
+}
 function mesISO(v) { const d = dataISO(v); return d ? d.slice(0, 7) : 'Sem data'; }
 function normalizar(v) { return String(v || '').trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase(); }
 function numero(v) {
@@ -115,10 +136,42 @@ function categoria(item = {}, padrao = 'Sem categoria') { return item.categoria 
 function descricao(item = {}, padrao = 'Lançamento') { return item.descricao || item.titulo || item.observacao || padrao; }
 function pessoa(item = {}) { return item.alunoFornecedor || item.pessoa || item.pessoaFornecedor || item.cliente || item.fornecedor || item.alunoNome || ''; }
 function horaItem(item = {}) {
+  if (item.hora) return String(item.hora).slice(0, 5);
   const fonte = item.criadoEm || item.atualizadoEm || item.dataPagamento || item.data || '';
   const txt = String(fonte || '');
-  if (txt.includes('T')) return txt.slice(11, 16);
+  if (txt.includes('T')) {
+    const data = new Date(txt);
+    if (!Number.isNaN(data.getTime())) {
+      return new Intl.DateTimeFormat('pt-BR', {
+        timeZone: TIMEZONE_OPERACAO,
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      }).format(data);
+    }
+    return txt.slice(11, 16);
+  }
   return '';
+}
+
+function formasRecibo(recibo = {}) {
+  const formas = Array.isArray(recibo.formasPagamento) ? recibo.formasPagamento.filter(Boolean) : [];
+  if (formas.length) return formas;
+  return [{
+    formaPagamento: recibo.formaPagamento || recibo.forma || 'Dinheiro',
+    valor: recibo.valorPago ?? recibo.valorBrutoRecebido ?? recibo.valorLiquido ?? 0,
+    taxaOperadoraValor: recibo.taxaOperadoraValor ?? recibo.taxa ?? 0,
+    valorLiquido: recibo.valorLiquido
+  }];
+}
+
+function taxaFormaRecibo(forma = {}, recibo = {}, bruto = 0, totalBruto = 0) {
+  const taxa = numero(forma.taxaOperadoraValor ?? forma.taxaValor ?? forma.taxa);
+  if (taxa > 0) return arred(taxa);
+  const taxaTotal = numero(recibo.taxaOperadoraValor ?? recibo.taxaValor ?? recibo.taxa);
+  if (taxaTotal <= 0) return 0;
+  if (totalBruto > 0 && bruto > 0) return arred(taxaTotal * bruto / totalBruto);
+  return arred(taxaTotal / Math.max(1, formasRecibo(recibo).length));
 }
 
 function somaPorMapa(mapa, chave, campo, valor) {
@@ -197,12 +250,14 @@ export async function movimentoDiarioCaixa(filtros = {}) {
   const financeiro = await lerJson(FINANCEIRO_FILE, []);
   const recebimentosRaw = await lerJson(RECEBIMENTOS_FILE, []);
   const recibosRaw = await lerJson(RECIBOS_FILE, []);
+  const recibosItensRaw = await lerJson(RECIBOS_ITENS_FILE, []);
   const pagamentosRaw = await lerJsonOpcional([PAGAMENTOS_FILE, PAGAMENTOS_FILE_LEGADO], []);
 
   const caixas = Array.isArray(caixaRaw.caixas) ? caixaRaw.caixas : [];
   const movimentos = Array.isArray(caixaRaw.movimentos) ? caixaRaw.movimentos : [];
   const recebimentosBase = arrayDe(recebimentosRaw, 'recebimentos');
   const recibosBase = arrayDe(recibosRaw, 'recibos');
+  const recibosItensBase = arrayDe(recibosItensRaw, 'itens');
   const pagamentosBase = arrayDe(pagamentosRaw, 'pagamentos');
   const recibosEstornados = idsRecibosEstornados({ recibos: recibosBase, recebimentos: recebimentosBase, movimentos });
 
@@ -211,6 +266,12 @@ export async function movimentoDiarioCaixa(filtros = {}) {
     const reciboId = String(recebimento.reciboId || recebimento.ultimoReciboId || '').trim();
     if (!reciboId) continue;
     recebimentosPorRecibo.set(reciboId, [...(recebimentosPorRecibo.get(reciboId) || []), recebimento]);
+  }
+  const itensPorRecibo = new Map();
+  for (const item of recibosItensBase) {
+    const reciboId = String(item.reciboId || '').trim();
+    if (!reciboId) continue;
+    itensPorRecibo.set(reciboId, [...(itensPorRecibo.get(reciboId) || []), item]);
   }
 
   const movimentosPeriodoHistorico = movimentos.filter((m) => {
@@ -244,6 +305,21 @@ export async function movimentoDiarioCaixa(filtros = {}) {
     if (f.movimentoCaixaId) financeiroPorMovimento.set(String(f.movimentoCaixaId), f);
     if (f.id) financeiroPorId.set(String(f.id), f);
   }
+  const categoriaDoRecibo = (recibo = {}) => {
+    const relacionados = recebimentosPorRecibo.get(String(recibo.id || '')) || [];
+    const categoriasRecebimentos = [...new Set(relacionados.map((item) => categoria(item, '')).filter(Boolean))];
+    if (categoriasRecebimentos.length === 1) return categoriasRecebimentos[0];
+
+    const itens = itensPorRecibo.get(String(recibo.id || '')) || [];
+    const categoriasTitulos = [...new Set(itens
+      .map((item) => financeiroPorId.get(String(item.tituloId || '')))
+      .filter(Boolean)
+      .map((titulo) => categoria(titulo, ''))
+      .filter(Boolean))];
+    if (categoriasTitulos.length === 1) return categoriasTitulos[0];
+
+    return recibo.categoria || 'Recebimentos';
+  };
 
   let recebimentos = entradas.map((m) => {
     const fin = financeiroPorMovimento.get(String(m.id)) || financeiroPorId.get(String(m.lancamentoFinanceiroId || m.financeiroId || '')) || {};
@@ -318,6 +394,40 @@ export async function movimentoDiarioCaixa(filtros = {}) {
       return item;
     });
   recebimentos = [...recebimentos, ...recebimentosExtras];
+
+  const recibosExtras = recibosBase
+    .filter(r => statusAtivo(r) && !reciboEstornado(r))
+    .filter(r => dentroPeriodo(r.data || dataISO(r.criadoEm), dataInicio, dataFim))
+    .filter(r => passaCategoriaFiltro({ ...r, categoria: categoriaDoRecibo(r), descricao: `Recibo ${r.numero || r.id}`, pessoa: r.aluno }, categoriaFiltro))
+    .filter(r => !jaVisto(vistosRecebimentos, r))
+    .filter(r => !jaVisto(vistosEntradasGlobais, r))
+    .flatMap(r => {
+      marcarVisto(vistosRecebimentos, r);
+      const formas = formasRecibo(r);
+      const totalBruto = formas.reduce((soma, forma) => soma + numero(forma.valor ?? forma.valorPago ?? forma.valorBruto), 0) || valorBruto(r);
+      const categoriaRecibo = categoriaDoRecibo(r);
+      return formas.map((forma, indice) => {
+        const bruto = numero(forma.valor ?? forma.valorPago ?? forma.valorBruto) || (indice === 0 ? valorBruto(r) : 0);
+        const taxa = taxaFormaRecibo(forma, r, bruto, totalBruto);
+        const liquidoForma = numero(forma.valorLiquido ?? forma.valorRecebidoLiquido);
+        const liquido = liquidoForma > 0 ? arred(liquidoForma) : arred(bruto - taxa);
+        return {
+          id: `${r.id || r.numero || 'recibo'}:${indice}`,
+          reciboId: r.id || '',
+          hora: horaItem(r),
+          data: dataISO(r.data || r.criadoEm),
+          cliente: r.aluno || r.pessoa || '',
+          descricao: `Recibo ${r.numero || r.id || ''}${r.aluno ? ` - ${r.aluno}` : ''}`.trim(),
+          categoria: categoriaRecibo,
+          formaPagamento: forma.formaPagamento || forma.forma || 'Dinheiro',
+          bruto,
+          taxa,
+          liquido,
+          status: r.status || 'recebido'
+        };
+      }).filter(item => passaFormaFiltro(item, formaFiltro));
+    });
+  recebimentos = [...recebimentos, ...recibosExtras];
 
   const vistosPagamentos = new Set();
   pagamentos.forEach(m => marcarVisto(vistosPagamentos, m));

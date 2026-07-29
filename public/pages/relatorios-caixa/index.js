@@ -1,5 +1,9 @@
 const $ = (s) => document.querySelector(s);
-function hojeISO(){ return new Date().toISOString().slice(0,10); }
+function hojeISO(){
+  const data = new Date();
+  data.setMinutes(data.getMinutes() - data.getTimezoneOffset());
+  return data.toISOString().slice(0,10);
+}
 function moeda(v){ return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
 function html(v){ return String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 

@@ -159,6 +159,38 @@ try {
   assert.equal(linhasCartao[0].liquido, 63.06);
   assert.equal(linhasCartao[0].categoria, "Reativação");
 
+  const recibosPath = path.join(temporario, "data", "recibos.json");
+  const itensReciboPath = path.join(temporario, "data", "recibos_itens.json");
+  const recibosAntesFallback = await fs.readFile(recibosPath, "utf8");
+  const itensAntesFallback = await fs.readFile(itensReciboPath, "utf8");
+  const reciboSemMovimento = {
+    id: "rec_sem_movimento_caixa",
+    numero: "SEM-MOV",
+    data: dataRelatorio,
+    hora: "10:30",
+    alunoId: aluno.id,
+    aluno: "Aluno sem movimento",
+    caixaId: "cx_sem_movimento",
+    valorPago: 40,
+    valorBrutoRecebido: 40,
+    taxaOperadoraValor: 1,
+    valorLiquido: 39,
+    formasPagamento: [{ formaPagamento: "PIX", valor: 40, taxaOperadoraValor: 1, valorLiquido: 39 }],
+    cancelado: false,
+    criadoEm: `${dataRelatorio}T13:30:00.000Z`
+  };
+  await fs.writeFile(recibosPath, JSON.stringify([...JSON.parse(recibosAntesFallback), reciboSemMovimento], null, 2));
+  await fs.writeFile(itensReciboPath, JSON.stringify([...JSON.parse(itensAntesFallback), { id: "reci_sem_movimento_caixa", reciboId: reciboSemMovimento.id, tituloId: cartao.lancamento.id, valorAplicado: 40 }], null, 2));
+  const relatorioFallbackRecibo = await relatorios.movimentoDiarioCaixa({ dataInicio: dataRelatorio, dataFim: dataRelatorio });
+  const linhasFallbackRecibo = relatorioFallbackRecibo.recebimentos.filter((item) => item.reciboId === reciboSemMovimento.id);
+  assert.equal(linhasFallbackRecibo.length, 1, "Recibo oficial sem movimento vinculado deve aparecer no relatorio de caixa.");
+  assert.equal(linhasFallbackRecibo[0].bruto, 40);
+  assert.equal(linhasFallbackRecibo[0].taxa, 1);
+  assert.equal(linhasFallbackRecibo[0].liquido, 39);
+  assert.equal(linhasFallbackRecibo[0].categoria, cartao.lancamento.categoria);
+  await fs.writeFile(recibosPath, recibosAntesFallback);
+  await fs.writeFile(itensReciboPath, itensAntesFallback);
+
   const biDia = await relatorios.biFinanceiro({ inicio: dataRelatorio, fim: dataRelatorio });
   const linhasBICartao = biDia.linhas.filter((item) => (item.referencias || []).includes(cartao.recibo.id));
   assert.equal(linhasBICartao.length, 1, "BI financeiro não pode somar o recibo e o movimento de caixa como duas receitas.");
