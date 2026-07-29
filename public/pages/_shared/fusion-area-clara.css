@@ -44,3 +44,75 @@ main.main::after {
     background-color: #f4f7fb !important;
   }
 }
+
+/* Correção global de contraste do topo sobre a área clara.
+   O breadcrumb é criado dinamicamente por fusion-layout.js e alguns temas
+   administrativos o deixavam transparente, com letras brancas. */
+.fusion-main > .fusion-breadcrumb,
+.fusion-content > .fusion-breadcrumb,
+main.main > .fusion-breadcrumb,
+main.wrap > .fusion-breadcrumb,
+.fusion-breadcrumb {
+  display: flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  flex-wrap: wrap !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 0 14px !important;
+  padding: 9px 12px !important;
+  box-sizing: border-box !important;
+  border: 1px solid #d7e0ea !important;
+  border-radius: 10px !important;
+  background: #ffffff !important;
+  background-image: none !important;
+  color: #526274 !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  line-height: 1.35 !important;
+  text-shadow: none !important;
+  opacity: 1 !important;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, .05) !important;
+}
+
+.fusion-breadcrumb,
+.fusion-breadcrumb * {
+  text-shadow: none !important;
+  opacity: 1 !important;
+}
+
+.fusion-breadcrumb a {
+  color: #087f91 !important;
+  font-weight: 800 !important;
+  text-decoration: underline !important;
+  text-decoration-thickness: 1px !important;
+  text-underline-offset: 2px !important;
+}
+
+.fusion-breadcrumb a:hover,
+.fusion-breadcrumb a:focus-visible {
+  color: #075d6a !important;
+}
+
+.fusion-breadcrumb strong,
+.fusion-breadcrumb [aria-current="page"] {
+  color: #17212b !important;
+  font-weight: 800 !important;
+}
+
+/* Separadores inseridos como texto ou spans também precisam permanecer visíveis. */
+.fusion-breadcrumb span,
+.fusion-breadcrumb .separator,
+.fusion-breadcrumb .separador {
+  color: #7b8794 !important;
+}
+
+@media (max-width: 900px) {
+  .fusion-breadcrumb {
+    margin-bottom: 10px !important;
+    padding: 8px 10px !important;
+    overflow-x: auto !important;
+    flex-wrap: nowrap !important;
+    white-space: nowrap !important;
+  }
+}
