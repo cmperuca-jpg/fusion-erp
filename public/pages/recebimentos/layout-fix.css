@@ -1,0 +1,177 @@
+/* Ajustes locais para a tela de Recebimentos dentro do tema escuro global. */
+.recebimentos-page {
+  max-width: none !important;
+}
+
+body.fusion-com-sidebar > main.recebimentos-page {
+  width: calc(100% - 270px) !important;
+  max-width: none !important;
+}
+
+.recebimentos-page .page-header {
+  align-items: flex-start !important;
+}
+
+.recebimentos-page .actions {
+  flex: 1 1 560px !important;
+  justify-content: flex-end !important;
+}
+
+.recebimentos-page .actions .btn {
+  min-height: 34px !important;
+  padding: 7px 10px !important;
+  white-space: nowrap !important;
+}
+
+.recebimentos-page .cards-resumo {
+  grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)) !important;
+  gap: 10px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow: visible !important;
+}
+
+.recebimentos-page .cards-resumo .card {
+  min-width: 0 !important;
+  padding: 14px 16px !important;
+}
+
+.recebimentos-page .cards-resumo .card span {
+  margin-bottom: 8px !important;
+  white-space: nowrap !important;
+}
+
+.recebimentos-page .cards-resumo .card strong {
+  display: block !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  font-size: clamp(16px, 1.45vw, 21px) !important;
+  line-height: 1.05 !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+.recebimentos-page .filtros {
+  grid-template-columns: minmax(220px, 2fr) repeat(5, minmax(104px, 1fr)) auto !important;
+  gap: 10px !important;
+}
+
+.recebimentos-page .field.buttons {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  width: auto !important;
+}
+
+.recebimentos-page .field.buttons .btn {
+  white-space: nowrap !important;
+}
+
+.recebimentos-page .bulk-bar {
+  gap: 10px !important;
+}
+
+.recebimentos-page .table-wrap {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: auto !important;
+  padding: 14px 16px !important;
+}
+
+.recebimentos-page #tbRecebimentos {
+  width: max-content !important;
+  min-width: 1320px !important;
+  table-layout: auto !important;
+}
+
+.recebimentos-page #tbRecebimentos th,
+.recebimentos-page #tbRecebimentos td {
+  min-width: 68px !important;
+  max-width: none !important;
+  height: auto !important;
+  padding: 7px 8px !important;
+  line-height: 1.2 !important;
+  vertical-align: middle !important;
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  overflow-wrap: normal !important;
+}
+
+.recebimentos-page #tbRecebimentos .check {
+  width: 40px !important;
+  min-width: 40px !important;
+  text-align: center !important;
+}
+
+.recebimentos-page #tbRecebimentos td:nth-child(3) {
+  min-width: 190px !important;
+}
+
+.recebimentos-page #tbRecebimentos td:nth-child(4) {
+  min-width: 230px !important;
+  max-width: 310px !important;
+  white-space: normal !important;
+  word-break: normal !important;
+  overflow-wrap: anywhere !important;
+}
+
+.recebimentos-page #tbRecebimentos .num {
+  min-width: 98px !important;
+  text-align: right !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+.recebimentos-page #tbRecebimentos th.acoes,
+.recebimentos-page #tbRecebimentos td.acoes {
+  width: 390px !important;
+  min-width: 390px !important;
+  text-align: left !important;
+}
+
+.recebimentos-page .row-actions {
+  display: flex !important;
+  justify-content: flex-start !important;
+  gap: 4px !important;
+  flex-wrap: nowrap !important;
+}
+
+.recebimentos-page .row-actions button {
+  min-height: 28px !important;
+  padding: 4px 6px !important;
+  font-size: 9.5px !important;
+  line-height: 1.15 !important;
+  white-space: nowrap !important;
+}
+
+@media (max-width: 1350px) {
+  .recebimentos-page .cards-resumo {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+
+  .recebimentos-page .filtros {
+    grid-template-columns: minmax(220px, 2fr) repeat(3, minmax(110px, 1fr)) !important;
+  }
+
+  .recebimentos-page .field.buttons {
+    grid-column: 1 / -1 !important;
+  }
+}
+
+@media (max-width: 760px) {
+  body.fusion-com-sidebar > main.recebimentos-page {
+    width: 100% !important;
+  }
+
+  .recebimentos-page .cards-resumo,
+  .recebimentos-page .filtros {
+    grid-template-columns: 1fr !important;
+  }
+
+  .recebimentos-page .actions,
+  .recebimentos-page .field.buttons,
+  .recebimentos-page .bulk-bar {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    width: 100% !important;
+  }
+}

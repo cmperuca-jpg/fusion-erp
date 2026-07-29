@@ -183,3 +183,115 @@
   border:1px solid #4b6b75!important;
   box-shadow:none!important;
 }
+
+/* Financeiro - tabela operacional compacta */
+.financeiro-page .financeiro-kpis {
+  grid-template-columns: repeat(auto-fit, minmax(158px, 1fr)) !important;
+  gap: 12px !important;
+}
+
+.financeiro-page .financeiro-kpis .kpi-btn {
+  min-width: 0 !important;
+  padding: 14px 16px !important;
+}
+
+.financeiro-page .financeiro-kpis .kpi-btn strong {
+  display: block !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  font-size: clamp(16px, 1.45vw, 21px) !important;
+  line-height: 1.05 !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+.financeiro-page .filtros-financeiro {
+  grid-template-columns: minmax(260px, 1fr) minmax(145px, 180px) minmax(145px, 180px) auto auto !important;
+  align-items: center !important;
+}
+
+.financeiro-page .tabela-container {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: auto !important;
+  overflow-y: visible !important;
+}
+
+.financeiro-page .tabela-container table {
+  width: max-content !important;
+  min-width: 1370px !important;
+  table-layout: auto !important;
+}
+
+.financeiro-page .tabela-container th,
+.financeiro-page .tabela-container td {
+  min-width: 72px !important;
+  max-width: none !important;
+  height: auto !important;
+  padding: 7px 8px !important;
+  line-height: 1.2 !important;
+  vertical-align: middle !important;
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  overflow-wrap: normal !important;
+}
+
+.financeiro-page .tabela-container th:nth-child(2),
+.financeiro-page .tabela-container td:nth-child(2) {
+  min-width: 280px !important;
+  max-width: 360px !important;
+  white-space: normal !important;
+  word-break: normal !important;
+  overflow-wrap: anywhere !important;
+}
+
+.financeiro-page .tabela-container th:nth-child(4),
+.financeiro-page .tabela-container td:nth-child(4) {
+  min-width: 190px !important;
+  max-width: 260px !important;
+  white-space: normal !important;
+  word-break: normal !important;
+  overflow-wrap: anywhere !important;
+}
+
+.financeiro-page .tabela-container th:nth-child(6),
+.financeiro-page .tabela-container th:nth-child(7),
+.financeiro-page .tabela-container th:nth-child(8),
+.financeiro-page .tabela-container th:nth-child(9),
+.financeiro-page .tabela-container td:nth-child(6),
+.financeiro-page .tabela-container td:nth-child(7),
+.financeiro-page .tabela-container td:nth-child(8),
+.financeiro-page .tabela-container td:nth-child(9) {
+  min-width: 104px !important;
+  text-align: right !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+.financeiro-page .tabela-container th:last-child,
+.financeiro-page .tabela-container td:last-child {
+  width: 290px !important;
+  min-width: 290px !important;
+}
+
+.financeiro-page .acoes {
+  display: flex !important;
+  justify-content: flex-start !important;
+  gap: 5px !important;
+  flex-wrap: nowrap !important;
+}
+
+.financeiro-page .acoes button,
+.financeiro-page .acoes .btn {
+  min-height: 28px !important;
+  padding: 4px 7px !important;
+  font-size: 10px !important;
+  line-height: 1.15 !important;
+  white-space: nowrap !important;
+}
+
+@media (max-width: 1000px) {
+  .financeiro-page .filtros-financeiro {
+    grid-template-columns: 1fr !important;
+  }
+}

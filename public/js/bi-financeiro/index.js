@@ -1,6 +1,10 @@
 const API_BI_FINANCEIRO = '/api/financeiro/relatorios/bi-financeiro';
 let ultimoBI = null;
 const graficos = {};
+const chartTextColor = '#d9eef2';
+const chartMutedColor = 'rgba(217, 238, 242, 0.62)';
+const chartGridColor = 'rgba(217, 238, 242, 0.12)';
+const chartPalette = ['#38bdf8', '#fb7185', '#f59e0b', '#34d399', '#a78bfa', '#f97316'];
 
 function moeda(valor) { return Number(valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); }
 function numero(valor) { const n = Number(String(valor ?? '').replace(',', '.')); return Number.isFinite(n) ? n : 0; }
@@ -58,23 +62,51 @@ function aplicarResumo(resumo = {}, linhas = []) {
 }
 function destruirGrafico(id) { if (graficos[id]) { graficos[id].destroy(); delete graficos[id]; } }
 function semDadosGrafico(id) { destruirGrafico(id); const canvas = document.getElementById(id); if (canvas) canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height); }
+function opcoesEscala(beginAtZero = true) {
+  return {
+    x: { ticks: { color: chartMutedColor }, grid: { color: 'transparent' } },
+    y: { beginAtZero, ticks: { color: chartMutedColor }, grid: { color: chartGridColor } }
+  };
+}
+function opcoesLegenda(display = true) {
+  return { display, labels: { color: chartTextColor, boxWidth: 13, boxHeight: 13 } };
+}
 function graficoBarras(id, labels, valores, label) {
   const canvas = document.getElementById(id); if (!canvas || !window.Chart) return;
   if (!labels.length) return semDadosGrafico(id);
   destruirGrafico(id);
-  graficos[id] = new Chart(canvas, { type: 'bar', data: { labels, datasets: [{ label, data: valores }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } } });
+  graficos[id] = new Chart(canvas, {
+    type: 'bar',
+    data: { labels, datasets: [{ label, data: valores, backgroundColor: '#2f9ed2', borderColor: '#7dd3fc', borderWidth: 1, borderRadius: 3, maxBarThickness: 48 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: opcoesLegenda(false), tooltip: { titleColor: chartTextColor, bodyColor: chartTextColor } }, scales: opcoesEscala(true) }
+  });
 }
 function graficoPizza(id, labels, valores) {
   const canvas = document.getElementById(id); if (!canvas || !window.Chart) return;
   if (!labels.length) return semDadosGrafico(id);
   destruirGrafico(id);
-  graficos[id] = new Chart(canvas, { type: 'doughnut', data: { labels, datasets: [{ data: valores }] }, options: { responsive: true, maintainAspectRatio: false } });
+  graficos[id] = new Chart(canvas, {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data: valores, backgroundColor: labels.map((_, i) => chartPalette[i % chartPalette.length]), borderColor: '#0a2731', borderWidth: 2 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: opcoesLegenda(true), tooltip: { titleColor: chartTextColor, bodyColor: chartTextColor } } }
+  });
 }
 function graficoFluxo(id, dados) {
   const canvas = document.getElementById(id); if (!canvas || !window.Chart) return;
   if (!dados.length) return semDadosGrafico(id);
   destruirGrafico(id);
-  graficos[id] = new Chart(canvas, { type: 'line', data: { labels: dados.map(x => x.mes), datasets: [{ label: 'Receitas', data: dados.map(x => x.receitas) }, { label: 'Despesas', data: dados.map(x => x.despesas) }, { label: 'Saldo', data: dados.map(x => x.saldo) }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } } });
+  graficos[id] = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels: dados.map(x => x.mes),
+      datasets: [
+        { label: 'Receitas', data: dados.map(x => x.receitas), borderColor: '#38bdf8', backgroundColor: 'rgba(56, 189, 248, 0.12)', tension: 0.28, pointRadius: 3 },
+        { label: 'Despesas', data: dados.map(x => x.despesas), borderColor: '#fb7185', backgroundColor: 'rgba(251, 113, 133, 0.12)', tension: 0.28, pointRadius: 3 },
+        { label: 'Saldo', data: dados.map(x => x.saldo), borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.12)', tension: 0.28, pointRadius: 3 }
+      ]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: opcoesLegenda(true), tooltip: { titleColor: chartTextColor, bodyColor: chartTextColor } }, scales: opcoesEscala(true) }
+  });
 }
 function agrupar(linhas, chaveFn, valorFn) {
   const mapa = new Map();
