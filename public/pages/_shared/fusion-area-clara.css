@@ -1,0 +1,46 @@
+/* Fusion ERP — padronização da área principal clara.
+   Mantém menu lateral e cartões com seus estilos próprios. */
+html,
+body {
+  background: #f4f7fb !important;
+}
+
+body > .fusion-shell,
+.fusion-shell,
+.fusion-main,
+.fusion-content,
+main.main,
+main.wrap,
+main.prof-area,
+main[class*="-page"],
+body.fusion-com-sidebar,
+body.fusion-com-sidebar .fusion-shell,
+body.fusion-com-sidebar .fusion-shell > .fusion-main {
+  background-color: #f4f7fb !important;
+  background-image: none !important;
+}
+
+/* A área de conteúdo deve ocupar a tela clara, sem alterar o menu lateral. */
+.fusion-main,
+.fusion-content,
+main.main,
+main.wrap {
+  min-height: 100vh;
+}
+
+/* Evita faixas escuras criadas por pseudo-elementos do tema premium. */
+.fusion-main::before,
+.fusion-main::after,
+.fusion-content::before,
+.fusion-content::after,
+main.main::before,
+main.main::after {
+  background: transparent !important;
+  background-image: none !important;
+}
+
+@media (max-width: 900px) {
+  html, body, .fusion-main, .fusion-content, main.main, main.wrap {
+    background-color: #f4f7fb !important;
+  }
+}

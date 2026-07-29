@@ -38,3 +38,50 @@ select.campo-bloqueado-professor:disabled{
 .aba-divisao{background:#123d48!important;border-color:#477581!important;color:#f8fcfd!important}
 .aba-divisao.ativa{background:#20aec0!important;border-color:#54d6e5!important;color:#041d24!important}
 .btn.ghost{background:#f8fafc!important;border-color:#b8cbd1!important;color:#102a33!important}
+
+
+/* Correção de contraste das abas A/B/C no tema escuro do Fusion ERP. */
+.treino .abas-divisoes .aba-divisao{
+  min-width:108px!important;
+  min-height:40px!important;
+  background:#e8f2f5!important;
+  border:2px solid #8fb4bd!important;
+  color:#12313a!important;
+  font-weight:900!important;
+  opacity:1!important;
+  text-shadow:none!important;
+  box-shadow:0 2px 8px rgba(0,0,0,.22)!important;
+}
+.treino .abas-divisoes .aba-divisao:hover,
+.treino .abas-divisoes .aba-divisao:focus-visible{
+  background:#fff!important;
+  border-color:#43c7d8!important;
+  color:#071f26!important;
+  outline:3px solid rgba(67,199,216,.3)!important;
+  outline-offset:2px!important;
+}
+.treino .abas-divisoes .aba-divisao.ativa{
+  background:#18b7ca!important;
+  border-color:#8beaf3!important;
+  color:#031b21!important;
+  box-shadow:0 0 0 2px rgba(139,234,243,.22),0 4px 12px rgba(0,0,0,.28)!important;
+}
+.treino .abas-divisoes .aba-divisao span{
+  background:#163b45!important;
+  color:#fff!important;
+  border:1px solid #5e8993!important;
+  opacity:1!important;
+}
+.treino .abas-divisoes .aba-divisao.ativa span{
+  background:#f4fdff!important;
+  color:#07323c!important;
+  border-color:#07323c!important;
+}
+.treino .abas-divisoes .aba-mais{
+  min-width:40px!important;
+  width:40px!important;
+  background:#dcecef!important;
+  border-color:#8fb4bd!important;
+  color:#0b3039!important;
+  font-size:22px!important;
+}

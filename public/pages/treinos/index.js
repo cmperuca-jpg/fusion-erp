@@ -143,6 +143,8 @@ function listaDe(resposta) {
   if (Array.isArray(resposta.data)) return resposta.data;
   if (Array.isArray(resposta.alunos)) return resposta.alunos;
   if (Array.isArray(resposta.professores)) return resposta.professores;
+  if (Array.isArray(resposta.treinos)) return resposta.treinos;
+  if (resposta.dados && Array.isArray(resposta.dados.treinos)) return resposta.dados.treinos;
   if (Array.isArray(resposta.items)) return resposta.items;
   if (resposta.dados && Array.isArray(resposta.dados.itens)) return resposta.dados.itens;
   return [];
@@ -512,7 +514,17 @@ async function carregarTreinoDoAluno() {
     const alunoId = idPessoa(aluno);
     const resposta = await api(`/api/treinos?alunoId=${encodeURIComponent(alunoId)}`);
     if (resposta.ok === false) throw new Error(resposta.mensagem || "Erro ao carregar treino do aluno.");
-    const treinos = listaDe(resposta).slice().sort((a, b) => dataOrdenacaoTreino(b) - dataOrdenacaoTreino(a));
+    const chavesAluno = [alunoId, aluno.id, aluno.alunoId, aluno.codigo, aluno.matriculaId, aluno.cpf]
+      .filter(Boolean)
+      .map((valor) => String(valor).trim());
+    const treinosRecebidos = listaDe(resposta);
+    const treinosDoAluno = treinosRecebidos.filter((treino) => {
+      const chavesTreino = [treino.alunoId, treino.idAluno, treino.aluno_id, treino.aluno?.id, treino.aluno?.alunoId]
+        .filter(Boolean)
+        .map((valor) => String(valor).trim());
+      return !chavesTreino.length || chavesTreino.some((chave) => chavesAluno.includes(chave));
+    });
+    const treinos = treinosDoAluno.slice().sort((a, b) => dataOrdenacaoTreino(b) - dataOrdenacaoTreino(a));
     if (treinos.length) aplicarTreinoNoFormulario(treinos[0]);
     else limparFormularioTreino();
   } catch (erro) {
