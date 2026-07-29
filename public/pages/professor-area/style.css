@@ -1,16 +1,456 @@
-*{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f5f7fb;color:#101828}.prof-area{max-width:980px;margin:0 auto;padding:22px}.prof-hero{display:flex;align-items:center;justify-content:space-between;gap:16px;background:#fff;border:1px solid #dfe6f1;border-radius:22px;padding:20px;box-shadow:0 12px 34px rgba(15,23,42,.06);margin-bottom:14px}.prof-hero span{display:block;font-size:12px;text-transform:uppercase;font-weight:900;color:#ff6600;letter-spacing:.05em}.prof-hero h1{margin:3px 0 5px;font-size:30px}.prof-hero p{margin:0;color:#475569;font-weight:700}.btn{border:0;border-radius:12px;padding:12px 16px;font-weight:900;cursor:pointer;background:#e8eef8;color:#162036;text-decoration:none}.btn.primary{background:#111d35;color:#fff;width:100%;margin-top:12px}.prof-alerta{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;border-radius:16px;padding:13px 15px;font-weight:900;margin-bottom:14px}.prof-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.prof-card{background:#fff;border:1px solid #dfe6f1;border-radius:22px;padding:22px;box-shadow:0 12px 34px rgba(15,23,42,.06)}.icon{width:58px;height:58px;border-radius:18px;background:#f8fafc;border:1px solid #e2e8f0;display:grid;place-items:center;font-size:28px;margin-bottom:14px}.prof-card h2{margin:0 0 8px;font-size:24px}.prof-card p{margin:0;color:#475569;line-height:1.42}@media(max-width:760px){.prof-area{padding:12px}.prof-hero{align-items:flex-start;flex-direction:column;border-radius:18px}.prof-grid{grid-template-columns:1fr}.prof-hero .btn{width:100%}}
+/* Portal do Professor: camada isolada carregada depois do tema administrativo. */
+.portal-professor-page,
+.portal-professor-page * {
+  box-sizing: border-box;
+}
 
-.escopo-acesso{display:inline-flex;margin-top:10px;padding:7px 10px;border-radius:999px;background:#e2e8f0;color:#334155;font-size:12px;font-weight:900}
-.escopo-acesso.global{background:#dcfce7;color:#166534}
+html {
+  min-width: 320px;
+}
 
-.gestao-professores{margin-top:16px;background:#fff;border:1px solid #dfe6f1;border-radius:22px;padding:20px;box-shadow:0 12px 34px rgba(15,23,42,.06)}
-.gestao-professores[hidden]{display:none}.gestao-cabecalho{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:14px}.gestao-cabecalho span{font-size:12px;text-transform:uppercase;font-weight:900;color:#ff6600}.gestao-cabecalho h2{margin:4px 0 5px}.gestao-cabecalho p{margin:0;color:#475569}.gestao-mensagem{min-height:22px;font-weight:800;color:#475569;margin-bottom:8px}.lista-professores{display:grid;gap:9px}.professor-item{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:12px;border:1px solid #e2e8f0;border-radius:14px;padding:12px}.professor-dados{display:flex;flex-direction:column;gap:4px;min-width:0}.professor-dados span{color:#64748b;font-size:13px;overflow-wrap:anywhere}.status-professor{padding:6px 9px;border-radius:999px;font-size:12px;font-weight:900}.status-professor.ativo{background:#dcfce7;color:#166534}.status-professor.bloqueado{background:#fee2e2;color:#991b1b}.btn.bloquear{background:#fee2e2;color:#991b1b}.btn.desbloquear{background:#dcfce7;color:#166534}.btn:disabled{opacity:.5;cursor:not-allowed}.lista-vazia{color:#64748b}@media(max-width:700px){.gestao-cabecalho{flex-direction:column}.gestao-cabecalho .btn{width:100%}.professor-item{grid-template-columns:1fr auto}.professor-item .btn{grid-column:1/-1;width:100%}}
+body.portal-professor-page,
+body.portal-professor-page.fusion-no-sidebar {
+  margin: 0 !important;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background:
+    radial-gradient(circle at 82% 0%, rgba(42, 184, 202, .10), transparent 30%),
+    linear-gradient(145deg, #061219, #071821 72%) !important;
+  color: #f4f8fa !important;
+  font-family: Arial, Helvetica, sans-serif !important;
+}
 
-/* Portal do professor: contraste independente do tema administrativo. */
-.prof-alerta{background:#fff7ed!important;border-color:#fdba74!important;color:#7c2d12!important;text-shadow:none!important}
-.prof-alerta *{color:inherit!important}
-.icon{background:#e6f3f6!important;border-color:#7fb5c1!important;color:#082f3a!important;text-shadow:none!important}
-.prof-card h2,.gestao-professores h2,.professor-dados strong{color:#fff!important;text-shadow:none!important}
-.prof-card p,.gestao-cabecalho p,.professor-dados span,.gestao-mensagem,.lista-vazia{color:#d5e7eb!important;opacity:1!important;text-shadow:none!important}
-.prof-hero p{color:#d5e7eb!important;opacity:1!important}
-.escopo-acesso.global{background:#dcfce7!important;color:#14532d!important}
+body.portal-professor-page > main.prof-area,
+body.portal-professor-page.fusion-no-sidebar > main.prof-area {
+  width: min(100%, 1240px) !important;
+  max-width: 1240px !important;
+  min-height: auto !important;
+  margin: 0 auto !important;
+  padding: 18px !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+.portal-professor-page .prof-hero,
+.portal-professor-page .prof-card,
+.portal-professor-page .gestao-professores {
+  background: linear-gradient(145deg, rgba(13, 51, 64, .96), rgba(8, 35, 43, .96)) !important;
+  color: #f4f8fa !important;
+  border: 1px solid #1b4652 !important;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, .18) !important;
+}
+
+.portal-professor-page .prof-hero {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 18px !important;
+  min-height: 0 !important;
+  margin: 0 0 14px !important;
+  padding: 18px 20px !important;
+  border-radius: 18px !important;
+}
+
+.portal-professor-page .prof-identidade {
+  display: grid !important;
+  grid-template-columns: auto minmax(0, 1fr) !important;
+  align-items: center !important;
+  gap: 16px !important;
+  min-width: 0;
+}
+
+.portal-professor-page .prof-copy {
+  min-width: 0;
+}
+
+.portal-professor-page .fusion-professor-perfil-foto {
+  display: grid !important;
+  grid-template-columns: 82px !important;
+  justify-items: center !important;
+  align-content: center !important;
+  gap: 7px !important;
+  margin: 0 !important;
+}
+
+.portal-professor-page #fotoProfessorPortal {
+  width: 82px !important;
+  height: 82px !important;
+  margin: 0 !important;
+  border: 3px solid rgba(255, 255, 255, .72) !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, .24) !important;
+}
+
+.portal-professor-page #btnFotoProfessorPortal {
+  width: auto !important;
+  min-width: 82px !important;
+  min-height: 30px !important;
+  margin: 0 !important;
+  padding: 6px 9px !important;
+  border: 1px solid #3ec2d3 !important;
+  border-radius: 8px !important;
+  background: #169db0 !important;
+  color: #fff !important;
+  font-size: 10px !important;
+  font-weight: 900 !important;
+  line-height: 1.1 !important;
+}
+
+.portal-professor-page .prof-marca,
+.portal-professor-page .gestao-cabecalho > div > span {
+  display: block !important;
+  margin: 0 !important;
+  color: #ff7a1a !important;
+  font-size: 11px !important;
+  font-weight: 900 !important;
+  letter-spacing: .06em !important;
+  line-height: 1.2 !important;
+  text-transform: uppercase !important;
+  text-shadow: none !important;
+}
+
+.portal-professor-page .prof-hero h1 {
+  margin: 3px 0 4px !important;
+  color: #fff !important;
+  font-size: clamp(24px, 3vw, 32px) !important;
+  line-height: 1.06 !important;
+  letter-spacing: -.025em !important;
+  overflow-wrap: anywhere;
+  text-shadow: none !important;
+}
+
+.portal-professor-page .prof-hero p,
+.portal-professor-page .prof-card p,
+.portal-professor-page .gestao-cabecalho p,
+.portal-professor-page .professor-dados span,
+.portal-professor-page .gestao-mensagem,
+.portal-professor-page .lista-vazia {
+  color: #d5e7eb !important;
+  opacity: 1 !important;
+  text-shadow: none !important;
+}
+
+.portal-professor-page .prof-hero p {
+  margin: 0 !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  line-height: 1.4 !important;
+}
+
+.portal-professor-page .escopo-acesso {
+  display: inline-flex !important;
+  align-items: center !important;
+  max-width: 100%;
+  margin: 9px 0 0 !important;
+  padding: 7px 10px !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: #e2e8f0 !important;
+  color: #334155 !important;
+  font-size: 11px !important;
+  font-weight: 900 !important;
+  line-height: 1.2 !important;
+  white-space: normal !important;
+}
+
+.portal-professor-page .escopo-acesso.global {
+  background: #dcfce7 !important;
+  color: #14532d !important;
+}
+
+.portal-professor-page .btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 38px !important;
+  padding: 9px 14px !important;
+  border: 1px solid transparent !important;
+  border-radius: 9px !important;
+  box-shadow: none !important;
+  font-size: 12px !important;
+  font-weight: 900 !important;
+  line-height: 1.15 !important;
+  text-decoration: none !important;
+  white-space: normal !important;
+  cursor: pointer;
+}
+
+.portal-professor-page .prof-sair {
+  align-self: start !important;
+  min-width: 72px !important;
+  background: transparent !important;
+  color: #f4f8fa !important;
+  border-color: #4b7883 !important;
+}
+
+.portal-professor-page .prof-sair:hover,
+.portal-professor-page .prof-sair:focus-visible {
+  background: rgba(42, 184, 202, .12) !important;
+  border-color: #2ab8ca !important;
+}
+
+.portal-professor-page .prof-alerta {
+  margin: 0 0 14px !important;
+  padding: 12px 15px !important;
+  border: 1px solid #fdba74 !important;
+  border-radius: 12px !important;
+  background: #fff7ed !important;
+  color: #7c2d12 !important;
+  font-size: 12px !important;
+  font-weight: 900 !important;
+  line-height: 1.35 !important;
+  text-shadow: none !important;
+}
+
+.portal-professor-page .prof-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 14px !important;
+}
+
+.portal-professor-page .prof-card {
+  display: grid !important;
+  grid-template-columns: 52px minmax(0, 1fr) !important;
+  grid-template-rows: 1fr auto !important;
+  align-items: start !important;
+  gap: 12px 14px !important;
+  min-height: 180px !important;
+  padding: 18px !important;
+  border-radius: 18px !important;
+}
+
+.portal-professor-page .icon {
+  display: grid !important;
+  place-items: center !important;
+  width: 52px !important;
+  height: 52px !important;
+  margin: 0 !important;
+  border: 1px solid #7fb5c1 !important;
+  border-radius: 15px !important;
+  background: #e6f3f6 !important;
+  color: #082f3a !important;
+  font-size: 24px !important;
+  line-height: 1 !important;
+  text-shadow: none !important;
+}
+
+.portal-professor-page .prof-card-conteudo {
+  min-width: 0;
+}
+
+.portal-professor-page .prof-card h2,
+.portal-professor-page .gestao-professores h2,
+.portal-professor-page .professor-dados strong {
+  color: #fff !important;
+  text-shadow: none !important;
+}
+
+.portal-professor-page .prof-card h2 {
+  margin: 1px 0 6px !important;
+  font-size: 21px !important;
+  line-height: 1.15 !important;
+}
+
+.portal-professor-page .prof-card p {
+  margin: 0 !important;
+  font-size: 13px !important;
+  line-height: 1.45 !important;
+}
+
+.portal-professor-page .prof-card .btn.primary {
+  grid-column: 1 / -1 !important;
+  width: 100% !important;
+  margin: 0 !important;
+  background: #169db0 !important;
+  color: #fff !important;
+  border-color: #2ab8ca !important;
+}
+
+.portal-professor-page .prof-card .btn.primary:hover,
+.portal-professor-page .prof-card .btn.primary:focus-visible {
+  background: #128a9b !important;
+}
+
+.portal-professor-page .gestao-professores {
+  margin: 14px 0 0 !important;
+  padding: 18px !important;
+  border-radius: 18px !important;
+}
+
+.portal-professor-page .gestao-professores[hidden] {
+  display: none !important;
+}
+
+.portal-professor-page .gestao-cabecalho {
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 16px !important;
+  margin: 0 0 14px !important;
+}
+
+.portal-professor-page .gestao-cabecalho h2 {
+  margin: 4px 0 5px !important;
+  font-size: 21px !important;
+}
+
+.portal-professor-page .gestao-cabecalho p {
+  margin: 0 !important;
+}
+
+.portal-professor-page .gestao-mensagem {
+  min-height: 22px;
+  margin-bottom: 8px;
+  font-weight: 800;
+}
+
+.portal-professor-page .lista-professores {
+  display: grid !important;
+  gap: 9px !important;
+}
+
+.portal-professor-page .professor-item {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto auto !important;
+  align-items: center !important;
+  gap: 12px !important;
+  padding: 12px !important;
+  border: 1px solid #28515d !important;
+  border-radius: 12px !important;
+  background: #071c24 !important;
+}
+
+.portal-professor-page .professor-dados {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.portal-professor-page .professor-dados span {
+  font-size: 12px !important;
+  overflow-wrap: anywhere;
+}
+
+.portal-professor-page .status-professor {
+  padding: 6px 9px !important;
+  border-radius: 999px !important;
+  font-size: 10px !important;
+  font-weight: 900 !important;
+  white-space: nowrap !important;
+}
+
+.portal-professor-page .status-professor.ativo,
+.portal-professor-page .btn.desbloquear {
+  background: #dcfce7 !important;
+  color: #166534 !important;
+}
+
+.portal-professor-page .status-professor.bloqueado,
+.portal-professor-page .btn.bloquear {
+  background: #fee2e2 !important;
+  color: #991b1b !important;
+}
+
+.portal-professor-page .btn:disabled {
+  opacity: .5 !important;
+  cursor: not-allowed !important;
+}
+
+@media (max-width: 760px) {
+  body.portal-professor-page > main.prof-area,
+  body.portal-professor-page.fusion-no-sidebar > main.prof-area {
+    padding: 12px !important;
+  }
+
+  .portal-professor-page .prof-hero {
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    align-items: start !important;
+    padding: 14px !important;
+    border-radius: 15px !important;
+  }
+
+  .portal-professor-page .prof-identidade {
+    grid-template-columns: 68px minmax(0, 1fr) !important;
+    gap: 12px !important;
+  }
+
+  .portal-professor-page .fusion-professor-perfil-foto {
+    grid-template-columns: 68px !important;
+  }
+
+  .portal-professor-page #fotoProfessorPortal {
+    width: 68px !important;
+    height: 68px !important;
+  }
+
+  .portal-professor-page #btnFotoProfessorPortal {
+    min-width: 68px !important;
+    padding: 5px 6px !important;
+    font-size: 9px !important;
+  }
+
+  .portal-professor-page .prof-sair {
+    min-width: 58px !important;
+    padding-inline: 10px !important;
+  }
+
+  .portal-professor-page .prof-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .portal-professor-page .prof-card {
+    min-height: 164px !important;
+  }
+
+  .portal-professor-page .gestao-cabecalho {
+    flex-direction: column !important;
+  }
+
+  .portal-professor-page .gestao-cabecalho .btn {
+    width: 100% !important;
+  }
+
+  .portal-professor-page .professor-item {
+    grid-template-columns: minmax(0, 1fr) auto !important;
+  }
+
+  .portal-professor-page .professor-item .btn {
+    grid-column: 1 / -1 !important;
+    width: 100% !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .portal-professor-page .prof-hero {
+    grid-template-columns: 1fr !important;
+  }
+
+  .portal-professor-page .prof-sair {
+    position: absolute;
+    top: 22px;
+    right: 22px;
+  }
+
+  .portal-professor-page .prof-identidade {
+    padding-right: 62px;
+  }
+
+  .portal-professor-page .prof-card {
+    grid-template-columns: 46px minmax(0, 1fr) !important;
+    padding: 15px !important;
+  }
+
+  .portal-professor-page .icon {
+    width: 46px !important;
+    height: 46px !important;
+    border-radius: 13px !important;
+    font-size: 21px !important;
+  }
+
+  .portal-professor-page .prof-card h2 {
+    font-size: 19px !important;
+  }
+}

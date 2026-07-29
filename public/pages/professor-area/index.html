@@ -4,33 +4,69 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Área do Professor - Fusion ERP</title>
-  <script src="/assets/js/fusion-portal-guard.js?v=20260728-professor-foto-1" data-fusion-guard="professor"></script>
-  <link rel="stylesheet" href="./style.css?v=20260728-professor-foto-1">
+  <script src="/assets/js/fusion-portal-guard.js?v=20260729-professor-layout-1" data-fusion-guard="professor"></script>
   <link rel="manifest" href="/manifest-professor.webmanifest">
-  <meta name="theme-color" content="#2563eb">
+  <meta name="theme-color" content="#0a2731">
   <link rel="stylesheet" href="/assets/css/fusion-no-sidebar.css">
   <link rel="stylesheet" href="/assets/css/fusion-app.css">
   <link rel="stylesheet" href="/assets/css/fusion-premium-final.css">
+  <link rel="stylesheet" href="./style.css?v=20260729-professor-layout-1">
 </head>
-<body>
+<body class="portal-professor-page fusion-no-sidebar">
   <main class="prof-area">
     <header class="prof-hero">
-      <div><span>Fusion ERP</span><h1 id="professorNome">Professor</h1><p>Área restrita para avaliação física e montagem de treinos.</p><div id="escopoAcesso" class="escopo-acesso"></div></div>
-      <button id="sair" class="btn" type="button">Sair</button>
+      <div class="prof-identidade">
+        <div class="prof-copy">
+          <span class="prof-marca">Fusion ERP</span>
+          <h1 id="professorNome">Professor</h1>
+          <p>Área restrita para avaliação física e montagem de treinos.</p>
+          <div id="escopoAcesso" class="escopo-acesso"></div>
+        </div>
+      </div>
+      <button id="sair" class="btn prof-sair" type="button">Sair</button>
     </header>
-    <section class="prof-alerta">Este acesso não abre o painel administrativo do sistema. Use apenas as opções abaixo.</section>
-    <section class="prof-grid">
-      <article class="prof-card"><div class="icon">AV</div><h2>Avaliação física</h2><p>Criar, revisar e acompanhar avaliações dos alunos.</p><button id="abrirAvaliacao" class="btn primary" type="button">Abrir avaliação física</button></article>
-      <article class="prof-card"><div class="icon">TR</div><h2>Montador de treino</h2><p>Prescrever treino A/B/C, séries, repetições, cargas e observações.</p><button id="abrirTreinos" class="btn primary" type="button">Abrir montador de treino</button></article>
+
+    <section class="prof-alerta" role="note">
+      Este acesso não abre o painel administrativo do sistema. Use apenas as opções abaixo.
     </section>
+
+    <section class="prof-grid" aria-label="Ferramentas do professor">
+      <article class="prof-card">
+        <div class="icon" aria-hidden="true">AV</div>
+        <div class="prof-card-conteudo">
+          <h2>Avaliação física</h2>
+          <p>Criar, revisar e acompanhar avaliações dos alunos.</p>
+        </div>
+        <button id="abrirAvaliacao" class="btn primary" type="button">Abrir avaliação física</button>
+      </article>
+
+      <article class="prof-card">
+        <div class="icon" aria-hidden="true">TR</div>
+        <div class="prof-card-conteudo">
+          <h2>Montador de treino</h2>
+          <p>Prescrever treino A/B/C, séries, repetições, cargas e observações.</p>
+        </div>
+        <button id="abrirTreinos" class="btn primary" type="button">Abrir montador de treino</button>
+      </article>
+    </section>
+
     <section id="gestaoProfessores" class="gestao-professores" hidden>
-      <div class="gestao-cabecalho"><div><span>Responsável técnico</span><h2>Gestão de professores</h2><p>Visualize, bloqueie e desbloqueie os professores cadastrados.</p></div><button id="atualizarProfessores" class="btn" type="button">Atualizar lista</button></div>
-      <div id="mensagemProfessores" class="gestao-mensagem"></div><div id="listaProfessores" class="lista-professores"></div>
+      <div class="gestao-cabecalho">
+        <div>
+          <span>Responsável técnico</span>
+          <h2>Gestão de professores</h2>
+          <p>Visualize, bloqueie e desbloqueie os professores cadastrados.</p>
+        </div>
+        <button id="atualizarProfessores" class="btn" type="button">Atualizar lista</button>
+      </div>
+      <div id="mensagemProfessores" class="gestao-mensagem" aria-live="polite"></div>
+      <div id="listaProfessores" class="lista-professores"></div>
     </section>
   </main>
-  <script src="./index.js?v=20260728-professor-foto-1"></script>
-  <script src="/assets/js/fusion-foto-perfil.js?v=20260728-professor-foto-1"></script>
-  <script src="/assets/js/fusion-professor-foto-perfil.js?v=20260728-professor-foto-1"></script>
+
+  <script src="./index.js?v=20260729-professor-layout-1"></script>
+  <script src="/assets/js/fusion-foto-perfil.js?v=20260729-professor-layout-1"></script>
+  <script src="/assets/js/fusion-professor-foto-perfil.js?v=20260729-professor-layout-1"></script>
   <script src="/assets/js/fusion-no-sidebar.js" defer></script>
   <script src="/assets/pwa/fusion-pwa-install.js" defer></script>
 </body>
