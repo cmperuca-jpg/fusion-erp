@@ -13,7 +13,9 @@ import {
 } from './api.js';
 
 const $ = seletor => document.querySelector(seletor);
-const estado = { mensalidades: [], alunos: [], planos: [] };
+const PARAMS_INICIAIS = new URLSearchParams(location.search);
+const ALUNO_ID_URL = PARAMS_INICIAIS.get('alunoId') || PARAMS_INICIAIS.get('aluno_id') || '';
+const estado = { mensalidades: [], alunos: [], planos: [], alunoContexto: null };
 let baixaMensalidadeAtual = null;
 
 function valorPrincipalMensalidade(item = {}) {
@@ -68,8 +70,21 @@ function textoSeguro(valor) {
   return String(valor ?? '');
 }
 
+function alunoId(item = {}) {
+  return textoSeguro(item.id || item._id || item.alunoId || item.aluno_id);
+}
+
+function alunoNome(item = {}) {
+  return textoSeguro(item.nome || item.nomeCompleto || item.alunoNome || item.aluno || item.name || 'Aluno');
+}
+
 function filtros() {
-  return { q: $('#fBusca').value, competencia: $('#fCompetencia').value, status: $('#fStatus').value };
+  return {
+    q: $('#fBusca').value,
+    competencia: $('#fCompetencia').value,
+    status: $('#fStatus').value,
+    alunoId: ALUNO_ID_URL
+  };
 }
 
 function limparElemento(el) {
@@ -105,6 +120,27 @@ function preencherSelects() {
     const valor = Number(plano.valor ?? plano.preco ?? plano.valorMensal ?? 0);
     planoSelect.appendChild(criarOpcao(id, nome, { valor }));
   });
+}
+
+function aplicarContextoAluno() {
+  if (!ALUNO_ID_URL) return;
+  estado.alunoContexto = estado.alunos.find(aluno => alunoId(aluno) === textoSeguro(ALUNO_ID_URL)) || null;
+
+  const faixa = $('#mensalidadeAlunoContexto');
+  if (faixa) {
+    const titulo = faixa.querySelector('strong');
+    const texto = faixa.querySelector('span');
+    if (estado.alunoContexto) {
+      titulo.textContent = `Mensalidades de ${alunoNome(estado.alunoContexto)}`;
+      texto.textContent = 'Mostrando todos os vencimentos deste aluno, sem limitar ao mes atual.';
+    } else {
+      titulo.textContent = 'Mensalidades do aluno selecionado';
+      texto.textContent = 'O filtro veio da ficha do aluno. Se nada aparecer, ainda nao existe mensalidade vinculada.';
+    }
+    faixa.classList.remove('hidden');
+  }
+
+  if ($('#alunoId')) $('#alunoId').value = ALUNO_ID_URL;
 }
 
 function statusTexto(status) {
@@ -216,6 +252,7 @@ async function carregarBases() {
   try { estado.alunos = await listarAlunos(); } catch { estado.alunos = []; }
   try { estado.planos = await listarPlanos(); } catch { estado.planos = []; }
   preencherSelects();
+  aplicarContextoAluno();
 }
 
 function abrirModal(m = null) {
@@ -229,6 +266,7 @@ function abrirModal(m = null) {
   $('#observacao').value = m?.observacao || '';
 
   if (m?.alunoId) $('#alunoId').value = m.alunoId;
+  else if (ALUNO_ID_URL) $('#alunoId').value = ALUNO_ID_URL;
   if (m?.planoId) $('#planoId').value = m.planoId;
 
   $('#quantidade').disabled = Boolean(m);
@@ -410,6 +448,6 @@ $('#lista').addEventListener('click', async ev => {
   }
 });
 
-$('#fCompetencia').value = competenciaAtual();
+$('#fCompetencia').value = ALUNO_ID_URL ? '' : competenciaAtual();
 await carregarBases();
 await carregar();

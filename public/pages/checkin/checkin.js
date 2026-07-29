@@ -7,6 +7,8 @@
     }
 
     const API = "/api/checkin";
+    const paramsIniciais = new URLSearchParams(location.search);
+    const alunoIdUrl = paramsIniciais.get("alunoId") || paramsIniciais.get("aluno_id") || "";
 
     const els = {
       tabela: document.getElementById("tabelaCheckin"),
@@ -34,6 +36,7 @@
     let professores = [];
     let turmas = [];
     let planos = [];
+    let alunoContexto = null;
 
     function valor(id) {
       const el = document.getElementById(id);
@@ -43,6 +46,31 @@
     function setValor(id, value) {
       const el = document.getElementById(id);
       if (el) el.value = value ?? "";
+    }
+
+    function idAluno(aluno = {}) {
+      return String(aluno.id || aluno._id || aluno.alunoId || aluno.aluno_id || "");
+    }
+
+    function nomeAluno(aluno = {}) {
+      return String(aluno.nome || aluno.nomeCompleto || aluno.alunoNome || aluno.aluno || aluno.name || "Aluno");
+    }
+
+    function renderizarContextoAluno() {
+      const faixa = document.getElementById("checkinAlunoContexto");
+      if (!faixa || !alunoIdUrl) return;
+      const titulo = faixa.querySelector("strong");
+      const texto = faixa.querySelector("span");
+
+      if (alunoContexto) {
+        if (titulo) titulo.textContent = `Check-in de ${nomeAluno(alunoContexto)}`;
+        if (texto) texto.textContent = "Historico filtrado pelo aluno selecionado. Novo check-in ja abre com este aluno.";
+      } else {
+        if (titulo) titulo.textContent = "Check-in do aluno selecionado";
+        if (texto) texto.textContent = "O aluno veio da ficha cadastral, mas nao foi localizado entre os cadastros ativos.";
+      }
+
+      faixa.classList.remove("hidden");
     }
 
     function listaDeResposta(json, chavePrincipal) {
@@ -153,7 +181,15 @@
         buscarLista("/api/planos", "planos")
       ]);
 
+      alunoContexto = alunoIdUrl
+        ? listaAlunos.find((aluno) => idAluno(aluno) === String(alunoIdUrl)) || null
+        : null;
+
       alunos = listaAlunos.filter(ativo).sort((a, b) => String(a.nome || "").localeCompare(String(b.nome || "")));
+      if (alunoContexto && !alunos.some((aluno) => idAluno(aluno) === idAluno(alunoContexto))) {
+        alunos.unshift(alunoContexto);
+      }
+
       matriculas = listaMatriculas;
       professores = listaProfessores.filter(ativo).sort((a, b) => String(a.nome || "").localeCompare(String(b.nome || "")));
       turmas = listaTurmas.filter(ativo).sort((a, b) => String(a.nome || "").localeCompare(String(b.nome || "")));
@@ -167,6 +203,12 @@
       if (selectPlano && planos.length) {
         preencherSelect("plano", planos, (p) => p.nome, (p) => p.nome, "Selecione o plano");
       }
+
+      if (alunoContexto) {
+        setValor("aluno", idAluno(alunoContexto));
+        preencherMatriculasDoAluno(alunoContexto);
+      }
+      renderizarContextoAluno();
     }
 
     function hojeISO() {
@@ -208,6 +250,10 @@
         setValor("horaEntrada", horaAtual());
         setValor("tipo", "Manual");
         setValor("status", "Liberado");
+        if (alunoContexto) {
+          setValor("aluno", idAluno(alunoContexto));
+          preencherMatriculasDoAluno(alunoContexto);
+        }
       }
 
       els.modal.classList.add("ativo");
@@ -223,7 +269,10 @@
 
     function renderizarTabela() {
       if (!registros.length) {
-        els.tabela.innerHTML = `<tr><td colspan="9">Nenhum check-in encontrado.</td></tr>`;
+        const mensagem = alunoContexto
+          ? "Nenhum check-in encontrado para este aluno."
+          : "Nenhum check-in encontrado.";
+        els.tabela.innerHTML = `<tr><td colspan="9">${mensagem}</td></tr>`;
         return;
       }
 
@@ -265,6 +314,7 @@
     async function carregarRegistros() {
       try {
         const params = new URLSearchParams();
+        if (alunoIdUrl) params.set("alunoId", alunoIdUrl);
         if (els.busca.value) params.set("busca", els.busca.value);
         if (els.filtroStatus.value) params.set("status", els.filtroStatus.value);
         if (els.filtroData.value) params.set("data", els.filtroData.value);

@@ -1,5 +1,21 @@
 [
   {
+    "id": "audfin_3768b5ed-34e0-4481-af74-29a9498db621",
+    "dataHora": "2026-07-29T13:49:54.863Z",
+    "usuario": "sistema",
+    "acao": "emitir_recibo",
+    "entidade": "recibo",
+    "entidadeId": "rec_a4769c1e-1b0b-4503-8eb4-2a8c308e6711",
+    "detalhes": {
+      "numero": "00000006",
+      "valor": 73,
+      "tituloIds": [
+        "fin_1785332936949_843405"
+      ],
+      "caixaId": "cx_1784930775284_75abd0"
+    }
+  },
+  {
     "id": "audfin_d3010369-4dbd-4b48-8e25-c4e836639180",
     "dataHora": "2026-07-24T21:42:07.370Z",
     "usuario": "sistema",

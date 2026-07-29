@@ -284,12 +284,35 @@
 
     if ($("valor")) $("valor").value = mensalidade.toFixed(2);
     if ($("valor_total_inicial")) $("valor_total_inicial").value = total.toFixed(2);
-    if (taxaInput) taxaInput.disabled = !cobrarTaxa;
+    if (taxaInput) taxaInput.disabled = !cobrarTaxa || modoSomenteTurma;
 
     if ($("resumoPlano")) {
       $("resumoPlano").innerHTML = plano
         ? `<b>${esc(plano.nome || "")}</b><br>Mensalidade do plano: ${br(mensalidade)}<br>Taxa de matricula: ${br(taxa)}<br>Desconto: ${br(desconto)}<br><b>Total inicial: ${br(total)}</b><br><small>Turma nao entra no financeiro. Ela serve somente para agenda, presenca e organizacao operacional.</small>`
         : "Selecione um plano para calcular a matricula.";
+    }
+  }
+
+  function setFinanceiroOperacionalBloqueado(bloqueado) {
+    [
+      "taxa_matricula",
+      "desconto_matricula",
+      "forma_pagamento",
+      "vencimento",
+      "dia_vencimento",
+      "cobrar_taxa_matricula",
+      "gerar_mensalidade"
+    ].forEach((id) => {
+      const campo = $(id);
+      if (!campo) return;
+      campo.disabled = Boolean(bloqueado);
+      if (bloqueado) campo.dataset.bloqueioOperacional = "true";
+      else delete campo.dataset.bloqueioOperacional;
+    });
+
+    const financeiroTab = document.querySelector('[data-tab="financeiro"]');
+    if (financeiroTab) {
+      financeiroTab.textContent = bloqueado ? "Plano preservado" : "Plano e financeiro";
     }
   }
 
@@ -309,6 +332,7 @@
   function preencherFormulario(m) {
     matriculaAtual = m;
     modoSomenteTurma = false;
+    setFinanceiroOperacionalBloqueado(false);
     const btn = $("btnSalvar");
     if (btn) btn.textContent = "Salvar matricula";
     $("matriculaId").value = m.id || "";
@@ -334,11 +358,12 @@
   function ativarModoSomenteTurma({ mostrarMensagem = true } = {}) {
     if (!matriculaAtual) return;
     modoSomenteTurma = true;
+    setFinanceiroOperacionalBloqueado(true);
     const btn = $("btnSalvar");
-    if (btn) btn.textContent = "Salvar turma";
+    if (btn) btn.textContent = "Salvar turma/modalidade";
     tab("dados");
     if (mostrarMensagem) {
-      setAlerta("Escolha a turma e clique em Salvar turma. Este ajuste nao gera cobranca nem taxa.", "ok");
+      setAlerta("Escolha turma/modalidade e salve. Plano, vencimento e cobranca ficam preservados.", "ok");
     }
   }
 
@@ -356,7 +381,10 @@
     if (!alunoId) return;
     const mats = await buscarMatriculasAluno(alunoId);
     const ativa = mats.find((m) => statusMatriculaEditavel(m.status));
-    if (ativa) preencherFormulario(ativa);
+    if (ativa) {
+      preencherFormulario(ativa);
+      ativarModoSomenteTurma({ mostrarMensagem: false });
+    }
   }
 
   async function salvarMatriculaExistenteSemFinanceiro({ atualizarVencimento = false, atualizarStatus = false } = {}) {
@@ -576,6 +604,7 @@
     $("plano_id")?.addEventListener("change", () => {
       if (modoSomenteTurma) {
         modoSomenteTurma = false;
+        setFinanceiroOperacionalBloqueado(false);
         const btn = $("btnSalvar");
         if (btn) btn.textContent = "Salvar matricula";
         setAlerta("Plano alterado: salvar agora passa a ser troca comercial com financeiro.", "erro");
@@ -623,7 +652,11 @@
       if (modoReativacao() && !matriculaAtual && $("status")) $("status").value = "Pendente";
     }
     if (idUrl && idUrl !== "undefined") {
-      try { preencherFormulario(await carregarMatricula(idUrl)); }
+      try {
+        const matricula = await carregarMatricula(idUrl);
+        preencherFormulario(matricula);
+        if (statusMatriculaEditavel(matricula.status)) ativarModoSomenteTurma({ mostrarMensagem: false });
+      }
       catch (erro) { setAlerta(erro.message, "erro"); }
     }
     recalcular();

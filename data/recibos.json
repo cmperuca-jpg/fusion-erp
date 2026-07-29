@@ -1,5 +1,46 @@
 [
   {
+    "id": "rec_a4769c1e-1b0b-4503-8eb4-2a8c308e6711",
+    "numero": "00000006",
+    "operacaoId": "ea89e261-8878-4c29-b4b7-2a0a12d508ec",
+    "data": "2026-07-29",
+    "hora": "10:49:54",
+    "alunoId": "31c67092-0a41-42ed-a1d4-021f37e57868",
+    "aluno": "marcos matheus lima de souza",
+    "caixaId": "cx_1784930775284_75abd0",
+    "valorPagoCentavos": 7300,
+    "valorPago": 73,
+    "valorBrutoRecebido": 73,
+    "valorAplicadoCentavos": 7300,
+    "valorAplicado": 73,
+    "taxaOperadoraValorCentavos": 0,
+    "taxaOperadoraValor": 0,
+    "valorLiquidoCentavos": 7300,
+    "valorLiquido": 73,
+    "diferencaCentavos": 0,
+    "troco": 0,
+    "creditoGerado": 0,
+    "formasPagamento": [
+      {
+        "formaPagamento": "Dinheiro",
+        "valor": 73,
+        "referencia": "",
+        "bandeiraCartao": "",
+        "modalidadeCartao": "",
+        "parcelasCartao": 1,
+        "taxaOperadoraPercentual": 0,
+        "taxaOperadoraFixa": 0,
+        "taxaOperadoraValor": 0,
+        "taxa": 0,
+        "valorLiquido": 73
+      }
+    ],
+    "cancelado": false,
+    "usuario": "sistema",
+    "observacao": "",
+    "criadoEm": "2026-07-29T13:49:54.848Z"
+  },
+  {
     "id": "rec_48f71007-f36a-45ed-919b-3dfb6dd81a03",
     "numero": "00000005",
     "operacaoId": "018d576b-1273-4214-963a-4cd23323a235",

@@ -286,13 +286,6 @@ export async function movimentoDiarioCaixa(filtros = {}) {
 
   const entradas = movimentosPeriodo.filter(m => normalizar(m.tipo).includes('entrada'));
   const saidas = movimentosPeriodo.filter(m => normalizar(m.tipo).includes('saida') || normalizar(m.tipo).includes('saída'));
-  const vistosEntradasGlobais = new Set();
-  const vistosSaidasGlobais = new Set();
-  movimentos.filter(statusAtivo).filter((m) => !movimentoNeutroPorEstorno(m, recibosEstornados)).forEach((m) => {
-    const tipo = normalizar(m.tipo);
-    if (tipo.includes('entrada')) marcarVisto(vistosEntradasGlobais, m);
-    if (tipo.includes('saida') || tipo.includes('saída')) marcarVisto(vistosSaidasGlobais, m);
-  });
   const quantidadeMovimentosPorRecibo = new Map();
   for (const entrada of entradas) {
     const reciboId = String(entrada.reciboId || '').trim();
@@ -375,7 +368,6 @@ export async function movimentoDiarioCaixa(filtros = {}) {
     .filter(r => dentroPeriodo(dataPagamento(r) || dataVencimento(r), dataInicio, dataFim))
     .filter(r => passaFormaFiltro(r, formaFiltro) && passaCategoriaFiltro(r, categoriaFiltro))
     .filter(r => !jaVisto(vistosRecebimentos, r))
-    .filter(r => !jaVisto(vistosEntradasGlobais, r))
     .map(r => {
       const item = {
         id: r.id,
@@ -400,7 +392,6 @@ export async function movimentoDiarioCaixa(filtros = {}) {
     .filter(r => dentroPeriodo(r.data || dataISO(r.criadoEm), dataInicio, dataFim))
     .filter(r => passaCategoriaFiltro({ ...r, categoria: categoriaDoRecibo(r), descricao: `Recibo ${r.numero || r.id}`, pessoa: r.aluno }, categoriaFiltro))
     .filter(r => !jaVisto(vistosRecebimentos, r))
-    .filter(r => !jaVisto(vistosEntradasGlobais, r))
     .flatMap(r => {
       marcarVisto(vistosRecebimentos, r);
       const formas = formasRecibo(r);
@@ -438,7 +429,6 @@ export async function movimentoDiarioCaixa(filtros = {}) {
     .filter(p => dentroPeriodo(dataPagamento(p) || dataVencimento(p), dataInicio, dataFim))
     .filter(p => passaFormaFiltro(p, formaFiltro) && passaCategoriaFiltro(p, categoriaFiltro))
     .filter(p => !jaVisto(vistosPagamentos, p))
-    .filter(p => !jaVisto(vistosSaidasGlobais, p))
     .map(p => {
       const item = {
         id: p.id,
@@ -460,7 +450,6 @@ export async function movimentoDiarioCaixa(filtros = {}) {
     .filter(f => dentroPeriodo(dataPagamento(f) || dataVencimento(f), dataInicio, dataFim))
     .filter(f => passaFormaFiltro(f, formaFiltro) && passaCategoriaFiltro(f, categoriaFiltro))
     .filter(f => !jaVisto(vistosPagamentos, f))
-    .filter(f => !jaVisto(vistosSaidasGlobais, f))
     .map(f => {
       const item = {
         id: f.id,

@@ -1,1 +1,124 @@
-[]
+[
+  {
+    "id": "men_1785332936948_539009",
+    "alunoId": "31c67092-0a41-42ed-a1d4-021f37e57868",
+    "aluno": "marcos matheus lima de souza",
+    "matriculaId": "mat_1785332936942_260676",
+    "planoId": "7b5a2b88-381b-446a-ba27-9ff3aa6bd510",
+    "plano": "fusion fit",
+    "tipoPlano": "Mensal",
+    "competencia": "2026-07",
+    "vencimento": "2026-08-29",
+    "valorMatricula": 0,
+    "taxaMatricula": 0,
+    "valorPlano": 65,
+    "valorServicos": 0,
+    "valor": 65,
+    "total": 65,
+    "valorOriginal": 65,
+    "valorTotalInicial": 65,
+    "valorPago": 73,
+    "valorRecebido": 0,
+    "valorRestante": 0,
+    "servicos": [
+      {
+        "id": "1784906181707",
+        "turmaId": "1784906181707",
+        "nome": "MUSCULAÇÃO",
+        "modalidade": "MUSCULAÇÃO",
+        "professorId": "",
+        "professor": "MARCOS ANDRE",
+        "diasSemana": "segunda, terça, quarta, quinta, sexta, sabado e domingo",
+        "horario": "05:30 as 22:00",
+        "sala": "SALA DE MAQUINAS",
+        "capacidade": 200,
+        "alunosMatriculados": 1,
+        "valor": 0,
+        "valorMensal": 0,
+        "valorPrePago": 0,
+        "valorDiarista": 0,
+        "tipoCobranca": "Mensal",
+        "status": "Ativa"
+      }
+    ],
+    "itens": [
+      {
+        "descricao": "Taxa de matricula",
+        "valor": 0
+      },
+      {
+        "descricao": "Plano mensal",
+        "valor": 65
+      },
+      {
+        "descricao": "Desconto inicial",
+        "valor": 0
+      }
+    ],
+    "resumoValores": "Taxa de matricula 0.00 + plano mensal 65.00 + ajuste proporcional 0.00 - desconto 0.00 = total 65.00",
+    "formaPagamento": "Dinheiro",
+    "status": "pago",
+    "origem": "matricula_inicial_unificada",
+    "recorrencia": "entrada_unica",
+    "ativarMatriculaAoReceber": true,
+    "criadoEm": "2026-07-29T13:48:56.948Z",
+    "atualizadoEm": "2026-07-29T13:49:54.853Z",
+    "lancamentoFinanceiroId": "fin_1785332936949_843405",
+    "financeiroInicialId": "fin_1785332936949_843405",
+    "recebimentoId": "rec_1785332936951_767509",
+    "valorQuitado": 65,
+    "valorBrutoRecebido": 73,
+    "desconto": 2,
+    "acrescimo": 10,
+    "taxaOperadoraValor": 0,
+    "ultimaTaxaOperadoraValor": 0,
+    "taxaOperadoraPercentual": 0,
+    "taxaOperadoraFixa": 0,
+    "valorLiquido": 73,
+    "bandeiraCartao": "",
+    "modalidadeCartao": "",
+    "parcelasCartao": 1,
+    "ultimoReciboId": "rec_a4769c1e-1b0b-4503-8eb4-2a8c308e6711",
+    "dataPagamento": "2026-07-29"
+  },
+  {
+    "id": "men_auto_1785332994984_480765",
+    "alunoId": "31c67092-0a41-42ed-a1d4-021f37e57868",
+    "aluno": "marcos matheus lima de souza",
+    "alunoNome": "marcos matheus lima de souza",
+    "matriculaId": "mat_1785332936942_260676",
+    "numeroMatricula": "MAT-202607-000001",
+    "planoId": "7b5a2b88-381b-446a-ba27-9ff3aa6bd510",
+    "plano": "fusion fit",
+    "competencia": "2026-08",
+    "vencimento": "2026-08-12",
+    "valor": 65,
+    "valorOriginal": 65,
+    "taxaMatricula": 0,
+    "total": 65,
+    "valorPago": 0,
+    "valorRestante": 0,
+    "status": "programada",
+    "origem": "recorrencia_programada",
+    "renovacaoAutomatica": true,
+    "periodicidade": "Mensal",
+    "periodicidadeMeses": 1,
+    "criadoEm": "2026-07-29T13:49:54.985Z",
+    "atualizadoEm": "2026-07-29T13:49:54.985Z",
+    "historico": [
+      {
+        "id": "hist_men_1785332994986_515662",
+        "acao": "programar_fatura_futura",
+        "descricao": "Fatura da competência 2026-08 programada sem gerar saldo financeiro em aberto.",
+        "usuario": "financeiro",
+        "criadoEm": "2026-07-29T13:49:54.986Z"
+      }
+    ],
+    "programada": true,
+    "emitida": false,
+    "emitirEm": "2026-08-12",
+    "saldoRestante": 0,
+    "lancamentoFinanceiroId": "fin_men_auto_1785332994984_480765",
+    "descricao": "Fatura futura 2026-08 - marcos matheus lima de souza"
+  }
+]

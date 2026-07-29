@@ -1,1 +1,74 @@
-[]
+[
+  {
+    "id": "rec_1785332936951_767509",
+    "descricao": "Entrada matricula + mensalidade - marcos matheus lima de souza",
+    "categoria": "Matricula e mensalidade",
+    "pessoa": "marcos matheus lima de souza",
+    "cliente": "marcos matheus lima de souza",
+    "aluno": "marcos matheus lima de souza",
+    "alunoId": "31c67092-0a41-42ed-a1d4-021f37e57868",
+    "matriculaId": "mat_1785332936942_260676",
+    "referencia": "MAT-202607-000001",
+    "mensalidadeId": "men_1785332936948_539009",
+    "lancamentoFinanceiroId": "fin_1785332936949_843405",
+    "planoId": "7b5a2b88-381b-446a-ba27-9ff3aa6bd510",
+    "plano": "fusion fit",
+    "vencimento": "2026-08-29",
+    "valor": 65,
+    "valorBruto": 65,
+    "total": 65,
+    "valorDevido": 65,
+    "valorMatricula": 0,
+    "taxaMatricula": 0,
+    "valorPlano": 65,
+    "valorMensal": 65,
+    "valorMensalNormal": 65,
+    "ajusteProporcional": 0,
+    "diaVencimento": 12,
+    "valorServicos": 0,
+    "descontoMatricula": 0,
+    "valorRecebido": 73,
+    "valorPago": 0,
+    "valorLiquido": 73,
+    "valorRestante": 0,
+    "saldo": 65,
+    "formaPagamento": "Dinheiro",
+    "forma": "Dinheiro",
+    "status": "recebido",
+    "origem": "matricula_inicial_unificada",
+    "recorrencia": "entrada_unica",
+    "ativarMatriculaAoReceber": true,
+    "itens": [
+      {
+        "descricao": "Taxa de matricula",
+        "valor": 0
+      },
+      {
+        "descricao": "Plano mensal",
+        "valor": 65
+      },
+      {
+        "descricao": "Desconto inicial",
+        "valor": 0
+      }
+    ],
+    "resumoValores": "Taxa de matricula 0.00 + plano mensal 65.00 + ajuste proporcional 0.00 - desconto 0.00 = total 65.00",
+    "observacao": "",
+    "criadoEm": "2026-07-29T13:48:56.952Z",
+    "atualizadoEm": "2026-07-29T13:49:54.854Z",
+    "reciboId": "rec_a4769c1e-1b0b-4503-8eb4-2a8c308e6711",
+    "numeroRecibo": "00000006",
+    "valorQuitado": 65,
+    "valorBrutoRecebido": 73,
+    "desconto": 2,
+    "acrescimo": 10,
+    "taxaOperadoraValor": 0,
+    "ultimaTaxaOperadoraValor": 0,
+    "taxaOperadoraPercentual": 0,
+    "taxaOperadoraFixa": 0,
+    "bandeiraCartao": "",
+    "modalidadeCartao": "",
+    "parcelasCartao": 1,
+    "dataRecebimento": "2026-07-29"
+  }
+]

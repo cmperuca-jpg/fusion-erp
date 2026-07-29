@@ -370,7 +370,7 @@ export async function receberTitulos(dados = {}) {
       ? dados.itens
       : [{
           tituloId: dados.tituloId || dados.id,
-          valor: dados.valorAplicado ?? dados.valor,
+          valor: dados.valorAplicado ?? dados.valorBaixa ?? dados.valorRecebido ?? dados.valorPago ?? dados.valor,
           valorAplicadoInformado: campoInformado(dados, "valorAplicado"),
           desconto: dados.desconto,
           acrescimo: dados.acrescimo ?? dados.juros ?? dados.multa

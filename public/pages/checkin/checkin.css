@@ -16,6 +16,27 @@
   color: #64748b;
 }
 
+.hidden {
+  display: none !important;
+}
+
+.contexto-aluno {
+  margin-bottom: 18px;
+  border-color: #bae6fd;
+  background: #e0f2fe;
+  display: grid;
+  gap: 4px;
+}
+
+.contexto-aluno strong {
+  color: #0f172a;
+}
+
+.contexto-aluno span {
+  color: #334155;
+  font-size: 13px;
+}
+
 .painel-checkin {
   margin: 20px 0;
   display: grid;

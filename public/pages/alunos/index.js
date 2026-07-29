@@ -38,6 +38,25 @@ function dataParaISO(valor) {
   return `${n.slice(4, 8)}-${n.slice(2, 4)}-${n.slice(0, 2)}`;
 }
 
+function calcularIdade(valor) {
+  const iso = dataParaISO(valor);
+  if (!iso) return null;
+  const nascimento = new Date(`${iso}T00:00:00`);
+  const hoje = new Date();
+  if (Number.isNaN(nascimento.getTime()) || nascimento > hoje) return null;
+  let idade = hoje.getFullYear() - nascimento.getFullYear();
+  const mes = hoje.getMonth() - nascimento.getMonth();
+  if (mes < 0 || (mes === 0 && hoje.getDate() < nascimento.getDate())) idade -= 1;
+  return idade >= 0 ? idade : null;
+}
+
+function atualizarIdadeAluno() {
+  const el = $("#idadeAlunoResumo");
+  if (!el) return;
+  const idade = calcularIdade($("#data_nascimento")?.value || "");
+  el.textContent = idade === null ? "Idade: informe o nascimento" : `Idade: ${idade} ano(s)`;
+}
+
 function normalizarTexto(valor) {
   return String(valor ?? "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
@@ -668,14 +687,15 @@ async function abrirNovoAluno() {
   const taxaLivre = $("#valor_taxa_matricula"); if (taxaLivre) { delete taxaLivre.dataset.inicializado; delete taxaLivre.dataset.editado; taxaLivre.value = "0,00"; }
   $("#alunoId").value = "";
   $("#status").value = "inativo";
-  $("#data_matricula").value = dataParaCampo(dataHojeISO());
-  $("#dia_vencimento_mensal").value = "";
+  if ($("#data_matricula")) $("#data_matricula").value = dataParaCampo(dataHojeISO());
+  if ($("#dia_vencimento_mensal")) $("#dia_vencimento_mensal").value = "";
   fotoBase64Atual = "";
   atualizarPreviewFoto("");
   renderizarHistorico([]);
   renderizarMatriculasAluno([]);
   trocarTab("cadastro");
   abrirModal("Novo aluno");
+  atualizarIdadeAluno();
   atualizarModoCadastroAluno();
   atualizarPainelComercialMatricula();
 }
@@ -730,6 +750,7 @@ function preencherFormulario(a) {
   $("#cpf").value = formatarCpfVisual(alunoCpf(a));
   $("#rg").value = a.rg ?? "";
   $("#data_nascimento").value = dataParaCampo(a.data_nascimento ?? a.dataNascimento ?? "");
+  atualizarIdadeAluno();
   $("#sexo").value = a.sexo ?? "";
   $("#telefone").value = formatarTelefoneVisual(alunoTelefone(a));
   $("#whatsapp").value = formatarTelefoneVisual(a.whatsapp ?? "");
@@ -740,8 +761,8 @@ function preencherFormulario(a) {
     a.professor_responsavel || a.professorNome || a.professor_responsavel_nome || ""
   );
   preencherSelectPlanos(alunoPlanoId(a) || alunoPlano(a));
-  $("#data_matricula").value = dataParaCampo((a.data_matricula ?? "").slice(0, 10) || dataHojeISO());
-  $("#dia_vencimento_mensal").value = a.diaVencimento ?? a.dia_vencimento ?? "";
+  if ($("#data_matricula")) $("#data_matricula").value = dataParaCampo((a.data_matricula ?? "").slice(0, 10) || dataHojeISO());
+  if ($("#dia_vencimento_mensal")) $("#dia_vencimento_mensal").value = a.diaVencimento ?? a.dia_vencimento ?? "";
   $("#status").value = alunoStatus(a);
   $("#responsavel").value = a.responsavel ?? "";
   $("#contato_emergencia").value = a.contato_emergencia ?? a.contatoEmergencia ?? "";
@@ -1123,16 +1144,6 @@ function coletarDadosFormulario() {
     if (dados[k] === "") delete dados[k];
   });
 
-  const idAtual = $("#alunoId")?.value || "";
-  if (idAtual) {
-    const alunoAtual = alunos.find(x => String(alunoId(x)) === String(idAtual));
-    const statusAtual = alunoAtual ? alunoStatus(alunoAtual) : "";
-    if (statusAtual) dados.status = statusAtual;
-    if (alunoAtual?.statusMatricula) dados.statusMatricula = alunoAtual.statusMatricula;
-    if (alunoAtual?.matriculaStatus) dados.matriculaStatus = alunoAtual.matriculaStatus;
-    if (alunoAtual?.ativo !== undefined) dados.ativo = alunoAtual.ativo;
-  }
-
   return dados;
 }
 
@@ -1273,7 +1284,15 @@ function renderizarMatriculasAluno(lista) {
   if (!el) return;
 
   if (!lista || !lista.length) {
-    el.innerHTML = `<div class="timeline-empty">Nenhuma matrícula vinculada. Use "Nova matrícula / turma" para colocar este aluno em uma turma.</div>`;
+    const idAtual = escapeAttr($("#alunoId")?.value || "");
+    const acao = idAtual
+      ? `<button type="button" class="btn-light" onclick="window.abrirMatriculaAluno('${idAtual}')">Matricular aluno</button>`
+      : `<span>Salve o cadastro antes de criar a matricula.</span>`;
+    el.innerHTML = `<div class="timeline-empty">
+      <strong>Nenhuma matrícula vinculada.</strong>
+      <p style="margin:6px 0 12px;">Use matrícula para ativar plano, turma e modalidade sem misturar com a edição cadastral.</p>
+      ${acao}
+    </div>`;
     return;
   }
 
@@ -1289,8 +1308,8 @@ function renderizarMatriculasAluno(lista) {
       <p style="margin:0;color:#475569;"><strong>Turma:</strong> ${escapeHtml(matriculaTurma(m))}</p>
       <p style="margin:0;color:#475569;"><strong>Início:</strong> ${escapeHtml(formatarDataCurta(m.dataInicio || m.dataMatricula))} · <strong>Valor:</strong> R$ ${formatarMoeda(m.valorMensal || 0)}</p>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;">
-        <button type="button" class="btn-light" onclick="abrirFichaMatricula('${escapeAttr(id)}')">Abrir matrícula</button>
-        ${ativo ? `<button type="button" class="btn-light" onclick="abrirMatriculaAluno('${escapeAttr(m.alunoId || $('#alunoId').value)}')">Alterar plano/turma</button>` : ""}
+        ${ativo ? `<button type="button" class="btn-light" onclick="abrirMatriculaAluno('${escapeAttr(m.alunoId || $('#alunoId').value)}')">Trocar turma/modalidade</button>` : ""}
+        <button type="button" class="btn-light" onclick="abrirFichaMatricula('${escapeAttr(id)}')">Ver ficha</button>
       </div>
     </div>`;
   }).join("");
@@ -1594,6 +1613,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   }));
 
   ao("#cpf", "input", e => e.target.value = formatarCpfVisual(e.target.value));
+  ao("#data_nascimento", "input", atualizarIdadeAluno);
+  ao("#data_nascimento", "change", atualizarIdadeAluno);
   ao("#telefone", "input", e => e.target.value = formatarTelefoneVisual(e.target.value));
   ao("#whatsapp", "input", e => e.target.value = formatarTelefoneVisual(e.target.value));
   ao("#senhaAluno", "input", e => { e.target.dataset.editado = "true"; });

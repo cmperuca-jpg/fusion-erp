@@ -15,5 +15,36 @@
       "observacaoFechamento": ""
     }
   ],
-  "movimentos": []
+  "movimentos": [
+    {
+      "id": "movrec_bef45cc2-c149-42bf-8d8c-9cccd94e7ae1",
+      "caixaId": "cx_1784930775284_75abd0",
+      "tipo": "entrada",
+      "descricao": "Recibo 00000006 - marcos matheus lima de souza",
+      "categoria": "Matrícula e mensalidade",
+      "planoContaId": "pc_1_01",
+      "pessoa": "marcos matheus lima de souza",
+      "alunoId": "31c67092-0a41-42ed-a1d4-021f37e57868",
+      "reciboId": "rec_a4769c1e-1b0b-4503-8eb4-2a8c308e6711",
+      "lancamentoFinanceiroId": "fin_1785332936949_843405",
+      "mensalidadeId": "men_1785332936948_539009",
+      "formaPagamento": "Dinheiro",
+      "bandeiraCartao": "",
+      "modalidadeCartao": "",
+      "parcelasCartao": 1,
+      "valorCentavos": 7300,
+      "valor": 73,
+      "valorBruto": 73,
+      "taxaCentavos": 0,
+      "taxaOperadoraPercentual": 0,
+      "taxaOperadoraFixa": 0,
+      "taxaOperadoraValor": 0,
+      "valorLiquidoCentavos": 7300,
+      "valorLiquido": 73,
+      "data": "2026-07-29",
+      "status": "ativo",
+      "origem": "recibo",
+      "criadoEm": "2026-07-29T13:49:54.856Z"
+    }
+  ]
 }

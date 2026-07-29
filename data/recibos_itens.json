@@ -98,5 +98,25 @@
     "valorLiquidoAplicado": 65,
     "cancelado": false,
     "criadoEm": "2026-07-24T21:42:07.360Z"
+  },
+  {
+    "id": "reci_7376fec3-1227-4cc3-82cc-755d4ac2096c",
+    "reciboId": "rec_a4769c1e-1b0b-4503-8eb4-2a8c308e6711",
+    "tituloId": "fin_1785332936949_843405",
+    "alunoId": "31c67092-0a41-42ed-a1d4-021f37e57868",
+    "matriculaId": "mat_1785332936942_260676",
+    "mensalidadeId": "men_1785332936948_539009",
+    "valorOriginalCentavos": 6500,
+    "saldoAnteriorCentavos": 6500,
+    "descontoCentavos": 200,
+    "acrescimoCentavos": 1000,
+    "valorAplicadoCentavos": 7300,
+    "valorAplicado": 73,
+    "taxaOperadoraValorCentavos": 0,
+    "taxaOperadoraValor": 0,
+    "valorLiquidoAplicadoCentavos": 7300,
+    "valorLiquidoAplicado": 73,
+    "cancelado": false,
+    "criadoEm": "2026-07-29T13:49:54.852Z"
   }
 ]

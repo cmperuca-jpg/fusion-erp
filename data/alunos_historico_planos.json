@@ -122,5 +122,43 @@
     "servicos": [],
     "acao": "matricula_pendente_pagamento",
     "criadoEm": "2026-07-24T17:45:34.049Z"
+  },
+  {
+    "id": "hist_plano_1785332936957_589126",
+    "alunoId": "31c67092-0a41-42ed-a1d4-021f37e57868",
+    "aluno": "marcos matheus lima de souza",
+    "matriculaId": "mat_1785332936942_260676",
+    "numeroMatricula": "MAT-202607-000001",
+    "planoId": "7b5a2b88-381b-446a-ba27-9ff3aa6bd510",
+    "plano": "fusion fit",
+    "tipoPlano": "Mensal",
+    "valorMatricula": 0,
+    "valorPlano": 65,
+    "valorServicos": 0,
+    "valorMensalTotal": 65,
+    "valorTotalInicial": 65,
+    "servicos": [
+      {
+        "id": "1784906181707",
+        "turmaId": "1784906181707",
+        "nome": "MUSCULAÇÃO",
+        "modalidade": "MUSCULAÇÃO",
+        "professorId": "",
+        "professor": "MARCOS ANDRE",
+        "diasSemana": "segunda, terça, quarta, quinta, sexta, sabado e domingo",
+        "horario": "05:30 as 22:00",
+        "sala": "SALA DE MAQUINAS",
+        "capacidade": 200,
+        "alunosMatriculados": 1,
+        "valor": 0,
+        "valorMensal": 0,
+        "valorPrePago": 0,
+        "valorDiarista": 0,
+        "tipoCobranca": "Mensal",
+        "status": "Ativa"
+      }
+    ],
+    "acao": "matricula_pendente_pagamento",
+    "criadoEm": "2026-07-29T13:48:56.957Z"
   }
 ]

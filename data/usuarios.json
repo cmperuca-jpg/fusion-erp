@@ -3,7 +3,7 @@
     "id": "usr_admin",
     "nome": "Administrador Fusion",
     "email": "admin@fusionerp.local",
-    "senhaHash": "$2b$12$aBTJD3/i8ad6uR4nzKGVo.wlSnlzOGDmhmIo4eVOSD8v3xiC3j0g.",
+    "senhaHash": "$2b$12$OQHc.LS3Go96mjXyq3hQBeZGAMwZXAMUFsab8GBsAW7bGHTJUlKOC",
     "perfil": "Administrador",
     "status": "ativo",
     "permissoes": [
@@ -11,6 +11,6 @@
     ],
     "trocarSenhaNoPrimeiroAcesso": true,
     "criadoEm": "2026-07-24T21:49:49.988Z",
-    "atualizadoEm": "2026-07-24T21:49:49.988Z"
+    "atualizadoEm": "2026-07-29T13:36:02.858Z"
   }
 ]

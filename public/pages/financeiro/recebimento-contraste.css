@@ -186,24 +186,36 @@
 
 /* Financeiro - tabela operacional compacta */
 .financeiro-page .financeiro-kpis {
-  grid-template-columns: repeat(auto-fit, minmax(158px, 1fr)) !important;
-  gap: 12px !important;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)) !important;
+  gap: 14px !important;
 }
 
 .financeiro-page .financeiro-kpis .kpi-btn {
   min-width: 0 !important;
   padding: 14px 16px !important;
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  align-content: start !important;
+  gap: 6px !important;
 }
 
 .financeiro-page .financeiro-kpis .kpi-btn strong {
   display: block !important;
   max-width: 100% !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-  white-space: nowrap !important;
-  font-size: clamp(16px, 1.45vw, 21px) !important;
-  line-height: 1.05 !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  white-space: normal !important;
+  font-size: clamp(20px, 1.7vw, 26px) !important;
+  line-height: 1.12 !important;
   font-variant-numeric: tabular-nums !important;
+  overflow-wrap: anywhere !important;
+}
+
+.financeiro-page .financeiro-kpis .kpi-btn span,
+.financeiro-page .financeiro-kpis .kpi-btn small {
+  display: block !important;
+  max-width: 100% !important;
+  line-height: 1.15 !important;
 }
 
 .financeiro-page .filtros-financeiro {

@@ -691,8 +691,27 @@ export async function atualizar(id, dados) {
   const resultado = alunoUpdateSchema.safeParse(dados);
   if (!resultado.success) throw new Error(mensagemValidacao(resultado));
 
+  const dadosEntrada = dados && typeof dados === "object" ? dados : {};
+  const campoInformado = (nome) => Object.prototype.hasOwnProperty.call(dadosEntrada, nome);
+  const camposStatusInformados = ["status", "situacao", "statusMatricula", "matriculaStatus", "ativo"]
+    .some(campoInformado);
   const alunoAntes = await buscarAlunoPorId(id);
-  const deveReativar = alunoAntes && statusSolicitaReativacao(resultado.data) &&
+  if (alunoAntes) {
+    if (!campoInformado("status")) {
+      resultado.data.status = alunoAntes.status;
+    }
+    if (!campoInformado("statusMatricula")) {
+      resultado.data.statusMatricula = alunoAntes.statusMatricula;
+    }
+    if (!campoInformado("matriculaStatus")) {
+      resultado.data.matriculaStatus = alunoAntes.matriculaStatus;
+    }
+    if (!campoInformado("ativo")) {
+      resultado.data.ativo = alunoAntes.ativo;
+    }
+  }
+
+  const deveReativar = camposStatusInformados && alunoAntes && statusSolicitaReativacao(dadosEntrada) &&
     ["inativo", "inativa", "cancelado", "cancelada", "desligado", "desligada", "encerrado", "encerrada", "sem matricula", "sem matrícula"].some(s =>
       [alunoAntes.status, alunoAntes.situacao, alunoAntes.statusMatricula, alunoAntes.matriculaStatus].map(normalizar).includes(s)
     );
@@ -704,7 +723,9 @@ export async function atualizar(id, dados) {
     throw erro;
   }
 
-  const deveDesligar = alunoAntes && statusSolicitaDesligamento(resultado.data);
+  const deveDesligar = camposStatusInformados && alunoAntes &&
+    statusSolicitaDesligamento(dadosEntrada) &&
+    !statusSolicitaReativacao(dadosEntrada);
 
   if (deveDesligar) {
     await cancelarVinculosFinanceirosDoAluno(alunoAntes, {
