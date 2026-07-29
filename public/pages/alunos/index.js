@@ -1123,6 +1123,16 @@ function coletarDadosFormulario() {
     if (dados[k] === "") delete dados[k];
   });
 
+  const idAtual = $("#alunoId")?.value || "";
+  if (idAtual) {
+    const alunoAtual = alunos.find(x => String(alunoId(x)) === String(idAtual));
+    const statusAtual = alunoAtual ? alunoStatus(alunoAtual) : "";
+    if (statusAtual) dados.status = statusAtual;
+    if (alunoAtual?.statusMatricula) dados.statusMatricula = alunoAtual.statusMatricula;
+    if (alunoAtual?.matriculaStatus) dados.matriculaStatus = alunoAtual.matriculaStatus;
+    if (alunoAtual?.ativo !== undefined) dados.ativo = alunoAtual.ativo;
+  }
+
   return dados;
 }
 
