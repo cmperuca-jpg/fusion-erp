@@ -33,7 +33,7 @@ function preencherKPIs(kpis) {
 }
 
 function renderizarGraficos(graficosDados) {
-  criarGraficoPizza("graficoTurmasModalidade", graficosDados.turmasPorModalidade);
+  criarGraficoPizza("graficoTurmasModalidade", graficosDados.alunosPorModalidade || graficosDados.turmasPorModalidade);
   criarGraficoPizza("graficoProfessoresEspecialidade", graficosDados.professoresPorEspecialidade);
   criarGraficoPizza("graficoAgendaTipo", graficosDados.agendaPorTipo);
   criarGraficoBarra("graficoAgendaMes", "Agenda", graficosDados.agendaPorMes, "mes", "valor");

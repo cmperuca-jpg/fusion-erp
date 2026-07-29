@@ -122,6 +122,42 @@ function turmaNomeItem(item = {}) {
   return texto(item.turmaNome ?? item.turma_nome ?? item.turma ?? item.nomeTurma);
 }
 
+function modalidadeItem(item = {}) {
+  if (Array.isArray(item.modalidades)) return texto(item.modalidades.join(", "));
+  return texto(item.modalidade ?? item.modalidadeNome ?? item.modalidade_nome ?? item.servico ?? item.tipo);
+}
+
+function listaTexto(valor) {
+  if (Array.isArray(valor)) return valor.map(texto).filter(Boolean);
+  return texto(valor).split(",").map(texto).filter(Boolean);
+}
+
+function planoDaMatricula(planos = [], matricula = {}) {
+  return encontrarPorId(planos, matricula.planoId ?? matricula.plano_id) ||
+    planos.find(plano => normalizar(plano.nome) === normalizar(matricula.plano)) ||
+    null;
+}
+
+function modalidadesDaMatricula(planos = [], matricula = {}) {
+  const diretas = listaTexto(modalidadeItem(matricula));
+  if (diretas.length) return diretas;
+  const plano = planoDaMatricula(planos, matricula);
+  const doPlano = listaTexto(plano?.modalidadesIncluidas ?? plano?.modalidades);
+  return doPlano.length ? doPlano : ["Sem modalidade"];
+}
+
+function contarMatriculasPorModalidade(matriculas = [], planos = []) {
+  const mapa = new Map();
+  for (const matricula of matriculas) {
+    for (const modalidade of modalidadesDaMatricula(planos, matricula)) {
+      mapa.set(modalidade, (mapa.get(modalidade) || 0) + 1);
+    }
+  }
+  return [...mapa.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "pt-BR"))
+    .map(([nome, valor]) => ({ nome, valor }));
+}
+
 function dataCadastroAluno(item = {}) {
   return dataISO(item.criadoEm ?? item.criado_em ?? item.dataCadastro ?? item.data_cadastro ?? item.data_matricula ?? item.dataMatricula);
 }
@@ -346,6 +382,7 @@ export async function gerarBIAcademiaOperacional(filtros = {}) {
   const inicio = filtros.inicio || filtros.dataInicio || "";
   const fim = filtros.fim || filtros.dataFim || "";
   const hoje = hojeISO();
+  const matriculasAtivas = matriculasAtivasUnicas(base.matriculas);
 
   const agendaPeriodo = filtrarPeriodo(base.agenda, item => item.data ?? item.dataInicio ?? item.data_inicio, inicio, fim);
   const agendaHoje = base.agenda.filter(a => dataISO(a.data ?? a.dataInicio ?? a.data_inicio) === hoje);
@@ -429,6 +466,7 @@ export async function gerarBIAcademiaOperacional(filtros = {}) {
       agendamentosHoje: agendaHoje.length
     },
     graficos: {
+      alunosPorModalidade: contarMatriculasPorModalidade(matriculasAtivas, base.planos),
       turmasPorModalidade: contarPorCampo(base.turmas, "modalidade", "Sem modalidade"),
       turmasPorStatus: contarPorCampo(base.turmas, "status", "Sem status"),
       professoresPorEspecialidade: contarPorCampo(base.professores, item => item.especialidade || (Array.isArray(item.especialidades) ? item.especialidades.join(", ") : ""), "Sem especialidade"),

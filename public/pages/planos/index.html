@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Planos - Fusion ERP</title>
   <link rel="stylesheet" href="/css/components.css" />
-  <link rel="stylesheet" href="/pages/planos/planos.css" />
+  <link rel="stylesheet" href="/pages/planos/planos.css?v=20260728-modalidades-plano-1" />
   <link rel="stylesheet" href="/assets/css/fusion-app.css">
   <script src="/assets/js/fusion-auth.js"></script>
   <script>FusionAuth.proteger();</script>
@@ -129,7 +129,8 @@
         </label>
 
         <label class="full">Modalidades incluídas
-          <input id="modalidadesIncluidas" placeholder="Ex.: Musculação, Natação, Funcional" />
+          <div id="modalidadesIncluidas" class="modalidades-picker" role="group" aria-label="Modalidades incluidas no plano"></div>
+          <small id="modalidadesAjuda" class="form-hint">Selecione as modalidades que este plano oferece.</small>
         </label>
 
         <label>Horários permitidos
@@ -147,7 +148,7 @@
       </form>
     </div>
   </div>
-  <script src="/pages/planos/planos.js"></script>
+  <script src="/pages/planos/planos.js?v=20260728-modalidades-plano-1"></script>
     <script src="/assets/js/fusion-layout.js"></script>
 
 <script src="/assets/pwa/fusion-pwa-install.js" defer></script>

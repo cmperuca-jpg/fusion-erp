@@ -54,7 +54,7 @@ function validarPayload(payload = {}) {
     descontoPercentual: numero(payload.descontoPercentual, 0),
     multaAtrasoPercentual: numero(payload.multaAtrasoPercentual, 0),
     limiteSemanal: numero(payload.limiteSemanal, 0),
-    modalidadesIncluidas: lista(payload.modalidadesIncluidas),
+    modalidadesIncluidas: lista(payload.modalidadesIncluidas ?? payload.modalidades),
     horariosPermitidos: texto(payload.horariosPermitidos) || "Livre",
     status: texto(payload.status) || "Ativo"
   };
@@ -64,7 +64,10 @@ export async function obterPlanos(filtros = {}) {
   const termo = texto(filtros.q || filtros.busca).toLowerCase();
   const status = texto(filtros.status);
   const tipo = texto(filtros.tipo || filtros.tipoPlano);
-  planos = planos.map((p) => ({ ...validarPayload(p), id: p.id, criadoEm: p.criadoEm, atualizadoEm: p.atualizadoEm }));
+  planos = planos.map((p) => {
+    const dados = validarPayload(p);
+    return { ...dados, modalidades: dados.modalidadesIncluidas.join(", "), id: p.id, criadoEm: p.criadoEm, atualizadoEm: p.atualizadoEm };
+  });
   if (termo) planos = planos.filter((p) => [p.nome,p.tipo,p.descricao,p.horariosPermitidos,...(p.modalidadesIncluidas||[])].join(" ").toLowerCase().includes(termo));
   if (status && status !== "Todos") planos = planos.filter((p) => p.status === status);
   if (tipo && tipo !== "Todos") planos = planos.filter((p) => p.tipo === tipo || p.tipoPlano === tipo);

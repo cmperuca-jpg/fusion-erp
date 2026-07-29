@@ -7,6 +7,7 @@
   let alunos = [];
   let planos = [];
   let turmas = [];
+  let modalidades = [];
   let matriculaAtual = null;
   let modoSomenteTurma = false;
   let ultimoPlanoTaxaSincronizada = "";
@@ -76,6 +77,64 @@
   function turmaNome(turma) {
     return turma?.nome || turma?.turma || turma?.descricao || turma?.modalidade || "";
   }
+  function modalidadeValor(modalidade) {
+    return modalidade?.nome || modalidade?.modalidade || modalidade?.descricao || modalidade?.id || "";
+  }
+  function modalidadeSelecionadaNome() {
+    const select = $("modalidade");
+    return select?.value || select?.selectedOptions?.[0]?.dataset?.nome || "";
+  }
+  function listaTexto(valor) {
+    if (Array.isArray(valor)) return valor.map((item) => String(item || "").trim()).filter(Boolean);
+    return String(valor || "").split(",").map((item) => item.trim()).filter(Boolean);
+  }
+  function modalidadesDoPlano(plano = planoSelecionado()) {
+    return [...new Set(listaTexto(plano?.modalidadesIncluidas ?? plano?.modalidades))];
+  }
+  function renderizarSelectModalidades(selecionada = "") {
+    const select = $("modalidade");
+    if (!select) return;
+    const modalidadesPlano = modalidadesDoPlano();
+    const base = modalidadesPlano.length ? modalidadesPlano.map((nome) => ({ nome })) : modalidades;
+    const atual = selecionada || select.value || "";
+    const opcoes = new Map();
+
+    base.forEach((item) => {
+      const nome = modalidadeValor(item);
+      if (nome && !opcoes.has(norm(nome))) opcoes.set(norm(nome), nome);
+    });
+    if (atual && !opcoes.has(norm(atual))) opcoes.set(norm(atual), atual);
+
+    const itens = [...opcoes.values()];
+    select.innerHTML = `<option value="">Selecione a modalidade</option>` + itens
+      .map((nome) => `<option value="${attr(nome)}">${esc(nome)}</option>`)
+      .join("");
+
+    if (atual && itens.some((nome) => norm(nome) === norm(atual))) select.value = itens.find((nome) => norm(nome) === norm(atual)) || "";
+    else if (itens.length === 1) select.value = itens[0];
+    else select.value = "";
+  }
+  function garantirOpcaoModalidade(nome) {
+    const select = $("modalidade");
+    const valor = String(nome || "").trim();
+    if (!select || !valor) return;
+    const existe = Array.from(select.options).some((opcao) => String(opcao.value) === valor);
+    if (!existe) {
+      const opcao = document.createElement("option");
+      opcao.value = valor;
+      opcao.dataset.nome = valor;
+      opcao.textContent = valor;
+      select.appendChild(opcao);
+    }
+  }
+  function sincronizarModalidadeDaTurma() {
+    const turma = turmaSelecionada();
+    const modalidade = turma?.modalidade || turma?.modalidadeNome || turma?.servico || "";
+    if (!modalidade) return;
+    garantirOpcaoModalidade(modalidade);
+    const select = $("modalidade");
+    if (select) select.value = modalidade;
+  }
   function turmaSelecionada() {
     const valor = turmaSelecionadaId();
     return turmas.find((t) => String(turmaValor(t)) === String(valor)) || null;
@@ -87,7 +146,9 @@
     return {
       turmaIds: turmaId ? [turmaId] : [],
       turmaNome: nome,
-      turmaNomes: nome ? [nome] : []
+      turmaNomes: nome ? [nome] : [],
+      modalidade: modalidadeSelecionadaNome(),
+      modalidadeNome: modalidadeSelecionadaNome()
     };
   }
   function statusMatriculaEditavel(status) {
@@ -109,18 +170,31 @@
   }
 
   async function carregarBase() {
-    const [alunosResp, planosResp, turmasResp] = await Promise.all([
+    const [alunosResp, planosResp, turmasResp, modalidadesResp] = await Promise.all([
       fetch("/api/alunos", { cache: "no-store" }).then((r) => r.json()).catch(() => []),
       fetch("/api/planos", { cache: "no-store" }).then((r) => r.json()).catch(() => []),
-      fetch("/api/turmas", { cache: "no-store" }).then((r) => r.json()).catch(() => [])
+      fetch("/api/turmas", { cache: "no-store" }).then((r) => r.json()).catch(() => []),
+      fetch("/api/modalidades", { cache: "no-store" }).then((r) => r.json()).catch(() => [])
     ]);
 
     alunos = lista(alunosResp);
     planos = lista(planosResp).filter((p) => !["inativo", "inativa", "cancelado"].includes(norm(p.status || "Ativo")));
     turmas = lista(turmasResp).filter((t) => !["inativa", "inativo", "cancelada", "cancelado"].includes(norm(t.status || "Ativa")));
+    modalidades = lista(modalidadesResp).filter((m) => !["inativa", "inativo", "cancelada", "cancelado"].includes(norm(m.status || "Ativa")));
+    const modalidadesDasTurmas = turmas
+      .map((t) => t.modalidade || t.modalidadeNome || t.servico || "")
+      .filter(Boolean)
+      .map((nome) => ({ nome }));
+    const modalidadesUnicas = new Map();
+    [...modalidades, ...modalidadesDasTurmas].forEach((m) => {
+      const valor = modalidadeValor(m);
+      if (valor && !modalidadesUnicas.has(norm(valor))) modalidadesUnicas.set(norm(valor), { ...m, nome: valor });
+    });
+    modalidades = [...modalidadesUnicas.values()];
 
     preencherSelect("aluno_id", alunos, "Selecione o aluno", (a) => a.id, alunoNome);
     preencherSelect("plano_id", planos, "Selecione o plano", (p) => p.id, (p) => `${p.nome || p.id} - ${br(valorPlano(p))}`);
+    renderizarSelectModalidades();
     preencherSelect("turma_id", turmas, "Sem turma vinculada", turmaValor, (t) => {
       const partes = [t.nome, t.modalidade, t.professor, t.horario].filter(Boolean);
       return partes.join(" - ");
@@ -194,6 +268,7 @@
     $("data_fim").value = String(m.dataFim || m.data_fim || "").slice(0, 10);
     $("plano_id").value = m.planoId || m.plano_id || "";
     $("turma_id").value = Array.isArray(m.turmaIds) ? (m.turmaIds[0] || "") : (m.turmaId || m.turma_id || "");
+    renderizarSelectModalidades(m.modalidade || turmaSelecionada()?.modalidade || "");
     $("taxa_matricula").value = dinheiro(m.valorMatricula ?? m.taxaMatricula).toFixed(2);
     $("taxa_matricula").dataset.manual = dinheiro(m.valorMatricula ?? m.taxaMatricula) > 0 ? "true" : "";
     $("desconto_matricula").value = dinheiro(m.descontoMatricula).toFixed(2);
@@ -442,9 +517,14 @@
         if (btn) btn.textContent = "Salvar matricula";
         setAlerta("Plano alterado: salvar agora passa a ser troca comercial com financeiro.", "erro");
       }
+      renderizarSelectModalidades();
       recalcular();
     });
     $("turma_id")?.addEventListener("change", () => {
+      sincronizarModalidadeDaTurma();
+      if (matriculaAtual) ativarModoSomenteTurma({ mostrarMensagem: false });
+    });
+    $("modalidade")?.addEventListener("change", () => {
       if (matriculaAtual) ativarModoSomenteTurma({ mostrarMensagem: false });
     });
     $("cobrar_taxa_matricula")?.addEventListener("change", () => {

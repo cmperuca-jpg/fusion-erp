@@ -33,7 +33,8 @@ export async function carregarBaseBI() {
     exerciciosRaw,
     estoqueRaw,
     pdvRaw,
-    agendaRaw
+    agendaRaw,
+    planosRaw
   ] = await Promise.all([
     lerJSON("alunos.json"),
     lerJSON("professores.json"),
@@ -48,7 +49,8 @@ export async function carregarBaseBI() {
     lerJSON("exercicios.json"),
     lerJSON("estoque.json"),
     lerJSON("pdv.json"),
-    lerJSON("agenda.json")
+    lerJSON("agenda.json"),
+    lerJSON("planos.json")
   ]);
 
   const presencas = comoLista(presencasRaw, ["presencas", "dados"]);
@@ -69,6 +71,7 @@ export async function carregarBaseBI() {
     exercicios: comoLista(exerciciosRaw, ["exercicios", "dados"]),
     estoque: comoLista(estoqueRaw, ["estoque", "produtos", "dados"]),
     pdv: comoLista(pdvRaw, ["pdv", "vendas", "dados"]),
-    agenda: comoLista(agendaRaw, ["agenda", "aulas", "dados"])
+    agenda: comoLista(agendaRaw, ["agenda", "aulas", "dados"]),
+    planos: comoLista(planosRaw, ["planos", "dados"])
   };
 }

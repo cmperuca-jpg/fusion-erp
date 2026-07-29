@@ -26,6 +26,12 @@
 .form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
 .form-grid label { color: #334155; font-weight: 700; font-size: 13px; }
 .form-grid label input, .form-grid label select, .form-grid label textarea { margin-top: 6px; }
+.form-hint { display: block; margin-top: 6px; color: #64748b; font-size: 12px; font-weight: 500; }
+.modalidades-picker { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; margin-top: 8px; }
+.modalidade-option { display: flex; align-items: center; gap: 8px; border: 1px solid #cbd5e1; border-radius: 10px; padding: 10px 12px; background: #f8fafc; color: #0f172a; font-weight: 800; }
+.modalidade-option input { width: auto; margin: 0; }
+.modalidade-option span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.modalidades-empty { border: 1px dashed #cbd5e1; border-radius: 10px; padding: 12px; color: #64748b; background: #f8fafc; }
 .full { grid-column: 1 / -1; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
 @media (max-width: 900px) { .kpi-grid, .filters-row, .form-grid { grid-template-columns: 1fr; } }

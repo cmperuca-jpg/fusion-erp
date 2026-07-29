@@ -40,15 +40,21 @@
   function servicos(m) {
     return Array.isArray(m.servicos) ? m.servicos : (Array.isArray(m.turmas) ? m.turmas : []);
   }
+  function campoOperacional(m, campo, padrao = "-") {
+    const direto = texto(m?.[campo], "");
+    if (direto) return direto;
+    const valores = servicos(m).map((s) => texto(s?.[campo], "")).filter(Boolean);
+    return valores.length ? [...new Set(valores)].join(", ") : padrao;
+  }
   function renderServicos(m) {
     const lista = servicos(m);
     if (!lista.length) return esc(texto(m.turma || m.turmaNome));
     return lista.map((s) => `
-      <div style="padding:10px 0;border-bottom:1px solid #cbd5e1">
+      <span class="ficha-servico">
         <strong>${esc(s.nome || "-")}</strong><br>
         Modalidade: ${esc(s.modalidade || "-")} | Professor: ${esc(s.professor || "-")}<br>
         Dias: ${esc(s.diasSemana || "-")} | Horario: ${esc(s.horario || "-")} | Local: ${esc(s.sala || "-")}
-      </div>
+      </span>
     `).join("");
   }
   function proximaMensalidade(m) {
@@ -86,10 +92,10 @@
     $("tituloMatricula").textContent = m.numero ? `Matricula ${m.numero}` : "Matricula";
     set("aluno", texto(m.aluno || m.nomeAluno));
     html("turma", renderServicos(m));
-    set("modalidade", texto(m.modalidade));
-    set("professor", texto(m.professor));
-    set("horario", texto(m.horario));
-    set("sala", texto(m.sala));
+    set("modalidade", campoOperacional(m, "modalidade"));
+    set("professor", campoOperacional(m, "professor"));
+    set("horario", campoOperacional(m, "horario"));
+    set("sala", campoOperacional(m, "sala"));
     set("data_matricula", data(m.dataMatricula));
     set("data_inicio", data(m.dataInicio));
     set("data_fim", data(m.dataFim));

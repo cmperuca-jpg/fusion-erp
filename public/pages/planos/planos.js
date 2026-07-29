@@ -1,7 +1,9 @@
 if (typeof carregarLayout === "function") carregarLayout("Planos");
 
 let planos = [];
+let modalidades = [];
 const API = "/api/planos";
+const API_MODALIDADES = "/api/modalidades";
 const PLANOS_ATUALIZADOS_KEY = "fusion_planos_atualizados_em";
 
 const elementos = {
@@ -18,6 +20,20 @@ function moeda(valor) {
   return Number(valor || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
+function esc(valor) {
+  return String(valor ?? "").replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;"
+  }[c]));
+}
+
+function normalizar(valor) {
+  return String(valor || "").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
 async function request(url, options = {}) {
   const resposta = await fetch(url, {
     headers: { "Content-Type": "application/json" },
@@ -30,6 +46,62 @@ async function request(url, options = {}) {
   }
   if (Array.isArray(json)) return json;
   return json.dados ?? json.planos ?? json.data ?? json.itens ?? json;
+}
+
+function nomeModalidade(item) {
+  return item?.nome || item?.modalidade || item?.descricao || item?.id || "";
+}
+
+function listaModalidades(valor) {
+  if (Array.isArray(valor)) return valor.map((item) => String(item || "").trim()).filter(Boolean);
+  return String(valor || "").split(",").map((item) => item.trim()).filter(Boolean);
+}
+
+function modalidadesSelecionadas() {
+  const container = document.getElementById("modalidadesIncluidas");
+  if (!container) return [];
+  return Array.from(container.querySelectorAll("input[type='checkbox']:checked"))
+    .map((input) => input.value)
+    .filter(Boolean);
+}
+
+function renderizarOpcoesModalidades(selecionadas = []) {
+  const container = document.getElementById("modalidadesIncluidas");
+  const ajuda = document.getElementById("modalidadesAjuda");
+  if (!container) return;
+
+  const selecionadasNorm = new Set(listaModalidades(selecionadas).map(normalizar));
+  if (!modalidades.length) {
+    container.innerHTML = `<div class="modalidades-empty">Nenhuma modalidade ativa cadastrada. Cadastre em Modalidades para liberar a seleção no plano.</div>`;
+    if (ajuda) ajuda.textContent = "Sem modalidade cadastrada, o plano fica sem distribuição por modalidade.";
+    return;
+  }
+
+  container.innerHTML = modalidades.map((item, index) => {
+    const nome = nomeModalidade(item);
+    const id = `modalidadePlano_${index}`;
+    const checked = selecionadasNorm.has(normalizar(nome)) ? "checked" : "";
+    return `
+      <label class="modalidade-option" for="${esc(id)}">
+        <input id="${esc(id)}" type="checkbox" value="${esc(nome)}" ${checked}>
+        <span>${esc(nome)}</span>
+      </label>
+    `;
+  }).join("");
+  if (ajuda) ajuda.textContent = "Selecione as modalidades que este plano oferece.";
+}
+
+async function carregarModalidades() {
+  const lista = await request(API_MODALIDADES).catch(() => []);
+  const mapa = new Map();
+  lista
+    .filter((item) => !["inativa", "inativo", "cancelada", "cancelado"].includes(normalizar(item.status || "Ativa")))
+    .forEach((item) => {
+      const nome = nomeModalidade(item);
+      if (nome && !mapa.has(normalizar(nome))) mapa.set(normalizar(nome), { ...item, nome });
+    });
+  modalidades = [...mapa.values()].sort((a, b) => nomeModalidade(a).localeCompare(nomeModalidade(b), "pt-BR"));
+  renderizarOpcoesModalidades();
 }
 
 async function carregarResumo() {
@@ -53,8 +125,9 @@ async function carregarPlanos() {
 }
 
 function renderizarModalidades(modalidades = []) {
-  if (!modalidades.length) return `<span class="tag">Nenhuma</span>`;
-  return modalidades.map((item) => `<span class="tag">${item}</span>`).join("");
+  const lista = listaModalidades(modalidades);
+  if (!lista.length) return `<span class="tag">Nenhuma</span>`;
+  return lista.map((item) => `<span class="tag">${esc(item)}</span>`).join("");
 }
 
 function renderizarTabela() {
@@ -98,6 +171,7 @@ function abrirModal() {
   document.getElementById("multaAtrasoPercentual").value = 0;
   document.getElementById("limiteSemanal").value = 0;
   document.getElementById("horariosPermitidos").value = "Livre";
+  renderizarOpcoesModalidades();
   elementos.modalTitulo.textContent = "Novo Plano";
   elementos.modal.classList.add("aberto");
 }
@@ -120,7 +194,7 @@ window.editarPlano = function (id) {
   document.getElementById("descontoPercentual").value = item.descontoPercentual || 0;
   document.getElementById("multaAtrasoPercentual").value = item.multaAtrasoPercentual || 0;
   document.getElementById("limiteSemanal").value = item.limiteSemanal || 0;
-  document.getElementById("modalidadesIncluidas").value = (item.modalidadesIncluidas || []).join(", ");
+  renderizarOpcoesModalidades(item.modalidadesIncluidas || []);
   document.getElementById("horariosPermitidos").value = item.horariosPermitidos || "Livre";
   document.getElementById("descricao").value = item.descricao || "";
 
@@ -149,7 +223,7 @@ elementos.form.addEventListener("submit", async (event) => {
     descontoPercentual: document.getElementById("descontoPercentual").value,
     multaAtrasoPercentual: document.getElementById("multaAtrasoPercentual").value,
     limiteSemanal: document.getElementById("limiteSemanal").value,
-    modalidadesIncluidas: document.getElementById("modalidadesIncluidas").value,
+    modalidadesIncluidas: modalidadesSelecionadas(),
     horariosPermitidos: document.getElementById("horariosPermitidos").value,
     descricao: document.getElementById("descricao").value
   };
@@ -174,4 +248,9 @@ elementos.busca.addEventListener("input", carregarPlanos);
 elementos.tipoFiltro.addEventListener("change", carregarPlanos);
 elementos.statusFiltro.addEventListener("change", carregarPlanos);
 
-carregarPlanos();
+async function iniciar() {
+  await carregarModalidades();
+  await carregarPlanos();
+}
+
+iniciar().catch((erro) => alert(erro.message));

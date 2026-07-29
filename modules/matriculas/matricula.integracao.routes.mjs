@@ -12,6 +12,8 @@ function comum(body={}){
     turmaIds:body.turmaIds || body.turmasIds || body.turmasSelecionadas,
     turmaNome:body.turmaNome || body.turma || body.nomeTurma,
     turmaNomes:body.turmaNomes || body.turmasNomes || body.nomesTurmas,
+    modalidade:body.modalidade || body.modalidadeNome || body.modalidade_nome,
+    modalidadeNome:body.modalidadeNome || body.modalidade || body.modalidade_nome,
     tipoCobranca:body.tipoCobranca || body.tipoPlano,
     tipoPlano:body.tipoPlano,
     vencimento:body.vencimento,

@@ -54,13 +54,16 @@ function valorTurmaPorTipo(turma,tipo){ return 0; }
 function normalizarTurma(turma,tipo){ return { id: turma.id, turmaId: turma.id, nome: turma.nome || turma.turma || '', modalidade: turma.modalidade || '', professorId: turma.professorId || turma.professor_id || '', professor: turma.professor || '', diasSemana: turma.diasSemana || turma.dias_semana || '', horario: turma.horario || [turma.hora_inicio,turma.hora_fim].filter(Boolean).join(' às '), sala: turma.sala || turma.local || '', capacidade: Number(turma.capacidade||0), alunosMatriculados: Number(turma.alunosMatriculados||0), valor: valorTurmaPorTipo(turma,tipo), valorMensal: dinheiro(turma.valorMensal ?? turma.valor ?? 0), valorPrePago: dinheiro(turma.valorPrePago ?? turma.valorMensal ?? turma.valor ?? 0), valorDiarista: dinheiro(turma.valorDiarista ?? turma.valorAvulso ?? 0), tipoCobranca: tipo, status: turma.status || 'Ativa' }; }
 function turmaAtiva(t){ return !['inativa','inativo','cancelada','cancelado','encerrada','encerrado'].includes(normalizar(t?.status||'Ativa')); }
 function montarServicosLegado(base, plano, opcoes={}){ const tipo=opcoes.tipoCobranca || opcoes.tipoPlano || tipoPlano(plano); const ids=normalizarIds(opcoes); return ids.map(id=>{ const t=(base.turmas||[]).find(x=>String(x.id)===String(id)); if(!t){ const e=new Error(`Turma/serviço não encontrado: ${id}.`); e.status=404; throw e; } if(!turmaAtiva(t)){ const e=new Error(`Turma/serviço inativo: ${t.nome||id}.`); e.status=400; throw e; } return normalizarTurma(t,tipo); }); }
-function normalizarTurmaOperacional(turma,tipo){
+function modalidadeOperacional(opcoes = {}, fallback = '') {
+  return txt(opcoes.modalidade || opcoes.modalidadeNome || opcoes.modalidade_nome || fallback);
+}
+function normalizarTurmaOperacional(turma,tipo,opcoes={}){
   const id=idTurma(turma);
   return {
     id,
     turmaId:id,
     nome:nomeTurma(turma),
-    modalidade:turma.modalidade || '',
+    modalidade:turma.modalidade || modalidadeOperacional(opcoes),
     professorId:turma.professorId || turma.professor_id || '',
     professor:turma.professor || '',
     diasSemana:turma.diasSemana || turma.dias_semana || '',
@@ -86,9 +89,9 @@ function buscarTurma(base, id, nomes=[]){
     return nomes.length>0 && nomesTurma.some(n=>nomes.includes(n));
   });
 }
-function criarTurmaOperacional(id,nome,tipo){
+function criarTurmaOperacional(id,nome,tipo,opcoes={}){
   const rotulo=txt(nome || id || 'Turma operacional');
-  return normalizarTurmaOperacional({ id:txt(id || rotulo), nome:rotulo, status:'Ativa' }, tipo);
+  return normalizarTurmaOperacional({ id:txt(id || rotulo), nome:rotulo, status:'Ativa' }, tipo, opcoes);
 }
 function montarServicos(base, plano, opcoes={}){
   const tipo=opcoes.tipoCobranca || opcoes.tipoPlano || tipoPlano(plano);
@@ -96,13 +99,13 @@ function montarServicos(base, plano, opcoes={}){
   const nomes=normalizarNomesTurmas(opcoes);
   return ids.map((id,idx)=>{
     const t=buscarTurma(base,id,nomes);
-    if(!t) return criarTurmaOperacional(id, nomes[idx] || id, tipo);
+    if(!t) return criarTurmaOperacional(id, nomes[idx] || id, tipo, opcoes);
     if(!turmaAtiva(t)){
       const e=new Error(`Turma/servico inativo: ${nomeTurma(t)||id}.`);
       e.status=400;
       throw e;
     }
-    return normalizarTurmaOperacional(t,tipo);
+    return normalizarTurmaOperacional(t,tipo,opcoes);
   });
 }
 function resumoServicos(servicos=[]){ const s=Array.isArray(servicos)?servicos:[]; return { turmaIds:s.map(x=>x.id), turma:s.map(x=>x.nome).filter(Boolean).join(', '), modalidade:[...new Set(s.map(x=>x.modalidade).filter(Boolean))].join(', '), professor:[...new Set(s.map(x=>x.professor).filter(Boolean))].join(', '), horario:s.map(x=>[x.nome,x.diasSemana,x.horario].filter(Boolean).join(' - ')).join(' | '), sala:[...new Set(s.map(x=>x.sala).filter(Boolean))].join(', '), valorServicos:0 }; }
@@ -268,6 +271,7 @@ export async function integrarMatriculaAluno(alunoId, planoId, opcoes={}){
 
   const servicos=montarServicos(base,plano,{...opcoes,tipoCobranca:tipo});
   const r=resumoServicos(servicos);
+  const modalidadeSelecionada=modalidadeOperacional(opcoes, r.modalidade);
 
   const cobrarMatricula = opcoes.cobrarMatricula !== undefined
     ? opcoes.cobrarMatricula !== false && opcoes.cobrarMatricula !== 'false'
@@ -358,7 +362,7 @@ export async function integrarMatriculaAluno(alunoId, planoId, opcoes={}){
     turma:r.turma,
     turmas:servicos,
     servicos,
-    modalidade:r.modalidade,
+    modalidade:r.modalidade || modalidadeSelecionada,
     professor:r.professor,
     horario:r.horario,
     sala:r.sala,
@@ -698,13 +702,14 @@ export async function atualizarTurmasMatricula(id, opcoes={}, usuario='sistema')
   const plano=base.planos.find(p=>String(p.id)===String(m.planoId || opcoes.planoId || '')) || {};
   const turmas=montarServicos(base, plano, { ...opcoes, tipoCobranca:m.tipoCobranca || m.tipoPlano || tipoPlano(plano) });
   const r=resumoServicos(turmas);
+  const modalidadeSelecionada=modalidadeOperacional(opcoes, r.modalidade);
   Object.assign(m,{
     turmaId:r.turmaIds[0]||'',
     turmaIds:r.turmaIds,
     turma:r.turma,
     turmas,
     servicos:turmas,
-    modalidade:r.modalidade,
+    modalidade:r.modalidade || modalidadeSelecionada,
     professor:r.professor,
     horario:r.horario,
     sala:r.sala,
