@@ -24,13 +24,15 @@
 .modal-card { background: white; width: min(900px, 100%); max-height: 92vh; overflow-y: auto; border-radius: 18px; box-shadow: 0 30px 80px rgba(15, 23, 42, 0.3); padding: 22px; }
 .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 .form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
-.form-grid label { color: #334155; font-weight: 700; font-size: 13px; }
+.form-grid label, .field-label { color: #334155; font-weight: 700; font-size: 13px; }
 .form-grid label input, .form-grid label select, .form-grid label textarea { margin-top: 6px; }
+.field-title { display: block; color: #e5f7fb; font-weight: 900; }
 .form-hint { display: block; margin-top: 6px; color: #64748b; font-size: 12px; font-weight: 500; }
 .modalidades-picker { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; margin-top: 8px; }
-.modalidade-option { display: flex; align-items: center; gap: 8px; border: 1px solid #cbd5e1; border-radius: 10px; padding: 10px 12px; background: #f8fafc; color: #0f172a; font-weight: 800; }
-.modalidade-option input { width: auto; margin: 0; }
-.modalidade-option span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.modalidade-option { display: flex; align-items: center; gap: 10px; min-height: 46px; border: 1px solid #9fb7c1!important; border-radius: 10px; padding: 10px 12px; background: #f8fafc!important; color: #102b35!important; font-weight: 900!important; text-shadow: none!important; }
+.modalidade-option input { width: 16px!important; height: 16px!important; min-width: 16px; margin: 0!important; accent-color: #22c7d9; }
+.modalidade-option span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #102b35!important; text-shadow: none!important; }
+.modalidade-option:has(input:checked) { background: #e6fbff!important; border-color: #22c7d9!important; box-shadow: inset 0 0 0 1px #22c7d9; }
 .modalidades-empty { border: 1px dashed #cbd5e1; border-radius: 10px; padding: 12px; color: #64748b; background: #f8fafc; }
 .full { grid-column: 1 / -1; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
