@@ -697,17 +697,14 @@ export async function atualizar(id, dados) {
       [alunoAntes.status, alunoAntes.situacao, alunoAntes.statusMatricula, alunoAntes.matriculaStatus].map(normalizar).includes(s)
     );
 
-  // A reativação precisa vir antes do desligamento. O cadastro pode enviar
-  // status=ativo junto com statusMatricula=Cancelada; nesse caso é reativação.
+  // Alteracao cadastral nao pode ativar matricula nem gerar financeiro.
   if (deveReativar) {
-    return await reativarFluxoCompletoAluno(id, {
-      ...dados,
-      usuario: dados?.usuario || dados?.atualizadoPor || "sistema",
-      motivo: dados?.motivoReativacao || dados?.motivo || "Aluno marcado como ativo no cadastro."
-    });
+    const erro = new Error("Nao ative o aluno pela edicao. Use Reativar matricula para escolher plano, turma, modalidade e pagamento.");
+    erro.status = 409;
+    throw erro;
   }
 
-  const deveDesligar = alunoAntes && !deveReativar && statusSolicitaDesligamento(resultado.data);
+  const deveDesligar = alunoAntes && statusSolicitaDesligamento(resultado.data);
 
   if (deveDesligar) {
     await cancelarVinculosFinanceirosDoAluno(alunoAntes, {

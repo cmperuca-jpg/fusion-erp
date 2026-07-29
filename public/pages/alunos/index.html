@@ -110,23 +110,23 @@
             <div class="field"><label for="senhaAluno">Senha do Portal do Aluno</label><input id="senhaAluno" type="text" autocomplete="off" placeholder="Senha de acesso do aluno"><small>A senha salva aparece aqui para consulta da recepcao. Se ficar vazia, o portal ainda aceita CPF/data conforme regra atual.</small></div>
             <div class="field"><label for="confirmarSenhaAluno">Confirmar senha</label><input id="confirmarSenhaAluno" type="text" autocomplete="off" placeholder="Repita a senha do aluno"></div>
           </div>
-          <div class="fusion-card cadastro-matricula-vinculada">
+          <div class="fusion-card cadastro-matricula-vinculada js-cadastro-matricula-field">
             <strong>Matricula vinculada ao plano</strong>
             <p>Todo novo aluno precisa de plano. A matricula e o financeiro inicial sao gerados pelo plano; turma e apenas vinculo operacional.</p>
           </div>
 
-          <div class="grid-3">
-            <div class="field"><label for="plano">Plano *</label><select id="plano" required><option value="">Selecione um plano</option></select></div>
+          <div class="grid-3 js-cadastro-matricula-field">
+            <div class="field"><label for="plano">Plano</label><select id="plano"><option value="">Selecione um plano</option></select></div>
             <div class="field"><label for="data_matricula">Data da matricula</label><input id="data_matricula" type="text" inputmode="numeric" autocomplete="off" placeholder="DD/MM/AAAA" data-fusion-date="1"></div>
             <div class="field"><label for="dia_vencimento_mensal">Dia de vencimento mensal *</label><input id="dia_vencimento_mensal" type="text" inputmode="numeric" maxlength="2" autocomplete="off" placeholder="1 a 28"><small>Cria a próxima fatura como programada, sem saldo em aberto até o vencimento.</small></div>
             <div class="field"><label for="valor_mensal_preview">Mensalidade do plano</label><input id="valor_mensal_preview" readonly></div>
           </div>
-          <div class="grid-3">
+          <div class="grid-3 js-cadastro-matricula-field">
             <div class="field"><label for="cobrar_taxa_matricula">Cobrar taxa de matricula</label><select id="cobrar_taxa_matricula"><option value="sim">Sim</option><option value="nao">Nao</option></select></div>
             <div class="field"><label for="valor_taxa_matricula">Taxa de matricula</label><input id="valor_taxa_matricula" type="text" value="0,00" inputmode="decimal" autocomplete="off" data-fusion-date="0" data-money="1"></div>
             <div class="field"><label for="desconto_matricula">Desconto inicial</label><input id="desconto_matricula" type="text" value="0,00" inputmode="decimal" autocomplete="off" data-fusion-date="0" data-money="1"></div>
           </div>
-          <div class="grid-2">
+          <div class="grid-2 js-cadastro-matricula-field">
             <div class="field"><label for="total_matricula_preview">Total inicial</label><input id="total_matricula_preview" readonly></div>
             <div class="field"><label>&nbsp;</label><button type="button" class="btn-light" id="btnRecarregarPlanos">Recarregar planos</button></div>
           </div>
@@ -208,12 +208,12 @@
           </section>
         </div>
 
-        <div class="modal-actions"><button type="button" class="btn-light" id="btnFicha">Imprimir ficha completa</button><button type="button" class="btn-light" id="btnCancelar">Cancelar</button><button type="submit" class="fusion-button" id="btnSalvarAluno">Salvar aluno</button></div>
+        <div class="modal-actions"><button type="button" class="btn-light" id="btnFicha">Imprimir ficha completa</button><button type="button" class="btn-light" id="btnCancelar">Cancelar</button><button type="submit" class="fusion-button" id="btnSalvarAluno">Cadastrar aluno</button></div>
       </form>
     </div>
   </div>
 <script src="/assets/js/fusion-date.js"></script>
-<script src="./index.js?v=20260728-senha-cpf-1"></script>
+<script src="./index.js?v=20260729-fluxo-aluno-1"></script>
   <script src="/assets/js/fusion-ciclo-professor-aluno.js"></script>
   <script src="/assets/js/fusion-menu-global.js"></script>
     <script src="/assets/js/fusion-layout.js"></script>

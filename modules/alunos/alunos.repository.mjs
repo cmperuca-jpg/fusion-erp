@@ -18,6 +18,30 @@ function limparCpf(valor) {
   return String(valor || "").replace(/\D/g, "");
 }
 
+function cpfValido(valor) {
+  const cpf = limparCpf(valor);
+  if (!cpf) return true;
+  if (cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) return false;
+
+  const calcularDigito = (base) => {
+    let soma = 0;
+    for (let i = 0; i < base.length; i += 1) {
+      soma += Number(base[i]) * (base.length + 1 - i);
+    }
+    const resto = (soma * 10) % 11;
+    return resto === 10 ? 0 : resto;
+  };
+
+  return calcularDigito(cpf.slice(0, 9)) === Number(cpf[9]) &&
+    calcularDigito(cpf.slice(0, 10)) === Number(cpf[10]);
+}
+
+function validarCpfCadastro(cpf) {
+  if (cpf && !cpfValido(cpf)) {
+    throw new Error("CPF invalido. Confira os numeros digitados.");
+  }
+}
+
 function sincronizarSenhaAcessoAluno(dados = {}) {
   const senha = dados.senhaAluno || dados.senhaAcesso || dados.senhaPortal || dados.portalSenha || dados.senha || "";
   if (!senha) return dados;
@@ -42,6 +66,7 @@ export async function buscarAlunoPorId(id) {
 async function criarAlunoInterno(aluno) {
   const alunos = await lerAlunos();
   const cpfNovo = limparCpf(aluno.cpf);
+  validarCpfCadastro(cpfNovo);
 
   if (cpfNovo) {
     const cpfJaExiste = alunos.some(item => limparCpf(item.cpf) === cpfNovo);
@@ -78,6 +103,7 @@ async function atualizarAlunoInterno(id, dados) {
   }
 
   const cpfNovo = limparCpf(dados.cpf);
+  validarCpfCadastro(cpfNovo);
 
   if (cpfNovo) {
     const cpfJaExiste = alunos.some((item, itemIndex) =>

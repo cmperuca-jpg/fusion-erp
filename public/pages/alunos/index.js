@@ -46,6 +46,24 @@ function somenteNumeros(valor) {
   return String(valor ?? "").replace(/\D/g, "");
 }
 
+function cpfValido(valor) {
+  const cpf = somenteNumeros(valor);
+  if (!cpf) return true;
+  if (cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) return false;
+
+  const calcularDigito = (base) => {
+    let soma = 0;
+    for (let i = 0; i < base.length; i += 1) {
+      soma += Number(base[i]) * (base.length + 1 - i);
+    }
+    const resto = (soma * 10) % 11;
+    return resto === 10 ? 0 : resto;
+  };
+
+  return calcularDigito(cpf.slice(0, 9)) === Number(cpf[9]) &&
+    calcularDigito(cpf.slice(0, 10)) === Number(cpf[10]);
+}
+
 function extrairLista(payload) {
   if (Array.isArray(payload)) return payload;
   if (Array.isArray(payload.alunos)) return payload.alunos;
@@ -540,7 +558,7 @@ function botaoStatusAluno(id, status) {
     return `<button class="btn-row regularizar" type="button" onclick="regularizarPreMatricula('${escapeAttr(id)}')">Regularizar</button>`;
   }
   if (alunoEstaInativoOperacional(status)) {
-    return `<button class="btn-row success" type="button" onclick="reativarAluno('${escapeAttr(id)}')">Reativar</button>`;
+    return `<button class="btn-row success" type="button" onclick="reativarAluno('${escapeAttr(id)}')">Reativar matrícula</button>`;
   }
   return `<button class="btn-row warning" type="button" onclick="cancelarAluno('${escapeAttr(id)}')">Cancelar</button>`;
 }
@@ -550,7 +568,7 @@ function botaoStatusAlunoMobile(id, status) {
     return `<button type="button" class="regularizar" onclick="regularizarPreMatricula('${escapeAttr(id)}')">Regularizar</button>`;
   }
   if (alunoEstaInativoOperacional(status)) {
-    return `<button type="button" class="success" onclick="reativarAluno('${escapeAttr(id)}')">Reativar</button>`;
+    return `<button type="button" class="success" onclick="reativarAluno('${escapeAttr(id)}')">Reativar matrícula</button>`;
   }
   return `<button type="button" class="warning" onclick="cancelarAluno('${escapeAttr(id)}')">Cancelar</button>`;
 }
@@ -658,7 +676,7 @@ async function abrirNovoAluno() {
   renderizarMatriculasAluno([]);
   trocarTab("cadastro");
   abrirModal("Novo aluno");
-  await carregarPlanos("");
+  atualizarModoCadastroAluno();
   atualizarPainelComercialMatricula();
 }
 
@@ -680,6 +698,7 @@ function fecharModal() {
   fotoBase64Atual = "";
   atualizarPreviewFoto("");
   setSalvarLoading(false);
+  atualizarModoCadastroAluno();
 }
 
 function preencherSenhaAluno(valor = "") {
@@ -700,7 +719,7 @@ window.abrirEdicao = async function(id) {
   renderizarMatriculasAluno([]);
   trocarTab("cadastro");
   abrirModal("Editar aluno");
-  await carregarPlanos(alunoPlano(a));
+  atualizarModoCadastroAluno();
   atualizarPainelComercialMatricula();
   atualizarMatriculasAlunoAtual();
 };
@@ -872,89 +891,8 @@ window.regularizarPreMatricula = async function(id) {
 };
 
 window.reativarAluno = async function(id) {
-  if (!id) return mostrarAlerta("ID do aluno não encontrado.", "erro");
-
-  const a = alunos.find(x => String(alunoId(x)) === String(id));
-  const nome = a ? alunoNome(a) : "este aluno";
-  const valorPadrao = parseMoeda(a?.valorMensal || a?.valorPlano || a?.valorMensalTotal || "0");
-  const informado = prompt(
-    `Valor para reativar ${nome}:`,
-    valorPadrao > 0 ? formatarMoeda(valorPadrao) : "0,00"
-  );
-
-  if (informado === null) return;
-
-  const valor = parseMoeda(informado);
-  if (!(valor > 0)) {
-    mostrarAlerta("Informe um valor maior que zero para abrir a cobrança de reativação.", "erro");
-    return;
-  }
-
-  const diaInformado = prompt(
-    `Dia de vencimento mensal de ${nome} (1 a 28):`,
-    String(a?.diaVencimento || a?.dia_vencimento || "")
-  );
-
-  if (diaInformado === null) return;
-
-  const diaVencimento = diaVencimentoValido(diaInformado);
-  if (!diaVencimento) {
-    mostrarAlerta("Informe um dia de vencimento mensal inteiro de 1 a 28.", "erro");
-    return;
-  }
-
-  try {
-    const resp = await fetch(`${API_ALUNOS}/${encodeURIComponent(id)}/reativar-cobranca`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        valor,
-        diaVencimento,
-        usuario: "operador",
-        motivo: "Reativação pelo cadastro de alunos com cobrança no caixa."
-      })
-    });
-    const payload = await safeJson(resp);
-
-    if (!resp.ok || payload.ok === false) {
-      throw new Error(payload.erro || payload.mensagem || `Erro HTTP ${resp.status}`);
-    }
-
-    const resultado = payload?.resultado || payload || {};
-    const financeiroId =
-      resultado?.financeiro?.id ||
-      resultado?.financeiroId ||
-      resultado?.lancamentoFinanceiroId ||
-      resultado?.mensalidade?.lancamentoFinanceiroId ||
-      resultado?.recebimento?.lancamentoFinanceiroId ||
-      "";
-    const mensalidadeId =
-      resultado?.mensalidade?.id ||
-      resultado?.mensalidadeId ||
-      resultado?.recebimento?.mensalidadeId ||
-      "";
-
-    const mensagem = payload.mensagem || "Cobrança de reativação criada. Baixe no Financeiro para ativar o aluno.";
-    mostrarAlerta(mensagem, "sucesso");
-
-    await carregarAlunos();
-
-    const params = new URLSearchParams();
-    if (financeiroId) params.set("financeiroId", financeiroId);
-    else if (mensalidadeId) params.set("mensalidadeId", mensalidadeId);
-    params.set("receberAgora", "1");
-    params.set("origem", "reativacao_aluno");
-
-    const url = `/pages/financeiro/index.html?${params.toString()}`;
-
-    if (confirm(`${mensagem}
-
-Abrir o Financeiro para escolher a forma de pagamento e confirmar o recebimento agora?`)) {
-      location.href = url;
-    }
-  } catch (erro) {
-    mostrarAlerta(erro.message, "erro");
-  }
+  if (!id) return mostrarAlerta("ID do aluno nao encontrado.", "erro");
+  return window.abrirMatriculaAluno(id, { origem: "reativacao" });
 };
 
 window.excluirAluno = async function(id) {
@@ -1117,28 +1055,20 @@ async function salvarAluno(ev) {
     const idSalvo = alunoId(salvo) || id;
     registrarHistoricoLocal(idSalvo, id ? "edicao" : "cadastro", id ? "Cadastro do aluno atualizado" : "Aluno cadastrado no sistema");
 
-    if (id && dados.diaVencimento) {
-      await atualizarDiaVencimentoDaMatricula(idSalvo, dados.diaVencimento);
-    }
-
     fecharModal();
     await carregarAlunos();
 
     if (id) {
-      mostrarAlerta("Aluno atualizado com sucesso.", "sucesso");
+      mostrarAlerta("Dados do aluno atualizados com sucesso. Nenhuma matricula ou cobranca foi alterada.", "sucesso");
       return;
     }
 
-    const resultadoMatricula = await integrarMatriculaAposCadastro(salvo, dados);
-    registrarHistoricoLocal(idSalvo, "matricula_plano", "Aluno cadastrado com matricula vinculada ao plano.");
-    await carregarAlunos();
-
-    if (resultadoMatricula && confirmarRecebimentoAgora(resultadoMatricula)) {
-      abrirRecebimentoMatricula(resultadoMatricula);
+    if (confirm("Aluno cadastrado com sucesso. Deseja abrir a matricula agora para escolher plano, turma, modalidade e pagamento?")) {
+      window.abrirMatriculaAluno(idSalvo);
       return;
     }
 
-    mostrarAlerta("Aluno cadastrado com matricula vinculada ao plano. Turmas nao alteram o financeiro.", "sucesso");
+    mostrarAlerta("Aluno cadastrado com sucesso. Use Nova matricula ou Reativar matricula quando for vincular plano, turma, modalidade e pagamento.", "sucesso");
   } catch (erro) {
     mostrarAlerta(erro.message, "erro");
   } finally {
@@ -1149,7 +1079,7 @@ async function salvarAluno(ev) {
 function coletarDadosFormulario() {
   const ids = [
     "nome", "rg", "data_nascimento", "sexo", "email",
-    "plano", "data_matricula", "status", "responsavel", "contato_emergencia",
+    "responsavel", "contato_emergencia",
     "cep", "cidade", "estado", "endereco", "objetivo", "observacoes",
     "tipo_sanguineo", "peso", "altura", "alergias", "restricoes_medicas",
     "medicamentos", "lesoes"
@@ -1172,9 +1102,6 @@ function coletarDadosFormulario() {
     dados.portalSenha = senha;
   }
 
-  const diaVencimento = diaVencimentoValido($("#dia_vencimento_mensal")?.value);
-  if (diaVencimento) dados.diaVencimento = diaVencimento;
-
   ids.forEach(id => dados[id] = $(`#${id}`).value.trim());
 
   const professorSelect = $("#professor_responsavel");
@@ -1188,16 +1115,7 @@ function coletarDadosFormulario() {
   dados.professorResponsavelId = professorId;
 
   dados.data_nascimento = dataParaISO(dados.data_nascimento);
-  dados.data_matricula = dataParaISO(dados.data_matricula) || dataHojeISO();
   if (!dados.data_nascimento) delete dados.data_nascimento;
-
-  const planoSelecionado = planosCadastrados.find((p) => planoId(p) === dados.plano);
-  if (planoSelecionado) {
-    dados.planoId = planoId(planoSelecionado);
-    dados.plano = planoNome(planoSelecionado);
-    dados.valorMensal = Number(planoSelecionado.valorMensal ?? planoSelecionado.valor ?? 0) || 0;
-    dados.taxaMatricula = Number(planoSelecionado.taxaMatricula ?? 0) || 0;
-  }
 
   dados.estado = (dados.estado || "").toUpperCase();
 
@@ -1205,25 +1123,12 @@ function coletarDadosFormulario() {
     if (dados[k] === "") delete dados[k];
   });
 
-  const novoCadastro = !$("#alunoId").value;
-
-  if (novoCadastro) {
-    dados.status = "pre-matriculado";
-    dados.statusMatricula = "Pendente";
-    dados.matriculaStatus = "Pendente";
-    dados.ativo = false;
-  } else {
-    if (!dados.status) dados.status = "inativo";
-  }
-
   return dados;
 }
 
 function validarAluno(d) {
   if (!d.nome || d.nome.length < 3) return "Informe o nome completo do aluno.";
-  if (!$("#alunoId").value && !d.planoId) return "Selecione o plano para criar a matricula do aluno.";
-  const possuiMatricula = !$("#alunoId").value || Boolean(d.planoId) || ["ativo", "pre-matriculado", "pendente"].includes(normalizarTexto(d.status));
-  if (possuiMatricula && !diaVencimentoValido($("#dia_vencimento_mensal")?.value)) return "Informe o dia de vencimento mensal com um número inteiro de 1 a 28.";
+  if (d.cpf && !cpfValido(d.cpf)) return "CPF invalido. Confira os numeros digitados.";
   if (d.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email)) return "E-mail inválido.";
   if (d.telefone && d.telefone.length < 10) return "Telefone inválido.";
   if (d.whatsapp && d.whatsapp.length < 10) return "WhatsApp inválido.";
@@ -1242,8 +1147,23 @@ function setSalvarLoading(ativo) {
   const btn = $("#btnSalvarAluno");
   if (btn) {
     btn.disabled = ativo;
-    btn.textContent = ativo ? "Salvando..." : "Salvar aluno";
+    btn.textContent = ativo ? "Salvando..." : ($("#alunoId")?.value ? "Salvar alterações" : "Cadastrar aluno");
   }
+}
+
+function atualizarModoCadastroAluno() {
+  const editando = Boolean($("#alunoId")?.value);
+  const botaoSalvar = $("#btnSalvarAluno");
+  if (botaoSalvar && !salvando) botaoSalvar.textContent = editando ? "Salvar alterações" : "Cadastrar aluno";
+
+  const camposMatricula = document.querySelectorAll(".js-cadastro-matricula-field");
+  camposMatricula.forEach((bloco) => {
+    bloco.hidden = true;
+    bloco.querySelectorAll("input, select, textarea, button").forEach((el) => {
+      el.disabled = true;
+      el.required = false;
+    });
+  });
 }
 
 function trocarTab(nome) {
@@ -1408,9 +1328,11 @@ window.abrirFluxoMatriculaAluno = async function(id) {
   window.abrirMatriculaAluno(id);
 };
 
-window.abrirMatriculaAluno = function(id) {
-  if (!id) return mostrarAlerta("Aluno não identificado.", "erro");
-  location.href = `/pages/matriculas/cadastro.html?alunoId=${encodeURIComponent(id)}`;
+window.abrirMatriculaAluno = function(id, opcoes = {}) {
+  if (!id) return mostrarAlerta("Aluno nao identificado.", "erro");
+  const params = new URLSearchParams({ alunoId: id });
+  if (opcoes.origem) params.set("origem", opcoes.origem);
+  location.href = `/pages/matriculas/cadastro.html?${params.toString()}`;
 };
 
 function abrirMatriculaDoModal() {
@@ -1629,6 +1551,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   } catch (erro) {
     console.warn("Falha ao preparar interface móvel de alunos:", erro);
   }
+  atualizarModoCadastroAluno();
 
   ao("#btnNovoAluno", "click", abrirNovoAluno);
   ao("#btnAtualizar", "click", async () => {

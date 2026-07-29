@@ -3,6 +3,7 @@
   const params = new URLSearchParams(location.search);
   const idUrl = params.get("id");
   const alunoIdUrl = params.get("alunoId") || params.get("aluno_id");
+  const origemUrl = params.get("origem") || "";
 
   let alunos = [];
   let planos = [];
@@ -48,6 +49,9 @@
   function norm(valor) {
     return String(valor || "").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   }
+  function modoReativacao() {
+    return norm(origemUrl).includes("reativacao");
+  }
   function tipoPlano(plano) {
     const tipo = norm(plano?.tipoPlano || plano?.tipo || "Mensal");
     if (tipo.includes("pre")) return "Pre-pago";
@@ -68,6 +72,53 @@
   function tab(nome) {
     document.querySelectorAll(".tab").forEach((btn) => btn.classList.toggle("active", btn.dataset.tab === nome));
     document.querySelectorAll(".tab-content").forEach((el) => el.classList.toggle("active", el.id === `tab-${nome}`));
+  }
+  function financeiroInicialResultado(json, mat) {
+    const financeiro = json?.financeiroInicial || json?.financeiro || mat?.financeiroInicial || {};
+    const mensalidade = json?.mensalidadeGerada || json?.mensalidadeInicial || mat?.mensalidadeInicial || {};
+    const recebimento = json?.recebimentoInicial || mat?.recebimentoInicial || {};
+    return {
+      financeiroId: financeiro.id || mat?.financeiroInicialId || mensalidade.lancamentoFinanceiroId || recebimento.lancamentoFinanceiroId || "",
+      mensalidadeId: mensalidade.id || mat?.mensalidadeInicialId || recebimento.mensalidadeId || financeiro.mensalidadeId || "",
+      matriculaId: mat?.id || mat?.numero || financeiro.matriculaId || mensalidade.matriculaId || recebimento.matriculaId || "",
+      alunoId: mat?.alunoId || json?.aluno?.id || financeiro.alunoId || mensalidade.alunoId || recebimento.alunoId || ""
+    };
+  }
+  function valorEntradaResultado(json, mat) {
+    return dinheiro(
+      mat?.valorTotalInicial ??
+      json?.financeiroInicial?.valorRestante ??
+      json?.financeiroInicial?.valor ??
+      json?.mensalidadeGerada?.valorRestante ??
+      json?.mensalidadeGerada?.valor ??
+      json?.recebimentoInicial?.valorRestante ??
+      json?.recebimentoInicial?.valor ??
+      0
+    );
+  }
+  function urlFinanceiroResultado(json, mat) {
+    const ids = financeiroInicialResultado(json, mat);
+    const destino = new URLSearchParams();
+    if (ids.financeiroId) destino.set("financeiroId", ids.financeiroId);
+    if (ids.mensalidadeId) destino.set("mensalidadeId", ids.mensalidadeId);
+    if (ids.matriculaId) destino.set("matriculaId", ids.matriculaId);
+    if (ids.alunoId) destino.set("alunoId", ids.alunoId);
+    destino.set("receberAgora", "1");
+    destino.set("origem", modoReativacao() ? "reativacao-matricula" : "matricula");
+    return `/pages/financeiro/index.html?${destino.toString()}`;
+  }
+  function confirmarRecebimentoInicial(json, mat) {
+    const valor = valorEntradaResultado(json, mat);
+    if (valor <= 0) return false;
+
+    const texto = modoReativacao()
+      ? "Reativacao criada como pendente. Para liberar o aluno, confirme o recebimento inicial no Financeiro."
+      : "Matricula criada como pendente. Para liberar o aluno, confirme o recebimento inicial no Financeiro.";
+    const ok = confirm(`${texto}\n\nAbrir o Financeiro agora para receber ${br(valor)}?`);
+    if (!ok) return false;
+
+    location.href = urlFinanceiroResultado(json, mat);
+    return true;
   }
   function planoSelecionado() { return planos.find((p) => String(p.id) === String($("plano_id")?.value)) || null; }
   function turmaSelecionadaId() { return $("turma_id")?.value || ""; }
@@ -497,6 +548,7 @@
 
       const mat = json.matricula || json.dados;
       setAlerta(json.mensagem || "Matricula salva com plano vinculado.", "ok");
+      if (confirmarRecebimentoInicial(json, mat)) return;
       if (mat?.id) setTimeout(() => location.href = `/pages/matriculas/ficha.html?id=${encodeURIComponent(mat.id)}`, 700);
     } catch (erro) {
       setAlerta(erro.message || "Erro ao salvar matricula.", "erro");
@@ -509,6 +561,17 @@
     $("formMatricula")?.setAttribute("novalidate", "novalidate");
     document.querySelectorAll(".tab").forEach((btn) => btn.addEventListener("click", () => tab(btn.dataset.tab)));
     await carregarBase();
+
+    if (modoReativacao()) {
+      const titulo = $("tituloCadastro");
+      if (titulo) titulo.textContent = "Reativacao de matricula";
+      const textoHeader = document.querySelector(".cadastro-header p");
+      if (textoHeader) textoHeader.textContent = "Escolha plano, turma e modalidade. A ativacao acontece somente apos receber o titulo inicial no Financeiro.";
+      if ($("status")) $("status").value = "Pendente";
+      const btn = $("btnSalvar");
+      if (btn) btn.textContent = "Gerar reativacao";
+      setAlerta("Reativacao separada da edicao cadastral: esta tela cria a matricula pendente e o recebimento libera o aluno.", "ok");
+    }
 
     $("plano_id")?.addEventListener("change", () => {
       if (modoSomenteTurma) {
@@ -557,6 +620,7 @@
       $("aluno_id").value = alunoIdUrl;
       $("aluno_id").disabled = true;
       await verificarAtiva();
+      if (modoReativacao() && !matriculaAtual && $("status")) $("status").value = "Pendente";
     }
     if (idUrl && idUrl !== "undefined") {
       try { preencherFormulario(await carregarMatricula(idUrl)); }
