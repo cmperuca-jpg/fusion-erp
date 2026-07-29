@@ -45,74 +45,115 @@ main.main::after {
   }
 }
 
-/* Correção global de contraste do topo sobre a área clara.
-   O breadcrumb é criado dinamicamente por fusion-layout.js e alguns temas
-   administrativos o deixavam transparente, com letras brancas. */
-.fusion-main > .fusion-breadcrumb,
-.fusion-content > .fusion-breadcrumb,
-main.main > .fusion-breadcrumb,
-main.wrap > .fusion-breadcrumb,
-.fusion-breadcrumb {
-  display: flex !important;
-  align-items: center !important;
-  gap: 7px !important;
-  flex-wrap: wrap !important;
-  width: 100% !important;
-  max-width: 100% !important;
-  margin: 0 0 14px !important;
-  padding: 9px 12px !important;
-  box-sizing: border-box !important;
-  border: 1px solid #d7e0ea !important;
-  border-radius: 10px !important;
-  background: #ffffff !important;
-  background-image: none !important;
-  color: #526274 !important;
-  font-size: 13px !important;
-  font-weight: 700 !important;
-  line-height: 1.35 !important;
-  text-shadow: none !important;
-  opacity: 1 !important;
-  box-shadow: 0 4px 14px rgba(15, 23, 42, .05) !important;
+/* Fusion ERP — contraste tipográfico global e KPIs compactos (2026-07-29). */
+:root{
+  --fusion-claro-titulo:#17313a;
+  --fusion-claro-texto:#526773;
+  --fusion-card-fundo:#123b46;
+  --fusion-card-borda:#295966;
+  --fusion-card-texto:#ffffff;
+  --fusion-card-secundario:#d8e8ec;
 }
 
-.fusion-breadcrumb,
-.fusion-breadcrumb * {
-  text-shadow: none !important;
-  opacity: 1 !important;
+/* Títulos e descrições que ficam diretamente sobre a área clara. */
+main.main > :is(.page-actions,.modulo-header),
+main > .hero,
+.fusion-content > :is(.page-actions,.modulo-header,.hero),
+.fusion-page > .page-title{
+  color:var(--fusion-claro-titulo)!important;
+}
+main.main > :is(.page-actions,.modulo-header) :is(h1,h2,h3),
+main > .hero :is(h1,h2,h3),
+.fusion-content > :is(.page-actions,.modulo-header,.hero) :is(h1,h2,h3),
+.fusion-page > .page-title :is(h1,h2,h3){
+  color:var(--fusion-claro-titulo)!important;
+  text-shadow:none!important;
+  opacity:1!important;
+}
+main.main > :is(.page-actions,.modulo-header) p,
+main > .hero p,
+.fusion-content > :is(.page-actions,.modulo-header,.hero) p,
+.fusion-page > .page-title p{
+  color:var(--fusion-claro-texto)!important;
+  text-shadow:none!important;
+  opacity:1!important;
 }
 
-.fusion-breadcrumb a {
-  color: #087f91 !important;
-  font-weight: 800 !important;
-  text-decoration: underline !important;
-  text-decoration-thickness: 1px !important;
-  text-underline-offset: 2px !important;
+/* Cartões de indicadores: leitura consistente e números sem estouro. */
+:is(.kpi-grid,.dashboard-grid,.financeiro-kpis,.cards,.cards-resumo) > :is(.card,.kpi,.kpi-card),
+:is(.kpi-grid,.dashboard-grid,.financeiro-kpis,.cards,.cards-resumo) > button.card{
+  background:var(--fusion-card-fundo)!important;
+  border:1px solid var(--fusion-card-borda)!important;
+  color:var(--fusion-card-texto)!important;
+  text-shadow:none!important;
+  min-width:0!important;
+  overflow:hidden!important;
+}
+:is(.kpi-grid,.dashboard-grid,.financeiro-kpis,.cards,.cards-resumo) > :is(.card,.kpi,.kpi-card) :is(span,small),
+:is(.kpi-grid,.dashboard-grid,.financeiro-kpis,.cards,.cards-resumo) > button.card :is(span,small){
+  color:var(--fusion-card-secundario)!important;
+  opacity:1!important;
+  text-shadow:none!important;
+  line-height:1.3!important;
+}
+:is(.kpi-grid,.dashboard-grid,.financeiro-kpis,.cards,.cards-resumo) > :is(.card,.kpi,.kpi-card) strong,
+:is(.kpi-grid,.dashboard-grid,.financeiro-kpis,.cards,.cards-resumo) > button.card strong{
+  display:block!important;
+  max-width:100%!important;
+  color:#fff!important;
+  font-size:clamp(1.35rem,2vw,2rem)!important;
+  line-height:1.08!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+  text-shadow:none!important;
 }
 
-.fusion-breadcrumb a:hover,
-.fusion-breadcrumb a:focus-visible {
-  color: #075d6a !important;
+/* Agenda e Check-in: evita título, número e legenda na mesma linha. */
+.dashboard-grid > .card.kpi{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:flex-start!important;
+  justify-content:center!important;
+  gap:5px!important;
+  min-height:92px!important;
+}
+.dashboard-grid > .card.kpi strong{order:2!important}
+.dashboard-grid > .card.kpi small{order:3!important}
+
+/* Recebimentos: oito cartões compactos e último cartão com contraste correto. */
+.recebimentos-page .cards-resumo > .card{
+  min-height:76px!important;
+  padding:13px 14px!important;
+}
+.recebimentos-page .cards-resumo > .card strong{
+  font-size:clamp(1.15rem,1.45vw,1.55rem)!important;
+}
+.recebimentos-page .cards-resumo > .card.danger{
+  background:#123b46!important;
+  border-color:#d76969!important;
+}
+.recebimentos-page .cards-resumo > .card.danger :is(span,strong){
+  color:#fff!important;
 }
 
-.fusion-breadcrumb strong,
-.fusion-breadcrumb [aria-current="page"] {
-  color: #17212b !important;
-  font-weight: 800 !important;
+/* O cabeçalho de Recebimentos é um bloco escuro e precisa permanecer claro. */
+.recebimentos-page .page-header :is(.eyebrow,h1,.subtitle){
+  color:#fff!important;
+  text-shadow:none!important;
+  opacity:1!important;
+}
+.recebimentos-page .page-header .subtitle{color:#d8e8ec!important}
+
+/* Campos dentro de painéis escuros. */
+:is(.filtros-card,.filtros-agenda,.filtros-financeiro,.filtros,.panel.filtros) label{
+  color:#f3fafb!important;
+  opacity:1!important;
 }
 
-/* Separadores inseridos como texto ou spans também precisam permanecer visíveis. */
-.fusion-breadcrumb span,
-.fusion-breadcrumb .separator,
-.fusion-breadcrumb .separador {
-  color: #7b8794 !important;
-}
-
-@media (max-width: 900px) {
-  .fusion-breadcrumb {
-    margin-bottom: 10px !important;
-    padding: 8px 10px !important;
-    overflow-x: auto !important;
-    flex-wrap: nowrap !important;
-    white-space: nowrap !important;
+@media(max-width:760px){
+  :is(.kpi-grid,.dashboard-grid,.financeiro-kpis,.cards,.cards-resumo) > :is(.card,.kpi,.kpi-card) strong,
+  :is(.kpi-grid,.dashboard-grid,.financeiro-kpis,.cards,.cards-resumo) > button.card strong{
+    font-size:1.4rem!important;
   }
 }
