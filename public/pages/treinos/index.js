@@ -3,6 +3,8 @@ let alunos = [];
 let professores = [];
 let divisoes = [{ nome: "A", itens: [] }, { nome: "B", itens: [] }, { nome: "C", itens: [] }];
 let divisaoAtiva = 0;
+let treinoAtualId = "";
+let carregandoTreinoAluno = false;
 
 const $ = (id) => document.getElementById(id);
 const metodos = ["Convencional", "Bi-set", "Tri-set", "Drop-set", "Rest-pause", "FST-7", "Pirâmide", "Pirâmide inversa", "Circuito", "Super-série", "Pré-exaustão", "Pós-exaustão"];
@@ -417,24 +419,6 @@ function prescricaoLiberada() {
   return Boolean(aluno && idPessoa(aluno) && professor && idPessoa(professor));
 }
 
-function atualizarLinkAluno() {
-  const link = $("verPaginaAluno");
-  if (!link) return;
-  const aluno = alunoSelecionadoAtual();
-  if (!aluno) {
-    link.href = "/pages/aluno-treinos/index.html";
-    link.classList.add("disabled-link");
-    link.title = "Selecione um aluno para abrir a página de treino do aluno.";
-    return;
-  }
-  const alunoId = idPessoa(aluno);
-  const alunoNome = nomePessoa(aluno);
-  localStorage.setItem("fusion_aluno_treino_selecionado", JSON.stringify({ alunoId, alunoNome }));
-  link.href = `/pages/aluno-treinos/index.html?alunoId=${encodeURIComponent(alunoId)}&alunoNome=${encodeURIComponent(alunoNome)}`;
-  link.classList.remove("disabled-link");
-  link.title = `Abrir treino de ${alunoNome}`;
-}
-
 function atualizarEstadoPrescricao() {
   const liberado = prescricaoLiberada();
   ["salvarTreino", "salvarTreinoRodape"].forEach((id) => {
@@ -442,9 +426,11 @@ function atualizarEstadoPrescricao() {
     if (!botao) return;
     const alunoOk = Boolean(alunoSelecionadoAtual());
     const professorOk = Boolean(professorSelecionadoAtual());
-    botao.disabled = !liberado;
-    botao.classList.toggle("disabled", !liberado);
-    botao.title = liberado
+    botao.disabled = !liberado || carregandoTreinoAluno;
+    botao.classList.toggle("disabled", !liberado || carregandoTreinoAluno);
+    botao.title = carregandoTreinoAluno
+      ? "Carregando treino do aluno..."
+      : liberado
       ? "Salvar treino prescrito"
       : (!alunoOk
           ? "Selecione um aluno para liberar a prescrição."
@@ -452,7 +438,90 @@ function atualizarEstadoPrescricao() {
               ? "Professor responsável não identificado."
               : "Complete os dados obrigatórios para liberar a prescrição."));
   });
-  atualizarLinkAluno();
+}
+
+function dataCampo(valor) {
+  const texto = String(valor || "").trim();
+  const iso = texto.match(/^(\d{4}-\d{2}-\d{2})/);
+  return iso ? iso[1] : "";
+}
+
+function divisoesVazias() {
+  return [{ nome: "A", itens: [] }, { nome: "B", itens: [] }, { nome: "C", itens: [] }];
+}
+
+function normalizarDivisoesTreino(treino = {}) {
+  const lista = Array.isArray(treino.divisoes) ? treino.divisoes : [];
+  if (!lista.length) return divisoesVazias();
+  return lista.map((divisao, indice) => ({
+    nome: String(divisao?.nome || String.fromCharCode(65 + indice)).trim() || String.fromCharCode(65 + indice),
+    itens: Array.isArray(divisao?.itens)
+      ? divisao.itens.map((item) => ({
+          ...normalizarExercicio(item || {}),
+          series: item?.series || "",
+          repeticoes: item?.repeticoes || "",
+          carga: item?.carga || "",
+          descanso: item?.descanso || "",
+          metodo: item?.metodo || "Convencional",
+          cadencia: item?.cadencia || "",
+          obs: item?.obs || item?.observacoes || ""
+        }))
+      : []
+  }));
+}
+
+function limparFormularioTreino() {
+  treinoAtualId = "";
+  divisoes = divisoesVazias();
+  divisaoAtiva = 0;
+  $("objetivo").value = "";
+  $("validade").value = "";
+  $("dataPrescricao").value = new Date().toISOString().slice(0, 10);
+  $("observacoes").value = "";
+  renderDivisoes();
+}
+
+function aplicarTreinoNoFormulario(treino = {}) {
+  treinoAtualId = String(treino.id || treino._id || "");
+  divisoes = normalizarDivisoesTreino(treino);
+  divisaoAtiva = 0;
+  $("objetivo").value = treino.objetivo || "";
+  $("validade").value = dataCampo(treino.validade);
+  $("dataPrescricao").value = dataCampo(treino.dataPrescricao || treino.criadoEm) || new Date().toISOString().slice(0, 10);
+  $("observacoes").value = treino.observacoes || treino.observacao || "";
+  renderDivisoes();
+}
+
+function dataOrdenacaoTreino(treino = {}) {
+  const valor = treino.atualizadoEm || treino.dataPrescricao || treino.criadoEm || "";
+  const tempo = new Date(valor).getTime();
+  return Number.isFinite(tempo) ? tempo : 0;
+}
+
+async function carregarTreinoDoAluno() {
+  const aluno = alunoSelecionadoAtual();
+  if (!aluno) {
+    limparFormularioTreino();
+    atualizarEstadoPrescricao();
+    return;
+  }
+
+  carregandoTreinoAluno = true;
+  atualizarEstadoPrescricao();
+  try {
+    const alunoId = idPessoa(aluno);
+    const resposta = await api(`/api/treinos?alunoId=${encodeURIComponent(alunoId)}`);
+    if (resposta.ok === false) throw new Error(resposta.mensagem || "Erro ao carregar treino do aluno.");
+    const treinos = listaDe(resposta).slice().sort((a, b) => dataOrdenacaoTreino(b) - dataOrdenacaoTreino(a));
+    if (treinos.length) aplicarTreinoNoFormulario(treinos[0]);
+    else limparFormularioTreino();
+  } catch (erro) {
+    limparFormularioTreino();
+    alert(erro.message || "Não foi possível carregar o treino já montado do aluno.");
+  } finally {
+    carregandoTreinoAluno = false;
+    atualizarEstadoPrescricao();
+  }
 }
 
 async function salvar() {
@@ -475,11 +544,15 @@ async function salvar() {
     observacoes: $("observacoes").value,
     divisoes
   };
-  const r = await api("/api/treinos", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+  const url = treinoAtualId ? `/api/treinos/${encodeURIComponent(treinoAtualId)}` : "/api/treinos";
+  const method = treinoAtualId ? "PUT" : "POST";
+  const r = await api(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
   if (r.ok) {
+    const salvo = r.dados || r.data || {};
+    treinoAtualId = String(salvo.id || salvo._id || treinoAtualId || "");
     localStorage.setItem("fusion_aluno_treino_selecionado", JSON.stringify({ alunoId: payload.alunoId, alunoNome: payload.alunoNome }));
   }
-  alert(r.ok ? "Treino prescrito salvo." : (r.mensagem || "Erro ao salvar treino."));
+  alert(r.ok ? (method === "PUT" ? "Treino atualizado." : "Treino prescrito salvo.") : (r.mensagem || "Erro ao salvar treino."));
   atualizarEstadoPrescricao();
 }
 
@@ -526,15 +599,8 @@ async function init() {
 $("busca").oninput = renderExercicios;
 $("grupoFiltro").onchange = renderExercicios;
 $("buscaAluno").oninput = () => { renderAlunos(); atualizarEstadoPrescricao(); };
-$("alunoSelect").onchange = atualizarEstadoPrescricao;
+$("alunoSelect").onchange = carregarTreinoDoAluno;
 $("professorSelect").onchange = atualizarEstadoPrescricao;
-const verPaginaAluno = $("verPaginaAluno");
-if (verPaginaAluno) verPaginaAluno.onclick = (ev) => {
-  if (!alunoSelecionadoAtual()) {
-    ev.preventDefault();
-    alert("Selecione um aluno antes de abrir a página de treino do aluno.");
-  }
-};
 if ($("addDivisao")) $("addDivisao").onclick = adicionarDivisao;
 $("salvarTreino").onclick = salvar;
 if ($("salvarTreinoRodape")) $("salvarTreinoRodape").onclick = salvar;
