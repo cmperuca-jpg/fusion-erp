@@ -1,0 +1,22 @@
+--- /mnt/data/fusion_erp_inspect/fusion-erp-main/render.yaml	2026-07-29 21:18:44.000000000 +0000
++++ /mnt/data/fusion-erp-backup-desativado/render.yaml	2026-08-03 09:50:39.738604125 +0000
+@@ -45,7 +45,7 @@
+       - key: SUPABASE_BACKUP_BUCKET
+         value: fusion-backups
+       - key: FUSION_BACKUP_AUTO
+-        value: true
++        value: false
+       - key: FUSION_BACKUP_AUTO_MS
+         value: 21600000
+       - key: FUSION_BACKUP_PART_MB
+--- /mnt/data/fusion_erp_inspect/fusion-erp-main/modules/backup/backup.service.mjs	2026-07-29 21:18:44.000000000 +0000
++++ /mnt/data/fusion-erp-backup-desativado/modules/backup/backup.service.mjs	2026-08-03 09:50:39.738604125 +0000
+@@ -641,7 +641,7 @@
+ }
+ 
+ export function iniciarBackupAutomatico() {
+-  const ativo = !["0", "false", "nao", "não"].includes(String(process.env.FUSION_BACKUP_AUTO || "true").toLowerCase());
++  const ativo = !["0", "false", "nao", "não"].includes(String(process.env.FUSION_BACKUP_AUTO || "false").toLowerCase());
+   if (!ativo || backupAutomaticoTimer || !process.env.SUPABASE_URL) return statusBackupAutomatico();
+   const intervalo = Math.max(15 * 60 * 1000, Number(process.env.FUSION_BACKUP_AUTO_MS || 6 * 60 * 60 * 1000));
+   const primeiro = setTimeout(executarBackupAutomatico, Math.min(60 * 1000, Math.floor(intervalo / 4)));
