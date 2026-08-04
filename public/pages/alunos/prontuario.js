@@ -100,22 +100,28 @@ function primeiraMatriculaAtiva(){
 
 function mensalidadeAbertaPrincipal(){
   const lista = Array.isArray(prontuario?.mensalidades) ? prontuario.mensalidades : [];
-  const abertas = lista.filter(m => ['aberto','aberta','pendente','parcial','atrasado'].includes(String(m.status||'').toLowerCase()));
+  const abertas = lista.filter(m => {
+    const st = normalizarStatus(m.status);
+    return !['programada','programado','agendada','agendado'].includes(st) && statusRecebivel(st) && valorMensalidadeReceber(m) > 0;
+  });
   return abertas.sort((a,b)=>String(a.vencimento||'').localeCompare(String(b.vencimento||'')))[0] || {};
 }
 
 function mensalidadeProgramadaPrincipal(){
   const lista = Array.isArray(prontuario?.mensalidades) ? prontuario.mensalidades : [];
-  const programadas = lista.filter(m => ['programada','programado','agendada','agendado'].includes(normalizarStatus(m.status)));
+  const programadas = lista.filter(m => ['programada','programado','agendada','agendado'].includes(normalizarStatus(m.status)) && valorMensalidadeReceber(m) > 0);
   return programadas.sort((a,b)=>String(a.vencimento||'').localeCompare(String(b.vencimento||'')))[0] || {};
 }
 
+function mensalidadesComValorRecebivel(){
+  const lista = Array.isArray(prontuario?.mensalidades) ? prontuario.mensalidades : [];
+  return lista
+    .filter(m => m?.id && statusRecebivel(m.status) && valorMensalidadeReceber(m) > 0)
+    .sort((a,b)=>String(a.vencimento||'').localeCompare(String(b.vencimento||'')));
+}
+
 function mensalidadeRecebivelContrato(){
-  const aberta = mensalidadeAbertaPrincipal();
-  if (aberta?.id && statusRecebivel(aberta.status)) return aberta;
-  const programada = mensalidadeProgramadaPrincipal();
-  if (programada?.id && statusRecebivel(programada.status)) return programada;
-  return {};
+  return mensalidadesComValorRecebivel()[0] || {};
 }
 
 function valorMensalidadeReceber(item = {}){
