@@ -77,6 +77,12 @@ function normalizarCobrancaPortal(item = {}, origem = '') {
   } else if (statusPagoPortal(item) || saldo <= 0 && !statusProgramadoPortal(item)) {
     estadoFinanceiro = 'pago';
     statusExibicao = 'Pago';
+  } else if (statusProgramadoPortal(item) && vencimento && vencimento < hoje) {
+    estadoFinanceiro = 'divida_ativa';
+    statusExibicao = 'Em atraso';
+  } else if (statusProgramadoPortal(item) && vencimento && vencimento === hoje) {
+    estadoFinanceiro = 'vence_hoje';
+    statusExibicao = 'Vence hoje';
   } else if (statusProgramadoPortal(item)) {
     estadoFinanceiro = 'programada';
     statusExibicao = 'Programada';
@@ -122,7 +128,7 @@ function consolidarFinanceiroPortal(financeiro = [], mensalidades = []) {
   const programadas = ordenarCobrancasAsc(todos.filter((item) => item.estadoFinanceiro === 'programada'));
   const pagos = ordenarPorData(todos.filter((item) => item.estadoFinanceiro === 'pago'), ['dataPagamento', 'pagamento', 'vencimento', 'criadoEm']);
   const cobrancasAbertas = [...dividaAtiva, ...venceHoje, ...aVencer];
-  const proximaMensalidade = [...programadas, ...aVencer, ...venceHoje].find(Boolean) || null;
+  const proximaMensalidade = [...dividaAtiva, ...venceHoje, ...aVencer, ...programadas].find(Boolean) || null;
   const somarSaldo = (lista) => Number(lista.reduce((t, item) => t + numero(item.saldoPortal), 0).toFixed(2));
   const somarValor = (lista) => Number(lista.reduce((t, item) => t + numero(item.valorPortal), 0).toFixed(2));
   return {

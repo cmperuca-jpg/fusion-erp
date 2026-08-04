@@ -43,6 +43,10 @@ body .fusion-ui-userbar{
   color:#9a3412;
 }
 
+@media(max-width:560px){
+  .aluno-topo-acoes{grid-template-columns:1fr}
+}
+
 /* O tema premium e carregado depois desta pagina e usa texto branco global.
    Estes seletores identificam os cartoes claros do portal para impedir texto
    branco sobre fundo branco, sem alterar as demais telas do sistema. */

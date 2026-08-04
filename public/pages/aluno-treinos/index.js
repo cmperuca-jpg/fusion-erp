@@ -6,11 +6,9 @@ const fotoAlunoFallback = "data:image/svg+xml;charset=utf-8," + encodeURICompone
 let alunoDetalhe = null;
 let matriculaAlunoDetalhe = null;
 let prontuarioAlunoDetalhe = null;
-let professoresPortal = [];
 let treinoAtual = null;
 let divisaoAtual = 0;
 let exercicioAtual = 0;
-let installPrompt = null;
 let touchStartX = 0;
 let touchStartY = 0;
 let controleCatracaAtual = null;
@@ -28,25 +26,37 @@ function esc(v) {
 }
 
 function sessaoAluno() {
+  const params = new URLSearchParams(location.search);
+  const alunoIdUrl = params.get("alunoId") || params.get("id");
+  const alunoNomeUrl = params.get("alunoNome") || params.get("nome") || "Aluno";
+  let sessaoSalva = null;
   try {
-    const sessao = JSON.parse(localStorage.getItem("fusion_aluno_treino_login") || "null");
-    if (sessao?.alunoId) return sessao;
+    sessaoSalva = JSON.parse(localStorage.getItem("fusion_aluno_treino_login") || "null");
   } catch {}
 
-  const params = new URLSearchParams(location.search);
-  const alunoId = params.get("alunoId") || params.get("id");
-  const alunoNome = params.get("alunoNome") || params.get("nome") || "Aluno";
-  if (alunoId) return { alunoId, alunoNome };
+  if (alunoIdUrl) {
+    if (sessaoSalva?.alunoId && String(sessaoSalva.alunoId) === String(alunoIdUrl)) {
+      return { ...sessaoSalva, alunoId: alunoIdUrl, alunoNome: sessaoSalva.alunoNome || alunoNomeUrl };
+    }
+    return { alunoId: alunoIdUrl, alunoNome: alunoNomeUrl, token: "" };
+  }
+
+  if (sessaoSalva?.alunoId) return sessaoSalva;
   return null;
 }
 
 function exigirLogin() {
   const sessao = sessaoAluno();
-  if (!sessao?.alunoId) {
-    location.replace("/pages/aluno-login/index.html");
+  if (!sessao?.alunoId || !sessao?.token) {
+    redirecionarLoginAluno();
     return null;
   }
   return sessao;
+}
+
+function redirecionarLoginAluno() {
+  const next = encodeURIComponent(`${location.pathname}${location.search}${location.hash}`);
+  location.replace(`/pages/aluno-login/index.html?next=${next}`);
 }
 
 function headersAluno(headers = {}) {
@@ -85,8 +95,18 @@ function estaVencido(iso) {
   return iso < new Date().toISOString().slice(0, 10);
 }
 
+function numeroValor(v) {
+  if (typeof v === "number") return Number.isFinite(v) ? v : 0;
+  const texto = String(v ?? "").trim();
+  if (!texto) return 0;
+  const limpo = texto.replace(/[^\d,.-]/g, "");
+  const normalizado = limpo.includes(",") ? limpo.replace(/\./g, "").replace(",", ".") : limpo;
+  const n = Number(normalizado);
+  return Number.isFinite(n) ? n : 0;
+}
+
 function moeda(v) {
-  const n = Number(String(v ?? 0).replace(",", "."));
+  const n = numeroValor(v);
   if (!Number.isFinite(n) || n <= 0) return "";
   return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
@@ -129,14 +149,22 @@ async function safeFetchJson(url) {
   }
 }
 
+async function validarSessaoPortalAluno(sessao) {
+  if (!sessao?.alunoId || !sessao?.token) return false;
+  try {
+    const url = `/api/treinos/aluno-sessao?alunoId=${encodeURIComponent(sessao.alunoId)}&token=${encodeURIComponent(sessao.token)}`;
+    const resp = await fetch(url, { cache: "no-store", headers: headersAluno() });
+    const json = await resp.json().catch(() => ({}));
+    return resp.ok && json.ok !== false;
+  } catch {
+    return false;
+  }
+}
+
 async function carregarAlunoDetalhe(sessao) {
   if (!sessao?.alunoId) return null;
   const direto = await safeFetchJson(`/api/alunos/${encodeURIComponent(sessao.alunoId)}`);
-  if (direto) return direto.aluno || direto.dados || direto.data || direto;
-
-  const listaPayload = await safeFetchJson("/api/alunos");
-  const lista = extrairLista(listaPayload || {});
-  return lista.find((a) => idAlunoRegistro(a) === String(sessao.alunoId)) || null;
+  return direto ? (direto.aluno || direto.dados || direto.data || direto) : null;
 }
 
 async function carregarMatriculaAluno(sessao) {
@@ -148,11 +176,6 @@ async function carregarMatriculaAluno(sessao) {
   return matriculas.find((matricula) => ["ativa", "ativo"].includes(String(matricula?.status || "").trim().toLowerCase()))
     || matriculas[0]
     || null;
-}
-
-async function carregarProfessoresPortal() {
-  const payload = await safeFetchJson("/api/professores");
-  return extrairLista(payload || {});
 }
 
 function nomeProfessorValido(...valores) {
@@ -184,34 +207,8 @@ function professorResponsavelPortal() {
     servicos.map((servico) => servico?.professorNome || servico?.professor_responsavel || servico?.professorResponsavel || servico?.professor)
   );
   if (nomeExplicito) return nomeExplicito;
+  return "";
 
-  const idsVinculados = nomeProfessorValido(
-    treinoAtual?.professorId,
-    treinoAtual?.professor_id,
-    alunoDetalhe?.professorId,
-    alunoDetalhe?.professor_id,
-    matriculaAlunoDetalhe?.professorId,
-    matriculaAlunoDetalhe?.professor_id,
-    servicos.map((servico) => servico?.professorId || servico?.professor_id)
-  );
-  if (idsVinculados) {
-    const cadastrado = professoresPortal.find((professor) => String(
-      professor?.id || professor?._id || professor?.professorId || professor?.professor_id || ""
-    ) === String(idsVinculados));
-    const nomeCadastrado = nomeProfessorValido(cadastrado?.nome, cadastrado?.professorNome, cadastrado?.professor);
-    if (nomeCadastrado) return nomeCadastrado;
-  }
-
-  // Sem professor individual, exibe somente o responsável técnico oficial.
-  // Não escolhe um professor comum ao acaso.
-  const responsavelTecnico = professoresPortal.find((professor) => {
-    const perfil = String(professor?.perfil || professor?.tipoPerfil || professor?.funcao || "").trim().toLowerCase();
-    const ativo = !["inativo", "inativa", "bloqueado", "bloqueada", "cancelado", "cancelada"].includes(
-      String(professor?.status || "ativo").trim().toLowerCase()
-    );
-    return ativo && (professor?.acessoTodosAlunos === true || ["responsavel_tecnico", "responsavel-tecnico"].includes(perfil));
-  });
-  return nomeProfessorValido(responsavelTecnico?.nome, responsavelTecnico?.professorNome, responsavelTecnico?.professor);
 }
 
 function renderFotoAluno() {
@@ -249,8 +246,6 @@ function atualizarContadorCatraca(controle = null) {
     status.classList.toggle("vencido", Boolean(atingiuLimite));
   }
 
-  const botao = $("btnLiberarCatraca");
-  if (botao) botao.disabled = Boolean(atingiuLimite);
 }
 
 async function carregarContadorCatraca(sessao) {
@@ -407,11 +402,81 @@ function dataPagamento(item) {
 }
 
 function valorPagamento(item) {
-  return item.valor ?? item.total ?? item.valorTotal ?? item.valorLiquido ?? item.valorMensal ?? item.valor_pago ?? item.valorPago;
+  return item.valorRestante ?? item.saldoRestante ?? item.saldo ?? item.valorAberto ?? item.valorOriginal ?? item.valorDevido ?? item.valorBruto ?? item.total ?? item.valor ?? item.valorTotal ?? item.valorLiquido ?? item.valorMensal ?? item.valor_pago ?? item.valorPago;
+}
+
+function valorBasePagamento(item) {
+  return item.valorOriginal ?? item.valorDevido ?? item.valorBruto ?? item.total ?? item.valor ?? item.valorTotal ?? item.valorMensal ?? item.valorPlano ?? item.valor_pago ?? item.valorPago;
 }
 
 function statusPagamento(item) {
   return String(item.statusPagamento || item.status || item.situacao || "").toLowerCase();
+}
+
+function statusPagoPagamento(item = {}) {
+  return ["pago", "paga", "recebido", "recebida", "quitado", "quitada", "baixado", "baixada"].includes(statusPagamento(item));
+}
+
+function statusCanceladoPagamento(item = {}) {
+  return ["cancelado", "cancelada", "estornado", "estornada", "excluido", "excluida"].includes(statusPagamento(item));
+}
+
+function statusProgramadoPagamento(item = {}) {
+  return ["programada", "programado", "agendada", "agendado", "futura", "futuro", "prevista", "previsto"].includes(statusPagamento(item));
+}
+
+function tipoReceberPagamento(item = {}) {
+  const tipo = String(item.tipo || item.natureza || item.tipoLancamento || "receber").trim().toLowerCase();
+  return !["pagar", "pagamento", "despesa", "saida", "saída"].includes(tipo);
+}
+
+function valorRecebidoPagamento(item = {}) {
+  return numeroValor(item.valorPago ?? item.valorRecebido ?? item.recebido ?? item.valorBrutoRecebido ?? 0);
+}
+
+function saldoPagamento(item = {}) {
+  if (statusPagoPagamento(item) || statusCanceladoPagamento(item)) return 0;
+  if (statusProgramadoPagamento(item)) return Math.max(0, numeroValor(valorBasePagamento(item)) - valorRecebidoPagamento(item));
+  const saldoInformado = item.valorRestante ?? item.saldoRestante ?? item.saldo ?? item.valorAberto;
+  const saldo = numeroValor(saldoInformado);
+  if (saldoInformado !== undefined && saldoInformado !== null && saldo > 0) return saldo;
+  return Math.max(0, numeroValor(valorBasePagamento(item)) - valorRecebidoPagamento(item));
+}
+
+function chavePagamentoProntuario(item = {}, origem = "") {
+  const mensalidadeId = item.mensalidadeId || (origem === "mensalidade" ? item.id : "");
+  if (mensalidadeId) return `mensalidade:${mensalidadeId}`;
+  const financeiroId = item.lancamentoFinanceiroId || item.financeiroId || (origem === "financeiro" ? item.id : "");
+  if (financeiroId) return `financeiro:${financeiroId}`;
+  return `${origem}:${item.id || item.numeroDocumento || item.descricao || item.vencimento || Math.random()}`;
+}
+
+function cobrancasProntuario() {
+  const prontuario = prontuarioAlunoDetalhe || window.prontuarioAlunoDetalhe || {};
+  const mapa = new Map();
+  const adicionar = (item, origem) => {
+    if (!item) return;
+    if (origem === "financeiro" && !tipoReceberPagamento(item)) return;
+    const registro = { ...item, origemPagamento: origem };
+    const chave = chavePagamentoProntuario(item, origem);
+    const atual = mapa.get(chave);
+    if (!atual || (statusProgramadoPagamento(atual) && !statusProgramadoPagamento(registro))) {
+      mapa.set(chave, registro);
+    }
+  };
+  (Array.isArray(prontuario.mensalidades) ? prontuario.mensalidades : []).forEach(item => adicionar(item, "mensalidade"));
+  (Array.isArray(prontuario.financeiro) ? prontuario.financeiro : []).forEach(item => adicionar(item, "financeiro"));
+  return [...mapa.values()];
+}
+
+function valorMensalContratoPortal() {
+  return numeroValor(
+    matriculaAlunoDetalhe?.valorMensal ??
+    matriculaAlunoDetalhe?.valorPlano ??
+    alunoDetalhe?.valorMensal ??
+    alunoDetalhe?.valorPlano ??
+    ""
+  );
 }
 
 function proximoVencimentoFallback() {
@@ -435,43 +500,37 @@ function proximoVencimentoFallback() {
 }
 
 async function carregarPagamentos(sessao) {
-  const urls = [
-    `/api/mensalidades?alunoId=${encodeURIComponent(sessao.alunoId)}`,
-    `/api/mensalidades?aluno_id=${encodeURIComponent(sessao.alunoId)}`,
-    `/api/financeiro?alunoId=${encodeURIComponent(sessao.alunoId)}`,
-    `/api/pagamentos?alunoId=${encodeURIComponent(sessao.alunoId)}`
-  ];
-  let lista = [];
-  for (const url of urls) {
-    const payload = await safeFetchJson(url);
-    lista = extrairLista(payload || {});
-    if (lista.length) break;
-  }
   const hoje = new Date().toISOString().slice(0, 10);
-  const programados = lista
-    .filter((p) => ["programada", "programado", "agendada", "agendado", "futura", "futuro"].includes(statusPagamento(p)))
-    .filter((p) => dataPagamento(p))
-    .sort((a, b) => dataPagamento(a).localeCompare(dataPagamento(b)));
+  const prontuario = prontuarioAlunoDetalhe || window.prontuarioAlunoDetalhe || {};
+  const resumo = prontuario.resumoFinanceiro || {};
+  const lista = cobrancasProntuario();
   const abertos = lista
-    .filter((p) => !["pago", "recebido", "baixado", "cancelado", "programada", "programado", "agendada", "agendado", "futura", "futuro"].includes(statusPagamento(p)))
+    .filter((p) => !statusPagoPagamento(p) && !statusCanceladoPagamento(p) && saldoPagamento(p) > 0)
     .filter((p) => dataPagamento(p))
     .sort((a, b) => dataPagamento(a).localeCompare(dataPagamento(b)));
-  const proximoProgramado = programados.find((p) => dataPagamento(p) >= hoje) || programados[0];
-  const proximo = abertos.find((p) => dataPagamento(p) >= hoje) || abertos[0] || proximoProgramado;
+  const vencimentoResumo = dataISO(resumo.proximoVencimento);
+  const valorAberto = numeroValor(resumo.valorAberto);
+  const proximo = (vencimentoResumo && abertos.find((p) => dataPagamento(p) === vencimentoResumo))
+    || abertos.find((p) => dataPagamento(p) < hoje)
+    || abertos.find((p) => dataPagamento(p) >= hoje)
+    || abertos[0];
 
-  const data = dataPagamento(proximo) || proximoVencimentoFallback();
-  const valor = moeda(valorPagamento(proximo));
-  setTexto("proximoPagamento", data ? `${dataBR(data)}${valor ? " · " + valor : ""}` : "Não localizado");
+  const data = vencimentoResumo || dataPagamento(proximo) || proximoVencimentoFallback();
+  const valorNumero = valorAberto > 0 ? valorAberto : (saldoPagamento(proximo) || numeroValor(valorPagamento(proximo)) || valorMensalContratoPortal());
+  const valor = moeda(valorNumero);
+  setTexto("proximoPagamento", data ? `${dataBR(data)}${valor ? " - " + valor : ""}` : "Nao localizado");
 
   const st = $("statusPagamento");
   const alerta = $("alertaPagamento");
-  if (data && estaVencido(data)) {
+  const programadoFuturo = proximo && statusProgramadoPagamento(proximo) && dataPagamento(proximo) > hoje;
+  const temValorAberto = valorAberto > 0 || (saldoPagamento(proximo) > 0 && !programadoFuturo);
+  if (data && temValorAberto && estaVencido(data)) {
     st.textContent = "Em atraso";
     st.classList.add("vencido");
-    alerta.textContent = "Existe pagamento em atraso. Procure a recepção da academia.";
+    alerta.textContent = "Existe pagamento em atraso. Procure a recepcao da academia.";
     alerta.classList.remove("hidden");
   } else {
-    st.textContent = data ? (proximo === proximoProgramado ? "Programado" : "Em aberto") : "";
+    st.textContent = data ? (temValorAberto ? "Em aberto" : "Programado") : "";
     st.classList.remove("vencido");
     alerta.classList.add("hidden");
   }
@@ -480,15 +539,19 @@ async function carregarPagamentos(sessao) {
 async function carregar() {
   const sessao = exigirLogin();
   if (!sessao) return;
+  const sessaoValida = await validarSessaoPortalAluno(sessao);
+  if (!sessaoValida) {
+    localStorage.removeItem("fusion_aluno_treino_login");
+    redirecionarLoginAluno();
+    return;
+  }
 
-  const [alunoCarregado, matriculaCarregada, professoresCarregados] = await Promise.all([
+  const [alunoCarregado, matriculaCarregada] = await Promise.all([
     carregarAlunoDetalhe(sessao),
-    carregarMatriculaAluno(sessao),
-    carregarProfessoresPortal()
+    carregarMatriculaAluno(sessao)
   ]);
   alunoDetalhe = alunoCarregado;
   matriculaAlunoDetalhe = matriculaCarregada;
-  professoresPortal = professoresCarregados;
   sincronizarDetalhesPortal();
   setTexto("alunoNomeTitulo", nomeAlunoRegistro(alunoDetalhe) || sessao.alunoNome || "Aluno");
   renderFotoAluno();
@@ -535,89 +598,20 @@ function divisaoAnterior() {
   renderTudo();
 }
 
-function abrirAvaliacao() {
+function atualizarLinkPortalInicial() {
+  const link = $("btnVoltarPortal");
+  if (!link) return;
   const sessao = sessaoAluno();
-  if (!sessao?.alunoId) return;
-
-  location.href =
-    `/pages/aluno-avaliacao/index.html?alunoId=${encodeURIComponent(sessao.alunoId)}`;
+  link.href = sessao?.alunoId
+    ? `/pages/portal-aluno-emergencial/index.html?alunoId=${encodeURIComponent(sessao.alunoId)}`
+    : "/pages/portal-aluno-emergencial/index.html";
 }
-
-function mostrarStatusCatraca(mensagem, tipo = "info") {
-  const box = $("statusCatraca");
-  if (!box) return;
-  box.textContent = mensagem;
-  box.dataset.tipo = tipo;
-  box.classList.remove("hidden");
-}
-
-async function liberarCatracaPortal() {
-  const sessao = exigirLogin();
-  if (!sessao) return;
-
-  if (!sessao.token) {
-    mostrarStatusCatraca("Faca login novamente para liberar a catraca.", "erro");
-    return;
-  }
-
-  const botao = $("btnLiberarCatraca");
-  botao.disabled = true;
-  mostrarStatusCatraca("Liberando catraca...", "info");
-
-  try {
-    const resp = await fetch("/api/treinos/aluno-liberar-catraca", {
-      method: "POST",
-      headers: headersAluno({ "Content-Type": "application/json" }),
-      body: JSON.stringify({
-        alunoId: sessao.alunoId,
-        token: sessao.token,
-        direcao: "entrada"
-      })
-    });
-    const json = await resp.json().catch(() => ({}));
-    if (!resp.ok || json.ok === false) throw new Error(json.mensagem || "Nao foi possivel liberar a catraca.");
-
-    const dados = json.dados || {};
-    if (dados.controleAcessos) atualizarContadorCatraca(dados.controleAcessos);
-    if (dados.autorizado) {
-      const limite = dados.limiteDiario || dados.controleAcessos?.limite || 3;
-      const usados = dados.acessosUsadosHoje ?? dados.controleAcessos?.usados;
-      const detalhe = limite > 0 && usados !== undefined ? ` (${usados}/${limite} hoje)` : "";
-      mostrarStatusCatraca(`Acesso liberado. Pode passar.${detalhe}`, "sucesso");
-    } else {
-      mostrarStatusCatraca(`Acesso bloqueado: ${dados.motivo || "verifique a recepcao."}`, "erro");
-    }
-  } catch (erro) {
-    mostrarStatusCatraca(erro.message || "Nao foi possivel liberar a catraca.", "erro");
-  } finally {
-    botao.disabled = Boolean(controleCatracaAtual?.limiteAtingido);
-  }
-}
-
-window.addEventListener("beforeinstallprompt", (ev) => {
-  ev.preventDefault();
-  installPrompt = ev;
-  $("btnInstalar").classList.remove("hidden");
-});
-
-$("btnInstalar").onclick = async () => {
-  if (!installPrompt) return;
-  installPrompt.prompt();
-  await installPrompt.userChoice.catch(() => null);
-  installPrompt = null;
-  $("btnInstalar").classList.add("hidden");
-};
 
 $("proximo").onclick = proximo;
 $("anterior").onclick = anterior;
 $("atualizar").onclick = carregar;
-$("btnAvaliacao").onclick = abrirAvaliacao;
-$("btnLiberarCatraca").onclick = liberarCatracaPortal;
 $("checkConcluido").onchange = () => marcarConcluido($("checkConcluido").checked);
-$("sair").onclick = () => {
-  localStorage.removeItem("fusion_aluno_treino_login");
-  location.replace("/pages/aluno-login/index.html");
-};
+atualizarLinkPortalInicial();
 
 document.addEventListener("keydown", (ev) => {
   if (ev.key === "ArrowRight") proximo();

@@ -3,43 +3,138 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Portal do Aluno - Pagamento Emergencial</title>
+  <title>Fusion ERP - Portal do Aluno</title>
   <link rel="stylesheet" href="/assets/css/fusion-app.css">
-  <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="/assets/css/fusion-site-chat.css">
+  <link rel="stylesheet" href="./style.css?v=20260804-portal-pix-frequencia-1">
   <meta name="theme-color" content="#16a34a">
   <link rel="stylesheet" href="/pages/_shared/fusion-area-clara.css?v=20260729-contraste-global-2">
 </head>
 <body>
   <main class="portal">
-    <header class="portal-head">
-      <div><span>Fusion ERP</span><h1>Portal do Aluno</h1><p id="saudacao">Carregando seus dados...</p></div>
+    <header class="portal-hero">
+      <div class="perfil">
+        <img id="fotoAluno" class="avatar" alt="Foto do aluno">
+        <div>
+          <span class="marca">Fusion ERP</span>
+          <h1 id="nomeAluno">Portal do Aluno</h1>
+          <p id="saudacao">Carregando seus dados...</p>
+          <div class="chips">
+            <span id="statusAluno">Status: -</span>
+            <span id="planoAluno">Plano: -</span>
+          </div>
+        </div>
+      </div>
       <button id="sair" type="button" class="secondary">Sair</button>
     </header>
 
-    <nav class="atalhos">
-      <a id="linkTreino" href="/pages/aluno-treinos/">Meu treino</a>
+    <nav class="atalhos" aria-label="Acoes do portal">
+      <a id="linkTreino" class="primary" href="/pages/aluno-treinos/">Meu treino</a>
+      <a id="linkAvaliacao" href="/pages/aluno-avaliacao/">Visualizar avaliacao</a>
       <button id="atualizar" type="button" class="secondary">Atualizar</button>
     </nav>
 
+    <section class="resumo-grid resumo-grid-compacto" aria-label="Resumo do aluno">
+      <article class="card">
+        <span>Valor aberto</span>
+        <strong id="valorAberto">R$ 0,00</strong>
+        <small>Financeiro do aluno</small>
+      </article>
+      <article class="card">
+        <span>Valor pago</span>
+        <strong id="valorPago">R$ 0,00</strong>
+        <small id="ultimaBaixa">Ultima baixa: -</small>
+      </article>
+      <article class="card">
+        <span>Ultima avaliacao</span>
+        <strong id="ultimaAvaliacao">-</strong>
+        <small id="proximaAvaliacao">Proxima: -</small>
+      </article>
+      <article class="card destaque">
+        <span>Frequencia no mes</span>
+        <strong id="frequenciaMes">0 dia(s)</strong>
+        <small id="frequenciaResumoTopo">Sem registros liberados</small>
+      </article>
+      <article class="card acesso-card">
+        <span>Acessos hoje</span>
+        <strong id="acessosCatraca">0 / 3</strong>
+        <small id="statusAcessosCatraca">Consultando...</small>
+        <button id="btnLiberarCatraca" type="button">Liberar catraca</button>
+        <div id="statusCatraca" class="catraca-status hidden" role="status"></div>
+      </article>
+    </section>
+
+    <section class="conteudo-grid">
+      <section class="card mensalidade-card">
+        <div class="card-head">
+          <div>
+            <span>Mensalidade</span>
+            <h2 id="tituloMensalidade">Resumo da mensalidade</h2>
+            <p id="mensalidadeResumoTexto">Consultando mensalidade...</p>
+          </div>
+          <strong id="valorMensalidade">R$ 0,00</strong>
+        </div>
+        <div class="mensalidade-corpo">
+          <div class="pagamento-box">
+            <span>Pagamento</span>
+            <h3>PIX da academia</h3>
+            <p>Chave PIX: <strong id="chavePixMensalidade">82988450407</strong></p>
+            <div class="pagamento-acoes">
+              <button id="btnCopiarPixMensalidade" type="button">Pagar no PIX</button>
+              <button id="btnGerarBoleto" type="button" disabled title="Funcao em desenvolvimento">Gerar boleto</button>
+            </div>
+            <small id="mensagemPixMensalidade">O botao PIX copia a chave para pagamento.</small>
+          </div>
+          <div class="calendario-box">
+            <div class="calendario-head">
+              <div>
+                <span>Frequencia</span>
+                <h3 id="calendarioTitulo">Mes atual</h3>
+              </div>
+              <strong id="totalFrequenciaMes">0</strong>
+            </div>
+            <div class="calendario-semana" aria-hidden="true">
+              <span>D</span><span>S</span><span>T</span><span>Q</span><span>Q</span><span>S</span><span>S</span>
+            </div>
+            <div id="calendarioFrequencia" class="calendario-grid"></div>
+            <small id="resumoFrequencia">Dias marcados indicam passagem liberada na catraca.</small>
+          </div>
+        </div>
+      </section>
+
+      <section class="card aluno-card">
+        <div class="card-head">
+          <div>
+            <span>Matricula</span>
+            <h2>Informacoes do plano</h2>
+          </div>
+        </div>
+        <div id="dadosAluno" class="detalhes-grid">
+          <div class="loading">Consultando matricula...</div>
+        </div>
+      </section>
+    </section>
+
     <section class="card" id="cardStatus">
-      <div class="loading">Consultando situação financeira...</div>
+      <div class="loading">Consultando liberacao emergencial...</div>
     </section>
 
     <section class="card hidden" id="cardPix">
       <h2>Pagamento via PIX</h2>
-      <p>Copie o código abaixo, efetue o pagamento e envie uma imagem do comprovante.</p>
+      <p>Copie o codigo abaixo, efetue o pagamento e envie uma imagem do comprovante.</p>
       <div class="pix-meta"><span>Valor</span><strong id="pixValor">R$ 0,00</strong></div>
       <label for="pixCodigo">PIX Copia e Cola / Chave PIX</label>
       <textarea id="pixCodigo" readonly></textarea>
       <button id="copiarPix" type="button">Copiar PIX</button>
-      <p class="aviso">O envio do comprovante consome a única tentativa do mês. A liberação é automática, mesmo antes da conferência da recepção.</p>
+      <p class="aviso">O envio do comprovante consome a unica tentativa do mes. A liberacao e automatica, mesmo antes da conferencia da recepcao.</p>
       <label for="comprovante">Comprovante (PNG, JPG ou WEBP)</label>
       <input id="comprovante" type="file" accept="image/png,image/jpeg,image/webp">
-      <img id="preview" class="preview hidden" alt="Prévia do comprovante">
+      <img id="preview" class="preview hidden" alt="Previa do comprovante">
       <button id="enviar" type="button">Enviar comprovante e liberar acesso</button>
       <div id="mensagem" class="mensagem"></div>
     </section>
   </main>
-  <script src="./index.js"></script>
+  <script src="./index.js?v=20260804-portal-pix-frequencia-1"></script>
+  <script src="/assets/js/fusion-site-chat.js" data-chat-origem="portal_aluno"></script>
 </body>
 </html>

@@ -523,7 +523,9 @@ document.addEventListener('DOMContentLoaded',()=>{
     document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active', b===btn));
     document.querySelectorAll('.tab-panel').forEach(p=>p.classList.toggle('active', p.id === `tab-${btn.dataset.tab}`));
   }));
-  $('#btnEditar').addEventListener('click',()=> location.href='/pages/alunos/index.html');
+  $('#btnEditar').addEventListener('click',()=> {
+    location.href = `/pages/alunos/index.html?editar=${encodeURIComponent(alunoId)}&tab=cadastro`;
+  });
   $('#btnImprimir').addEventListener('click',()=> window.print());
   const btnContrato = $('#btnSalvarChecklistComercial');
   if (btnContrato) btnContrato.addEventListener('click',()=> alerta('Contrato comercial atualizado com os dados já vinculados ao aluno.', 'sucesso'));

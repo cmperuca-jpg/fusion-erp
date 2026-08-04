@@ -1,6 +1,5 @@
 const API_ALUNOS = "/api/alunos";
 const API_PROFESSORES = "/api/professores";
-const API_FINANCEIRO = "/api/financeiro";
 const API_MATRICULAS_INTEGRAR = "/api/matriculas/integrar";
 const API_MATRICULAS = "/api/matriculas";
 let matriculasAlunoAtual = [];
@@ -744,6 +743,24 @@ window.abrirEdicao = async function(id) {
   atualizarMatriculasAlunoAtual();
 };
 
+async function abrirEdicaoInicialPorUrl() {
+  const params = new URLSearchParams(location.search);
+  const acao = normalizarTexto(params.get("acao") || params.get("modo") || "");
+  const id = params.get("editar") || params.get("edit") || (["editar", "edicao"].includes(acao) ? (params.get("id") || params.get("alunoId")) : "");
+  if (!id) return;
+
+  const existe = alunos.some(a => String(alunoId(a)) === String(id));
+  if (!existe) {
+    mostrarAlerta("Aluno nao encontrado para edicao.", "erro");
+    return;
+  }
+
+  await window.abrirEdicao(id);
+  const aba = params.get("tab") || params.get("aba") || "cadastro";
+  const abaExiste = [...document.querySelectorAll("[data-tab]")].some(btn => btn.dataset.tab === aba);
+  if (abaExiste) trocarTab(aba);
+}
+
 function preencherFormulario(a) {
   $("#alunoId").value = alunoId(a);
   $("#nome").value = alunoNome(a);
@@ -784,19 +801,80 @@ function preencherFormulario(a) {
 }
 
 
-function extrairLancamentosFinanceiro(payload) {
-  if (Array.isArray(payload)) return payload;
-  if (Array.isArray(payload?.lancamentos)) return payload.lancamentos;
-  if (Array.isArray(payload?.data)) return payload.data;
-  if (Array.isArray(payload?.dados)) return payload.dados;
-  if (Array.isArray(payload?.itens)) return payload.itens;
-  if (Array.isArray(payload?.registros)) return payload.registros;
-  return [];
-}
-
 function statusFinanceiroAberto(item = {}) {
   const st = normalizarTexto(item.status || item.situacao || "aberto");
   return !["pago", "recebido", "quitado", "baixado", "cancelado", "estornado"].includes(st);
+}
+
+function tipoReceberFinanceiroAluno(item = {}) {
+  return normalizarTexto(item.tipo || item.natureza || item.tipoLancamento || "receber") === "receber";
+}
+
+function valorBaseCobrancaAluno(item = {}) {
+  return parseMoeda(item.valorOriginal ?? item.valorDevido ?? item.valorBruto ?? item.total ?? item.valor ?? item.valorMensal ?? item.valorPlano ?? 0);
+}
+
+function valorRecebidoCobrancaAluno(item = {}) {
+  return parseMoeda(item.valorPago ?? item.valorRecebido ?? item.recebido ?? item.valorBrutoRecebido ?? 0);
+}
+
+function valorRecebivelCobrancaAluno(item = {}) {
+  if (!statusFinanceiroAberto(item)) return 0;
+  const st = normalizarTexto(item.status || item.situacao || "");
+  if (["programado", "programada", "agendado", "agendada", "previsto", "prevista"].includes(st)) {
+    return Math.max(0, valorBaseCobrancaAluno(item) - valorRecebidoCobrancaAluno(item));
+  }
+  const saldoInformado = item.valorRestante ?? item.saldoRestante ?? item.saldo ?? item.valorAberto;
+  const saldo = parseMoeda(saldoInformado);
+  if (saldoInformado !== undefined && saldoInformado !== null && saldo > 0) return saldo;
+  return Math.max(0, valorBaseCobrancaAluno(item) - valorRecebidoCobrancaAluno(item));
+}
+
+function dataCobrancaAluno(item = {}) {
+  return String(item.vencimento || item.dataVencimento || item.data_vencimento || item.competencia || "").slice(0, 10);
+}
+
+async function carregarProntuarioFinanceiroAluno(id) {
+  if (!id) return null;
+  const resp = await fetch(`${API_ALUNOS}/${encodeURIComponent(id)}/prontuario`, { cache: "no-store" });
+  const payload = await safeJson(resp);
+  if (!resp.ok || payload.ok === false) {
+    throw new Error(payload.erro || payload.mensagem || `Erro HTTP ${resp.status}`);
+  }
+  return payload;
+}
+
+function cobrancasRecebiveisDoProntuario(prontuario = {}, id = "") {
+  const mapa = new Map();
+  const adicionar = (item = {}, origem = "") => {
+    if (!item) return;
+    if (origem === "financeiro" && !tipoReceberFinanceiroAluno(item)) return;
+    const alunoDoItem = String(item.alunoId || item.aluno_id || "");
+    if (alunoDoItem && String(alunoDoItem) !== String(id)) return;
+    const valor = valorRecebivelCobrancaAluno(item);
+    if (valor <= 0) return;
+    const financeiroId = item.id || item.financeiroId || item.lancamentoFinanceiroId || "";
+    const mensalidadeId = item.mensalidadeId || item.mensalidade_id || (origem === "mensalidade" ? item.id : "");
+    const chave = mensalidadeId ? `men:${mensalidadeId}` : (financeiroId ? `fin:${financeiroId}` : "");
+    if (!chave || mapa.has(chave)) return;
+    mapa.set(chave, {
+      origem,
+      item,
+      valor,
+      financeiroId: origem === "financeiro" ? financeiroId : (item.lancamentoFinanceiroId || item.financeiroId || ""),
+      mensalidadeId,
+      vencimento: dataCobrancaAluno(item)
+    });
+  };
+
+  (Array.isArray(prontuario.financeiro) ? prontuario.financeiro : []).forEach(item => adicionar(item, "financeiro"));
+  (Array.isArray(prontuario.mensalidades) ? prontuario.mensalidades : []).forEach(item => adicionar(item, "mensalidade"));
+  return [...mapa.values()].sort((a, b) => {
+    const prioridadeA = pareceCobrancaRegularizacao(a.item) ? 1 : 0;
+    const prioridadeB = pareceCobrancaRegularizacao(b.item) ? 1 : 0;
+    if (prioridadeA !== prioridadeB) return prioridadeB - prioridadeA;
+    return String(a.vencimento || "").localeCompare(String(b.vencimento || ""));
+  });
 }
 
 function pareceCobrancaRegularizacao(item = {}) {
@@ -848,37 +926,15 @@ async function localizarCobrancaRegularizacao(aluno = {}) {
   const idsMensalidades = idsMensalidadeDoAluno(aluno);
   if (idsMensalidades.length) return { mensalidadeId: idsMensalidades[0] };
 
-  const nome = alunoNome(aluno);
   const id = alunoId(aluno);
-  const busca = encodeURIComponent(nome || id);
-  const resp = await fetch(`${API_FINANCEIRO}?busca=${busca}`, { cache: "no-store" });
-  const payload = await safeJson(resp);
-
-  if (!resp.ok) {
-    throw new Error(payload.erro || payload.mensagem || `Erro HTTP ${resp.status}`);
-  }
-
-  const lista = extrairLancamentosFinanceiro(payload)
-    .filter(item => normalizarTexto(item.tipo || "receber") === "receber")
-    .filter(statusFinanceiroAberto)
-    .filter(item => {
-      const mesmoId = id && String(item.alunoId || item.aluno_id || "") === String(id);
-      const mesmoNome = nome && normalizarTexto([item.aluno, item.pessoa, item.alunoFornecedor, item.pessoaFornecedor].join(" ")).includes(normalizarTexto(nome));
-      return mesmoId || mesmoNome;
-    })
-    .sort((a, b) => {
-      const prioridadeA = pareceCobrancaRegularizacao(a) ? 1 : 0;
-      const prioridadeB = pareceCobrancaRegularizacao(b) ? 1 : 0;
-      if (prioridadeA !== prioridadeB) return prioridadeB - prioridadeA;
-      return String(a.vencimento || "").localeCompare(String(b.vencimento || ""));
-    });
-
+  const prontuario = await carregarProntuarioFinanceiroAluno(id);
+  const lista = cobrancasRecebiveisDoProntuario(prontuario, id);
   const pendencia = lista[0];
   if (!pendencia) return null;
 
   return {
-    financeiroId: pendencia.id || pendencia.financeiroId || pendencia.lancamentoFinanceiroId || "",
-    mensalidadeId: pendencia.mensalidadeId || pendencia.mensalidade_id || "",
+    financeiroId: pendencia.financeiroId || "",
+    mensalidadeId: pendencia.mensalidadeId || "",
     alunoId: id
   };
 }
@@ -1659,6 +1715,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       console.error(`Falha ao carregar ${nomes[indice]}:`, resultado.reason);
     }
   });
+
+  await abrirEdicaoInicialPorUrl();
 });
 
 

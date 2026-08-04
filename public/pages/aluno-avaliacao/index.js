@@ -76,8 +76,8 @@ function renderFotos(atual){
 }
 async function carregar(){
   const sessao = sessaoAluno();
-  if(!sessao?.alunoId){ location.replace("/pages/aluno-login/index.html"); return; }
-  $("tituloAluno").textContent = sessao.alunoNome || "Minha avaliação";
+  if(!sessao?.alunoId || !sessao?.token){ location.replace(`/pages/aluno-login/index.html?next=${encodeURIComponent(location.pathname + location.search)}`); return; }
+  $("tituloAluno").textContent = sessao.alunoNome || "Minha avaliacao";
   const lista = (await buscarAvaliacoes(sessao.alunoId)).sort(ordenar);
   if(!lista.length){ $("alerta").textContent = "Nenhuma avaliação física foi encontrada para este aluno."; $("alerta").classList.remove("hidden"); return; }
   const atual = lista[0], anterior = lista[1] || null;
@@ -91,7 +91,6 @@ async function carregar(){
 }
 $("btnVoltar").onclick = () => {
   const s = sessaoAluno();
-  location.href = s?.alunoId ? `/pages/aluno-treinos/index.html?alunoId=${encodeURIComponent(s.alunoId)}` : "/pages/aluno-treinos/index.html";
+  location.href = s?.alunoId ? `/pages/portal-aluno-emergencial/index.html?alunoId=${encodeURIComponent(s.alunoId)}` : "/pages/portal-aluno-emergencial/index.html";
 };
-$("btnAtualizar").onclick = carregar;
 carregar();
