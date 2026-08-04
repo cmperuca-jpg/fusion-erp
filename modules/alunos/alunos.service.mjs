@@ -1133,6 +1133,46 @@ function statusPagoAluno(status = "") {
   return ["pago", "paga", "recebido", "quitado", "baixado"].includes(s);
 }
 
+function statusProgramadoAluno(status = "") {
+  const s = normalizar(status);
+  return ["programado", "programada", "agendado", "agendada", "previsto", "prevista", "futuro", "futura"].includes(s);
+}
+
+function tipoReceberFinanceiroAluno(item = {}) {
+  const tipo = normalizar(item.tipo || item.natureza || item.tipoLancamento || "receber");
+  return !["pagar", "pagamento", "despesa", "saida", "saída"].includes(tipo);
+}
+
+function vencimentoFinanceiroAluno(item = {}) {
+  return somenteDataAluno(item.vencimento || item.dataVencimento || item.data_vencimento || item.competencia || "");
+}
+
+function valorRecebidoFinanceiroAluno(item = {}) {
+  return numeroAluno(item.valorPago ?? item.valorRecebido ?? item.recebido ?? item.valorBrutoRecebido ?? 0, 0);
+}
+
+function valorBaseFinanceiroAluno(item = {}) {
+  return numeroAluno(item.valorOriginal ?? item.valorDevido ?? item.valorBruto ?? item.total ?? item.valor ?? item.valorPlano ?? item.valorMensal, 0);
+}
+
+function saldoFinanceiroAluno(item = {}) {
+  if (statusProgramadoAluno(item.status)) {
+    return Math.max(0, valorBaseFinanceiroAluno(item) - valorRecebidoFinanceiroAluno(item));
+  }
+  const direto = [item.valorRestante, item.saldoRestante, item.saldo, item.valorAberto]
+    .find(v => v !== undefined && v !== null && String(v).trim() !== "");
+  if (direto !== undefined) return Math.max(0, numeroAluno(direto, 0));
+  return Math.max(0, valorBaseFinanceiroAluno(item) - valorRecebidoFinanceiroAluno(item));
+}
+
+function podeContarAbertoAluno(item = {}) {
+  const st = item.status;
+  if (statusPagoAluno(st) || estaCancelado(st)) return false;
+  if (statusAbertoAluno(st)) return true;
+  const vencimento = vencimentoFinanceiroAluno(item);
+  return statusProgramadoAluno(st) && Boolean(vencimento && vencimento <= hojeISO());
+}
+
 function pertenceAoAlunoProntuario(item = {}, alunoId = "", matriculaIds = new Set()) {
   if (mesmoId(item.alunoId, alunoId) || mesmoId(item.aluno_id, alunoId)) return true;
   if (item.matriculaId && matriculaIds.has(String(item.matriculaId))) return true;
@@ -1161,8 +1201,13 @@ function calcularResumoFinanceiroAluno(mensalidades = [], financeiro = []) {
     proximoVencimento: "",
     ultimaBaixa: ""
   };
+  const mensalidadeIds = new Set();
+  const financeiroIdsVinculados = new Set();
 
   for (const m of mensalidades) {
+    if (m.id) mensalidadeIds.add(String(m.id));
+    const financeiroId = m.lancamentoFinanceiroId || m.financeiroId;
+    if (financeiroId) financeiroIdsVinculados.add(String(financeiroId));
     const valorBase = numeroAluno(m.total ?? m.valorOriginal ?? m.valor ?? m.valorBruto, 0);
     const valorPago = numeroAluno(m.valorPago ?? m.valorRecebido ?? 0, 0);
     if (statusPagoAluno(m.status)) {
@@ -1173,12 +1218,41 @@ function calcularResumoFinanceiroAluno(mensalidades = [], financeiro = []) {
     } else if (estaCancelado(m.status)) {
       resumo.mensalidadesCanceladas += 1;
       resumo.valorCancelado += valorBase;
-    } else if (statusAbertoAluno(m.status)) {
+    } else if (podeContarAbertoAluno(m)) {
+      const valorEmAberto = statusProgramadoAluno(m.status)
+        ? Math.max(0, valorBase - valorPago)
+        : numeroAluno(m.valorRestante ?? m.saldoRestante ?? valorBase, valorBase);
+      if (valorEmAberto <= 0) continue;
       resumo.mensalidadesAbertas += 1;
-      resumo.valorAberto += numeroAluno(m.valorRestante ?? m.saldoRestante ?? valorBase, valorBase);
+      resumo.valorAberto += valorEmAberto;
       const venc = somenteDataAluno(m.vencimento || m.dataVencimento || "");
       if (venc && (!resumo.proximoVencimento || venc < resumo.proximoVencimento)) resumo.proximoVencimento = venc;
     }
+  }
+
+  for (const f of financeiro) {
+    if (!tipoReceberFinanceiroAluno(f)) continue;
+    if (f.id && financeiroIdsVinculados.has(String(f.id))) continue;
+    if (f.mensalidadeId && mensalidadeIds.has(String(f.mensalidadeId))) continue;
+
+    const valorBase = valorBaseFinanceiroAluno(f);
+    const valorPago = valorRecebidoFinanceiroAluno(f);
+    if (statusPagoAluno(f.status)) {
+      resumo.valorPago += valorPago || valorBase;
+      const baixa = somenteDataAluno(f.dataPagamento || f.pagamento || f.baixadoEm || f.atualizadoEm || "");
+      if (baixa && baixa > resumo.ultimaBaixa) resumo.ultimaBaixa = baixa;
+      continue;
+    }
+    if (estaCancelado(f.status)) {
+      resumo.valorCancelado += valorBase;
+      continue;
+    }
+    if (!podeContarAbertoAluno(f)) continue;
+    const saldo = saldoFinanceiroAluno(f);
+    if (saldo <= 0) continue;
+    resumo.valorAberto += saldo;
+    const venc = vencimentoFinanceiroAluno(f);
+    if (venc && (!resumo.proximoVencimento || venc < resumo.proximoVencimento)) resumo.proximoVencimento = venc;
   }
 
   for (const k of ["valorAberto", "valorPago", "valorCancelado"]) resumo[k] = numeroAluno(resumo[k], 0);

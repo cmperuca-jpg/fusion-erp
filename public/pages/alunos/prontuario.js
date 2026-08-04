@@ -23,6 +23,13 @@ function parseMoeda(v){
   const n = Number(texto);
   return Number.isFinite(n) ? n : 0;
 }
+function primeiroValorPositivo(...valores){
+  for (const valor of valores) {
+    const n = parseMoeda(valor);
+    if (n > 0) return n;
+  }
+  return 0;
+}
 function dataISO(v){
   const s = String(v || '').slice(0, 10);
   return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : '';
@@ -83,6 +90,20 @@ function valorLancamentoFinanceiro(item = {}){
   return item.valorOriginal ?? item.valorDevido ?? item.valorBruto ?? item.total ?? item.valor ?? item.valorPlano ?? item.valorMensal ?? item.valorRestante ?? 0;
 }
 
+function tipoReceberFinanceiro(item = {}){
+  const tipo = normalizarStatus(item.tipo || item.natureza || item.tipoLancamento || 'receber');
+  return !['pagar','pagamento','despesa','saida','saída'].includes(tipo);
+}
+
+function valorFinanceiroReceber(item = {}){
+  if (!tipoReceberFinanceiro(item) || !statusRecebivel(item.status)) return 0;
+  const saldoInformado = item.valorRestante ?? item.saldoRestante ?? item.saldo ?? item.valorAberto;
+  const saldo = parseMoeda(saldoInformado);
+  if (saldoInformado !== undefined && saldoInformado !== null && saldo > 0) return saldo;
+  const recebido = parseMoeda(item.valorPago ?? item.valorRecebido ?? item.recebido ?? item.valorBrutoRecebido ?? 0);
+  return Math.max(0, parseMoeda(valorLancamentoFinanceiro(item)) - recebido);
+}
+
 function renderFinanceiro(){
   const lista = prontuario.financeiro || [];
   $('#listaFinanceiro').innerHTML = lista.length ? lista.map(f=>`<tr><td>${esc(f.descricao||'-')}</td><td>${data(f.vencimento || f.data_vencimento)}</td><td>${moeda(valorLancamentoFinanceiro(f))}</td><td><span class="badge ${statusClass(f.status)}">${esc(f.status||'-')}</span></td></tr>`).join('') : `<tr><td colspan="4">Nenhum lançamento.</td></tr>`;
@@ -126,7 +147,15 @@ function mensalidadesComValorRecebivel(){
 }
 
 function mensalidadeRecebivelContrato(){
-  return mensalidadesComValorRecebivel()[0] || {};
+  return mensalidadesComValorRecebivel()[0] || financeiroRecebivelPrincipal() || {};
+}
+
+function financeiroRecebivelPrincipal(){
+  const lista = Array.isArray(prontuario?.financeiro) ? prontuario.financeiro : [];
+  return lista
+    .filter(f => f?.id && tipoReceberFinanceiro(f) && statusRecebivel(f.status) && valorFinanceiroReceber(f) > 0)
+    .sort((a,b)=>String(a.vencimento || a.dataVencimento || a.data_vencimento || '').localeCompare(String(b.vencimento || b.dataVencimento || b.data_vencimento || '')))
+    .map(f => ({ ...f, origemRecebivel: 'financeiro' }))[0] || {};
 }
 
 function mensalidadeContratoSemRegistro({ aluno = {}, matricula = {}, valorMensal = 0, vencimento = '' } = {}){
@@ -149,6 +178,7 @@ function mensalidadeContratoSemRegistro({ aluno = {}, matricula = {}, valorMensa
 }
 
 function valorMensalidadeReceber(item = {}){
+  if (item.origemRecebivel === 'financeiro') return valorFinanceiroReceber(item);
   const st = normalizarStatus(item.status);
   if (statusPago(st) || statusCancelado(st)) return 0;
   if (['programada','programado','agendada','agendado'].includes(st)) {
@@ -164,7 +194,7 @@ function botaoReceberMensalidade(item = {}){
   if ((!item?.id && !item?.contratoSemMensalidade) || !statusRecebivel(item.status)) return '';
   const valor = valorMensalidadeReceber(item);
   if (valor <= 0) return '';
-  const alvo = item.id || '__contrato__';
+  const alvo = item.contratoSemMensalidade ? '__contrato__' : (item.origemRecebivel === 'financeiro' ? `financeiro:${item.id}` : item.id);
   return `<button class="fusion-button prontuario-receber-btn" type="button" data-receber-mensalidade="${esc(alvo)}">Receber</button>`;
 }
 
@@ -209,8 +239,8 @@ function contratoInfoBase(){
   const pago = ultimoPagamento();
   const treino = (prontuario?.treinos || [])[0] || {};
   const avaliacao = (prontuario?.avaliacoes || [])[0] || {};
-  const valorMensal = matricula.valorMensal ?? matricula.valorPlano ?? recebivelExistente.valor ?? recebivelExistente.total ?? aberta.valor ?? aberta.total ?? programada.valor ?? programada.total ?? aluno.valorMensal ?? 0;
-  const vencimentoContrato = aberta.vencimento || programada.vencimento || prontuario?.resumoFinanceiro?.proximoVencimento || matricula.proximoVencimento || aluno.proximoVencimento || matricula.vencimentoInicial;
+  const valorMensal = primeiroValorPositivo(matricula.valorMensal, matricula.valorPlano, recebivelExistente.valor, recebivelExistente.total, recebivelExistente.valorOriginal, aberta.valor, aberta.total, programada.valor, programada.total, aluno.valorMensal);
+  const vencimentoContrato = aberta.vencimento || programada.vencimento || recebivelExistente.vencimento || recebivelExistente.dataVencimento || recebivelExistente.data_vencimento || prontuario?.resumoFinanceiro?.proximoVencimento || matricula.proximoVencimento || aluno.proximoVencimento || matricula.vencimentoInicial;
   const recebivel = recebivelExistente.id ? recebivelExistente : mensalidadeContratoSemRegistro({ aluno, matricula, valorMensal, vencimento: vencimentoContrato });
   return { aluno, matricula, aberta, programada, recebivel, pago, treino, avaliacao, valorMensal };
 }
@@ -218,9 +248,9 @@ function contratoInfoBase(){
 function renderContratoComercial(){
   const el = $('#contratoComercialResumo');
   if (!el) return;
-  const { aluno, matricula, aberta, programada, pago, valorMensal } = contratoInfoBase();
-  const vencimentoContrato = aberta.vencimento || programada.vencimento || prontuario?.resumoFinanceiro?.proximoVencimento;
-  const statusContrato = aberta.status || programada.status || 'A receber';
+  const { aluno, matricula, aberta, programada, recebivel, pago, valorMensal } = contratoInfoBase();
+  const vencimentoContrato = aberta.vencimento || programada.vencimento || recebivel.vencimento || recebivel.dataVencimento || recebivel.data_vencimento || prontuario?.resumoFinanceiro?.proximoVencimento;
+  const statusContrato = aberta.status || programada.status || recebivel.status || 'A receber';
   el.innerHTML = info({
     'Plano contratado': matricula.plano || aluno.plano || '-',
     'Valor mensal': moeda(valorMensal),
@@ -245,8 +275,8 @@ function renderServicosContratados(){
   const modalidades = modalidadeLista(aluno, matricula);
   const extras = servicosExtrasLista();
   const exercicios = exerciciosDoTreino(treino);
-  const vencimentoContrato = aberta.vencimento || programada.vencimento || prontuario?.resumoFinanceiro?.proximoVencimento;
-  const statusContrato = aberta.status || programada.status || (recebivel?.contratoSemMensalidade ? 'A receber' : '-');
+  const vencimentoContrato = aberta.vencimento || programada.vencimento || recebivel.vencimento || recebivel.dataVencimento || recebivel.data_vencimento || prontuario?.resumoFinanceiro?.proximoVencimento;
+  const statusContrato = aberta.status || programada.status || recebivel.status || (recebivel?.contratoSemMensalidade ? 'A receber' : '-');
   const valorRecebivel = (recebivel?.id || recebivel?.contratoSemMensalidade) ? valorMensalidadeReceber(recebivel) : 0;
   box.innerHTML = [
     listaHtml('Plano contratado', [
@@ -287,10 +317,17 @@ function renderServicosContratados(){
 }
 
 async function receberMensalidadeProntuario(id){
-  let mensalidade = id === '__contrato__'
-    ? contratoInfoBase().recebivel
-    : (prontuario?.mensalidades || []).find(m => String(m.id) === String(id));
-  if (!mensalidade) return alerta('Mensalidade nao encontrada no prontuario.');
+  let mensalidade = {};
+  if (String(id || '').startsWith('financeiro:')) {
+    const financeiroId = String(id).replace(/^financeiro:/, '');
+    const lancamento = (prontuario?.financeiro || []).find(f => String(f.id) === String(financeiroId));
+    mensalidade = lancamento ? { ...lancamento, origemRecebivel: 'financeiro' } : {};
+  } else {
+    mensalidade = id === '__contrato__'
+      ? contratoInfoBase().recebivel
+      : (prontuario?.mensalidades || []).find(m => String(m.id) === String(id));
+  }
+  if (!mensalidade || (!mensalidade.id && !mensalidade.contratoSemMensalidade)) return alerta('Cobranca nao encontrada no prontuario.');
 
   const valorPrevisto = valorMensalidadeReceber(mensalidade);
   if (valorPrevisto <= 0) return alerta('Nao ha valor em aberto para receber.');
@@ -302,11 +339,15 @@ async function receberMensalidadeProntuario(id){
   if (!confirm(`Confirmar recebimento de ${moeda(valorPrevisto)} para ${nomeAluno(prontuario?.aluno)}?`)) return;
 
   try {
-    mensalidade = await garantirMensalidadeParaReceber(mensalidade);
+    const receberFinanceiro = mensalidade.origemRecebivel === 'financeiro';
+    if (!receberFinanceiro) mensalidade = await garantirMensalidadeParaReceber(mensalidade);
     const valor = valorMensalidadeReceber(mensalidade) || valorPrevisto;
-    if (!mensalidade?.id) throw new Error('Mensalidade nao identificada para baixa.');
-    const resp = await fetch(`/api/mensalidades/${encodeURIComponent(mensalidade.id)}/baixar`, {
-      method: 'POST',
+    if (!mensalidade?.id) throw new Error('Cobranca nao identificada para baixa.');
+    const url = receberFinanceiro
+      ? `/api/financeiro/${encodeURIComponent(mensalidade.id)}/baixar`
+      : `/api/mensalidades/${encodeURIComponent(mensalidade.id)}/baixar`;
+    const resp = await fetch(url, {
+      method: receberFinanceiro ? 'PATCH' : 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         formaPagamento,
@@ -316,6 +357,7 @@ async function receberMensalidadeProntuario(id){
         valorRecebido: valor,
         valorBaixa: valor,
         valor,
+        operacaoId: `prontuario-${mensalidade.id}-${Date.now()}`,
         usuario: 'Prontuario do aluno',
         observacao: 'Recebimento confirmado pelo prontuario do aluno.'
       })
@@ -323,10 +365,10 @@ async function receberMensalidadeProntuario(id){
     const json = await resp.json().catch(() => ({}));
     if (!resp.ok || json.erro || json.ok === false) throw new Error(json.mensagem || json.message || `Erro HTTP ${resp.status}`);
 
-    alerta('Recebimento confirmado. A mensalidade foi baixada e o caixa/financeiro foram atualizados.', 'sucesso');
+    alerta('Recebimento confirmado. A cobranca foi baixada e o caixa/financeiro foram atualizados.', 'sucesso');
     await carregar();
   } catch (erro) {
-    alerta(erro.message || 'Nao foi possivel receber esta mensalidade.');
+    alerta(erro.message || 'Nao foi possivel receber esta cobranca.');
   }
 }
 
