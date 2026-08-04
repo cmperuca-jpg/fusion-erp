@@ -773,12 +773,40 @@ export async function programarProximaCobrancaAposPagamento({ mensalidadeId = ""
   const diaVencimento = matricula.diaVencimento || aluno.diaVencimento || diaMes(referencia);
   const proximoVencimento = adicionarMeses(referencia, periodicidade.meses, diaVencimento);
   const proximaCompetencia = competencia(proximoVencimento);
-  let mensalidadeProgramada = mensalidades.find((item) => {
+
+  const mesmaFatura = (item) => {
     const mesmoAluno = String(item.alunoId || "") === String(aluno.id);
     const mesmaMatricula = !item.matriculaId || String(item.matriculaId) === String(matricula.id);
     const compItem = String(item.competencia || competencia(item.vencimento || item.dataVencimento || "")).slice(0, 7);
-    return mesmoAluno && mesmaMatricula && compItem === proximaCompetencia && estaProgramada(item) && statusNormalizado(item.status) !== "cancelado";
-  }) || null;
+    return mesmoAluno && mesmaMatricula && compItem === proximaCompetencia && statusNormalizado(item.status) !== "cancelado";
+  };
+
+  const mensalidadeEmitida = mensalidades.find((item) => mesmaFatura(item) && !estaProgramada(item)) || null;
+  if (mensalidadeEmitida) {
+    await registrarLog({
+      acao: "programar_proxima_cobranca",
+      sucesso: true,
+      programada: false,
+      motivo: "Competencia futura ja possui mensalidade emitida.",
+      alunoId: aluno.id,
+      matriculaId: matricula.id,
+      mensalidadeId,
+      financeiroId,
+      mensalidadeExistenteId: mensalidadeEmitida.id,
+      vencimento: proximoVencimento,
+      competencia: proximaCompetencia,
+      usuario
+    });
+    return {
+      ok: true,
+      programada: false,
+      motivo: "Competencia futura ja possui mensalidade emitida.",
+      mensalidadeExistente: mensalidadeEmitida,
+      proximoVencimento
+    };
+  }
+
+  let mensalidadeProgramada = mensalidades.find((item) => mesmaFatura(item) && estaProgramada(item)) || null;
   if (!mensalidadeProgramada) {
     mensalidadeProgramada = montarMensalidadeProgramada({
       aluno,

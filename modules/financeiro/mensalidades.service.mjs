@@ -472,6 +472,31 @@ function nomePlanoDeRegistro(m = {}, plano = null, matricula = null, financeiro 
     financeiro?.plano || financeiro?.planoNome || '';
 }
 
+function chaveMensalidadeCompetencia(m = {}) {
+  const aluno = String(m.alunoId || normalizarTexto(m.alunoNome || m.aluno || m.pessoa || '')).trim();
+  if (!aluno) return '';
+  const matricula = String(m.matriculaId || '').trim();
+  const competencia = String(m.competencia || competenciaPorVencimento(m.vencimento || m.dataVencimento || '')).slice(0, 7);
+  if (!competencia) return '';
+  return [aluno, matricula, competencia].join('|');
+}
+
+function ocultarProgramadasDuplicadas(lista = []) {
+  const emitidas = new Set();
+
+  for (const item of lista) {
+    const status = statusInterno(item.status);
+    const chave = chaveMensalidadeCompetencia(item);
+    if (chave && status !== 'programada' && status !== 'cancelado') emitidas.add(chave);
+  }
+
+  return lista.filter((item) => {
+    if (statusInterno(item.status) !== 'programada') return true;
+    const chave = chaveMensalidadeCompetencia(item);
+    return !chave || !emitidas.has(chave);
+  });
+}
+
 export async function listarMensalidades(filtros = {}) {
   const [mensalidades, alunos, planos, financeiro, matriculas] = await Promise.all([
     lerJson(MENSALIDADES_FILE, []),
@@ -486,7 +511,7 @@ export async function listarMensalidades(filtros = {}) {
   const competencia = String(filtros.competencia || '').trim();
   const alunoId = String(filtros.alunoId || '').trim();
 
-  return mensalidades
+  const normalizadas = mensalidades
     .map(m => {
       const vencimento = String(m.vencimento || hojeISO()).slice(0, 10);
       const aluno = alunos.find(a => String(a.id || a._id || '') === String(m.alunoId || '')) || null;
@@ -515,7 +540,9 @@ export async function listarMensalidades(filtros = {}) {
         status: calcularStatus({ ...m, vencimento })
       };
       return { ...base, ...calcularValorAtualizado(base) };
-    })
+    });
+
+  return ocultarProgramadasDuplicadas(normalizadas)
     .filter(m => {
       if (q) {
         const alvo = normalizarTexto(`${m.alunoNome} ${m.aluno} ${m.descricao} ${m.planoNome} ${m.plano} ${m.competencia}`);
@@ -720,12 +747,6 @@ export async function baixarMensalidade(id, dados = {}) {
 
   const atual = mensalidades[idx];
 
-  if (statusInterno(atual.status) === 'programada') {
-    const erro = new Error('Esta fatura ainda está programada. Ela ficará disponível para baixa na data do vencimento.');
-    erro.status = 409;
-    throw erro;
-  }
-
   if (statusInterno(atual.status) === 'pago') {
     const erro = new Error('Esta mensalidade já está paga.');
     erro.status = 409;
@@ -755,6 +776,11 @@ export async function baixarMensalidade(id, dados = {}) {
     dataPagamento: dados.dataPagamento || hojeISO(),
     pagamento: dados.dataPagamento || hojeISO(),
     formaPagamento: dados.formaPagamento || 'Dinheiro',
+    programada: false,
+    previsto: false,
+    emitida: true,
+    recebidaAntecipadamente: statusInterno(atual.status) === 'programada',
+    recebidaAntecipadamenteEm: statusInterno(atual.status) === 'programada' ? agoraISO() : atual.recebidaAntecipadamenteEm,
     valorOriginal: valorBaseCobranca,
     valorDevido: Number(valorDevido.toFixed(2)),
     valorPago,

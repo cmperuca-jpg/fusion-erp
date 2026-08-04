@@ -30,11 +30,18 @@ function valorAtualizadoMensalidade(item = {}) {
   const entrada = alvo.includes('matricula_inicial_unificada') || alvo.includes('entrada') || alvo.includes('matrícula') || alvo.includes('matricula');
   // Corrige registros já existentes que guardaram `valorAtualizado` apenas
   // com o valor do plano (R$ 65), embora a cobrança inicial seja R$ 100.
+  const situacao = String(item.status || '').toLowerCase();
   if (entrada) {
     const saldo = Number(item.saldoRestante ?? item.valorRestante ?? 0);
     return saldo > 0 ? saldo : valorPrincipalMensalidade(item);
   }
-  return Number(item.saldoRestante ?? item.valorAtualizado ?? item.valor ?? 0);
+  if (situacao === 'programada') return valorPrincipalMensalidade(item);
+  if (situacao === 'pago' || situacao === 'cancelado') return 0;
+
+  const saldoInformado = item.saldoRestante ?? item.valorRestante;
+  const saldo = Number(saldoInformado ?? 0);
+  if (saldoInformado !== undefined && saldoInformado !== null && saldo > 0) return saldo;
+  return Number(item.valorAtualizado ?? item.valor ?? 0);
 }
 
 function valorDevidoBaixaMensalidade() {
@@ -220,8 +227,8 @@ function renderLista() {
     div.className = 'acoes';
 
     div.appendChild(criarBotao('Editar', '', 'editar', m.id));
-    if (!['pago', 'cancelado', 'programada'].includes(m.status)) {
-      div.appendChild(criarBotao('Baixar', 'baixar', 'baixar', m.id));
+    if (!['pago', 'cancelado'].includes(m.status)) {
+      div.appendChild(criarBotao(m.status === 'programada' ? 'Pagar' : 'Baixar', 'baixar', 'baixar', m.id));
     }
 
     if (m.status === 'pago' || m.status === 'parcial') {

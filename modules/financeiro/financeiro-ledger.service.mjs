@@ -379,6 +379,18 @@ export async function receberTitulos(dados = {}) {
     for (const entrada of itensEntrada) {
       const i = titulos.findIndex((x) => String(x.id) === String(entrada.tituloId)); if (i < 0) throw erro(`Título não encontrado: ${entrada.tituloId}.`, 404);
       let titulo = tituloNormalizado(titulos[i]); if (tipoTitulo(titulo) !== "receber") throw erro("Contas a pagar devem ser baixadas no módulo de pagamentos.");
+      const programadoAntesDaBaixa = programado(titulo);
+      if (programadoAntesDaBaixa) {
+        titulo = tituloNormalizado({
+          ...titulo,
+          status: "Aberto",
+          programado: false,
+          previsto: false,
+          recebidoAntecipado: true,
+          recebidoAntecipadoEm: agora()
+        });
+        titulos[i] = titulo;
+      }
       if (!idMatricula(titulo) && idAluno(titulo)) {
         const candidatas = matriculas.filter((m) => String(m.alunoId || m.aluno_id) === idAluno(titulo) && ["ativa", "ativo", "pendente"].includes(status(m)));
         if (candidatas.length === 1) {
@@ -399,7 +411,7 @@ export async function receberTitulos(dados = {}) {
       const ajusteFormularioDesconto = descontoC > 0 && aplicadoBrutoC > devidoC && aplicadoBrutoC === baseAntesDescontoC;
       const aplicadoC = ajusteFormularioDesconto ? devidoC : aplicadoBrutoC;
       if (aplicadoC <= 0 || aplicadoC > devidoC) throw erro(`Valor inválido para ${titulo.descricao}. Saldo devido: ${reais(devidoC).toFixed(2)}.`);
-      totalAplicadoC += aplicadoC; alocacoes.push({ indice: i, titulo, aplicadoC, descontoC, acrescimoC, devidoC, ajusteFormularioDesconto });
+      totalAplicadoC += aplicadoC; alocacoes.push({ indice: i, titulo, aplicadoC, descontoC, acrescimoC, devidoC, ajusteFormularioDesconto, programadoAntesDaBaixa });
     }
     const usarTotalAplicadoComoMeio = alocacoes.length === 1 &&
       alocacoes[0].ajusteFormularioDesconto &&
@@ -511,7 +523,37 @@ export async function receberTitulos(dados = {}) {
       });
       const item = { id: uid("reci"), reciboId: recibo.id, tituloId: a.titulo.id, alunoId: alunoUnico, matriculaId: idMatricula(a.titulo), mensalidadeId: txt(a.titulo.mensalidadeId), valorOriginalCentavos: valorTituloC(a.titulo), saldoAnteriorCentavos: saldoC(a.titulo), descontoCentavos: a.descontoC, acrescimoCentavos: a.acrescimoC, valorAplicadoCentavos: a.aplicadoC, valorAplicado: reais(a.aplicadoC), taxaOperadoraValorCentavos: taxaAtualC, taxaOperadoraValor: reais(taxaAtualC), valorLiquidoAplicadoCentavos: Math.max(0, a.aplicadoC - taxaAtualC), valorLiquidoAplicado: reais(Math.max(0, a.aplicadoC - taxaAtualC)), cancelado: false, criadoEm: agora() };
       novosItens.push(item); itensRecibo.push(item);
-      for (let m = 0; m < mensalidades.length; m += 1) if (mesmo(mensalidades[m].id, item.mensalidadeId) || mesmo(mensalidades[m].lancamentoFinanceiroId || mensalidades[m].financeiroId, item.tituloId)) mensalidades[m] = { ...mensalidades[m], valorPago: titulos[a.indice].valorBrutoRecebido, valorQuitado: titulos[a.indice].valorPago, valorBrutoRecebido: titulos[a.indice].valorBrutoRecebido, valorRestante: titulos[a.indice].valorRestante, desconto: titulos[a.indice].desconto, acrescimo: titulos[a.indice].acrescimo, taxaOperadoraValor: titulos[a.indice].taxaOperadoraValor, ultimaTaxaOperadoraValor: titulos[a.indice].ultimaTaxaOperadoraValor, taxaOperadoraPercentual: titulos[a.indice].taxaOperadoraPercentual, taxaOperadoraFixa: titulos[a.indice].taxaOperadoraFixa, valorLiquido: titulos[a.indice].valorLiquido, bandeiraCartao: titulos[a.indice].bandeiraCartao, modalidadeCartao: titulos[a.indice].modalidadeCartao, parcelasCartao: titulos[a.indice].parcelasCartao, formaPagamento: titulos[a.indice].formaPagamento, status: titulos[a.indice].status === "Pago" ? "pago" : "parcial", ultimoReciboId: recibo.id, dataPagamento: recibo.data, atualizadoEm: agora() };
+      for (let m = 0; m < mensalidades.length; m += 1) {
+        if (!mesmo(mensalidades[m].id, item.mensalidadeId) && !mesmo(mensalidades[m].lancamentoFinanceiroId || mensalidades[m].financeiroId, item.tituloId)) continue;
+        mensalidades[m] = {
+          ...mensalidades[m],
+          valorPago: titulos[a.indice].valorBrutoRecebido,
+          valorQuitado: titulos[a.indice].valorPago,
+          valorBrutoRecebido: titulos[a.indice].valorBrutoRecebido,
+          valorRestante: titulos[a.indice].valorRestante,
+          saldoRestante: titulos[a.indice].valorRestante,
+          desconto: titulos[a.indice].desconto,
+          acrescimo: titulos[a.indice].acrescimo,
+          taxaOperadoraValor: titulos[a.indice].taxaOperadoraValor,
+          ultimaTaxaOperadoraValor: titulos[a.indice].ultimaTaxaOperadoraValor,
+          taxaOperadoraPercentual: titulos[a.indice].taxaOperadoraPercentual,
+          taxaOperadoraFixa: titulos[a.indice].taxaOperadoraFixa,
+          valorLiquido: titulos[a.indice].valorLiquido,
+          bandeiraCartao: titulos[a.indice].bandeiraCartao,
+          modalidadeCartao: titulos[a.indice].modalidadeCartao,
+          parcelasCartao: titulos[a.indice].parcelasCartao,
+          formaPagamento: titulos[a.indice].formaPagamento,
+          status: titulos[a.indice].status === "Pago" ? "pago" : "parcial",
+          programada: false,
+          previsto: false,
+          emitida: true,
+          recebidaAntecipadamente: a.programadoAntesDaBaixa ? true : mensalidades[m].recebidaAntecipadamente,
+          recebidaAntecipadamenteEm: a.programadoAntesDaBaixa ? agora() : mensalidades[m].recebidaAntecipadamenteEm,
+          ultimoReciboId: recibo.id,
+          dataPagamento: recibo.data,
+          atualizadoEm: agora()
+        };
+      }
       const r = recebimentos.findIndex((x) => mesmo(x.lancamentoFinanceiroId || x.financeiroId, item.tituloId) || mesmo(x.mensalidadeId, item.mensalidadeId));
       const receb = { ...(r >= 0 ? recebimentos[r] : {}), id: r >= 0 ? recebimentos[r].id : uid("recv"), alunoId: alunoUnico, matriculaId: item.matriculaId, mensalidadeId: item.mensalidadeId, lancamentoFinanceiroId: item.tituloId, reciboId: recibo.id, numeroRecibo: recibo.numero, valorRecebido: titulos[a.indice].valorBrutoRecebido, valorQuitado: titulos[a.indice].valorPago, valorBrutoRecebido: titulos[a.indice].valorBrutoRecebido, valorRestante: titulos[a.indice].valorRestante, desconto: titulos[a.indice].desconto, acrescimo: titulos[a.indice].acrescimo, taxaOperadoraValor: titulos[a.indice].taxaOperadoraValor, ultimaTaxaOperadoraValor: titulos[a.indice].ultimaTaxaOperadoraValor, taxaOperadoraPercentual: titulos[a.indice].taxaOperadoraPercentual, taxaOperadoraFixa: titulos[a.indice].taxaOperadoraFixa, valorLiquido: titulos[a.indice].valorLiquido, bandeiraCartao: titulos[a.indice].bandeiraCartao, modalidadeCartao: titulos[a.indice].modalidadeCartao, parcelasCartao: titulos[a.indice].parcelasCartao, status: titulos[a.indice].status === "Pago" ? "recebido" : "parcial", dataRecebimento: recibo.data, formaPagamento: meioUnico?.formaPagamento || "Múltiplas", atualizadoEm: agora(), criadoEm: r >= 0 ? recebimentos[r].criadoEm : agora() };
       if (r >= 0) recebimentos[r] = receb; else recebimentos.push(receb);
