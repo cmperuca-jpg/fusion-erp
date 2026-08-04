@@ -13,6 +13,16 @@ function data(v){ if(!v) return '-'; const s=String(v).slice(0,10); const [a,m,d
 function esc(v){ return String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c])); }
 function statusClass(st){ const s=String(st||'').toLowerCase(); if(['pago','recebido','ativo','ativa'].includes(s)) return 'ok'; if(['aberto','aberta','pendente','parcial'].includes(s)) return 'warn'; if(['cancelado','inativo','bloqueado'].includes(s)) return 'bad'; return ''; }
 function nomeAluno(a){ return a?.nome || a?.aluno || a?.name || 'Aluno'; }
+function normalizarStatus(v){ return String(v || '').trim().toLowerCase(); }
+function statusPago(v){ return ['pago','paga','recebido','recebida','quitado','quitada','baixado','baixada'].includes(normalizarStatus(v)); }
+function statusCancelado(v){ return ['cancelado','cancelada','estornado','estornada','excluido','excluida'].includes(normalizarStatus(v)); }
+function statusRecebivel(v){ return !statusPago(v) && !statusCancelado(v); }
+function parseMoeda(v){
+  if (typeof v === 'number') return Number.isFinite(v) ? v : 0;
+  const texto = String(v ?? '').replace(/\./g, '').replace(',', '.').replace(/[^\d.-]/g, '');
+  const n = Number(texto);
+  return Number.isFinite(n) ? n : 0;
+}
 
 function alerta(msg,tipo='erro'){
   const el=$('#alerta'); el.textContent=msg; el.className=`alunos-alert ${tipo}`; el.classList.remove('hidden');
@@ -94,6 +104,39 @@ function mensalidadeAbertaPrincipal(){
   return abertas.sort((a,b)=>String(a.vencimento||'').localeCompare(String(b.vencimento||'')))[0] || {};
 }
 
+function mensalidadeProgramadaPrincipal(){
+  const lista = Array.isArray(prontuario?.mensalidades) ? prontuario.mensalidades : [];
+  const programadas = lista.filter(m => ['programada','programado','agendada','agendado'].includes(normalizarStatus(m.status)));
+  return programadas.sort((a,b)=>String(a.vencimento||'').localeCompare(String(b.vencimento||'')))[0] || {};
+}
+
+function mensalidadeRecebivelContrato(){
+  const aberta = mensalidadeAbertaPrincipal();
+  if (aberta?.id && statusRecebivel(aberta.status)) return aberta;
+  const programada = mensalidadeProgramadaPrincipal();
+  if (programada?.id && statusRecebivel(programada.status)) return programada;
+  return {};
+}
+
+function valorMensalidadeReceber(item = {}){
+  const st = normalizarStatus(item.status);
+  if (statusPago(st) || statusCancelado(st)) return 0;
+  if (['programada','programado','agendada','agendado'].includes(st)) {
+    return parseMoeda(item.total ?? item.valorOriginal ?? item.valor ?? item.valorBruto ?? 0);
+  }
+  const saldoInformado = item.saldoRestante ?? item.valorRestante;
+  const saldo = parseMoeda(saldoInformado);
+  if (saldoInformado !== undefined && saldoInformado !== null && saldo > 0) return saldo;
+  return parseMoeda(item.valorAtualizado ?? item.valorDevido ?? item.total ?? item.valorOriginal ?? item.valor ?? 0);
+}
+
+function botaoReceberMensalidade(item = {}){
+  if (!item?.id || !statusRecebivel(item.status)) return '';
+  const valor = valorMensalidadeReceber(item);
+  if (valor <= 0) return '';
+  return `<button class="fusion-button prontuario-receber-btn" type="button" data-receber-mensalidade="${esc(item.id)}">Receber</button>`;
+}
+
 function ultimoPagamento(){
   const lista = Array.isArray(prontuario?.mensalidades) ? prontuario.mensalidades : [];
   return lista.filter(m => ['pago','paga','recebido','quitado','baixado'].includes(String(m.status||'').toLowerCase()))
@@ -130,25 +173,29 @@ function contratoInfoBase(){
   const aluno = prontuario?.aluno || {};
   const matricula = primeiraMatriculaAtiva();
   const aberta = mensalidadeAbertaPrincipal();
+  const programada = mensalidadeProgramadaPrincipal();
+  const recebivel = mensalidadeRecebivelContrato();
   const pago = ultimoPagamento();
   const treino = (prontuario?.treinos || [])[0] || {};
   const avaliacao = (prontuario?.avaliacoes || [])[0] || {};
-  const valorMensal = matricula.valorMensal ?? matricula.valorPlano ?? aberta.valor ?? aberta.total ?? aluno.valorMensal ?? 0;
-  return { aluno, matricula, aberta, pago, treino, avaliacao, valorMensal };
+  const valorMensal = matricula.valorMensal ?? matricula.valorPlano ?? recebivel.valor ?? recebivel.total ?? aberta.valor ?? aberta.total ?? programada.valor ?? programada.total ?? aluno.valorMensal ?? 0;
+  return { aluno, matricula, aberta, programada, recebivel, pago, treino, avaliacao, valorMensal };
 }
 
 function renderContratoComercial(){
   const el = $('#contratoComercialResumo');
   if (!el) return;
-  const { aluno, matricula, aberta, pago, valorMensal } = contratoInfoBase();
+  const { aluno, matricula, aberta, programada, pago, valorMensal } = contratoInfoBase();
+  const vencimentoContrato = aberta.vencimento || programada.vencimento || prontuario?.resumoFinanceiro?.proximoVencimento;
+  const statusContrato = aberta.status || programada.status || 'Sem aberto';
   el.innerHTML = info({
     'Plano contratado': matricula.plano || aluno.plano || '-',
     'Valor mensal': moeda(valorMensal),
     'Matrícula': matricula.status || aluno.statusMatricula || '-',
-    'Próximo vencimento': data(aberta.vencimento || prontuario?.resumoFinanceiro?.proximoVencimento),
+    'Proximo vencimento': data(vencimentoContrato),
     'Renovação': (matricula.renovacaoAutomatica === false || aluno.renovacaoAutomatica === false) ? 'Manual' : 'Automática',
     'Último pagamento': data(pago.dataPagamento || pago.pagamento || pago.baixadoEm),
-    'Situação financeira': aberta.status || 'Sem aberto'
+    'Situacao financeira': statusContrato
   });
 }
 
@@ -161,16 +208,19 @@ function renderServicosContratados(){
   const box = $('#servicosChecklist');
   const totalBox = $('#contratoTotalBox');
   if (!box) return;
-  const { aluno, matricula, aberta, pago, treino, avaliacao, valorMensal } = contratoInfoBase();
+  const { aluno, matricula, aberta, programada, recebivel, pago, treino, avaliacao, valorMensal } = contratoInfoBase();
   const modalidades = modalidadeLista(aluno, matricula);
   const extras = servicosExtrasLista();
   const exercicios = exerciciosDoTreino(treino);
+  const vencimentoContrato = aberta.vencimento || programada.vencimento || prontuario?.resumoFinanceiro?.proximoVencimento;
+  const statusContrato = aberta.status || programada.status || '-';
+  const valorRecebivel = recebivel?.id ? valorMensalidadeReceber(recebivel) : 0;
   box.innerHTML = [
     listaHtml('Plano contratado', [
       `Plano: ${esc(matricula.plano || aluno.plano || '-')}`,
-      `Valor: ${moeda(valorMensal)}/mês`,
+      `<span class="prontuario-valor-acao"><span>Valor: ${moeda(valorMensal)}/m\u00eas</span>${botaoReceberMensalidade(recebivel)}</span>`,
       `Matrícula: ${esc(matricula.status || aluno.statusMatricula || '-')}`,
-      `Vencimento: ${data(aberta.vencimento || prontuario?.resumoFinanceiro?.proximoVencimento)}`,
+      `Vencimento: ${data(vencimentoContrato)}`,
       `Renovação: ${(matricula.renovacaoAutomatica === false || aluno.renovacaoAutomatica === false) ? 'Manual' : 'Automática'}`
     ]),
     listaHtml('Modalidades', modalidades.map(m => `• ${esc(m)}`)),
@@ -194,12 +244,52 @@ function renderServicosContratados(){
     listaHtml('Benefícios', ['Portal do Aluno', 'Portal Professor', 'Check-in ativo'].map(x => `✓ ${x}`)),
     listaHtml('Resumo financeiro', [
       `Valor mensal: ${moeda(valorMensal)}`,
-      `Próximo vencimento: ${data(aberta.vencimento || prontuario?.resumoFinanceiro?.proximoVencimento)}`,
-      `Situação: ${esc(aberta.status || '-')}`,
+      valorRecebivel > 0 ? `Valor a receber: ${moeda(valorRecebivel)}` : '',
+      `Proximo vencimento: ${data(vencimentoContrato)}`,
+      `Situacao: ${esc(statusContrato)}`,
       `Último pagamento: ${data(pago.dataPagamento || pago.pagamento || pago.baixadoEm)}`
-    ])
+    ].filter(Boolean))
   ].join('');
   if (totalBox) totalBox.innerHTML = `<strong>Total mensal:</strong> ${moeda(valorMensal)} <span>Base: matrícula, mensalidades e financeiro do aluno.</span>`;
+}
+
+async function receberMensalidadeProntuario(id){
+  const mensalidade = (prontuario?.mensalidades || []).find(m => String(m.id) === String(id));
+  if (!mensalidade) return alerta('Mensalidade nao encontrada no prontuario.');
+
+  const valor = valorMensalidadeReceber(mensalidade);
+  if (valor <= 0) return alerta('Nao ha valor em aberto para receber.');
+
+  const forma = prompt('Forma de pagamento:', 'PIX');
+  if (forma === null) return;
+  const formaPagamento = String(forma || '').trim() || 'PIX';
+
+  if (!confirm(`Confirmar recebimento de ${moeda(valor)} para ${nomeAluno(prontuario?.aluno)}?`)) return;
+
+  try {
+    const resp = await fetch(`/api/mensalidades/${encodeURIComponent(id)}/baixar`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        formaPagamento,
+        valorAplicado: valor,
+        valorPago: valor,
+        valorEntregue: valor,
+        valorRecebido: valor,
+        valorBaixa: valor,
+        valor,
+        usuario: 'Prontuario do aluno',
+        observacao: 'Recebimento confirmado pelo prontuario do aluno.'
+      })
+    });
+    const json = await resp.json().catch(() => ({}));
+    if (!resp.ok || json.erro || json.ok === false) throw new Error(json.mensagem || json.message || `Erro HTTP ${resp.status}`);
+
+    alerta('Recebimento confirmado. A mensalidade foi baixada e o caixa/financeiro foram atualizados.', 'sucesso');
+    await carregar();
+  } catch (erro) {
+    alerta(erro.message || 'Nao foi possivel receber esta mensalidade.');
+  }
 }
 
 function renderAvaliacoes(){
@@ -282,6 +372,11 @@ document.addEventListener('DOMContentLoaded',()=>{
   $('#btnImprimir').addEventListener('click',()=> window.print());
   const btnContrato = $('#btnSalvarChecklistComercial');
   if (btnContrato) btnContrato.addEventListener('click',()=> alerta('Contrato comercial atualizado com os dados já vinculados ao aluno.', 'sucesso'));
+
+  document.addEventListener('click', (ev) => {
+    const btnReceber = ev.target.closest('[data-receber-mensalidade]');
+    if (btnReceber) receberMensalidadeProntuario(btnReceber.dataset.receberMensalidade);
+  });
 
   const abaSolicitada = String(params.get("tab") || "").trim();
   const abaInicial =
