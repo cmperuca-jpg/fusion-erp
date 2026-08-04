@@ -1,237 +1,228 @@
-@import url("/assets/css/fusion-correcoes-visuais.css");
+/* Fusion Sistema — estrutura global em largura total com menu superior. */
 
 :root{
-  --fusion-bg:#f4f6f9;
-  --fusion-panel:#ffffff;
-  --fusion-text:#111827;
-  --fusion-muted:#64748b;
-  --fusion-border:#dbe3ef;
-  --fusion-primary:#ff6600;
-  --fusion-primary-dark:#d95600;
-  --fusion-dark:#101826;
-  --fusion-green:#16a34a;
-  --fusion-red:#dc2626;
-  --fusion-yellow:#f59e0b;
+  --fusion-content-padding:22px;
+  --fusion-top-menu-height:52px;
 }
+
 *{box-sizing:border-box}
-body{margin:0;background:var(--fusion-bg);color:var(--fusion-text);font-family:Arial,Helvetica,sans-serif}
-.main,.fusion-main{margin-left:270px;min-height:100vh;padding:22px}
-.sidebar{position:fixed;left:0;top:0;bottom:0;width:270px;background:var(--fusion-dark);color:#fff;padding:18px;overflow:auto;z-index:20}
-.brand{padding:8px 8px 18px;border-bottom:1px solid rgba(255,255,255,.12);margin-bottom:12px}
-.brand strong{display:block;font-size:22px}
-.brand small{display:block;color:#cbd5e1;margin-top:4px}
-.menu-grupo{margin:16px 0}
-.menu-titulo{display:block;color:#94a3b8;text-transform:uppercase;font-size:11px;font-weight:800;margin:0 0 8px}
-.sidebar a{display:flex;gap:10px;align-items:center;color:#e5e7eb;text-decoration:none;padding:10px 11px;border-radius:10px;margin:3px 0;font-weight:700}
-.sidebar a:hover{background:rgba(255,255,255,.10);color:#fff}
-.topbar{display:flex;justify-content:space-between;align-items:center;gap:16px;background:var(--fusion-panel);border:1px solid var(--fusion-border);border-radius:18px;padding:18px 20px;margin-bottom:18px;box-shadow:0 10px 30px rgba(15,23,42,.05)}
-.topbar h1{margin:0;font-size:26px}
-.topbar small{color:var(--fusion-muted)}
-.usuario-topo{display:flex;align-items:center;gap:10px;font-weight:800}
-.btn-sair{background:#111827;color:#fff;border:0;border-radius:10px;padding:9px 12px;font-weight:800;cursor:pointer}
-.fusion-card,.card,.panel{background:var(--fusion-panel);border:1px solid var(--fusion-border);border-radius:18px;padding:18px;box-shadow:0 10px 30px rgba(15,23,42,.05)}
-.fusion-grid,.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
-.fusion-kpi-label{color:var(--fusion-muted);font-weight:800}
-.fusion-kpi-value{font-size:30px;font-weight:900;margin:8px 0}
-input,select,textarea{border:1px solid #cbd5e1;border-radius:12px;padding:11px;font:inherit;background:#fff}
-button,.btn{border:0;border-radius:12px;background:var(--fusion-primary);color:#fff;padding:11px 14px;font-weight:900;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px}
-button:hover,.btn:hover{background:var(--fusion-primary-dark)}
-.btn-secondary{background:#111827}
-.btn-danger,.danger{background:var(--fusion-red)}
-.btn-light{background:#e2e8f0;color:#111827}
-table{width:100%;border-collapse:collapse}
-th,td{padding:12px;border-bottom:1px solid #e5e7eb;text-align:left;vertical-align:top}
-th{font-size:12px;text-transform:uppercase;color:#475569}
-.badge{display:inline-flex;align-items:center;border-radius:999px;padding:5px 9px;background:#e2e8f0;font-size:12px;font-weight:900;text-transform:capitalize}
-.badge.ativo{background:#dcfce7;color:#166534}
-.badge.inativo{background:#fee2e2;color:#991b1b}
-.badge.administrador{background:#fef3c7;color:#92400e}
-.acoes{display:flex;gap:8px;flex-wrap:wrap}
-@media(max-width:900px){
-  .sidebar{position:relative;width:auto;bottom:auto}
-  .main,.fusion-main{margin-left:0;padding:12px}
-  .topbar{display:grid}
+
+html,
+body{
+  min-width:0;
+  max-width:100%;
+  min-height:100%;
+  margin:0;
+  overflow-x:hidden;
 }
 
-.sidebar a.ativo{background:var(--fusion-primary);color:#fff}
-.sidebar a.ativo:hover{background:var(--fusion-primary-dark)}
-
-/* Fusion ERP 2.8.0 - menu lateral inteligente definitivo */
-body.fusion-com-sidebar .sidebar,
-body.fusion-com-sidebar .fusion-sidebar{
-  display:block !important;
-  visibility:visible !important;
-  opacity:1 !important;
-  transform:none !important;
-}
-body.fusion-com-sidebar .main,
-body.fusion-com-sidebar .fusion-main{
-  margin-left:270px !important;
-}
-body.fusion-com-sidebar .fusion-shell{
-  display:block !important;
-}
-.sidebar a.ativo,
-.fusion-sidebar a.ativo{
-  background:var(--fusion-primary) !important;
-  color:#fff !important;
-}
-@media(max-width:900px){
-  body.fusion-com-sidebar .sidebar,
-  body.fusion-com-sidebar .fusion-sidebar{
-    position:relative !important;
-    width:auto !important;
-    bottom:auto !important;
-  }
-  body.fusion-com-sidebar .main,
-  body.fusion-com-sidebar .fusion-main{
-    margin-left:0 !important;
-  }
+html.fusion-sem-menu,
+html.fusion-no-sidebar,
+html.fusion-layout-fullwidth,
+body.fusion-sem-menu,
+body.fusion-no-sidebar,
+body.fusion-layout-fullwidth{
+  width:100%!important;
+  max-width:100%!important;
+  margin-left:0!important;
+  padding-left:0!important;
 }
 
-/* Fusion ERP 2.8.0 - controle Henry 7X na TopBar */
-.fusion-catraca-controle{
+body.fusion-layout-fullwidth > :is(
+  main,
+  .main,
+  .fusion-main,
+  .chat-admin,
+  .crm,
+  .fusion-shell,
+  .page-root,
+  .app-root
+){
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  min-height:100vh!important;
+  margin-left:0!important;
+  margin-right:0!important;
+  padding:var(--fusion-content-padding)!important;
+  box-sizing:border-box!important;
+  overflow-x:hidden!important;
+}
+
+body.fusion-menu-superior-ativo > :is(
+  main,
+  .main,
+  .fusion-main,
+  .chat-admin,
+  .crm,
+  .fusion-shell,
+  .page-root,
+  .app-root
+){
+  min-height:calc(100vh - var(--fusion-top-menu-height))!important;
+}
+
+body.fusion-layout-fullwidth > .fusion-shell{
+  display:block!important;
+}
+
+body.fusion-layout-fullwidth > .fusion-shell > :is(
+  .fusion-main,
+  main,
+  .main
+){
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  margin:0!important;
+  padding:0!important;
+}
+
+body.fusion-layout-fullwidth > :is(
+  main,
+  .main,
+  .fusion-main,
+  .chat-admin,
+  .crm,
+  .fusion-shell,
+  .page-root,
+  .app-root
+) :is(
+  .fusion-content,
+  .content,
+  .page-content,
+  .conteudo,
+  .wrap,
+  .container,
+  .dashboard,
+  .access-page,
+  .face-shell
+){
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  margin-left:0!important;
+  margin-right:0!important;
+  box-sizing:border-box!important;
+}
+
+body.fusion-layout-fullwidth > :is(
+  main,
+  .main,
+  .fusion-main,
+  .chat-admin,
+  .crm,
+  .fusion-shell,
+  .page-root,
+  .app-root
+) :is(
+  .fusion-grid,
+  .grid,
+  .cards,
+  .kpis,
+  .pipeline,
+  .table-wrap,
+  .tabela-wrap,
+  .table-responsive,
+  .card,
+  .fusion-card
+){
+  min-width:0;
+  max-width:100%;
+}
+
+#fusionSidebar,
+#fusionMenuGlobal,
+.fusion-menu-global,
+body > .sidebar,
+body > .fusion-sidebar,
+body > .fusion-ui-sidebar,
+body > .menu-global,
+body > .nav-sidebar,
+body > .app-sidebar,
+body > .layout-sidebar,
+.fusion-v3-menu-toggle,
+.fusion-v3-menu-backdrop,
+.fusion-mobile-final-bar,
+.fusion-mobile-final-overlay,
+.fusion-mobile-menu-button,
+.fusion-mobile-overlay,
+.fusion-breadcrumb{
+  display:none!important;
+  visibility:hidden!important;
+  pointer-events:none!important;
+}
+
+body.fusion-com-sidebar > :is(
+  main,
+  .main,
+  .fusion-main,
+  .chat-admin,
+  .crm,
+  .fusion-shell,
+  .page-root,
+  .app-root
+){
+  width:100%!important;
+  max-width:100%!important;
+  margin-left:0!important;
+}
+
+body.fusion-menu-open,
+body.fusion-ui-menu-open{
+  overflow:auto!important;
+}
+
+.actions,
+.acoes,
+.modal-actions,
+.alunos-actions,
+.prontuario-actions{
   display:flex;
   align-items:center;
-  gap:7px;
-  padding:5px;
-  border:1px solid var(--fusion-border);
-  border-radius:12px;
-  background:#f8fafc;
-}
-.fusion-catraca-status{
-  display:inline-flex;
-  align-items:center;
-  gap:6px;
-  padding:0 6px;
-  font-size:12px;
-  font-weight:900;
-  white-space:nowrap;
-  color:#991b1b;
-}
-.fusion-catraca-status::before{
-  content:"";
-  width:9px;
-  height:9px;
-  border-radius:50%;
-  background:#dc2626;
-  box-shadow:0 0 0 3px rgba(220,38,38,.12);
-}
-.fusion-catraca-controle.catraca-ativa .fusion-catraca-status{color:#166534}
-.fusion-catraca-controle.catraca-ativa .fusion-catraca-status::before{
-  background:#16a34a;
-  box-shadow:0 0 0 3px rgba(22,163,74,.12);
-}
-.fusion-catraca-controle.catraca-ocupada .fusion-catraca-status{color:#92400e}
-.fusion-catraca-controle.catraca-ocupada .fusion-catraca-status::before{
-  background:#f59e0b;
-  box-shadow:0 0 0 3px rgba(245,158,11,.15);
-}
-.fusion-catraca-toggle,
-.fusion-catraca-liberar{
-  min-height:34px;
-  padding:7px 10px;
-  border-radius:9px;
-  font-size:12px;
-}
-.fusion-catraca-toggle{background:#334155}
-.fusion-catraca-liberar{background:#ff6600}
-.fusion-catraca-toggle:disabled,
-.fusion-catraca-liberar:disabled{
-  opacity:.45;
-  cursor:not-allowed;
-}
-@media(max-width:1100px){
-  .usuario-topo{flex-wrap:wrap;justify-content:flex-end}
-  .fusion-catraca-status{display:none}
-}
-@media(max-width:700px){
-  .fusion-catraca-controle{width:100%;justify-content:space-between}
-  .fusion-catraca-toggle,.fusion-catraca-liberar{flex:1}
+  flex-wrap:wrap;
+  gap:10px;
 }
 
+.version-tag,
+.integration-status,
+.system-alert:empty,
+.qa-finalizado,
+.zip15-panel,
+[data-debug],
+.debug-info,
+#btnDiagnostico,
+#btnDiagnosticoRotas{
+  display:none!important;
+}
 
-
-/* Fusion ERP 2.8.0 — harmonização final das páginas internas */
-html{background:var(--fusion-bg)}
-body:not(.login-page){min-height:100vh}
-body:not(.fusion-sem-menu)>.fusion-main,
-body:not(.fusion-sem-menu)>main.main,
-body:not(.fusion-sem-menu)>main.fusion-page{margin-left:270px!important;width:auto!important;max-width:none!important;padding:22px!important}
-.sidebar.fusion-sidebar{display:block!important;position:fixed!important;left:0!important;top:0!important;bottom:0!important;width:270px!important;overflow-y:auto!important;background:var(--fusion-dark)!important;color:#fff!important;padding:18px!important;z-index:1000!important}
-.sidebar.fusion-sidebar .fusion-brand{height:auto!important;padding:8px 8px 18px!important;color:#fff!important}
-.sidebar.fusion-sidebar .fusion-menu-section{margin:14px 0!important}
-.sidebar.fusion-sidebar .fusion-menu-group{display:block!important;color:#93a4bd!important;padding:0!important;margin:0 0 8px!important;font-size:11px!important;letter-spacing:.08em!important}
-.sidebar.fusion-sidebar a{display:flex!important;color:#e5e7eb!important;padding:10px 11px!important;border-radius:10px!important;margin:3px 0!important;text-decoration:none!important;font-weight:750!important}
-.sidebar.fusion-sidebar a:hover,.sidebar.fusion-sidebar a.active{background:var(--fusion-primary)!important;color:#fff!important}
-.page-header,.topbar{border-radius:18px!important;background:#fff!important;border:1px solid var(--fusion-border)!important;box-shadow:0 10px 30px rgba(15,23,42,.05)!important}
-.actions{display:flex!important;gap:10px!important;flex-wrap:wrap!important;align-items:center!important}
-button,.btn,.actions button,.actions .btn{min-height:42px!important;border-radius:12px!important;padding:10px 16px!important;font-weight:850!important;line-height:1.1!important;box-shadow:none!important}
-.btn-light,.actions .btn-light{background:#e7edf6!important;color:#172033!important;border:1px solid #d4deeb!important}
-.btn-secondary,.actions .btn-secondary{background:#172033!important;color:#fff!important}
-.btn-primary,.actions .btn-primary{background:var(--fusion-primary)!important;color:#fff!important}
-.btn-danger,.actions .btn-danger{background:var(--fusion-red)!important;color:#fff!important}
-button:disabled,.btn:disabled{opacity:.5!important;cursor:not-allowed!important}
-.version-tag,.integration-status,.system-alert:empty,.qa-finalizado,.zip15-panel,[data-debug],.debug-info{display:none!important}
-#btnDiagnostico,#btnDiagnosticoRotas{display:none!important}
 @media(max-width:900px){
-  body:not(.fusion-sem-menu)>.fusion-main,body:not(.fusion-sem-menu)>main.main,body:not(.fusion-sem-menu)>main.fusion-page{margin-left:0!important;padding:12px!important}
-  .sidebar.fusion-sidebar{position:relative!important;width:auto!important;inset:auto!important;max-height:none!important}
-  .page-header{display:grid!important;gap:14px!important}
-  .actions{width:100%!important}
-}
+  :root{
+    --fusion-content-padding:12px;
+    --fusion-top-menu-height:50px;
+  }
 
-/* Fusion ERP 2.8.0 — correção de encaixe das páginas internas */
-body.fusion-com-sidebar > main,
-body.fusion-com-sidebar > .main,
-body.fusion-com-sidebar > .fusion-main,
-body.fusion-com-sidebar > .chat-admin {
-  margin-left:270px !important;
-  width:calc(100% - 270px) !important;
-  max-width:none !important;
-  padding:22px !important;
-}
-body.fusion-com-sidebar > main > header:not(.topbar):not(.topo) {
-  display:none !important;
-}
-body.fusion-com-sidebar .topbar {
-  min-height:72px;
-  margin:0 0 18px !important;
-}
-body.fusion-com-sidebar .hero,
-body.fusion-com-sidebar .topo {
-  margin-left:0 !important;
-  margin-right:0 !important;
-}
-body.fusion-com-sidebar .cards {
-  padding-left:0 !important;
-  padding-right:0 !important;
-}
-body.fusion-com-sidebar .filtros,
-body.fusion-com-sidebar .painel {
-  margin-left:0 !important;
-  margin-right:0 !important;
-}
-body.fusion-com-sidebar .tabela-wrap,
-body.fusion-com-sidebar .card {
-  min-width:0;
-}
-body.fusion-com-sidebar .sidebar.fusion-sidebar {
-  width:270px !important;
-}
-body.fusion-com-sidebar .sidebar.fusion-sidebar a[target="_blank"]::after {
-  content:"↗";
-  margin-left:auto;
-  opacity:.75;
-  font-size:12px;
-}
-@media(max-width:900px){
-  body.fusion-com-sidebar > main,
-  body.fusion-com-sidebar > .main,
-  body.fusion-com-sidebar > .fusion-main,
-  body.fusion-com-sidebar > .chat-admin {
-    margin-left:0 !important;
-    width:100% !important;
-    padding:12px !important;
+  body.fusion-layout-fullwidth > :is(
+    main,
+    .main,
+    .fusion-main,
+    .chat-admin,
+    .crm,
+    .fusion-shell,
+    .page-root,
+    .app-root
+  ){
+    width:100%!important;
+    max-width:100%!important;
+    margin-left:0!important;
+    padding:12px!important;
+  }
+
+  .actions,
+  .acoes,
+  .modal-actions,
+  .alunos-actions,
+  .prontuario-actions{
+    width:100%;
   }
 }

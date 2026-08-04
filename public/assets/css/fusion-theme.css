@@ -1,0 +1,375 @@
+/* Fusion Sistema — tema visual oficial claro com navegação superior escura. */
+:root{
+  --fusion-bg:#f4f7fb;--fusion-panel:#fff;--fusion-panel-soft:#eef4f7;
+  --fusion-text:#152536;--fusion-heading:#17384a;--fusion-muted:#607386;--fusion-border:#d8e2ea;
+  --fusion-primary:#22b8d2;--fusion-primary-hover:#1299b2;--fusion-accent:#22b8d2;
+  --fusion-success:#16815f;--fusion-warning:#8a7500;--fusion-danger:#c63e4d;
+  --fusion-menu-bg:#242424;--fusion-menu-bg-hover:#303030;--fusion-menu-border:#3a3a3a;
+  --fusion-radius:12px;--fusion-shadow:0 8px 24px rgba(15,23,42,.07);color-scheme:light
+}
+html,body,html.fusion-sem-menu,body.fusion-sem-menu{background:var(--fusion-bg);color:var(--fusion-text)}
+body{font-family:Arial,Helvetica,sans-serif;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+body::after{display:none!important;content:none!important}
+h1,h2,h3,h4,h5,h6,.page-title,.fusion-title{color:var(--fusion-heading);text-shadow:none}
+p,.subtitle,.descricao,.description,.help,.hint,small{color:var(--fusion-muted);text-shadow:none}
+label{color:#334b5c;text-shadow:none}a{color:#087f91}
+.topbar,.page-header,.topo,.header,.cabecalho,.fusion-standard-header{background:var(--fusion-panel);color:var(--fusion-text);border:1px solid var(--fusion-border);box-shadow:var(--fusion-shadow)}
+.card,.fusion-card,.panel,.painel,.box,.widget,.section-card,.content-card,.form-card,.table-card,.filtro-card,.filters,.filtros,.modal-card,.modal-content,.dialog-content,.popup-content{background:var(--fusion-panel);color:var(--fusion-text);border-color:var(--fusion-border);box-shadow:var(--fusion-shadow)}
+input,select,textarea{background:#fff;color:#172b3a;border:1px solid #bccbd5;box-shadow:none;text-shadow:none;color-scheme:light}
+input::placeholder,textarea::placeholder{color:#7b8d9b;opacity:1}
+input:focus,select:focus,textarea:focus{outline:0;border-color:var(--fusion-primary);box-shadow:0 0 0 3px rgba(34, 184, 210,.16)}
+.table-wrap,.table-responsive,.tabela-wrap{max-width:100%;overflow-x:auto;background:var(--fusion-panel)}
+table{background:var(--fusion-panel);color:var(--fusion-text)}thead th,th{background:var(--fusion-panel-soft);color:#425a6a;text-shadow:none}td{color:#263d4d;text-shadow:none}tbody tr:hover{background:#f7fafb}
+.modal-backdrop,.modal-overlay,.popup-operacional{background:rgba(7,24,32,.58)}
+.modal-head,.modal-header,.dialog-header,.popup-operacional-head{background:#153b47;color:#fff;border-bottom-color:#2d5968}
+.modal-head :is(h1,h2,h3),.modal-header :is(h1,h2,h3),.popup-operacional-head h3{color:#fff}
+.tabs{background:#f3f7f9;border-color:var(--fusion-border)}.tab{background:#fff;color:#284454;border-color:#bdcbd4}.tab.active{background:var(--fusion-primary);color:#fff;border-color:var(--fusion-primary)}
+.badge,.chip{background:#e7eef2;color:#304b5b}.badge.ativo,.badge.ativa,.status-ativo,.chip.ok{background:#dcfce7;color:#166534}.badge.inativo,.badge.inativa,.status-inativo,.status-cancelado,.chip.bad{background:#fee2e2;color:#991b1b}.badge.pendente,.chip.warn{background:#fef3c7;color:#756400}
+
+/* Dashboard global — componentes do template único.
+   A página /pages/dashboard/index.html usa somente as folhas globais. */
+body.fusion-menu-superior-ativo .fusion-shell > .fusion-main > .fusion-content{
+  display:grid;
+  gap:18px;
+  width:100%;
+  max-width:100%;
+}
+
+body.fusion-menu-superior-ativo .fusion-shell > .fusion-main > .fusion-content > .fusion-grid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:16px;
+  width:100%;
+  margin:0!important;
+}
+
+body.fusion-menu-superior-ativo .fusion-shell > .fusion-main > .fusion-content > .fusion-grid:last-child{
+  grid-template-columns:repeat(3,minmax(0,1fr));
+}
+
+body.fusion-menu-superior-ativo .fusion-shell > .fusion-main > .fusion-content > .fusion-grid > .fusion-card,
+body.fusion-menu-superior-ativo .fusion-shell > .fusion-main > .fusion-content > .fusion-card{
+  min-width:0;
+  margin:0;
+  padding:20px;
+  border:1px solid var(--fusion-border);
+  border-radius:var(--fusion-radius);
+  background:var(--fusion-panel);
+  color:var(--fusion-text);
+  box-shadow:var(--fusion-shadow);
+}
+
+body.fusion-menu-superior-ativo .fusion-shell > .fusion-main > .fusion-content > .fusion-grid:first-child > .fusion-card{
+  min-height:132px;
+}
+
+body.fusion-menu-superior-ativo .fusion-shell > .fusion-main > .fusion-content > .fusion-grid:last-child > .fusion-card{
+  min-height:150px;
+}
+
+body.fusion-menu-superior-ativo .fusion-shell .fusion-kpi-label{
+  color:var(--fusion-muted);
+  font-size:13px;
+  font-weight:700;
+  line-height:1.3;
+}
+
+body.fusion-menu-superior-ativo .fusion-shell .fusion-kpi-value{
+  margin:8px 0 5px;
+  color:var(--fusion-heading);
+  font-size:30px;
+  font-weight:800;
+  line-height:1.05;
+}
+
+body.fusion-menu-superior-ativo .fusion-shell .fusion-card > h2{
+  margin:0 0 10px;
+  color:var(--fusion-heading);
+  font-size:22px;
+  line-height:1.2;
+}
+
+body.fusion-menu-superior-ativo .fusion-shell .fusion-card > p{
+  margin:0;
+  color:var(--fusion-muted);
+  line-height:1.5;
+}
+
+body.fusion-menu-superior-ativo .fusion-shell .fusion-card > small,
+body.fusion-menu-superior-ativo .fusion-shell .fusion-kpi-value + small{
+  display:block;
+  color:var(--fusion-muted);
+  line-height:1.35;
+}
+
+body.fusion-menu-superior-ativo .fusion-shell .fusion-btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:42px;
+  padding:0 18px;
+  border:1px solid transparent;
+  border-radius:10px;
+  font-family:inherit;
+  font-weight:700;
+  text-decoration:none;
+  cursor:pointer;
+}
+
+body.fusion-menu-superior-ativo .fusion-shell .fusion-btn-primary{
+  border-color:var(--fusion-primary);
+  background:var(--fusion-primary);
+  color:#fff;
+}
+
+body.fusion-menu-superior-ativo .fusion-shell .fusion-btn-primary:hover,
+body.fusion-menu-superior-ativo .fusion-shell .fusion-btn-primary:focus-visible{
+  border-color:var(--fusion-primary-hover);
+  background:var(--fusion-primary-hover);
+  color:#fff;
+}
+
+@media(max-width:1000px){
+  body.fusion-menu-superior-ativo .fusion-shell > .fusion-main > .fusion-content > .fusion-grid,
+  body.fusion-menu-superior-ativo .fusion-shell > .fusion-main > .fusion-content > .fusion-grid:last-child{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+
+@media(max-width:640px){
+  body.fusion-menu-superior-ativo .fusion-shell > .fusion-main > .fusion-content > .fusion-grid,
+  body.fusion-menu-superior-ativo .fusion-shell > .fusion-main > .fusion-content > .fusion-grid:last-child{
+    grid-template-columns:1fr;
+  }
+
+  body.fusion-menu-superior-ativo .fusion-shell > .fusion-main > .fusion-content > .fusion-grid > .fusion-card,
+  body.fusion-menu-superior-ativo .fusion-shell > .fusion-main > .fusion-content > .fusion-card{
+    padding:16px;
+  }
+}
+
+/* Fusion Sistema — padrão visual profissional compartilhado.
+   Use as classes fusion-ui-* nas páginas para manter KPIs, títulos, filtros,
+   gráficos e tabelas com a mesma escala e organização. */
+:root{
+  --fusion-page-max:1600px;
+  --fusion-page-gap:20px;
+  --fusion-card-radius:16px;
+  --fusion-card-border:#dce6ec;
+  --fusion-card-shadow:0 8px 24px rgba(20,54,75,.065);
+  --fusion-title-size:clamp(28px,2.3vw,34px);
+  --fusion-section-title-size:23px;
+  --fusion-card-title-size:18px;
+  --fusion-kpi-value-size:30px;
+  --fusion-body-size:14px;
+}
+
+body.fusion-menu-superior-ativo{
+  font-size:var(--fusion-body-size);
+  line-height:1.45;
+}
+
+body.fusion-menu-superior-ativo h1{font-size:var(--fusion-title-size);line-height:1.1}
+body.fusion-menu-superior-ativo h2{font-size:var(--fusion-section-title-size);line-height:1.2}
+body.fusion-menu-superior-ativo h3{font-size:var(--fusion-card-title-size);line-height:1.25}
+
+.fusion-ui-page{
+  display:grid!important;
+  align-content:start!important;
+  gap:var(--fusion-page-gap)!important;
+  width:100%!important;
+  max-width:var(--fusion-page-max)!important;
+  margin:0 auto!important;
+}
+
+.fusion-ui-hero,
+.fusion-ui-section,
+.fusion-ui-chart-card,
+.fusion-ui-table-card,
+.fusion-ui-kpi{
+  min-width:0;
+  border:1px solid var(--fusion-card-border)!important;
+  border-radius:var(--fusion-card-radius)!important;
+  background:#fff!important;
+  color:var(--fusion-text)!important;
+  box-shadow:var(--fusion-card-shadow)!important;
+}
+
+.fusion-ui-hero{
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:24px;
+  overflow:hidden;
+  padding:28px 30px!important;
+}
+
+.fusion-ui-hero::before{
+  content:"";
+  position:absolute;
+  inset:0 auto 0 0;
+  width:5px;
+  background:linear-gradient(180deg,#48cde1,var(--fusion-primary-hover));
+}
+
+.fusion-ui-hero__content,
+.fusion-ui-hero__actions{position:relative;z-index:1}
+.fusion-ui-hero h1{margin:4px 0 7px!important;color:#12354a!important;letter-spacing:-.025em}
+.fusion-ui-hero p{max-width:780px;margin:0!important;color:#667d8d!important;font-size:15px;line-height:1.55}
+.fusion-ui-hero__actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+
+.fusion-ui-eyebrow{
+  display:block;
+  margin:0 0 5px;
+  color:#128ca4;
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.11em;
+  text-transform:uppercase;
+}
+
+.fusion-ui-btn{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:8px!important;
+  min-height:42px!important;
+  margin:0!important;
+  padding:10px 16px!important;
+  border:1px solid transparent!important;
+  border-radius:10px!important;
+  font-family:inherit!important;
+  font-size:13px!important;
+  font-weight:800!important;
+  line-height:1!important;
+  text-decoration:none!important;
+  cursor:pointer!important;
+  transition:transform .16s ease,box-shadow .16s ease,background-color .16s ease,border-color .16s ease!important;
+}
+.fusion-ui-btn:hover{transform:translateY(-1px)}
+.fusion-ui-btn:disabled{opacity:.62;cursor:wait;transform:none}
+.fusion-ui-btn svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.fusion-ui-btn--primary{background:var(--fusion-primary)!important;color:#fff!important;box-shadow:0 7px 16px rgba(34,184,210,.2)!important}
+.fusion-ui-btn--primary:hover{background:var(--fusion-primary-hover)!important;color:#fff!important}
+.fusion-ui-btn--secondary{background:#163a4c!important;color:#fff!important}
+.fusion-ui-btn--secondary:hover{background:#0f2d3c!important;color:#fff!important}
+.fusion-ui-btn--ghost{background:#fff!important;color:#496273!important;border-color:#cad7df!important}
+.fusion-ui-btn--ghost:hover{background:#f4f8fa!important;color:#128ca4!important;border-color:#9bcbd4!important}
+.fusion-ui-btn--danger{background:#c63e4d!important;color:#fff!important}
+
+.fusion-ui-section{padding:21px 24px!important}
+.fusion-ui-section-header{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin-bottom:14px}
+.fusion-ui-section-header--compact{align-items:center;margin-bottom:17px}
+.fusion-ui-section-header h2{margin:0 0 4px!important;color:#15384b!important;font-size:var(--fusion-section-title-size)!important}
+.fusion-ui-section-header p{margin:0!important;color:#6c8190!important;font-size:14px;line-height:1.45}
+
+.fusion-ui-update-status{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  flex:0 0 auto;
+  color:#527080;
+  font-size:12px;
+  font-weight:700;
+}
+.fusion-ui-update-status::before{content:"";width:8px;height:8px;border-radius:50%;background:#27ae78;box-shadow:0 0 0 4px rgba(39,174,120,.12)}
+.fusion-ui-update-status.is-loading::before{background:#d9a32e;box-shadow:0 0 0 4px rgba(217,163,46,.12)}
+.fusion-ui-update-status.is-error::before{background:#d54d5d;box-shadow:0 0 0 4px rgba(213,77,93,.12)}
+
+.fusion-ui-filter-grid{display:grid;grid-template-columns:repeat(2,minmax(180px,1fr)) auto;gap:13px;align-items:end}
+.fusion-ui-field{display:grid;gap:7px;color:#3f596a;font-size:12px;font-weight:800}
+.fusion-ui-field :is(input,select,textarea){width:100%!important;min-height:43px!important;margin:0!important;padding:9px 12px!important;border:1px solid #cbd8e0!important;border-radius:10px!important;background:#fff!important;color:#1e3c4d!important;font-size:14px!important}
+.fusion-ui-field :is(input,select,textarea):focus{outline:0!important;border-color:var(--fusion-primary)!important;box-shadow:0 0 0 3px rgba(34,184,210,.14)!important}
+.fusion-ui-filter-actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+.fusion-ui-alert{margin-top:14px;padding:11px 13px;border:1px solid #efc3c8;border-radius:10px;background:#fff2f4;color:#a62e3d;font-size:13px;font-weight:700}
+
+.fusion-ui-kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px}
+.fusion-ui-kpi{position:relative;overflow:hidden;padding:18px 19px!important;text-align:left}
+.fusion-ui-kpi::after{content:"";position:absolute;right:-18px;bottom:-26px;width:82px;height:82px;border-radius:50%;background:rgba(34,184,210,.07)}
+.fusion-ui-kpi__top{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.fusion-ui-kpi__top span{color:#516a7a;font-size:12px;font-weight:900;letter-spacing:.03em;text-transform:uppercase}
+.fusion-ui-kpi__top i{width:9px;height:9px;border-radius:50%;background:var(--fusion-primary);box-shadow:0 0 0 5px rgba(34,184,210,.11)}
+.fusion-ui-kpi strong{position:relative;z-index:1;display:block;margin:11px 0 5px;color:#112f42!important;font-size:var(--fusion-kpi-value-size)!important;font-weight:800!important;line-height:1!important;letter-spacing:-.035em;white-space:nowrap}
+.fusion-ui-kpi small{position:relative;z-index:1;display:block;color:#7a8d9a!important;font-size:12px;line-height:1.35}
+.fusion-ui-kpi--secondary .fusion-ui-kpi__top i{background:#7890a0;box-shadow:0 0 0 5px rgba(120,144,160,.11)}
+.fusion-ui-kpi--primary{border-color:#bfeaf1!important;background:linear-gradient(145deg,#fff,#f3fcfe)!important}
+
+.fusion-ui-dashboard-section{display:grid;gap:14px;min-width:0}
+.fusion-ui-chart-grid,.fusion-ui-table-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:17px}
+.fusion-ui-chart-card,.fusion-ui-table-card{padding:20px 22px 18px!important;overflow:hidden}
+.fusion-ui-card-header{display:flex;align-items:flex-start;justify-content:space-between;gap:15px;margin-bottom:10px}
+.fusion-ui-card-header h2{margin:0 0 4px!important;color:#15384b!important;font-size:var(--fusion-section-title-size)!important}
+.fusion-ui-card-header h3{margin:0 0 4px!important;color:#15384b!important;font-size:var(--fusion-card-title-size)!important}
+.fusion-ui-card-header p{margin:0!important;color:#728794!important;font-size:12px;line-height:1.45}
+.fusion-ui-chart-frame{position:relative;width:100%;height:300px;min-height:300px;margin-top:6px}
+.fusion-ui-chart-frame--doughnut{height:310px;min-height:310px}
+.fusion-ui-chart-frame canvas{display:block!important;width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important}
+.fusion-ui-chart-empty{position:absolute;inset:0;display:grid;place-content:center;gap:4px;border:1px dashed #cad8df;border-radius:11px;background:#f8fbfc;color:#758a98;text-align:center}
+.fusion-ui-chart-empty[hidden]{display:none!important}
+.fusion-ui-chart-empty strong{color:#496273;font-size:14px}
+.fusion-ui-chart-empty span{font-size:12px}
+
+.fusion-ui-table-content{min-width:0;color:#425d6e;font-size:13px}
+.fusion-ui-table-wrap{width:100%;overflow:auto;border:1px solid #e1e9ee;border-radius:11px;background:#fff}
+.fusion-ui-table{width:100%!important;min-width:520px!important;margin:0!important;border-collapse:separate!important;border-spacing:0!important;background:#fff!important}
+.fusion-ui-table th{padding:11px 12px!important;background:#eff5f7!important;color:#496171!important;border:0!important;border-bottom:1px solid #dce7ec!important;font-size:11px!important;font-weight:900!important;letter-spacing:.04em!important;text-align:left!important;text-transform:uppercase!important;white-space:nowrap}
+.fusion-ui-table td{padding:12px!important;background:#fff!important;color:#294658!important;border:0!important;border-bottom:1px solid #edf1f4!important;font-size:13px!important;vertical-align:middle!important}
+.fusion-ui-table tbody tr:last-child td{border-bottom:0!important}
+.fusion-ui-table tbody tr:hover td{background:#f7fbfc!important}
+.fusion-ui-table .is-numeric{text-align:right!important;font-variant-numeric:tabular-nums}
+.fusion-ui-rank{display:inline-grid;place-items:center;width:25px;height:25px;margin-right:9px;border-radius:8px;background:#e7f7fa;color:#128ca4;font-size:11px;font-weight:900}
+.fusion-ui-empty{display:grid;place-items:center;min-height:132px;padding:25px;border:1px dashed #cbd9e0;border-radius:11px;background:#f8fbfc;color:#758a98;text-align:center}
+.fusion-ui-empty strong{display:block;margin-bottom:4px;color:#496273;font-size:14px}
+.fusion-ui-empty span{font-size:12px}
+
+.fusion-ui-status{display:inline-flex;align-items:center;gap:6px;padding:5px 8px;border-radius:999px;background:#edf3f5;color:#526a79;font-size:11px;font-weight:800;white-space:nowrap}
+.fusion-ui-status::before{content:"";width:7px;height:7px;border-radius:50%;background:#8297a4}
+.fusion-ui-status--success{background:#e7f8f1;color:#177455}.fusion-ui-status--success::before{background:#28a576}
+.fusion-ui-status--warning{background:#fff5da;color:#8b6511}.fusion-ui-status--warning::before{background:#dda528}
+.fusion-ui-status--danger{background:#fdecef;color:#9d3442}.fusion-ui-status--danger::before{background:#d65363}
+
+/* Base comum para páginas antigas que ainda usam nomenclaturas anteriores. */
+:is(.kpis,.kpi-grid,.cards-resumo,.financeiro-kpis,.bi-kpis,.bi-kpis-secundarios){gap:14px}
+:is(.kpi,.kpi-card,.fusion-kpi-card,.aluno-kpi,.aval-kpi,.prof-kpi,.pront-kpi) > strong{
+  color:#112f42;
+  font-size:var(--fusion-kpi-value-size);
+  font-weight:800;
+  line-height:1;
+  letter-spacing:-.03em;
+}
+:is(.kpi,.kpi-card,.fusion-kpi-card,.aluno-kpi,.aval-kpi,.prof-kpi,.pront-kpi) > :is(span,h3,.fusion-kpi-label){
+  color:#516a7a;
+  font-size:12px;
+  font-weight:800;
+}
+.page-actions h1,.page-actions h2,.page-header h1,.page-header h2{font-size:var(--fusion-section-title-size);letter-spacing:-.015em}
+
+@media(max-width:900px){
+  .fusion-ui-page{gap:17px!important}
+  .fusion-ui-hero{align-items:flex-start;padding:23px 21px!important}
+  .fusion-ui-filter-grid{grid-template-columns:1fr 1fr}
+  .fusion-ui-filter-actions{grid-column:1/-1}
+  .fusion-ui-chart-grid,.fusion-ui-table-grid{grid-template-columns:1fr}
+  .fusion-ui-chart-frame{height:285px;min-height:285px}
+}
+
+@media(max-width:620px){
+  :root{--fusion-section-title-size:21px;--fusion-kpi-value-size:28px}
+  .fusion-ui-hero{display:grid}
+  .fusion-ui-hero__actions,.fusion-ui-hero__actions .fusion-ui-btn{width:100%}
+  .fusion-ui-section-header,.fusion-ui-section-header--compact{display:grid;align-items:start}
+  .fusion-ui-filter-grid{grid-template-columns:1fr}
+  .fusion-ui-filter-actions{display:grid;grid-template-columns:1fr 1fr}
+  .fusion-ui-filter-actions .fusion-ui-btn{width:100%}
+  .fusion-ui-chart-card,.fusion-ui-table-card,.fusion-ui-section{padding:17px!important}
+  .fusion-ui-chart-frame{height:260px;min-height:260px}
+}
+
+body.fusion-layout-fullwidth > main.fusion-ui-page,
+body.fusion-layout-fullwidth > .main.fusion-ui-page{
+  width:100%!important;
+  max-width:var(--fusion-page-max)!important;
+  margin-left:auto!important;
+  margin-right:auto!important;
+}

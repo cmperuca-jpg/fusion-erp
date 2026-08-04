@@ -45,7 +45,7 @@ services:
       - key: SUPABASE_BACKUP_BUCKET
         value: fusion-backups
       - key: FUSION_BACKUP_AUTO
-        value: true
+        value: false
       - key: FUSION_BACKUP_AUTO_MS
         value: 21600000
       - key: FUSION_BACKUP_PART_MB

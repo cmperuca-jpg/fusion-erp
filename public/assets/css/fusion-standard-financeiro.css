@@ -1,0 +1,42 @@
+/* Fusion Sistema — componentes internos padronizados no visual Financeiro/Mensalidades.
+   Não define sidebar, margem da página ou tipografia do menu. */
+body.fusion-com-sidebar{
+  --std-bg:#f4f7fb;--std-panel:#fff;--std-panel-soft:#eef4f7;--std-text:#0b3045;
+  --std-muted:#355d73;--std-border:#cfdae4;--std-primary:#17a9bf;--std-primary-hover:#1299b2
+}
+body.fusion-com-sidebar :is(main,.main,.fusion-main,.fusion-content,.content,.page-content,.crm){background:var(--std-bg)!important;color:var(--std-text)!important}
+body.fusion-com-sidebar :is(.modulo-header,.page-actions,.page-title-row,.hero:not(.portal-hero),.topo:not(.topbar),.page-header:not(.topbar)){background:transparent!important;color:var(--std-text)!important;border:0!important;box-shadow:none!important}
+body.fusion-com-sidebar :is(h1,h2,h3,h4,h5,h6,.page-title,.fusion-title){color:var(--std-text)!important;-webkit-text-fill-color:var(--std-text)!important;text-shadow:none!important;opacity:1!important}
+body.fusion-com-sidebar :is(p,small,.subtitle,.descricao,.description,.empty){color:var(--std-muted)!important;-webkit-text-fill-color:var(--std-muted)!important;text-shadow:none!important;opacity:1!important}
+body.fusion-com-sidebar :is(.card,.fusion-card,.panel,.painel,.box,.widget,.table-card,.tabela-card,.filtros-card,.filters,.filtros,.section-card,.content-card,.form-card,.lead,.col,.pipeline>div){background:var(--std-panel)!important;color:var(--std-text)!important;border:1px solid var(--std-border)!important;border-radius:14px!important;box-shadow:0 8px 24px rgba(15,23,42,.06)!important}
+body.fusion-com-sidebar :is(.kpi-card,.kpi,.stat,.metric,.summary-card,.resumo-card,.kpis>div,.prof-kpis>div,.aluno-kpi,.prof-kpi,.access-kpi,.face-stat,[class*="kpi-card"],[class$="-kpi"]){background:var(--std-panel)!important;background-image:none!important;color:var(--std-text)!important;border:1px solid var(--std-border)!important;border-radius:14px!important;box-shadow:0 8px 24px rgba(15,23,42,.05)!important}
+body.fusion-com-sidebar :is(.kpi-card,.kpi,.stat,.metric,.summary-card,.resumo-card,.kpis>div,.prof-kpis>div,.aluno-kpi,.prof-kpi,.access-kpi,.face-stat,[class*="kpi-card"],[class$="-kpi"]) :is(span,small){color:var(--std-muted)!important;-webkit-text-fill-color:var(--std-muted)!important}
+body.fusion-com-sidebar :is(.kpi-card,.kpi,.stat,.metric,.summary-card,.resumo-card,.kpis>div,.prof-kpis>div,.aluno-kpi,.prof-kpi,.access-kpi,.face-stat,[class*="kpi-card"],[class$="-kpi"]) strong{color:var(--std-text)!important;-webkit-text-fill-color:var(--std-text)!important;text-shadow:none!important}
+body.fusion-com-sidebar :is(input,select,textarea){background:#fff!important;color:#172b3a!important;-webkit-text-fill-color:#172b3a!important;border:1px solid #c7d4df!important;box-shadow:none!important;color-scheme:light!important}
+body.fusion-com-sidebar label{color:#294b60!important;-webkit-text-fill-color:#294b60!important}
+
+/* Botões preenchidos azuis em todas as páginas internas. */
+body.fusion-com-sidebar :is(button,.btn,.button,a.btn,a.button,[role="button"],input[type="button"],input[type="submit"],input[type="reset"],.fusion-button,.btn-primary,.btn-secondary,.btn-light,.btn-success,.btn-warning,.btn-info,.btn-danger,.primary,.secondary,.success,.warning,.info,.danger,.delete,.excluir,.salvar,.ghost,.outline,.btn-outline){background:var(--std-primary)!important;background-image:none!important;color:#fff!important;-webkit-text-fill-color:#fff!important;border:1px solid var(--std-primary)!important;box-shadow:none!important;text-shadow:none!important}
+body.fusion-com-sidebar :is(button,.btn,.button,a.btn,a.button,[role="button"],input[type="button"],input[type="submit"],input[type="reset"],.fusion-button):hover{background:var(--std-primary-hover)!important;border-color:var(--std-primary-hover)!important;color:#fff!important;-webkit-text-fill-color:#fff!important}
+/* Controles de navegação não são botões de ação. */
+body.fusion-com-sidebar :is(button.fusion-menu-group,button.menu-titulo,button.tab:not(.active)){background:transparent!important;color:inherit!important;-webkit-text-fill-color:currentColor!important;border-color:transparent!important;box-shadow:none!important}
+
+body.fusion-com-sidebar table{background:#fff!important;color:var(--std-text)!important}
+body.fusion-com-sidebar :is(thead,thead tr,thead th,th){background:var(--std-panel-soft)!important;color:#234f65!important;-webkit-text-fill-color:#234f65!important}
+body.fusion-com-sidebar :is(tbody,tbody tr,td){background:#fff!important;color:#294b60!important;-webkit-text-fill-color:#294b60!important;border-color:#dce5ec!important}
+body.fusion-com-sidebar tbody tr:hover td{background:#f7fafc!important}
+
+/* CRM e módulos técnicos: somente superfície, sem alterar layout. */
+body.fusion-com-sidebar .crm :is(.topo,.kpis,.filtros,.col,.lead),
+body.fusion-com-sidebar :is(.access-hero,.access-agent-card,.access-card,.access-panel,.access-driver-card,.access-person,.access-table-wrap,.face-head,.face-card){background:#fff!important;background-image:none!important;color:var(--std-text)!important;border-color:var(--std-border)!important}
+body.fusion-com-sidebar .crm .pipeline{background:transparent!important}
+
+/* Modais acima da sidebar. */
+body.fusion-com-sidebar :is(.modal-backdrop,.modal-overlay,.popup-operacional){z-index:3000!important;background:rgba(7,24,32,.58)!important}
+body.fusion-com-sidebar .modal{background:transparent!important}
+body.fusion-com-sidebar :is(.modal-card,.modal-content,.dialog-content,.popup-operacional-card){position:relative!important;z-index:3001!important;background:#fff!important;color:var(--std-text)!important;border:1px solid var(--std-border)!important}
+
+/* O menu nunca recebe estilos de conteúdo ou botões genéricos. */
+body.fusion-com-sidebar :is(.sidebar,.fusion-sidebar,#fusionSidebar),
+body.fusion-com-sidebar :is(.sidebar,.fusion-sidebar,#fusionSidebar) *{--std-text:#eef7f9}
+body.fusion-com-sidebar :is(.sidebar,.fusion-sidebar,#fusionSidebar) :is(h1,h2,h3,p,small,span,strong){-webkit-text-fill-color:currentColor!important}

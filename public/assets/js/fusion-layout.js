@@ -1,15 +1,102 @@
 (function () {
-  const __FUSION_V3_NAVIGATION_FINAL__ = true;
+  "use strict";
+
+  const MENU_GRUPOS = [
+    {
+      id: "principal",
+      label: "PRINCIPAL",
+      itens: [
+        { id: "dashboard", label: "Dashboard", href: "/pages/dashboard/index.html", perm: "dashboard" },
+        { id: "bi-financeiro", label: "BI Financeiro", href: "/pages/bi-financeiro/index.html", perm: "relatorios" },
+        { id: "admin", label: "Painel Administrativo", href: "/pages/admin/index.html", perm: "admin" }
+      ]
+    },
+    {
+      id: "academia",
+      label: "ACADEMIA",
+      itens: [
+        { id: "alunos", label: "Alunos", href: "/pages/alunos/index.html", perm: "alunos" },
+        { id: "professores", label: "Professores", href: "/pages/professores/index.html", perm: "professores" },
+        { id: "modalidades", label: "Modalidades", href: "/pages/modalidades/index.html", perm: "modalidades" },
+        { id: "planos", label: "Planos", href: "/pages/planos/index.html", perm: "planos" },
+        { id: "turmas", label: "Turmas", href: "/pages/turmas/index.html", perm: "turmas" },
+        { id: "agenda", label: "Agenda", href: "/pages/agenda/index.html", perm: "turmas" },
+        { id: "checkin", label: "Check-in", href: "/pages/checkin/index.html", perm: "checkin" },
+        { id: "access-engine", label: "Catracas", href: "/pages/access-engine/index.html", perm: "access-engine" },
+        { id: "reconhecimento-facial", label: "Reconhecimento Facial", href: "/pages/reconhecimento-facial/admin.html", perm: "alunos", somentePagina: true }
+      ]
+    },
+    {
+      id: "comercial",
+      label: "COMERCIAL",
+      itens: [
+        { id: "comercial-painel", label: "CRM Comercial", href: "/pages/comercial-painel/index.html", perm: "comercial-painel" },
+        { id: "site-academia", label: "Site da Academia", href: "/pages/promocao/index.html", perm: "comercial", somentePagina: true, novaAba: true },
+        { id: "matricula-online", label: "Matricula Online", href: "/pages/matricula-online/index.html", perm: "matricula-online", somentePagina: true, novaAba: true },
+        { id: "matriculas-pendentes", label: "Matriculas Pendentes", href: "/pages/matriculas-pendentes/index.html", perm: "matriculas" },
+        { id: "site-chat", label: "Chat do Site", href: "/pages/site-chat/index.html", perm: "site-chat" },
+        { id: "matriculas", label: "Matriculas", href: "/pages/matriculas/index.html", perm: "matriculas" }
+      ]
+    },
+    {
+      id: "financeiro",
+      label: "FINANCEIRO",
+      itens: [
+        { id: "financeiro", label: "Financeiro", href: "/pages/financeiro/index.html", perm: "financeiro" },
+        { id: "mensalidades", label: "Mensalidades", href: "/pages/mensalidades/index.html", perm: "mensalidades" },
+        { id: "recebimentos", label: "Recebimentos", href: "/pages/recebimentos/index.html", perm: "financeiro" },
+        { id: "pagamentos", label: "Pagamentos", href: "/pages/financeiro/pagamentos/index.html", perm: "financeiro" },
+        { id: "caixa", label: "Caixa", href: "/pages/caixa/index.html", perm: "caixa" },
+        { id: "relatorios", label: "Relatorios de Caixa", href: "/pages/relatorios-caixa/index.html", perm: "relatorios" }
+      ]
+    },
+    {
+      id: "indicadores",
+      label: "INDICADORES",
+      itens: [
+        { id: "bi-academia", label: "BI Academia", href: "/pages/bi-academia/index.html", perm: "relatorios" },
+        { id: "bi-operacional", label: "BI Operacional", href: "/pages/bi-academia-operacional/index.html", perm: "relatorios" }
+      ]
+    },
+    {
+      id: "sistema",
+      label: "SISTEMA",
+      itens: [
+        { id: "configuracoes", label: "Configuracoes", href: "/pages/configuracoes/index.html", perm: "admin" }
+      ]
+    }
+  ];
+
+  function garantirMarcaDocumento() {
+    document.title = String(document.title || "Fusion Sistema").replace(/Fusion\s+ERP/gi, "Fusion Sistema");
+
+    let favicon = document.querySelector('link[rel="icon"][data-fusion-brand]');
+    if (!favicon) {
+      favicon = document.createElement("link");
+      favicon.rel = "icon";
+      favicon.type = "image/svg+xml";
+      favicon.dataset.fusionBrand = "true";
+      document.head?.appendChild(favicon);
+    }
+    favicon.href = "/assets/brand/fusion-sistema-symbol.svg";
+
+    let tema = document.querySelector('meta[name="theme-color"]');
+    if (!tema) {
+      tema = document.createElement("meta");
+      tema.name = "theme-color";
+      document.head?.appendChild(tema);
+    }
+    tema.content = "#22b8d2";
+  }
 
   function garantirEstilosGlobais() {
     const estilos = [
       ["fusion-app-global", "/assets/css/fusion-app.css"],
       ["fusion-menu-global", "/assets/css/fusion-menu-global.css"],
-      ["fusion-mobile-final", "/assets/css/fusion-mobile-final.css"],
       ["fusion-premium-final", "/assets/css/fusion-premium-final.css"],
-      ["fusion-correcoes-visuais", "/assets/css/fusion-correcoes-visuais.css"],
       ["fusion-notificacoes", "/assets/css/fusion-notificacoes.css"]
     ];
+
     estilos.forEach(([id, href]) => {
       if (document.getElementById(id) || document.querySelector(`link[href="${href}"]`)) return;
       const link = document.createElement("link");
@@ -20,110 +107,441 @@
     });
   }
 
-  garantirEstilosGlobais();
-
   function garantirCentralNotificacoes() {
-    if (document.querySelector('script[src="/assets/js/fusion-notificacoes.js"]')) return;
+    const src = "/assets/js/fusion-notificacoes.js";
+    const existente = Array.from(document.scripts).some(script => {
+      try {
+        return new URL(script.src, location.href).pathname === src;
+      } catch {
+        return false;
+      }
+    });
+
+    if (existente) return;
+
     const script = document.createElement("script");
-    script.src = "/assets/js/fusion-notificacoes.js";
+    script.src = src;
     script.defer = true;
+    script.dataset.fusionNotificacoes = "true";
     document.head.appendChild(script);
   }
 
-  /* Sino e catraca ficam concentrados na barra lateral, sem poluir as páginas. */
+  let observadorAlturaMenu = null;
 
-  const PAGINAS_SEM_MENU = [
-    "/pages/aluno-avaliacao/",
-    "/pages/aluno-avaliacao/index.html",
-    "/pages/aluno-treinos/",
-    "/pages/aluno-treinos/index.html",
-    "/pages/aluno-login/",
-    "/pages/aluno-login/index.html",
-    "/pages/professor-area/",
-    "/pages/professor-area/index.html",
-    "/pages/professor-login/",
-    "/pages/professor-login/index.html",
-    "/pages/treinos/",
-    "/pages/treinos/index.html",
-    "/pages/avaliacoes/",
-    "/pages/avaliacoes/index.html",
-    "/pages/promocao/",
-    "/pages/promocao/index.html",
-    "/pages/matricula-online/",
-    "/pages/matricula-online/index.html",
-    "/pages/login/",
-    "/pages/login/index.html",
-    "/pages/reconhecimento-facial/",
-    "/pages/reconhecimento-facial/index.html"
-  ];
+  function sincronizarAlturaMenu() {
+    const menu = document.getElementById("fusionTopMenu");
+    if (!menu) return;
 
-  const ITENS_MENU = [
-    { grupo: "Principal", itens: [
-      { id: "dashboard", label: "Dashboard", href: "/pages/dashboard/index.html", perm: "dashboard" },
-      { id: "bi-financeiro", label: "BI Financeiro", href: "/pages/bi-financeiro/index.html", perm: "relatorios" },
-      { id: "admin", label: "Painel administrativo", href: "/pages/admin/index.html", perm: "admin" }
-    ]},
-    { grupo: "Academia", itens: [
-      { id: "alunos", label: "Alunos", href: "/pages/alunos/index.html", perm: "alunos" },
-      { id: "professores", label: "Professores", href: "/pages/professores/index.html", perm: "professores" },
-      { id: "modalidades", label: "Modalidades", href: "/pages/modalidades/index.html", perm: "modalidades" },
-      { id: "planos", label: "Planos", href: "/pages/planos/index.html", perm: "planos" },
-      { id: "turmas", label: "Turmas", href: "/pages/turmas/index.html", perm: "turmas" },
-      { id: "agenda", label: "Agenda", href: "/pages/agenda/index.html", perm: "turmas" },
-      { id: "checkin", label: "Check-in", href: "/pages/checkin/index.html", perm: "checkin" },
-      { id: "access-engine", label: "Catracas", href: "/pages/access-engine/index.html", perm: "access-engine" },
-      { id: "reconhecimento-facial", label: "Reconhecimento facial", href: "/pages/reconhecimento-facial/admin.html", perm: "alunos" }
-    ]},
-    { grupo: "Comercial", itens: [
-      { id: "comercial-painel", label: "CRM Comercial", href: "/pages/comercial-painel/index.html", perm: "comercial-painel" },
-      { id: "site-academia", label: "Site da academia", href: "/pages/promocao/index.html", perm: "comercial", novaAba: true },
-      { id: "matricula-online", label: "Matrícula Online", href: "/pages/matricula-online/index.html", perm: "matricula-online", novaAba: true },
-      { id: "matriculas-pendentes", label: "Matrículas pendentes", href: "/pages/matriculas-pendentes/index.html", perm: "matriculas" },
-      { id: "site-chat", label: "Chat do site", href: "/pages/site-chat/index.html", perm: "site-chat" },
-      { id: "matriculas", label: "Matrículas", href: "/pages/matriculas/index.html", perm: "matriculas" }
-    ]},
-    { grupo: "Financeiro", itens: [
-      { id: "financeiro", label: "Financeiro", href: "/pages/financeiro/index.html", perm: "financeiro" },
-      { id: "mensalidades", label: "Mensalidades", href: "/pages/mensalidades/index.html", perm: "mensalidades" },
-      { id: "recebimentos", label: "Recebimentos", href: "/pages/recebimentos/index.html", perm: "financeiro" },
-      { id: "pagamentos", label: "Pagamentos", href: "/pages/financeiro/pagamentos/index.html", perm: "financeiro" },
-      { id: "caixa", label: "Caixa", href: "/pages/caixa/index.html", perm: "caixa" },
-      { id: "relatorios", label: "Relatórios de caixa", href: "/pages/relatorios-caixa/index.html", perm: "relatorios" }
-    ]},
-    { grupo: "Indicadores", itens: [
-      { id: "bi-academia", label: "BI Academia", href: "/pages/bi-academia/index.html", perm: "relatorios" },
-      { id: "bi-operacional", label: "BI Operacional", href: "/pages/bi-academia-operacional/index.html", perm: "relatorios" }
-    ]},
-    { grupo: "Sistema", itens: [
-      { id: "configuracoes", label: "Configurações", href: "/pages/configuracoes/index.html", perm: "admin" }
-    ]}
-  ];
+    const altura = Math.max(1, Math.round(menu.getBoundingClientRect().height || 0));
+    if (!altura) return;
+
+    document.documentElement.style.setProperty("--fusion-top-menu-height", `${altura}px`);
+  }
+
+  function observarAlturaMenu(menu) {
+    observadorAlturaMenu?.disconnect?.();
+    observadorAlturaMenu = null;
+
+    if (!menu) return;
+
+    sincronizarAlturaMenu();
+
+    if (typeof ResizeObserver === "function") {
+      observadorAlturaMenu = new ResizeObserver(sincronizarAlturaMenu);
+      observadorAlturaMenu.observe(menu);
+    }
+  }
+
+  function encerrarSessao() {
+    try {
+      if (window.FusionAuth && typeof FusionAuth.sair === "function") {
+        FusionAuth.sair();
+        return;
+      }
+    } catch {}
+
+    [
+      "fusionToken",
+      "fusionUsuario",
+      "usuarioLogado",
+      "usuarioNome",
+      "usuarioEmail",
+      "usuarioPerfil"
+    ].forEach(chave => localStorage.removeItem(chave));
+
+    location.href = "/pages/login/index.html";
+  }
+
+  const SELETORES_MENU_LATERAL = [
+    "#fusionSidebar",
+    "#fusionMenuGlobal",
+    ".fusion-menu-global",
+    "body > .sidebar",
+    "body > .fusion-sidebar",
+    "body > .fusion-ui-sidebar",
+    "body > .menu-global",
+    "body > .nav-sidebar",
+    "body > .app-sidebar",
+    "body > .layout-sidebar",
+    ".fusion-v3-menu-toggle",
+    ".fusion-v3-menu-backdrop",
+    ".fusion-mobile-final-bar",
+    ".fusion-mobile-final-overlay",
+    ".fusion-mobile-menu-button",
+    ".fusion-mobile-overlay",
+    ".fusion-breadcrumb"
+  ].join(",");
 
   function normalizarPath(pathname) {
-    return String(pathname || location.pathname).replace(/\/+$/, "/");
+    let path = String(pathname || location.pathname || "/").split(/[?#]/)[0];
+    const indicePages = path.indexOf("/pages/");
+    if (indicePages >= 0) path = path.slice(indicePages);
+    path = path.replace(/\/{2,}/g, "/");
+    if (path.length > 1 && path.endsWith("/")) path += "index.html";
+    return path;
   }
 
-  function paginaSemMenu() {
-    const atual = normalizarPath(location.pathname);
-    return PAGINAS_SEM_MENU.some(p => atual === normalizarPath(p));
+  function pastaDoHref(href) {
+    return normalizarPath(href).replace(/\/[^/]+\.html$/i, "/");
   }
 
-  function removerMenusExistentes() {
-    document.querySelectorAll(".sidebar,.fusion-sidebar,#fusionSidebar,#fusionMenuGlobal,.fusion-menu-global,.fusion-v3-menu-toggle,.fusion-v3-menu-backdrop,.fusion-mobile-final-bar,.fusion-mobile-final-overlay,.fusion-breadcrumb,.topbar,.fusion-topbar").forEach(el => el.remove());
-    document.body.classList.add("fusion-sem-menu");
-    document.body.classList.remove("fusion-menu-open");
-    document.body.classList.remove("fusion-com-sidebar");
-    document.documentElement.classList.add("fusion-sem-menu");
+  function itemCorrespondeAoPath(item, pathname = location.pathname) {
+    const atual = normalizarPath(pathname);
+    const alvo = normalizarPath(item.href);
+    if (atual === alvo) return true;
+    if (item.somentePagina) return false;
+    return atual.startsWith(pastaDoHref(item.href));
   }
 
-  function removerBarrasSuperiores() {
-    document.querySelectorAll(".topbar,.fusion-topbar").forEach(el => el.remove());
+  function normalizarPermissao(valor) {
+    return String(valor || "").trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+  }
+
+  function podeVer(item, user = usuario()) {
+    if (!item?.perm) return true;
+    const permissoes = Array.isArray(user?.permissoes) ? user.permissoes.map(normalizarPermissao) : [];
+    const perfil = normalizarPermissao(user?.perfil || user?.perfilOriginal);
+    if (permissoes.includes("*") || perfil === "admin" || perfil === "administrador") return true;
+    return permissoes.includes(normalizarPermissao(item.perm)) || permissoes.includes(normalizarPermissao(item.id));
+  }
+
+  function gruposPermitidos(user = usuario()) {
+    return MENU_GRUPOS.map(grupo => {
+      const itens = grupo.itens.filter(item => podeVer(item, user));
+      return itens.length ? { ...grupo, itens } : null;
+    }).filter(Boolean);
+  }
+
+  function todosItens(grupos = MENU_GRUPOS) {
+    return grupos.flatMap(grupo => grupo.itens.map(item => ({ ...item, grupoId: grupo.id, grupoLabel: grupo.label })));
+  }
+
+  function paginaComMenuSuperior() {
+    return todosItens().some(item => itemCorrespondeAoPath(item));
+  }
+
+  function itemAtual(grupos = MENU_GRUPOS) {
+    return todosItens(grupos).find(item => itemCorrespondeAoPath(item)) || null;
+  }
+
+  function removerMenusLegados(root = document) {
+    root.querySelectorAll?.(SELETORES_MENU_LATERAL).forEach(elemento => elemento.remove());
+    document.querySelectorAll("body > .topbar, body > .fusion-topbar").forEach(elemento => elemento.remove());
+
+    [document.documentElement, document.body].filter(Boolean).forEach(elemento => {
+      elemento.classList.remove("fusion-com-sidebar", "fusion-menu-open", "fusion-ui-menu-open");
+      elemento.classList.add("fusion-sem-menu", "fusion-no-sidebar", "fusion-layout-fullwidth");
+    });
+
+    if (document.body) {
+      document.body.style.removeProperty("overflow");
+      document.body.style.removeProperty("padding-left");
+      document.body.style.removeProperty("margin-left");
+
+      // dashboard.css usa o body como contêiner flexível da antiga sidebar.
+      // As quatro páginas de BI/Matrículas carregam esse arquivo depois do
+      // tema global; por isso a correção precisa existir também inline.
+      document.body.style.setProperty("display", "block", "important");
+      document.body.style.setProperty("flex-direction", "column", "important");
+      document.body.style.setProperty("align-items", "stretch", "important");
+      document.body.style.setProperty("justify-content", "flex-start", "important");
+      document.body.style.setProperty("width", "100%", "important");
+      document.body.style.setProperty("max-width", "100%", "important");
+      document.body.style.setProperty("min-height", "100vh", "important");
+    }
+  }
+
+  function criarCaret() {
+    const caret = document.createElement("span");
+    caret.className = "fusion-top-menu__caret";
+    caret.setAttribute("aria-hidden", "true");
+    return caret;
+  }
+
+  function criarLink(item, contexto) {
+    const link = document.createElement("a");
+    link.className = `fusion-top-menu__link fusion-top-menu__link--${contexto}`;
+    link.href = item.href;
+    link.textContent = item.label;
+    link.dataset.menuId = item.id;
+
+    if (item.novaAba) {
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.title = item.label + " - abrir em nova aba";
+    }
+
+    if (itemCorrespondeAoPath(item)) {
+      link.classList.add("is-active");
+      link.setAttribute("aria-current", "page");
+    }
+
+    link.addEventListener("click", fecharTudo);
+    return link;
+  }
+
+  function criarGrupoDesktop(grupo) {
+    const wrapper = document.createElement("div");
+    wrapper.className = "fusion-top-menu__group";
+    wrapper.dataset.groupId = grupo.id;
+
+    const botao = document.createElement("button");
+    botao.type = "button";
+    botao.className = "fusion-top-menu__group-trigger";
+    botao.setAttribute("aria-expanded", "false");
+    botao.setAttribute("aria-controls", `fusion-menu-dropdown-${grupo.id}`);
+    botao.append(document.createTextNode(grupo.label), criarCaret());
+
+    const dropdown = document.createElement("div");
+    dropdown.className = "fusion-top-menu__dropdown";
+    dropdown.id = `fusion-menu-dropdown-${grupo.id}`;
+    dropdown.setAttribute("role", "menu");
+    grupo.itens.forEach(item => dropdown.appendChild(criarLink(item, "dropdown")));
+
+    if (grupo.itens.some(item => itemCorrespondeAoPath(item))) {
+      wrapper.classList.add("is-current");
+    }
+
+    botao.addEventListener("click", evento => {
+      evento.stopPropagation();
+      const abrir = !wrapper.classList.contains("is-open");
+      fecharTudo(wrapper);
+      wrapper.classList.toggle("is-open", abrir);
+      botao.setAttribute("aria-expanded", abrir ? "true" : "false");
+    });
+
+    wrapper.append(botao, dropdown);
+    return wrapper;
+  }
+
+  function criarGrupoMega(grupo) {
+    const section = document.createElement("section");
+    section.className = "fusion-top-menu__mega-group";
+    section.dataset.megaGroupId = grupo.id;
+
+    const botao = document.createElement("button");
+    botao.type = "button";
+    botao.className = "fusion-top-menu__mega-title";
+    botao.setAttribute("aria-expanded", "false");
+    botao.setAttribute("aria-controls", `fusion-menu-mega-${grupo.id}`);
+    botao.append(document.createTextNode(grupo.label), criarCaret());
+
+    const lista = document.createElement("div");
+    lista.className = "fusion-top-menu__mega-links";
+    lista.id = `fusion-menu-mega-${grupo.id}`;
+    grupo.itens.forEach(item => lista.appendChild(criarLink(item, "mega")));
+
+    if (grupo.itens.some(item => itemCorrespondeAoPath(item))) {
+      section.classList.add("is-current");
+    }
+
+    botao.addEventListener("click", evento => {
+      if (!window.matchMedia("(max-width: 900px)").matches) return;
+      evento.stopPropagation();
+      const abrir = !section.classList.contains("is-open");
+      const painel = section.closest(".fusion-top-menu__mega");
+      painel?.querySelectorAll(".fusion-top-menu__mega-group.is-open").forEach(outro => {
+        if (outro === section) return;
+        outro.classList.remove("is-open");
+        outro.querySelector(".fusion-top-menu__mega-title")?.setAttribute("aria-expanded", "false");
+      });
+      section.classList.toggle("is-open", abrir);
+      botao.setAttribute("aria-expanded", abrir ? "true" : "false");
+    });
+
+    section.append(botao, lista);
+    return section;
+  }
+
+  function fecharTudo(excecao) {
+    const menu = document.getElementById("fusionTopMenu");
+    if (!menu) return;
+
+    menu.querySelectorAll(".fusion-top-menu__group.is-open").forEach(grupo => {
+      if (grupo === excecao) return;
+      grupo.classList.remove("is-open");
+      grupo.querySelector(".fusion-top-menu__group-trigger")?.setAttribute("aria-expanded", "false");
+    });
+
+    const mega = menu.querySelector(".fusion-top-menu__mega");
+    if (mega !== excecao) {
+      mega?.classList.remove("is-open");
+      menu.querySelector(".fusion-top-menu__all-trigger")?.setAttribute("aria-expanded", "false");
+    }
+
+    if (!excecao) {
+      menu.querySelectorAll(".fusion-top-menu__mega-group.is-open").forEach(grupo => {
+        grupo.classList.remove("is-open");
+        grupo.querySelector(".fusion-top-menu__mega-title")?.setAttribute("aria-expanded", "false");
+      });
+    }
+
+    document.body?.classList.toggle("fusion-menu-superior-aberto", Boolean(excecao));
+  }
+
+  function montarMenuSuperior() {
+    removerMenusLegados();
+
+    if (!paginaComMenuSuperior()) {
+      document.getElementById("fusionTopMenu")?.remove();
+      document.documentElement.classList.remove("fusion-menu-superior-ativo");
+      document.body?.classList.remove("fusion-menu-superior-ativo", "fusion-menu-superior-aberto");
+      return;
+    }
+
+    if (document.getElementById("fusionTopMenu")) return;
+
+    const user = usuario();
+    const gruposMenu = gruposPermitidos(user);
+
+    const header = document.createElement("header");
+    header.id = "fusionTopMenu";
+    header.className = "fusion-top-menu";
+
+    const inner = document.createElement("div");
+    inner.className = "fusion-top-menu__inner";
+
+    const marca = document.createElement("a");
+    marca.className = "fusion-top-menu__brand";
+    marca.href = "/pages/dashboard/index.html";
+    marca.setAttribute("aria-label", "Fusion Sistema — ir para o Dashboard");
+
+    const marcaIcone = document.createElement("img");
+    marcaIcone.className = "fusion-top-menu__brand-icon";
+    marcaIcone.src = "/assets/brand/fusion-sistema-symbol.svg";
+    marcaIcone.alt = "";
+    marcaIcone.setAttribute("aria-hidden", "true");
+
+    const marcaTexto = document.createElement("span");
+    marcaTexto.className = "fusion-top-menu__brand-text";
+    marcaTexto.textContent = "Fusion Sistema";
+    marca.append(marcaIcone, marcaTexto);
+
+    const allWrap = document.createElement("div");
+    allWrap.className = "fusion-top-menu__all";
+
+    const allButton = document.createElement("button");
+    allButton.type = "button";
+    allButton.className = "fusion-top-menu__all-trigger";
+    allButton.setAttribute("aria-expanded", "false");
+    allButton.setAttribute("aria-controls", "fusion-menu-todas-categorias");
+
+    const hamburguer = document.createElement("span");
+    hamburguer.className = "fusion-top-menu__hamburger";
+    hamburguer.setAttribute("aria-hidden", "true");
+    hamburguer.innerHTML = "<i></i><i></i><i></i>";
+
+    const allLabel = document.createElement("span");
+    allLabel.className = "fusion-top-menu__all-label";
+    allLabel.textContent = "Todas as categorias";
+    allButton.append(hamburguer, allLabel, criarCaret());
+
+    const mega = document.createElement("div");
+    mega.className = "fusion-top-menu__mega";
+    mega.id = "fusion-menu-todas-categorias";
+
+    const megaGrid = document.createElement("div");
+    megaGrid.className = "fusion-top-menu__mega-grid";
+    gruposMenu.forEach(grupo => megaGrid.appendChild(criarGrupoMega(grupo)));
+    mega.appendChild(megaGrid);
+
+    allButton.addEventListener("click", evento => {
+      evento.stopPropagation();
+      const abrir = !mega.classList.contains("is-open");
+      fecharTudo(abrir ? mega : null);
+      mega.classList.toggle("is-open", abrir);
+      allButton.setAttribute("aria-expanded", abrir ? "true" : "false");
+      document.body?.classList.toggle("fusion-menu-superior-aberto", abrir);
+    });
+
+    allWrap.append(allButton, mega);
+
+    const nav = document.createElement("nav");
+    nav.className = "fusion-top-menu__categories";
+    nav.setAttribute("aria-label", "Navegação principal do Fusion Sistema");
+    gruposMenu.forEach(grupo => nav.appendChild(criarGrupoDesktop(grupo)));
+
+    const ferramentas = document.createElement("div");
+    ferramentas.className = "fusion-top-menu__tools";
+    ferramentas.setAttribute("aria-label", "Ferramentas do usuário");
+
+    const notificacoes = document.createElement("div");
+    notificacoes.className = "fusion-top-menu__notifications fusion-sidebar-notificacoes";
+    notificacoes.setAttribute("aria-label", "Notificações do sistema");
+
+    const sair = document.createElement("button");
+    sair.type = "button";
+    sair.className = "fusion-top-menu__logout";
+    sair.setAttribute("aria-label", "Sair do Fusion Sistema");
+    sair.title = usuario()?.nome ? `Sair — ${usuario().nome}` : "Sair";
+    sair.innerHTML = `
+      <svg aria-hidden="true" viewBox="0 0 24 24">
+        <path d="M10 5H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h4M14 8l4 4-4 4M18 12H9"/>
+      </svg>
+      <span>Sair</span>
+    `;
+    sair.addEventListener("click", evento => {
+      evento.stopPropagation();
+      fecharTudo();
+      encerrarSessao();
+    });
+
+    const controleCatraca = montarControleCatraca(user);
+    if (controleCatraca) ferramentas.appendChild(controleCatraca);
+    ferramentas.append(notificacoes, sair);
+    inner.append(marca, allWrap, nav, ferramentas);
+    header.appendChild(inner);
+
+    // Ativa as classes antes de inserir o cabeçalho. Isso impede que regras
+    // legadas de body{display:flex} estiquem o menu durante a montagem.
+    document.documentElement.classList.add("fusion-menu-superior-ativo");
+    document.body.classList.add("fusion-menu-superior-ativo");
+    document.body.prepend(header);
+    observarAlturaMenu(header);
+    requestAnimationFrame(sincronizarAlturaMenu);
+    removerMenusLegados();
+    garantirCentralNotificacoes();
+
+    window.FusionMenuMobile = {
+      abrir() {
+        if (!mega.classList.contains("is-open")) allButton.click();
+      },
+      fechar() {
+        fecharTudo();
+      },
+      alternar() {
+        allButton.click();
+      }
+    };
   }
 
   function usuario() {
     try {
-      if (window.FusionAuth && typeof FusionAuth.usuarioAtual === "function") return FusionAuth.usuarioAtual();
+      if (window.FusionAuth && typeof FusionAuth.usuarioAtual === "function") {
+        return FusionAuth.usuarioAtual();
+      }
     } catch {}
+
     try {
       return JSON.parse(localStorage.getItem("fusionUsuario") || "null");
     } catch {
@@ -131,196 +549,18 @@
     }
   }
 
-  function podeVer(item, user) {
-    const permissoes = Array.isArray(user?.permissoes) ? user.permissoes : [];
-    const perfil = String(user?.perfil || user?.perfilOriginal || "").toLowerCase();
-    if (permissoes.includes("*") || perfil === "admin" || perfil === "administrador") return true;
-    return permissoes.includes(item.perm) || permissoes.includes(item.id);
-  }
-
-  function itemAtivo(href) {
-    const atual = normalizarPath(location.pathname);
-    const alvo = normalizarPath(href);
-    return atual === alvo || atual === alvo.replace(/\/$/, "/index.html/");
-  }
-
-  function todosItensMenu() {
-    return ITENS_MENU.flatMap(grupo => grupo.itens.map(item => ({ ...item, grupo: grupo.grupo })));
-  }
-
-  function itemMenuAtual() {
-    return todosItensMenu().find(item => itemAtivo(item.href)) || null;
-  }
-
-  function montarBreadcrumb() {
-    if (paginaSemMenu()) return;
-    document.querySelectorAll(".fusion-breadcrumb").forEach(el => el.remove());
-    const item = itemMenuAtual();
-    if (!item) return;
-    const destino = document.querySelector(".fusion-content,.content,.page-content,.crm,main");
-    if (!destino) return;
-
-    const nav = document.createElement("nav");
-    nav.className = "fusion-breadcrumb";
-    nav.setAttribute("aria-label", "Caminho da pagina");
-    nav.innerHTML = `<a href="/pages/dashboard/index.html">Inicio</a><span>/</span><span>${item.grupo}</span><span>/</span><strong>${item.label}</strong>`;
-    destino.prepend(nav);
-  }
-
-  function montarMenuMobile() {
-    document.querySelectorAll(".fusion-v3-menu-toggle,.fusion-v3-menu-backdrop,.fusion-mobile-final-bar,.fusion-mobile-final-overlay").forEach(el => el.remove());
-    document.body.classList.remove("fusion-menu-open");
-
-    const barra = document.createElement("div");
-    barra.className = "fusion-mobile-final-bar";
-    const botao = document.createElement("button");
-    botao.type = "button";
-    botao.className = "fusion-mobile-final-menu-btn";
-    botao.setAttribute("aria-label", "Abrir menu");
-    botao.setAttribute("aria-expanded", "false");
-    botao.setAttribute("aria-controls", "fusionSidebar");
-    botao.textContent = "☰";
-    const titulo = document.createElement("div");
-    titulo.className = "fusion-mobile-final-title";
-    titulo.textContent = itemMenuAtual()?.label || document.title.replace(/\s*[-|].*$/, "").trim() || "Fusion ERP";
-    barra.append(botao, titulo);
-
-    const fundo = document.createElement("div");
-    fundo.className = "fusion-mobile-final-overlay";
-    fundo.setAttribute("aria-hidden", "true");
-
-    function alternarMenu(forcar) {
-      const aberto = typeof forcar === "boolean" ? forcar : !document.body.classList.contains("fusion-menu-open");
-      document.body.classList.toggle("fusion-menu-open", aberto);
-      botao.setAttribute("aria-expanded", aberto ? "true" : "false");
-      botao.setAttribute("aria-label", aberto ? "Fechar menu" : "Abrir menu");
-      botao.textContent = aberto ? "×" : "☰";
-      fundo.setAttribute("aria-hidden", aberto ? "false" : "true");
-    }
-
-    botao.addEventListener("click", () => alternarMenu());
-    fundo.addEventListener("click", () => alternarMenu(false));
-    document.querySelector("#fusionSidebar [data-fusion-menu-close]")?.addEventListener("click", () => alternarMenu(false));
-    document.addEventListener("keydown", (ev) => {
-      if (ev.key === "Escape") alternarMenu(false);
-    });
-    window.addEventListener("pageshow", () => alternarMenu(false));
-    window.addEventListener("pagehide", () => alternarMenu(false));
-    window.addEventListener("orientationchange", () => alternarMenu(false));
-    window.matchMedia("(min-width: 901px)").addEventListener?.("change", ev => {
-      if (ev.matches) alternarMenu(false);
-    });
-
-    window.FusionMenuMobile = { fechar: () => alternarMenu(false), abrir: () => alternarMenu(true), alternar: alternarMenu };
-    document.body.prepend(fundo);
-    document.body.prepend(barra);
-  }
-
-  function montarMenu() {
-    if (paginaSemMenu()) {
-      removerMenusExistentes();
-      return;
-    }
-
-    const user = usuario();
-    const sidebar = document.createElement("aside");
-    sidebar.className = "sidebar fusion-sidebar";
-    sidebar.id = "fusionSidebar";
-
-    const marca = document.createElement("div");
-    marca.className = "brand fusion-brand";
-    marca.innerHTML = `
-      <span class="fusion-brand-texto"><strong>Fusion ERP</strong><small>Menu inteligente</small></span>
-      <button class="fusion-menu-fechar" data-fusion-menu-close type="button" aria-label="Fechar menu">×</button>
-      <button class="fusion-menu-sair" type="button" aria-label="Sair do Fusion ERP">Sair</button>
-    `;
-    marca.querySelector(".fusion-menu-sair")?.addEventListener("click", () => {
-      if (window.FusionAuth && typeof FusionAuth.sair === "function") FusionAuth.sair();
-      else location.href = "/pages/login/index.html";
-    });
-    sidebar.appendChild(marca);
-
-    const ferramentas = document.createElement("div");
-    ferramentas.className = "fusion-sidebar-ferramentas";
-    ferramentas.innerHTML = '<div class="fusion-sidebar-notificacoes" aria-label="Notificações do sistema"></div>';
-    const controleCatraca = montarControleCatraca(user);
-    if (controleCatraca) ferramentas.prepend(controleCatraca);
-    sidebar.appendChild(ferramentas);
-
-    ITENS_MENU.forEach((grupo, indiceGrupo) => {
-      const itens = grupo.itens.filter(item => podeVer(item, user));
-      if (!itens.length) return;
-
-      const box = document.createElement("div");
-      box.className = "menu-grupo fusion-menu-section open";
-      box.id = `fusion_menu_grupo_${indiceGrupo}`;
-
-      const titulo = document.createElement("button");
-      titulo.type = "button";
-      titulo.className = "menu-titulo fusion-menu-group";
-      titulo.setAttribute("aria-expanded", "true");
-      titulo.setAttribute("aria-controls", `${box.id}_itens`);
-      titulo.innerHTML = `<span>${grupo.grupo}</span><span class="fusion-menu-group-caret" aria-hidden="true">&rsaquo;</span>`;
-      titulo.addEventListener("click", () => {
-        const recolhido = box.classList.toggle("collapsed");
-        box.classList.toggle("open", !recolhido);
-        titulo.setAttribute("aria-expanded", recolhido ? "false" : "true");
-      });
-      box.appendChild(titulo);
-
-      const lista = document.createElement("div");
-      lista.className = "fusion-menu-items";
-      lista.id = `${box.id}_itens`;
-
-      itens.forEach(item => {
-        const a = document.createElement("a");
-        a.href = item.href;
-        a.dataset.menuId = item.id;
-        a.textContent = item.label;
-        if (item.novaAba) {
-          a.target = "_blank";
-          a.rel = "noopener noreferrer";
-          a.title = `${item.label} — abrir em nova aba`;
-        }
-        a.addEventListener("click", () => window.FusionMenuMobile?.fechar?.());
-        if (itemAtivo(item.href)) {
-          a.classList.add("active");
-          a.setAttribute("aria-current", "page");
-        }
-        lista.appendChild(a);
-      });
-
-      box.appendChild(lista);
-      sidebar.appendChild(box);
-    });
-
-    removerMenusExistentes();
-    document.body.classList.remove("fusion-sem-menu");
-    document.documentElement.classList.remove("fusion-sem-menu");
-    document.body.classList.add("fusion-com-sidebar");
-    document.documentElement.classList.add("fusion-com-sidebar");
-    document.body.prepend(sidebar);
-    montarMenuMobile();
-    montarBreadcrumb();
-    garantirCentralNotificacoes();
-  }
-
   function preencherUsuarioTopo() {
     const user = usuario();
-    document.querySelectorAll("[data-fusion-user]").forEach(el => {
-      el.textContent = user?.nome || "Administrador";
+    document.querySelectorAll("[data-fusion-user]").forEach(elemento => {
+      elemento.textContent = user?.nome || "Administrador";
     });
   }
 
-
   const CATRACA_STORAGE_KEY = "fusion_catraca_painel_ativa";
-  const CATRACA_HOST = "10.0.0.236";
-  const CATRACA_PORT = 3000;
 
   function perfilPodeControlarCatraca(user) {
-    const perfil = String(user?.perfil || user?.perfilOriginal || "")
-      .trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    return ["admin", "administrador", "gerente", "recepcao", "recepção", "comercial"].includes(perfil);
+    const perfil = normalizarPermissao(user?.perfil || user?.perfilOriginal);
+    return ["admin", "administrador", "gerente", "recepcao", "comercial"].includes(perfil);
   }
 
   function catracaAtiva() {
@@ -331,42 +571,22 @@
     localStorage.setItem(CATRACA_STORAGE_KEY, ativa ? "1" : "0");
   }
 
-  async function requisicaoCatraca(url, body) {
-    const opcoes = {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body || {})
-    };
-    const resp = window.FusionAuth?.fetchAuth
-      ? await FusionAuth.fetchAuth(url, opcoes)
-      : await fetch(url, opcoes);
-    const json = await resp.json().catch(() => ({}));
-    if (!resp.ok || json.ok === false) {
-      throw new Error(json.mensagem || json.erro || `Erro HTTP ${resp.status}`);
-    }
-    return json;
-  }
-
   function atualizarControleCatraca(controle, estado = {}) {
     if (!controle) return;
     const ativa = estado.ativa ?? catracaAtiva();
     const ocupada = estado.ocupada === true;
     const status = controle.querySelector("[data-catraca-status]");
     const alternar = controle.querySelector("[data-catraca-alternar]");
-    const liberar = controle.querySelector("[data-catraca-liberar]");
 
     controle.classList.toggle("catraca-ativa", ativa);
     controle.classList.toggle("catraca-inativa", !ativa);
     controle.classList.toggle("catraca-ocupada", ocupada);
 
-    if (status) {
-      status.textContent = ocupada ? "Comunicando..." : (ativa ? "Catraca ligada" : "Controle desligado");
-    }
+    if (status) status.textContent = ocupada ? "Comunicando..." : (ativa ? "Catraca ligada" : "Controle desligado");
     if (alternar) {
       alternar.textContent = ativa ? "Desligar" : "Ligar";
       alternar.disabled = ocupada;
     }
-    if (liberar) liberar.disabled = ocupada || !ativa;
   }
 
   function montarControleCatraca(user) {
@@ -374,117 +594,91 @@
 
     const controle = document.createElement("div");
     controle.className = "fusion-catraca-controle";
-    controle.innerHTML = `
-      <span class="fusion-catraca-status" data-catraca-status>Catraca ligada</span>
-      <button type="button" class="fusion-catraca-toggle" data-catraca-alternar>Desligar</button>
-    `;
+    controle.innerHTML = '<span class="fusion-catraca-status" data-catraca-status>Catraca ligada</span><button type="button" class="fusion-catraca-toggle" data-catraca-alternar>Desligar</button>';
 
-    const alternar = controle.querySelector("[data-catraca-alternar]");
-    const liberar = controle.querySelector("[data-catraca-liberar]");
-
-    alternar.addEventListener("click", async () => {
+    controle.querySelector("[data-catraca-alternar]")?.addEventListener("click", () => {
       const vaiLigar = !catracaAtiva();
       atualizarControleCatraca(controle, { ativa: catracaAtiva(), ocupada: true });
-      try {
-        // Este controle apenas habilita/desabilita o botão no painel.
-        // A Henry física é controlada exclusivamente pelo Fusion Access Agent.
-        salvarCatracaAtiva(vaiLigar);
-        atualizarControleCatraca(controle, { ativa: vaiLigar, ocupada: false });
-      } catch (erro) {
-        atualizarControleCatraca(controle, { ativa: catracaAtiva(), ocupada: false });
-        alert(erro.message || "Não foi possível alterar o estado da catraca.");
-      }
-    });
-
-    liberar?.addEventListener("click", async () => {
-      if (!catracaAtiva()) return;
-      atualizarControleCatraca(controle, { ativa: true, ocupada: true });
-      try {
-        await requisicaoCatraca("/api/access-engine/liberar-remoto", {
-          dispositivoId: "disp_henry7x_01",
-          direcao: "ambos",
-          tempoSegundos: 5,
-          operadorId: user?.id || "",
-          operadorNome: user?.nome || "",
-          origem: "topbar-liberacao-manual",
-          motivo: "Liberação manual pelo painel"
-        });
-        atualizarControleCatraca(controle, { ativa: true, ocupada: false });
-      } catch (erro) {
-        atualizarControleCatraca(controle, { ativa: true, ocupada: false });
-        alert(erro.message || "Falha ao liberar a catraca.");
-      }
+      salvarCatracaAtiva(vaiLigar);
+      atualizarControleCatraca(controle, { ativa: vaiLigar, ocupada: false });
     });
 
     atualizarControleCatraca(controle);
     return controle;
   }
 
-
   function prepararLinksPublicos(root = document) {
     const destinos = ["/pages/matricula-online/index.html", "/pages/promocao/index.html"];
-    root.querySelectorAll("a[href]").forEach((link) => {
-      const href = String(link.getAttribute("href") || "").split("?")[0];
-      if (destinos.includes(href)) {
-        link.target = "_blank";
-        link.rel = "noopener noreferrer";
-      }
+    root.querySelectorAll?.("a[href]").forEach(link => {
+      if (link.closest("#fusionTopMenu")) return;
+      const href = normalizarPath(link.getAttribute("href"));
+      if (!destinos.includes(href)) return;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
     });
   }
 
   function formatarDatasVisiveis(root = document) {
     const seletor = "td,th,span,small,p,strong,[data-date-br]";
-    root.querySelectorAll?.(seletor).forEach((el) => {
-      if (el.children.length || el.closest("input,select,textarea,script,style")) return;
-      const atual = String(el.textContent || "");
+    root.querySelectorAll?.(seletor).forEach(elemento => {
+      if (elemento.closest("#fusionTopMenu")) return;
+      if (elemento.children.length || elemento.closest("input,select,textarea,script,style")) return;
+      const atual = String(elemento.textContent || "");
       const formatado = atual.replace(/\b(\d{4})-(\d{2})-(\d{2})\b/g, "$3/$2/$1");
-      if (formatado !== atual) el.textContent = formatado;
+      if (formatado !== atual) elemento.textContent = formatado;
     });
   }
 
-  window.carregarLayout = function carregarLayout(titulo) {
-
-    if (paginaSemMenu()) {
-        removerMenusExistentes();
-        return;
-    }
-
-    montarMenu();
+  function aplicarLayout() {
+    garantirEstilosGlobais();
+    garantirMarcaDocumento();
+    removerMenusLegados();
+    montarMenuSuperior();
     preencherUsuarioTopo();
-    removerBarrasSuperiores();
+  }
+
+  window.carregarLayout = function carregarLayout() {
+    aplicarLayout();
   };
 
-  document.addEventListener("DOMContentLoaded", () => {
+  let atualizacaoPendente = false;
+  function agendarAtualizacao() {
+    if (atualizacaoPendente) return;
+    atualizacaoPendente = true;
+    requestAnimationFrame(() => {
+      atualizacaoPendente = false;
+      removerMenusLegados();
+      if (paginaComMenuSuperior() && !document.getElementById("fusionTopMenu")) montarMenuSuperior();
+      formatarDatasVisiveis(document);
+    });
+  }
+
+  function iniciar() {
     prepararLinksPublicos(document);
     formatarDatasVisiveis(document);
-    removerBarrasSuperiores();
-    if (paginaSemMenu()) {
-      removerMenusExistentes();
-      preencherUsuarioTopo();
-      return;
-    }
+    aplicarLayout();
 
-    if (!document.querySelector(".sidebar,#fusionSidebar")) {
-      window.carregarLayout();
-    } else {
-      preencherUsuarioTopo();
-    }
-  });
+    const observador = new MutationObserver(agendarAtualizacao);
+    observador.observe(document.documentElement, { childList: true, subtree: true });
 
-  window.addEventListener("load", () => {
-    formatarDatasVisiveis(document);
-    removerBarrasSuperiores();
-    if (paginaSemMenu()) removerMenusExistentes();
-  });
-
-  let formatacaoPendente = false;
-  new MutationObserver(() => {
-    if (formatacaoPendente) return;
-    formatacaoPendente = true;
-    requestAnimationFrame(() => {
-      formatacaoPendente = false;
-      formatarDatasVisiveis(document);
-      removerBarrasSuperiores();
+    document.addEventListener("click", evento => {
+      if (!evento.target.closest("#fusionTopMenu")) fecharTudo();
     });
-  }).observe(document.documentElement, { childList: true, subtree: true });
+
+    document.addEventListener("keydown", evento => {
+      if (evento.key === "Escape") fecharTudo();
+    });
+
+    window.addEventListener("resize", () => {
+      fecharTudo();
+      sincronizarAlturaMenu();
+    });
+    window.addEventListener("pageshow", aplicarLayout);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", iniciar, { once: true });
+  } else {
+    iniciar();
+  }
 })();

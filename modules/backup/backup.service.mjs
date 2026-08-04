@@ -641,7 +641,7 @@ async function executarBackupAutomatico() {
 }
 
 export function iniciarBackupAutomatico() {
-  const ativo = !["0", "false", "nao", "não"].includes(String(process.env.FUSION_BACKUP_AUTO || "true").toLowerCase());
+  const ativo = !["0", "false", "nao", "não"].includes(String(process.env.FUSION_BACKUP_AUTO || "false").toLowerCase());
   if (!ativo || backupAutomaticoTimer || !process.env.SUPABASE_URL) return statusBackupAutomatico();
   const intervalo = Math.max(15 * 60 * 1000, Number(process.env.FUSION_BACKUP_AUTO_MS || 6 * 60 * 60 * 1000));
   const primeiro = setTimeout(executarBackupAutomatico, Math.min(60 * 1000, Math.floor(intervalo / 4)));
