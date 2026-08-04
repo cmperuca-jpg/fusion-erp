@@ -23,6 +23,11 @@ function parseMoeda(v){
   const n = Number(texto);
   return Number.isFinite(n) ? n : 0;
 }
+function dataISO(v){
+  const s = String(v || '').slice(0, 10);
+  return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : '';
+}
+function competenciaPorData(v){ return dataISO(v).slice(0, 7); }
 
 function alerta(msg,tipo='erro'){
   const el=$('#alerta'); el.textContent=msg; el.className=`alunos-alert ${tipo}`; el.classList.remove('hidden');
@@ -124,6 +129,25 @@ function mensalidadeRecebivelContrato(){
   return mensalidadesComValorRecebivel()[0] || {};
 }
 
+function mensalidadeContratoSemRegistro({ aluno = {}, matricula = {}, valorMensal = 0, vencimento = '' } = {}){
+  const valor = parseMoeda(valorMensal);
+  const vencimentoISO = dataISO(vencimento);
+  if (valor <= 0 || !vencimentoISO) return {};
+  return {
+    id: '',
+    contratoSemMensalidade: true,
+    alunoId: aluno.id || aluno._id || alunoId,
+    alunoNome: nomeAluno(aluno),
+    planoId: matricula.planoId || aluno.planoId || '',
+    planoNome: matricula.plano || matricula.planoNome || aluno.plano || '',
+    competencia: competenciaPorData(vencimentoISO),
+    vencimento: vencimentoISO,
+    valor,
+    total: valor,
+    status: 'a_receber'
+  };
+}
+
 function valorMensalidadeReceber(item = {}){
   const st = normalizarStatus(item.status);
   if (statusPago(st) || statusCancelado(st)) return 0;
@@ -137,10 +161,11 @@ function valorMensalidadeReceber(item = {}){
 }
 
 function botaoReceberMensalidade(item = {}){
-  if (!item?.id || !statusRecebivel(item.status)) return '';
+  if ((!item?.id && !item?.contratoSemMensalidade) || !statusRecebivel(item.status)) return '';
   const valor = valorMensalidadeReceber(item);
   if (valor <= 0) return '';
-  return `<button class="fusion-button prontuario-receber-btn" type="button" data-receber-mensalidade="${esc(item.id)}">Receber</button>`;
+  const alvo = item.id || '__contrato__';
+  return `<button class="fusion-button prontuario-receber-btn" type="button" data-receber-mensalidade="${esc(alvo)}">Receber</button>`;
 }
 
 function ultimoPagamento(){
@@ -180,11 +205,13 @@ function contratoInfoBase(){
   const matricula = primeiraMatriculaAtiva();
   const aberta = mensalidadeAbertaPrincipal();
   const programada = mensalidadeProgramadaPrincipal();
-  const recebivel = mensalidadeRecebivelContrato();
+  const recebivelExistente = mensalidadeRecebivelContrato();
   const pago = ultimoPagamento();
   const treino = (prontuario?.treinos || [])[0] || {};
   const avaliacao = (prontuario?.avaliacoes || [])[0] || {};
-  const valorMensal = matricula.valorMensal ?? matricula.valorPlano ?? recebivel.valor ?? recebivel.total ?? aberta.valor ?? aberta.total ?? programada.valor ?? programada.total ?? aluno.valorMensal ?? 0;
+  const valorMensal = matricula.valorMensal ?? matricula.valorPlano ?? recebivelExistente.valor ?? recebivelExistente.total ?? aberta.valor ?? aberta.total ?? programada.valor ?? programada.total ?? aluno.valorMensal ?? 0;
+  const vencimentoContrato = aberta.vencimento || programada.vencimento || prontuario?.resumoFinanceiro?.proximoVencimento || matricula.proximoVencimento || aluno.proximoVencimento || matricula.vencimentoInicial;
+  const recebivel = recebivelExistente.id ? recebivelExistente : mensalidadeContratoSemRegistro({ aluno, matricula, valorMensal, vencimento: vencimentoContrato });
   return { aluno, matricula, aberta, programada, recebivel, pago, treino, avaliacao, valorMensal };
 }
 
@@ -193,7 +220,7 @@ function renderContratoComercial(){
   if (!el) return;
   const { aluno, matricula, aberta, programada, pago, valorMensal } = contratoInfoBase();
   const vencimentoContrato = aberta.vencimento || programada.vencimento || prontuario?.resumoFinanceiro?.proximoVencimento;
-  const statusContrato = aberta.status || programada.status || 'Sem aberto';
+  const statusContrato = aberta.status || programada.status || 'A receber';
   el.innerHTML = info({
     'Plano contratado': matricula.plano || aluno.plano || '-',
     'Valor mensal': moeda(valorMensal),
@@ -219,8 +246,8 @@ function renderServicosContratados(){
   const extras = servicosExtrasLista();
   const exercicios = exerciciosDoTreino(treino);
   const vencimentoContrato = aberta.vencimento || programada.vencimento || prontuario?.resumoFinanceiro?.proximoVencimento;
-  const statusContrato = aberta.status || programada.status || '-';
-  const valorRecebivel = recebivel?.id ? valorMensalidadeReceber(recebivel) : 0;
+  const statusContrato = aberta.status || programada.status || (recebivel?.contratoSemMensalidade ? 'A receber' : '-');
+  const valorRecebivel = (recebivel?.id || recebivel?.contratoSemMensalidade) ? valorMensalidadeReceber(recebivel) : 0;
   box.innerHTML = [
     listaHtml('Plano contratado', [
       `Plano: ${esc(matricula.plano || aluno.plano || '-')}`,
@@ -260,20 +287,25 @@ function renderServicosContratados(){
 }
 
 async function receberMensalidadeProntuario(id){
-  const mensalidade = (prontuario?.mensalidades || []).find(m => String(m.id) === String(id));
+  let mensalidade = id === '__contrato__'
+    ? contratoInfoBase().recebivel
+    : (prontuario?.mensalidades || []).find(m => String(m.id) === String(id));
   if (!mensalidade) return alerta('Mensalidade nao encontrada no prontuario.');
 
-  const valor = valorMensalidadeReceber(mensalidade);
-  if (valor <= 0) return alerta('Nao ha valor em aberto para receber.');
+  const valorPrevisto = valorMensalidadeReceber(mensalidade);
+  if (valorPrevisto <= 0) return alerta('Nao ha valor em aberto para receber.');
 
   const forma = prompt('Forma de pagamento:', 'PIX');
   if (forma === null) return;
   const formaPagamento = String(forma || '').trim() || 'PIX';
 
-  if (!confirm(`Confirmar recebimento de ${moeda(valor)} para ${nomeAluno(prontuario?.aluno)}?`)) return;
+  if (!confirm(`Confirmar recebimento de ${moeda(valorPrevisto)} para ${nomeAluno(prontuario?.aluno)}?`)) return;
 
   try {
-    const resp = await fetch(`/api/mensalidades/${encodeURIComponent(id)}/baixar`, {
+    mensalidade = await garantirMensalidadeParaReceber(mensalidade);
+    const valor = valorMensalidadeReceber(mensalidade) || valorPrevisto;
+    if (!mensalidade?.id) throw new Error('Mensalidade nao identificada para baixa.');
+    const resp = await fetch(`/api/mensalidades/${encodeURIComponent(mensalidade.id)}/baixar`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -296,6 +328,81 @@ async function receberMensalidadeProntuario(id){
   } catch (erro) {
     alerta(erro.message || 'Nao foi possivel receber esta mensalidade.');
   }
+}
+
+async function reqJson(url, opcoes = {}){
+  const resp = await fetch(url, opcoes);
+  const json = await resp.json().catch(() => ({}));
+  if (!resp.ok || json.erro || json.ok === false) {
+    const erro = new Error(json.mensagem || json.message || `Erro HTTP ${resp.status}`);
+    erro.status = resp.status;
+    throw erro;
+  }
+  return json;
+}
+
+function listaMensalidadesResposta(dados){
+  if (Array.isArray(dados)) return dados;
+  return dados?.mensalidades || dados?.dados || dados?.items || [];
+}
+
+function montarPayloadMensalidadeContrato(mensalidade = {}){
+  const aluno = prontuario?.aluno || {};
+  const matricula = primeiraMatriculaAtiva();
+  const vencimento = dataISO(mensalidade.vencimento || prontuario?.resumoFinanceiro?.proximoVencimento || matricula.proximoVencimento || aluno.proximoVencimento);
+  const valor = valorMensalidadeReceber(mensalidade) || parseMoeda(mensalidade.valor || mensalidade.total);
+
+  return {
+    alunoId: mensalidade.alunoId || aluno.id || aluno._id || alunoId,
+    alunoNome: mensalidade.alunoNome || nomeAluno(aluno),
+    planoId: mensalidade.planoId || matricula.planoId || aluno.planoId || '',
+    planoNome: mensalidade.planoNome || mensalidade.plano || matricula.plano || matricula.planoNome || aluno.plano || '',
+    vencimento,
+    valor,
+    quantidade: 1,
+    observacao: 'Mensalidade criada pelo prontuario para recebimento.'
+  };
+}
+
+async function buscarMensalidadeContrato(mensalidade = {}){
+  const payload = montarPayloadMensalidadeContrato(mensalidade);
+  if (!payload.alunoId || !payload.vencimento) return {};
+  const params = new URLSearchParams({
+    alunoId: payload.alunoId,
+    competencia: competenciaPorData(payload.vencimento),
+    status: 'todos'
+  });
+  const dados = await reqJson(`/api/mensalidades?${params.toString()}`);
+  return listaMensalidadesResposta(dados)
+    .filter(m => m?.id && statusRecebivel(m.status) && valorMensalidadeReceber(m) > 0)
+    .sort((a,b)=>String(a.vencimento||'').localeCompare(String(b.vencimento||'')))[0] || {};
+}
+
+async function criarMensalidadeContrato(mensalidade = {}){
+  const payload = montarPayloadMensalidadeContrato(mensalidade);
+  if (!payload.alunoId) throw new Error('Aluno nao identificado para gerar mensalidade.');
+  if (!payload.vencimento) throw new Error('Vencimento nao identificado para gerar mensalidade.');
+  if (!payload.valor || payload.valor <= 0) throw new Error('Valor nao identificado para gerar mensalidade.');
+
+  try {
+    return await reqJson('/api/mensalidades', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+  } catch (erro) {
+    if (erro.status !== 409 && !/existe|duplic/i.test(erro.message || '')) throw erro;
+    const existente = await buscarMensalidadeContrato(mensalidade);
+    if (existente?.id) return existente;
+    throw erro;
+  }
+}
+
+async function garantirMensalidadeParaReceber(mensalidade = {}){
+  if (mensalidade?.id) return mensalidade;
+  const existente = await buscarMensalidadeContrato(mensalidade);
+  if (existente?.id) return existente;
+  return criarMensalidadeContrato(mensalidade);
 }
 
 function renderAvaliacoes(){
