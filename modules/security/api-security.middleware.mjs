@@ -92,6 +92,11 @@ function alunoIdNoPath(req) {
   return match?.[1] || "";
 }
 
+function alunoIdFotoNoPath(req) {
+  const match = String(req.path || "").match(/^\/api\/alunos\/([^/]+)\/foto$/);
+  return match?.[1] || "";
+}
+
 function professorIdFotoNoPath(req) {
   const match = String(req.path || "").match(/^\/api\/professores\/([^/]+)\/foto$/);
   return match?.[1] || "";
@@ -102,6 +107,7 @@ function portalAlunoPermitido(req, user = {}) {
   const alunoId = String(user.id || "");
 
   if (req.method === "GET" && alunoIdNoPath(req)) return mesmoId(alunoIdNoPath(req), alunoId);
+  if (req.method === "PUT" && alunoIdFotoNoPath(req)) return mesmoId(alunoIdFotoNoPath(req), alunoId);
   if (req.method === "GET" && req.path === "/api/treinos") return mesmoId(alunoIdDaRequisicao(req), alunoId);
   if (req.method === "GET" && req.path === "/api/avaliacoes") return mesmoId(alunoIdDaRequisicao(req), alunoId);
   if (req.method === "GET" && req.path === "/api/mensalidades") return mesmoId(alunoIdDaRequisicao(req), alunoId);

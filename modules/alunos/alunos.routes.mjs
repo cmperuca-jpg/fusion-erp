@@ -23,6 +23,11 @@ function mesmo(a, b) {
   return texto(a) && texto(a) === texto(b);
 }
 
+function fotoAlunoValida(valor) {
+  const foto = texto(valor);
+  return /^data:image\/(jpeg|jpg|png|webp);base64,/i.test(foto) && foto.length > 300;
+}
+
 function usuarioPortalProfessor(req) {
   return req.usuario?.portal === true && req.usuario?.portalTipo === "professor";
 }
@@ -198,6 +203,41 @@ router.post("/", async (req, res) => {
   try {
     const aluno = await alunosService.criar(req.body);
     res.status(201).json({ ok: true, aluno, mensagem: "Aluno cadastrado com sucesso" });
+  } catch (error) {
+    erro(res, error, 400);
+  }
+});
+
+router.put("/:id/foto", async (req, res) => {
+  try {
+    const atual = await alunosService.buscar(req.params.id);
+    if (!atual) {
+      return res.status(404).json({ ok: false, erro: "Aluno não encontrado", mensagem: "Aluno não encontrado" });
+    }
+
+    const portalAluno = req.usuario?.portal === true && normalizar(req.usuario?.portalTipo) === "aluno";
+    if (portalAluno && !mesmo(req.usuario?.id, req.params.id)) {
+      return res.status(403).json({ ok: false, mensagem: "Você só pode alterar a própria foto." });
+    }
+
+    const foto = texto(req.body?.foto_base64 || req.body?.fotoBase64 || req.body?.foto);
+    if (!fotoAlunoValida(foto)) {
+      return res.status(400).json({
+        ok: false,
+        mensagem: "Foto inválida. Envie uma imagem JPG, PNG ou WEBP válida."
+      });
+    }
+
+    const aluno = await alunosService.atualizar(req.params.id, { foto_base64: foto });
+    if (!aluno) {
+      return res.status(404).json({ ok: false, erro: "Aluno não encontrado", mensagem: "Aluno não encontrado" });
+    }
+
+    res.json({
+      ok: true,
+      foto_base64: aluno.foto_base64 || foto,
+      mensagem: "Foto atualizada com sucesso"
+    });
   } catch (error) {
     erro(res, error, 400);
   }

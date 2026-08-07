@@ -1,0 +1,40 @@
+FUSION ERP - PATCH "TROCAR FOTO" NO PORTAL DO ALUNO
+
+Base utilizada:
+- Repositório: cmperuca-jpg/fusion-erp
+- Branch: main
+- Commit: 2cdd8a8eb6fced7164eb5b66393ac6f82291ed86
+
+O pacote contém somente os arquivos novos/modificados desta alteração.
+Ele NÃO contém o restante do repositório.
+
+COMO APLICAR
+1. Faça backup do projeto atual.
+2. Extraia este ZIP.
+3. Copie as pastas "modules" e "public" para a raiz do fusion-erp.
+4. Confirme a substituição dos arquivos existentes.
+5. Os arquivos trocar-foto.js e trocar-foto.css serão adicionados.
+6. Reinicie/republique o Fusion ERP.
+
+ARQUIVOS ALTERADOS
+- public/pages/portal-aluno-emergencial/index.html
+- modules/alunos/alunos.routes.mjs
+- modules/security/api-security.middleware.mjs
+
+ARQUIVOS NOVOS
+- public/pages/portal-aluno-emergencial/trocar-foto.js
+- public/pages/portal-aluno-emergencial/trocar-foto.css
+
+FUNCIONAMENTO
+- Exibe o botão "Trocar foto" logo abaixo da foto do aluno.
+- No celular, solicita a câmera frontal, igual à Matrícula Online.
+- Aceita imagem de até 8 MB no navegador.
+- Redimensiona a imagem para no máximo 1200 px e converte para JPEG qualidade 0,82,
+  seguindo o tratamento usado na Matrícula Online.
+- Salva em foto_base64 no cadastro do aluno.
+- Atualiza a imagem imediatamente no Portal do Aluno.
+- O endpoint PUT /api/alunos/:id/foto só é liberado ao próprio aluno autenticado.
+- O PUT genérico do cadastro do aluno continua bloqueado para o portal.
+
+VALIDAÇÃO REALIZADA
+- node --check nos arquivos JavaScript/MJS modificados: OK.

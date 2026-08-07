@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="/assets/css/fusion-app.css">
   <link rel="stylesheet" href="/assets/css/fusion-site-chat.css">
   <link rel="stylesheet" href="./style.css?v=20260804-portal-pix-frequencia-1">
+  <link rel="stylesheet" href="./trocar-foto.css?v=20260806-1">
   <meta name="theme-color" content="#16a34a">
   <link rel="stylesheet" href="/pages/_shared/fusion-area-clara.css?v=20260729-contraste-global-2">
 </head>
@@ -14,7 +15,12 @@
   <main class="portal">
     <header class="portal-hero">
       <div class="perfil">
-        <img id="fotoAluno" class="avatar" alt="Foto do aluno">
+        <div class="foto-perfil">
+          <img id="fotoAluno" class="avatar" alt="Foto do aluno">
+          <input id="fotoAlunoInput" type="file" accept="image/*" capture="user" hidden>
+          <button id="btnTrocarFoto" type="button" class="trocar-foto">Trocar foto</button>
+          <small id="statusFotoAluno" class="status-foto" role="status" aria-live="polite"></small>
+        </div>
         <div>
           <span class="marca">Fusion ERP</span>
           <h1 id="nomeAluno">Portal do Aluno</h1>
@@ -135,6 +141,7 @@
     </section>
   </main>
   <script src="./index.js?v=20260804-portal-pix-frequencia-1"></script>
+  <script src="./trocar-foto.js?v=20260806-1"></script>
   <script src="/assets/js/fusion-site-chat.js" data-chat-origem="portal_aluno"></script>
 </body>
 </html>
