@@ -1,17 +1,52 @@
-FUSION ERP - UNIFICAÇÃO DO DASHBOARD COM O BI
+CORREÇÃO — BOTÃO TROCAR TURMA/MODALIDADE
+Fusion ERP — módulo Alunos
 
-Arquivo alterado:
-  public/js/dashboard-home.js
+O que este pacote corrige
+--------------------------
+1. O botão "Trocar turma/modalidade" passa a abrir diretamente a matrícula
+   exibida no cartão, usando:
+   /pages/matriculas/cadastro.html?id=<ID_DA_MATRICULA>&origem=troca-turma
 
-O que muda:
-- Alunos ativos, total de alunos, matrículas ativas e presentes hoje passam a vir de /api/bi/executivo.
-- O Dashboard deixa de recalcular alunos ativos usando diretamente aluno.status.
-- Os gráficos de plano e status passam a usar os dados consolidados do BI.
-- Aniversariantes e últimas avaliações continuam usando os cadastros originais.
-- Nenhuma rotina financeira é alterada.
+2. A própria tela de matrícula já reconhece o ID da matrícula e entra no modo
+   operacional de turma/modalidade, preservando plano e financeiro.
 
-Instalação:
-1. Extraia este ZIP na raiz do projeto.
-2. Permita substituir public/js/dashboard-home.js.
-3. Faça commit e deploy.
-4. Atualize o navegador com Ctrl+F5.
+3. Corrige o contraste visual de:
+   - Trocar turma/modalidade
+   - Ver ficha
+
+4. Mantém o preenchimento automático de CEP que já existia no arquivo
+   cep-autofill.js.
+
+ARQUIVO PARA SUBSTITUIR MANUALMENTE
+-----------------------------------
+public/pages/alunos/cep-autofill.js
+
+Se você apenas substituir esse arquivo no servidor/GitHub, faça Ctrl+F5 no
+navegador para ignorar o cache.
+
+MODO RECOMENDADO NO WINDOWS
+---------------------------
+1. Extraia este ZIP.
+2. Abra PowerShell na pasta extraída.
+3. Execute:
+
+   .\APLICAR_CORRECAO.ps1 -Repo "C:\caminho\para\fusion-erp"
+
+O script:
+- cria backup dos arquivos atuais;
+- substitui cep-autofill.js;
+- altera a versão do script em public/pages/alunos/index.html para evitar cache.
+
+TESTE
+-----
+Abra:
+Academia > Alunos > Editar aluno > Matrículas
+
+Clique em "Trocar turma/modalidade".
+
+Resultado esperado:
+- abre Cadastro de Matrícula da matrícula correta;
+- aluno/plano continuam vinculados;
+- alteração fica focada em turma/modalidade;
+- ao salvar, usa PATCH /api/matriculas/:id/turmas;
+- não recria cobrança nem mensalidade.

@@ -124,3 +124,153 @@
 
   mostrarMensagem('Digite os 8 números do CEP para preencher o endereço automaticamente.');
 })();
+
+/*
+ * Fusion ERP - correção do botão "Trocar turma/modalidade" no cadastro de alunos.
+ *
+ * O botão original abria a tela de matrícula somente com alunoId. Isso obrigava
+ * a tela seguinte a localizar novamente a matrícula ativa e podia produzir
+ * comportamento inconsistente. A correção usa diretamente o ID/número da
+ * matrícula exibida no próprio cartão e abre cadastro.html?id=..., que já entra
+ * no modo de alteração operacional de turma/modalidade sem recriar financeiro.
+ */
+(() => {
+  if (!window.location.pathname.includes('/pages/alunos/')) return;
+
+  const LISTA_ID = 'matriculasAlunoLista';
+  const MARCA_CORRIGIDO = 'fusionTrocaTurmaCorrigida';
+
+  function textoNormalizado(valor) {
+    return String(valor || '')
+      .trim()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+  }
+
+  function ehBotaoTrocaTurma(botao) {
+    const texto = textoNormalizado(botao?.textContent);
+    return texto.includes('trocar turma') || texto.includes('alterar turma');
+  }
+
+  function ehBotaoVerFicha(botao) {
+    return textoNormalizado(botao?.textContent).includes('ver ficha');
+  }
+
+  function extrairIdDoOnclick(onclick = '') {
+    const texto = String(onclick || '');
+    const match = texto.match(/abrirFichaMatricula\(\s*['"]([^'"]+)['"]\s*\)/i);
+    return match?.[1] || '';
+  }
+
+  function extrairMatriculaId(botaoTroca) {
+    const acoes = botaoTroca?.parentElement;
+    const card = acoes?.parentElement || botaoTroca?.closest('.timeline-item, .card');
+    if (!card) return '';
+
+    const botaoFicha = Array.from(card.querySelectorAll('button')).find(ehBotaoVerFicha);
+    const peloOnclick = extrairIdDoOnclick(botaoFicha?.getAttribute('onclick'));
+    if (peloOnclick) return peloOnclick;
+
+    const dataId =
+      card.dataset?.matriculaId ||
+      botaoTroca.dataset?.matriculaId ||
+      botaoFicha?.dataset?.matriculaId ||
+      '';
+    if (dataId) return dataId;
+
+    const textoCard = String(card.textContent || '');
+    const peloNumero = textoCard.match(/\bMAT-[A-Z0-9-]+\b/i);
+    return peloNumero?.[0] || '';
+  }
+
+  function abrirTrocaTurma(matriculaId) {
+    const id = String(matriculaId || '').trim();
+    if (!id) return;
+    const params = new URLSearchParams({
+      id,
+      origem: 'troca-turma'
+    });
+    window.location.href = `/pages/matriculas/cadastro.html?${params.toString()}`;
+  }
+
+  function aplicarVisual(botao, tipo) {
+    if (!botao) return;
+
+    botao.disabled = false;
+    botao.removeAttribute('aria-disabled');
+
+    botao.style.setProperty('opacity', '1', 'important');
+    botao.style.setProperty('cursor', 'pointer', 'important');
+    botao.style.setProperty('text-shadow', 'none', 'important');
+    botao.style.setProperty('min-height', '40px', 'important');
+    botao.style.setProperty('padding', '9px 14px', 'important');
+    botao.style.setProperty('border-radius', '9px', 'important');
+    botao.style.setProperty('font-weight', '800', 'important');
+
+    if (tipo === 'troca') {
+      botao.style.setProperty('background', '#22b8d2', 'important');
+      botao.style.setProperty('border', '1px solid #1299b2', 'important');
+      botao.style.setProperty('color', '#ffffff', 'important');
+    } else {
+      botao.style.setProperty('background', '#ffffff', 'important');
+      botao.style.setProperty('border', '1px solid #b9cfd5', 'important');
+      botao.style.setProperty('color', '#102b35', 'important');
+    }
+  }
+
+  function corrigirBotao(botao) {
+    if (!botao || !ehBotaoTrocaTurma(botao)) return;
+
+    aplicarVisual(botao, 'troca');
+
+    const card = botao.parentElement?.parentElement;
+    const botaoFicha = card
+      ? Array.from(card.querySelectorAll('button')).find(ehBotaoVerFicha)
+      : null;
+    aplicarVisual(botaoFicha, 'ficha');
+
+    const matriculaId = extrairMatriculaId(botao);
+    if (!matriculaId) return;
+
+    botao.dataset[MARCA_CORRIGIDO] = '1';
+    botao.title = 'Alterar somente turma/modalidade, preservando o financeiro';
+    botao.onclick = (evento) => {
+      evento?.preventDefault();
+      evento?.stopPropagation();
+      abrirTrocaTurma(matriculaId);
+      return false;
+    };
+  }
+
+  function aplicarCorrecao() {
+    const lista = document.getElementById(LISTA_ID);
+    if (!lista) return;
+
+    lista.querySelectorAll('button').forEach((botao) => {
+      if (ehBotaoTrocaTurma(botao)) corrigirBotao(botao);
+      else if (ehBotaoVerFicha(botao)) aplicarVisual(botao, 'ficha');
+    });
+  }
+
+  function iniciarObservacao() {
+    aplicarCorrecao();
+
+    const lista = document.getElementById(LISTA_ID);
+    if (!lista || lista.dataset.trocaTurmaObserver === '1') return;
+
+    lista.dataset.trocaTurmaObserver = '1';
+    const observer = new MutationObserver(() => aplicarCorrecao());
+    observer.observe(lista, { childList: true, subtree: true });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', iniciarObservacao, { once: true });
+  } else {
+    iniciarObservacao();
+  }
+
+  // A lista de matrículas é carregada de forma assíncrona.
+  setTimeout(iniciarObservacao, 300);
+  setTimeout(iniciarObservacao, 1000);
+})();
