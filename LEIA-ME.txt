@@ -1,48 +1,79 @@
-FUSION ERP — CONSOLIDAÇÃO FINANCEIRA SaaS
-Arquivos produzidos a partir dos 4 arquivos reais enviados em 07/08/2026.
+FUSION ERP — CONSOLIDAÇÃO FINANCEIRA HISTÓRICA
+Data: 07/08/2026
 
-CORREÇÕES DE CÓDIGO
-1. public/js/matriculas/cadastro.js
-   - Nova matrícula abre com vencimento inicial igual à data da matrícula.
-   - Se a data da matrícula mudar antes de salvar, a entrada inicial acompanha.
+O BANCO JÁ FOI CORRIGIDO
+========================
+Foi feita uma auditoria real no Supabase antes da correção.
 
-2. modules/matriculas/matricula.integracao.service.mjs
-   - O servidor passa a ser a autoridade:
-     entrada matrícula + primeira mensalidade vence na data da matrícula.
-   - Próximo ciclo continua calculado pelo dia de vencimento mensal.
+Academia Piloto:
+- 55 registros na coleção recebimentos.
+- 53 recebimentos estavam quitados.
+- Os 53 tinham valorRecebido preenchido, mas valorPago divergente/zerado.
+- 7 matrículas iniciais unificadas tinham vencimento deslocado para o mês seguinte.
 
-3. modules/financeiro/mensalidades.service.mjs
-   - A competência gravada deixa de ser substituída pelo mês do vencimento.
-   - Registros legados de matrícula inicial usam a data da matrícula como fallback.
+Studio Fitness:
+- 1 recebimento quitado com o mesmo problema de aliases.
+- 1 matrícula inicial unificada com vencimento deslocado.
 
-4. modules/financeiro/financeiro-ledger.service.mjs
-   - valorPago / valorRecebido / valorBrutoRecebido ficam sincronizados.
-   - saldo e dataPagamento do recebimento também são atualizados.
-   - bruto e líquido continuam separados; taxa da operadora não altera o valor bruto.
+A correção já foi aplicada:
+- valorPago = valorRecebido nos recebimentos quitados;
+- valorBrutoRecebido = valorRecebido;
+- centavos sincronizados;
+- saldo/valorRestante = 0 nos quitados;
+- dataPagamento preservada/sincronizada;
+- cobrança inicial passa a usar a data real da matrícula;
+- competência da mensalidade inicial passa a usar o mês real da matrícula.
 
-DADOS JÁ EXISTENTES
-scripts/RECONCILIAR-STUDIO-FITNESS-PRIMEIRO-CLIENTE.sql
+Verificação pós-correção:
+- datas iniciais divergentes: 0
+- recebimentos quitados com aliases divergentes: 0
 
-Esse SQL corrige apenas o primeiro fluxo já gravado da Studio Fitness:
-- entrada inicial: 07/08/2026
-- total bruto: R$ 125,00
-- taxa: R$ 1,24
-- líquido: R$ 123,76
-- próxima mensalidade: R$ 100,00 em 07/09/2026
+BACKUP
+======
+Antes das alterações, 78 registros foram copiados para:
+collection = _backup_financeiro_20260807_1441
 
-Não apaga caixa, recibo, matrícula, aluno nem a mensalidade futura.
+O aplicativo não usa essa coleção. Ela existe apenas para rollback.
 
-ORDEM RECOMENDADA
-1. Substituir os 4 arquivos no projeto.
-2. Commit/push.
-3. Aguardar Render ficar Live.
-4. Executar o SQL uma única vez no Supabase SQL Editor.
-5. Ctrl+F5 e testar:
-   - Mensalidades em agosto
-   - Financeiro
-   - Caixa
-   - Relatório diário
-   - Ficha da matrícula
+CÓDIGO
+======
+1. public/pages/recebimentos/index.js
+   Já vem corrigido neste ZIP.
+   Regra: Programado não é Aberto, mas pode ser recebido antecipadamente.
 
-VALIDAÇÃO TÉCNICA
-Os 4 arquivos JavaScript/MJS foram validados com node --check.
+2. public/pages/financeiro/financeiro.js
+   O arquivo atual tem uma linha que desabilita Receber quando status=Programado.
+   Use APLICAR_CORRECAO.py (ou .ps1/.sh) para corrigir exatamente essa linha
+   sem sobrescrever as outras correções já existentes.
+
+IMPORTANTE
+==========
+O HTML do Financeiro carrega financeiro.js, não index.js.
+Por isso esta correção atua em:
+public/pages/financeiro/financeiro.js
+
+COMO APLICAR NO PROJETO
+=======================
+1. Extraia o ZIP na raiz do Fusion ERP.
+2. Substitua public/pages/recebimentos/index.js pelo arquivo do ZIP.
+3. Execute:
+   Windows PowerShell:
+     .\APLICAR_CORRECAO.ps1
+   Linux:
+     bash APLICAR_CORRECAO.sh
+4. Commit/push.
+5. Aguarde Render ficar Live.
+6. Ctrl+F5.
+
+RESULTADO ESPERADO
+==================
+Título futuro:
+Status: Programado
+Não soma em Receitas em Aberto
+Não soma em Vencidos
+Botão Receber: HABILITADO
+Recebimento antecipado: PERMITIDO
+
+Título pago:
+Receber: DESABILITADO
+Bruto/taxa/líquido permanecem coerentes.
