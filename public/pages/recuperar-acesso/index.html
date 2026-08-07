@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0b6574">
+  <title>Recuperar acesso | Fusion Sistema</title>
+  <link rel="stylesheet" href="./style.css?v=20260807-recuperacao-1">
+</head>
+<body>
+  <main class="shell">
+    <section class="intro">
+      <div class="marca">Fusion Sistema</div>
+      <span class="etiqueta">Recuperação segura</span>
+      <h1>Recupere seu acesso.</h1>
+      <p>Informe a academia e o e-mail cadastrado. Enviaremos um código de 6 dígitos para confirmar sua identidade.</p>
+      <div class="passos">
+        <span data-step-label="1" class="ativo"><b>1</b> Identificar conta</span>
+        <span data-step-label="2"><b>2</b> Confirmar e-mail</span>
+        <span data-step-label="3"><b>3</b> Recuperar acesso</span>
+      </div>
+    </section>
+
+    <section class="card">
+      <a class="voltar" href="/pages/comecar/">← Voltar para entrar</a>
+
+      <section class="etapa ativo" id="etapaIdentificar" data-step="1">
+        <span class="eyebrow">Etapa 1 de 3</span>
+        <h2>Localizar sua conta</h2>
+        <p>Use o nome da academia e o mesmo e-mail cadastrado no seu usuário Fusion.</p>
+        <form id="formIdentificar" novalidate>
+          <label>Nome da academia
+            <input id="academia" required minlength="2" autocomplete="organization" placeholder="Ex.: Academia Piloto">
+          </label>
+          <label>E-mail cadastrado
+            <input id="email" type="email" required autocomplete="email" placeholder="voce@empresa.com.br">
+          </label>
+          <button id="btnEnviar" class="primario" type="submit">Enviar código de verificação</button>
+          <div id="mensagemIdentificar" class="mensagem" role="status" aria-live="polite"></div>
+        </form>
+      </section>
+
+      <section class="etapa" id="etapaConfirmar" data-step="2" hidden>
+        <span class="eyebrow">Etapa 2 de 3</span>
+        <h2>Confira seu e-mail</h2>
+        <p id="textoDestino">Enviamos um código de 6 dígitos.</p>
+        <form id="formConfirmar" novalidate>
+          <label>Código de verificação
+            <input id="codigoVerificacao" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required placeholder="000000">
+          </label>
+          <button id="btnConfirmar" class="primario" type="submit">Confirmar código</button>
+          <button id="btnReenviar" class="link-button" type="button">Enviar outro código</button>
+          <div id="mensagemConfirmar" class="mensagem" role="status" aria-live="polite"></div>
+        </form>
+      </section>
+
+      <section class="etapa" id="etapaResultado" data-step="3" hidden>
+        <span class="eyebrow">Identidade confirmada</span>
+        <h2>Seu acesso foi localizado</h2>
+        <div class="credencial">
+          <small>Academia</small>
+          <strong id="resultadoAcademia">—</strong>
+        </div>
+        <div class="credencial codigo">
+          <small>Seu código de acesso</small>
+          <strong id="resultadoCodigo">—</strong>
+        </div>
+        <div class="acoes">
+          <button type="button" class="secundario" id="btnCopiar">Copiar código</button>
+          <button type="button" class="primario" id="btnVoltarEntrar">Voltar para entrar</button>
+        </div>
+
+        <details class="senha-box" id="boxSenha">
+          <summary>Esqueci minha senha também</summary>
+          <form id="formSenha" novalidate>
+            <label>Nova senha
+              <input id="novaSenha" type="password" minlength="10" autocomplete="new-password" required placeholder="Mínimo de 10 caracteres">
+            </label>
+            <label>Confirmar nova senha
+              <input id="confirmarNovaSenha" type="password" minlength="10" autocomplete="new-password" required>
+            </label>
+            <button id="btnSenha" class="perigo" type="submit">Alterar minha senha</button>
+          </form>
+        </details>
+        <div id="mensagemResultado" class="mensagem" role="status" aria-live="polite"></div>
+      </section>
+    </section>
+  </main>
+  <script src="./index.js?v=20260807-recuperacao-1"></script>
+</body>
+</html>

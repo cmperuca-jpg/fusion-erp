@@ -1,19 +1,35 @@
-FUSION ERP — LINK DISCRETO 'ESQUECEU SEU CÓDIGO'
+FUSION ERP — RECUPERAÇÃO DE ACESSO
+==================================
 
-"
-    "Alteração:
-"
-    "- adiciona abaixo do botão 'Entrar no sistema' o link:
-"
-    "  'Esqueceu seu código de acesso? Clique aqui'
-"
-    "- destino: /pages/meu-acesso/index.html
-"
-    "- visual discreto, centralizado e responsivo.
+A migration do Supabase JÁ FOI APLICADA em produção.
 
-"
-    "Arquivos:
-"
-    "- public/pages/comecar/index.html
-"
-    "- public/pages/comecar/style.css
+ANTES DE TESTAR NO RENDER
+Configure no Environment:
+
+RESEND_API_KEY=<sua chave>
+FUSION_RECOVERY_FROM_EMAIL=Fusion Sistema <acesso@fusionsistema.com.br>
+
+Recomendado:
+FUSION_RECOVERY_SECRET=<segredo aleatório com pelo menos 32 caracteres>
+
+Opcional:
+FUSION_RECOVERY_REPLY_TO=suporte@fusionsistema.com.br
+
+IMPORTANTE
+O domínio usado em FUSION_RECOVERY_FROM_EMAIL deve estar validado no Resend.
+Sem as variáveis de e-mail, o sistema NÃO revela códigos e retorna que a
+recuperação por e-mail ainda não está configurada.
+
+FLUXO
+/pages/comecar/
+  -> Esqueceu seu código?
+/pages/recuperar-acesso/
+  -> academia + e-mail
+  -> OTP 6 dígitos
+  -> mostra FS-XXXX-XXXX
+  -> opcional: redefinir senha
+  -> volta para o login com academia e código preenchidos
+
+VALIDAÇÃO
+- node --check: OK
+- npm run check: OK

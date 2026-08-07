@@ -182,4 +182,9 @@
   const params = new URLSearchParams(location.search);
   if (params.get("acao") === "criar") abrirTab("criar");
   else abrirTab("entrar");
+
+  const prefill = new URLSearchParams(location.search);
+  if (prefill.get("academia")) $("academiaAcesso").value = prefill.get("academia");
+  if (prefill.get("codigo")) $("codigoAcesso").value = prefill.get("codigo").toUpperCase();
+
 })();

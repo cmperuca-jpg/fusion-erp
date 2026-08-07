@@ -1,5 +1,10 @@
 import express from "express";
 import {
+  iniciarRecuperacao,
+  confirmarRecuperacao,
+  redefinirSenhaRecuperacao
+} from "./recovery.service.mjs";
+import {
   autenticar,
   autenticarPorEmpresaCodigo,
   listarUsuarios,
@@ -54,6 +59,34 @@ router.post("/login-empresa", async (req, res) => {
   try {
     const { empresa, academia, codigo, codigoAcesso, senha } = req.body || {};
     res.json(await autenticarPorEmpresaCodigo(empresa || academia, codigo || codigoAcesso, senha));
+  } catch (erro) {
+    tratarErro(res, erro);
+  }
+});
+
+
+router.post("/recuperacao/iniciar", async (req, res) => {
+  try {
+    res.json(await iniciarRecuperacao(req.body || {}, {
+      ip: req.ip || req.socket?.remoteAddress || "",
+      userAgent: req.headers["user-agent"] || ""
+    }));
+  } catch (erro) {
+    tratarErro(res, erro);
+  }
+});
+
+router.post("/recuperacao/confirmar", async (req, res) => {
+  try {
+    res.json(await confirmarRecuperacao(req.body || {}));
+  } catch (erro) {
+    tratarErro(res, erro);
+  }
+});
+
+router.post("/recuperacao/redefinir-senha", async (req, res) => {
+  try {
+    res.json(await redefinirSenhaRecuperacao(req.body || {}));
   } catch (erro) {
     tratarErro(res, erro);
   }
