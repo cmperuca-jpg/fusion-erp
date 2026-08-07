@@ -1,42 +1,23 @@
-FUSION SISTEMA — ACESSO GERAL DAS ACADEMIAS
-================================================
+FUSION ERP — SERVIÇO DE SUPORTE CONTROLADO
 
-OBJETIVO
-A página /pages/comecar/ passa a ser a porta de entrada geral do Fusion.
+A migration do banco já foi aplicada no Supabase de produção.
 
-ENTRAR EM UMA ACADEMIA
-- Nome da academia
-- Código de acesso gerado pelo Fusion
-- Senha do administrador
+Este pacote contém somente o código para:
+- Central de Suporte em /pages/suporte/index.html
+- sessões temporárias de 30 minutos
+- acesso sem senha do cliente
+- banner visível de MODO SUPORTE
+- auditoria por requisição de API
+- retorno automático à conta original ao encerrar
 
-O backend valida os 3 itens e cria a sessão no tenant correto.
+IMPORTANTE
+Nenhuma pessoa foi autorizada automaticamente como suporte.
+Depois do deploy é necessário cadastrar no Supabase apenas o E-MAIL das contas
+da sua equipe que poderão acessar clientes. Não envie senha.
 
-CRIAR NOVA ACADEMIA
-A mesma página mantém a opção de cadastro.
-Ao finalizar, o Fusion mostra:
-- nome da academia
-- código de acesso administrativo
+Tabelas já criadas:
+- fusion_support_operators
+- fusion_support_sessions
+- fusion_support_audit
 
-O usuário pode copiar o código e entrar no sistema.
-
-ISOLAMENTO
-O código é validado junto com a academia e o usuário administrativo.
-O JWT continua carregando tenantId.
-As APIs continuam bloqueando divergência entre tenant da sessão e tenant informado.
-
-BANCO
-A migration saas_login_geral_codigo_acesso já foi aplicada no Supabase de produção.
-Ela adicionou access_code ao índice de login e gerou códigos para os acessos existentes.
-Não execute novamente manualmente no banco de produção.
-
-ARQUIVOS
-- public/pages/comecar/index.html
-- public/pages/comecar/index.js
-- public/pages/comecar/style.css
-- modules/auth/auth.service.mjs
-- modules/auth/auth.routes.mjs
-- modules/auth/tenant-registry.service.mjs
-- modules/security/api-security.middleware.mjs
-- modules/saas/saas.service.mjs
-- server.mjs
-- supabase/migrations/20260807093000_saas_login_geral_codigo_acesso.sql
+A primeira conta de suporte deve ser adicionada deliberadamente como support_admin.

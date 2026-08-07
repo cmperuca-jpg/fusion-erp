@@ -205,6 +205,39 @@ function extrairToken(authorization = "") {
   return valor;
 }
 
+export function gerarTokenSuporte(usuario = {}, {
+  sessionId,
+  homeTenantId,
+  targetTenantId,
+  targetTenantName = "",
+  reason = "",
+  supportRole = "support_agent",
+  expiresInMinutes = 30
+} = {}) {
+  if (!usuario?.id || !usuario?.email || !sessionId || !homeTenantId || !targetTenantId) {
+    throw erro("Não foi possível criar a sessão de suporte.", 500);
+  }
+
+  const ttl = Math.min(Math.max(Number(expiresInMinutes || 30), 10), 120);
+  return jwt.sign(
+    {
+      sub: usuario.id,
+      email: usuario.email,
+      perfil: "Administrador",
+      permissoes: ["*"],
+      tenantId: normalizarTenantId(targetTenantId),
+      supportAccess: true,
+      supportSessionId: String(sessionId),
+      supportHomeTenantId: normalizarTenantId(homeTenantId),
+      supportReason: texto(reason),
+      supportRole: texto(supportRole || "support_agent"),
+      supportTargetName: texto(targetTenantName)
+    },
+    JWT_SECRET,
+    { expiresIn: `${ttl}m` }
+  );
+}
+
 export function gerarTokenPortal({ sub, tipo, perfil = "", permissoes = [], nome = "", tenantId = tenantAtual() } = {}) {
   if (!sub || !tipo) throw erro("Não foi possível criar a sessão do portal.", 500);
   return jwt.sign(
@@ -419,6 +452,33 @@ export async function validarToken(tokenOuAuthorization) {
   }
 
   if (!payload?.tenantId) throw erro("Sessão antiga sem empresa. Faça login novamente.", 401);
+
+  if (payload.supportAccess === true) {
+    if (!payload.supportHomeTenantId || !payload.supportSessionId) {
+      throw erro("Sessão de suporte inválida.", 401);
+    }
+
+    return executarComTenant(payload.supportHomeTenantId, async () => {
+      const usuarios = await lerUsuarios();
+      const usuario = usuarios.find(u => String(u.id) === String(payload.sub));
+      if (!usuario) throw erro("Operador de suporte não encontrado.", 401);
+      if (normalizar(usuario.status) !== "ativo") throw erro("Operador de suporte inativo.", 403);
+
+      return {
+        ...semSenha(usuario),
+        perfil: "Administrador",
+        perfilOriginal: "Administrador",
+        permissoes: ["*"],
+        tenantId: normalizarTenantId(payload.tenantId),
+        academiaNome: texto(payload.supportTargetName),
+        supportAccess: true,
+        supportSessionId: texto(payload.supportSessionId),
+        supportHomeTenantId: normalizarTenantId(payload.supportHomeTenantId),
+        supportReason: texto(payload.supportReason),
+        supportRole: texto(payload.supportRole || "support_agent")
+      };
+    });
+  }
 
   return executarComTenant(payload.tenantId, async () => {
     const usuarios = await lerUsuarios();

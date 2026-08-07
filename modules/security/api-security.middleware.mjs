@@ -1,5 +1,6 @@
 import { validarToken, validarTokenPortal } from "../auth/auth.service.mjs";
 import { executarComTenant, normalizarTenantId } from "../core/persistence/tenant-context.mjs";
+import { validarSessaoSuporteAtiva, registrarAuditoriaSuporte } from "../suporte/suporte.service.mjs";
 
 const PUBLIC_RULES = [
   ["GET", "/api/health"],
@@ -295,6 +296,23 @@ export async function apiSecurity(req, res, next) {
 
   if (tenantConflita(req, req.usuario)) {
     return responderConflitoTenant(res);
+  }
+
+  if (req.usuario?.supportAccess) {
+    try {
+      await validarSessaoSuporteAtiva(req.usuario);
+    } catch (error) {
+      return res.status(error.status || 401).json({
+        ok: false,
+        mensagem: error.message || "Sessão de suporte inválida."
+      });
+    }
+
+    res.once("finish", () => {
+      registrarAuditoriaSuporte(req.usuario, req, res.statusCode).catch(error => {
+        console.warn(`[Suporte] Falha ao registrar auditoria: ${error.message}`);
+      });
+    });
   }
 
   if (isPortal(req.usuario) && !portalPermitido(req, req.usuario)) {
