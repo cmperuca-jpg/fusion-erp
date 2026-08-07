@@ -1,0 +1,264 @@
+/* Fusion Sistema — ficha do aluno: contraste definitivo v2
+   Carregar por ultimo no prontuario para vencer temas globais/premium. */
+
+.prontuario-page{
+  --ficha-card:#ffffff;
+  --ficha-ink:#142d35;
+  --ficha-muted:#405d66;
+  --ficha-border:#a9c3ca;
+  --ficha-teal:#0b4452;
+  --ficha-teal-strong:#075e6b;
+  --ficha-soft:#e8f4f6;
+  color:var(--ficha-ink)!important;
+}
+
+.prontuario-page,
+.prontuario-page .tab-panel{
+  background:transparent!important;
+}
+
+/* Cabeçalho */
+.prontuario-page .prontuario-header.fusion-card{
+  background:var(--ficha-teal)!important;
+  border:1px solid #0a5868!important;
+  color:#fff!important;
+  box-shadow:0 10px 28px rgba(11,68,82,.18)!important;
+}
+.prontuario-page .prontuario-header :is(h1,h2,h3,strong){
+  color:#fff!important;
+  opacity:1!important;
+  text-shadow:none!important;
+}
+.prontuario-page .prontuario-header :is(p,span,small){
+  color:#e0f0f3!important;
+  opacity:1!important;
+  text-shadow:none!important;
+}
+.prontuario-page .foto-grande{
+  background:#fff!important;
+  color:#294b55!important;
+  border:2px solid #8ec5cf!important;
+}
+
+/* Botoes do cabecalho */
+.prontuario-page .prontuario-actions .fusion-button,
+.prontuario-page .prontuario-actions .fusion-button.secondary{
+  background:#fff!important;
+  color:#0b3440!important;
+  border:1px solid #fff!important;
+  font-weight:800!important;
+  text-shadow:none!important;
+  opacity:1!important;
+}
+.prontuario-page .prontuario-actions .fusion-button:hover,
+.prontuario-page .prontuario-actions .fusion-button:focus-visible{
+  background:#dff3f6!important;
+  color:#062e38!important;
+  border-color:#9fd3dc!important;
+}
+
+/* KPIs */
+.prontuario-page .prontuario-kpis .aluno-kpi{
+  background:var(--ficha-card)!important;
+  border:1px solid var(--ficha-border)!important;
+  border-left:4px solid var(--ficha-teal-strong)!important;
+  color:var(--ficha-ink)!important;
+  box-shadow:0 5px 16px rgba(20,45,53,.07)!important;
+}
+.prontuario-page .prontuario-kpis .aluno-kpi span{
+  color:var(--ficha-muted)!important;
+  opacity:1!important;
+}
+.prontuario-page .prontuario-kpis .aluno-kpi strong{
+  color:#102a32!important;
+  opacity:1!important;
+}
+
+/* Abas */
+.prontuario-page .prontuario-tabs.fusion-card{
+  background:#fff!important;
+  border:1px solid var(--ficha-border)!important;
+  box-shadow:0 5px 16px rgba(20,45,53,.06)!important;
+}
+.prontuario-page .prontuario-tabs .tab{
+  background:var(--ficha-soft)!important;
+  color:#173943!important;
+  border:1px solid #b5ced4!important;
+  font-size:12px!important;
+  font-weight:800!important;
+  opacity:1!important;
+  text-shadow:none!important;
+}
+.prontuario-page .prontuario-tabs .tab:hover,
+.prontuario-page .prontuario-tabs .tab:focus-visible{
+  background:#d5eaee!important;
+  color:#0d3039!important;
+  border-color:#6ea9b4!important;
+}
+.prontuario-page .prontuario-tabs .tab.active{
+  background:var(--ficha-teal-strong)!important;
+  color:#fff!important;
+  border-color:var(--ficha-teal-strong)!important;
+  box-shadow:0 3px 10px rgba(7,94,107,.22)!important;
+}
+
+/* Cartoes principais */
+.prontuario-page .tab-panel > .fusion-card,
+.prontuario-page .comercial-card{
+  background:#fff!important;
+  border:1px solid var(--ficha-border)!important;
+  color:var(--ficha-ink)!important;
+  box-shadow:0 6px 18px rgba(20,45,53,.07)!important;
+}
+.prontuario-page .tab-panel > .fusion-card :is(h2,h3,h4,h5,strong){
+  color:#102a32!important;
+  opacity:1!important;
+  text-shadow:none!important;
+}
+.prontuario-page .tab-panel > .fusion-card :is(p,span,small,label,time){
+  color:var(--ficha-muted)!important;
+  opacity:1!important;
+  text-shadow:none!important;
+}
+
+/* Cartoes dinamicos */
+.prontuario-page :is(.mini-card,.timeline-row,.info-item,.empty,.servico-check-row),
+.prontuario-page .cards-list > *{
+  background:#f8fbfc!important;
+  border:1px solid #b7cdd2!important;
+  color:var(--ficha-ink)!important;
+  opacity:1!important;
+  text-shadow:none!important;
+}
+.prontuario-page :is(.mini-card,.timeline-row,.info-item,.empty,.servico-check-row) :is(h4,strong,b),
+.prontuario-page .cards-list > * :is(h4,strong,b){
+  color:#102a32!important;
+  opacity:1!important;
+}
+.prontuario-page :is(.mini-card,.timeline-row,.info-item,.empty,.servico-check-row) :is(p,span,small,time,label),
+.prontuario-page .cards-list > * :is(p,span,small,time,label){
+  color:#405d66!important;
+  opacity:1!important;
+}
+
+/* Tabelas */
+.prontuario-page .table-wrap{
+  background:#fff!important;
+  border:1px solid var(--ficha-border)!important;
+}
+.prontuario-page .alunos-table thead th{
+  background:#0b4452!important;
+  color:#fff!important;
+  border-color:#2a6876!important;
+  opacity:1!important;
+  text-shadow:none!important;
+}
+.prontuario-page .alunos-table tbody tr{
+  background:#fff!important;
+}
+.prontuario-page .alunos-table tbody tr:nth-child(even){
+  background:#f4f8f9!important;
+}
+.prontuario-page .alunos-table tbody td,
+.prontuario-page .alunos-table tbody td *{
+  color:#17343d!important;
+  opacity:1!important;
+  text-shadow:none!important;
+}
+
+/* Inputs e selects */
+.prontuario-page :is(input,select,textarea){
+  background:#fff!important;
+  color:#102a32!important;
+  border-color:#8eacb4!important;
+  opacity:1!important;
+}
+.prontuario-page :is(input,select,textarea)::placeholder{
+  color:#607982!important;
+  opacity:1!important;
+}
+.prontuario-page select option{
+  background:#fff!important;
+  color:#102a32!important;
+}
+
+/* Acoes internas: evita texto branco em ciano claro */
+.prontuario-page .tab-panel .fusion-button,
+.prontuario-page .tab-panel .prontuario-receber-btn,
+.prontuario-page .tab-panel button:not(.tab){
+  background:var(--ficha-teal-strong)!important;
+  color:#fff!important;
+  border:1px solid var(--ficha-teal-strong)!important;
+  font-weight:800!important;
+  text-shadow:none!important;
+  opacity:1!important;
+}
+.prontuario-page .tab-panel .fusion-button:hover,
+.prontuario-page .tab-panel .prontuario-receber-btn:hover,
+.prontuario-page .tab-panel button:not(.tab):hover{
+  background:#064c58!important;
+  border-color:#064c58!important;
+}
+
+/* Links e chips */
+.prontuario-page a{
+  color:#075e6b!important;
+  font-weight:800!important;
+  text-decoration:underline!important;
+  text-underline-offset:2px!important;
+}
+.prontuario-page .chip{
+  background:#e8f4f6!important;
+  color:#123943!important;
+  border:1px solid #87b6bf!important;
+}
+.prontuario-page .chip.ok{
+  background:#dcfce7!important;
+  color:#166534!important;
+  border-color:#86d9a5!important;
+}
+.prontuario-page .chip.warn{
+  background:#fef3c7!important;
+  color:#854d0e!important;
+  border-color:#e7bd55!important;
+}
+.prontuario-page .chip.bad{
+  background:#fee2e2!important;
+  color:#991b1b!important;
+  border-color:#f2a6a6!important;
+}
+
+/* Totais */
+.prontuario-page .contrato-total-box > div{
+  background:#f5f9fa!important;
+  border:1px solid #b7cdd2!important;
+}
+.prontuario-page .contrato-total-box > div :is(span,strong){
+  color:#17343d!important;
+  opacity:1!important;
+}
+.prontuario-page .contrato-total-box .total-final{
+  background:#dff3f6!important;
+  border-color:#70b5c1!important;
+}
+.prontuario-page .contrato-total-box .total-final strong{
+  color:#064c58!important;
+}
+
+@media (max-width:900px){
+  .prontuario-page .prontuario-tabs .tab{
+    min-height:44px!important;
+    font-size:13px!important;
+  }
+}
+
+@media print{
+  .prontuario-page .prontuario-header.fusion-card,
+  .prontuario-page .tab-panel > .fusion-card,
+  .prontuario-page :is(.mini-card,.timeline-row,.info-item,.empty),
+  .prontuario-page .cards-list > *{
+    background:#fff!important;
+    color:#111!important;
+    box-shadow:none!important;
+  }
+}
