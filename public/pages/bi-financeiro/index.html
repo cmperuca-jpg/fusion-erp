@@ -38,20 +38,22 @@
       <label>Início<input id="filtroInicio" type="date"></label>
       <label>Fim<input id="filtroFim" type="date"></label>
       <label>Tipo<select id="filtroTipo"><option value="">Todos</option><option value="receita">Receitas</option><option value="despesa">Despesas</option></select></label>
-      <label>Status<select id="filtroStatus"><option value="">Todos</option><option value="realizado">Realizados</option><option value="aberto">Abertos</option><option value="vencido">Vencidos</option></select></label>
+      <label>Status<select id="filtroStatus"><option value="">Todos</option><option value="realizado">Realizados</option><option value="aberto">Abertos</option><option value="parcial">Parciais</option><option value="programado">Programados</option><option value="vencido">Vencidos</option></select></label>
       <button id="btnLimparBI" type="button">Limpar</button>
     </div>
   </section>
 
   <section class="bi-kpis">
     <div class="card"><span>Recebido liquido</span><strong id="kpiRecebido">R$ 0,00</strong><small>Entradas liquidas realizadas</small></div>
-    <div class="card"><span>A receber</span><strong id="kpiReceber">R$ 0,00</strong><small>Receitas em aberto</small></div>
+    <div class="card"><span>A receber</span><strong id="kpiReceber">R$ 0,00</strong><small>Receitas exigíveis em aberto</small></div>
+    <div class="card"><span>Programado a receber</span><strong id="kpiProgramadoReceber">R$ 0,00</strong><small>Receitas futuras já previstas</small></div>
     <div class="card"><span>Pago</span><strong id="kpiPago">R$ 0,00</strong><small>Saídas realizadas</small></div>
-    <div class="card"><span>A pagar</span><strong id="kpiPagar">R$ 0,00</strong><small>Despesas em aberto</small></div>
+    <div class="card"><span>A pagar</span><strong id="kpiPagar">R$ 0,00</strong><small>Despesas exigíveis em aberto</small></div>
+    <div class="card"><span>Programado a pagar</span><strong id="kpiProgramadoPagar">R$ 0,00</strong><small>Despesas futuras já previstas</small></div>
     <div class="card"><span>Vencido a receber</span><strong id="kpiVencidoReceber">R$ 0,00</strong><small>Inadimplência</small></div>
     <div class="card"><span>Vencido a pagar</span><strong id="kpiVencidoPagar">R$ 0,00</strong><small>Compromissos vencidos</small></div>
     <div class="card"><span>Saldo realizado</span><strong id="kpiSaldoRealizado">R$ 0,00</strong><small>Recebido liquido menos pago</small></div>
-    <div class="card"><span>Saldo liquido previsto</span><strong id="kpiSaldoPrevisto">R$ 0,00</strong><small>Liquido realizado + aberto</small></div>
+    <div class="card"><span>Saldo líquido previsto</span><strong id="kpiSaldoPrevisto" style="white-space:nowrap">R$ 0,00</strong><small>Realizado + aberto + programado</small></div>
   </section>
 
   <section class="bi-kpis bi-kpis-secundarios">
@@ -82,7 +84,7 @@
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="/js/bi-financeiro/index.js?v=20260728-graficos-1"></script>
+<script src="/js/bi-financeiro/index.js?v=20260807-bi-contabil-v2"></script>
 <script src="/assets/js/fusion-layout.js"></script>
 
 <script src="/assets/pwa/fusion-pwa-install.js" defer></script>

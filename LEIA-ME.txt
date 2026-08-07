@@ -1,117 +1,74 @@
-FUSION ERP — CONSOLIDAÇÃO CONTÁBIL/FINANCEIRA
+FUSION ERP — CORREÇÃO FINAL CAIXA + BI FINANCEIRO
 Data: 07/08/2026
 
-ARQUIVOS ALTERADOS
-==================
-modules/financeiro/relatorios.service.mjs
-public/pages/bi-financeiro/index.js
-modules/financeiro/caixa.service.mjs
-modules/financeiro/mensalidades.service.mjs
-public/pages/caixa/index.js
-
-OBJETIVO
+ARQUIVOS
 ========
-Unificar a matemática financeira entre:
-- Financeiro
-- Mensalidades
-- Recebimentos
-- Pagamentos
-- Caixa
-- Relatório Diário de Caixa
-- BI Financeiro
-- Dashboard
+modules/financeiro/caixa.service.mjs
+public/js/bi-financeiro/index.js
+public/pages/bi-financeiro/index.html
 
-CORREÇÕES PRINCIPAIS
-====================
-1) BRUTO - TAXA = LÍQUIDO
-Quando existe taxa explícita, o líquido é recalculado por:
-  líquido = bruto - taxa
-Isso corrige registros históricos em que a taxa foi descontada duas vezes.
+ERRO 1 — CAIXA
+==============
+Causa:
+Uma saída histórica de R$ 4.500,00 não possui campo valorLiquido.
+O helper numérico convertia campo ausente em zero. A rotina então inferia,
+erradamente, uma taxa de R$ 4.500,00 e líquido zero para a saída.
 
-Exemplo auditado:
-  R$ 65,00 - R$ 1,94 = R$ 63,06
-e não R$ 61,12.
+Correção:
+- taxa só é inferida por bruto - líquido quando o campo líquido realmente existe;
+- se não existe taxa e não existe líquido informado, líquido = bruto;
+- uma saída histórica de R$ 4.500,00 passa a reduzir também o saldo líquido.
 
-2) CAIXA
-O Caixa agora valida:
-  saldo bruto = entradas brutas - saídas brutas
-  saldo líquido = entradas líquidas - saídas líquidas
+Resultado esperado:
+Entradas brutas........ R$ 3.290,01
+Taxas.................. R$     3,26
+Entradas líquidas...... R$ 3.286,75
+Saídas................. R$ 4.500,00
+Saldo bruto............ -R$ 1.209,99
+Saldo líquido.......... -R$ 1.213,25
 
-O backend também cruza movimento com Financeiro/Recebimento/Recibo para
-recuperar a taxa correta quando movimentos antigos não carregam a taxa.
+Como o Financeiro principal consulta /api/caixa/atual, o cartão "Caixa líquido"
+também deve passar para -R$ 1.213,25.
 
-3) BI FINANCEIRO
-O frontend deixa de usar o valor original de título parcial como saldo pendente.
-Agora usa:
-  valorPendente
+ERRO 2 — BI FINANCEIRO
+======================
+Causa:
+O JavaScript real carregado pela página ainda usava l.valor nos títulos
+não realizados. Assim, um título parcial de R$ 5.700,00 com R$ 4.500,00
+já pagos continuava aparecendo como R$ 5.700,00 pendentes.
 
-Exemplo:
-  título R$ 5.700,00
-  pago R$ 4.500,00
-  pendente R$ 1.200,00
+Correção:
+- não realizado usa valorPendente;
+- título parcial passa a representar R$ 1.200,00 pendentes;
+- Programado fica separado de Aberto;
+- saldo previsto inclui Aberto + Programado;
+- resumo oficial do backend é usado quando não há filtro local;
+- filtros ganharam Parcial e Programado;
+- BI ganhou cartões Programado a receber e Programado a pagar;
+- tabelas e gráficos usam valorPendente quando aplicável.
 
-O saldo previsto inclui separadamente:
-  realizado + aberto + programado
+Resultado esperado:
+Recebido líquido....... R$ 3.286,75
+A receber.............. R$   130,00
+Programado a receber... R$ 3.055,00
+Pago................... R$ 4.500,00
+A pagar................ R$ 1.200,00
+Programado a pagar..... R$ 5.700,00
+Vencido a receber...... R$   130,00
+Vencido a pagar........ R$ 1.200,00
+Saldo realizado........ -R$ 1.213,25
+Saldo líquido previsto. -R$ 4.928,25
 
-4) DEDUPLICAÇÃO DE RECORRÊNCIA
-No BI, um título Programado redundante não é somado quando já existe a cobrança
-emitida para o mesmo aluno/matrícula/plano/competência.
-
-5) MENSALIDADES
-- Programada futura permanece Programada.
-- No vencimento passa a Aberta.
-- Depois do vencimento passa a Atrasada.
-- Registros futuros criados manualmente passam a nascer como Programados.
-- Duplicidade Programada x Emitida é ocultada pela origem persistida, mesmo
-  depois que o vencimento já passou.
-- Saldo em atraso é reconstruído quando registros antigos guardaram saldo zero
-  indevidamente.
-- Mensalidade paga não volta a entrar em "valor previsto".
-
-6) FUSO HORÁRIO
-Mensalidades e Caixa passam a usar America/Sao_Paulo para a data operacional.
-
-VALORES DE CONTROLE DO DIAGNÓSTICO
-==================================
-Estes valores são as referências matemáticas do estado analisado da Academia Piloto:
-
-Entradas brutas efetivas............. R$ 3.290,01
-Taxas financeiras corretas........... R$     3,26
-Entradas líquidas corretas............ R$ 3.286,75
-Saídas efetivamente pagas............ R$ 4.500,00
-Saldo realizado correto.............. -R$ 1.213,25
-
-Conta parcial:
-Título................................. R$ 5.700,00
-Pago................................... R$ 4.500,00
-Saldo vencido.......................... R$ 1.200,00
-Título futuro.......................... R$ 5.700,00
-Necessidade de pagamentos 30 dias..... R$ 6.900,00
-
-Mensalidades de agosto:
-Pagas.................................. R$   555,00
-Atrasadas.............................. R$   130,00
-Programadas válidas.................... R$ 2.535,00
-
-Saldo projetado total, considerando todos os títulos conhecidos e removendo
-as duas previsões redundantes identificadas no diagnóstico:
-....................................... -R$ 4.928,25
-
-IMPORTANTE
-==========
-Este ZIP altera CÓDIGO. Ele não apaga nem modifica registros históricos no Supabase.
-
-Os dois títulos Programados redundantes e o registro histórico com líquido incorreto
-continuam existindo fisicamente no banco até uma reconciliação de dados específica.
-O código deste pacote impede que essas inconsistências contaminem os principais
-cálculos consolidados.
-
-Depois do deploy:
-1. Aguarde o Render ficar Live.
-2. Faça Ctrl+F5.
-3. Compare Financeiro, Caixa, Relatório Diário e BI.
-4. Só depois faça a reconciliação física dos registros históricos.
+CACHE
+=====
+A página agora carrega:
+/js/bi-financeiro/index.js?v=20260807-bi-contabil-v2
 
 VALIDAÇÃO
 =========
-Todos os 5 arquivos passaram no node --check.
+node --check public/js/bi-financeiro/index.js: OK
+node --check modules/financeiro/caixa.service.mjs: OK
+
+Teste matemático:
+R$ 3.290,01 - R$ 3,26 - R$ 4.500,00 = -R$ 1.213,25
+Saldo previsto consolidado = -R$ 4.928,25

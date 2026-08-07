@@ -128,6 +128,17 @@ function taxaExplicita(registro = {}) {
   return numero(registro.taxaOperadoraValor ?? registro.taxaValor ?? registro.taxa, 0);
 }
 
+function valorNumericoInformado(registro = {}, campos = []) {
+  for (const campo of campos) {
+    if (!Object.prototype.hasOwnProperty.call(registro, campo)) continue;
+    const bruto = registro[campo];
+    if (bruto === null || bruto === undefined || String(bruto).trim() === '') continue;
+    const n = Number(String(bruto).replace(',', '.'));
+    if (Number.isFinite(n)) return n;
+  }
+  return null;
+}
+
 function construirContextoFinanceiro(financeiro = [], recibos = [], recebimentos = []) {
   const financeiroPorId = new Map();
   const financeiroPorMovimento = new Map();
@@ -197,22 +208,37 @@ function taxaMovimento(movimento = {}, contexto = {}) {
   const taxaRecibo = taxaExplicita(recibo || {});
   if (taxaRecibo > 0) return taxaRecibo;
 
+  // Só infere taxa pela diferença bruto-líquido quando o líquido realmente
+  // existe no registro. Campo ausente não pode ser convertido em zero.
+  const liquidoInformado = valorNumericoInformado(
+    movimento,
+    ['valorLiquido', 'valorRecebidoLiquido']
+  );
+  if (liquidoInformado === null) return 0;
+
   const bruto = valorBrutoMovimento(movimento);
-  const liquido = numero(movimento.valorLiquido ?? movimento.valorRecebidoLiquido, bruto);
-  return Math.max(0, Number((bruto - liquido).toFixed(2)));
+  return Math.max(0, Number((bruto - liquidoInformado).toFixed(2)));
 }
 
 function valorLiquidoMovimento(movimento = {}, contexto = {}) {
   const bruto = valorBrutoMovimento(movimento);
   const taxa = taxaMovimento(movimento, contexto);
   const liquidoCalculado = Math.max(0, Number((bruto - taxa).toFixed(2)));
-  const liquidoInformado = numero(movimento.valorLiquido ?? movimento.valorRecebidoLiquido, NaN);
+  const liquidoInformado = valorNumericoInformado(
+    movimento,
+    ['valorLiquido', 'valorRecebidoLiquido']
+  );
 
-  // Havendo taxa explícita no movimento, no financeiro ou no recibo, a
-  // identidade contábil bruto - taxa = líquido prevalece sobre histórico corrompido.
+  // Havendo taxa explícita no movimento, no financeiro, no recebimento ou
+  // no recibo, bruto - taxa = líquido é a identidade contábil canônica.
   if (taxa > 0) return liquidoCalculado;
-  if (Number.isFinite(liquidoInformado) && liquidoInformado > 0) return liquidoInformado;
-  return liquidoCalculado;
+
+  // Sem taxa e com líquido informado, preserva o valor explícito.
+  if (liquidoInformado !== null) return Math.max(0, Number(liquidoInformado.toFixed(2)));
+
+  // Movimento sem campo líquido e sem taxa (caso típico de saída histórica):
+  // líquido = bruto. Isso impede uma saída de R$ 4.500 de virar líquido zero.
+  return bruto;
 }
 
 function criarTotaisZerados() {

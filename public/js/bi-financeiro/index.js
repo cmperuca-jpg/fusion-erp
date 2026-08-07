@@ -15,9 +15,72 @@ function setValor(id, v) { const el = document.getElementById(id); if (el) el.va
 function hojeISO() { return new Date().toISOString().slice(0, 10); }
 function statusAnalitico(linha) {
   if (linha.programado) return 'programado';
+  if (linha.parcial) return 'parcial';
   if (linha.realizado) return 'realizado';
   if (linha.vencimento && linha.vencimento < hojeISO()) return 'vencido';
   return 'aberto';
+}
+
+function valorLinha(linha = {}) {
+  return numero(
+    linha.realizado
+      ? (linha.valorRealizado ?? linha.valor)
+      : (linha.valorPendente ?? linha.valor)
+  );
+}
+
+function resumoCanonicoDasLinhas(linhas = []) {
+  const hoje = hojeISO();
+
+  // componenteParcialRealizado é um evento realizado auxiliar; não é um
+  // segundo título. Ele pode participar do realizado, mas não dos saldos.
+  const titulos = linhas.filter(l => !l.componenteParcialRealizado);
+  const receitasTitulos = titulos.filter(l => l.tipo === 'receita');
+  const despesasTitulos = titulos.filter(l => l.tipo === 'despesa');
+
+  const receitasAbertas = receitasTitulos.filter(l => !l.realizado && !l.programado);
+  const despesasAbertas = despesasTitulos.filter(l => !l.realizado && !l.programado);
+  const receitasProgramadas = receitasTitulos.filter(l => !l.realizado && l.programado);
+  const despesasProgramadas = despesasTitulos.filter(l => !l.realizado && l.programado);
+
+  const recebido = linhas
+    .filter(l => l.tipo === 'receita' && l.realizado)
+    .reduce((s, l) => s + valorLinha(l), 0);
+  const pago = linhas
+    .filter(l => l.tipo === 'despesa' && l.realizado)
+    .reduce((s, l) => s + valorLinha(l), 0);
+
+  const receber = receitasAbertas.reduce((s, l) => s + valorLinha(l), 0);
+  const pagar = despesasAbertas.reduce((s, l) => s + valorLinha(l), 0);
+  const programadoReceber = receitasProgramadas.reduce((s, l) => s + valorLinha(l), 0);
+  const programadoPagar = despesasProgramadas.reduce((s, l) => s + valorLinha(l), 0);
+  const vencidoReceber = receitasAbertas
+    .filter(l => l.vencimento && l.vencimento < hoje)
+    .reduce((s, l) => s + valorLinha(l), 0);
+  const vencidoPagar = despesasAbertas
+    .filter(l => l.vencimento && l.vencimento < hoje)
+    .reduce((s, l) => s + valorLinha(l), 0);
+  const taxasFinanceiras = linhas
+    .filter(l => l.realizado)
+    .reduce((s, l) => s + numero(l.taxa || l.taxaOperadoraValor || 0), 0);
+
+  return {
+    recebido,
+    receber,
+    pago,
+    pagar,
+    programadoReceber,
+    programadoPagar,
+    vencidoReceber,
+    vencidoPagar,
+    taxasFinanceiras,
+    saldoRealizado: recebido - pago,
+    saldoPrevisto:
+      (recebido + receber + programadoReceber) -
+      (pago + pagar + programadoPagar),
+    qtdReceitas: receitasTitulos.length,
+    qtdDespesas: despesasTitulos.length
+  };
 }
 function paramsFiltro() {
   const p = new URLSearchParams();
@@ -35,30 +98,27 @@ function linhasFiltradasLocal() {
   });
 }
 function aplicarResumo(resumo = {}, linhas = []) {
-  const operacionais = linhas.filter(l => !l.programado);
-  const receitas = operacionais.filter(l => l.tipo === 'receita');
-  const despesas = operacionais.filter(l => l.tipo === 'despesa');
-  const recebidas = receitas.filter(l => l.realizado);
-  const hoje = hojeISO();
-  const recebido = receitas.filter(l => l.realizado).reduce((s, l) => s + numero(l.valorRealizado || l.valor), 0);
-  const receber = receitas.filter(l => !l.realizado).reduce((s, l) => s + numero(l.valor), 0);
-  const pago = despesas.filter(l => l.realizado).reduce((s, l) => s + numero(l.valorRealizado || l.valor), 0);
-  const pagar = despesas.filter(l => !l.realizado).reduce((s, l) => s + numero(l.valor), 0);
-  const vencidoReceber = receitas.filter(l => !l.realizado && l.vencimento && l.vencimento < hoje).reduce((s, l) => s + numero(l.valor), 0);
-  const vencidoPagar = despesas.filter(l => !l.realizado && l.vencimento && l.vencimento < hoje).reduce((s, l) => s + numero(l.valor), 0);
-  const taxas = linhas.reduce((s, l) => s + numero(l.taxa || l.taxaOperadoraValor || 0), 0);
-  setTexto('kpiRecebido', moeda(recebido || resumo.recebido));
-  setTexto('kpiReceber', moeda(receber || resumo.receber));
-  setTexto('kpiPago', moeda(pago || resumo.pago));
-  setTexto('kpiPagar', moeda(pagar || resumo.pagar));
-  setTexto('kpiVencidoReceber', moeda(vencidoReceber || resumo.vencidoReceber));
-  setTexto('kpiVencidoPagar', moeda(vencidoPagar || resumo.vencidoPagar));
-  setTexto('kpiSaldoRealizado', moeda((recebido - pago) || resumo.saldoRealizado));
-  setTexto('kpiSaldoPrevisto', moeda(((recebido + receber) - (pago + pagar)) || resumo.saldoPrevisto));
-  setTexto('kpiTicketMedio', moeda(recebidas.length ? recebido / recebidas.length : 0));
-  setTexto('kpiTaxas', moeda(taxas || resumo.taxasFinanceiras || 0));
-  setTexto('kpiQtdReceitas', String(receitas.length));
-  setTexto('kpiQtdDespesas', String(despesas.length));
+  const filtroLocalAtivo = Boolean(valor('filtroTipo') || valor('filtroStatus'));
+  const calculado = resumoCanonicoDasLinhas(linhas);
+  const r = filtroLocalAtivo ? calculado : resumo;
+
+  const recebidas = linhas.filter(l => l.tipo === 'receita' && l.realizado);
+  const recebidoTicket = recebidas.reduce((s, l) => s + valorLinha(l), 0);
+
+  setTexto('kpiRecebido', moeda(r.recebido ?? 0));
+  setTexto('kpiReceber', moeda(r.receber ?? 0));
+  setTexto('kpiProgramadoReceber', moeda(r.programadoReceber ?? 0));
+  setTexto('kpiPago', moeda(r.pago ?? 0));
+  setTexto('kpiPagar', moeda(r.pagar ?? 0));
+  setTexto('kpiProgramadoPagar', moeda(r.programadoPagar ?? 0));
+  setTexto('kpiVencidoReceber', moeda(r.vencidoReceber ?? 0));
+  setTexto('kpiVencidoPagar', moeda(r.vencidoPagar ?? 0));
+  setTexto('kpiSaldoRealizado', moeda(r.saldoRealizado ?? 0));
+  setTexto('kpiSaldoPrevisto', moeda(r.saldoPrevisto ?? 0));
+  setTexto('kpiTicketMedio', moeda(recebidas.length ? recebidoTicket / recebidas.length : 0));
+  setTexto('kpiTaxas', moeda(r.taxasFinanceiras ?? 0));
+  setTexto('kpiQtdReceitas', String(r.qtdReceitas ?? calculado.qtdReceitas ?? 0));
+  setTexto('kpiQtdDespesas', String(r.qtdDespesas ?? calculado.qtdDespesas ?? 0));
 }
 function destruirGrafico(id) { if (graficos[id]) { graficos[id].destroy(); delete graficos[id]; } }
 function semDadosGrafico(id) { destruirGrafico(id); const canvas = document.getElementById(id); if (canvas) canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height); }
@@ -120,17 +180,38 @@ function aplicarGraficos(linhas) {
   const operacionais = linhas.filter(l => !l.programado);
   const receitas = operacionais.filter(l => l.tipo === 'receita');
   const despesas = operacionais.filter(l => l.tipo === 'despesa');
-  const receitasMes = agrupar(receitas, l => String(l.data || l.vencimento || '').slice(0, 7), l => l.realizado ? (l.valorRealizado || l.valor) : l.valor);
-  const despesasMes = agrupar(despesas, l => String(l.data || l.vencimento || '').slice(0, 7), l => l.realizado ? (l.valorRealizado || l.valor) : l.valor);
+  const receitasMes = agrupar(
+    receitas,
+    l => String(l.data || l.vencimento || '').slice(0, 7),
+    valorLinha
+  );
+  const despesasMes = agrupar(
+    despesas,
+    l => String(l.data || l.vencimento || '').slice(0, 7),
+    valorLinha
+  );
   const meses = [...new Set([...receitasMes.map(x => x.chave), ...despesasMes.map(x => x.chave)])].sort();
   const fluxo = meses.map(mes => {
     const r = receitasMes.find(x => x.chave === mes)?.valor || 0;
     const d = despesasMes.find(x => x.chave === mes)?.valor || 0;
     return { mes, receitas: r, despesas: d, saldo: Number((r - d).toFixed(2)) };
   });
-  const status = agrupar(linhas, l => l.programado ? 'Programado' : (l.realizado ? (l.tipo === 'receita' ? 'Recebido' : 'Pago') : (statusAnalitico(l) === 'vencido' ? 'Vencido' : 'Aberto')), l => l.realizado ? (l.valorRealizado || l.valor) : l.valor);
-  const receitaCat = agrupar(receitas, l => l.categoria, l => l.realizado ? (l.valorRealizado || l.valor) : l.valor).sort((a, b) => b.valor - a.valor).slice(0, 10);
-  const despesaCat = agrupar(despesas, l => l.categoria, l => l.realizado ? (l.valorRealizado || l.valor) : l.valor).sort((a, b) => b.valor - a.valor).slice(0, 10);
+
+  const status = agrupar(
+    linhas.filter(l => !l.componenteParcialRealizado),
+    l => {
+      const st = statusAnalitico(l);
+      if (st === 'programado') return 'Programado';
+      if (st === 'parcial') return 'Parcial';
+      if (st === 'realizado') return l.tipo === 'receita' ? 'Recebido' : 'Pago';
+      if (st === 'vencido') return 'Vencido';
+      return 'Aberto';
+    },
+    valorLinha
+  );
+
+  const receitaCat = agrupar(receitas, l => l.categoria, valorLinha).sort((a, b) => b.valor - a.valor).slice(0, 10);
+  const despesaCat = agrupar(despesas, l => l.categoria, valorLinha).sort((a, b) => b.valor - a.valor).slice(0, 10);
   graficoBarras('graficoReceitas', receitasMes.map(x => x.chave), receitasMes.map(x => x.valor), 'Receitas');
   graficoBarras('graficoDespesas', despesasMes.map(x => x.chave), despesasMes.map(x => x.valor), 'Despesas');
   graficoFluxo('graficoFluxo', fluxo);
@@ -142,7 +223,7 @@ function tabelaLinhas(id, linhas, limite = 20) {
   const el = document.getElementById(id); if (!el) return;
   const dados = linhas.slice(0, limite);
   if (!dados.length) { el.innerHTML = '<p class="bi-empty">Nenhum registro encontrado.</p>'; return; }
-  el.innerHTML = `<div class="bi-table-wrap"><table class="bi-table"><thead><tr><th>Data</th><th>Tipo</th><th>Descrição</th><th>Pessoa</th><th>Categoria</th><th>Valor</th></tr></thead><tbody>${dados.map(l => `<tr><td>${esc(l.vencimento || l.data || '-')}</td><td><span class="bi-badge ${esc(l.tipo)}">${l.tipo === 'receita' ? 'Receita' : 'Despesa'}</span></td><td>${esc(l.descricao || '-')}</td><td>${esc(l.pessoa || '-')}</td><td>${esc(l.categoria || '-')}</td><td><strong>${moeda(l.realizado ? (l.valorRealizado || l.valor) : l.valor)}</strong></td></tr>`).join('')}</tbody></table></div>`;
+  el.innerHTML = `<div class="bi-table-wrap"><table class="bi-table"><thead><tr><th>Data</th><th>Tipo</th><th>Descrição</th><th>Pessoa</th><th>Categoria</th><th>Valor</th></tr></thead><tbody>${dados.map(l => `<tr><td>${esc(l.vencimento || l.data || '-')}</td><td><span class="bi-badge ${esc(l.tipo)}">${l.tipo === 'receita' ? 'Receita' : 'Despesa'}</span></td><td>${esc(l.descricao || '-')}</td><td>${esc(l.pessoa || '-')}</td><td>${esc(l.categoria || '-')}</td><td><strong>${moeda(valorLinha(l))}</strong></td></tr>`).join('')}</tbody></table></div>`;
 }
 function aplicarTabelas(linhas) {
   const hoje = hojeISO();
