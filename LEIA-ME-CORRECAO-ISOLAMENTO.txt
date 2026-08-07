@@ -1,0 +1,67 @@
+FUSION ERP — CORREÇÃO CRÍTICA DE ISOLAMENTO DE DADOS
+Data: 07/08/2026
+
+DIAGNÓSTICO CONFIRMADO NO SUPABASE
+==================================
+O banco da Studio Fitness NÃO contém os dados da Academia Piloto.
+
+Contagem atual:
+academia-piloto:
+- modalidades: 3
+- planos: 5
+- professores: 1
+- turmas: 4
+- usuarios: 4
+
+studio-fitness:
+- usuarios: 1
+- planos: 0
+- professores: 0
+- modalidades: 0
+- turmas: 0
+
+CAUSA REAL
+==========
+Alguns módulos antigos ignoravam a persistência multiempresa e liam diretamente
+arquivos compartilhados do servidor:
+
+data/planos.json
+data/professores.json
+data/modalidades.json
+data/turmas.json
+
+Esses arquivos contêm os dados legados da Academia Piloto. Por isso uma sessão
+da Studio Fitness conseguia ENXERGAR os dados da piloto mesmo que o Supabase
+estivesse corretamente separado por tenant_id.
+
+CORREÇÃO
+========
+Os quatro repositórios passam a usar:
+modules/core/persistence/durable-json.mjs
+
+Esse armazenamento usa o tenant ativo da sessão e o Supabase fusion_v3_records.
+
+Resultado esperado após o deploy:
+- Academia Piloto continua com seus 5 planos, 1 professor, 3 modalidades e 4 turmas.
+- Studio Fitness começa vazia nesses quatro módulos.
+- Criar um plano/professor/modalidade/turma na Studio Fitness grava somente
+  em studio-fitness.
+- Criar/editar na Academia Piloto permanece somente em academia-piloto.
+
+IMPORTANTE
+==========
+NÃO APAGUE os planos/professores que aparecem na Studio Fitness antes do patch.
+Eles não estão cadastrados no tenant Studio Fitness. Eles apenas estavam sendo
+lidos do arquivo compartilhado da Academia Piloto.
+
+COMO APLICAR
+============
+1. Faça backup do projeto.
+2. Extraia este ZIP na raiz do fusion-erp.
+3. Substitua os quatro arquivos.
+4. Commit/push.
+5. Aguarde o Render mostrar Deploy live.
+6. Feche a sessão/PWA e entre novamente na Studio Fitness.
+7. Teste Planos, Professores, Modalidades e Turmas.
+
+Não há migration de banco neste pacote.

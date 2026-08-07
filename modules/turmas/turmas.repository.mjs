@@ -1,34 +1,24 @@
-import fs from "fs/promises";
-import path from "path";
-import { fileURLToPath } from "url";
+import { lerJsonDuravel, salvarJsonDuravel } from "../core/persistence/durable-json.mjs";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const DATA_PATH = path.join(__dirname, "../../data/turmas.json");
+const ARQUIVO = "turmas.json";
 
-async function garantirArquivo() {
-  try {
-    await fs.access(DATA_PATH);
-  } catch {
-    await fs.mkdir(path.dirname(DATA_PATH), { recursive: true });
-    await fs.writeFile(DATA_PATH, "[]", "utf8");
-  }
+function listaSegura(dados) {
+  return Array.isArray(dados) ? dados : [];
 }
 
 export async function listarTurmas() {
-  await garantirArquivo();
-  const conteudo = await fs.readFile(DATA_PATH, "utf8");
-  return JSON.parse(conteudo || "[]");
+  return listaSegura(await lerJsonDuravel(ARQUIVO, []));
 }
 
 export async function salvarTurmas(turmas) {
-  await garantirArquivo();
-  await fs.writeFile(DATA_PATH, JSON.stringify(turmas, null, 2), "utf8");
+  const lista = listaSegura(turmas);
+  await salvarJsonDuravel(ARQUIVO, lista);
+  return lista;
 }
 
 export async function buscarTurmaPorId(id) {
   const turmas = await listarTurmas();
-  return turmas.find((turma) => String(turma.id) === String(id));
+  return turmas.find((turma) => String(turma.id) === String(id)) || null;
 }
 
 export async function criarTurma(dados) {
