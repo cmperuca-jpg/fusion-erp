@@ -1,51 +1,65 @@
-FUSION ERP — RECEBIMENTOS
-Previsão de caixa — próximos 30 dias
+FUSION ERP — PAGAMENTOS
+Correção de Programado + Previsão de pagamentos — 30 dias
 Data: 07/08/2026
 
-ARQUIVOS ALTERADOS
-==================
-public/pages/recebimentos/index.html
-public/pages/recebimentos/index.js
+ARQUIVOS
+========
+public/pages/financeiro/pagamentos/index.html
+public/pages/financeiro/pagamentos/index.js
 
-REGRA DO NOVO INDICADOR
-=======================
-O antigo KPI "Valor bruto" foi substituído por:
-"Previsão de caixa — 30 dias"
+STATUS
+======
+Regra aplicada:
+- título com vencimento futuro e saldo > 0: Programado;
+- título Programado NÃO entra como Aberto;
+- Programado NÃO entra como Vencido;
+- Programado CONTINUA disponível para baixa antecipada;
+- Parcial continua Parcial quando já existe pagamento parcial;
+- Pago, Cancelado e Estornado mantêm seus estados.
 
-O cálculo considera somente títulos:
-- com status Aberto, Parcial ou Programado;
-- com vencimento entre hoje e hoje + 30 dias;
-- com valor ainda disponível para recebimento.
+EXEMPLO DA TELA ANALISADA
+=========================
+Hoje: 07/08/2026
 
-Não entram:
-- Pago / Recebido;
-- Cancelado;
-- Estornado;
-- títulos vencidos antes de hoje;
-- títulos com vencimento depois da janela de 30 dias.
+15/07/2026
+Valor original: R$ 5.700,00
+Pago: R$ 4.500,00
+Saldo: R$ 1.200,00
+Situação: Parcial + vencido
 
-VALORES
-=======
-- Programado: usa o valor ainda baixável, mesmo quando o saldo contábil do
-  título programado é zero.
-- Parcial: usa somente o saldo restante.
-- Aberto: usa somente o saldo restante.
+15/08/2026
+Valor: R$ 5.700,00
+Pago: R$ 0,00
+Saldo: R$ 5.700,00
+Situação: Programado
+Baixa antecipada: permitida
 
-IMPORTANTE
-==========
-A coluna "Valor bruto" da tabela NÃO foi alterada, pois ali ela representa
-corretamente o valor nominal de cada título individual.
+PREVISÃO DE PAGAMENTOS — 30 DIAS
+================================
+O antigo "Valor previsto" somava os valores originais:
+R$ 5.700 + R$ 5.700 = R$ 11.400
 
-Também foi adicionado "Programado" ao filtro de status.
+Agora o indicador soma NECESSIDADE REAL DE CAIXA:
+- todo saldo vencido ainda pendente;
+- mais saldos com vencimento até 30 dias à frente;
+- exclui Pago, Cancelado e Estornado.
+
+No exemplo:
+R$ 1.200 vencido pendente
++ R$ 5.700 programado em 15/08
+= R$ 6.900 de previsão de pagamentos.
+
+EM ABERTO
+=========
+Programado não entra em "Em aberto".
+No exemplo, "Em aberto" passa a refletir somente o saldo já exigível:
+R$ 1.200,00.
 
 CACHE
 =====
-O index.html agora chama:
-index.js?v=20260807-previsao-caixa-30d-1
-
-Isso ajuda navegador/PWA a carregar a versão nova.
+O HTML chama:
+index.js?v=20260807-pagamentos-programado-previsao30-1
 
 VALIDAÇÃO
 =========
-node --check public/pages/recebimentos/index.js
-Resultado: OK
+node --check: OK

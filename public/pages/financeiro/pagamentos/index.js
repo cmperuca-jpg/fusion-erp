@@ -24,16 +24,61 @@ function hojeIso(){ return new Date().toISOString().slice(0, 10); }
 function moeda(v){ return Number(v || 0).toLocaleString("pt-BR", { style:"currency", currency:"BRL" }); }
 function dataBr(v){ if(!v)return "-"; const s=String(v).slice(0,10), p=s.split("-"); return p.length===3 ? `${p[2]}/${p[1]}/${p[0]}` : s; }
 function normalizar(v){ return String(v || "").trim().toLowerCase(); }
-function normalizarStatus(s){ s=normalizar(s || "aberto"); if(["quitado","baixado","pago"].includes(s))return "pago"; if(["pendente","em aberto","vencido"].includes(s))return "aberto"; if(["parcialmente pago","baixado parcial"].includes(s))return "parcial"; return s || "aberto"; }
+function normalizarStatus(s){ s=normalizar(s || "aberto"); if(["quitado","baixado","pago"].includes(s))return "pago"; if(["programado","programada","agendado","agendada","previsto","prevista"].includes(s))return "programado"; if(["pendente","em aberto","vencido"].includes(s))return "aberto"; if(["parcialmente pago","baixado parcial"].includes(s))return "parcial"; return s || "aberto"; }
 function campoTexto(item, nomes, padrao=""){ for(const n of nomes){ if(item?.[n]!==undefined && item?.[n]!==null && String(item[n]).trim()!=="") return item[n]; } return padrao; }
 function campoValor(item, nomes, padrao=0){ for(const n of nomes){ if(item?.[n]!==undefined && item?.[n]!==null) return item[n]; } return padrao; }
 function idRegistro(item){ return campoTexto(item, ["id","_id","codigo","uuid","chave"], ""); }
 function dataItem(item){ return campoTexto(item, ["vencimento","dataVencimento","data","competencia"], "").slice(0,10); }
 function valorTotal(item){ return Number(campoValor(item, ["valor","valorBruto","total","valorOriginal"], 0)); }
 function valorPago(item){ return Number(campoValor(item, ["valorPago","pago","valorLiquido","liquido","valorBaixado"], 0)); }
-function saldoItem(item){ const s=campoValor(item, ["valorRestante","saldo","valorAberto"], null); return s!==null ? Number(s) : Math.max(0, valorTotal(item)-valorPago(item)); }
-function estaEmAberto(item){ return ["aberto","parcial"].includes(normalizarStatus(item.status)) && saldoItem(item)>0; }
+function saldoItem(item){ const s=campoValor(item, ["valorRestante","saldo","valorAberto"], null); return s!==null ? Math.max(0, Number(s)) : Math.max(0, valorTotal(item)-valorPago(item)); }
+function somarDiasIso(iso,dias){ const d=new Date(`${iso}T00:00:00`); d.setDate(d.getDate()+dias); return d.toISOString().slice(0,10); }
+
+/*
+ * Situação operacional:
+ * - futuro e ainda não quitado => Programado;
+ * - pode ser pago antecipadamente;
+ * - Programado não entra em "Em aberto" nem em "Vencidos";
+ * - Parcial é preservado quando já houve pagamento parcial.
+ */
+function statusItem(item){
+  const bruto=normalizarStatus(item?.status);
+  const saldo=saldoItem(item);
+  const pago=valorPago(item);
+  const total=valorTotal(item);
+  const data=dataItem(item);
+
+  if(["cancelado","estornado"].includes(bruto)) return bruto;
+  if(bruto==="pago" || (total>0 && saldo<=0.009)) return "pago";
+  if(bruto==="parcial" || (pago>0.009 && saldo>0.009)) return "parcial";
+  if(bruto==="programado" || (data && data>hojeIso())) return "programado";
+  return "aberto";
+}
+
+function estaProgramado(item){ return statusItem(item)==="programado"; }
+function estaBaixavel(item){ return ["aberto","parcial","programado"].includes(statusItem(item)) && saldoItem(item)>0; }
+function estaEmAberto(item){
+  const data=dataItem(item);
+  return ["aberto","parcial"].includes(statusItem(item)) && saldoItem(item)>0 && (!data || data<=hojeIso());
+}
 function estaVencido(item){ const d=dataItem(item); return d && d < hojeIso() && estaEmAberto(item); }
+
+/*
+ * Previsão de pagamentos:
+ * inclui todo saldo vencido ainda pendente + títulos com vencimento até
+ * 30 dias à frente. Exclui Pago, Cancelado e Estornado.
+ */
+function entraNaPrevisao30Dias(item){
+  const st=statusItem(item);
+  if(["pago","cancelado","estornado"].includes(st)) return false;
+  if(saldoItem(item)<=0) return false;
+  const data=dataItem(item);
+  if(!data) return false;
+  return data<=somarDiasIso(hojeIso(),30);
+}
+function previsaoPagamentos30Dias(lista=[]){
+  return lista.reduce((total,item)=>entraNaPrevisao30Dias(item) ? total+saldoItem(item) : total, 0);
+}
 function obterLista(d){ if(Array.isArray(d))return d; for(const k of ["lancamentos","pagamentos","contasPagar","items","data","resultado"]){ if(Array.isArray(d?.[k])) return d[k]; } return []; }
 function getFiltros(){ return { busca: $("#fBusca")?.value || "", status: $("#fStatus")?.value || "", forma: $("#fForma")?.value || "", inicio: $("#fInicio")?.value || "", fim: $("#fFim")?.value || "" }; }
 function aviso(txt){ const el=$("#avisoSistema"); if(!el)return; el.textContent=txt; el.hidden=!txt; }
@@ -44,7 +89,7 @@ function obterPorId(id){ return estado.registros.find((r) => String(idRegistro(r
 function aplicarFiltrosLocais(){
   const f=getFiltros(), busca=normalizar(f.busca);
   estado.filtrados=estado.registros.filter((item) => {
-    const status=normalizarStatus(item.status), forma=normalizar(campoTexto(item,["formaPagamento","forma","meioPagamento"],"")), data=dataItem(item);
+    const status=statusItem(item), forma=normalizar(campoTexto(item,["formaPagamento","forma","meioPagamento"],"")), data=dataItem(item);
     const texto=[campoTexto(item,["fornecedor","credor","nome"],""), campoTexto(item,["descricao","observacao","referencia"],""), campoTexto(item,["documento","numeroDocumento"],""), campoTexto(item,["categoria"],"")].join(" ").toLowerCase();
     if(f.status && status!==f.status)return false;
     if(f.forma && forma!==f.forma)return false;
@@ -64,15 +109,15 @@ function renderRank(id, dados){
 
 function atualizarResumo(){
   const r=estado.registros, res=estado.resumoApi || {};
-  $("#kpiTotal").textContent = res.total ?? r.length;
-  $("#kpiAbertos").textContent = res.abertos ?? r.filter((x)=>normalizarStatus(x.status)==="aberto").length;
-  $("#kpiPagos").textContent = res.pagos ?? r.filter((x)=>normalizarStatus(x.status)==="pago").length;
-  $("#kpiParciais").textContent = res.parciais ?? r.filter((x)=>normalizarStatus(x.status)==="parcial").length;
-  $("#kpiVencidos").textContent = res.vencidos ?? r.filter(estaVencido).length;
-  $("#kpiValorPrevisto").textContent = moeda(res.valorPrevisto ?? r.reduce((a,x)=>a+valorTotal(x),0));
-  $("#kpiValorPago").textContent = moeda(res.valorPago ?? r.reduce((a,x)=>a+valorPago(x),0));
-  $("#kpiValorAberto").textContent = moeda(res.valorAberto ?? r.reduce((a,x)=>a+saldoItem(x),0));
-  const vencido = res.valorVencido ?? r.filter(estaVencido).reduce((a,x)=>a+saldoItem(x),0);
+  $("#kpiTotal").textContent = r.length;
+  $("#kpiAbertos").textContent = r.filter((x)=>statusItem(x)==="aberto" && estaEmAberto(x)).length;
+  $("#kpiPagos").textContent = r.filter((x)=>statusItem(x)==="pago").length;
+  $("#kpiParciais").textContent = r.filter((x)=>statusItem(x)==="parcial").length;
+  $("#kpiVencidos").textContent = r.filter(estaVencido).length;
+  $("#kpiValorPrevisto").textContent = moeda(previsaoPagamentos30Dias(r));
+  $("#kpiValorPago").textContent = moeda(r.reduce((a,x)=>a+valorPago(x),0));
+  $("#kpiValorAberto").textContent = moeda(r.reduce((a,x)=>estaEmAberto(x)?a+saldoItem(x):a,0));
+  const vencido = r.filter(estaVencido).reduce((a,x)=>a+saldoItem(x),0);
   if($("#kpiValorVencido")) $("#kpiValorVencido").textContent = moeda(vencido);
   renderRank("#rankFornecedores", res.porFornecedor);
   renderRank("#rankCategorias", res.porCategoria);
@@ -89,8 +134,8 @@ function renderTabela(){
   $("#btnAnterior").disabled=estado.pagina<=1; $("#btnProxima").disabled=estado.pagina>=total;
   if(!page.length){ tbody.innerHTML=`<tr><td colspan="11" class="empty">Nenhum pagamento encontrado.</td></tr>`; return; }
   tbody.innerHTML=page.map((item) => {
-    const id=idRegistro(item), status=normalizarStatus(item.status);
-    return `<tr class="${estaVencido(item)?"linha-vencida":""}"><td><input type="checkbox" class="sel-pagamento" value="${esc(id)}" ${estaEmAberto(item)?"":"disabled"}></td><td>${esc(dataBr(dataItem(item)))}</td><td>${esc(campoTexto(item,["fornecedor","credor","nome"],"-"))}</td><td>${esc(campoTexto(item,["descricao","observacao","referencia"],"-"))}</td><td>${esc(campoTexto(item,["categoria"],"-"))}</td><td>${esc(campoTexto(item,["formaPagamento","forma","meioPagamento"],"-"))}</td><td class="num">${esc(moeda(valorTotal(item)))}</td><td class="num">${esc(moeda(valorPago(item)))}</td><td class="num">${esc(moeda(saldoItem(item)))}</td><td><span class="badge ${esc(status)}">${esc(status)}</span></td><td class="acoes"><button class="btn btn-light" data-editar="${esc(id)}">Editar</button><button class="btn btn-light" data-baixar="${esc(id)}" ${estaEmAberto(item)?"":"disabled"}>Baixar</button><button class="btn btn-light" data-duplicar="${esc(id)}">Duplicar</button><button class="btn btn-light" data-historico="${esc(id)}">Histórico</button><button class="btn btn-light" data-estornar="${esc(id)}" ${["pago","parcial"].includes(status)?"":"disabled"}>Estornar</button><button class="btn btn-light" data-cancelar="${esc(id)}" ${id && !["cancelado","estornado","pago"].includes(status)?"":"disabled"}>Cancelar</button><button class="btn btn-danger" data-excluir="${esc(id)}">Excluir</button></td></tr>`;
+    const id=idRegistro(item), status=statusItem(item);
+    return `<tr class="${estaVencido(item)?"linha-vencida":""}"><td><input type="checkbox" class="sel-pagamento" value="${esc(id)}" ${estaBaixavel(item)?"":"disabled"}></td><td>${esc(dataBr(dataItem(item)))}</td><td>${esc(campoTexto(item,["fornecedor","credor","nome"],"-"))}</td><td>${esc(campoTexto(item,["descricao","observacao","referencia"],"-"))}</td><td>${esc(campoTexto(item,["categoria"],"-"))}</td><td>${esc(campoTexto(item,["formaPagamento","forma","meioPagamento"],"-"))}</td><td class="num">${esc(moeda(valorTotal(item)))}</td><td class="num">${esc(moeda(valorPago(item)))}</td><td class="num">${esc(moeda(saldoItem(item)))}</td><td><span class="badge ${esc(status)}">${esc(status)}</span></td><td class="acoes"><button class="btn btn-light" data-editar="${esc(id)}">Editar</button><button class="btn btn-light" data-baixar="${esc(id)}" ${estaBaixavel(item)?"":"disabled"}>Baixar</button><button class="btn btn-light" data-duplicar="${esc(id)}">Duplicar</button><button class="btn btn-light" data-historico="${esc(id)}">Histórico</button><button class="btn btn-light" data-estornar="${esc(id)}" ${["pago","parcial"].includes(status)?"":"disabled"}>Estornar</button><button class="btn btn-light" data-cancelar="${esc(id)}" ${id && !["cancelado","estornado","pago"].includes(status)?"":"disabled"}>Cancelar</button><button class="btn btn-danger" data-excluir="${esc(id)}">Excluir</button></td></tr>`;
   }).join("");
 }
 
@@ -114,8 +159,8 @@ function abrirModalBaixa(id){ const item=obterPorId(id); $("#baixaId").value=id;
 async function confirmarBaixa(){ const id=$("#baixaId").value, valor=Number($("#baixaValor").value||0); if(!id||valor<=0){alert("Informe um valor válido.");return;} try{ await baixarPagamento(id,{valor,formaPagamento:$("#baixaForma").value,forma:$("#baixaForma").value,observacao:$("#baixaObs").value}); $("#modalBaixa").close(); await carregar(); }catch(e){alert(erroAmigavel(e));} }
 function limparModalPagamento(){ ["#novoId","#novoFornecedor","#novoDocumento","#novoDescricao","#novoCategoria","#novoVencimento","#novoValor","#novoObs"].forEach((id)=>{const el=$(id); if(el)el.value="";}); $("#novoForma").value="pix"; $("#novoStatus").value="aberto"; }
 function abrirNovo(){ limparModalPagamento(); $("#tituloModalNovo").textContent="Novo pagamento"; $("#btnSalvarNovo").textContent="Salvar pagamento"; $("#modalNovo").showModal(); }
-function abrirEditar(id){ const item=obterPorId(id); if(!item)return; limparModalPagamento(); $("#tituloModalNovo").textContent="Editar pagamento"; $("#btnSalvarNovo").textContent="Salvar alterações"; $("#novoId").value=id; $("#novoFornecedor").value=campoTexto(item,["fornecedor","credor","nome"],""); $("#novoDocumento").value=campoTexto(item,["documento","numeroDocumento"],""); $("#novoDescricao").value=campoTexto(item,["descricao","observacao","referencia"],""); $("#novoCategoria").value=campoTexto(item,["categoria"],""); $("#novoVencimento").value=dataItem(item); $("#novoValor").value=valorTotal(item).toFixed(2); $("#novoForma").value=campoTexto(item,["formaPagamento","forma"],"pix"); $("#novoStatus").value=normalizarStatus(item.status); $("#novoObs").value=campoTexto(item,["observacao"],""); $("#modalNovo").showModal(); }
-async function salvarNovo(){ const id=$("#novoId").value, fornecedor=$("#novoFornecedor").value.trim(), descricao=$("#novoDescricao").value.trim(), vencimento=$("#novoVencimento").value, valor=Number($("#novoValor").value||0); if(!fornecedor||!descricao||!vencimento||valor<=0){alert("Preencha fornecedor, descrição, vencimento e valor.");return;} const status=$("#novoStatus").value, forma=$("#novoForma").value; const payload={tipo:"pagar",fornecedor,credor:fornecedor,descricao,documento:$("#novoDocumento").value.trim(),categoria:$("#novoCategoria").value.trim(),vencimento,dataVencimento:vencimento,valor,valorBruto:valor,valorPago:status==="pago"?valor:0,valorLiquido:status==="pago"?valor:0,valorRestante:status==="pago"?0:valor,formaPagamento:forma,forma,status,observacao:$("#novoObs").value.trim()}; try{ if(id) await editarPagamento(id,payload); else await criarPagamento(payload); $("#modalNovo").close(); estado.pagina=1; await carregar(); }catch(e){alert(erroAmigavel(e));} }
+function abrirEditar(id){ const item=obterPorId(id); if(!item)return; limparModalPagamento(); $("#tituloModalNovo").textContent="Editar pagamento"; $("#btnSalvarNovo").textContent="Salvar alterações"; $("#novoId").value=id; $("#novoFornecedor").value=campoTexto(item,["fornecedor","credor","nome"],""); $("#novoDocumento").value=campoTexto(item,["documento","numeroDocumento"],""); $("#novoDescricao").value=campoTexto(item,["descricao","observacao","referencia"],""); $("#novoCategoria").value=campoTexto(item,["categoria"],""); $("#novoVencimento").value=dataItem(item); $("#novoValor").value=valorTotal(item).toFixed(2); $("#novoForma").value=campoTexto(item,["formaPagamento","forma"],"pix"); $("#novoStatus").value=statusItem(item); $("#novoObs").value=campoTexto(item,["observacao"],""); $("#modalNovo").showModal(); }
+async function salvarNovo(){ const id=$("#novoId").value, fornecedor=$("#novoFornecedor").value.trim(), descricao=$("#novoDescricao").value.trim(), vencimento=$("#novoVencimento").value, valor=Number($("#novoValor").value||0); if(!fornecedor||!descricao||!vencimento||valor<=0){alert("Preencha fornecedor, descrição, vencimento e valor.");return;} let status=$("#novoStatus").value; if(!["pago","cancelado","parcial"].includes(status) && vencimento>hojeIso()) status="programado"; const forma=$("#novoForma").value; const payload={tipo:"pagar",fornecedor,credor:fornecedor,descricao,documento:$("#novoDocumento").value.trim(),categoria:$("#novoCategoria").value.trim(),vencimento,dataVencimento:vencimento,valor,valorBruto:valor,valorPago:status==="pago"?valor:0,valorLiquido:status==="pago"?valor:0,valorRestante:status==="pago"?0:valor,formaPagamento:forma,forma,status,observacao:$("#novoObs").value.trim()}; try{ if(id) await editarPagamento(id,payload); else await criarPagamento(payload); $("#modalNovo").close(); estado.pagina=1; await carregar(); }catch(e){alert(erroAmigavel(e));} }
 function abrirParcelar(){ ["#parcFornecedor","#parcDocumento","#parcDescricao","#parcCategoria","#parcPrimeiroVencimento","#parcValorTotal"].forEach((id)=>{const el=$(id); if(el)el.value="";}); $("#parcQtd").value="2"; $("#parcIntervalo").value="30"; $("#parcForma").value="boleto"; $("#modalParcelar").showModal(); }
 async function salvarParcelar(){ const fornecedor=$("#parcFornecedor").value.trim(), descricao=$("#parcDescricao").value.trim(), vencimento=$("#parcPrimeiroVencimento").value, valor=Number($("#parcValorTotal").value||0), parcelas=Number($("#parcQtd").value||0); if(!fornecedor||!descricao||!vencimento||valor<=0||parcelas<1){alert("Preencha fornecedor, descrição, primeiro vencimento, valor total e parcelas.");return;} try{ await parcelarPagamento({fornecedor,credor:fornecedor,descricao,documento:$("#parcDocumento").value.trim(),categoria:$("#parcCategoria").value.trim(),vencimento,dataVencimento:vencimento,valor,valorBruto:valor,parcelas,intervaloDias:Number($("#parcIntervalo").value||30),formaPagamento:$("#parcForma").value,forma:$("#parcForma").value}); $("#modalParcelar").close(); estado.pagina=1; await carregar(); }catch(e){alert(erroAmigavel(e));} }
 async function confirmarDuplicacao(id){ if(!confirm("Duplicar este pagamento como uma nova conta em aberto?"))return; try{ await duplicarPagamento(id); estado.pagina=1; await carregar(); }catch(e){alert(erroAmigavel(e));} }
@@ -123,17 +168,17 @@ async function confirmarExclusao(id){ if(!confirm("Excluir definitivamente este 
 async function confirmarEstorno(id){ const motivo=prompt("Motivo do estorno:","Estorno solicitado pelo usuário"); if(motivo===null)return; try{ await estornarPagamento(id,motivo); await carregar(); }catch(e){alert(erroAmigavel(e));} }
 async function confirmarCancelamento(id){ const motivo=prompt("Motivo do cancelamento:","Cancelamento solicitado pelo usuário"); if(motivo===null)return; try{ await cancelarPagamento(id,motivo); await carregar(); }catch(e){alert(erroAmigavel(e));} }
 function csvCell(v){ return `"${String(v ?? "").replaceAll('"','""')}"`; }
-function exportarCsv(){ aplicarFiltrosLocais(); const linhas=[["Vencimento","Fornecedor","Descricao","Documento","Categoria","Forma","Valor","Pago","Saldo","Status"],...estado.filtrados.map((i)=>[dataBr(dataItem(i)),campoTexto(i,["fornecedor","credor","nome"],""),campoTexto(i,["descricao","observacao","referencia"],""),campoTexto(i,["documento","numeroDocumento"],""),campoTexto(i,["categoria"],""),campoTexto(i,["formaPagamento","forma"],""),valorTotal(i).toFixed(2).replace(".",","),valorPago(i).toFixed(2).replace(".",","),saldoItem(i).toFixed(2).replace(".",","),normalizarStatus(i.status)])]; const csv=linhas.map((l)=>l.map(csvCell).join(";")).join("\n"); const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a"); a.href=url; a.download=`fusion_pagamentos_${hojeIso()}.csv`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); }
+function exportarCsv(){ aplicarFiltrosLocais(); const linhas=[["Vencimento","Fornecedor","Descricao","Documento","Categoria","Forma","Valor","Pago","Saldo","Status"],...estado.filtrados.map((i)=>[dataBr(dataItem(i)),campoTexto(i,["fornecedor","credor","nome"],""),campoTexto(i,["descricao","observacao","referencia"],""),campoTexto(i,["documento","numeroDocumento"],""),campoTexto(i,["categoria"],""),campoTexto(i,["formaPagamento","forma"],""),valorTotal(i).toFixed(2).replace(".",","),valorPago(i).toFixed(2).replace(".",","),saldoItem(i).toFixed(2).replace(".",","),statusItem(i)])]; const csv=linhas.map((l)=>l.map(csvCell).join(";")).join("\n"); const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a"); a.href=url; a.download=`fusion_pagamentos_${hojeIso()}.csv`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); }
 async function executarDiagnostico(){ const el=$("#statusIntegracao"); if(el){el.hidden=false;el.textContent="Executando diagnóstico das rotas...";} try{ const res=await diagnosticarPagamentos(); if(el)el.innerHTML=`Diagnóstico concluído:<ul>${res.map((r)=>r.ok?`<li class="ok-rota">${esc(r.base)} OK - ${esc(r.tipo)} - ${esc(r.tempo)}ms</li>`:`<li class="erro-rota">${esc(r.base)} falhou - HTTP ${esc(r.status||"-")} - ${esc(r.erro)}</li>`).join("")}</ul>`; }catch(e){ if(el)el.textContent=erroAmigavel(e); } }
 
 
 function idsSelecionados(){ return [...document.querySelectorAll(".sel-pagamento:checked")].map((el)=>el.value).filter(Boolean); }
 async function baixarLoteSelecionados(){
   const ids=idsSelecionados();
-  if(!ids.length){ alert("Selecione ao menos um pagamento em aberto."); return; }
+  if(!ids.length){ alert("Selecione ao menos um pagamento disponível para baixa."); return; }
   const forma=prompt("Forma de pagamento para o lote:", "pix");
   if(forma===null)return;
-  if(!confirm(`Baixar ${ids.length} pagamento(s) pelo saldo em aberto?`))return;
+  if(!confirm(`Baixar ${ids.length} pagamento(s) pelo saldo disponível?`))return;
   try{ const r=await baixarPagamentosEmLote(ids,{formaPagamento:forma,forma,observacao:"Baixa em lote pelo ZIP 14"}); alert(`Baixa em lote concluída: ${r.baixados || 0} sucesso(s), ${r.falhas || 0} falha(s).`); await carregar(); }
   catch(e){ alert(erroAmigavel(e)); }
 }
