@@ -265,8 +265,12 @@ export async function integrarMatriculaAluno(alunoId, planoId, opcoes={}){
   const dataMatricula=opcoes.dataMatricula || hojeISO();
   const dataInicio=opcoes.dataInicio || dataMatricula;
   const diaVencimento=validarDiaVencimento(opcoes.diaVencimento);
-  const vencimentoInicial=opcoes.vencimento || dataMatricula;
-  const proximoVencimento=opcoes.diaVencimento ? proximoMesNoDia(dataMatricula,diaVencimento) : addMeses(vencimentoInicial, 1);
+  // A entrada inicial é uma cobrança de ativação (matrícula + primeira mensalidade)
+  // e pertence à data da matrícula. Não usar o vencimento do próximo ciclo aqui.
+  const vencimentoInicial=dataMatricula;
+  const proximoVencimento=opcoes.diaVencimento
+    ? proximoMesNoDia(dataMatricula,diaVencimento)
+    : addMeses(dataMatricula, 1);
   const dataFim=opcoes.dataFim || (mesesPlano(plano)>0 ? addMeses(dataInicio, mesesPlano(plano)) : '');
 
   const servicos=montarServicos(base,plano,{...opcoes,tipoCobranca:tipo});

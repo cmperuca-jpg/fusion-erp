@@ -47,6 +47,27 @@ function competenciaPorVencimento(dataISO) {
   return String(dataISO || hojeISO()).slice(0, 7);
 }
 
+function competenciaCanonica(mensalidade = {}, vencimento = '', matricula = null) {
+  // A competência persistida é a autoridade. Isso é essencial para a cobrança
+  // inicial: ela pertence ao mês da matrícula, mesmo em registros legados cujo
+  // vencimento foi gravado incorretamente no mês seguinte.
+  const armazenada = String(mensalidade.competencia || '').trim().slice(0, 7);
+  if (/^\d{4}-\d{2}$/.test(armazenada)) return armazenada;
+
+  if (ehMatriculaInicial(mensalidade)) {
+    const referencia = String(
+      mensalidade.dataMatricula ||
+      matricula?.dataMatricula ||
+      mensalidade.criadoEm ||
+      mensalidade.dataPagamento ||
+      ''
+    ).slice(0, 10);
+    if (/^\d{4}-\d{2}-\d{2}$/.test(referencia)) return referencia.slice(0, 7);
+  }
+
+  return competenciaPorVencimento(vencimento);
+}
+
 function adicionarMeses(dataISO, qtd) {
   const d = new Date(`${dataISO}T12:00:00`);
   d.setMonth(d.getMonth() + qtd);
@@ -535,7 +556,7 @@ export async function listarMensalidades(filtros = {}) {
         planoNome,
         plano: m.plano || planoNome,
         vencimento,
-        competencia: competenciaPorVencimento(vencimento),
+        competencia: competenciaCanonica(m, vencimento, matricula),
         valor: numero(m.valor, 0),
         status: calcularStatus({ ...m, vencimento })
       };

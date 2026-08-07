@@ -164,6 +164,9 @@ function distribuirCentavos(total = 0, bases = []) {
 
 function tituloNormalizado(item = {}) {
   const totalC = valorTituloC(item); const pagoC = Math.min(totalC, Math.max(0, valorPagoC(item)));
+  const brutoRecebidoC = Number.isInteger(item.valorBrutoRecebidoCentavos)
+    ? item.valorBrutoRecebidoCentavos
+    : centavos(item.valorBrutoRecebido ?? item.valorRecebidoBruto ?? item.valorRecebido ?? item.valorPago ?? 0);
   const saldoAtualC = finalizado(item) || quitado(item) ? 0 : Math.max(0, totalC - pagoC);
   const programadoTitulo = programado(item);
   const saldoExibidoC = programadoTitulo ? 0 : saldoAtualC;
@@ -171,7 +174,9 @@ function tituloNormalizado(item = {}) {
   return {
     ...item, id: txt(item.id) || uid("tit"), tipo: tipoTitulo(item), valorCentavos: totalC,
     valor: reais(totalC), valorBruto: reais(totalC), valorPagoCentavos: pagoC, valorPago: reais(pagoC),
-    valorRecebido: reais(pagoC), saldoCentavos: saldoExibidoC, valorRestante: reais(saldoExibidoC), status: situacao,
+    valorRecebido: reais(brutoRecebidoC), valorBrutoRecebido: reais(brutoRecebidoC),
+    valorBrutoRecebidoCentavos: brutoRecebidoC,
+    saldoCentavos: saldoExibidoC, valorRestante: reais(saldoExibidoC), status: situacao,
     alunoId: idAluno(item), matriculaId: idMatricula(item), vencimento: dataVencimento(item),
     descricao: txt(item.descricao || item.historico || "Lançamento financeiro"), categoria: txt(item.categoria || "Outras receitas"),
     planoContaId: txt(item.planoContaId || item.plano_conta_id), excluido: Boolean(item.excluido)
@@ -528,6 +533,10 @@ export async function receberTitulos(dados = {}) {
         mensalidades[m] = {
           ...mensalidades[m],
           valorPago: titulos[a.indice].valorBrutoRecebido,
+          valorRecebido: titulos[a.indice].valorBrutoRecebido,
+          valorRecebidoBruto: titulos[a.indice].valorBrutoRecebido,
+          valorPagoCentavos: titulos[a.indice].valorBrutoRecebidoCentavos,
+          valorRecebidoCentavos: titulos[a.indice].valorBrutoRecebidoCentavos,
           valorQuitado: titulos[a.indice].valorPago,
           valorBrutoRecebido: titulos[a.indice].valorBrutoRecebido,
           valorRestante: titulos[a.indice].valorRestante,
@@ -555,7 +564,41 @@ export async function receberTitulos(dados = {}) {
         };
       }
       const r = recebimentos.findIndex((x) => mesmo(x.lancamentoFinanceiroId || x.financeiroId, item.tituloId) || mesmo(x.mensalidadeId, item.mensalidadeId));
-      const receb = { ...(r >= 0 ? recebimentos[r] : {}), id: r >= 0 ? recebimentos[r].id : uid("recv"), alunoId: alunoUnico, matriculaId: item.matriculaId, mensalidadeId: item.mensalidadeId, lancamentoFinanceiroId: item.tituloId, reciboId: recibo.id, numeroRecibo: recibo.numero, valorRecebido: titulos[a.indice].valorBrutoRecebido, valorQuitado: titulos[a.indice].valorPago, valorBrutoRecebido: titulos[a.indice].valorBrutoRecebido, valorRestante: titulos[a.indice].valorRestante, desconto: titulos[a.indice].desconto, acrescimo: titulos[a.indice].acrescimo, taxaOperadoraValor: titulos[a.indice].taxaOperadoraValor, ultimaTaxaOperadoraValor: titulos[a.indice].ultimaTaxaOperadoraValor, taxaOperadoraPercentual: titulos[a.indice].taxaOperadoraPercentual, taxaOperadoraFixa: titulos[a.indice].taxaOperadoraFixa, valorLiquido: titulos[a.indice].valorLiquido, bandeiraCartao: titulos[a.indice].bandeiraCartao, modalidadeCartao: titulos[a.indice].modalidadeCartao, parcelasCartao: titulos[a.indice].parcelasCartao, status: titulos[a.indice].status === "Pago" ? "recebido" : "parcial", dataRecebimento: recibo.data, formaPagamento: meioUnico?.formaPagamento || "Múltiplas", atualizadoEm: agora(), criadoEm: r >= 0 ? recebimentos[r].criadoEm : agora() };
+      const receb = {
+        ...(r >= 0 ? recebimentos[r] : {}),
+        id: r >= 0 ? recebimentos[r].id : uid("recv"),
+        alunoId: alunoUnico,
+        matriculaId: item.matriculaId,
+        mensalidadeId: item.mensalidadeId,
+        lancamentoFinanceiroId: item.tituloId,
+        reciboId: recibo.id,
+        numeroRecibo: recibo.numero,
+        valorPago: titulos[a.indice].valorBrutoRecebido,
+        valorRecebido: titulos[a.indice].valorBrutoRecebido,
+        valorRecebidoBruto: titulos[a.indice].valorBrutoRecebido,
+        valorPagoCentavos: titulos[a.indice].valorBrutoRecebidoCentavos,
+        valorRecebidoCentavos: titulos[a.indice].valorBrutoRecebidoCentavos,
+        valorQuitado: titulos[a.indice].valorPago,
+        valorBrutoRecebido: titulos[a.indice].valorBrutoRecebido,
+        valorRestante: titulos[a.indice].valorRestante,
+        saldo: titulos[a.indice].valorRestante,
+        desconto: titulos[a.indice].desconto,
+        acrescimo: titulos[a.indice].acrescimo,
+        taxaOperadoraValor: titulos[a.indice].taxaOperadoraValor,
+        ultimaTaxaOperadoraValor: titulos[a.indice].ultimaTaxaOperadoraValor,
+        taxaOperadoraPercentual: titulos[a.indice].taxaOperadoraPercentual,
+        taxaOperadoraFixa: titulos[a.indice].taxaOperadoraFixa,
+        valorLiquido: titulos[a.indice].valorLiquido,
+        bandeiraCartao: titulos[a.indice].bandeiraCartao,
+        modalidadeCartao: titulos[a.indice].modalidadeCartao,
+        parcelasCartao: titulos[a.indice].parcelasCartao,
+        status: titulos[a.indice].status === "Pago" ? "recebido" : "parcial",
+        dataRecebimento: recibo.data,
+        dataPagamento: recibo.data,
+        formaPagamento: meioUnico?.formaPagamento || "Múltiplas",
+        atualizadoEm: agora(),
+        criadoEm: r >= 0 ? recebimentos[r].criadoEm : agora()
+      };
       if (r >= 0) recebimentos[r] = receb; else recebimentos.push(receb);
       const origemAtivadora = norm(a.titulo.origem);
       const deveAtivarMatricula = titulos[a.indice].status === "Pago" && (

@@ -638,8 +638,17 @@
     const data = hoje();
     $("data_matricula").value = data;
     $("data_inicio").value = data;
-    $("vencimento").value = addMes(data);
+    // A cobrança inicial (matrícula + primeira mensalidade) vence na data da matrícula.
+    // O próximo ciclo mensal é calculado separadamente pelo dia de vencimento.
+    $("vencimento").value = data;
     $("dia_vencimento").value = "";
+
+    // Em matrícula nova, se a data da matrícula mudar, a entrada inicial acompanha a mesma data.
+    $("data_matricula")?.addEventListener("change", () => {
+      if (matriculaAtual) return;
+      const dataMatricula = $("data_matricula")?.value || "";
+      if (dataMatricula && $("vencimento")) $("vencimento").value = dataMatricula;
+    });
 
     $("dia_vencimento")?.addEventListener("input", (event) => {
       event.target.value = String(event.target.value || "").replace(/\D/g, "").slice(0, 2);

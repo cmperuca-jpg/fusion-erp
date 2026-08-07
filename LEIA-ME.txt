@@ -1,52 +1,48 @@
-FUSION ERP — CAMPOS VISÍVEIS NO CONFIRMAR RECEBIMENTO
-07/08/2026
+FUSION ERP — CONSOLIDAÇÃO FINANCEIRA SaaS
+Arquivos produzidos a partir dos 4 arquivos reais enviados em 07/08/2026.
 
-SIM: uma única regra CSS cobre todos os campos deste modal:
-- Valor devido
-- Valor pago
-- Data do pagamento
-- Forma de pagamento
-- Bandeira
-- Modalidade
-- Parcelas
-- Taxa %
-- Taxa fixa
-- Desconto
-- Acréscimo/Juros
-- Observação
+CORREÇÕES DE CÓDIGO
+1. public/js/matriculas/cadastro.js
+   - Nova matrícula abre com vencimento inicial igual à data da matrícula.
+   - Se a data da matrícula mudar antes de salvar, a entrada inicial acompanha.
 
-A correção força:
-color
--webkit-text-fill-color
-opacity
-autofill do Chrome/Edge
-readonly/disabled
-date
-select
-number
-textarea
-placeholder
+2. modules/matriculas/matricula.integracao.service.mjs
+   - O servidor passa a ser a autoridade:
+     entrada matrícula + primeira mensalidade vence na data da matrícula.
+   - Próximo ciclo continua calculado pelo dia de vencimento mensal.
 
-IMPORTANTE
-==========
-A correção serve para TODOS OS CAMPOS do modal "Confirmar recebimento".
-Ela não muda automaticamente campos de outras páginas/módulos.
+3. modules/financeiro/mensalidades.service.mjs
+   - A competência gravada deixa de ser substituída pelo mês do vencimento.
+   - Registros legados de matrícula inicial usam a data da matrícula como fallback.
 
-COMO APLICAR
-============
-1. Substitua:
-   public/pages/financeiro/recebimento-contraste.css
+4. modules/financeiro/financeiro-ledger.service.mjs
+   - valorPago / valorRecebido / valorBrutoRecebido ficam sincronizados.
+   - saldo e dataPagamento do recebimento também são atualizados.
+   - bruto e líquido continuam separados; taxa da operadora não altera o valor bruto.
 
-2. Na raiz do projeto execute:
-   PowerShell:
-   .\APLICAR-CORRECAO-FINANCEIRO.ps1
+DADOS JÁ EXISTENTES
+scripts/RECONCILIAR-STUDIO-FITNESS-PRIMEIRO-CLIENTE.sql
 
-   ou Linux:
-   bash APLICAR-CORRECAO-FINANCEIRO.sh
+Esse SQL corrige apenas o primeiro fluxo já gravado da Studio Fitness:
+- entrada inicial: 07/08/2026
+- total bruto: R$ 125,00
+- taxa: R$ 1,24
+- líquido: R$ 123,76
+- próxima mensalidade: R$ 100,00 em 07/09/2026
 
-O script move o CSS de contraste para o final do <head> e troca a versão,
-evitando que o tema global ou o cache do navegador vençam a correção.
+Não apaga caixa, recibo, matrícula, aluno nem a mensalidade futura.
 
-3. Commit/push.
-4. Aguarde o Render ficar Live.
-5. No navegador: Ctrl+F5.
+ORDEM RECOMENDADA
+1. Substituir os 4 arquivos no projeto.
+2. Commit/push.
+3. Aguardar Render ficar Live.
+4. Executar o SQL uma única vez no Supabase SQL Editor.
+5. Ctrl+F5 e testar:
+   - Mensalidades em agosto
+   - Financeiro
+   - Caixa
+   - Relatório diário
+   - Ficha da matrícula
+
+VALIDAÇÃO TÉCNICA
+Os 4 arquivos JavaScript/MJS foram validados com node --check.
