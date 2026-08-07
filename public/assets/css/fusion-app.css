@@ -226,3 +226,14 @@ body.fusion-ui-menu-open{
     width:100%;
   }
 }
+
+/* FUSION_DOCUMENT_SCROLL_BASE_20260807 */
+html.fusion-menu-superior-ativo,
+body.fusion-menu-superior-ativo{
+  height:auto!important;
+  max-height:none!important;
+  overflow-y:auto!important;
+  -webkit-overflow-scrolling:touch!important;
+}
+/* /FUSION_DOCUMENT_SCROLL_BASE_20260807 */
+

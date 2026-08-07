@@ -1,0 +1,124 @@
+FUSION ERP — CORREÇÃO PWA 3 APLICATIVOS + ROLAGEM + CONTRASTE
+Data: 07/08/2026
+
+OBJETIVO
+========
+Corrigir:
+- páginas do PWA Sistema que só rolavam corretamente com vários dedos;
+- travas residuais de touch-action:none / overflow:hidden;
+- conflito entre o menu mobile antigo e o menu superior novo;
+- contraste do menu superior e do título do módulo;
+- contraste dos KPIs (cards/macro) do Financeiro;
+- conflito de Service Worker entre os 3 PWAs.
+
+OS 3 PWAs CONTINUAM SEPARADOS
+=============================
+1. Sistema
+   Manifest: /manifest-sistema.webmanifest
+   SW:       /fusion-sw-sistema.js
+   Scope:    /
+
+2. Aluno
+   Manifest: /manifest-aluno.webmanifest
+   SW:       /fusion-sw-aluno.js
+   Scope:    /pages/aluno-
+
+3. Professor
+   Manifest: /manifest-professor.webmanifest
+   SW:       /fusion-sw-professor.js
+   Scope:    /pages/professor-
+
+A escolha de /pages/aluno- e /pages/professor- é intencional: esses prefixes
+abrangem as páginas aluno-login/aluno-treinos/aluno-avaliacao e
+professor-area/professor-login sem fazer os dois PWAs disputarem o mesmo
+scope /pages/.
+
+CAUSA PRINCIPAL DA ROLAGEM
+==========================
+O CSS mobile real possuía:
+  body.fusion-menu-open {
+    overflow:hidden!important;
+    touch-action:none;
+  }
+
+Ao mesmo tempo, o Fusion atual usa menu superior e remove a sidebar antiga.
+No PWA/bfcache a classe antiga podia sobreviver e bloquear gesto vertical de
+um dedo. A correção restaura overflow/touch-action ao entrar/retomar o Sistema
+e impede o fusion-mobile-final.js de recriar a navegação mobile antiga quando
+o menu superior novo já está ativo.
+
+Também foi corrigida a rolagem dentro de:
+- tabelas largas;
+- modais ativos;
+- PWA standalone/fullscreen.
+
+CONTRASTE
+=========
+- Menu superior: texto branco explícito + -webkit-text-fill-color.
+- Título do módulo: texto azul-petróleo escuro sobre fundo claro.
+- Subtítulo: cinza escuro.
+- Financeiro: KPIs clicáveis voltam a ser cards brancos com texto escuro.
+- btn-light: fundo branco com texto teal escuro.
+
+SERVICE WORKER
+==============
+Novos caches:
+- fusion-sistema-v282-pwa-scroll
+- fusion-aluno-v282-pwa-scroll
+- fusion-professor-v282-pwa-scroll
+
+O fusion-pwa-install.js:
+- atualiza o SW mesmo quando o PWA já está instalado;
+- remove registros legados aluno/professor com scope /pages/;
+- remove o SW genérico antigo /fusion-sw.js no scope raiz;
+- registra cada PWA no seu scope correto.
+
+COMO APLICAR
+============
+Windows:
+  .\APLICAR-CORRECAO-PWA-3APPS.ps1 -Repo "C:\caminho\para\fusion-erp"
+
+Linux/macOS:
+  ./APLICAR-CORRECAO-PWA-3APPS.sh /caminho/para/fusion-erp
+
+O script cria backup antes de substituir.
+
+DEPOIS DO DEPLOY
+================
+1. Feche completamente os 3 PWAs no celular.
+2. Abra primeiro o Fusion Sistema pelo navegador/PWA e aguarde alguns segundos.
+3. Feche e abra novamente.
+4. Teste Financeiro usando apenas 1 dedo.
+5. Teste rolagem sobre uma tabela larga e dentro de um modal.
+6. Abra Aluno e Professor uma vez para os novos scopes serem registrados.
+
+Se o aparelho continuar preso a um Service Worker antigo, faça UMA vez:
+- Configurações do navegador > dados do site do domínio > limpar;
+  ou
+- desinstale e instale novamente os 3 PWAs.
+
+Depois da migração para v282 isso não deve ser necessário nas próximas
+atualizações.
+
+ARQUIVOS ALTERADOS
+==================
+public/fusion-sw-sistema.js
+public/fusion-sw-aluno.js
+public/fusion-sw-professor.js
+public/manifest-sistema.webmanifest
+public/manifest-aluno.webmanifest
+public/manifest-professor.webmanifest
+public/assets/pwa/fusion-pwa-install.js
+public/assets/pwa/fusion-pwa-mobile.css
+public/assets/css/fusion-mobile-final.css
+public/assets/css/fusion-mobile-first.css
+public/assets/js/fusion-mobile-final.js
+public/assets/css/fusion-app.css
+public/assets/css/fusion-menu-global.css
+public/assets/css/fusion-premium-final.css
+public/assets/js/fusion-layout.js
+public/pages/_shared/fusion-area-clara.css
+
+Observação: fusion-mobile-first.css e fusion-premium-final.css estão no pacote
+como os arquivos reais recebidos; não precisaram de alteração funcional nesta
+correção.

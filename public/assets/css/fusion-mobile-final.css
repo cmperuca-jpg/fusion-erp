@@ -338,3 +338,51 @@ body.fusion-no-sidebar .fusion-main{width:100%!important;max-width:100%!importan
   body.fusion-menu-open{overflow:hidden!important;touch-action:none;}
   body.fusion-menu-open .fusion-sidebar a{touch-action:manipulation;}
 }
+
+/* ==========================================================================
+   FUSION_SCROLL_ONE_FINGER_AND_TITLE_CONTRAST_20260807
+   ========================================================================== */
+.fusion-mobile-final-title{
+  color:#172033!important;
+  -webkit-text-fill-color:#172033!important;
+  opacity:1!important;
+  text-shadow:none!important;
+}
+
+@media(max-width:900px){
+  html.fusion-menu-superior-ativo,
+  body.fusion-menu-superior-ativo,
+  body.fusion-menu-superior-ativo.fusion-menu-open,
+  body.fusion-menu-superior-ativo.fusion-ui-menu-open{
+    height:auto!important;
+    max-height:none!important;
+    overflow-y:auto!important;
+    overscroll-behavior-y:auto!important;
+    touch-action:pan-y pinch-zoom!important;
+    -webkit-overflow-scrolling:touch!important;
+  }
+
+  body.fusion-menu-superior-ativo .fusion-mobile-final-bar,
+  body.fusion-menu-superior-ativo .fusion-mobile-final-overlay{
+    display:none!important;
+    visibility:hidden!important;
+    pointer-events:none!important;
+  }
+
+  .table-wrap,
+  .tabela-wrap,
+  .table-responsive,
+  .tabela-scroll,
+  .tabela-container{
+    touch-action:pan-x pan-y pinch-zoom!important;
+  }
+
+  .modal-overlay.ativo > .modal,
+  .modal-backdrop:not(.hidden) > .modal-card{
+    overflow-y:auto!important;
+    touch-action:pan-y pinch-zoom!important;
+    -webkit-overflow-scrolling:touch!important;
+  }
+}
+/* /FUSION_SCROLL_ONE_FINGER_AND_TITLE_CONTRAST_20260807 */
+

@@ -1,2 +1,46 @@
 /* Fusion ERP 2.7.4 - PWA install UI */
 :root{--fusion-pwa-color:#ff6600}.fusion-pwa-banner,.fusion-ios-hint{position:fixed;left:16px;right:16px;bottom:16px;z-index:99999;display:flex;align-items:center;gap:12px;background:#111827;color:#fff;border:1px solid rgba(255,255,255,.14);border-radius:18px;padding:14px 16px;box-shadow:0 18px 50px rgba(0,0,0,.35);font-family:Arial,Helvetica,sans-serif}.fusion-pwa-banner div{display:flex;flex-direction:column;gap:2px;flex:1}.fusion-pwa-banner strong,.fusion-ios-hint strong{font-size:15px}.fusion-pwa-banner span,.fusion-ios-hint{font-size:13px;line-height:1.35}.fusion-pwa-banner button,.fusion-ios-hint button{border:0;border-radius:999px;background:var(--fusion-pwa-color);color:#fff;font-weight:800;padding:10px 14px;min-height:44px;cursor:pointer}.fusion-ios-hint button{margin-left:auto;order:2}@media(max-width:560px){.fusion-pwa-banner,.fusion-ios-hint{left:10px;right:10px;bottom:10px;border-radius:16px}.fusion-pwa-banner{align-items:flex-start}.fusion-pwa-banner button{min-width:96px}}@media(display-mode:standalone){.fusion-pwa-banner,.fusion-ios-hint{display:none!important}body{overscroll-behavior-y:contain}}
+
+/* FUSION_PWA_3APPS_SCROLL_20260807
+   Rolagem natural no PWA instalado. Mantém bloqueio apenas quando uma UI
+   realmente aberta precisa dele. */
+@media (display-mode: standalone), (display-mode: fullscreen) {
+  html{
+    min-height:100%!important;
+    height:auto!important;
+    max-height:none!important;
+    overflow-y:auto!important;
+    overscroll-behavior-y:auto!important;
+    touch-action:pan-y pinch-zoom!important;
+    -webkit-overflow-scrolling:touch;
+  }
+
+  body:not(.fusion-menu-open):not(.fusion-ui-menu-open){
+    min-height:100dvh!important;
+    height:auto!important;
+    max-height:none!important;
+    overflow-y:auto!important;
+    overscroll-behavior-y:auto!important;
+    touch-action:pan-y pinch-zoom!important;
+    -webkit-overflow-scrolling:touch;
+  }
+
+  .table-wrap,
+  .tabela-wrap,
+  .table-responsive,
+  .tabela-scroll,
+  .tabela-container{
+    touch-action:pan-x pan-y pinch-zoom!important;
+    -webkit-overflow-scrolling:touch!important;
+  }
+
+  .modal-overlay.ativo > .modal,
+  .modal-backdrop:not(.hidden) > .modal-card,
+  [role="dialog"][open]{
+    overflow-y:auto!important;
+    touch-action:pan-y pinch-zoom!important;
+    -webkit-overflow-scrolling:touch!important;
+  }
+}
+/* /FUSION_PWA_3APPS_SCROLL_20260807 */
+

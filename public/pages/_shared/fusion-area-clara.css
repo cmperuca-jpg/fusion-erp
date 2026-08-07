@@ -116,3 +116,22 @@ main.wrap > .fusion-breadcrumb,
     white-space: nowrap !important;
   }
 }
+
+/* FUSION_AREA_CLARA_TITULOS_20260807 */
+main.main :is(.page-actions,.page-head,.page-header,.section-head,.module-header) :is(h1,h2,h3),
+.fusion-main :is(.page-actions,.page-head,.page-header,.section-head,.module-header) :is(h1,h2,h3){
+  color:#17384a!important;
+  -webkit-text-fill-color:#17384a!important;
+  opacity:1!important;
+  text-shadow:none!important;
+}
+
+main.main :is(.page-actions,.page-head,.page-header,.section-head,.module-header) :is(p,small),
+.fusion-main :is(.page-actions,.page-head,.page-header,.section-head,.module-header) :is(p,small){
+  color:#526b78!important;
+  -webkit-text-fill-color:#526b78!important;
+  opacity:1!important;
+  text-shadow:none!important;
+}
+/* /FUSION_AREA_CLARA_TITULOS_20260807 */
+

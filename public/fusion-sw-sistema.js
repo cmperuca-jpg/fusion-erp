@@ -1,14 +1,16 @@
-const CACHE = 'fusion-sistema-v281-scroll';
+const CACHE = 'fusion-sistema-v282-pwa-scroll';
 const CACHE_PREFIX = 'fusion-sistema-';
 const ALLOWED = [
-  '/pages/login/',
-  '/pages/dashboard/',
-  '/pages/admin/',
   '/manifest-sistema.webmanifest',
   '/assets/pwa/fusion-pwa-mobile.css',
   '/assets/pwa/fusion-pwa-install.js',
   '/assets/css/fusion-mobile-final.css',
-  '/assets/js/fusion-mobile-final.js'
+  '/assets/css/fusion-mobile-first.css',
+  '/assets/js/fusion-mobile-final.js',
+  '/assets/css/fusion-menu-global.css',
+  '/assets/css/fusion-app.css',
+  '/assets/js/fusion-layout.js',
+  '/pages/_shared/fusion-area-clara.css'
 ];
 
 self.addEventListener('install', event => {

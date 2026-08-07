@@ -1,32 +1,46 @@
-CORRECAO DE CONTRASTE — VISUALIZACAO DA FICHA DO ALUNO
-Data: 07/08/2026
+FUSION ERP — ARQUIVOS REAIS CORRIGIDOS
+07/08/2026
 
-O que muda:
-- cabecalho teal escuro com texto branco;
-- botoes do cabecalho brancos com texto escuro;
-- KPIs em cartoes brancos com numeros escuros;
-- abas inativas claras com texto escuro;
-- aba ativa em teal escuro com texto branco;
-- cartoes da ficha brancos/claros com texto escuro;
-- tabelas com cabecalho teal escuro e corpo claro;
-- botoes internos deixam de usar branco sobre ciano claro;
-- inputs e selects ficam com fundo branco e texto escuro;
-- chips de status mantem cores sem perder legibilidade.
+Este pacote foi criado diretamente a partir dos arquivos reais enviados.
 
-Windows:
-  .\APLICAR-CONTRASTE-FICHA.ps1 -Repo "C:\caminho\para\fusion-erp"
+CORREÇÕES
+1. "Ver ficha" não fica mais branco/invisível:
+   - botão agora possui classe própria;
+   - fundo teal escuro;
+   - texto branco;
+   - -webkit-text-fill-color forçado;
+   - também força visibilidade do span interno.
 
-Linux/macOS:
-  ./APLICAR-CONTRASTE-FICHA.sh /caminho/para/fusion-erp
+2. "Trocar turma/modalidade":
+   - agora o index.js abre diretamente a matrícula pelo ID:
+     /pages/matriculas/cadastro.html?id=<matricula>&origem=troca-turma
+   - não depende mais de reencontrar a matrícula somente pelo aluno.
 
-O script:
-1. cria backup do prontuario.html;
-2. copia prontuario-contraste-v2.css;
-3. inclui o CSS por ultimo no <head>, depois do tema global;
-4. adiciona versao na URL do CSS para evitar cache antigo.
+3. Cache:
+   - index.html recebeu novas versões de style.css, index.js e cep-autofill.js.
 
-Depois:
-- commit/push/deploy;
-- abra a ficha;
-- use Ctrl+F5 no computador;
-- no celular/PWA, feche e abra novamente se ainda houver cache visual antigo.
+4. Ficha/prontuário:
+   - o arquivo prontuario-contraste-v2.css que você enviou existia,
+     mas prontuario.html não o carregava.
+   - agora ele é carregado por último, depois do CSS global claro.
+
+ARQUIVOS PARA SUBSTITUIR/ADICIONAR
+public/pages/alunos/index.html
+public/pages/alunos/index.js
+public/pages/alunos/style.css
+public/pages/alunos/cep-autofill.js
+public/pages/alunos/prontuario.html
+public/pages/alunos/prontuario-contraste-v2.css
+
+TESTE
+1. Faça backup dos arquivos atuais.
+2. Substitua os arquivos mantendo exatamente os caminhos acima.
+3. Faça deploy.
+4. No navegador use Ctrl+F5.
+5. Abra Alunos > Editar aluno > Matrículas.
+6. Confirme:
+   - Trocar turma/modalidade = ciano com texto branco.
+   - Ver ficha = teal escuro com texto branco.
+7. Clique em Ver ficha e confirme o novo contraste do prontuário.
+
+Os dois JS modificados foram validados com node --check.

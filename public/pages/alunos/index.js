@@ -1364,8 +1364,8 @@ function renderizarMatriculasAluno(lista) {
       <p style="margin:0;color:#475569;"><strong>Turma:</strong> ${escapeHtml(matriculaTurma(m))}</p>
       <p style="margin:0;color:#475569;"><strong>Início:</strong> ${escapeHtml(formatarDataCurta(m.dataInicio || m.dataMatricula))} · <strong>Valor:</strong> R$ ${formatarMoeda(m.valorMensal || 0)}</p>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;">
-        ${ativo ? `<button type="button" class="btn-light" onclick="abrirMatriculaAluno('${escapeAttr(m.alunoId || $('#alunoId').value)}')">Trocar turma/modalidade</button>` : ""}
-        <button type="button" class="btn-light" onclick="abrirFichaMatricula('${escapeAttr(id)}')">Ver ficha</button>
+        ${ativo ? `<button type="button" class="btn-light btn-troca-turma-matricula" data-matricula-id="${escapeAttr(id)}" onclick="abrirTrocaTurmaMatricula('${escapeAttr(id)}')" aria-label="Trocar turma ou modalidade">Trocar turma/modalidade</button>` : ""}
+        <button type="button" class="btn-light btn-ver-ficha-matricula" data-matricula-id="${escapeAttr(id)}" onclick="abrirFichaMatricula('${escapeAttr(id)}')" aria-label="Ver ficha da matrícula"><span>Ver ficha</span></button>
       </div>
     </div>`;
   }).join("");
@@ -1384,6 +1384,15 @@ async function atualizarMatriculasAlunoAtual() {
   renderizarMatriculasAluno(matriculasAlunoAtual);
   return matriculasAlunoAtual;
 }
+
+window.abrirTrocaTurmaMatricula = function(id) {
+  if (!id) return mostrarAlerta("Matrícula não identificada.", "erro");
+  const params = new URLSearchParams({
+    id: String(id),
+    origem: "troca-turma"
+  });
+  location.href = `/pages/matriculas/cadastro.html?${params.toString()}`;
+};
 
 window.abrirFichaMatricula = function(id) {
   if (!id) return mostrarAlerta("Matrícula não identificada.", "erro");

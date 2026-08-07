@@ -244,6 +244,17 @@
     return todosItens(grupos).find(item => itemCorrespondeAoPath(item)) || null;
   }
 
+  function restaurarRolagemDocumento() {
+    [document.documentElement, document.body].filter(Boolean).forEach(elemento => {
+      elemento.classList.remove("fusion-menu-open", "fusion-ui-menu-open");
+      elemento.style.removeProperty("overflow");
+      elemento.style.removeProperty("overflow-y");
+      elemento.style.removeProperty("touch-action");
+      elemento.style.removeProperty("height");
+      elemento.style.removeProperty("max-height");
+    });
+  }
+
   function removerMenusLegados(root = document) {
     root.querySelectorAll?.(SELETORES_MENU_LATERAL).forEach(elemento => elemento.remove());
     document.querySelectorAll("body > .topbar, body > .fusion-topbar").forEach(elemento => elemento.remove());
@@ -253,8 +264,9 @@
       elemento.classList.add("fusion-sem-menu", "fusion-no-sidebar", "fusion-layout-fullwidth");
     });
 
+    restaurarRolagemDocumento();
+
     if (document.body) {
-      document.body.style.removeProperty("overflow");
       document.body.style.removeProperty("padding-left");
       document.body.style.removeProperty("margin-left");
 
@@ -673,7 +685,15 @@
       fecharTudo();
       sincronizarAlturaMenu();
     });
-    window.addEventListener("pageshow", aplicarLayout);
+    window.addEventListener("pageshow", () => {
+      restaurarRolagemDocumento();
+      aplicarLayout();
+    });
+
+    window.addEventListener("orientationchange", restaurarRolagemDocumento);
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) restaurarRolagemDocumento();
+    });
   }
 
   if (document.readyState === "loading") {

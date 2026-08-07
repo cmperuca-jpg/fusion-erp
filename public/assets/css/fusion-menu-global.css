@@ -1446,3 +1446,125 @@ body.fusion-menu-superior-ativo :is([id],[name]){
     scroll-margin-top:calc(var(--fusion-top-menu-height,50px) + 10px);
   }
 }
+
+/* ==========================================================================
+   FUSION_TOP_CONTRAST_AND_PWA_SCROLL_20260807
+   ========================================================================== */
+
+/* Menu superior: letras sempre visíveis sobre o fundo escuro. */
+#fusionTopMenu .fusion-top-menu__brand,
+#fusionTopMenu .fusion-top-menu__brand-text,
+#fusionTopMenu .fusion-top-menu__all-trigger,
+#fusionTopMenu .fusion-top-menu__all-label,
+#fusionTopMenu .fusion-top-menu__group-trigger{
+  color:#f7fbfc!important;
+  -webkit-text-fill-color:#f7fbfc!important;
+  opacity:1!important;
+  text-shadow:none!important;
+}
+
+/* Título principal de cada módulo sobre a área clara. */
+body.fusion-menu-superior-ativo :is(
+  .page-actions,
+  .page-head,
+  .page-header,
+  .section-head,
+  .module-header,
+  .header-card,
+  .topo
+) :is(h1,h2,h3){
+  color:#17384a!important;
+  -webkit-text-fill-color:#17384a!important;
+  opacity:1!important;
+  text-shadow:none!important;
+}
+
+body.fusion-menu-superior-ativo :is(
+  .page-actions,
+  .page-head,
+  .page-header,
+  .section-head,
+  .module-header,
+  .header-card,
+  .topo
+) :is(p,small,.subtitle,.subtitulo){
+  color:#526b78!important;
+  -webkit-text-fill-color:#526b78!important;
+  opacity:1!important;
+  text-shadow:none!important;
+}
+
+/* Financeiro: KPI é um card clicável, não um botão de ação ciano. */
+body.fusion-menu-superior-ativo .financeiro-kpis button.kpi-btn{
+  background:#ffffff!important;
+  background-image:none!important;
+  color:#17384a!important;
+  -webkit-text-fill-color:#17384a!important;
+  border:1px solid #cbd9df!important;
+  box-shadow:0 7px 20px rgba(15,23,42,.07)!important;
+  text-align:left!important;
+}
+
+body.fusion-menu-superior-ativo .financeiro-kpis button.kpi-btn :is(span,small){
+  color:#526b78!important;
+  -webkit-text-fill-color:#526b78!important;
+  opacity:1!important;
+  text-shadow:none!important;
+}
+
+body.fusion-menu-superior-ativo .financeiro-kpis button.kpi-btn strong{
+  color:#102f3a!important;
+  -webkit-text-fill-color:#102f3a!important;
+  opacity:1!important;
+  text-shadow:none!important;
+}
+
+body.fusion-menu-superior-ativo .financeiro-kpis button.kpi-btn:hover,
+body.fusion-menu-superior-ativo .financeiro-kpis button.kpi-btn:focus-visible{
+  background:#f3fafb!important;
+  border-color:#22b8d2!important;
+  color:#102f3a!important;
+  -webkit-text-fill-color:#102f3a!important;
+}
+
+/* Ações "light" permanecem secundárias e legíveis. */
+body.fusion-menu-superior-ativo button.btn-light,
+body.fusion-menu-superior-ativo a.btn-light{
+  background:#ffffff!important;
+  color:#0b5967!important;
+  -webkit-text-fill-color:#0b5967!important;
+  border:1px solid #86b8c1!important;
+  text-shadow:none!important;
+}
+
+body.fusion-menu-superior-ativo button.btn-light:hover,
+body.fusion-menu-superior-ativo a.btn-light:hover{
+  background:#eaf6f8!important;
+  color:#073f49!important;
+  -webkit-text-fill-color:#073f49!important;
+  border-color:#57a1ad!important;
+}
+
+/* O menu superior novo não precisa das travas da sidebar antiga. */
+html.fusion-menu-superior-ativo,
+body.fusion-menu-superior-ativo,
+body.fusion-menu-superior-ativo.fusion-menu-open,
+body.fusion-menu-superior-ativo.fusion-ui-menu-open{
+  overflow-y:auto!important;
+  overscroll-behavior-y:auto!important;
+  touch-action:pan-y pinch-zoom!important;
+}
+
+@media(max-width:900px){
+  #fusionTopMenu .fusion-top-menu__all-trigger,
+  #fusionTopMenu .fusion-top-menu__all-label{
+    color:#ffffff!important;
+    -webkit-text-fill-color:#ffffff!important;
+  }
+
+  body.fusion-menu-superior-ativo :is(.page-actions,.page-head,.page-header,.section-head,.module-header,.header-card,.topo){
+    background:transparent!important;
+  }
+}
+/* /FUSION_TOP_CONTRAST_AND_PWA_SCROLL_20260807 */
+

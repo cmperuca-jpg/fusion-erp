@@ -212,11 +212,21 @@
       botao.style.setProperty('background', '#22b8d2', 'important');
       botao.style.setProperty('border', '1px solid #1299b2', 'important');
       botao.style.setProperty('color', '#ffffff', 'important');
+      botao.style.setProperty('-webkit-text-fill-color', '#ffffff', 'important');
     } else {
-      botao.style.setProperty('background', '#ffffff', 'important');
-      botao.style.setProperty('border', '1px solid #b9cfd5', 'important');
-      botao.style.setProperty('color', '#102b35', 'important');
+      botao.style.setProperty('background', '#0b4452', 'important');
+      botao.style.setProperty('border', '1px solid #073946', 'important');
+      botao.style.setProperty('color', '#ffffff', 'important');
+      botao.style.setProperty('-webkit-text-fill-color', '#ffffff', 'important');
     }
+
+    botao.querySelectorAll('*').forEach((filho) => {
+      filho.style.setProperty('color', '#ffffff', 'important');
+      filho.style.setProperty('-webkit-text-fill-color', '#ffffff', 'important');
+      filho.style.setProperty('opacity', '1', 'important');
+      filho.style.setProperty('visibility', 'visible', 'important');
+      filho.style.setProperty('text-shadow', 'none', 'important');
+    });
   }
 
   function corrigirBotao(botao) {
