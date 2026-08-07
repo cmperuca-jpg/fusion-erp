@@ -1,35 +1,52 @@
-FUSION ERP — RECUPERAÇÃO DE ACESSO
-==================================
+FUSION ERP — CAMPOS VISÍVEIS NO CONFIRMAR RECEBIMENTO
+07/08/2026
 
-A migration do Supabase JÁ FOI APLICADA em produção.
+SIM: uma única regra CSS cobre todos os campos deste modal:
+- Valor devido
+- Valor pago
+- Data do pagamento
+- Forma de pagamento
+- Bandeira
+- Modalidade
+- Parcelas
+- Taxa %
+- Taxa fixa
+- Desconto
+- Acréscimo/Juros
+- Observação
 
-ANTES DE TESTAR NO RENDER
-Configure no Environment:
-
-RESEND_API_KEY=<sua chave>
-FUSION_RECOVERY_FROM_EMAIL=Fusion Sistema <acesso@fusionsistema.com.br>
-
-Recomendado:
-FUSION_RECOVERY_SECRET=<segredo aleatório com pelo menos 32 caracteres>
-
-Opcional:
-FUSION_RECOVERY_REPLY_TO=suporte@fusionsistema.com.br
+A correção força:
+color
+-webkit-text-fill-color
+opacity
+autofill do Chrome/Edge
+readonly/disabled
+date
+select
+number
+textarea
+placeholder
 
 IMPORTANTE
-O domínio usado em FUSION_RECOVERY_FROM_EMAIL deve estar validado no Resend.
-Sem as variáveis de e-mail, o sistema NÃO revela códigos e retorna que a
-recuperação por e-mail ainda não está configurada.
+==========
+A correção serve para TODOS OS CAMPOS do modal "Confirmar recebimento".
+Ela não muda automaticamente campos de outras páginas/módulos.
 
-FLUXO
-/pages/comecar/
-  -> Esqueceu seu código?
-/pages/recuperar-acesso/
-  -> academia + e-mail
-  -> OTP 6 dígitos
-  -> mostra FS-XXXX-XXXX
-  -> opcional: redefinir senha
-  -> volta para o login com academia e código preenchidos
+COMO APLICAR
+============
+1. Substitua:
+   public/pages/financeiro/recebimento-contraste.css
 
-VALIDAÇÃO
-- node --check: OK
-- npm run check: OK
+2. Na raiz do projeto execute:
+   PowerShell:
+   .\APLICAR-CORRECAO-FINANCEIRO.ps1
+
+   ou Linux:
+   bash APLICAR-CORRECAO-FINANCEIRO.sh
+
+O script move o CSS de contraste para o final do <head> e troca a versão,
+evitando que o tema global ou o cache do navegador vençam a correção.
+
+3. Commit/push.
+4. Aguarde o Render ficar Live.
+5. No navegador: Ctrl+F5.
