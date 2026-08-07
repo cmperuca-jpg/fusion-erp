@@ -23,7 +23,16 @@ async function salvarJson(arquivo, dados) {
 }
 
 function hojeISO() {
-  return new Date().toISOString().slice(0, 10);
+  const partes = new Intl.DateTimeFormat('pt-BR', {
+    timeZone: 'America/Sao_Paulo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).formatToParts(new Date()).reduce((acc, parte) => {
+    if (parte.type !== 'literal') acc[parte.type] = parte.value;
+    return acc;
+  }, {});
+  return `${partes.year}-${partes.month}-${partes.day}`;
 }
 
 function agoraISO() {
@@ -97,9 +106,22 @@ function statusFinanceiro(status) {
 
 function calcularStatus(m) {
   const s = statusInterno(m.status);
-  if (s === 'pago' || s === 'cancelado' || s === 'parcial' || s === 'programada') return s;
-  const venc = new Date(`${m.vencimento}T23:59:59`);
-  return venc < new Date() ? 'atrasado' : 'aberto';
+  if (s === 'pago' || s === 'cancelado' || s === 'parcial') return s;
+
+  const vencimento = String(m.vencimento || hojeISO()).slice(0, 10);
+  const hoje = hojeISO();
+
+  // Programado é um estado futuro. Ao chegar ao vencimento ele se torna
+  // exigível; após o vencimento passa a atrasado.
+  if (s === 'programada') {
+    if (vencimento < hoje) return 'atrasado';
+    if (vencimento === hoje) return 'aberto';
+    return 'programada';
+  }
+
+  if (vencimento < hoje) return 'atrasado';
+  if (vencimento > hoje) return 'programada';
+  return 'aberto';
 }
 
 function calcularValorAtualizado(m, config = {}) {
@@ -141,12 +163,14 @@ async function buscarPlano(id) {
 }
 
 function existeDuplicada(mensalidades, alunoId, competencia, ignorarId = '') {
-  return mensalidades.some(m =>
-    String(m.id) !== String(ignorarId) &&
-    String(m.alunoId) === String(alunoId) &&
-    String(m.competencia) === String(competencia) &&
-    statusInterno(m.status) !== 'cancelado'
-  );
+  const alvo = String(competencia || '').slice(0, 7);
+  return mensalidades.some(m => {
+    if (String(m.id) === String(ignorarId)) return false;
+    if (String(m.alunoId) !== String(alunoId)) return false;
+    if (statusInterno(m.status) === 'cancelado') return false;
+    const comp = String(m.competencia || competenciaPorVencimento(m.vencimento || m.dataVencimento || '')).slice(0, 7);
+    return Boolean(alvo && comp === alvo);
+  });
 }
 
 function ehMatriculaInicial(mensalidade = {}) {
@@ -184,6 +208,22 @@ function valorPrincipalMensalidade(mensalidade = {}) {
     return numero(mensalidade.valor, 0);
   }
   return numero(mensalidade.valorOriginal ?? mensalidade.valor, 0);
+}
+
+function saldoDevidoMensalidade(mensalidade = {}) {
+  const st = calcularStatus(mensalidade);
+  if (st === 'pago' || st === 'cancelado') return 0;
+
+  const saldoInformado = mensalidade.saldoRestante ?? mensalidade.valorRestante ?? mensalidade.saldo;
+  const saldo = numero(saldoInformado, 0);
+  if (saldo > 0) return Number(saldo.toFixed(2));
+
+  const principal = numero(
+    mensalidade.valorAtualizado ?? mensalidade.valorDevido ?? valorPrincipalMensalidade(mensalidade),
+    0
+  );
+  const pago = numero(mensalidade.valorPago ?? mensalidade.valorRecebido ?? 0, 0);
+  return Number(Math.max(0, principal - pago).toFixed(2));
 }
 
 function idsIguais(a, b) {
@@ -329,7 +369,7 @@ async function upsertLancamentoFinanceiro(mensalidade) {
     total: valorPrincipal,
     valorPago,
     valorRecebido: valorPago,
-    valorRestante: statusFin === 'Pago' ? 0 : Math.max(0, Number((valorPrincipal - valorPago).toFixed(2))),
+    valorRestante: ['Pago', 'Programado'].includes(statusFin) ? 0 : Math.max(0, Number((valorPrincipal - valorPago).toFixed(2))),
     valorBrutoRecebido,
     valorLiquido,
     taxaOperadoraPercentual: numero(mensalidade.taxaOperadoraPercentual, 0),
@@ -506,13 +546,14 @@ function ocultarProgramadasDuplicadas(lista = []) {
   const emitidas = new Set();
 
   for (const item of lista) {
-    const status = statusInterno(item.status);
+    const statusPersistido = statusInterno(item.statusPersistido ?? item.status);
     const chave = chaveMensalidadeCompetencia(item);
-    if (chave && status !== 'programada' && status !== 'cancelado') emitidas.add(chave);
+    if (chave && statusPersistido !== 'programada' && statusPersistido !== 'cancelado') emitidas.add(chave);
   }
 
   return lista.filter((item) => {
-    if (statusInterno(item.status) !== 'programada') return true;
+    const statusPersistido = statusInterno(item.statusPersistido ?? item.status);
+    if (statusPersistido !== 'programada') return true;
     const chave = chaveMensalidadeCompetencia(item);
     return !chave || !emitidas.has(chave);
   });
@@ -551,6 +592,7 @@ export async function listarMensalidades(filtros = {}) {
 
       const base = {
         ...m,
+        statusPersistido: m.status,
         alunoNome,
         aluno: m.aluno || alunoNome,
         planoNome,
@@ -599,17 +641,17 @@ export async function resumoMensalidades(filtros = {}) {
   for (const m of lista) {
     if (m.status === 'aberto') {
       resumo.abertas++;
-      resumo.valorAberto += numero(m.saldoRestante ?? m.valorAtualizado ?? valorPrincipalMensalidade(m), 0);
+      resumo.valorAberto += saldoDevidoMensalidade(m);
     } else if (m.status === 'pago') {
       resumo.pagas++;
       resumo.valorPago += numero(m.valorPago ?? m.valor, 0);
     } else if (m.status === 'parcial') {
       resumo.parciais++;
-      resumo.valorAberto += numero(m.saldoRestante ?? 0, 0);
+      resumo.valorAberto += saldoDevidoMensalidade(m);
       resumo.valorPago += numero(m.valorPago ?? 0, 0);
     } else if (m.status === 'atrasado') {
       resumo.atrasadas++;
-      resumo.valorAtrasado += numero(m.saldoRestante ?? m.valorAtualizado ?? valorPrincipalMensalidade(m), 0);
+      resumo.valorAtrasado += saldoDevidoMensalidade(m);
     } else if (m.status === 'cancelado') {
       resumo.canceladas++;
     } else if (m.status === 'programada') {
@@ -617,7 +659,11 @@ export async function resumoMensalidades(filtros = {}) {
       resumo.valorProgramado += numero(m.valor, 0);
     }
 
-    if (m.status !== 'cancelado') resumo.valorPrevisto += numero(m.saldoRestante ?? m.valorAtualizado ?? valorPrincipalMensalidade(m), 0);
+    if (['aberto', 'parcial', 'atrasado'].includes(m.status)) {
+      resumo.valorPrevisto += saldoDevidoMensalidade(m);
+    } else if (m.status === 'programada') {
+      resumo.valorPrevisto += numero(m.valor, 0);
+    }
 
     // O Dashboard exibe mensalidades recorrentes, não a cobrança única de
     // matrícula + primeira mensalidade que permanece no Financeiro.
@@ -667,7 +713,9 @@ export async function criarMensalidade(dados = {}) {
     desconto: beneficio.desconto,
     descontoFidelidadePercentual: beneficio.premio?.percentual || 0,
     premioFidelidadeId: beneficio.premio?.id || '',
-    status: statusInterno(dados.status || 'aberto'),
+    status: dados.status
+      ? statusInterno(dados.status)
+      : (vencimento > hojeISO() ? 'programada' : 'aberto'),
     descricao: dados.descricao || 'Mensalidade',
     observacao: dados.observacao || '',
     lancamentoFinanceiroId: '',
@@ -745,7 +793,11 @@ export async function atualizarMensalidade(id, dados = {}) {
     vencimento,
     competencia,
     valor: dados.valor !== undefined ? numero(dados.valor) : numero(mensalidades[idx].valor, 0),
-    status: statusInterno(dados.status || mensalidades[idx].status || 'aberto'),
+    status: (() => {
+      const atual = statusInterno(dados.status ?? mensalidades[idx].status ?? 'aberto');
+      if (['pago', 'parcial', 'cancelado'].includes(atual)) return atual;
+      return vencimento > hojeISO() ? 'programada' : 'aberto';
+    })(),
     atualizadoEm: agoraISO()
   };
 

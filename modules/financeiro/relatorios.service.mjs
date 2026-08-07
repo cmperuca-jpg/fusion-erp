@@ -122,11 +122,27 @@ function calcularTaxa(item = {}) {
   if (Number.isInteger(item.taxaOperadoraValorCentavos)) return arred(item.taxaOperadoraValorCentavos / 100);
   return arred(item.taxaOperadoraValor ?? item.taxaValor ?? item.taxa ?? 0);
 }
-function valorBruto(item = {}) { return arred(item.valorBrutoRecebido ?? item.valorRecebido ?? item.valorPago ?? item.totalPago ?? item.valor ?? item.valorBruto ?? item.valorTotal ?? 0); }
+function valorBruto(item = {}) { return arred(item.valorBrutoRecebido ?? item.valorRecebidoBruto ?? item.valorRecebido ?? item.valorPago ?? item.totalPago ?? item.valor ?? item.valorBruto ?? item.valorTotal ?? 0); }
+
+function liquidoCanonico(brutoValor, taxaValor, liquidoInformado = 0) {
+  const bruto = Math.max(0, numero(brutoValor));
+  const taxa = Math.max(0, numero(taxaValor));
+  const calculado = arred(Math.max(0, bruto - taxa));
+  const informado = numero(liquidoInformado);
+
+  // Taxa explícita é autoridade contábil. Isso corrige registros históricos
+  // onde o líquido foi salvo com a taxa descontada duas vezes.
+  if (taxa > 0) return calculado;
+  if (informado > 0) return arred(informado);
+  return calculado;
+}
+
 function valorLiquido(item = {}) {
-  const liquido = numero(item.valorLiquido ?? item.valorRecebidoLiquido ?? 0);
-  if (liquido > 0) return arred(liquido);
-  return arred(valorBruto(item) - calcularTaxa(item));
+  return liquidoCanonico(
+    valorBruto(item),
+    calcularTaxa(item),
+    item.valorLiquido ?? item.valorRecebidoLiquido ?? 0
+  );
 }
 function valorOriginal(item = {}) { return arred(item.valor ?? item.valorBruto ?? item.valorTotal ?? item.total ?? item.valorLiquido ?? 0); }
 function valorPago(item = {}) { return arred(item.valorPago ?? item.valorPagoTotal ?? item.totalPago ?? item.valorRecebido ?? 0); }
@@ -239,7 +255,7 @@ function passaFormaFiltro(item = {}, filtro = '') {
 }
 
 function referencias(item = {}) {
-  return [...new Set([
+  const refs = [
     item.id,
     item.movimentoCaixaId,
     item.lancamentoFinanceiroId,
@@ -251,7 +267,15 @@ function referencias(item = {}) {
     item.reciboId,
     item.ultimoReciboId,
     item.reciboEstornadoId
-  ].map(v => String(v || '').trim()).filter(Boolean))];
+  ].map(v => String(v || '').trim()).filter(Boolean);
+
+  // Compatibilidade com saídas legadas sem campos de vínculo. Exemplo:
+  // cx_baixa-pagamento-fin_pag_...-timestamp contém o ID financeiro no próprio ID.
+  const id = String(item.id || '');
+  const embutido = id.match(/(fin_[A-Za-z0-9_]+)(?=-|$)/);
+  if (embutido?.[1]) refs.push(embutido[1]);
+
+  return [...new Set(refs)];
 }
 
 function jaVisto(vistos, item = {}) {
@@ -349,7 +373,7 @@ export async function movimentoDiarioCaixa(filtros = {}) {
       : 0;
     const taxa = calcularTaxa(m) || calcularTaxa(fin) || taxaRelacionada;
     const liquidoInformado = numero(m.valorLiquido ?? m.valorRecebidoLiquido);
-    const liquido = liquidoInformado > 0 ? arred(liquidoInformado) : arred(bruto - taxa);
+    const liquido = liquidoCanonico(bruto, taxa, liquidoInformado);
     return {
       id: m.id,
       reciboId: m.reciboId || '',
@@ -423,7 +447,7 @@ export async function movimentoDiarioCaixa(filtros = {}) {
         const bruto = numero(forma.valor ?? forma.valorPago ?? forma.valorBruto) || (indice === 0 ? valorBruto(r) : 0);
         const taxa = taxaFormaRecibo(forma, r, bruto, totalBruto);
         const liquidoForma = numero(forma.valorLiquido ?? forma.valorRecebidoLiquido);
-        const liquido = liquidoForma > 0 ? arred(liquidoForma) : arred(bruto - taxa);
+        const liquido = liquidoCanonico(bruto, taxa, liquidoForma);
         return {
           id: `${r.id || r.numero || 'recibo'}:${indice}`,
           reciboId: r.id || '',
@@ -535,6 +559,42 @@ export async function movimentoDiarioCaixa(filtros = {}) {
   };
 }
 
+function ehTituloRecorrenteFinanceiro(item = {}) {
+  const origem = normalizar(item.origem);
+  const categoriaItem = normalizar(item.categoria);
+  const descricaoItem = normalizar(item.descricao);
+  if (origem.includes('matricula_inicial') || categoriaItem.includes('matricula') || descricaoItem.includes('entrada matricula')) return false;
+  return origem.includes('mensalidade') ||
+    origem.includes('recorrencia') ||
+    categoriaItem.includes('mensalidade') ||
+    Boolean(item.mensalidadeId && (item.competencia || item.vencimento));
+}
+
+function chaveRecorrenciaFinanceira(item = {}) {
+  if (!ehTituloRecorrenteFinanceiro(item)) return '';
+  const aluno = String(item.alunoId || pessoa(item) || '').trim();
+  if (!aluno) return '';
+  const matricula = String(item.matriculaId || '').trim();
+  const plano = String(item.planoId || '').trim();
+  const comp = String(item.competencia || dataVencimento(item).slice(0, 7) || '').slice(0, 7);
+  if (!comp) return '';
+  return [aluno, matricula, plano, comp].join('|');
+}
+
+function ocultarProgramadosDuplicadosFinanceiro(lista = []) {
+  const emitidas = new Set();
+  for (const item of lista) {
+    if (!statusAtivo(item) || statusProgramado(item)) continue;
+    const chave = chaveRecorrenciaFinanceira(item);
+    if (chave) emitidas.add(chave);
+  }
+  return lista.filter(item => {
+    if (!statusProgramado(item)) return true;
+    const chave = chaveRecorrenciaFinanceira(item);
+    return !chave || !emitidas.has(chave);
+  });
+}
+
 export async function biFinanceiro(filtros = {}) {
   const inicio = dataISO(filtros.inicio || filtros.dataInicio || '');
   const fim = dataISO(filtros.fim || filtros.dataFim || (inicio ? hojeISO() : ''));
@@ -546,7 +606,7 @@ export async function biFinanceiro(filtros = {}) {
   const pagamentosRaw = await lerJsonOpcional([PAGAMENTOS_FILE, PAGAMENTOS_FILE_LEGADO], []);
   const caixaRaw = await lerJson(CAIXA_FILE, { caixas: [], movimentos: [] });
 
-  const financeiro = arrayDe(financeiroRaw, 'lancamentos').filter(statusAtivo);
+  const financeiro = ocultarProgramadosDuplicadosFinanceiro(arrayDe(financeiroRaw, 'lancamentos').filter(statusAtivo));
   const recebimentosTodos = arrayDe(recebimentosRaw, 'recebimentos');
   const recibosTodos = arrayDe(recibosRaw, 'recibos');
   const recebimentos = recebimentosTodos.filter(statusAtivo).filter(statusPago);
@@ -559,33 +619,31 @@ export async function biFinanceiro(filtros = {}) {
   const movimentos = movimentosHistoricos.filter((m) => !movimentoNeutroPorEstorno(m, recibosEstornados));
 
   const linhas = [];
-  const referencias = item => [...new Set([
-    item.id, item.lancamentoFinanceiroId, item.financeiroId, item.recebimentoId,
-    item.pagamentoId, item.referenciaId, item.movimentoCaixaId, item.mensalidadeId,
-    item.reciboId, item.ultimoReciboId, item.reciboEstornadoId
-  ].map(v => String(v || '').trim()).filter(Boolean))];
   for (const f of financeiro) {
     const receita = tipoReceita(f);
     const dVenc = dataVencimento(f);
     const pagoStatus = statusPago(f);
     const dPag = pagoStatus ? dataPagamento(f) : '';
     const base = valorOriginal(f);
-    const pago = valorPago(f) || (pagoStatus ? valorLiquido(f) : 0);
+    const pago = valorPago(f) || (pagoStatus ? valorBruto(f) : 0);
     const pendente = pagoStatus ? 0 : valorPendente(f);
     const parcial = !pagoStatus && pago > 0 && pendente > 0;
-    const valorRealizado = pagoStatus ? valorLiquido(f) : pago;
+    const brutoRealizado = numero(f.valorBrutoRecebido ?? f.valorRecebidoBruto ?? f.valorRecebido ?? pago);
+    const valorRealizado = pagoStatus
+      ? valorLiquido(f)
+      : (receita ? liquidoCanonico(brutoRealizado || pago, calcularTaxa(f), f.valorLiquido ?? f.valorRecebidoLiquido) : pago);
 
     // Compatibilidade com títulos antigos gravados como "Aberto":
     // se ainda não houve baixa e o vencimento é futuro, operacionalmente é Programado.
-    const programado = !parcial && (
-      statusProgramado(f) ||
-      (!pagoStatus && pago <= 0 && dVenc && dVenc > hoje)
+    const programado = !parcial && !pagoStatus && pago <= 0 && (
+      (dVenc && dVenc > hoje) ||
+      (!dVenc && statusProgramado(f))
     );
 
     linhas.push({
       origem: 'financeiro', id: f.id, tipo: receita ? 'receita' : 'despesa', status: f.status || 'Aberto',
       data: dPag || dVenc, vencimento: dVenc, realizado: pagoStatus, valor: base,
-      valorPendente: pendente, valorRealizado, parcial, programado, taxa: calcularTaxa(f),
+      valorPendente: pendente, valorRealizado, parcial, programado, taxa: parcial ? 0 : calcularTaxa(f),
       categoria: categoria(f, receita ? 'Receitas' : 'Despesas'), descricao: descricao(f),
       pessoa: pessoa(f), referencias: referencias(f)
     });
@@ -602,7 +660,7 @@ export async function biFinanceiro(filtros = {}) {
         status: receita ? 'Recebido parcial' : 'Pago parcial',
         data: dataPagamento(f) || dVenc, vencimento: dVenc, realizado: true,
         valor: pago, valorPendente: 0,
-        valorRealizado: receita ? (numero(f.valorLiquido ?? f.valorRecebidoLiquido) || pago) : pago,
+        valorRealizado,
         programado: false, componenteParcialRealizado: true,
         taxa: calcularTaxa(f), categoria: categoria(f, receita ? 'Receitas' : 'Despesas'),
         descricao: descricao(f), pessoa: pessoa(f), referencias: referencias(f)
@@ -646,8 +704,10 @@ export async function biFinanceiro(filtros = {}) {
     const valor = numero(linha.valorRealizado || linha.valor);
     if (linha.realizado && valor <= 0) return 90;
     if (linha.realizado && linha.tipo === 'receita') {
-      if (linha.origem === 'caixa') return 1;
-      if (linha.origem === 'recebimentos') return 2;
+      // Recebimentos é a fonte contábil preferida para bruto/taxa/líquido.
+      // Caixa fica como fallback operacional quando o recebimento não existe.
+      if (linha.origem === 'recebimentos') return 1;
+      if (linha.origem === 'caixa') return 2;
       if (linha.origem === 'financeiro') return 3;
     }
     if (linha.realizado && linha.tipo === 'despesa') {
@@ -727,7 +787,7 @@ export async function biFinanceiro(filtros = {}) {
   return {
     ok: true,
     filtros: { inicio, fim },
-    resumo: { recebido, receber, pago, pagar, vencidoReceber, vencidoPagar, programadoReceber, programadoPagar, saldoRealizado: arred(recebido - pago), saldoPrevisto: arred((recebido + receber + programadoReceber) - (pago + pagar + programadoPagar)), totalLancamentos: periodo.filter(l => !l.componenteParcialRealizado).length, taxasFinanceiras: arred(periodo.reduce((s, l) => s + numero(l.taxa || 0), 0)), qtdReceitas: receitas.filter(l => !l.componenteParcialRealizado).length, qtdDespesas: despesas.filter(l => !l.componenteParcialRealizado).length },
+    resumo: { recebido, receber, pago, pagar, vencidoReceber, vencidoPagar, programadoReceber, programadoPagar, saldoRealizado: arred(recebido - pago), saldoPrevisto: arred((recebido + receber + programadoReceber) - (pago + pagar + programadoPagar)), totalLancamentos: periodo.filter(l => !l.componenteParcialRealizado).length, taxasFinanceiras: arred(periodo.filter(l => l.realizado).reduce((s, l) => s + numero(l.taxa || 0), 0)), qtdReceitas: receitas.filter(l => !l.componenteParcialRealizado).length, qtdDespesas: despesas.filter(l => !l.componenteParcialRealizado).length },
     receitasPorMes: [...receitasMes.values()].sort((a, b) => a.chave.localeCompare(b.chave)).map(x => ({ mes: x.chave, valor: x.valor })),
     despesasPorMes: [...despesasMes.values()].sort((a, b) => a.chave.localeCompare(b.chave)).map(x => ({ mes: x.chave, valor: x.valor })),
     fluxo,

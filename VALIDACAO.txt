@@ -1,16 +1,5 @@
-VALIDAÇÃO AUTOMÁTICA
-===================
-
-public/fusion-sw-sistema.js: OK
-public/fusion-sw-aluno.js: OK
-public/fusion-sw-professor.js: OK
-public/assets/pwa/fusion-pwa-install.js: OK
-public/assets/js/fusion-mobile-final.js: OK
-public/assets/js/fusion-layout.js: OK
-
-Manifests JSON: OK
-
-Scopes finais:
-Sistema:   /
-Aluno:     /pages/aluno-
-Professor: /pages/professor-
+modules/financeiro/relatorios.service.mjs: OK
+public/pages/bi-financeiro/index.js: OK
+modules/financeiro/caixa.service.mjs: OK
+modules/financeiro/mensalidades.service.mjs: OK
+public/pages/caixa/index.js: OK

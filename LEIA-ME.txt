@@ -1,59 +1,117 @@
-FUSION ERP — SALDO LÍQUIDO PREVISTO CORRIGIDO
+FUSION ERP — CONSOLIDAÇÃO CONTÁBIL/FINANCEIRA
 Data: 07/08/2026
 
-ARQUIVOS
-========
+ARQUIVOS ALTERADOS
+==================
 modules/financeiro/relatorios.service.mjs
-modules/financeiro/financeiro-ledger.service.mjs
-public/pages/financeiro/financeiro.js
-public/pages/financeiro/index.html
+public/pages/bi-financeiro/index.js
+modules/financeiro/caixa.service.mjs
+modules/financeiro/mensalidades.service.mjs
+public/pages/caixa/index.js
 
-O QUE FOI CORRIGIDO
-===================
-1. PAGAMENTO PARCIAL
-Antes:
-- um título de R$ 5.700,00 com R$ 4.500,00 já pagos podia continuar entrando
-  no BI como R$ 5.700,00 pendentes;
-- se a baixa de R$ 4.500,00 também estivesse registrada em Pagamentos/Caixa,
-  o valor pago era contabilizado e o título inteiro continuava pendente.
+OBJETIVO
+========
+Unificar a matemática financeira entre:
+- Financeiro
+- Mensalidades
+- Recebimentos
+- Pagamentos
+- Caixa
+- Relatório Diário de Caixa
+- BI Financeiro
+- Dashboard
 
-Agora:
-- realizado: R$ 4.500,00;
-- saldo pendente: R$ 1.200,00;
-- não existe nova cobrança dos R$ 4.500,00 já realizados.
+CORREÇÕES PRINCIPAIS
+====================
+1) BRUTO - TAXA = LÍQUIDO
+Quando existe taxa explícita, o líquido é recalculado por:
+  líquido = bruto - taxa
+Isso corrige registros históricos em que a taxa foi descontada duas vezes.
 
-2. TÍTULOS PROGRAMADOS
-- Programado não vira "Em aberto".
-- O saldo previsto considera Programado dos dois lados:
-  receitas programadas e despesas programadas.
-- Títulos antigos gravados como "Aberto", mas ainda futuros e sem baixa,
-  são tratados como Programado no BI.
-- Um título parcial continua Parcial, mesmo se o vencimento for futuro.
+Exemplo auditado:
+  R$ 65,00 - R$ 1,94 = R$ 63,06
+e não R$ 61,12.
 
-3. SALDO LÍQUIDO PREVISTO
-Fórmula canônica:
-(recebido líquido + receitas em aberto + receitas programadas)
--
-(despesas pagas + despesas em aberto + despesas programadas)
+2) CAIXA
+O Caixa agora valida:
+  saldo bruto = entradas brutas - saídas brutas
+  saldo líquido = entradas líquidas - saídas líquidas
 
-A fórmula usa SALDO PENDENTE nos títulos parciais, nunca o valor original inteiro.
+O backend também cruza movimento com Financeiro/Recebimento/Recibo para
+recuperar a taxa correta quando movimentos antigos não carregam a taxa.
 
-4. NEGATIVO NO KPI
-O sinal negativo não fica mais isolado no canto do cartão.
+3) BI FINANCEIRO
+O frontend deixa de usar o valor original de título parcial como saldo pendente.
+Agora usa:
+  valorPendente
+
 Exemplo:
-− R$ 4.800,19
-é exibido em uma única linha.
+  título R$ 5.700,00
+  pago R$ 4.500,00
+  pendente R$ 1.200,00
 
-5. BAIXA ANTECIPADA
-Na tela principal do Financeiro, Programado continua podendo ser
-Recebido/Pago antecipadamente. O status não precisa virar Aberto para liberar a ação.
+O saldo previsto inclui separadamente:
+  realizado + aberto + programado
 
-OBSERVAÇÃO SOBRE O VALOR EXATO
-==============================
-O valor final exibido depende de todos os títulos do tenant no momento do carregamento.
-A correção não força um número fixo: ela corrige a fórmula.
+4) DEDUPLICAÇÃO DE RECORRÊNCIA
+No BI, um título Programado redundante não é somado quando já existe a cobrança
+emitida para o mesmo aluno/matrícula/plano/competência.
 
-Validação:
-- node --check financeiro-ledger.service.mjs: OK
-- node --check relatorios.service.mjs: OK
-- node --check financeiro.js: OK
+5) MENSALIDADES
+- Programada futura permanece Programada.
+- No vencimento passa a Aberta.
+- Depois do vencimento passa a Atrasada.
+- Registros futuros criados manualmente passam a nascer como Programados.
+- Duplicidade Programada x Emitida é ocultada pela origem persistida, mesmo
+  depois que o vencimento já passou.
+- Saldo em atraso é reconstruído quando registros antigos guardaram saldo zero
+  indevidamente.
+- Mensalidade paga não volta a entrar em "valor previsto".
+
+6) FUSO HORÁRIO
+Mensalidades e Caixa passam a usar America/Sao_Paulo para a data operacional.
+
+VALORES DE CONTROLE DO DIAGNÓSTICO
+==================================
+Estes valores são as referências matemáticas do estado analisado da Academia Piloto:
+
+Entradas brutas efetivas............. R$ 3.290,01
+Taxas financeiras corretas........... R$     3,26
+Entradas líquidas corretas............ R$ 3.286,75
+Saídas efetivamente pagas............ R$ 4.500,00
+Saldo realizado correto.............. -R$ 1.213,25
+
+Conta parcial:
+Título................................. R$ 5.700,00
+Pago................................... R$ 4.500,00
+Saldo vencido.......................... R$ 1.200,00
+Título futuro.......................... R$ 5.700,00
+Necessidade de pagamentos 30 dias..... R$ 6.900,00
+
+Mensalidades de agosto:
+Pagas.................................. R$   555,00
+Atrasadas.............................. R$   130,00
+Programadas válidas.................... R$ 2.535,00
+
+Saldo projetado total, considerando todos os títulos conhecidos e removendo
+as duas previsões redundantes identificadas no diagnóstico:
+....................................... -R$ 4.928,25
+
+IMPORTANTE
+==========
+Este ZIP altera CÓDIGO. Ele não apaga nem modifica registros históricos no Supabase.
+
+Os dois títulos Programados redundantes e o registro histórico com líquido incorreto
+continuam existindo fisicamente no banco até uma reconciliação de dados específica.
+O código deste pacote impede que essas inconsistências contaminem os principais
+cálculos consolidados.
+
+Depois do deploy:
+1. Aguarde o Render ficar Live.
+2. Faça Ctrl+F5.
+3. Compare Financeiro, Caixa, Relatório Diário e BI.
+4. Só depois faça a reconciliação física dos registros históricos.
+
+VALIDAÇÃO
+=========
+Todos os 5 arquivos passaram no node --check.

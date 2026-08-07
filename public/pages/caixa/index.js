@@ -33,16 +33,25 @@ function valorBrutoMovimento(movimento = {}) {
 }
 
 function taxaMovimento(movimento = {}) {
-  const taxa = numero(movimento.taxaOperadoraValor ?? movimento.taxaValor, 0);
+  if (Number.isInteger(movimento.taxaCentavos)) return numero(movimento.taxaCentavos / 100, 0);
+  if (Number.isInteger(movimento.taxaOperadoraValorCentavos)) return numero(movimento.taxaOperadoraValorCentavos / 100, 0);
+  const taxa = numero(movimento.taxaOperadoraValor ?? movimento.taxaValor ?? movimento.taxa, 0);
   if (taxa > 0) return taxa;
-  return Math.max(0, Number((valorBrutoMovimento(movimento) - valorLiquidoMovimento(movimento)).toFixed(2)));
+
+  const bruto = valorBrutoMovimento(movimento);
+  const liquido = numero(movimento.valorLiquido ?? movimento.valorRecebidoLiquido, bruto);
+  return Math.max(0, Number((bruto - liquido).toFixed(2)));
 }
 
 function valorLiquidoMovimento(movimento = {}) {
   const bruto = valorBrutoMovimento(movimento);
+  const taxa = taxaMovimento(movimento);
+  const calculado = Math.max(0, Number((bruto - taxa).toFixed(2)));
   const liquido = numero(movimento.valorLiquido ?? movimento.valorRecebidoLiquido, NaN);
+
+  if (taxa > 0) return calculado;
   if (Number.isFinite(liquido) && liquido > 0) return liquido;
-  return Math.max(0, Number((bruto - numero(movimento.taxaOperadoraValor ?? movimento.taxaValor, 0)).toFixed(2)));
+  return calculado;
 }
 
 function hojeISO() {
@@ -91,8 +100,12 @@ function renderCaixa() {
   const taxas = numero(totais.taxas);
   const entradasLiquidas = numero(totais.entradasLiquidas ?? (entradasBrutas - taxas));
   const saidasBrutas = numero(totais.saidasBrutas ?? totais.saidas);
-  const saldoBruto = numero(totais.saldoAtualBruto ?? totais.saldoBruto ?? (entradasBrutas - saidasBrutas));
-  const saldoLiquido = numero(totais.saldoAtualLiquido ?? totais.saldoLiquido ?? totais.saldoAtual ?? (entradasLiquidas - numero(totais.saidasLiquidas ?? saidasBrutas)));
+  const saidasLiquidas = numero(totais.saidasLiquidas ?? saidasBrutas);
+
+  // O frontend valida as duas identidades de caixa em vez de confiar em um
+  // saldo histórico eventualmente persistido com semântica antiga.
+  const saldoBruto = Number((entradasBrutas - saidasBrutas).toFixed(2));
+  const saldoLiquido = Number((entradasLiquidas - saidasLiquidas).toFixed(2));
   const btnAbrir = $('#btnAbrir');
   const btnFechar = $('#btnFechar');
   const btnNovoMovimento = $('#btnNovoMovimento');

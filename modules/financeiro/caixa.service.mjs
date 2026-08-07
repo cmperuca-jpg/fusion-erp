@@ -6,6 +6,7 @@ const DATA_DIR = path.join(ROOT, 'data');
 const CAIXA_FILE = path.join(DATA_DIR, 'caixa.json');
 const FINANCEIRO_FILE = path.join(DATA_DIR, 'financeiro.json');
 const RECIBOS_FILE = path.join(DATA_DIR, 'recibos.json');
+const RECEBIMENTOS_FILE = path.join(DATA_DIR, 'recebimentos.json');
 
 async function lerCaixa() {
   const dados = await lerJsonDuravel(CAIXA_FILE, { caixas: [], movimentos: [] });
@@ -27,12 +28,25 @@ async function lerRecibos() {
   return lerJsonDuravel(RECIBOS_FILE, []);
 }
 
+async function lerRecebimentos() {
+  return lerJsonDuravel(RECEBIMENTOS_FILE, []);
+}
+
 async function salvarFinanceiro(dados) {
   await salvarJsonDuravel(FINANCEIRO_FILE, dados);
 }
 
 function hojeISO() {
-  return new Date().toISOString().slice(0, 10);
+  const partes = new Intl.DateTimeFormat('pt-BR', {
+    timeZone: 'America/Sao_Paulo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).formatToParts(new Date()).reduce((acc, parte) => {
+    if (parte.type !== 'literal') acc[parte.type] = parte.value;
+    return acc;
+  }, {});
+  return `${partes.year}-${partes.month}-${partes.day}`;
 }
 
 function agoraISO() {
@@ -108,20 +122,97 @@ function valorBrutoMovimento(movimento = {}) {
   return numero(movimento.valorBruto ?? movimento.valor, 0);
 }
 
-function taxaMovimento(movimento = {}) {
-  const taxaInformada = numero(movimento.taxaOperadoraValor ?? movimento.taxaValor, 0);
-  if (taxaInformada > 0) return taxaInformada;
+function taxaExplicita(registro = {}) {
+  if (Number.isInteger(registro.taxaCentavos)) return numero(registro.taxaCentavos / 100, 0);
+  if (Number.isInteger(registro.taxaOperadoraValorCentavos)) return numero(registro.taxaOperadoraValorCentavos / 100, 0);
+  return numero(registro.taxaOperadoraValor ?? registro.taxaValor ?? registro.taxa, 0);
+}
+
+function construirContextoFinanceiro(financeiro = [], recibos = [], recebimentos = []) {
+  const financeiroPorId = new Map();
+  const financeiroPorMovimento = new Map();
+  const recibosPorId = new Map();
+  const recebimentoPorMovimento = new Map();
+  const recebimentosPorRecibo = new Map();
+
+  for (const item of Array.isArray(financeiro) ? financeiro : []) {
+    const id = String(item.id || '').trim();
+    const movimentoId = String(item.movimentoCaixaId || '').trim();
+    if (id) financeiroPorId.set(id, item);
+    if (movimentoId) financeiroPorMovimento.set(movimentoId, item);
+  }
+  for (const recibo of Array.isArray(recibos) ? recibos : []) {
+    const id = String(recibo.id || recibo.numero || '').trim();
+    if (id) recibosPorId.set(id, recibo);
+  }
+  for (const recebimento of Array.isArray(recebimentos) ? recebimentos : []) {
+    const movimentoId = String(recebimento.movimentoCaixaId || '').trim();
+    const reciboId = String(recebimento.reciboId || recebimento.ultimoReciboId || '').trim();
+    if (movimentoId) recebimentoPorMovimento.set(movimentoId, recebimento);
+    if (reciboId) recebimentosPorRecibo.set(reciboId, [...(recebimentosPorRecibo.get(reciboId) || []), recebimento]);
+  }
+
+  return { financeiroPorId, financeiroPorMovimento, recibosPorId, recebimentoPorMovimento, recebimentosPorRecibo };
+}
+
+function financeiroRelacionado(movimento = {}, contexto = {}) {
+  const porMovimento = contexto.financeiroPorMovimento?.get(String(movimento.id || ''));
+  if (porMovimento) return porMovimento;
+
+  const idDireto = String(movimento.lancamentoFinanceiroId || movimento.financeiroId || '').trim();
+  if (idDireto && contexto.financeiroPorId?.has(idDireto)) return contexto.financeiroPorId.get(idDireto);
+
+  // Saídas antigas de contas a pagar podem trazer o ID financeiro embutido.
+  const idMovimento = String(movimento.id || '');
+  const embutido = idMovimento.match(/(fin_[A-Za-z0-9_]+)(?=-|$)/)?.[1] || '';
+  return embutido ? contexto.financeiroPorId?.get(embutido) || null : null;
+}
+
+function reciboRelacionado(movimento = {}, contexto = {}) {
+  const reciboId = String(movimento.reciboId || movimento.ultimoReciboId || '').trim();
+  return reciboId ? contexto.recibosPorId?.get(reciboId) || null : null;
+}
+
+function recebimentoRelacionado(movimento = {}, contexto = {}) {
+  const porMovimento = contexto.recebimentoPorMovimento?.get(String(movimento.id || ''));
+  if (porMovimento) return porMovimento;
+  const reciboId = String(movimento.reciboId || movimento.ultimoReciboId || '').trim();
+  const lista = reciboId ? contexto.recebimentosPorRecibo?.get(reciboId) || [] : [];
+  return lista.length === 1 ? lista[0] : null;
+}
+
+function taxaMovimento(movimento = {}, contexto = {}) {
+  const propria = taxaExplicita(movimento);
+  if (propria > 0) return propria;
+
+  const financeiro = financeiroRelacionado(movimento, contexto);
+  const taxaFinanceiro = taxaExplicita(financeiro || {});
+  if (taxaFinanceiro > 0) return taxaFinanceiro;
+
+  const recebimento = recebimentoRelacionado(movimento, contexto);
+  const taxaRecebimento = taxaExplicita(recebimento || {});
+  if (taxaRecebimento > 0) return taxaRecebimento;
+
+  const recibo = reciboRelacionado(movimento, contexto);
+  const taxaRecibo = taxaExplicita(recibo || {});
+  if (taxaRecibo > 0) return taxaRecibo;
 
   const bruto = valorBrutoMovimento(movimento);
   const liquido = numero(movimento.valorLiquido ?? movimento.valorRecebidoLiquido, bruto);
   return Math.max(0, Number((bruto - liquido).toFixed(2)));
 }
 
-function valorLiquidoMovimento(movimento = {}) {
+function valorLiquidoMovimento(movimento = {}, contexto = {}) {
   const bruto = valorBrutoMovimento(movimento);
+  const taxa = taxaMovimento(movimento, contexto);
+  const liquidoCalculado = Math.max(0, Number((bruto - taxa).toFixed(2)));
   const liquidoInformado = numero(movimento.valorLiquido ?? movimento.valorRecebidoLiquido, NaN);
+
+  // Havendo taxa explícita no movimento, no financeiro ou no recibo, a
+  // identidade contábil bruto - taxa = líquido prevalece sobre histórico corrompido.
+  if (taxa > 0) return liquidoCalculado;
   if (Number.isFinite(liquidoInformado) && liquidoInformado > 0) return liquidoInformado;
-  return Math.max(0, Number((bruto - taxaMovimento(movimento)).toFixed(2)));
+  return liquidoCalculado;
 }
 
 function criarTotaisZerados() {
@@ -168,8 +259,8 @@ function calcularTotais(movimentos, caixa, contexto = {}) {
 
   for (const m of lista) {
     const bruto = valorBrutoMovimento(m);
-    const liquido = valorLiquidoMovimento(m);
-    const taxa = taxaMovimento(m);
+    const liquido = valorLiquidoMovimento(m, contexto);
+    const taxa = taxaMovimento(m, contexto);
 
     const tipoMovimento = normalizar(m.tipo).normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     const saida = tipoMovimento.includes('saida');
@@ -279,8 +370,9 @@ async function removerLancamentoFinanceiro(movimentoId) {
 }
 
 export async function obterCaixaAtual() {
-  const [dados, recibos] = await Promise.all([lerCaixa(), lerRecibos()]);
+  const [dados, recibos, financeiro, recebimentos] = await Promise.all([lerCaixa(), lerRecibos(), lerFinanceiro(), lerRecebimentos()]);
   const recibosEstornados = idsRecibosEstornados(recibos, dados.movimentos);
+  const contextoFinanceiro = construirContextoFinanceiro(financeiro, recibos, recebimentos);
   const atual = caixaAberto(dados);
 
   if (!atual) {
@@ -294,20 +386,21 @@ export async function obterCaixaAtual() {
   return {
     aberto: true,
     caixa: atual,
-    totais: calcularTotais(dados.movimentos, atual, { recibosEstornados })
+    totais: calcularTotais(dados.movimentos, atual, { recibosEstornados, ...contextoFinanceiro })
   };
 }
 
 export async function listarCaixas(filtros = {}) {
-  const [dados, recibos] = await Promise.all([lerCaixa(), lerRecibos()]);
+  const [dados, recibos, financeiro, recebimentos] = await Promise.all([lerCaixa(), lerRecibos(), lerFinanceiro(), lerRecebimentos()]);
   const recibosEstornados = idsRecibosEstornados(recibos, dados.movimentos);
+  const contextoFinanceiro = construirContextoFinanceiro(financeiro, recibos, recebimentos);
   const status = normalizar(filtros.status);
   const data = String(filtros.data || '').trim();
 
   return dados.caixas
     .map(c => ({
       ...c,
-      totais: calcularTotais(dados.movimentos, c, { recibosEstornados })
+      totais: calcularTotais(dados.movimentos, c, { recibosEstornados, ...contextoFinanceiro })
     }))
     .filter(c => {
       if (status && status !== 'todos' && normalizar(c.status) !== status) return false;
@@ -318,8 +411,9 @@ export async function listarCaixas(filtros = {}) {
 }
 
 export async function listarMovimentos(filtros = {}) {
-  const [dados, recibos] = await Promise.all([lerCaixa(), lerRecibos()]);
+  const [dados, recibos, financeiro, recebimentos] = await Promise.all([lerCaixa(), lerRecibos(), lerFinanceiro(), lerRecebimentos()]);
   const recibosEstornados = idsRecibosEstornados(recibos, dados.movimentos);
+  const contextoFinanceiro = construirContextoFinanceiro(financeiro, recibos, recebimentos);
   const q = normalizar(filtros.q);
   const tipo = normalizar(filtros.tipo);
   const formaPagamento = normalizar(filtros.formaPagamento);
@@ -338,6 +432,12 @@ export async function listarMovimentos(filtros = {}) {
       }
       return true;
     })
+    .map(m => ({
+      ...m,
+      valorBruto: valorBrutoMovimento(m),
+      taxaOperadoraValor: taxaMovimento(m, { recibosEstornados, ...contextoFinanceiro }),
+      valorLiquido: valorLiquidoMovimento(m, { recibosEstornados, ...contextoFinanceiro })
+    }))
     .sort((a, b) => String(b.criadoEm).localeCompare(String(a.criadoEm)));
 }
 
@@ -395,8 +495,9 @@ export async function abrirCaixa(dadosEntrada = {}) {
 }
 
 export async function fecharCaixa(dadosEntrada = {}) {
-  const [dados, recibos] = await Promise.all([lerCaixa(), lerRecibos()]);
+  const [dados, recibos, financeiro, recebimentos] = await Promise.all([lerCaixa(), lerRecibos(), lerFinanceiro(), lerRecebimentos()]);
   const recibosEstornados = idsRecibosEstornados(recibos, dados.movimentos);
+  const contextoFinanceiro = construirContextoFinanceiro(financeiro, recibos, recebimentos);
   const atual = caixaAberto(dados);
 
   if (!atual) {
@@ -405,7 +506,7 @@ export async function fecharCaixa(dadosEntrada = {}) {
     throw erro;
   }
 
-  const totais = calcularTotais(dados.movimentos, atual, { recibosEstornados });
+  const totais = calcularTotais(dados.movimentos, atual, { recibosEstornados, ...contextoFinanceiro });
   const valorFechamentoInformado = numero(dadosEntrada.valorFechamentoInformado, totais.saldoAtual);
 
   atual.status = 'fechado';
