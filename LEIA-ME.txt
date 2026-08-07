@@ -1,52 +1,73 @@
-CORREÇÃO — BOTÃO TROCAR TURMA/MODALIDADE
-Fusion ERP — módulo Alunos
+CORREÇÃO DE ROLAGEM DO PWA — FUSION ERP
+Data da correção: 07/08/2026
 
-O que este pacote corrige
---------------------------
-1. O botão "Trocar turma/modalidade" passa a abrir diretamente a matrícula
-   exibida no cartão, usando:
-   /pages/matriculas/cadastro.html?id=<ID_DA_MATRICULA>&origem=troca-turma
+PROBLEMA IDENTIFICADO
+=====================
+A camada mobile global possui uma trava intencional quando o menu lateral está
+aberto:
 
-2. A própria tela de matrícula já reconhece o ID da matrícula e entra no modo
-   operacional de turma/modalidade, preservando plano e financeiro.
+    body.fusion-menu-open {
+      overflow: hidden !important;
+      touch-action: none;
+    }
 
-3. Corrige o contraste visual de:
-   - Trocar turma/modalidade
-   - Ver ficha
+No PWA instalado, ao voltar do segundo plano, navegar pelo histórico/bfcache ou
+restaurar uma página, a classe de menu pode permanecer no documento mesmo com o
+menu visualmente fechado. O resultado é a página inteira ficar "fixa": o toque
+vertical não rola.
 
-4. Mantém o preenchimento automático de CEP que já existia no arquivo
-   cep-autofill.js.
+Também não existia uma rotina específica para restaurar o scroll ao retornar ao
+PWA instalado.
 
-ARQUIVO PARA SUBSTITUIR MANUALMENTE
------------------------------------
-public/pages/alunos/cep-autofill.js
+O QUE A CORREÇÃO FAZ
+====================
+- Detecta quando o app está realmente em modo PWA/standalone.
+- Fecha trava residual de menu ao abrir/retomar a aplicação.
+- Restaura overflow-y e touch-action somente quando não há menu/modal aberto.
+- Mantém o fundo bloqueado normalmente enquanto um menu ou modal está aberto.
+- Corrige retorno por bfcache (pageshow), segundo plano e mudança de orientação.
+- Revalida o Service Worker dentro do PWA instalado.
+- Atualiza o cache do PWA do sistema para fusion-sistema-v281-scroll.
+- Faz o Service Worker usar estratégia network-first também para os arquivos
+  globais envolvidos na correção.
 
-Se você apenas substituir esse arquivo no servidor/GitHub, faça Ctrl+F5 no
-navegador para ignorar o cache.
+ARQUIVOS ALTERADOS PELO SCRIPT
+==============================
+public/assets/pwa/fusion-pwa-mobile.css
+public/assets/css/fusion-mobile-final.css
+public/assets/pwa/fusion-pwa-install.js
+public/assets/js/fusion-mobile-final.js
+public/fusion-sw-sistema.js
 
-MODO RECOMENDADO NO WINDOWS
----------------------------
+COMO APLICAR NO WINDOWS
+=======================
 1. Extraia este ZIP.
 2. Abra PowerShell na pasta extraída.
 3. Execute:
 
-   .\APLICAR_CORRECAO.ps1 -Repo "C:\caminho\para\fusion-erp"
+   .\APLICAR_CORRECAO_PWA.ps1 -Repo "C:\caminho\para\fusion-erp"
 
-O script:
-- cria backup dos arquivos atuais;
-- substitui cep-autofill.js;
-- altera a versão do script em public/pages/alunos/index.html para evitar cache.
+O script cria um backup dentro do próprio repositório antes de modificar os
+arquivos.
 
-TESTE
------
-Abra:
-Academia > Alunos > Editar aluno > Matrículas
+Linux/macOS:
+   ./APLICAR_CORRECAO_PWA.sh /caminho/para/fusion-erp
 
-Clique em "Trocar turma/modalidade".
+TESTE NO CELULAR
+================
+1. Faça deploy dos arquivos.
+2. Feche completamente o PWA.
+3. Abra o PWA novamente.
+4. Entre em uma página longa, por exemplo Alunos, Financeiro ou Matrículas.
+5. Role para baixo e para cima.
+6. Abra o menu, feche o menu e confirme que a página volta a rolar.
+7. Coloque o app em segundo plano, volte e teste a rolagem novamente.
 
-Resultado esperado:
-- abre Cadastro de Matrícula da matrícula correta;
-- aluno/plano continuam vinculados;
-- alteração fica focada em turma/modalidade;
-- ao salvar, usa PATCH /api/matriculas/:id/turmas;
-- não recria cobrança nem mensalidade.
+Se o telefone ainda estiver carregando a versão anterior após o deploy, limpe
+os dados/cache do site fusionsistema.com.br ou reinstale o PWA uma única vez.
+A nova versão do Service Worker reduz esse problema nas próximas atualizações.
+
+OBSERVAÇÃO
+==========
+O script é idempotente: ele procura a marca FUSION_PWA_SCROLL_FIX_20260807 e
+não duplica o patch se for executado novamente.

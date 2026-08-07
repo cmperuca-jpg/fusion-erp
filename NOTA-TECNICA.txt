@@ -1,19 +1,19 @@
-ALTERAÇÃO LÓGICA RECOMENDADA PARA O CÓDIGO-FONTE
-=====================================================
+NOTA TÉCNICA
 
-Arquivo: public/pages/alunos/index.js
+Na main analisada:
+- public/assets/css/fusion-mobile-final.css termina com:
+  body.fusion-menu-open { overflow:hidden!important; touch-action:none; }
 
-Hoje o botão é gerado aproximadamente assim:
+- public/assets/css/fusion-mobile-first.css também contém:
+  body.fusion-menu-open { overflow:hidden; }
 
-  onclick="abrirMatriculaAluno('<alunoId>')"
+- public/assets/js/fusion-mobile-final.js remove fusion-menu-open apenas pelos
+  eventos normais de fechar menu. Não havia recuperação em pageshow,
+  visibilitychange ou retomada do PWA.
 
-O ideal, em uma refatoração futura, é abrir a matrícula pelo próprio ID:
+- public/assets/pwa/fusion-pwa-mobile.css só tratava o standalone com
+  overscroll-behavior-y:contain.
 
-  onclick="location.href='/pages/matriculas/cadastro.html?id=<matriculaId>&origem=troca-turma'"
+- public/fusion-sw-sistema.js utilizava cache fusion-sistema-v280.
 
-O pacote atual aplica essa correção de forma compatível no script já carregado
-cep-autofill.js, sem alterar regras de financeiro e sem depender de alterações
-no backend.
-
-Backend já existente utilizado:
-  PATCH /api/matriculas/:id/turmas
+A correção evita remover a trava quando um menu/modal está realmente aberto.

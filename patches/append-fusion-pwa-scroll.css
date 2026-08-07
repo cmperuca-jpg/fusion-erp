@@ -1,0 +1,46 @@
+/* FUSION_PWA_SCROLL_FIX_20260807
+   Corrige travamento de rolagem no PWA instalado (Android/iOS).
+   A classe de desbloqueio é controlada pelo JS somente quando não há
+   menu ou modal aberto. */
+@media (display-mode: standalone) {
+  html.fusion-pwa-scroll-unlocked,
+  body.fusion-pwa-scroll-unlocked {
+    height: auto !important;
+    max-height: none !important;
+    overflow-y: auto !important;
+    overscroll-behavior-y: auto !important;
+    touch-action: pan-y !important;
+  }
+
+  body.fusion-pwa-scroll-unlocked {
+    min-height: 100dvh !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  body.fusion-pwa-scroll-unlocked .fusion-shell,
+  body.fusion-pwa-scroll-unlocked .fusion-main,
+  body.fusion-pwa-scroll-unlocked .fusion-content,
+  body.fusion-pwa-scroll-unlocked > main,
+  body.fusion-pwa-scroll-unlocked > .main,
+  body.fusion-pwa-scroll-unlocked > .content {
+    height: auto !important;
+    max-height: none !important;
+    min-height: 0;
+  }
+}
+
+@media (display-mode: standalone) and (max-width: 900px) {
+  html.fusion-pwa-scroll-unlocked,
+  body.fusion-pwa-scroll-unlocked {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: clip !important;
+  }
+
+  /* Menu realmente aberto continua bloqueando o fundo. */
+  body.fusion-menu-open,
+  body.fusion-ui-menu-open {
+    overflow: hidden !important;
+    touch-action: none !important;
+  }
+}
