@@ -1,0 +1,19 @@
+ALTERAÇÃO LÓGICA RECOMENDADA PARA O CÓDIGO-FONTE
+=====================================================
+
+Arquivo: public/pages/alunos/index.js
+
+Hoje o botão é gerado aproximadamente assim:
+
+  onclick="abrirMatriculaAluno('<alunoId>')"
+
+O ideal, em uma refatoração futura, é abrir a matrícula pelo próprio ID:
+
+  onclick="location.href='/pages/matriculas/cadastro.html?id=<matriculaId>&origem=troca-turma'"
+
+O pacote atual aplica essa correção de forma compatível no script já carregado
+cep-autofill.js, sem alterar regras de financeiro e sem depender de alterações
+no backend.
+
+Backend já existente utilizado:
+  PATCH /api/matriculas/:id/turmas
