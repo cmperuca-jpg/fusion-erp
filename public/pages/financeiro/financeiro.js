@@ -80,6 +80,12 @@ function moeda(valor) {
   return Number(valor || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
+function moedaSaldoPrevisto(valor) {
+  const numeroValor = Number(valor || 0);
+  const absoluto = Math.abs(numeroValor).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  return numeroValor < 0 ? `−\u00A0${absoluto}` : absoluto;
+}
+
 function hojeISO() { return new Date().toISOString().slice(0, 10); }
 function numero(valor) { const n = Number(String(valor ?? "").replace(",", ".")); return Number.isFinite(n) ? n : 0; }
 function valor(id) { return document.getElementById(id).value; }
@@ -513,7 +519,7 @@ function renderizarTabela() {
       <td><span class="badge ${escapeHtml(st)}">${escapeHtml(item.status || "Aberto")}</span></td>
       <td><div class="acoes">
         <button class="btn-secondary" onclick="editarLancamento('${escapeHtml(item.id)}')">Editar</button>
-        <button class="btn-light" ${jaPago || programado ? "disabled" : ""} onclick="baixarLancamento('${escapeHtml(item.id)}')">${item.tipo === "pagar" ? "Pagar" : "Receber"}</button>
+        <button class="btn-light" ${jaPago ? "disabled" : ""} onclick="baixarLancamento('${escapeHtml(item.id)}')" ${programado ? 'title="Título programado: baixa antecipada permitida"' : ""}>${item.tipo === "pagar" ? "Pagar" : "Receber"}</button>
         <button class="btn-light" ${jaPago || programado ? "disabled" : ""} onclick="alterarVencimentoLancamento('${escapeHtml(item.id)}')">Vencimento</button>
         <button class="btn-danger" ${jaPago || programado ? "disabled" : ""} onclick="excluirLancamento('${escapeHtml(item.id)}')">Cancelar</button>
       </div></td>
@@ -531,7 +537,7 @@ async function carregarResumo() {
     els.kpiReceitasPagas.textContent = moeda(json.resumo.receitasLiquidasPagas ?? json.resumo.receitasPagas);
     els.kpiReceitasAbertas.textContent = moeda(json.resumo.receitasAbertas);
     els.kpiDespesasAbertas.textContent = moeda(json.resumo.taxasFinanceiras ?? json.resumo.despesasAbertas);
-    els.kpiSaldoPrevisto.textContent = moeda(json.resumo.saldoLiquidoPrevisto ?? json.resumo.saldoPrevisto);
+    els.kpiSaldoPrevisto.textContent = moedaSaldoPrevisto(json.resumo.saldoLiquidoPrevisto ?? json.resumo.saldoPrevisto);
   }
   if (els.kpiCaixaReal && respCaixa?.ok) {
     const caixaJson = await respCaixa.json().catch(() => ({}));

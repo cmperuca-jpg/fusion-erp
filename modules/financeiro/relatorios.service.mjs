@@ -130,6 +130,28 @@ function valorLiquido(item = {}) {
 }
 function valorOriginal(item = {}) { return arred(item.valor ?? item.valorBruto ?? item.valorTotal ?? item.total ?? item.valorLiquido ?? 0); }
 function valorPago(item = {}) { return arred(item.valorPago ?? item.valorPagoTotal ?? item.totalPago ?? item.valorRecebido ?? 0); }
+
+/*
+ * Valor que ainda falta realizar.
+ *
+ * Não usa o valor original de um título parcial como se ele estivesse inteiro
+ * em aberto. Para títulos explicitamente Programados, ignora aliases antigos
+ * de saldo zerado, porque "programado" não significa "sem valor a receber/pagar".
+ */
+function valorPendente(item = {}) {
+  if (!statusAtivo(item) || statusPago(item)) return 0;
+
+  const original = Math.max(0, valorOriginal(item));
+  const pago = Math.max(0, Math.min(original, valorPago(item)));
+  const saldoInformado = item.valorRestante ?? item.saldoRestante ?? item.saldo ?? item.valorAberto;
+
+  if (!statusProgramado(item) && saldoInformado !== undefined && saldoInformado !== null && String(saldoInformado).trim() !== '') {
+    const saldo = Math.max(0, numero(saldoInformado));
+    if (saldo <= original + 0.009) return arred(saldo);
+  }
+
+  return arred(Math.max(0, original - pago));
+}
 function dataPagamento(item = {}) { return dataISO(item.dataPagamento || item.pagamento || item.dataBaixa || item.recebidoEm || item.pagoEm || item.atualizadoEm || item.updatedAt || item.criadoEm || item.createdAt); }
 function dataVencimento(item = {}) { return dataISO(item.vencimento || item.dataVencimento || item.data || item.criadoEm); }
 function categoria(item = {}, padrao = 'Sem categoria') { return item.categoria || item.centroCusto || item.origem || padrao; }
@@ -549,23 +571,53 @@ export async function biFinanceiro(filtros = {}) {
     const dPag = pagoStatus ? dataPagamento(f) : '';
     const base = valorOriginal(f);
     const pago = valorPago(f) || (pagoStatus ? valorLiquido(f) : 0);
+    const pendente = pagoStatus ? 0 : valorPendente(f);
+    const parcial = !pagoStatus && pago > 0 && pendente > 0;
     const valorRealizado = pagoStatus ? valorLiquido(f) : pago;
-    const programado = statusProgramado(f);
+
+    // Compatibilidade com títulos antigos gravados como "Aberto":
+    // se ainda não houve baixa e o vencimento é futuro, operacionalmente é Programado.
+    const programado = !parcial && (
+      statusProgramado(f) ||
+      (!pagoStatus && pago <= 0 && dVenc && dVenc > hoje)
+    );
+
     linhas.push({
       origem: 'financeiro', id: f.id, tipo: receita ? 'receita' : 'despesa', status: f.status || 'Aberto',
       data: dPag || dVenc, vencimento: dVenc, realizado: pagoStatus, valor: base,
-      valorRealizado, programado, taxa: calcularTaxa(f), categoria: categoria(f, receita ? 'Receitas' : 'Despesas'), descricao: descricao(f), pessoa: pessoa(f), referencias: referencias(f)
+      valorPendente: pendente, valorRealizado, parcial, programado, taxa: calcularTaxa(f),
+      categoria: categoria(f, receita ? 'Receitas' : 'Despesas'), descricao: descricao(f),
+      pessoa: pessoa(f), referencias: referencias(f)
     });
+
+    /*
+     * Se o título está parcial e não existir uma fonte operacional separada
+     * (recebimento/pagamento/caixa), preserva a parte já realizada.
+     * A deduplicação por referências elimina este componente quando a baixa
+     * específica também estiver presente.
+     */
+    if (parcial && pago > 0) {
+      linhas.push({
+        origem: 'financeiro', id: `${f.id}:parcial-realizado`, tipo: receita ? 'receita' : 'despesa',
+        status: receita ? 'Recebido parcial' : 'Pago parcial',
+        data: dataPagamento(f) || dVenc, vencimento: dVenc, realizado: true,
+        valor: pago, valorPendente: 0,
+        valorRealizado: receita ? (numero(f.valorLiquido ?? f.valorRecebidoLiquido) || pago) : pago,
+        programado: false, componenteParcialRealizado: true,
+        taxa: calcularTaxa(f), categoria: categoria(f, receita ? 'Receitas' : 'Despesas'),
+        descricao: descricao(f), pessoa: pessoa(f), referencias: referencias(f)
+      });
+    }
   }
 
   for (const r of recebimentos) {
     const data = dataPagamento(r) || dataVencimento(r);
-    linhas.push({ origem: 'recebimentos', id: r.id, tipo: 'receita', status: r.status || 'Recebido', data, vencimento: dataVencimento(r), realizado: true, valor: valorOriginal(r), valorRealizado: valorLiquido(r), taxa: calcularTaxa(r), categoria: categoria(r, 'Recebimentos'), descricao: descricao(r, 'Recebimento'), pessoa: pessoa(r), referencias: referencias(r) });
+    linhas.push({ origem: 'recebimentos', id: r.id, tipo: 'receita', status: r.status || 'Recebido', data, vencimento: dataVencimento(r), realizado: true, valor: valorOriginal(r), valorPendente: 0, valorRealizado: valorLiquido(r), taxa: calcularTaxa(r), categoria: categoria(r, 'Recebimentos'), descricao: descricao(r, 'Recebimento'), pessoa: pessoa(r), referencias: referencias(r) });
   }
 
   for (const p of pagamentos) {
     const data = dataPagamento(p) || dataVencimento(p);
-    linhas.push({ origem: 'pagamentos', id: p.id, tipo: 'despesa', status: p.status || 'Pago', data, vencimento: dataVencimento(p), realizado: statusPago(p), valor: valorOriginal(p), valorRealizado: statusPago(p) ? valorBruto(p) : valorPago(p), taxa: 0, categoria: categoria(p, 'Pagamentos'), descricao: descricao(p, 'Pagamento'), pessoa: pessoa(p), referencias: referencias(p) });
+    linhas.push({ origem: 'pagamentos', id: p.id, tipo: 'despesa', status: p.status || 'Pago', data, vencimento: dataVencimento(p), realizado: statusPago(p), valor: valorOriginal(p), valorPendente: 0, valorRealizado: statusPago(p) ? valorBruto(p) : valorPago(p), taxa: 0, categoria: categoria(p, 'Pagamentos'), descricao: descricao(p, 'Pagamento'), pessoa: pessoa(p), referencias: referencias(p) });
   }
 
   // Usa também o caixa como fonte de segurança para valores já movimentados,
@@ -585,7 +637,7 @@ export async function biFinanceiro(filtros = {}) {
     if (movimentoDeEstorno || vinculadoAReciboEstornado) continue;
 
     const data = dataISO(m.data || m.dataPagamento || m.criadoEm);
-    linhas.push({ origem: 'caixa', id: m.id, tipo: receita ? 'receita' : 'despesa', status: m.status || 'ativo', data, vencimento: data, realizado: true, valor: valorBruto(m), valorRealizado: valorLiquido(m), taxa: calcularTaxa(m), categoria: categoria(m, receita ? 'Caixa - entradas' : 'Caixa - saídas'), descricao: descricao(m, receita ? 'Entrada de caixa' : 'Saída de caixa'), pessoa: pessoa(m), referencias: referencias(m) });
+    linhas.push({ origem: 'caixa', id: m.id, tipo: receita ? 'receita' : 'despesa', status: m.status || 'ativo', data, vencimento: data, realizado: true, valor: valorBruto(m), valorPendente: 0, valorRealizado: valorLiquido(m), taxa: calcularTaxa(m), categoria: categoria(m, receita ? 'Caixa - entradas' : 'Caixa - saídas'), descricao: descricao(m, receita ? 'Entrada de caixa' : 'Saída de caixa'), pessoa: pessoa(m), referencias: referencias(m) });
   }
 
   // A mesma baixa existe em financeiro, recebimentos e caixa. Consolida pelos
@@ -623,14 +675,15 @@ export async function biFinanceiro(filtros = {}) {
   const despesasAbertas = despesas.filter(l => !l.realizado && !l.programado);
   const receitasProgramadas = receitas.filter(l => !l.realizado && l.programado);
   const despesasProgramadas = despesas.filter(l => !l.realizado && l.programado);
+  const valorLinhaPendente = (l = {}) => numero(l.valorPendente ?? l.valor);
   const recebido = arred(receitas.filter(l => l.realizado).reduce((s, l) => s + numero(l.valorRealizado || l.valor), 0));
-  const receber = arred(receitasAbertas.reduce((s, l) => s + numero(l.valor), 0));
+  const receber = arred(receitasAbertas.reduce((s, l) => s + valorLinhaPendente(l), 0));
   const pago = arred(despesas.filter(l => l.realizado).reduce((s, l) => s + numero(l.valorRealizado || l.valor), 0));
-  const pagar = arred(despesasAbertas.reduce((s, l) => s + numero(l.valor), 0));
-  const vencidoReceber = arred(receitasAbertas.filter(l => l.vencimento && l.vencimento < hoje).reduce((s, l) => s + numero(l.valor), 0));
-  const vencidoPagar = arred(despesasAbertas.filter(l => l.vencimento && l.vencimento < hoje).reduce((s, l) => s + numero(l.valor), 0));
-  const programadoReceber = arred(receitasProgramadas.reduce((s, l) => s + numero(l.valor), 0));
-  const programadoPagar = arred(despesasProgramadas.reduce((s, l) => s + numero(l.valor), 0));
+  const pagar = arred(despesasAbertas.reduce((s, l) => s + valorLinhaPendente(l), 0));
+  const vencidoReceber = arred(receitasAbertas.filter(l => l.vencimento && l.vencimento < hoje).reduce((s, l) => s + valorLinhaPendente(l), 0));
+  const vencidoPagar = arred(despesasAbertas.filter(l => l.vencimento && l.vencimento < hoje).reduce((s, l) => s + valorLinhaPendente(l), 0));
+  const programadoReceber = arred(receitasProgramadas.reduce((s, l) => s + valorLinhaPendente(l), 0));
+  const programadoPagar = arred(despesasProgramadas.reduce((s, l) => s + valorLinhaPendente(l), 0));
 
   const receitasMes = new Map();
   const despesasMes = new Map();
@@ -640,7 +693,7 @@ export async function biFinanceiro(filtros = {}) {
   const statusMapa = new Map();
 
   for (const l of periodo) {
-    const valor = numero(l.realizado ? (l.valorRealizado || l.valor) : l.valor);
+    const valor = numero(l.realizado ? (l.valorRealizado || l.valor) : (l.valorPendente ?? l.valor));
     const mes = mesISO(l.data || l.vencimento);
     if (!l.programado) {
       if (l.tipo === 'receita') {
@@ -653,11 +706,15 @@ export async function biFinanceiro(filtros = {}) {
         mapCategoria(despesaCategoria, l.categoria, valor);
       }
     }
-    const st = l.programado ? 'Programado' : (l.realizado ? (l.tipo === 'receita' ? 'Recebido' : 'Pago') : (l.vencimento && l.vencimento < hoje ? 'Vencido' : 'Aberto'));
-    const atual = statusMapa.get(st) || { status: st, quantidade: 0, valor: 0 };
-    atual.quantidade += 1;
-    atual.valor = arred(atual.valor + valor);
-    statusMapa.set(st, atual);
+    if (!l.componenteParcialRealizado) {
+      const st = l.programado
+        ? 'Programado'
+        : (l.parcial ? 'Parcial' : (l.realizado ? (l.tipo === 'receita' ? 'Recebido' : 'Pago') : (l.vencimento && l.vencimento < hoje ? 'Vencido' : 'Aberto')));
+      const atual = statusMapa.get(st) || { status: st, quantidade: 0, valor: 0 };
+      atual.quantidade += 1;
+      atual.valor = arred(atual.valor + valor);
+      statusMapa.set(st, atual);
+    }
   }
 
   const fluxo = [...fluxoMes.entries()].map(([mes, v]) => ({ mes, receitas: arred(v.receitas || 0), despesas: arred(v.despesas || 0), saldo: arred((v.receitas || 0) - (v.despesas || 0)) })).sort((a, b) => a.mes.localeCompare(b.mes));
@@ -670,7 +727,7 @@ export async function biFinanceiro(filtros = {}) {
   return {
     ok: true,
     filtros: { inicio, fim },
-    resumo: { recebido, receber, pago, pagar, vencidoReceber, vencidoPagar, programadoReceber, programadoPagar, saldoRealizado: arred(recebido - pago), saldoPrevisto: arred((recebido + receber) - (pago + pagar)), totalLancamentos: periodo.length, taxasFinanceiras: arred(periodo.reduce((s, l) => s + numero(l.taxa || 0), 0)), qtdReceitas: receitas.length, qtdDespesas: despesas.length },
+    resumo: { recebido, receber, pago, pagar, vencidoReceber, vencidoPagar, programadoReceber, programadoPagar, saldoRealizado: arred(recebido - pago), saldoPrevisto: arred((recebido + receber + programadoReceber) - (pago + pagar + programadoPagar)), totalLancamentos: periodo.filter(l => !l.componenteParcialRealizado).length, taxasFinanceiras: arred(periodo.reduce((s, l) => s + numero(l.taxa || 0), 0)), qtdReceitas: receitas.filter(l => !l.componenteParcialRealizado).length, qtdDespesas: despesas.filter(l => !l.componenteParcialRealizado).length },
     receitasPorMes: [...receitasMes.values()].sort((a, b) => a.chave.localeCompare(b.chave)).map(x => ({ mes: x.chave, valor: x.valor })),
     despesasPorMes: [...despesasMes.values()].sort((a, b) => a.chave.localeCompare(b.chave)).map(x => ({ mes: x.chave, valor: x.valor })),
     fluxo,

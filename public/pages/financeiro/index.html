@@ -69,10 +69,10 @@
         <small>Custos de operadora</small>
       </button>
 
-      <button class="card kpi kpi-btn" id="kpiAbrirSaldoPrevisto" type="button" title="Ver lançamentos que compõem o saldo previsto">
+      <button class="card kpi kpi-btn" id="kpiAbrirSaldoPrevisto" type="button" title="Inclui valores realizados, saldos pendentes e títulos programados">
         <span>Saldo líquido previsto</span>
-        <strong id="kpiSaldoPrevisto">R$ 0,00</strong>
-        <small>Receitas menos despesas</small>
+        <strong id="kpiSaldoPrevisto" style="white-space:nowrap">R$ 0,00</strong>
+        <small>Receitas realizadas e previstas − despesas realizadas e previstas</small>
       </button>
     </section>
 
@@ -88,6 +88,8 @@
       <select id="filtroStatus">
         <option value="">Todos os status</option>
         <option value="Aberto">Aberto</option>
+        <option value="Programado">Programado</option>
+        <option value="Parcial">Parcial</option>
         <option value="Pago">Pago</option>
         <option value="Cancelado">Cancelado</option>
       </select>
@@ -385,7 +387,7 @@
       </footer>
     </div>
   </div>
-  <script src="/pages/financeiro/financeiro.js?v=20260729-desconto-reativacao-2"></script>
+  <script src="/pages/financeiro/financeiro.js?v=20260807-saldo-previsto-v2"></script>
     <script src="/assets/js/fusion-layout.js"></script>
 
 <script src="/assets/pwa/fusion-pwa-install.js" defer></script>

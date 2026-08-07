@@ -1,65 +1,59 @@
-FUSION ERP — PAGAMENTOS
-Correção de Programado + Previsão de pagamentos — 30 dias
+FUSION ERP — SALDO LÍQUIDO PREVISTO CORRIGIDO
 Data: 07/08/2026
 
 ARQUIVOS
 ========
-public/pages/financeiro/pagamentos/index.html
-public/pages/financeiro/pagamentos/index.js
+modules/financeiro/relatorios.service.mjs
+modules/financeiro/financeiro-ledger.service.mjs
+public/pages/financeiro/financeiro.js
+public/pages/financeiro/index.html
 
-STATUS
-======
-Regra aplicada:
-- título com vencimento futuro e saldo > 0: Programado;
-- título Programado NÃO entra como Aberto;
-- Programado NÃO entra como Vencido;
-- Programado CONTINUA disponível para baixa antecipada;
-- Parcial continua Parcial quando já existe pagamento parcial;
-- Pago, Cancelado e Estornado mantêm seus estados.
+O QUE FOI CORRIGIDO
+===================
+1. PAGAMENTO PARCIAL
+Antes:
+- um título de R$ 5.700,00 com R$ 4.500,00 já pagos podia continuar entrando
+  no BI como R$ 5.700,00 pendentes;
+- se a baixa de R$ 4.500,00 também estivesse registrada em Pagamentos/Caixa,
+  o valor pago era contabilizado e o título inteiro continuava pendente.
 
-EXEMPLO DA TELA ANALISADA
-=========================
-Hoje: 07/08/2026
+Agora:
+- realizado: R$ 4.500,00;
+- saldo pendente: R$ 1.200,00;
+- não existe nova cobrança dos R$ 4.500,00 já realizados.
 
-15/07/2026
-Valor original: R$ 5.700,00
-Pago: R$ 4.500,00
-Saldo: R$ 1.200,00
-Situação: Parcial + vencido
+2. TÍTULOS PROGRAMADOS
+- Programado não vira "Em aberto".
+- O saldo previsto considera Programado dos dois lados:
+  receitas programadas e despesas programadas.
+- Títulos antigos gravados como "Aberto", mas ainda futuros e sem baixa,
+  são tratados como Programado no BI.
+- Um título parcial continua Parcial, mesmo se o vencimento for futuro.
 
-15/08/2026
-Valor: R$ 5.700,00
-Pago: R$ 0,00
-Saldo: R$ 5.700,00
-Situação: Programado
-Baixa antecipada: permitida
+3. SALDO LÍQUIDO PREVISTO
+Fórmula canônica:
+(recebido líquido + receitas em aberto + receitas programadas)
+-
+(despesas pagas + despesas em aberto + despesas programadas)
 
-PREVISÃO DE PAGAMENTOS — 30 DIAS
-================================
-O antigo "Valor previsto" somava os valores originais:
-R$ 5.700 + R$ 5.700 = R$ 11.400
+A fórmula usa SALDO PENDENTE nos títulos parciais, nunca o valor original inteiro.
 
-Agora o indicador soma NECESSIDADE REAL DE CAIXA:
-- todo saldo vencido ainda pendente;
-- mais saldos com vencimento até 30 dias à frente;
-- exclui Pago, Cancelado e Estornado.
+4. NEGATIVO NO KPI
+O sinal negativo não fica mais isolado no canto do cartão.
+Exemplo:
+− R$ 4.800,19
+é exibido em uma única linha.
 
-No exemplo:
-R$ 1.200 vencido pendente
-+ R$ 5.700 programado em 15/08
-= R$ 6.900 de previsão de pagamentos.
+5. BAIXA ANTECIPADA
+Na tela principal do Financeiro, Programado continua podendo ser
+Recebido/Pago antecipadamente. O status não precisa virar Aberto para liberar a ação.
 
-EM ABERTO
-=========
-Programado não entra em "Em aberto".
-No exemplo, "Em aberto" passa a refletir somente o saldo já exigível:
-R$ 1.200,00.
+OBSERVAÇÃO SOBRE O VALOR EXATO
+==============================
+O valor final exibido depende de todos os títulos do tenant no momento do carregamento.
+A correção não força um número fixo: ela corrige a fórmula.
 
-CACHE
-=====
-O HTML chama:
-index.js?v=20260807-pagamentos-programado-previsao30-1
-
-VALIDAÇÃO
-=========
-node --check: OK
+Validação:
+- node --check financeiro-ledger.service.mjs: OK
+- node --check relatorios.service.mjs: OK
+- node --check financeiro.js: OK

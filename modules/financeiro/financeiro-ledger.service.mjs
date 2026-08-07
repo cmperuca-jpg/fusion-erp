@@ -289,18 +289,29 @@ export async function resumoFinanceiro() {
   const taxasFinanceiras = moeda(r.taxasFinanceiras || 0);
   const receitasBrutasPagas = moeda(receitasLiquidasPagas + taxasFinanceiras);
   const receitasAbertas = moeda(r.receber || 0);
+  const receitasProgramadas = moeda(r.programadoReceber || 0);
   const despesasPagas = moeda(r.pago || 0);
   const despesasAbertas = moeda(r.pagar || 0);
+  const despesasProgramadas = moeda(r.programadoPagar || 0);
   const saldoRealizado = moeda(receitasLiquidasPagas - despesasPagas);
-  const saldoPrevisto = moeda((receitasLiquidasPagas + receitasAbertas) - (despesasPagas + despesasAbertas));
+
+  // Uma única fonte de verdade: o BI já consolida realizado, saldo pendente
+  // de títulos parciais e títulos programados sem duplicar o valor original.
+  const saldoPrevisto = moeda(
+    r.saldoPrevisto ??
+    ((receitasLiquidasPagas + receitasAbertas + receitasProgramadas) -
+      (despesasPagas + despesasAbertas + despesasProgramadas))
+  );
 
   return {
     totalLancamentos: Number(r.totalLancamentos || 0),
     receitasPagas: receitasLiquidasPagas,
     receitasAbertas,
+    receitasProgramadas,
     receitasVencidas: moeda(r.vencidoReceber || 0),
     despesasPagas,
     despesasAbertas,
+    despesasProgramadas,
     saldoRealizado,
     saldoPrevisto,
     receitasLiquidasPagas,
