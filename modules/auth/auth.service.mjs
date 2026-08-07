@@ -4,6 +4,8 @@ import path from "node:path";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { lerJsonDuravel, salvarJsonDuravel } from "../core/persistence/durable-json.mjs";
+import { executarComTenant, tenantAtual } from "../core/persistence/tenant-context.mjs";
+import { localizarTenantPorEmail, sincronizarIndiceUsuario, removerIndiceUsuario, validarEmailDisponivel } from "./tenant-registry.service.mjs";
 
 const SEGREDO_DESENVOLVIMENTO = "fusion-erp-dev-secret-trocar-em-producao";
 const JWT_SECRET_CONFIGURADO = process.env.JWT_SECRET || process.env.FUSION_JWT_SECRET || "";
@@ -182,13 +184,14 @@ function validarPayloadUsuario(payload = {}, editando = false) {
   return { nome, email, perfil, status, senha, permissoes };
 }
 
-function gerarToken(usuario) {
+function gerarToken(usuario, tenantId = tenantAtual()) {
   return jwt.sign(
     {
       sub: usuario.id,
       email: usuario.email,
       perfil: usuario.perfil,
-      permissoes: usuario.permissoes || permissoesPorPerfil(usuario.perfil)
+      permissoes: usuario.permissoes || permissoesPorPerfil(usuario.perfil),
+      tenantId
     },
     JWT_SECRET,
     { expiresIn: JWT_EXPIRES_IN }
@@ -202,10 +205,10 @@ function extrairToken(authorization = "") {
   return valor;
 }
 
-export function gerarTokenPortal({ sub, tipo, perfil = "", permissoes = [], nome = "" } = {}) {
+export function gerarTokenPortal({ sub, tipo, perfil = "", permissoes = [], nome = "", tenantId = tenantAtual() } = {}) {
   if (!sub || !tipo) throw erro("Não foi possível criar a sessão do portal.", 500);
   return jwt.sign(
-    { sub: String(sub), tipo: String(tipo), perfil, permissoes, nome },
+    { sub: String(sub), tipo: String(tipo), perfil, permissoes, nome, tenantId },
     JWT_SECRET,
     { expiresIn: JWT_EXPIRES_IN }
   );
@@ -245,6 +248,7 @@ export async function criarUsuario(payload = {}) {
   if (usuarios.some(u => normalizar(u.email) === dados.email)) {
     throw erro("Já existe um usuário com este e-mail.", 409);
   }
+  await validarEmailDisponivel(dados.email, { tenantId: tenantAtual() });
 
   const novo = {
     id: gerarId(),
@@ -262,6 +266,7 @@ export async function criarUsuario(payload = {}) {
 
   usuarios.push(novo);
   await salvarUsuarios(usuarios);
+  await sincronizarIndiceUsuario(novo, tenantAtual());
   return semSenha(novo, { incluirSenhaAcesso: true });
 }
 
@@ -270,9 +275,11 @@ export async function atualizarUsuario(id, payload = {}) {
   const idx = usuarios.findIndex(u => String(u.id) === String(id));
   if (idx < 0) throw erro("Usuário não encontrado.", 404);
 
+  const emailAnterior = usuarios[idx].email;
   const dados = validarPayloadUsuario(payload, true);
   const emailDuplicado = usuarios.some((u, i) => i !== idx && normalizar(u.email) === dados.email);
   if (emailDuplicado) throw erro("Já existe outro usuário com este e-mail.", 409);
+  await validarEmailDisponivel(dados.email, { tenantId: tenantAtual(), userId: usuarios[idx].id });
 
   usuarios[idx] = {
     ...usuarios[idx],
@@ -293,6 +300,10 @@ export async function atualizarUsuario(id, payload = {}) {
   }
 
   await salvarUsuarios(usuarios);
+  if (normalizar(emailAnterior) !== normalizar(usuarios[idx].email)) {
+    await removerIndiceUsuario({ email: emailAnterior });
+  }
+  await sincronizarIndiceUsuario(usuarios[idx], tenantAtual());
   return semSenha(usuarios[idx], { incluirSenhaAcesso: true });
 }
 
@@ -305,6 +316,7 @@ export async function alternarStatusUsuario(id) {
   usuarios[idx].atualizadoEm = agoraISO();
 
   await salvarUsuarios(usuarios);
+  await sincronizarIndiceUsuario(usuarios[idx], tenantAtual());
   return semSenha(usuarios[idx]);
 }
 
@@ -315,39 +327,42 @@ export async function removerUsuario(id) {
   if (usuario.id === "usr_admin") throw erro("O administrador padrão não pode ser removido.", 400);
 
   await salvarUsuarios(usuarios.filter(u => String(u.id) !== String(id)));
+  await removerIndiceUsuario(usuario);
   return { removido: true };
 }
 
 export async function autenticar(email, senha) {
-  const usuarios = await lerUsuarios();
-  const usuario = usuarios.find(u => normalizar(u.email) === normalizar(email));
-  const verificacao = usuario ? await verificarSenhaUsuario(usuario, senha) : { ok: false };
+  const indice = await localizarTenantPorEmail(email);
+  if (!indice?.tenant_id) throw erro("E-mail ou senha inválidos.", 401);
 
-  if (!usuario || !verificacao.ok) {
-    throw erro("E-mail ou senha inválidos.", 401);
-  }
+  return executarComTenant(indice.tenant_id, async () => {
+    const usuarios = await lerUsuarios();
+    const usuario = usuarios.find(u => normalizar(u.email) === normalizar(email));
+    const verificacao = usuario ? await verificarSenhaUsuario(usuario, senha) : { ok: false };
 
-  if (normalizar(usuario.status) !== "ativo") {
-    throw erro("Usuário inativo. Procure o administrador.", 403);
-  }
+    if (!usuario || !verificacao.ok) throw erro("E-mail ou senha inválidos.", 401);
+    if (normalizar(usuario.status) !== "ativo") throw erro("Usuário inativo. Procure o administrador.", 403);
 
-  if (verificacao.migrar) {
-    usuario.senhaHash = await senhaBcrypt(senha);
-    usuario.senhaAcesso = String(senha || "");
-    usuario.senhaPortal = String(senha || "");
-    delete usuario.senhaBcrypt;
-    delete usuario.senhaHashLegado;
-    usuario.atualizadoEm = agoraISO();
-    await salvarUsuarios(usuarios);
-  }
+    if (verificacao.migrar) {
+      usuario.senhaHash = await senhaBcrypt(senha);
+      usuario.senhaAcesso = String(senha || "");
+      usuario.senhaPortal = String(senha || "");
+      delete usuario.senhaBcrypt;
+      delete usuario.senhaHashLegado;
+      usuario.atualizadoEm = agoraISO();
+      await salvarUsuarios(usuarios);
+    }
 
-  const usuarioSessao = semSenha(usuario);
+    await sincronizarIndiceUsuario(usuario, indice.tenant_id);
+    const usuarioSessao = { ...semSenha(usuario), tenantId: indice.tenant_id };
 
-  return {
-    ok: true,
-    token: gerarToken(usuario),
-    usuario: usuarioSessao
-  };
+    return {
+      ok: true,
+      token: gerarToken(usuario, indice.tenant_id),
+      usuario: usuarioSessao,
+      tenantId: indice.tenant_id
+    };
+  });
 }
 
 export async function validarToken(tokenOuAuthorization) {
@@ -361,12 +376,15 @@ export async function validarToken(tokenOuAuthorization) {
     throw erro("Sessão expirada ou inválida. Faça login novamente.", 401);
   }
 
-  const usuarios = await lerUsuarios();
-  const usuario = usuarios.find(u => String(u.id) === String(payload.sub));
-  if (!usuario) throw erro("Usuário não encontrado.", 401);
-  if (normalizar(usuario.status) !== "ativo") throw erro("Usuário inativo. Procure o administrador.", 403);
+  if (!payload?.tenantId) throw erro("Sessão antiga sem empresa. Faça login novamente.", 401);
 
-  return semSenha(usuario);
+  return executarComTenant(payload.tenantId, async () => {
+    const usuarios = await lerUsuarios();
+    const usuario = usuarios.find(u => String(u.id) === String(payload.sub));
+    if (!usuario) throw erro("Usuário não encontrado.", 401);
+    if (normalizar(usuario.status) !== "ativo") throw erro("Usuário inativo. Procure o administrador.", 403);
+    return { ...semSenha(usuario), tenantId: payload.tenantId };
+  });
 }
 
 export async function obterPerfis() {

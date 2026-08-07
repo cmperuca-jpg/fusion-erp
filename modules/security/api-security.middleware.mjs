@@ -1,10 +1,12 @@
 import { validarToken, validarTokenPortal } from "../auth/auth.service.mjs";
+import { executarComTenant, normalizarTenantId } from "../core/persistence/tenant-context.mjs";
 
 const PUBLIC_RULES = [
   ["GET", "/api/health"],
   ["GET", "/api/v3/architecture/status"],
   ["GET", "/api/v3/persistence/status"],
   ["POST", "/api/auth/login"],
+  ["POST", "/api/saas/empresas"],
   ["POST", "/api/professores/login"],
   ["POST", "/api/treinos/aluno-login"],
   ["POST", "/api/matricula-online"],
@@ -176,7 +178,8 @@ async function autenticarSessao(req) {
         portal: true,
         portalTipo: portal.tipo,
         acessoTodosAlunos: isResponsavelTecnico(portal),
-        origemSessao: "portal"
+        origemSessao: "portal",
+        tenantId: portal.tenantId || ""
       };
     } catch {
       throw erroPainel;
@@ -231,7 +234,26 @@ export function securityHeaders(_req, res, next) {
 
 export async function apiSecurity(req, res, next) {
   if (!req.path.startsWith("/api/")) return next();
-  if (req.method === "OPTIONS" || isPublic(req)) return next();
+  if (req.method === "OPTIONS") return next();
+
+  if (isPublic(req)) {
+    const authorization = req.headers.authorization || "";
+    if (authorization) {
+      try {
+        const usuario = await autenticarSessao(req);
+        if (usuario?.tenantId) {
+          req.usuario = usuario;
+          return executarComTenant(usuario.tenantId, () => next());
+        }
+      } catch {}
+    }
+
+    const tenantPublico = normalizarTenantId(
+      req.headers["x-fusion-tenant"] || req.query?.tenantId || req.query?.tenant || req.body?.tenantId || req.body?.tenant || ""
+    );
+    if (tenantPublico) return executarComTenant(tenantPublico, () => next());
+    return next();
+  }
 
   try {
     req.usuario = await autenticarSessao(req);
@@ -256,5 +278,9 @@ export async function apiSecurity(req, res, next) {
     });
   }
 
-  return next();
+  if (!req.usuario?.tenantId) {
+    return res.status(401).json({ ok: false, mensagem: "Sessão sem empresa vinculada. Faça login novamente." });
+  }
+
+  return executarComTenant(req.usuario.tenantId, () => next());
 }

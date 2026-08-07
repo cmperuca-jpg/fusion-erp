@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#22b8d2">
+  <title>Criar academia | Fusion Sistema</title>
+  <link rel="stylesheet" href="./style.css?v=20260807-1">
+</head>
+<body>
+  <main class="cadastro-shell">
+    <section class="apresentacao">
+      <div class="marca">Fusion Sistema</div>
+      <span class="etiqueta">Comece pelo essencial</span>
+      <h1>Crie o ambiente da sua academia.</h1>
+      <p>Cada empresa recebe um espaço isolado no Fusion. Alunos, professores, matrículas e financeiro permanecem separados dos demais clientes.</p>
+      <div class="passos">
+        <span><b>1</b> Criar empresa</span>
+        <span><b>2</b> Criar administrador</span>
+        <span><b>3</b> Configurar academia</span>
+      </div>
+    </section>
+
+    <section class="form-card">
+      <div class="form-head">
+        <span>Cadastro inicial</span>
+        <h2>Usar nosso sistema</h2>
+        <p>Você poderá ajustar modalidades, planos e equipe depois do primeiro acesso.</p>
+      </div>
+
+      <form id="formEmpresa" novalidate>
+        <label>Nome da academia/empresa
+          <input id="nomeEmpresa" autocomplete="organization" required minlength="2" placeholder="Ex.: Academia Power Fit">
+        </label>
+        <label>Razão social <small>opcional</small>
+          <input id="razaoSocial" autocomplete="organization-title" placeholder="Razão social">
+        </label>
+        <label>CPF ou CNPJ
+          <input id="documento" inputmode="numeric" required placeholder="Somente números">
+        </label>
+        <label>Nome do responsável
+          <input id="responsavel" autocomplete="name" required placeholder="Seu nome">
+        </label>
+        <label>E-mail do administrador
+          <input id="email" type="email" autocomplete="email" required placeholder="voce@empresa.com.br">
+        </label>
+        <label>WhatsApp
+          <input id="telefone" inputmode="tel" autocomplete="tel" placeholder="(82) 99999-9999">
+        </label>
+        <label>Senha
+          <input id="senha" type="password" autocomplete="new-password" required minlength="10" placeholder="Mínimo de 10 caracteres">
+        </label>
+        <label>Confirmar senha
+          <input id="confirmarSenha" type="password" autocomplete="new-password" required minlength="10">
+        </label>
+
+        <button id="btnCriar" type="submit">Criar minha academia</button>
+        <div id="mensagem" class="mensagem" role="status" aria-live="polite"></div>
+      </form>
+    </section>
+  </main>
+  <script src="./index.js?v=20260807-1"></script>
+</body>
+</html>

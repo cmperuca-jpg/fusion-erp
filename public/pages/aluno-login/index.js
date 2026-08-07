@@ -1,5 +1,13 @@
 const $ = (id) => document.getElementById(id);
 
+const TENANT_KEY = "fusion_aluno_tenant";
+function tenantAtual() {
+  const params = new URLSearchParams(location.search);
+  const daUrl = String(params.get("tenant") || params.get("tenantId") || "").trim().toLowerCase();
+  if (daUrl) localStorage.setItem(TENANT_KEY, daUrl);
+  return daUrl || localStorage.getItem(TENANT_KEY) || "";
+}
+
 function mensagem(texto, tipo = "") {
   const el = $("mensagem");
   el.textContent = texto || "";
@@ -38,13 +46,13 @@ async function entrar() {
   try {
     const r = await fetch("/api/treinos/aluno-login", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ login, senha })
+      headers: { "Content-Type": "application/json", ...(tenantAtual() ? { "X-Fusion-Tenant": tenantAtual() } : {}) },
+      body: JSON.stringify({ login, senha, tenantId: tenantAtual() || undefined })
     });
     const data = await r.json().catch(() => ({}));
     if (!r.ok || !data.ok) throw new Error(data.mensagem || "Login inválido.");
 
-    localStorage.setItem("fusion_aluno_treino_login", JSON.stringify(data.dados));
+    localStorage.setItem("fusion_aluno_treino_login", JSON.stringify({ ...data.dados, tenantId: data.dados?.tenantId || tenantAtual() }));
     localStorage.setItem("fusion_aluno_treino_selecionado", JSON.stringify({
       alunoId: data.dados.alunoId,
       alunoNome: data.dados.alunoNome

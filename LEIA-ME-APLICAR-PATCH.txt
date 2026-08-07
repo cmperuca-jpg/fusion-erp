@@ -1,0 +1,16 @@
+FUSION ERP — MULTIEMPRESA FASE 1 — PATCH LEVE
+
+Este ZIP contém SOMENTE os arquivos novos/modificados da Fase 1.
+Não contém o repositório completo, node_modules, .git, uploads ou backups.
+
+COMO APLICAR
+1. Faça backup do projeto atual.
+2. Extraia este ZIP.
+3. Copie o conteúdo para a raiz do fusion-erp mantendo as mesmas pastas.
+4. Confirme a substituição dos arquivos existentes.
+5. Faça deploy/reinicie o backend.
+
+IMPORTANTE
+- A migration da Fase 1 já foi aplicada no Supabase de produção.
+- O arquivo supabase/migrations/20260807080800_saas_multiempresa_fase1.sql
+  está incluído somente para manter o repositório sincronizado/auditável.

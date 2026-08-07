@@ -1,5 +1,13 @@
 const $ = (id) => document.getElementById(id);
 
+const TENANT_KEY = "fusion_professor_tenant";
+function tenantAtual() {
+  const params = new URLSearchParams(location.search);
+  const daUrl = String(params.get("tenant") || params.get("tenantId") || "").trim().toLowerCase();
+  if (daUrl) localStorage.setItem(TENANT_KEY, daUrl);
+  return daUrl || localStorage.getItem(TENANT_KEY) || "";
+}
+
 function texto(v) {
   return String(v ?? "").trim();
 }
@@ -46,8 +54,8 @@ async function entrar() {
   try {
     const resp = await fetch("/api/professores/login", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ login, senha })
+      headers: { "Content-Type": "application/json", ...(tenantAtual() ? { "X-Fusion-Tenant": tenantAtual() } : {}) },
+      body: JSON.stringify({ login, senha, tenantId: tenantAtual() || undefined })
     });
 
     const payload = await resp.json().catch(() => ({}));
@@ -67,6 +75,7 @@ async function entrar() {
       perfil: professor.perfil || "professor",
       acessoTodosAlunos: professor.acessoTodosAlunos === true,
       permissoes: Array.isArray(payload.usuario?.permissoes) ? payload.usuario.permissoes : [],
+      tenantId: payload.tenantId || tenantAtual(),
       criadoEm: new Date().toISOString()
     };
 

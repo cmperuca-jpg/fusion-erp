@@ -3,15 +3,13 @@ import path from "node:path";
 import crypto from "node:crypto";
 import { DATABASE_CONFIG } from "../../../config/database.config.mjs";
 import { obterSupabaseAdmin } from "../../../config/supabase.mjs";
+import { tenantAtual } from "./tenant-context.mjs";
 
 const DATA_DIR = path.resolve(process.cwd(), "data");
 const TABLE = process.env.FUSION_SUPABASE_RECORDS_TABLE || "fusion_v3_records";
 const WRITE_MODE = String(process.env.FUSION_PERSISTENCE_WRITE_MODE || "primary").toLowerCase();
 
-function tenantId() {
-  return String(process.env.FUSION_TENANT_ID || process.env.FUSION_ACADEMIA_ID || "academia-piloto")
-    .trim().toLowerCase().replace(/[^a-z0-9_-]+/g, "-").replace(/^-+|-+$/g, "") || "academia-piloto";
-}
+function tenantId() { return tenantAtual(); }
 
 function nomeColecao(valor = "") {
   return path.basename(String(valor)).replace(/\.json$/i, "").replace(/[^a-z0-9_-]/gi, "_").toLowerCase();
