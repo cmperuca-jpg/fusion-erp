@@ -81,6 +81,7 @@ export async function criarEmpresa(payload={}){
     slug:tenantId,
     usuarioId:userId,
     empresa:{nome:d.nomeEmpresa,status:"trial",trialDias:14},
+    codigoAcesso: data?.access_code || data?.codigo_acesso || "",
     resultado:data
   }));
 }

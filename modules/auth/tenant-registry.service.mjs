@@ -68,3 +68,52 @@ export async function removerIndiceUsuario(usuario = {}) {
   const { error } = await supabase.from("fusion_tenant_login_index").delete().eq("email_normalized", email);
   if (error) throw new Error(`Falha ao remover índice de login: ${error.message}`);
 }
+
+export async function localizarAcessoPorEmpresaCodigo(empresa = "", codigo = "") {
+  const empresaTexto = texto(empresa);
+  const codigoTexto = texto(codigo).toUpperCase();
+  if (!empresaTexto || !codigoTexto) return null;
+
+  const supabase = obterSupabaseAdmin({ obrigatorio: true });
+  const slug = normalizarTenantId(empresaTexto.normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
+
+  let tenant = null;
+  if (slug) {
+    const { data, error } = await supabase
+      .from("fusion_tenants")
+      .select("tenant_id,slug,name,status")
+      .or(`tenant_id.eq.${slug},slug.eq.${slug}`)
+      .maybeSingle();
+    if (error) throw new Error(`Falha ao localizar academia: ${error.message}`);
+    tenant = data || null;
+  }
+
+  if (!tenant) {
+    const { data, error } = await supabase
+      .from("fusion_tenants")
+      .select("tenant_id,slug,name,status")
+      .ilike("name", empresaTexto)
+      .limit(2);
+    if (error) throw new Error(`Falha ao localizar academia: ${error.message}`);
+    if (Array.isArray(data) && data.length === 1) tenant = data[0];
+  }
+
+  if (!tenant?.tenant_id) return null;
+  if (!["active", "trial"].includes(String(tenant.status || "").toLowerCase())) return null;
+
+  const { data: indice, error: indiceErro } = await supabase
+    .from("fusion_tenant_login_index")
+    .select("tenant_id,user_id,profile,status,access_code")
+    .eq("tenant_id", tenant.tenant_id)
+    .eq("access_code", codigoTexto)
+    .maybeSingle();
+  if (indiceErro) throw new Error(`Falha ao validar código de acesso: ${indiceErro.message}`);
+  if (!indice) return null;
+
+  return {
+    ...indice,
+    tenant_id: normalizarTenantId(indice.tenant_id),
+    tenant_name: tenant.name,
+    tenant_slug: tenant.slug
+  };
+}

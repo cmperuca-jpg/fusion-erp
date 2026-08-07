@@ -4,8 +4,8 @@ import path from "node:path";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { lerJsonDuravel, salvarJsonDuravel } from "../core/persistence/durable-json.mjs";
-import { executarComTenant, tenantAtual } from "../core/persistence/tenant-context.mjs";
-import { localizarTenantPorEmail, sincronizarIndiceUsuario, removerIndiceUsuario, validarEmailDisponivel } from "./tenant-registry.service.mjs";
+import { executarComTenant, tenantAtual, normalizarTenantId } from "../core/persistence/tenant-context.mjs";
+import { localizarTenantPorEmail, localizarAcessoPorEmpresaCodigo, sincronizarIndiceUsuario, removerIndiceUsuario, validarEmailDisponivel } from "./tenant-registry.service.mjs";
 
 const SEGREDO_DESENVOLVIMENTO = "fusion-erp-dev-secret-trocar-em-producao";
 const JWT_SECRET_CONFIGURADO = process.env.JWT_SECRET || process.env.FUSION_JWT_SECRET || "";
@@ -331,11 +331,17 @@ export async function removerUsuario(id) {
   return { removido: true };
 }
 
-export async function autenticar(email, senha) {
+export async function autenticar(email, senha, tenantEsperado = "") {
   const indice = await localizarTenantPorEmail(email);
   if (!indice?.tenant_id) throw erro("E-mail ou senha inválidos.", 401);
 
-  return executarComTenant(indice.tenant_id, async () => {
+  const esperado = normalizarTenantId(tenantEsperado);
+  const tenantIndice = normalizarTenantId(indice.tenant_id);
+  if (esperado && tenantIndice !== esperado) {
+    throw erro("Este usuário não pertence a esta empresa.", 401);
+  }
+
+  return executarComTenant(tenantIndice, async () => {
     const usuarios = await lerUsuarios();
     const usuario = usuarios.find(u => normalizar(u.email) === normalizar(email));
     const verificacao = usuario ? await verificarSenhaUsuario(usuario, senha) : { ok: false };
@@ -353,14 +359,50 @@ export async function autenticar(email, senha) {
       await salvarUsuarios(usuarios);
     }
 
-    await sincronizarIndiceUsuario(usuario, indice.tenant_id);
-    const usuarioSessao = { ...semSenha(usuario), tenantId: indice.tenant_id };
+    await sincronizarIndiceUsuario(usuario, tenantIndice);
+    const usuarioSessao = { ...semSenha(usuario), tenantId: tenantIndice };
 
     return {
       ok: true,
-      token: gerarToken(usuario, indice.tenant_id),
+      token: gerarToken(usuario, tenantIndice),
       usuario: usuarioSessao,
-      tenantId: indice.tenant_id
+      tenantId: tenantIndice
+    };
+  });
+}
+
+export async function autenticarPorEmpresaCodigo(empresa, codigo, senha) {
+  const acesso = await localizarAcessoPorEmpresaCodigo(empresa, codigo);
+  if (!acesso?.tenant_id || !acesso?.user_id) throw erro("Academia, código ou senha inválidos.", 401);
+
+  return executarComTenant(acesso.tenant_id, async () => {
+    const usuarios = await lerUsuarios();
+    const usuario = usuarios.find(u => String(u.id) === String(acesso.user_id));
+    const verificacao = usuario ? await verificarSenhaUsuario(usuario, senha) : { ok: false };
+
+    if (!usuario || !verificacao.ok) throw erro("Academia, código ou senha inválidos.", 401);
+    if (normalizar(usuario.status) !== "ativo") throw erro("Usuário inativo. Procure o administrador.", 403);
+    if (!['administrador','admin'].includes(normalizar(usuario.perfil)) && !(usuario.permissoes || []).includes('*')) {
+      throw erro("Este código não possui acesso administrativo ao sistema.", 403);
+    }
+
+    if (verificacao.migrar) {
+      usuario.senhaHash = await senhaBcrypt(senha);
+      usuario.senhaAcesso = String(senha || "");
+      usuario.senhaPortal = String(senha || "");
+      delete usuario.senhaBcrypt;
+      delete usuario.senhaHashLegado;
+      usuario.atualizadoEm = agoraISO();
+      await salvarUsuarios(usuarios);
+    }
+
+    const usuarioSessao = { ...semSenha(usuario), tenantId: acesso.tenant_id, academiaNome: acesso.tenant_name };
+    return {
+      ok: true,
+      token: gerarToken(usuario, acesso.tenant_id),
+      usuario: usuarioSessao,
+      tenantId: acesso.tenant_id,
+      academia: { nome: acesso.tenant_name, slug: acesso.tenant_slug }
     };
   });
 }

@@ -1,6 +1,7 @@
 import express from "express";
 import {
   autenticar,
+  autenticarPorEmpresaCodigo,
   listarUsuarios,
   obterUsuario,
   criarUsuario,
@@ -38,8 +39,19 @@ function exigirAdministrador(req, res, next) {
 
 router.post("/login", async (req, res) => {
   try {
-    const { email, senha } = req.body || {};
-    res.json(await autenticar(email, senha));
+    const { email, senha, tenant, tenantId } = req.body || {};
+    const tenantEsperado = req.headers["x-fusion-tenant"] || tenant || tenantId || "";
+    res.json(await autenticar(email, senha, tenantEsperado));
+  } catch (erro) {
+    tratarErro(res, erro);
+  }
+});
+
+
+router.post("/login-empresa", async (req, res) => {
+  try {
+    const { empresa, academia, codigo, codigoAcesso, senha } = req.body || {};
+    res.json(await autenticarPorEmpresaCodigo(empresa || academia, codigo || codigoAcesso, senha));
   } catch (erro) {
     tratarErro(res, erro);
   }

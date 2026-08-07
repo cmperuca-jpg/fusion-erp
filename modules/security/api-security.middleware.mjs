@@ -6,6 +6,7 @@ const PUBLIC_RULES = [
   ["GET", "/api/v3/architecture/status"],
   ["GET", "/api/v3/persistence/status"],
   ["POST", "/api/auth/login"],
+  ["POST", "/api/auth/login-empresa"],
   ["POST", "/api/saas/empresas"],
   ["POST", "/api/professores/login"],
   ["POST", "/api/treinos/aluno-login"],
@@ -56,6 +57,31 @@ function isPublic(req) {
   return PUBLIC_RULES.some(([method, routePath, match = "exact"]) => {
     if (req.method !== method) return false;
     return match === "prefix" ? pathMatches(req.path, routePath) : req.path === routePath;
+  });
+}
+
+
+function tenantInformado(req) {
+  return normalizarTenantId(
+    req.headers["x-fusion-tenant"] ||
+    req.query?.tenantId ||
+    req.query?.tenant ||
+    req.body?.tenantId ||
+    req.body?.tenant ||
+    ""
+  );
+}
+
+function tenantConflita(req, usuario = {}) {
+  const informado = tenantInformado(req);
+  const sessao = normalizarTenantId(usuario?.tenantId || "");
+  return Boolean(informado && sessao && informado !== sessao);
+}
+
+function responderConflitoTenant(res) {
+  return res.status(403).json({
+    ok: false,
+    mensagem: "A sessão pertence a outra empresa. Faça login novamente nesta empresa."
   });
 }
 
@@ -242,16 +268,19 @@ export async function apiSecurity(req, res, next) {
       try {
         const usuario = await autenticarSessao(req);
         if (usuario?.tenantId) {
+          if (tenantConflita(req, usuario)) return responderConflitoTenant(res);
           req.usuario = usuario;
+          res.setHeader("X-Fusion-Tenant", normalizarTenantId(usuario.tenantId));
           return executarComTenant(usuario.tenantId, () => next());
         }
       } catch {}
     }
 
-    const tenantPublico = normalizarTenantId(
-      req.headers["x-fusion-tenant"] || req.query?.tenantId || req.query?.tenant || req.body?.tenantId || req.body?.tenant || ""
-    );
-    if (tenantPublico) return executarComTenant(tenantPublico, () => next());
+    const tenantPublico = tenantInformado(req);
+    if (tenantPublico) {
+      res.setHeader("X-Fusion-Tenant", tenantPublico);
+      return executarComTenant(tenantPublico, () => next());
+    }
     return next();
   }
 
@@ -262,6 +291,10 @@ export async function apiSecurity(req, res, next) {
       ok: false,
       mensagem: error.message || "Autenticacao necessaria."
     });
+  }
+
+  if (tenantConflita(req, req.usuario)) {
+    return responderConflitoTenant(res);
   }
 
   if (isPortal(req.usuario) && !portalPermitido(req, req.usuario)) {
@@ -282,5 +315,6 @@ export async function apiSecurity(req, res, next) {
     return res.status(401).json({ ok: false, mensagem: "Sessão sem empresa vinculada. Faça login novamente." });
   }
 
+  res.setHeader("X-Fusion-Tenant", normalizarTenantId(req.usuario.tenantId));
   return executarComTenant(req.usuario.tenantId, () => next());
 }

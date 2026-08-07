@@ -1,46 +1,42 @@
-FUSION ERP — ARQUIVOS REAIS CORRIGIDOS
-07/08/2026
+FUSION SISTEMA — ACESSO GERAL DAS ACADEMIAS
+================================================
 
-Este pacote foi criado diretamente a partir dos arquivos reais enviados.
+OBJETIVO
+A página /pages/comecar/ passa a ser a porta de entrada geral do Fusion.
 
-CORREÇÕES
-1. "Ver ficha" não fica mais branco/invisível:
-   - botão agora possui classe própria;
-   - fundo teal escuro;
-   - texto branco;
-   - -webkit-text-fill-color forçado;
-   - também força visibilidade do span interno.
+ENTRAR EM UMA ACADEMIA
+- Nome da academia
+- Código de acesso gerado pelo Fusion
+- Senha do administrador
 
-2. "Trocar turma/modalidade":
-   - agora o index.js abre diretamente a matrícula pelo ID:
-     /pages/matriculas/cadastro.html?id=<matricula>&origem=troca-turma
-   - não depende mais de reencontrar a matrícula somente pelo aluno.
+O backend valida os 3 itens e cria a sessão no tenant correto.
 
-3. Cache:
-   - index.html recebeu novas versões de style.css, index.js e cep-autofill.js.
+CRIAR NOVA ACADEMIA
+A mesma página mantém a opção de cadastro.
+Ao finalizar, o Fusion mostra:
+- nome da academia
+- código de acesso administrativo
 
-4. Ficha/prontuário:
-   - o arquivo prontuario-contraste-v2.css que você enviou existia,
-     mas prontuario.html não o carregava.
-   - agora ele é carregado por último, depois do CSS global claro.
+O usuário pode copiar o código e entrar no sistema.
 
-ARQUIVOS PARA SUBSTITUIR/ADICIONAR
-public/pages/alunos/index.html
-public/pages/alunos/index.js
-public/pages/alunos/style.css
-public/pages/alunos/cep-autofill.js
-public/pages/alunos/prontuario.html
-public/pages/alunos/prontuario-contraste-v2.css
+ISOLAMENTO
+O código é validado junto com a academia e o usuário administrativo.
+O JWT continua carregando tenantId.
+As APIs continuam bloqueando divergência entre tenant da sessão e tenant informado.
 
-TESTE
-1. Faça backup dos arquivos atuais.
-2. Substitua os arquivos mantendo exatamente os caminhos acima.
-3. Faça deploy.
-4. No navegador use Ctrl+F5.
-5. Abra Alunos > Editar aluno > Matrículas.
-6. Confirme:
-   - Trocar turma/modalidade = ciano com texto branco.
-   - Ver ficha = teal escuro com texto branco.
-7. Clique em Ver ficha e confirme o novo contraste do prontuário.
+BANCO
+A migration saas_login_geral_codigo_acesso já foi aplicada no Supabase de produção.
+Ela adicionou access_code ao índice de login e gerou códigos para os acessos existentes.
+Não execute novamente manualmente no banco de produção.
 
-Os dois JS modificados foram validados com node --check.
+ARQUIVOS
+- public/pages/comecar/index.html
+- public/pages/comecar/index.js
+- public/pages/comecar/style.css
+- modules/auth/auth.service.mjs
+- modules/auth/auth.routes.mjs
+- modules/auth/tenant-registry.service.mjs
+- modules/security/api-security.middleware.mjs
+- modules/saas/saas.service.mjs
+- server.mjs
+- supabase/migrations/20260807093000_saas_login_geral_codigo_acesso.sql

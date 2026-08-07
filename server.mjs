@@ -459,8 +459,14 @@ function bloquearDownloadPublico(req, res, next) {
 
 function cabecalhosEstaticos(res, filePath) {
   const nome = path.basename(filePath || "").toLowerCase();
+  const caminho = String(filePath || "").replace(/\\/g, "/").toLowerCase();
+  const arquivoCriticoTenant =
+    caminho.endsWith("/assets/js/fusion-auth.js") ||
+    caminho.endsWith("/pages/login/index.js") ||
+    caminho.endsWith("/pages/comecar/index.js");
+
   res.setHeader("X-Content-Type-Options", "nosniff");
-  if (nome.endsWith(".html") || nome.startsWith("fusion-sw")) {
+  if (nome.endsWith(".html") || nome.startsWith("fusion-sw") || arquivoCriticoTenant) {
     res.setHeader("Cache-Control", "no-store");
   }
 }
