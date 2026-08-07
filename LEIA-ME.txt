@@ -1,79 +1,51 @@
-FUSION ERP — CONSOLIDAÇÃO FINANCEIRA HISTÓRICA
+FUSION ERP — RECEBIMENTOS
+Previsão de caixa — próximos 30 dias
 Data: 07/08/2026
 
-O BANCO JÁ FOI CORRIGIDO
-========================
-Foi feita uma auditoria real no Supabase antes da correção.
+ARQUIVOS ALTERADOS
+==================
+public/pages/recebimentos/index.html
+public/pages/recebimentos/index.js
 
-Academia Piloto:
-- 55 registros na coleção recebimentos.
-- 53 recebimentos estavam quitados.
-- Os 53 tinham valorRecebido preenchido, mas valorPago divergente/zerado.
-- 7 matrículas iniciais unificadas tinham vencimento deslocado para o mês seguinte.
+REGRA DO NOVO INDICADOR
+=======================
+O antigo KPI "Valor bruto" foi substituído por:
+"Previsão de caixa — 30 dias"
 
-Studio Fitness:
-- 1 recebimento quitado com o mesmo problema de aliases.
-- 1 matrícula inicial unificada com vencimento deslocado.
+O cálculo considera somente títulos:
+- com status Aberto, Parcial ou Programado;
+- com vencimento entre hoje e hoje + 30 dias;
+- com valor ainda disponível para recebimento.
 
-A correção já foi aplicada:
-- valorPago = valorRecebido nos recebimentos quitados;
-- valorBrutoRecebido = valorRecebido;
-- centavos sincronizados;
-- saldo/valorRestante = 0 nos quitados;
-- dataPagamento preservada/sincronizada;
-- cobrança inicial passa a usar a data real da matrícula;
-- competência da mensalidade inicial passa a usar o mês real da matrícula.
+Não entram:
+- Pago / Recebido;
+- Cancelado;
+- Estornado;
+- títulos vencidos antes de hoje;
+- títulos com vencimento depois da janela de 30 dias.
 
-Verificação pós-correção:
-- datas iniciais divergentes: 0
-- recebimentos quitados com aliases divergentes: 0
-
-BACKUP
-======
-Antes das alterações, 78 registros foram copiados para:
-collection = _backup_financeiro_20260807_1441
-
-O aplicativo não usa essa coleção. Ela existe apenas para rollback.
-
-CÓDIGO
-======
-1. public/pages/recebimentos/index.js
-   Já vem corrigido neste ZIP.
-   Regra: Programado não é Aberto, mas pode ser recebido antecipadamente.
-
-2. public/pages/financeiro/financeiro.js
-   O arquivo atual tem uma linha que desabilita Receber quando status=Programado.
-   Use APLICAR_CORRECAO.py (ou .ps1/.sh) para corrigir exatamente essa linha
-   sem sobrescrever as outras correções já existentes.
+VALORES
+=======
+- Programado: usa o valor ainda baixável, mesmo quando o saldo contábil do
+  título programado é zero.
+- Parcial: usa somente o saldo restante.
+- Aberto: usa somente o saldo restante.
 
 IMPORTANTE
 ==========
-O HTML do Financeiro carrega financeiro.js, não index.js.
-Por isso esta correção atua em:
-public/pages/financeiro/financeiro.js
+A coluna "Valor bruto" da tabela NÃO foi alterada, pois ali ela representa
+corretamente o valor nominal de cada título individual.
 
-COMO APLICAR NO PROJETO
-=======================
-1. Extraia o ZIP na raiz do Fusion ERP.
-2. Substitua public/pages/recebimentos/index.js pelo arquivo do ZIP.
-3. Execute:
-   Windows PowerShell:
-     .\APLICAR_CORRECAO.ps1
-   Linux:
-     bash APLICAR_CORRECAO.sh
-4. Commit/push.
-5. Aguarde Render ficar Live.
-6. Ctrl+F5.
+Também foi adicionado "Programado" ao filtro de status.
 
-RESULTADO ESPERADO
-==================
-Título futuro:
-Status: Programado
-Não soma em Receitas em Aberto
-Não soma em Vencidos
-Botão Receber: HABILITADO
-Recebimento antecipado: PERMITIDO
+CACHE
+=====
+O index.html agora chama:
+index.js?v=20260807-previsao-caixa-30d-1
 
-Título pago:
-Receber: DESABILITADO
-Bruto/taxa/líquido permanecem coerentes.
+Isso ajuda navegador/PWA a carregar a versão nova.
+
+VALIDAÇÃO
+=========
+node --check public/pages/recebimentos/index.js
+Resultado: OK
