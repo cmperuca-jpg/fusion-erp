@@ -5,7 +5,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { lerJsonDuravel, salvarJsonDuravel } from "../core/persistence/durable-json.mjs";
 import { executarComTenant, tenantAtual, normalizarTenantId } from "../core/persistence/tenant-context.mjs";
-import { localizarTenantPorEmail, localizarAcessoPorEmpresaCodigo, sincronizarIndiceUsuario, removerIndiceUsuario, validarEmailDisponivel } from "./tenant-registry.service.mjs";
+import { localizarTenantPorEmail, localizarAcessoPorEmpresaCodigo, sincronizarIndiceUsuario, removerIndiceUsuario, validarEmailDisponivel, obterCodigoAcessoUsuario, regenerarCodigoAcessoUsuario } from "./tenant-registry.service.mjs";
 
 const SEGREDO_DESENVOLVIMENTO = "fusion-erp-dev-secret-trocar-em-producao";
 const JWT_SECRET_CONFIGURADO = process.env.JWT_SECRET || process.env.FUSION_JWT_SECRET || "";
@@ -299,8 +299,11 @@ export async function criarUsuario(payload = {}) {
 
   usuarios.push(novo);
   await salvarUsuarios(usuarios);
-  await sincronizarIndiceUsuario(novo, tenantAtual());
-  return semSenha(novo, { incluirSenhaAcesso: true });
+  const indiceLogin = await sincronizarIndiceUsuario(novo, tenantAtual());
+  return {
+    ...semSenha(novo, { incluirSenhaAcesso: true }),
+    codigoAcesso: indiceLogin?.access_code || ""
+  };
 }
 
 export async function atualizarUsuario(id, payload = {}) {
@@ -415,10 +418,6 @@ export async function autenticarPorEmpresaCodigo(empresa, codigo, senha) {
 
     if (!usuario || !verificacao.ok) throw erro("Academia, código ou senha inválidos.", 401);
     if (normalizar(usuario.status) !== "ativo") throw erro("Usuário inativo. Procure o administrador.", 403);
-    if (!['administrador','admin'].includes(normalizar(usuario.perfil)) && !(usuario.permissoes || []).includes('*')) {
-      throw erro("Este código não possui acesso administrativo ao sistema.", 403);
-    }
-
     if (verificacao.migrar) {
       usuario.senhaHash = await senhaBcrypt(senha);
       usuario.senhaAcesso = String(senha || "");
@@ -439,6 +438,20 @@ export async function autenticarPorEmpresaCodigo(empresa, codigo, senha) {
     };
   });
 }
+
+
+export async function obterMeuCodigoAcesso(usuario = {}) {
+  const tenantId = normalizarTenantId(usuario.tenantId || tenantAtual());
+  const dados = await obterCodigoAcessoUsuario(usuario, tenantId);
+  if (!dados) throw erro("Código de acesso não encontrado para este usuário.", 404);
+  return dados;
+}
+
+export async function regenerarMeuCodigoAcesso(usuario = {}) {
+  const tenantId = normalizarTenantId(usuario.tenantId || tenantAtual());
+  return regenerarCodigoAcessoUsuario(usuario, tenantId);
+}
+
 
 export async function validarToken(tokenOuAuthorization) {
   const token = extrairToken(tokenOuAuthorization);

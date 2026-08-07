@@ -145,6 +145,22 @@ input:focus{
 .btn-primary:disabled{opacity:.6;cursor:wait}
 .btn-secondary{border:1px solid #86b8c1;background:#fff;color:#0b5967}
 .btn-secondary:hover{background:#eef8fa}
+.link-recuperar{
+  display:block;
+  width:max-content;
+  max-width:100%;
+  margin:-5px auto 0;
+  color:#607681;
+  font-size:12px;
+  font-weight:700;
+  text-align:center;
+  text-decoration:none;
+}
+.link-recuperar:hover,
+.link-recuperar:focus-visible{
+  color:#0b6574;
+  text-decoration:underline;
+}
 .mensagem{min-height:22px;font-size:13px;font-weight:750}
 .mensagem.erro{color:#a71928}
 .mensagem.ok{color:#166534}

@@ -76,7 +76,12 @@
     try {
       const json = await loginGeral(academia, codigo, senha);
       status($("mensagemAcesso"), `Acesso confirmado: ${json.academia?.nome || academia}.`, "ok");
-      location.replace(`/pages/dashboard/index.html?tenant=${encodeURIComponent(json.tenantId)}`);
+      const perfil = String(json.usuario?.perfil || "").toLowerCase();
+      const destino =
+        perfil.includes("prof") || perfil.includes("responsavel") ? "/pages/professor-area/index.html" :
+        perfil.includes("comercial") ? "/pages/comercial-painel/index.html" :
+        "/pages/dashboard/index.html";
+      location.replace(`${destino}?tenant=${encodeURIComponent(json.tenantId)}`);
     } catch (error) {
       limparSessaoAnterior();
       status($("mensagemAcesso"), error.message || "Academia, código ou senha inválidos.", "erro");

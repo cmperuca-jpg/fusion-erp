@@ -9,7 +9,9 @@ import {
   alternarStatusUsuario,
   removerUsuario,
   obterPerfis,
-  validarToken
+  validarToken,
+  obterMeuCodigoAcesso,
+  regenerarMeuCodigoAcesso
 } from "./auth.service.mjs";
 
 const router = express.Router();
@@ -59,6 +61,22 @@ router.post("/login-empresa", async (req, res) => {
 
 router.get("/me", autenticarRequisicao, async (req, res) => {
   res.json({ ok: true, usuario: req.usuario });
+});
+
+router.get("/codigo-acesso", autenticarRequisicao, async (req, res) => {
+  try {
+    res.json({ ok: true, ...(await obterMeuCodigoAcesso(req.usuario || {})) });
+  } catch (erro) {
+    tratarErro(res, erro);
+  }
+});
+
+router.post("/codigo-acesso/regenerar", autenticarRequisicao, async (req, res) => {
+  try {
+    res.json({ ok: true, ...(await regenerarMeuCodigoAcesso(req.usuario || {})) });
+  } catch (erro) {
+    tratarErro(res, erro);
+  }
 });
 
 router.get("/usuarios", autenticarRequisicao, exigirAdministrador, async (req, res) => {

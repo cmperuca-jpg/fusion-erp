@@ -1,23 +1,19 @@
-FUSION ERP — SERVIÇO DE SUPORTE CONTROLADO
+FUSION ERP — LINK DISCRETO 'ESQUECEU SEU CÓDIGO'
 
-A migration do banco já foi aplicada no Supabase de produção.
+"
+    "Alteração:
+"
+    "- adiciona abaixo do botão 'Entrar no sistema' o link:
+"
+    "  'Esqueceu seu código de acesso? Clique aqui'
+"
+    "- destino: /pages/meu-acesso/index.html
+"
+    "- visual discreto, centralizado e responsivo.
 
-Este pacote contém somente o código para:
-- Central de Suporte em /pages/suporte/index.html
-- sessões temporárias de 30 minutos
-- acesso sem senha do cliente
-- banner visível de MODO SUPORTE
-- auditoria por requisição de API
-- retorno automático à conta original ao encerrar
-
-IMPORTANTE
-Nenhuma pessoa foi autorizada automaticamente como suporte.
-Depois do deploy é necessário cadastrar no Supabase apenas o E-MAIL das contas
-da sua equipe que poderão acessar clientes. Não envie senha.
-
-Tabelas já criadas:
-- fusion_support_operators
-- fusion_support_sessions
-- fusion_support_audit
-
-A primeira conta de suporte deve ser adicionada deliberadamente como support_admin.
+"
+    "Arquivos:
+"
+    "- public/pages/comecar/index.html
+"
+    "- public/pages/comecar/style.css

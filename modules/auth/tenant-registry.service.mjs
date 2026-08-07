@@ -4,6 +4,14 @@ import { normalizarTenantId } from "../core/persistence/tenant-context.mjs";
 function texto(valor) { return String(valor ?? "").trim(); }
 function emailNormalizado(valor) { return texto(valor).toLowerCase(); }
 
+async function gerarCodigoAcesso(supabase) {
+  const { data, error } = await supabase.rpc("fusion_generate_access_code_v1");
+  if (error) throw new Error(`Falha ao gerar código de acesso: ${error.message}`);
+  const codigo = texto(data).toUpperCase();
+  if (!codigo) throw new Error("O banco não retornou um código de acesso.");
+  return codigo;
+}
+
 export async function localizarTenantPorEmail(email) {
   const normalizado = emailNormalizado(email);
   if (!normalizado) return null;
@@ -37,28 +45,41 @@ export async function validarEmailDisponivel(email, { tenantId = "", userId = ""
 export async function sincronizarIndiceUsuario(usuario = {}, tenantId = "") {
   const email = emailNormalizado(usuario.email);
   const tenant = normalizarTenantId(tenantId);
-  if (!email || !tenant || !usuario.id) return;
+  if (!email || !tenant || !usuario.id) return null;
+
   const supabase = obterSupabaseAdmin({ obrigatorio: true });
   const { data: existente, error: consultaErro } = await supabase
     .from("fusion_tenant_login_index")
-    .select("tenant_id,user_id")
+    .select("tenant_id,user_id,access_code")
     .eq("email_normalized", email)
     .maybeSingle();
+
   if (consultaErro) throw new Error(`Falha ao validar índice de login: ${consultaErro.message}`);
   if (existente && (String(existente.tenant_id) !== tenant || String(existente.user_id) !== String(usuario.id))) {
     const conflito = Object.assign(new Error("Este e-mail já está vinculado a outro usuário ou empresa."), { status: 409 });
     throw conflito;
   }
 
-  const { error } = await supabase.from("fusion_tenant_login_index").upsert({
+  const accessCode = texto(existente?.access_code).toUpperCase() || await gerarCodigoAcesso(supabase);
+
+  const registro = {
     email_normalized: email,
     tenant_id: tenant,
     user_id: String(usuario.id),
     profile: texto(usuario.perfil),
     status: texto(usuario.status || "ativo").toLowerCase(),
+    access_code: accessCode,
     updated_at: new Date().toISOString()
-  }, { onConflict: "email_normalized" });
+  };
+
+  const { data, error } = await supabase
+    .from("fusion_tenant_login_index")
+    .upsert(registro, { onConflict: "email_normalized" })
+    .select("tenant_id,user_id,profile,status,access_code")
+    .single();
+
   if (error) throw new Error(`Falha ao atualizar índice de login: ${error.message}`);
+  return data || registro;
 }
 
 export async function removerIndiceUsuario(usuario = {}) {
@@ -68,6 +89,72 @@ export async function removerIndiceUsuario(usuario = {}) {
   const { error } = await supabase.from("fusion_tenant_login_index").delete().eq("email_normalized", email);
   if (error) throw new Error(`Falha ao remover índice de login: ${error.message}`);
 }
+
+
+export async function obterCodigoAcessoUsuario(usuario = {}, tenantId = "") {
+  const tenant = normalizarTenantId(tenantId);
+  const userId = texto(usuario.id || usuario.userId);
+  const mail = emailNormalizado(usuario.email);
+  if (!tenant || (!userId && !mail)) return null;
+
+  const supabase = obterSupabaseAdmin({ obrigatorio: true });
+  let query = supabase
+    .from("fusion_tenant_login_index")
+    .select("tenant_id,user_id,profile,status,access_code")
+    .eq("tenant_id", tenant);
+
+  query = userId ? query.eq("user_id", userId) : query.eq("email_normalized", mail);
+
+  const { data: indice, error } = await query.maybeSingle();
+  if (error) throw new Error(`Falha ao consultar código de acesso: ${error.message}`);
+  if (!indice) return null;
+
+  const { data: empresa, error: empresaErro } = await supabase
+    .from("fusion_tenants")
+    .select("tenant_id,slug,name,status")
+    .eq("tenant_id", tenant)
+    .maybeSingle();
+  if (empresaErro) throw new Error(`Falha ao consultar academia: ${empresaErro.message}`);
+
+  return {
+    tenantId: tenant,
+    academia: {
+      nome: empresa?.name || tenant,
+      slug: empresa?.slug || tenant,
+      status: empresa?.status || ""
+    },
+    usuarioId: indice.user_id,
+    perfil: indice.profile,
+    status: indice.status,
+    codigoAcesso: texto(indice.access_code).toUpperCase()
+  };
+}
+
+export async function regenerarCodigoAcessoUsuario(usuario = {}, tenantId = "") {
+  const tenant = normalizarTenantId(tenantId);
+  const userId = texto(usuario.id || usuario.userId);
+  if (!tenant || !userId) throw Object.assign(new Error("Usuário ou academia não identificados."), { status: 400 });
+
+  const supabase = obterSupabaseAdmin({ obrigatorio: true });
+  const novoCodigo = await gerarCodigoAcesso(supabase);
+
+  const { data, error } = await supabase
+    .from("fusion_tenant_login_index")
+    .update({
+      access_code: novoCodigo,
+      updated_at: new Date().toISOString()
+    })
+    .eq("tenant_id", tenant)
+    .eq("user_id", userId)
+    .select("tenant_id,user_id,profile,status,access_code")
+    .maybeSingle();
+
+  if (error) throw new Error(`Falha ao regenerar código de acesso: ${error.message}`);
+  if (!data) throw Object.assign(new Error("Código de acesso do usuário não encontrado."), { status: 404 });
+
+  return obterCodigoAcessoUsuario({ id: userId }, tenant);
+}
+
 
 export async function localizarAcessoPorEmpresaCodigo(empresa = "", codigo = "") {
   const empresaTexto = texto(empresa);
