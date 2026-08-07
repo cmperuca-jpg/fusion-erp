@@ -1,26 +1,86 @@
-FUSION ERP — CORREÇÃO DE SINCRONIA, ACESSO, CHECK-IN, BACKUP E MENU MÓVEL
+FUSION ERP — CONSOLIDAÇÃO DE ACESSO + RECUPERAÇÃO POR E-MAIL
+Data: 07/08/2026
 
-Este pacote contém somente os arquivos alterados. Não contém data, uploads,
-.env, chaves, node_modules nem o restante do site.
+O QUE ESTE PATCH FAZ
+====================
+1. /pages/comecar/ passa a selecionar apenas a ACADEMIA:
+   - nome da academia
+   - código da academia
+   - sem senha de usuário nessa tela
 
-COMO APLICAR
-1. Crie um backup no Painel administrativo antes de publicar.
-2. Extraia este ZIP diretamente na raiz do projeto Fusion ERP.
-3. Confirme a substituição dos 14 arquivos existentes.
-4. Execute: npm run check
-5. Teste localmente com: npm start
-6. Faça commit e push no GitHub para o Render publicar.
+2. Após validar a academia, abre:
+   /pages/login/index.html?tenant=<tenant>
 
-Não execute o publicador de dados locais para instalar esta correção. O pacote
-altera código, não os registros dos alunos. Em produção, o Supabase continua
-sendo a fonte oficial.
+3. O login interno pede:
+   - e-mail do usuário
+   - senha do usuário
+   e respeita Administrador, Gerente, Recepção/Operador, Comercial etc.
 
-TESTE DEPOIS DO DEPLOY
-- No celular, o menu deve iniciar fechado e abrir pelo botão de menu.
-- Receba um título de teste e confirme título, recibo, caixa e aluno no sistema.
-- Um aluno reativado e pago deve liberar a catraca sem permanecer pendente.
-- Abra Check-in: entradas autorizadas do app/catraca devem aparecer na lista.
-- No Painel administrativo, use "Criar backup do Supabase agora".
+4. O código FS-XXXX-XXXX passa a pertencer à ACADEMIA, não ao usuário.
 
-Se o celular mostrar a tela antiga uma única vez, feche a aba, abra novamente
-e atualize a página para descartar o cache anterior.
+5. O login interno exige uma seleção temporária assinada da academia.
+   Digitar apenas ?tenant=academia-piloto não basta.
+
+6. Recuperação consolidada:
+   - academia + e-mail
+   - OTP de 6 dígitos
+   - mostra o código da academia
+   - opcionalmente redefine a senha
+   - volta ao fluxo correto de login
+
+7. /pages/meu-acesso/ passa a mostrar o código DA ACADEMIA.
+   Apenas administrador pode regenerá-lo.
+
+BANCO
+=====
+A migration já foi aplicada no Supabase de produção.
+Academia Piloto e Studio Fitness já possuem código de academia.
+NÃO execute a migration manualmente novamente em produção.
+
+E-MAIL — ÚNICA CONFIGURAÇÃO MANUAL OBRIGATÓRIA
+==============================================
+No Render > fusion-erp > Environment:
+
+RESEND_API_KEY=<crie uma chave no Resend e cole somente no Render>
+
+NÃO envie a chave de API em chat e NÃO coloque a chave no GitHub.
+
+TESTE RÁPIDO
+============
+Se FUSION_RECOVERY_FROM_EMAIL ficar vazio, o código usa:
+Fusion Sistema <onboarding@resend.dev>
+
+Atenção: o remetente resend.dev só pode enviar para o e-mail da própria conta
+Resend. Para testar cmperuca@gmail.com, a conta Resend de teste precisa estar
+associada a esse e-mail.
+
+PRODUÇÃO
+========
+Depois valide o domínio fusionsistema.com.br no Resend e configure no Render:
+
+FUSION_RECOVERY_FROM_EMAIL=Fusion Sistema <acesso@fusionsistema.com.br>
+
+O render.yaml também prevê:
+- FUSION_RECOVERY_SECRET
+- FUSION_TENANT_SELECTION_SECRET
+com geração automática quando a Blueprint for sincronizada. Se não forem
+criados, o código usa o JWT_SECRET existente como fallback.
+
+TESTE APÓS DEPLOY
+=================
+1. Abra /pages/recuperar-acesso/
+2. Academia: academia-piloto
+3. E-mail: cmperuca@gmail.com
+4. Enviar código.
+5. Digitar OTP recebido.
+6. A tela mostrará o código DA ACADEMIA.
+7. Voltar para /pages/comecar/.
+8. Academia + código da academia.
+9. Continuar para o login.
+10. Em /pages/login/, entrar com o e-mail do usuário interno e a senha dele.
+
+VALIDAÇÃO
+=========
+- render.yaml: YAML válido
+- JavaScript: node --check OK
+- npm run check: 566 arquivos, 0 falhas

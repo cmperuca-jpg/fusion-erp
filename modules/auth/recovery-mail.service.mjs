@@ -5,7 +5,7 @@ function texto(v = "") {
 function configuracao() {
   return {
     apiKey: texto(process.env.RESEND_API_KEY || process.env.FUSION_RESEND_API_KEY),
-    from: texto(process.env.FUSION_RECOVERY_FROM_EMAIL || process.env.RESEND_FROM_EMAIL),
+    from: texto(process.env.FUSION_RECOVERY_FROM_EMAIL || process.env.RESEND_FROM_EMAIL || "Fusion Sistema <onboarding@resend.dev>"),
     replyTo: texto(process.env.FUSION_RECOVERY_REPLY_TO || ""),
     appName: texto(process.env.FUSION_RECOVERY_APP_NAME || "Fusion Sistema")
   };

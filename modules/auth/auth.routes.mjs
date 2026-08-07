@@ -1,12 +1,17 @@
 import express from "express";
 import {
+  selecionarAcademia,
+  validarTokenSelecaoAcademia,
+  obterCodigoAcademia,
+  regenerarCodigoAcademia
+} from "./academy-access.service.mjs";
+import {
   iniciarRecuperacao,
   confirmarRecuperacao,
   redefinirSenhaRecuperacao
 } from "./recovery.service.mjs";
 import {
   autenticar,
-  autenticarPorEmpresaCodigo,
   listarUsuarios,
   obterUsuario,
   criarUsuario,
@@ -14,9 +19,7 @@ import {
   alternarStatusUsuario,
   removerUsuario,
   obterPerfis,
-  validarToken,
-  obterMeuCodigoAcesso,
-  regenerarMeuCodigoAcesso
+  validarToken
 } from "./auth.service.mjs";
 
 const router = express.Router();
@@ -46,8 +49,13 @@ function exigirAdministrador(req, res, next) {
 
 router.post("/login", async (req, res) => {
   try {
-    const { email, senha, tenant, tenantId } = req.body || {};
+    const { email, senha, tenant, tenantId, selectionToken } = req.body || {};
     const tenantEsperado = req.headers["x-fusion-tenant"] || tenant || tenantId || "";
+    const tokenSelecao = req.headers["x-fusion-tenant-selection"] || selectionToken || "";
+    if (!tenantEsperado) {
+      return res.status(400).json({ ok: false, mensagem: "Selecione a academia antes de fazer login." });
+    }
+    validarTokenSelecaoAcademia(tokenSelecao, tenantEsperado);
     res.json(await autenticar(email, senha, tenantEsperado));
   } catch (erro) {
     tratarErro(res, erro);
@@ -55,10 +63,19 @@ router.post("/login", async (req, res) => {
 });
 
 
-router.post("/login-empresa", async (req, res) => {
+router.post("/login-empresa", async (_req, res) => {
+  return res.status(410).json({
+    ok: false,
+    mensagem: "Fluxo antigo desativado. Selecione a academia e depois faça login com seu usuário."
+  });
+});
+
+router.post("/selecionar-empresa", async (req, res) => {
   try {
-    const { empresa, academia, codigo, codigoAcesso, senha } = req.body || {};
-    res.json(await autenticarPorEmpresaCodigo(empresa || academia, codigo || codigoAcesso, senha));
+    res.json(await selecionarAcademia(req.body || {}, {
+      ip: req.ip || req.socket?.remoteAddress || "",
+      userAgent: req.headers["user-agent"] || ""
+    }));
   } catch (erro) {
     tratarErro(res, erro);
   }
@@ -98,15 +115,15 @@ router.get("/me", autenticarRequisicao, async (req, res) => {
 
 router.get("/codigo-acesso", autenticarRequisicao, async (req, res) => {
   try {
-    res.json({ ok: true, ...(await obterMeuCodigoAcesso(req.usuario || {})) });
+    res.json({ ok: true, ...(await obterCodigoAcademia(req.usuario?.tenantId || "")) });
   } catch (erro) {
     tratarErro(res, erro);
   }
 });
 
-router.post("/codigo-acesso/regenerar", autenticarRequisicao, async (req, res) => {
+router.post("/codigo-acesso/regenerar", autenticarRequisicao, exigirAdministrador, async (req, res) => {
   try {
-    res.json({ ok: true, ...(await regenerarMeuCodigoAcesso(req.usuario || {})) });
+    res.json({ ok: true, ...(await regenerarCodigoAcademia(req.usuario?.tenantId || "")) });
   } catch (erro) {
     tratarErro(res, erro);
   }

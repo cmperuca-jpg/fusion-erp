@@ -5,28 +5,35 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Fusion ERP - Login</title>
   <link rel="stylesheet" href="/assets/css/fusion-app.css">
-  <link rel="stylesheet" href="/pages/login/style.css">
-  <script src="/assets/js/fusion-auth.js" defer></script>
-  <script src="/pages/login/index.js" defer></script>
+  <link rel="stylesheet" href="/pages/login/style.css?v=20260807-login-interno-1">
+  <script src="/assets/js/fusion-auth.js?v=20260807-login-interno-1" defer></script>
+  <script src="/pages/login/index.js?v=20260807-login-interno-1" defer></script>
   <link rel="manifest" href="/manifest-sistema.webmanifest">
-  <meta name="theme-color" content="#ff6600">
+  <meta name="theme-color" content="#0b6574">
   <link rel="apple-touch-icon" href="/assets/pwa/icons/fusion-sistema-180.png">
   <link rel="stylesheet" href="/assets/css/fusion-premium-final.css">
 </head>
 <body class="login-page">
   <form class="login-card" id="loginForm" autocomplete="on">
-    <h1>Fusion ERP</h1>
-    <div class="sub">Entrar no sistema</div>
+    <h1>Fusion Sistema</h1>
+    <div class="sub">Login do usuário interno</div>
+
+    <div class="academia-selecionada" id="academiaSelecionada">
+      <small>Academia selecionada</small>
+      <strong id="academiaNome">Carregando...</strong>
+      <a id="trocarAcademia" href="/pages/comecar/">Trocar academia</a>
+    </div>
 
     <label class="sr-only" for="email">E-mail</label>
-    <input id="email" name="email" type="email" placeholder="E-mail"autocomplete="username" required>
+    <input id="email" name="email" type="email" placeholder="E-mail do usuário" autocomplete="username" required>
 
     <label class="sr-only" for="senha">Senha</label>
     <input id="senha" name="senha" type="password" placeholder="Senha" autocomplete="current-password" required>
 
     <button id="btnEntrar" type="submit">Entrar</button>
+    <a id="recuperarSenha" class="link-ajuda" href="/pages/recuperar-acesso/">Esqueceu sua senha? Recuperar acesso</a>
     <div id="erro" class="erro" role="alert"></div>
-    <div class="versao">Fusion ERP 2.8.0 · Login estabilizado</div>
+    <div class="versao">Fusion ERP 2.8.0 · Acesso multiempresa</div>
   </form>
   <script src="/assets/pwa/fusion-pwa-install.js" defer></script>
 </body>

@@ -2,10 +2,13 @@
   "use strict";
 
   const $ = id => document.getElementById(id);
+  const params = new URLSearchParams(location.search);
+  const modoSenha = params.get("tipo") === "senha";
   let requestId = "";
   let recoveryToken = "";
   let codigoAcesso = "";
   let academiaConfirmada = "";
+  let tenantConfirmado = "";
 
   function mensagem(id, texto = "", tipo = "") {
     const el = $(id);
@@ -85,10 +88,16 @@
       });
       recoveryToken = json.recoveryToken || "";
       codigoAcesso = json.codigoAcesso || "";
+      tenantConfirmado = json.tenantId || "";
       academiaConfirmada = json.academia?.nome || $("academia").value.trim();
       $("resultadoAcademia").textContent = academiaConfirmada;
       $("resultadoCodigo").textContent = codigoAcesso || "—";
       irParaEtapa(3);
+      if (modoSenha) {
+        $("boxSenha").open = true;
+        mensagem("mensagemResultado", "E-mail confirmado. Você pode criar uma nova senha abaixo.", "ok");
+        setTimeout(() => $("novaSenha").focus(), 0);
+      }
     } catch (error) {
       mensagem("mensagemConfirmar", error.message || "Código inválido.", "erro");
       $("codigoVerificacao").select();
@@ -116,19 +125,23 @@
     if (!codigoAcesso) return;
     try {
       await navigator.clipboard.writeText(codigoAcesso);
-      mensagem("mensagemResultado", "Código de acesso copiado.", "ok");
+      mensagem("mensagemResultado", "Código da academia copiado.", "ok");
     } catch {
-      mensagem("mensagemResultado", `Seu código é ${codigoAcesso}.`, "ok");
+      mensagem("mensagemResultado", `Código da academia: ${codigoAcesso}.`, "ok");
     }
   });
 
-  $("btnVoltarEntrar").addEventListener("click", () => {
-    const params = new URLSearchParams({
-      academia: academiaConfirmada,
-      codigo: codigoAcesso
-    });
-    location.href = `/pages/comecar/?${params.toString()}`;
-  });
+  function voltarParaEntrada() {
+    if (modoSenha && tenantConfirmado && sessionStorage.getItem("fusionTenantSelectionToken")) {
+      const qp = new URLSearchParams({ tenant: tenantConfirmado, academia: academiaConfirmada });
+      location.href = `/pages/login/index.html?${qp.toString()}`;
+      return;
+    }
+    const qp = new URLSearchParams({ academia: academiaConfirmada, codigo: codigoAcesso });
+    location.href = `/pages/comecar/?${qp.toString()}`;
+  }
+
+  $("btnVoltarEntrar").addEventListener("click", voltarParaEntrada);
 
   $("formSenha").addEventListener("submit", async event => {
     event.preventDefault();
@@ -152,7 +165,7 @@
         senha
       });
       $("boxSenha").open = false;
-      mensagem("mensagemResultado", "Senha alterada. Agora você já pode entrar no Fusion.", "ok");
+      mensagem("mensagemResultado", "Senha alterada. Você já pode voltar ao login.", "ok");
       btn.textContent = "Senha alterada";
     } catch (error) {
       mensagem("mensagemResultado", error.message || "Não foi possível alterar a senha.", "erro");
@@ -161,7 +174,16 @@
     }
   });
 
-  const params = new URLSearchParams(location.search);
   if (params.get("academia")) $("academia").value = params.get("academia");
+  if (params.get("email")) $("email").value = params.get("email");
+  if (modoSenha && params.get("academia")) {
+    $("academia").readOnly = true;
+    $("academia").title = "Academia já selecionada";
+  }
+  const voltar = document.querySelector(".voltar");
+  if (modoSenha && params.get("academia")) {
+    voltar.href = `/pages/login/index.html?tenant=${encodeURIComponent(params.get("academia"))}`;
+    voltar.textContent = "← Voltar para o login";
+  }
   irParaEtapa(1);
 })();

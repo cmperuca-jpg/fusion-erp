@@ -8,6 +8,7 @@ const PUBLIC_RULES = [
   ["GET", "/api/v3/persistence/status"],
   ["POST", "/api/auth/login"],
   ["POST", "/api/auth/login-empresa"],
+  ["POST", "/api/auth/selecionar-empresa"],
   ["POST", "/api/auth/recuperacao/iniciar"],
   ["POST", "/api/auth/recuperacao/confirmar"],
   ["POST", "/api/auth/recuperacao/redefinir-senha"],

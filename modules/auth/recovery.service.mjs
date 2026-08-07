@@ -317,20 +317,20 @@ export async function confirmarRecuperacao(payload = {}) {
   const [{ data: indice, error: indiceError }, { data: tenant, error: tenantError }] = await Promise.all([
     supabase
       .from("fusion_tenant_login_index")
-      .select("tenant_id,user_id,profile,status,access_code")
+      .select("tenant_id,user_id,profile,status")
       .eq("tenant_id", challenge.tenant_id)
       .eq("user_id", challenge.user_id)
       .maybeSingle(),
     supabase
       .from("fusion_tenants")
-      .select("tenant_id,slug,name,status")
+      .select("tenant_id,slug,name,status,access_code")
       .eq("tenant_id", challenge.tenant_id)
       .maybeSingle()
   ]);
 
   if (indiceError) throw erro(`Falha ao consultar acesso: ${indiceError.message}`, 500);
   if (tenantError) throw erro(`Falha ao consultar academia: ${tenantError.message}`, 500);
-  if (!indice?.access_code || !tenant) throw erro("Acesso não encontrado.", 404);
+  if (!indice || !tenant?.access_code) throw erro("Acesso não encontrado.", 404);
 
   return {
     ok: true,
@@ -338,7 +338,7 @@ export async function confirmarRecuperacao(payload = {}) {
     tenantId: challenge.tenant_id,
     academia: { nome: tenant.name, slug: tenant.slug },
     perfil: indice.profile,
-    codigoAcesso: String(indice.access_code).toUpperCase(),
+    codigoAcesso: String(tenant.access_code).toUpperCase(),
     mensagem: "Identidade confirmada."
   };
 }

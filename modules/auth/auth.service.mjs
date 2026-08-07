@@ -299,11 +299,8 @@ export async function criarUsuario(payload = {}) {
 
   usuarios.push(novo);
   await salvarUsuarios(usuarios);
-  const indiceLogin = await sincronizarIndiceUsuario(novo, tenantAtual());
-  return {
-    ...semSenha(novo, { incluirSenhaAcesso: true }),
-    codigoAcesso: indiceLogin?.access_code || ""
-  };
+  await sincronizarIndiceUsuario(novo, tenantAtual());
+  return semSenha(novo, { incluirSenhaAcesso: true });
 }
 
 export async function atualizarUsuario(id, payload = {}) {

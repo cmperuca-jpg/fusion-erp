@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#0b6574">
   <title>Acesso às academias | Fusion Sistema</title>
-  <link rel="stylesheet" href="./style.css?v=20260807-acesso-geral-1">
+  <link rel="stylesheet" href="./style.css?v=20260807-fluxo-login-interno-1">
 </head>
 <body>
   <main class="acesso-shell">
@@ -13,11 +13,11 @@
       <div class="marca">Fusion Sistema</div>
       <span class="etiqueta">Acesso multiempresa</span>
       <h1>Uma entrada.<br>Todas as academias.</h1>
-      <p>Entre informando a academia, o código de acesso gerado pelo Fusion e a senha do administrador.</p>
+      <p>Primeiro identifique a academia. Depois cada administrador, gerente ou operador entra com o próprio usuário e senha.</p>
       <div class="seguranca">
         <span><b>1</b> Identifica a academia</span>
-        <span><b>2</b> Valida o código exclusivo</span>
-        <span><b>3</b> Abre somente os dados daquela empresa</span>
+        <span><b>2</b> Valida o código da academia</span>
+        <span><b>3</b> Abre o login dos usuários internos</span>
       </div>
     </section>
 
@@ -30,22 +30,19 @@
       <section class="conteudo-tab ativo" id="painelEntrar" data-panel="entrar">
         <div class="form-head">
           <span>Acesso geral</span>
-          <h2>Entrar no Fusion</h2>
-          <p>Use o nome da academia, o código de acesso e a senha.</p>
+          <h2>Selecionar academia</h2>
+          <p>Informe o nome e o código da academia. Na próxima tela você fará login com seu usuário interno.</p>
         </div>
 
         <form id="formAcesso" class="form-acesso" novalidate>
           <label class="full">Nome da academia
             <input id="academiaAcesso" autocomplete="organization" required minlength="2" placeholder="Ex.: Studio Fitness">
           </label>
-          <label>Código de acesso
+          <label class="full">Código da academia
             <input id="codigoAcesso" autocomplete="off" required placeholder="FS-XXXX-XXXX" spellcheck="false">
           </label>
-          <label>Senha
-            <input id="senhaAcesso" type="password" autocomplete="current-password" required minlength="10" placeholder="Sua senha">
-          </label>
-          <button id="btnEntrar" class="btn-primary full" type="submit">Entrar no sistema</button>
-          <a class="link-recuperar full" href="/pages/recuperar-acesso/index.html">Esqueceu seu código de acesso? Clique aqui</a>
+          <button id="btnEntrar" class="btn-primary full" type="submit">Continuar para o login</button>
+          <a class="link-recuperar full" href="/pages/recuperar-acesso/index.html">Esqueceu o código da academia? Clique aqui</a>
           <div id="mensagemAcesso" class="mensagem full" role="status" aria-live="polite"></div>
         </form>
       </section>
@@ -54,7 +51,7 @@
         <div class="form-head">
           <span>Cadastro inicial</span>
           <h2>Criar nova academia</h2>
-          <p>O Fusion criará um ambiente isolado e gerará o código de acesso administrativo.</p>
+          <p>O Fusion criará o ambiente isolado, o primeiro administrador e um código exclusivo da academia.</p>
         </div>
 
         <form id="formEmpresa" class="form-criacao" novalidate>
@@ -70,13 +67,13 @@
           <label>Nome do responsável
             <input id="responsavel" autocomplete="name" required placeholder="Seu nome">
           </label>
-          <label>E-mail do administrador
+          <label>E-mail do primeiro administrador
             <input id="email" type="email" autocomplete="email" required placeholder="voce@empresa.com.br">
           </label>
           <label>WhatsApp
             <input id="telefone" inputmode="tel" autocomplete="tel" placeholder="(82) 99999-9999">
           </label>
-          <label>Senha
+          <label>Senha do primeiro administrador
             <input id="senha" type="password" autocomplete="new-password" required minlength="10" placeholder="Mínimo de 10 caracteres">
           </label>
           <label>Confirmar senha
@@ -90,25 +87,25 @@
 
       <section class="sucesso" id="painelSucesso" hidden>
         <span class="sucesso-tag">Academia criada</span>
-        <h2>Guarde seu código de acesso</h2>
-        <p>Você usará estes dados sempre que entrar pelo acesso geral do Fusion.</p>
+        <h2>Guarde o código da academia</h2>
+        <p>Este código identifica a empresa. Depois dele, cada funcionário entra com seu próprio e-mail e senha.</p>
         <div class="credencial">
           <small>Academia</small>
           <strong id="sucessoAcademia">—</strong>
         </div>
         <div class="credencial codigo">
-          <small>Código de acesso</small>
+          <small>Código da academia</small>
           <strong id="sucessoCodigo">—</strong>
         </div>
         <div class="sucesso-acoes">
           <button type="button" id="btnCopiarCodigo" class="btn-secondary">Copiar código</button>
-          <button type="button" id="btnEntrarNovo" class="btn-primary">Entrar no sistema</button>
+          <button type="button" id="btnEntrarNovo" class="btn-primary">Ir para o login</button>
         </div>
         <div id="mensagemSucesso" class="mensagem" role="status" aria-live="polite"></div>
       </section>
     </section>
   </main>
 
-  <script src="./index.js?v=20260807-recuperacao-1"></script>
+  <script src="./index.js?v=20260807-fluxo-login-interno-1"></script>
 </body>
 </html>

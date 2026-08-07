@@ -28,6 +28,26 @@
     return id ? `${LOGIN_URL}?tenant=${encodeURIComponent(id)}` : LOGIN_URL;
   }
 
+  function tokenSelecaoTenant() {
+    try { return texto(sessionStorage.getItem("fusionTenantSelectionToken")); }
+    catch { return ""; }
+  }
+
+  function limparSelecaoTenant() {
+    try {
+      sessionStorage.removeItem("fusionTenantSelectionToken");
+      sessionStorage.removeItem("fusionAcademiaSelecionadaNome");
+    } catch {}
+  }
+
+  function urlSelecionarAcademia(tenant = "", next = "") {
+    const params = new URLSearchParams();
+    if (texto(tenant)) params.set("academia", texto(tenant));
+    if (texto(next)) params.set("next", texto(next));
+    const query = params.toString();
+    return `/pages/comecar/${query ? `?${query}` : ""}`;
+  }
+
   function sessaoPertencePagina(usuario = {}) {
     const esperado = tenantDaPagina();
     const atual = texto(usuario?.tenantId || tenantSalvo());
@@ -102,8 +122,9 @@
   function limparSessao(redirecionar = true) {
     const tenant = tenantAtual();
     STORAGE_KEYS.forEach(k => localStorage.removeItem(k));
+    limparSelecaoTenant();
     delete document.documentElement.dataset.fusionTenant;
-    if (redirecionar) location.href = urlLoginTenant(tenant);
+    if (redirecionar) location.href = urlSelecionarAcademia(tenant);
   }
 
   function permissoesAtual() {
@@ -151,15 +172,16 @@
   function proteger(perfisPermitidos) {
     document.documentElement.classList.add("fusion-auth-pendente");
     if (!estaLogado()) {
-      const destino = encodeURIComponent(location.pathname + location.search);
-      location.href = `${LOGIN_URL}?next=${destino}`;
+      const destino = location.pathname + location.search;
+      location.href = urlSelecionarAcademia(tenantDaPagina() || tenantSalvo(), destino);
       return false;
     }
     const user = usuarioAtual();
     if (!sessaoPertencePagina(user)) {
       const tenant = tenantDaPagina();
+      const destino = location.pathname + location.search;
       limparSessao(false);
-      location.href = `${urlLoginTenant(tenant)}&next=${encodeURIComponent(location.pathname + location.search)}`;
+      location.href = urlSelecionarAcademia(tenant, destino);
       return false;
     }
     if (!podeAcessar(user, perfisPermitidos)) {
@@ -296,15 +318,21 @@
   }
 
   async function login(email, senha, tenantEsperado = "") {
-    const tenant = texto(tenantEsperado || tenantDaPagina());
-    const body = { email: texto(email), senha };
-    if (tenant) body.tenant = tenant;
+    const tenant = texto(tenantEsperado || tenantDaPagina() || tenantSalvo());
+    if (!tenant) throw new Error("Selecione a academia antes de fazer login.");
 
+    const selectionToken = tokenSelecaoTenant();
+    if (!selectionToken) {
+      throw new Error("A seleção da academia expirou. Volte e informe o código da academia novamente.");
+    }
+
+    const body = { email: texto(email), senha, tenant, selectionToken };
     const resp = await fetchOriginal("/api/auth/login", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        ...(tenant ? { "X-Fusion-Tenant": tenant } : {})
+        "X-Fusion-Tenant": tenant,
+        "X-Fusion-Tenant-Selection": selectionToken
       },
       body: JSON.stringify(body)
     });
@@ -312,9 +340,10 @@
     if (!resp.ok || json.ok === false) throw new Error(json.mensagem || json.erro || "Falha no login.");
 
     const tenantSessao = texto(json.tenantId || json.usuario?.tenantId || tenant);
-    if (tenant && tenantSessao && tenantSessao !== tenant) {
+    if (tenantSessao !== tenant) {
       throw new Error("A conta informada pertence a outra empresa.");
     }
+    limparSelecaoTenant();
     return salvarSessao(json.token, json.usuario, tenantSessao);
   }
 
@@ -343,7 +372,7 @@
     return fetchOriginal(input, { ...opcoes, headers });
   };
 
-  window.FusionAuth = { login, salvarSessao, usuarioAtual, tokenAtual, tenantAtual, estaLogado, validarSessao, temPermissao, permissoesAtual, cabecalhoAuth, fetchAuth, filtrarElementosPorPermissao, proteger, sair, limparSessao, destinoPorPerfil, estaEmSuporte, encerrarSuporte };
+  window.FusionAuth = { login, salvarSessao, usuarioAtual, tokenAtual, tenantAtual, estaLogado, validarSessao, temPermissao, permissoesAtual, cabecalhoAuth, fetchAuth, filtrarElementosPorPermissao, proteger, sair, limparSessao, destinoPorPerfil, estaEmSuporte, encerrarSuporte, tokenSelecaoTenant, limparSelecaoTenant, urlSelecionarAcademia };
   window.protegerPagina = function protegerPagina(perfisPermitidos) { return proteger(perfisPermitidos); };
   window.sair = sair;
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", garantirBannerSuporte, { once: true });
