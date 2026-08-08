@@ -1,74 +1,20 @@
-FUSION ERP — CORREÇÃO FINAL CAIXA + BI FINANCEIRO
-Data: 07/08/2026
+FUSION ERP — KPIs FINANCEIROS COMPACTOS
+Data: 08/08/2026
 
 ARQUIVOS
 ========
-modules/financeiro/caixa.service.mjs
-public/js/bi-financeiro/index.js
-public/pages/bi-financeiro/index.html
+public/pages/financeiro/financeiro.css
+public/pages/financeiro/index.html
 
-ERRO 1 — CAIXA
-==============
-Causa:
-Uma saída histórica de R$ 4.500,00 não possui campo valorLiquido.
-O helper numérico convertia campo ausente em zero. A rotina então inferia,
-erradamente, uma taxa de R$ 4.500,00 e líquido zero para a saída.
-
-Correção:
-- taxa só é inferida por bruto - líquido quando o campo líquido realmente existe;
-- se não existe taxa e não existe líquido informado, líquido = bruto;
-- uma saída histórica de R$ 4.500,00 passa a reduzir também o saldo líquido.
-
-Resultado esperado:
-Entradas brutas........ R$ 3.290,01
-Taxas.................. R$     3,26
-Entradas líquidas...... R$ 3.286,75
-Saídas................. R$ 4.500,00
-Saldo bruto............ -R$ 1.209,99
-Saldo líquido.......... -R$ 1.213,25
-
-Como o Financeiro principal consulta /api/caixa/atual, o cartão "Caixa líquido"
-também deve passar para -R$ 1.213,25.
-
-ERRO 2 — BI FINANCEIRO
-======================
-Causa:
-O JavaScript real carregado pela página ainda usava l.valor nos títulos
-não realizados. Assim, um título parcial de R$ 5.700,00 com R$ 4.500,00
-já pagos continuava aparecendo como R$ 5.700,00 pendentes.
-
-Correção:
-- não realizado usa valorPendente;
-- título parcial passa a representar R$ 1.200,00 pendentes;
-- Programado fica separado de Aberto;
-- saldo previsto inclui Aberto + Programado;
-- resumo oficial do backend é usado quando não há filtro local;
-- filtros ganharam Parcial e Programado;
-- BI ganhou cartões Programado a receber e Programado a pagar;
-- tabelas e gráficos usam valorPendente quando aplicável.
-
-Resultado esperado:
-Recebido líquido....... R$ 3.286,75
-A receber.............. R$   130,00
-Programado a receber... R$ 3.055,00
-Pago................... R$ 4.500,00
-A pagar................ R$ 1.200,00
-Programado a pagar..... R$ 5.700,00
-Vencido a receber...... R$   130,00
-Vencido a pagar........ R$ 1.200,00
-Saldo realizado........ -R$ 1.213,25
-Saldo líquido previsto. -R$ 4.928,25
+ALTERAÇÕES
+==========
+- reduz o tamanho dos valores dos 5 KPIs financeiros;
+- impede quebra de linha em todos os valores;
+- mantém o sinal negativo junto do valor;
+- usa números tabulares para melhor alinhamento;
+- preserva responsividade;
+- adiciona cache bust no CSS.
 
 CACHE
 =====
-A página agora carrega:
-/js/bi-financeiro/index.js?v=20260807-bi-contabil-v2
-
-VALIDAÇÃO
-=========
-node --check public/js/bi-financeiro/index.js: OK
-node --check modules/financeiro/caixa.service.mjs: OK
-
-Teste matemático:
-R$ 3.290,01 - R$ 3,26 - R$ 4.500,00 = -R$ 1.213,25
-Saldo previsto consolidado = -R$ 4.928,25
+/pages/financeiro/financeiro.css?v=20260808-kpi-compacto-1
