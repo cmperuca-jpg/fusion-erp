@@ -1,33 +1,27 @@
-FUSION ALUNO — SINCRONIZAÇÃO AUTOMÁTICA ERP -> APP
+FUSION ALUNO — CORREÇÃO DO FILTRO CPF
 
-Substitua somente este arquivo no repositório fusion-erp:
-
+Substitua somente:
 modules/treinos/aluno-app.service.mjs
 
-O que esta versão faz:
-1. A academia clica em "Código app" no aluno do ERP.
-2. O servidor localiza o aluno no banco principal do Fusion ERP por tenant + CPF.
-3. Sincroniza nome, CPF, WhatsApp/telefone, nascimento, matrícula, status e legacy_id
-   no banco dedicado do Fusion Aluno.
-4. Gera o código de ativação no banco do aplicativo.
-5. Não exige cadastro duplicado do aluno.
-6. Não envia foto/base64 para o banco do app.
-7. Mantém as chaves secretas somente no servidor.
+Correção aplicada:
+payload->cpf
+para:
+payload->>cpf
 
-Variáveis Render já necessárias:
-FUSION_APP_SUPABASE_URL
-FUSION_APP_SUPABASE_SECRET_KEY
+Motivo:
+o CPF armazenado dentro de payload é texto. O filtro PostgREST precisa usar
+->> para comparar um valor JSON como texto.
 
-Nenhuma variável nova precisa ser criada.
+Depois faça commit na main:
+fix: corrige filtro CPF na sincronizacao do Fusion Aluno
 
-Depois de substituir:
-git add modules/treinos/aluno-app.service.mjs
-git commit -m "fix: sincroniza aluno antes de gerar codigo do app"
-git push origin main
+A Render fará o Auto-Deploy.
 
-A Render fará Auto-Deploy.
+Após Deploy live:
+1. Abra Fusion Sistema > Alunos.
+2. Localize Ariana.
+3. Clique em Código app / Gerar código do app.
+4. Deve abrir o modal com o código de 8 caracteres, validade,
+   Copiar código e Enviar pelo WhatsApp.
 
-Teste:
-Fusion Sistema > Alunos > Ariana > Código app.
-Agora a resposta esperada é o código de 8 caracteres, não mais
-"Aluno ativo com este CPF não encontrado no banco do aplicativo".
+Nenhuma variável da Render precisa ser alterada.

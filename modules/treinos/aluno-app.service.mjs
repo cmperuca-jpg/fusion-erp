@@ -137,7 +137,7 @@ async function alunoERPPorCpf(tenant, cpfNormalizado) {
     .select("record_id,payload")
     .eq("tenant_id", tenant)
     .eq("collection", "alunos")
-    .eq("payload->cpf", cpfNormalizado)
+    .eq("payload->>cpf", cpfNormalizado)
     .limit(2);
 
   if (error) {
