@@ -1,27 +1,48 @@
-import fs from "fs";
-import fsp from "fs/promises";
+import fs from "fs/promises";
 import path from "path";
 import zlib from "zlib";
 import crypto from "crypto";
 import { createClient } from "@supabase/supabase-js";
-import { restaurarArquivosNoSupabase, statusPersistencia } from "./supabase-data.service.mjs";
+import { normalizarTenantId } from "../core/persistence/tenant-context.mjs";
 
 const ROOT_DIR = process.cwd();
 const DEFAULT_BUCKET = "fusion-backups";
 const DEFAULT_BACKUP_PREFIX = "FusionERP";
-const CONFIG_FILE = "backup_config.json";
 const MULTIPART_SUFFIX = ".manifest.json";
 const DB_SNAPSHOT_NAME = "database/fusion_v3_records.json";
+const BACKUP_MANIFEST_NAME = "backup-manifest.json";
+
 let backupAutomaticoTimer = null;
 let ultimoBackupAutomatico = null;
 let ultimoErroAutomatico = "";
 
-function dataDir() {
-  return path.resolve(ROOT_DIR, "data");
+function erro(mensagem, status = 500) {
+  return Object.assign(new Error(mensagem), { status });
 }
 
-function backupConfigPath() {
-  return path.resolve(dataDir(), CONFIG_FILE);
+function tenantSeguro(valor = "") {
+  const tenant = normalizarTenantId(
+    valor ||
+    process.env.FUSION_TENANT_ID ||
+    process.env.FUSION_ACADEMIA_ID ||
+    ""
+  );
+  if (!tenant) {
+    throw erro(
+      "Academia não identificada para a operação de backup. O fallback global foi desativado.",
+      400
+    );
+  }
+  return tenant;
+}
+
+function supabaseClient() {
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) throw erro("SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY não configurados.", 503);
+  return createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false }
+  });
 }
 
 function limparNomeArquivo(valor, fallback = DEFAULT_BACKUP_PREFIX) {
@@ -33,6 +54,22 @@ function limparNomeArquivo(valor, fallback = DEFAULT_BACKUP_PREFIX) {
     .replace(/_+/g, "_")
     .replace(/^[_-]+|[_-]+$/g, "")
     .slice(0, 80) || fallback;
+}
+
+function pastaBase(valor = "backups") {
+  const limpa = String(valor || "backups")
+    .replace(/\\/g, "/")
+    .replace(/^\/+|\/+$/g, "")
+    .replace(/\.\./g, "")
+    .split("/")
+    .map(parte => limparNomeArquivo(parte, "backups"))
+    .filter(Boolean)
+    .join("/");
+  return limpa || "backups";
+}
+
+function pastaDoTenant(config, tenantId) {
+  return `${pastaBase(config?.pastaSupabase || "backups")}/${tenantSeguro(tenantId)}`;
 }
 
 function dataPartes(date = new Date()) {
@@ -50,42 +87,69 @@ function dataPartes(date = new Date()) {
   };
 }
 
-function configPadrao() {
-  const nomeEmpresa = process.env.FUSION_BACKUP_EMPRESA || process.env.FUSION_ACADEMIA_NOME || process.env.BACKUP_NAME_PREFIX || DEFAULT_BACKUP_PREFIX;
+async function obterTenant(tenantId) {
+  const tenant = tenantSeguro(tenantId);
+  const { data, error } = await supabaseClient()
+    .from("fusion_tenants")
+    .select("tenant_id,slug,name,status,settings")
+    .eq("tenant_id", tenant)
+    .maybeSingle();
+
+  if (error) throw erro(`Falha ao consultar academia: ${error.message}`, 500);
+  if (!data) throw erro("Academia não encontrada.", 404);
+  return data;
+}
+
+function configPadrao(tenant = {}) {
+  const nome = String(tenant.name || tenant.tenant_id || DEFAULT_BACKUP_PREFIX).trim();
   return {
-    empresa: nomeEmpresa,
-    prefixo: process.env.BACKUP_NAME_PREFIX || nomeEmpresa || DEFAULT_BACKUP_PREFIX,
+    empresa: nome,
+    prefixo: nome,
     template: process.env.BACKUP_FILE_TEMPLATE || "{prefixo}_Backup_{data}_{hora}.zip",
     pastaSupabase: process.env.SUPABASE_BACKUP_FOLDER || "backups",
     atualizadoEm: null
   };
 }
 
-export async function lerConfiguracaoBackup() {
-  const padrao = configPadrao();
-  try {
-    const arquivo = backupConfigPath();
-    const bruto = await fsp.readFile(arquivo, "utf-8");
-    const salvo = bruto.trim() ? JSON.parse(bruto) : {};
-    return { ...padrao, ...salvo };
-  } catch {
-    return padrao;
-  }
+export async function lerConfiguracaoBackup(tenantId = "") {
+  const tenant = await obterTenant(tenantId);
+  const salvo = tenant.settings?.backup && typeof tenant.settings.backup === "object"
+    ? tenant.settings.backup
+    : {};
+  return { ...configPadrao(tenant), ...salvo };
 }
 
-export async function salvarConfiguracaoBackup(dados = {}) {
-  const atual = await lerConfiguracaoBackup();
+export async function salvarConfiguracaoBackup(dados = {}, tenantId = "") {
+  const tenant = await obterTenant(tenantId);
+  const atual = await lerConfiguracaoBackup(tenant.tenant_id);
   const config = {
     ...atual,
-    empresa: String(dados.empresa ?? atual.empresa ?? DEFAULT_BACKUP_PREFIX).trim() || DEFAULT_BACKUP_PREFIX,
-    prefixo: String(dados.prefixo ?? dados.nome ?? atual.prefixo ?? atual.empresa ?? DEFAULT_BACKUP_PREFIX).trim() || DEFAULT_BACKUP_PREFIX,
+    empresa: String(dados.empresa ?? atual.empresa ?? tenant.name ?? DEFAULT_BACKUP_PREFIX).trim() || DEFAULT_BACKUP_PREFIX,
+    prefixo: String(dados.prefixo ?? dados.nome ?? atual.prefixo ?? atual.empresa ?? tenant.name ?? DEFAULT_BACKUP_PREFIX).trim() || DEFAULT_BACKUP_PREFIX,
     template: String(dados.template ?? atual.template ?? "{prefixo}_Backup_{data}_{hora}.zip").trim() || "{prefixo}_Backup_{data}_{hora}.zip",
-    pastaSupabase: String(dados.pastaSupabase ?? atual.pastaSupabase ?? "backups").trim() || "backups",
+    pastaSupabase: pastaBase(dados.pastaSupabase ?? atual.pastaSupabase ?? "backups"),
     atualizadoEm: new Date().toISOString()
   };
-  await fsp.mkdir(dataDir(), { recursive: true });
-  await fsp.writeFile(backupConfigPath(), JSON.stringify(config, null, 2), "utf-8");
-  return { ok: true, config, exemplo: gerarNomeBackup(config) };
+
+  const settings = {
+    ...(tenant.settings && typeof tenant.settings === "object" ? tenant.settings : {}),
+    backup: config
+  };
+
+  const { error } = await supabaseClient()
+    .from("fusion_tenants")
+    .update({ settings, updated_at: new Date().toISOString() })
+    .eq("tenant_id", tenant.tenant_id);
+
+  if (error) throw erro(`Falha ao salvar configuração de backup: ${error.message}`, 500);
+
+  return {
+    ok: true,
+    tenantId: tenant.tenant_id,
+    config,
+    pastaEfetiva: pastaDoTenant(config, tenant.tenant_id),
+    exemplo: gerarNomeBackup(config)
+  };
 }
 
 function gerarNomeBackup(config = {}, date = new Date(), sufixo = "") {
@@ -94,6 +158,7 @@ function gerarNomeBackup(config = {}, date = new Date(), sufixo = "") {
   const prefixo = limparNomeArquivo(config.prefixo || empresa || DEFAULT_BACKUP_PREFIX);
   let template = String(config.template || "{prefixo}_Backup_{data}_{hora}.zip");
   if (!/\.zip$/i.test(template)) template += ".zip";
+
   const nome = template
     .replaceAll("{empresa}", empresa)
     .replaceAll("{prefixo}", prefixo)
@@ -103,26 +168,14 @@ function gerarNomeBackup(config = {}, date = new Date(), sufixo = "") {
     .replaceAll("{mes}", partes.mes)
     .replaceAll("{dia}", partes.dia)
     .replaceAll("{iso}", partes.iso);
+
   const base = limparNomeArquivo(nome.replace(/\.zip$/i, ""));
   const final = sufixo ? `${base}_${limparNomeArquivo(sufixo, "seguranca")}` : base;
   return `${final}.zip`;
 }
 
-function uploadsDir() {
-  return path.resolve(ROOT_DIR, "uploads");
-}
-
-function backupLocalDir() {
-  return path.resolve(ROOT_DIR, "backups");
-}
-
-function stamp() {
-  return new Date().toISOString().replace(/[:.]/g, "-");
-}
-
-function tenantId() {
-  return String(process.env.FUSION_TENANT_ID || process.env.FUSION_ACADEMIA_ID || "academia-piloto")
-    .trim().toLowerCase().replace(/[^a-z0-9_-]+/g, "-").replace(/^-+|-+$/g, "") || "academia-piloto";
+function backupLocalDir(tenantId) {
+  return path.resolve(ROOT_DIR, "backups", tenantSeguro(tenantId));
 }
 
 function sha256(buffer) {
@@ -139,14 +192,6 @@ function limiteRestauracaoBytes() {
   return Math.floor(mb * 1024 * 1024);
 }
 
-function crc32(buf) {
-  let c = 0 ^ -1;
-  for (let i = 0; i < buf.length; i++) {
-    c = CRC_TABLE[(c ^ buf[i]) & 0xff] ^ (c >>> 8);
-  }
-  return (c ^ -1) >>> 0;
-}
-
 const CRC_TABLE = (() => {
   const table = new Uint32Array(256);
   for (let n = 0; n < 256; n++) {
@@ -156,6 +201,12 @@ const CRC_TABLE = (() => {
   }
   return table;
 })();
+
+function crc32(buf) {
+  let c = 0 ^ -1;
+  for (let i = 0; i < buf.length; i++) c = CRC_TABLE[(c ^ buf[i]) & 0xff] ^ (c >>> 8);
+  return (c ^ -1) >>> 0;
+}
 
 function u16(n) {
   const b = Buffer.alloc(2);
@@ -176,37 +227,6 @@ function dosTime(date = new Date()) {
   return { time, day };
 }
 
-async function listarArquivos(baseDir, prefixo) {
-  const out = [];
-  async function walk(dir) {
-    let itens = [];
-    try { itens = await fsp.readdir(dir, { withFileTypes: true }); } catch { return; }
-    for (const item of itens) {
-      const abs = path.join(dir, item.name);
-      if (item.isDirectory()) {
-        await walk(abs);
-      } else if (item.isFile()) {
-        const rel = path.relative(baseDir, abs).split(path.sep).join("/");
-        out.push({ abs, name: `${prefixo}/${rel}` });
-      }
-    }
-  }
-  await walk(baseDir);
-  return out;
-}
-
-async function montarManifesto(arquivos) {
-  return {
-    sistema: "Fusion ERP",
-    tipo: "backup-json-storage",
-    criadoEm: new Date().toISOString(),
-    arquivos: arquivos.map(a => a.name),
-    totalArquivos: arquivos.length,
-    observacao: "Backup dos dados, uploads e snapshot do banco Supabase. Restauração protegida pelo painel administrativo.",
-    nomeConfiguravel: true
-  };
-}
-
 function zipBuffer(entradas) {
   const locais = [];
   const centrais = [];
@@ -214,7 +234,9 @@ function zipBuffer(entradas) {
 
   for (const entrada of entradas) {
     const nome = Buffer.from(entrada.name, "utf8");
-    const dados = Buffer.isBuffer(entrada.data) ? entrada.data : Buffer.from(String(entrada.data || ""));
+    const dados = Buffer.isBuffer(entrada.data)
+      ? entrada.data
+      : Buffer.from(String(entrada.data || ""));
     const comprimido = zlib.deflateRawSync(dados, { level: 9 });
     const crc = crc32(dados);
     const dt = dosTime(new Date(entrada.mtime || Date.now()));
@@ -242,86 +264,96 @@ function zipBuffer(entradas) {
   return Buffer.concat([...locais, ...centrais, end]);
 }
 
-async function exportarBancoSupabase() {
-  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) return null;
+async function exportarBancoSupabase(tenantId) {
+  const tenant = tenantSeguro(tenantId);
   const tabela = process.env.FUSION_SUPABASE_RECORDS_TABLE || "fusion_v3_records";
-  const supabase = supabaseClient();
   const linhas = [];
   const pagina = 1000;
+
   for (let inicio = 0; ; inicio += pagina) {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient()
       .from(tabela)
       .select("tenant_id,collection,record_id,payload,updated_at")
-      .eq("tenant_id", tenantId())
+      .eq("tenant_id", tenant)
       .order("collection", { ascending: true })
       .order("record_id", { ascending: true })
       .range(inicio, inicio + pagina - 1);
-    if (error) throw new Error(`Falha ao exportar banco para o backup: ${error.message}`);
+
+    if (error) throw erro(`Falha ao exportar banco para o backup: ${error.message}`, 500);
     linhas.push(...(data || []));
     if (!data || data.length < pagina) break;
   }
+
   return {
     sistema: "Fusion ERP",
-    tipo: "snapshot-postgresql-v1",
+    tipo: "snapshot-postgresql-v2-multitenant",
     tabela,
-    tenantId: tenantId(),
+    tenantId: tenant,
     criadoEm: new Date().toISOString(),
     totalRegistros: linhas.length,
     registros: linhas
   };
 }
 
-async function montarZip() {
-  const arquivos = [
-    ...(await listarArquivos(dataDir(), "data")),
-    ...(await listarArquivos(uploadsDir(), "uploads"))
-  ];
-  const entradas = [];
-  for (const arq of arquivos) {
-    const stat = await fsp.stat(arq.abs);
-    entradas.push({ name: arq.name, data: await fsp.readFile(arq.abs), mtime: stat.mtime });
-  }
-  const banco = await exportarBancoSupabase();
-  if (banco) entradas.push({ name: DB_SNAPSHOT_NAME, data: JSON.stringify(banco) });
-  const manifesto = await montarManifesto(arquivos);
-  manifesto.bancoIncluido = Boolean(banco);
-  manifesto.totalRegistrosBanco = banco?.totalRegistros || 0;
-  manifesto.tenantId = tenantId();
-  entradas.push({ name: "backup-manifest.json", data: JSON.stringify(manifesto, null, 2) });
-  return { buffer: zipBuffer(entradas), totalArquivos: arquivos.length, totalRegistrosBanco: banco?.totalRegistros || 0 };
-}
+async function montarZip(tenantId) {
+  const tenant = tenantSeguro(tenantId);
+  const banco = await exportarBancoSupabase(tenant);
+  const manifesto = {
+    sistema: "Fusion ERP",
+    tipo: "backup-saas-tenant-v2",
+    tenantId: tenant,
+    criadoEm: new Date().toISOString(),
+    bancoIncluido: true,
+    totalRegistrosBanco: banco.totalRegistros,
+    escopo: "Somente dados do tenant autenticado em fusion_v3_records.",
+    observacao: "Arquivos globais de data/uploads não são restaurados por este fluxo para impedir vazamento entre academias."
+  };
 
-function supabaseClient() {
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) throw new Error("SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY não configurados.");
-  return createClient(url, key, { auth: { persistSession: false } });
+  const entradas = [
+    { name: DB_SNAPSHOT_NAME, data: JSON.stringify(banco) },
+    { name: BACKUP_MANIFEST_NAME, data: JSON.stringify(manifesto, null, 2) }
+  ];
+
+  return {
+    buffer: zipBuffer(entradas),
+    totalArquivos: entradas.length,
+    totalRegistrosBanco: banco.totalRegistros
+  };
 }
 
 async function garantirBucketBackup() {
   const bucket = process.env.SUPABASE_BACKUP_BUCKET || DEFAULT_BUCKET;
-  const supabase = supabaseClient();
-  const { data, error } = await supabase.storage.getBucket(bucket);
+  const sb = supabaseClient();
+  const { data, error } = await sb.storage.getBucket(bucket);
   if (!error && data) return bucket;
-  const { error: criarErro } = await supabase.storage.createBucket(bucket, { public: false, fileSizeLimit: 50 * 1024 * 1024 });
-  if (criarErro && !/already exists|duplicate/i.test(criarErro.message || "")) throw new Error(criarErro.message);
+
+  const { error: criarErro } = await sb.storage.createBucket(bucket, {
+    public: false,
+    fileSizeLimit: 50 * 1024 * 1024
+  });
+  if (criarErro && !/already exists|duplicate/i.test(criarErro.message || "")) {
+    throw erro(criarErro.message, 500);
+  }
   return bucket;
 }
 
-async function uploadObjetoBackup(supabase, bucket, caminho, dados, contentType) {
-  const { error } = await supabase.storage.from(bucket).upload(caminho, dados, {
+async function uploadObjetoBackup(sb, bucket, caminho, dados, contentType) {
+  const { error } = await sb.storage.from(bucket).upload(caminho, dados, {
     contentType,
     upsert: false,
     cacheControl: "0"
   });
-  if (error) throw new Error(error.message);
+  if (error) throw erro(error.message, 500);
 }
 
-async function enviarBufferBackup({ supabase, bucket, pasta, nome, buffer, totalArquivos, totalRegistrosBanco }) {
+async function enviarBufferBackup({
+  sb, bucket, pasta, nome, buffer, totalArquivos, totalRegistrosBanco, tenantId
+}) {
   const limite = limiteParteBytes();
+
   if (buffer.length <= limite) {
     const caminho = `${pasta}/${nome}`;
-    await uploadObjetoBackup(supabase, bucket, caminho, buffer, "application/zip");
+    await uploadObjetoBackup(sb, bucket, caminho, buffer, "application/zip");
     return { caminho, tipo: "zip", partes: 1 };
   }
 
@@ -329,22 +361,32 @@ async function enviarBufferBackup({ supabase, bucket, pasta, nome, buffer, total
   const prefixoPartes = `${pasta}/${base}`;
   const partes = [];
   const enviados = [];
+
   try {
     const totalPartes = Math.ceil(buffer.length / limite);
+
     for (let indice = 0; indice < totalPartes; indice += 1) {
       const inicio = indice * limite;
       const parte = buffer.subarray(inicio, Math.min(buffer.length, inicio + limite));
       const parteNome = `parte-${String(indice + 1).padStart(3, "0")}-de-${String(totalPartes).padStart(3, "0")}.bin`;
       const caminho = `${prefixoPartes}/${parteNome}`;
-      await uploadObjetoBackup(supabase, bucket, caminho, parte, "application/octet-stream");
+
+      await uploadObjetoBackup(sb, bucket, caminho, parte, "application/octet-stream");
       enviados.push(caminho);
-      partes.push({ ordem: indice + 1, nome: parteNome, caminho, bytes: parte.length, sha256: sha256(parte) });
+      partes.push({
+        ordem: indice + 1,
+        nome: parteNome,
+        caminho,
+        bytes: parte.length,
+        sha256: sha256(parte)
+      });
     }
+
     const manifesto = {
       sistema: "Fusion ERP",
-      tipo: "fusion-backup-multipart-v1",
+      tipo: "fusion-backup-multipart-v2-multitenant",
       nome,
-      tenantId: tenantId(),
+      tenantId: tenantSeguro(tenantId),
       criadoEm: new Date().toISOString(),
       bytes: buffer.length,
       sha256: sha256(buffer),
@@ -353,76 +395,154 @@ async function enviarBufferBackup({ supabase, bucket, pasta, nome, buffer, total
       totalPartes: partes.length,
       partes
     };
+
     const caminhoManifesto = `${pasta}/${base}${MULTIPART_SUFFIX}`;
-    await uploadObjetoBackup(supabase, bucket, caminhoManifesto, Buffer.from(JSON.stringify(manifesto, null, 2)), "application/json");
-    return { caminho: caminhoManifesto, tipo: "multipart", partes: partes.length, manifesto };
-  } catch (erro) {
-    if (enviados.length) await supabase.storage.from(bucket).remove(enviados).catch(() => {});
-    throw erro;
+    await uploadObjetoBackup(
+      sb,
+      bucket,
+      caminhoManifesto,
+      Buffer.from(JSON.stringify(manifesto, null, 2)),
+      "application/json"
+    );
+
+    return {
+      caminho: caminhoManifesto,
+      tipo: "multipart",
+      partes: partes.length,
+      manifesto
+    };
+  } catch (e) {
+    if (enviados.length) await sb.storage.from(bucket).remove(enviados).catch(() => {});
+    throw e;
   }
 }
 
-export async function criarBackupLocal() {
-  const config = await lerConfiguracaoBackup();
+export async function criarBackupLocal(tenantId = "") {
+  const tenant = tenantSeguro(tenantId);
+  const config = await lerConfiguracaoBackup(tenant);
   const nome = gerarNomeBackup(config);
-  const { buffer, totalArquivos, totalRegistrosBanco } = await montarZip();
-  await fsp.mkdir(backupLocalDir(), { recursive: true });
-  const destino = path.join(backupLocalDir(), nome);
-  await fsp.writeFile(destino, buffer);
-  return { ok: true, destino, nome, bytes: buffer.length, totalArquivos, totalRegistrosBanco, criadoEm: new Date().toISOString() };
-}
+  const { buffer, totalArquivos, totalRegistrosBanco } = await montarZip(tenant);
+  const diretorio = backupLocalDir(tenant);
 
-export async function enviarBackupSupabase(opcoes = {}) {
-  const bucket = await garantirBucketBackup();
-  const config = await lerConfiguracaoBackup();
-  const nome = gerarNomeBackup(config, new Date(), opcoes.sufixo || "");
-  const { buffer, totalArquivos, totalRegistrosBanco } = await montarZip();
-  const supabase = supabaseClient();
-  const pasta = String(config.pastaSupabase || "backups").replace(/^\/+|\/+$/g, "") || "backups";
-  const envio = await enviarBufferBackup({ supabase, bucket, pasta, nome, buffer, totalArquivos, totalRegistrosBanco });
-  ultimoErroAutomatico = "";
+  await fs.mkdir(diretorio, { recursive: true });
+  const destino = path.join(diretorio, nome);
+  await fs.writeFile(destino, buffer);
+
   return {
-    ok: true, bucket, caminho: envio.caminho, nome, bytes: buffer.length, totalArquivos,
-    totalRegistrosBanco, tipo: envio.tipo, partes: envio.partes, criadoEm: new Date().toISOString()
+    ok: true,
+    tenantId: tenant,
+    destino,
+    nome,
+    bytes: buffer.length,
+    totalArquivos,
+    totalRegistrosBanco,
+    criadoEm: new Date().toISOString()
   };
 }
 
-export async function listarBackupsSupabase() {
+export async function enviarBackupSupabase(opcoes = {}, tenantId = "") {
+  const tenant = tenantSeguro(tenantId || opcoes.tenantId);
   const bucket = await garantirBucketBackup();
-  const supabase = supabaseClient();
-  const config = await lerConfiguracaoBackup();
-  const pasta = String(config.pastaSupabase || "backups").replace(/^\/+|\/+$/g, "") || "backups";
-  const { data, error } = await supabase.storage.from(bucket).list(pasta, { limit: 100, sortBy: { column: "created_at", order: "desc" } });
-  if (error) throw new Error(error.message);
+  const config = await lerConfiguracaoBackup(tenant);
+  const nome = gerarNomeBackup(config, new Date(), opcoes.sufixo || "");
+  const { buffer, totalArquivos, totalRegistrosBanco } = await montarZip(tenant);
+  const sb = supabaseClient();
+  const pasta = pastaDoTenant(config, tenant);
+
+  const envio = await enviarBufferBackup({
+    sb,
+    bucket,
+    pasta,
+    nome,
+    buffer,
+    totalArquivos,
+    totalRegistrosBanco,
+    tenantId: tenant
+  });
+
+  ultimoErroAutomatico = "";
+
+  return {
+    ok: true,
+    tenantId: tenant,
+    bucket,
+    pasta,
+    caminho: envio.caminho,
+    nome,
+    bytes: buffer.length,
+    totalArquivos,
+    totalRegistrosBanco,
+    tipo: envio.tipo,
+    partes: envio.partes,
+    criadoEm: new Date().toISOString()
+  };
+}
+
+export async function listarBackupsSupabase(tenantId = "") {
+  const tenant = tenantSeguro(tenantId);
+  const bucket = await garantirBucketBackup();
+  const sb = supabaseClient();
+  const config = await lerConfiguracaoBackup(tenant);
+  const pasta = pastaDoTenant(config, tenant);
+
+  const { data, error } = await sb.storage
+    .from(bucket)
+    .list(pasta, {
+      limit: 100,
+      sortBy: { column: "created_at", order: "desc" }
+    });
+
+  if (error) throw erro(error.message, 500);
+
   const backups = (data || [])
-    .filter(item => /\.zip$/i.test(item.name || "") || String(item.name || "").endsWith(MULTIPART_SUFFIX))
+    .filter(item =>
+      /\.zip$/i.test(item.name || "") ||
+      String(item.name || "").endsWith(MULTIPART_SUFFIX)
+    )
     .map(item => {
       const multipart = String(item.name || "").endsWith(MULTIPART_SUFFIX);
       return {
         ...item,
         tipo: multipart ? "multipart" : "zip",
+        tenantId: tenant,
         caminho: `${pasta}/${item.name}`,
-        nomeExibicao: multipart ? item.name.replace(MULTIPART_SUFFIX, ".zip (dividido)") : item.name
+        nomeExibicao: multipart
+          ? item.name.replace(MULTIPART_SUFFIX, ".zip (dividido)")
+          : item.name
       };
     });
-  return { ok: true, bucket, pasta, backups };
+
+  return { ok: true, tenantId: tenant, bucket, pasta, backups };
 }
 
 function extrairZipSeguro(buffer) {
-  if (!Buffer.isBuffer(buffer) || buffer.length < 22) throw new Error("Arquivo de backup inválido ou vazio.");
+  if (!Buffer.isBuffer(buffer) || buffer.length < 22) {
+    throw erro("Arquivo de backup inválido ou vazio.", 400);
+  }
+
   let eocd = -1;
   const inicioBusca = Math.max(0, buffer.length - 65557);
+
   for (let i = buffer.length - 22; i >= inicioBusca; i -= 1) {
-    if (buffer.readUInt32LE(i) === 0x06054b50) { eocd = i; break; }
+    if (buffer.readUInt32LE(i) === 0x06054b50) {
+      eocd = i;
+      break;
+    }
   }
-  if (eocd < 0) throw new Error("Estrutura ZIP inválida: diretório central não encontrado.");
+
+  if (eocd < 0) throw erro("Estrutura ZIP inválida: diretório central não encontrado.", 400);
+
   const total = buffer.readUInt16LE(eocd + 10);
   const offsetCentral = buffer.readUInt32LE(eocd + 16);
   const entradas = [];
   let pos = offsetCentral;
   let totalExtraido = 0;
+
   for (let indice = 0; indice < total; indice += 1) {
-    if (pos + 46 > buffer.length || buffer.readUInt32LE(pos) !== 0x02014b50) throw new Error("Diretório central do backup está corrompido.");
+    if (pos + 46 > buffer.length || buffer.readUInt32LE(pos) !== 0x02014b50) {
+      throw erro("Diretório central do backup está corrompido.", 400);
+    }
+
     const flags = buffer.readUInt16LE(pos + 8);
     const metodo = buffer.readUInt16LE(pos + 10);
     const tamanhoComprimido = buffer.readUInt32LE(pos + 20);
@@ -431,244 +551,390 @@ function extrairZipSeguro(buffer) {
     const extraLen = buffer.readUInt16LE(pos + 30);
     const comentarioLen = buffer.readUInt16LE(pos + 32);
     const offsetLocal = buffer.readUInt32LE(pos + 42);
-    const nome = buffer.subarray(pos + 46, pos + 46 + nomeLen).toString("utf8").replace(/\\/g, "/");
+    const nome = buffer
+      .subarray(pos + 46, pos + 46 + nomeLen)
+      .toString("utf8")
+      .replace(/\\/g, "/");
+
     pos += 46 + nomeLen + extraLen + comentarioLen;
-    if (flags & 1) throw new Error("Backup criptografado não é suportado.");
+
+    if (flags & 1) throw erro("Backup criptografado não é suportado.", 400);
     if (!nome || nome.endsWith("/")) continue;
-    if (nome.includes("..") || nome.startsWith("/") || !/^(?:(?:data|uploads)\/|database\/fusion_v3_records\.json$|backup-manifest\.json$)/.test(nome)) {
-      throw new Error(`Arquivo não permitido dentro do backup: ${nome}`);
+
+    if (![DB_SNAPSHOT_NAME, BACKUP_MANIFEST_NAME].includes(nome)) {
+      throw erro(`Arquivo não permitido dentro do backup SaaS: ${nome}`, 400);
     }
-    if (offsetLocal + 30 > buffer.length || buffer.readUInt32LE(offsetLocal) !== 0x04034b50) throw new Error(`Entrada inválida: ${nome}`);
+
+    if (offsetLocal + 30 > buffer.length || buffer.readUInt32LE(offsetLocal) !== 0x04034b50) {
+      throw erro(`Entrada inválida: ${nome}`, 400);
+    }
+
     const nomeLocalLen = buffer.readUInt16LE(offsetLocal + 26);
     const extraLocalLen = buffer.readUInt16LE(offsetLocal + 28);
     const inicioDados = offsetLocal + 30 + nomeLocalLen + extraLocalLen;
     const fimDados = inicioDados + tamanhoComprimido;
-    if (fimDados > buffer.length) throw new Error(`Conteúdo truncado: ${nome}`);
+
+    if (fimDados > buffer.length) throw erro(`Conteúdo truncado: ${nome}`, 400);
+
     const comprimido = buffer.subarray(inicioDados, fimDados);
     let dados;
+
     if (metodo === 0) dados = Buffer.from(comprimido);
     else if (metodo === 8) dados = zlib.inflateRawSync(comprimido);
-    else throw new Error(`Método de compactação não suportado em ${nome}.`);
-    if (dados.length !== tamanhoOriginal) throw new Error(`Tamanho inválido após extrair ${nome}.`);
+    else throw erro(`Método de compactação não suportado em ${nome}.`, 400);
+
+    if (dados.length !== tamanhoOriginal) {
+      throw erro(`Tamanho inválido após extrair ${nome}.`, 400);
+    }
+
     totalExtraido += dados.length;
-    if (totalExtraido > limiteRestauracaoBytes()) throw new Error("Backup excede o limite configurado para restauração.");
+    if (totalExtraido > limiteRestauracaoBytes()) {
+      throw erro("Backup excede o limite configurado para restauração.", 400);
+    }
+
     entradas.push({ nome, dados });
   }
+
   return entradas;
 }
 
-async function baixarObjetoBackup(supabase, bucket, caminho) {
-  const { data, error } = await supabase.storage.from(bucket).download(caminho);
-  if (error) throw new Error(error.message);
+async function baixarObjetoBackup(sb, bucket, caminho) {
+  const { data, error } = await sb.storage.from(bucket).download(caminho);
+  if (error) throw erro(error.message, 500);
   return Buffer.from(await data.arrayBuffer());
 }
 
-async function baixarBackupSelecionado(supabase, bucket, alvo, pasta) {
-  if (/\.zip$/i.test(alvo)) return baixarObjetoBackup(supabase, bucket, alvo);
-  const dadosManifesto = await baixarObjetoBackup(supabase, bucket, alvo);
-  let manifesto;
-  try { manifesto = JSON.parse(dadosManifesto.toString("utf8")); }
-  catch { throw new Error("Manifesto do backup dividido está inválido."); }
-  if (manifesto?.tipo !== "fusion-backup-multipart-v1" || !Array.isArray(manifesto.partes) || !manifesto.partes.length) {
-    throw new Error("Manifesto do backup dividido não é reconhecido.");
+async function baixarBackupSelecionado(sb, bucket, alvo, pasta, tenantId) {
+  const tenant = tenantSeguro(tenantId);
+
+  if (/\.zip$/i.test(alvo)) {
+    return baixarObjetoBackup(sb, bucket, alvo);
   }
-  if (manifesto.tenantId && manifesto.tenantId !== tenantId()) throw new Error("O backup pertence a outra academia.");
+
+  const dadosManifesto = await baixarObjetoBackup(sb, bucket, alvo);
+  let manifesto;
+
+  try {
+    manifesto = JSON.parse(dadosManifesto.toString("utf8"));
+  } catch {
+    throw erro("Manifesto do backup dividido está inválido.", 400);
+  }
+
+  if (
+    manifesto?.tipo !== "fusion-backup-multipart-v2-multitenant" ||
+    !Array.isArray(manifesto.partes) ||
+    !manifesto.partes.length
+  ) {
+    throw erro("Manifesto do backup dividido não é reconhecido.", 400);
+  }
+
+  if (tenantSeguro(manifesto.tenantId) !== tenant) {
+    throw erro("O backup pertence a outra academia.", 403);
+  }
+
   const baseAlvo = alvo.slice(0, -MULTIPART_SUFFIX.length);
   const prefixoSeguro = `${baseAlvo}/`;
   const partes = [...manifesto.partes].sort((a, b) => Number(a.ordem) - Number(b.ordem));
-  if (partes.length !== Number(manifesto.totalPartes)) throw new Error("Quantidade de partes do backup não confere.");
+
+  if (partes.length !== Number(manifesto.totalPartes)) {
+    throw erro("Quantidade de partes do backup não confere.", 400);
+  }
+
   const buffers = [];
   let bytes = 0;
+
   for (let indice = 0; indice < partes.length; indice += 1) {
     const parte = partes[indice];
     const caminho = String(parte.caminho || "");
-    if (Number(parte.ordem) !== indice + 1 || !caminho.startsWith(prefixoSeguro) || caminho.includes("..") || !/\.bin$/i.test(caminho)) {
-      throw new Error("Caminho de parte inválido no manifesto do backup.");
+
+    if (
+      Number(parte.ordem) !== indice + 1 ||
+      !caminho.startsWith(prefixoSeguro) ||
+      !caminho.startsWith(`${pasta}/`) ||
+      caminho.includes("..") ||
+      !/\.bin$/i.test(caminho)
+    ) {
+      throw erro("Caminho de parte inválido no manifesto do backup.", 400);
     }
-    const bufferParte = await baixarObjetoBackup(supabase, bucket, caminho);
-    if (bufferParte.length !== Number(parte.bytes) || sha256(bufferParte) !== parte.sha256) {
-      throw new Error(`A parte ${indice + 1} do backup está incompleta ou corrompida.`);
+
+    const bufferParte = await baixarObjetoBackup(sb, bucket, caminho);
+
+    if (
+      bufferParte.length !== Number(parte.bytes) ||
+      sha256(bufferParte) !== parte.sha256
+    ) {
+      throw erro(`A parte ${indice + 1} do backup está incompleta ou corrompida.`, 400);
     }
+
     bytes += bufferParte.length;
-    if (bytes > limiteRestauracaoBytes()) throw new Error("Backup excede o limite configurado para restauração.");
+    if (bytes > limiteRestauracaoBytes()) {
+      throw erro("Backup excede o limite configurado para restauração.", 400);
+    }
+
     buffers.push(bufferParte);
   }
+
   const completo = Buffer.concat(buffers);
-  if (completo.length !== Number(manifesto.bytes) || sha256(completo) !== manifesto.sha256) {
-    throw new Error("A verificação de integridade do backup dividido falhou.");
+
+  if (
+    completo.length !== Number(manifesto.bytes) ||
+    sha256(completo) !== manifesto.sha256
+  ) {
+    throw erro("A verificação de integridade do backup dividido falhou.", 400);
   }
+
   return completo;
 }
 
-function colecoesDosArquivosJson(entradas) {
-  const colecoes = {};
-  for (const entrada of entradas.filter(item => /^data\/[^/]+\.json$/i.test(item.nome))) {
-    const nome = path.basename(entrada.nome, ".json").replace(/[^a-z0-9_-]/gi, "_").toLowerCase();
-    const dados = JSON.parse(entrada.dados.toString("utf8"));
-    colecoes[nome] = Array.isArray(dados) ? dados : [{ id: "__document__", __fusion_document__: dados }];
+function lerJsonEntrada(entradas, nome) {
+  const entrada = entradas.find(item => item.nome === nome);
+  if (!entrada) throw erro(`Arquivo obrigatório ausente no backup: ${nome}`, 400);
+
+  try {
+    return JSON.parse(entrada.dados.toString("utf8"));
+  } catch {
+    throw erro(`JSON inválido no backup: ${nome}`, 400);
   }
-  return colecoes;
 }
 
-async function restaurarBancoSupabase(entradas) {
-  const supabase = supabaseClient();
-  const tabela = process.env.FUSION_SUPABASE_RECORDS_TABLE || "fusion_v3_records";
-  const snapshotEntrada = entradas.find(item => item.nome === DB_SNAPSHOT_NAME);
-  let colecoes = {};
-  if (snapshotEntrada) {
-    let snapshot;
-    try { snapshot = JSON.parse(snapshotEntrada.dados.toString("utf8")); }
-    catch { throw new Error("Snapshot do banco dentro do backup está inválido."); }
-    if (snapshot?.tipo !== "snapshot-postgresql-v1" || !Array.isArray(snapshot.registros)) throw new Error("Snapshot do banco não é reconhecido.");
-    if (snapshot.tenantId && snapshot.tenantId !== tenantId()) throw new Error("O snapshot pertence a outra academia.");
-    for (const linha of snapshot.registros) {
-      const nome = String(linha.collection || "");
-      if (!/^[a-z0-9_-]+$/.test(nome) || !linha.payload || typeof linha.payload !== "object") throw new Error("Registro inválido no snapshot do banco.");
-      (colecoes[nome] ||= []).push(linha.payload);
-    }
-  } else {
-    colecoes = colecoesDosArquivosJson(entradas);
-  }
-  if (!Object.keys(colecoes).length) throw new Error("O backup não contém coleções válidas para restaurar.");
+function validarEscopoBackup(entradas, tenantId) {
+  const tenant = tenantSeguro(tenantId);
+  const manifesto = lerJsonEntrada(entradas, BACKUP_MANIFEST_NAME);
+  const snapshot = lerJsonEntrada(entradas, DB_SNAPSHOT_NAME);
 
-  const pagina = 1000;
-  for (let inicio = 0; ; inicio += pagina) {
-    const { data: atuais, error: atuaisErro } = await supabase
-      .from(tabela).select("collection").eq("tenant_id", tenantId()).range(inicio, inicio + pagina - 1);
-    if (atuaisErro) throw new Error(`Falha ao preparar restauração do banco: ${atuaisErro.message}`);
-    for (const linha of atuais || []) {
-      const nome = String(linha.collection || "");
-      if (/^[a-z0-9_-]+$/.test(nome) && !Object.hasOwn(colecoes, nome)) colecoes[nome] = [];
+  if (manifesto?.tipo !== "backup-saas-tenant-v2") {
+    throw erro("Este arquivo não é um backup SaaS multiempresa compatível.", 400);
+  }
+  if (snapshot?.tipo !== "snapshot-postgresql-v2-multitenant") {
+    throw erro("Snapshot do banco não é reconhecido.", 400);
+  }
+
+  const tenantManifesto = tenantSeguro(manifesto.tenantId);
+  const tenantSnapshot = tenantSeguro(snapshot.tenantId);
+
+  if (tenantManifesto !== tenant || tenantSnapshot !== tenant) {
+    throw erro("Backup bloqueado: o arquivo pertence a outra academia.", 403);
+  }
+
+  if (!Array.isArray(snapshot.registros)) {
+    throw erro("Snapshot do banco não contém registros válidos.", 400);
+  }
+
+  for (const linha of snapshot.registros) {
+    if (tenantSeguro(linha.tenant_id) !== tenant) {
+      throw erro("Backup bloqueado: foi encontrado registro de outra academia.", 403);
     }
+    if (!/^[a-z0-9_-]+$/i.test(String(linha.collection || ""))) {
+      throw erro("Coleção inválida no snapshot do banco.", 400);
+    }
+    if (!linha.payload || typeof linha.payload !== "object" || Array.isArray(linha.payload)) {
+      throw erro("Registro inválido no snapshot do banco.", 400);
+    }
+  }
+
+  return { manifesto, snapshot };
+}
+
+async function restaurarBancoSupabase(snapshot, tenantId) {
+  const tenant = tenantSeguro(tenantId);
+  const tabela = process.env.FUSION_SUPABASE_RECORDS_TABLE || "fusion_v3_records";
+  const colecoes = {};
+
+  for (const linha of snapshot.registros) {
+    const nome = String(linha.collection || "").toLowerCase();
+    (colecoes[nome] ||= []).push({
+      ...(linha.payload || {}),
+      id: linha.payload?.id || linha.record_id
+    });
+  }
+
+  const sb = supabaseClient();
+  const pagina = 1000;
+
+  for (let inicio = 0; ; inicio += pagina) {
+    const { data: atuais, error: atuaisErro } = await sb
+      .from(tabela)
+      .select("collection")
+      .eq("tenant_id", tenant)
+      .range(inicio, inicio + pagina - 1);
+
+    if (atuaisErro) {
+      throw erro(`Falha ao preparar restauração do banco: ${atuaisErro.message}`, 500);
+    }
+
+    for (const linha of atuais || []) {
+      const nome = String(linha.collection || "").toLowerCase();
+      if (/^[a-z0-9_-]+$/.test(nome) && !Object.hasOwn(colecoes, nome)) {
+        colecoes[nome] = [];
+      }
+    }
+
     if (!atuais || atuais.length < pagina) break;
   }
 
-  const operacaoId = `restore-backup-${crypto.randomUUID()}`;
-  const { data, error } = await supabase.rpc("fusion_replace_collections", {
-    p_tenant_id: tenantId(), p_collections: colecoes, p_operation_id: operacaoId
+  const operacaoId = `restore-backup-${tenant}-${crypto.randomUUID()}`;
+
+  const { data, error } = await sb.rpc("fusion_replace_collections", {
+    p_tenant_id: tenant,
+    p_collections: colecoes,
+    p_operation_id: operacaoId
   });
-  if (error) throw new Error(`Falha na restauração transacional do banco: ${error.message}`);
-  return { ok: true, operacaoId, colecoes: Object.keys(colecoes).length, resultado: data };
-}
 
-async function arquivosAtuais(baseDir, prefixoRelativo) {
-  return listarArquivos(baseDir, prefixoRelativo);
-}
-
-function validarEntradasRestauracao(entradas) {
-  const permitidas = entradas.filter(e => /^(data|uploads)\//.test(e.nome));
-  if (!entradas.some(item => item.nome === DB_SNAPSHOT_NAME)) {
-    const criticos = ["data/alunos.json", "data/matriculas.json", "data/financeiro.json", "data/mensalidades.json"];
-    for (const nome of criticos) {
-      if (!permitidas.some(e => e.nome === nome)) throw new Error(`Backup antigo incompleto: ${nome} não foi encontrado.`);
-    }
-  }
-  for (const entrada of permitidas.filter(e => e.nome.startsWith("data/") && e.nome.endsWith(".json"))) {
-    try { JSON.parse(entrada.dados.toString("utf8")); }
-    catch { throw new Error(`JSON inválido no backup: ${entrada.nome}`); }
-  }
-  return permitidas;
-}
-
-async function aplicarEntradasRestauracao(entradas) {
-  const permitidas = validarEntradasRestauracao(entradas);
-  const nomesBackup = new Set(permitidas.map(e => e.nome));
-  const atuais = [
-    ...(await arquivosAtuais(dataDir(), "data")),
-    ...(await arquivosAtuais(uploadsDir(), "uploads"))
-  ];
-  for (const arquivo of atuais) {
-    if (!nomesBackup.has(arquivo.name)) await fsp.rm(arquivo.abs, { force: true });
-  }
-  for (const entrada of permitidas) {
-    const base = entrada.nome.startsWith("data/") ? dataDir() : uploadsDir();
-    const interno = entrada.nome.replace(/^(data|uploads)\//, "");
-    const destino = path.resolve(base, interno);
-    if (!destino.startsWith(`${base}${path.sep}`)) throw new Error(`Destino inseguro: ${entrada.nome}`);
-    await fsp.mkdir(path.dirname(destino), { recursive: true });
-    const temporario = `${destino}.restore-${Date.now()}`;
-    await fsp.writeFile(temporario, entrada.dados);
-    await fsp.rename(temporario, destino);
-  }
-  return permitidas.length;
-}
-
-export async function restaurarBackupSupabase(caminho = "", confirmacao = "") {
-  if (String(confirmacao).trim().toUpperCase() !== "RESTAURAR") {
-    const erro = new Error("Confirmação inválida. Digite RESTAURAR para continuar.");
-    erro.status = 400;
-    throw erro;
-  }
-  const config = await lerConfiguracaoBackup();
-  const pasta = String(config.pastaSupabase || "backups").replace(/^\/+|\/+$/g, "") || "backups";
-  const alvo = String(caminho || "").replace(/^\/+/, "");
-  const formatoValido = /\.zip$/i.test(alvo) || alvo.endsWith(MULTIPART_SUFFIX);
-  if (!alvo.startsWith(`${pasta}/`) || !formatoValido || alvo.includes("..")) {
-    const erro = new Error("Caminho de backup inválido.");
-    erro.status = 400;
-    throw erro;
+  if (error) {
+    throw erro(`Falha na restauração transacional do banco: ${error.message}`, 500);
   }
 
-  const backupSeguranca = await enviarBackupSupabase({ sufixo: "antes-restauracao" });
-  const bucket = await garantirBucketBackup();
-  const supabase = supabaseClient();
-  const buffer = await baixarBackupSelecionado(supabase, bucket, alvo, pasta);
-  const entradas = extrairZipSeguro(buffer);
-  validarEntradasRestauracao(entradas);
-  const banco = await restaurarBancoSupabase(entradas);
-  const totalRestaurados = await aplicarEntradasRestauracao(entradas);
-  const persistencia = await restaurarArquivosNoSupabase();
   return {
     ok: true,
-    mensagem: "Backup restaurado e sincronizado com o Supabase.",
+    tenantId: tenant,
+    operacaoId,
+    colecoes: Object.keys(colecoes).length,
+    resultado: data
+  };
+}
+
+export async function restaurarBackupSupabase(caminho = "", confirmacao = "", tenantId = "") {
+  const tenant = tenantSeguro(tenantId);
+
+  if (String(confirmacao).trim().toUpperCase() !== "RESTAURAR") {
+    throw erro("Confirmação inválida. Digite RESTAURAR para continuar.", 400);
+  }
+
+  const config = await lerConfiguracaoBackup(tenant);
+  const pasta = pastaDoTenant(config, tenant);
+  const alvo = String(caminho || "").replace(/^\/+/, "");
+  const formatoValido = /\.zip$/i.test(alvo) || alvo.endsWith(MULTIPART_SUFFIX);
+
+  if (
+    !alvo.startsWith(`${pasta}/`) ||
+    !formatoValido ||
+    alvo.includes("..")
+  ) {
+    throw erro("Backup bloqueado: caminho não pertence à academia autenticada.", 403);
+  }
+
+  const backupSeguranca = await enviarBackupSupabase(
+    { sufixo: "antes-restauracao" },
+    tenant
+  );
+
+  const bucket = await garantirBucketBackup();
+  const sb = supabaseClient();
+  const buffer = await baixarBackupSelecionado(sb, bucket, alvo, pasta, tenant);
+  const entradas = extrairZipSeguro(buffer);
+  const { snapshot } = validarEscopoBackup(entradas, tenant);
+  const banco = await restaurarBancoSupabase(snapshot, tenant);
+
+  return {
+    ok: true,
+    tenantId: tenant,
+    mensagem: "Backup da academia restaurado com isolamento multiempresa.",
     backupRestaurado: alvo,
     backupSeguranca: backupSeguranca.caminho,
-    totalRestaurados,
     banco,
-    persistencia,
     restauradoEm: new Date().toISOString()
   };
 }
 
+async function listarTenantsAtivos() {
+  const { data, error } = await supabaseClient()
+    .from("fusion_tenants")
+    .select("tenant_id,status")
+    .in("status", ["active", "trial"])
+    .order("tenant_id", { ascending: true });
+
+  if (error) throw erro(`Falha ao listar academias para backup automático: ${error.message}`, 500);
+  return (data || []).map(item => tenantSeguro(item.tenant_id));
+}
+
 async function executarBackupAutomatico() {
   try {
-    ultimoBackupAutomatico = await enviarBackupSupabase({ sufixo: "automatico" });
-    ultimoErroAutomatico = "";
-  } catch (erro) {
-    ultimoErroAutomatico = erro.message || String(erro);
+    const tenants = await listarTenantsAtivos();
+    const resultados = [];
+
+    for (const tenant of tenants) {
+      try {
+        resultados.push(await enviarBackupSupabase({ sufixo: "automatico" }, tenant));
+      } catch (e) {
+        resultados.push({ ok: false, tenantId: tenant, erro: e.message || String(e) });
+      }
+    }
+
+    ultimoBackupAutomatico = {
+      executadoEm: new Date().toISOString(),
+      totalTenants: tenants.length,
+      sucessos: resultados.filter(item => item.ok).length,
+      falhas: resultados.filter(item => !item.ok).length,
+      resultados
+    };
+    ultimoErroAutomatico = resultados.some(item => !item.ok)
+      ? "Um ou mais backups automáticos falharam."
+      : "";
+  } catch (e) {
+    ultimoErroAutomatico = e.message || String(e);
     console.error(`[Backup automático] ${ultimoErroAutomatico}`);
   }
 }
 
 export function iniciarBackupAutomatico() {
-  const ativo = !["0", "false", "nao", "não"].includes(String(process.env.FUSION_BACKUP_AUTO || "false").toLowerCase());
-  if (!ativo || backupAutomaticoTimer || !process.env.SUPABASE_URL) return statusBackupAutomatico();
-  const intervalo = Math.max(15 * 60 * 1000, Number(process.env.FUSION_BACKUP_AUTO_MS || 6 * 60 * 60 * 1000));
-  const primeiro = setTimeout(executarBackupAutomatico, Math.min(60 * 1000, Math.floor(intervalo / 4)));
+  const ativo = !["0", "false", "nao", "não"].includes(
+    String(process.env.FUSION_BACKUP_AUTO || "false").toLowerCase()
+  );
+
+  if (!ativo || backupAutomaticoTimer || !process.env.SUPABASE_URL) {
+    return statusBackupAutomatico();
+  }
+
+  const intervalo = Math.max(
+    15 * 60 * 1000,
+    Number(process.env.FUSION_BACKUP_AUTO_MS || 6 * 60 * 60 * 1000)
+  );
+
+  const primeiro = setTimeout(
+    executarBackupAutomatico,
+    Math.min(60 * 1000, Math.floor(intervalo / 4))
+  );
   primeiro.unref?.();
+
   backupAutomaticoTimer = setInterval(executarBackupAutomatico, intervalo);
   backupAutomaticoTimer.unref?.();
+
   return statusBackupAutomatico();
 }
 
 export function statusBackupAutomatico() {
   return {
     ativo: Boolean(backupAutomaticoTimer),
-    intervaloMs: Math.max(15 * 60 * 1000, Number(process.env.FUSION_BACKUP_AUTO_MS || 6 * 60 * 60 * 1000)),
+    modo: "multiempresa",
+    intervaloMs: Math.max(
+      15 * 60 * 1000,
+      Number(process.env.FUSION_BACKUP_AUTO_MS || 6 * 60 * 60 * 1000)
+    ),
     ultimoBackup: ultimoBackupAutomatico,
     ultimoErro: ultimoErroAutomatico
   };
 }
 
-export async function statusBackup() {
+export async function statusBackup(tenantId = "") {
+  const tenant = tenantSeguro(tenantId);
+  const config = await lerConfiguracaoBackup(tenant);
+
   return {
     ok: true,
-    dataDir: dataDir(),
-    uploadsDir: uploadsDir(),
-    supabaseConfigurado: Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY),
+    tenantId: tenant,
+    supabaseConfigurado: Boolean(
+      process.env.SUPABASE_URL &&
+      process.env.SUPABASE_SERVICE_ROLE_KEY
+    ),
     bucket: process.env.SUPABASE_BACKUP_BUCKET || DEFAULT_BUCKET,
-    config: await lerConfiguracaoBackup(),
-    persistencia: statusPersistencia(),
-    automatico: statusBackupAutomatico()
+    pasta: pastaDoTenant(config, tenant),
+    config,
+    automatico: statusBackupAutomatico(),
+    isolamento: {
+      ativo: true,
+      caminhoPorTenant: true,
+      restoreValidaTenant: true,
+      fallbackAcademiaPiloto: false
+    }
   };
 }

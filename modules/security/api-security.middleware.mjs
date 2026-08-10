@@ -1,6 +1,8 @@
+import path from "node:path";
 import { validarToken, validarTokenPortal } from "../auth/auth.service.mjs";
 import { executarComTenant, normalizarTenantId } from "../core/persistence/tenant-context.mjs";
 import { validarSessaoSuporteAtiva, registrarAuditoriaSuporte } from "../suporte/suporte.service.mjs";
+import { obterSupabaseAdmin } from "../../config/supabase.mjs";
 
 const PUBLIC_RULES = [
   ["GET", "/api/health"],
@@ -12,6 +14,7 @@ const PUBLIC_RULES = [
   ["POST", "/api/auth/recuperacao/iniciar"],
   ["POST", "/api/auth/recuperacao/confirmar"],
   ["POST", "/api/auth/recuperacao/redefinir-senha"],
+  ["GET", "/api/saas/publico", "prefix"],
   ["POST", "/api/saas/empresas"],
   ["POST", "/api/professores/login"],
   ["POST", "/api/treinos/aluno-login"],
@@ -36,6 +39,17 @@ const PUBLIC_RULES = [
   ["POST", "/api/emergency-access/comprovante"]
 ];
 
+const PUBLIC_TENANT_REQUIRED = [
+  ["GET", "/api/planos"],
+  ["POST", "/api/matricula-online"],
+  ["GET", "/api/matricula-online/validar-cpf"],
+  ["POST", "/api/leads"],
+  ["POST", "/api/site-chat"],
+  ["POST", "/api/site-chat/mensagens"],
+  ["GET", "/api/site-chat/mensagens"],
+  ["GET", "/api/aparencia"]
+];
+
 const ADMIN_PREFIXES = [
   "/api/auth/usuarios",
   "/api/auth/perfis",
@@ -50,9 +64,16 @@ const ADMIN_PREFIXES = [
   "/api/aparencia"
 ];
 
+const RESERVED_PUBLIC_SLUGS = new Set([
+  "api", "pages", "assets", "uploads", "downloads", "favicon.ico",
+  "manifest.json", "robots.txt", "sw.js", "fusion-sw.js"
+]);
+
 const loginAttempts = new Map();
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;
 const LOGIN_MAX_ATTEMPTS = 10;
+const cacheSitePublico = new Map();
+const CACHE_SITE_MS = 60 * 1000;
 
 function pathMatches(pathname, prefix) {
   return pathname === prefix || pathname.startsWith(`${prefix}/`);
@@ -65,6 +86,12 @@ function isPublic(req) {
   });
 }
 
+function publicExigeTenant(req) {
+  return PUBLIC_TENANT_REQUIRED.some(([method, routePath, match = "exact"]) => {
+    if (req.method !== method) return false;
+    return match === "prefix" ? pathMatches(req.path, routePath) : req.path === routePath;
+  });
+}
 
 function tenantInformado(req) {
   return normalizarTenantId(
@@ -218,6 +245,76 @@ async function autenticarSessao(req) {
   }
 }
 
+function slugDaRotaPublica(pathname = "") {
+  const rota = String(pathname || "").split("?")[0];
+
+  if (rota === "/") return { tipo: "fusion" };
+
+  const match = rota.match(/^\/([a-z0-9][a-z0-9_-]{1,79})(?:\/(matricula))?\/?$/i);
+  if (!match) return null;
+
+  const slug = normalizarTenantId(match[1]);
+  if (!slug || RESERVED_PUBLIC_SLUGS.has(slug)) return null;
+
+  return {
+    tipo: match[2] === "matricula" ? "matricula" : "academia",
+    slug
+  };
+}
+
+async function tenantPublicoPorSlug(slug = "") {
+  const normalizado = normalizarTenantId(slug);
+  if (!normalizado) return null;
+
+  const agora = Date.now();
+  const cache = cacheSitePublico.get(normalizado);
+  if (cache && agora - cache.em < CACHE_SITE_MS) return cache.valor;
+
+  const supabase = obterSupabaseAdmin({ obrigatorio: true });
+  const { data, error } = await supabase
+    .from("fusion_tenants")
+    .select("tenant_id,slug,name,status")
+    .or(`tenant_id.eq.${normalizado},slug.eq.${normalizado}`)
+    .limit(2);
+
+  if (error) throw error;
+
+  const ativos = (data || []).filter(item =>
+    ["active", "trial"].includes(String(item.status || "").toLowerCase())
+  );
+
+  const valor = ativos.length === 1 ? ativos[0] : null;
+  cacheSitePublico.set(normalizado, { em: agora, valor });
+  return valor;
+}
+
+async function servirRotaPublica(req, res) {
+  if (!["GET", "HEAD"].includes(req.method)) return false;
+
+  const rota = slugDaRotaPublica(req.path);
+  if (!rota) return false;
+
+  res.setHeader("Cache-Control", "no-store");
+
+  if (rota.tipo === "fusion") {
+    res.sendFile(path.resolve(process.cwd(), "public/pages/comecar/index.html"));
+    return true;
+  }
+
+  const tenant = await tenantPublicoPorSlug(rota.slug);
+  if (!tenant) return false;
+
+  res.setHeader("X-Fusion-Tenant", normalizarTenantId(tenant.tenant_id));
+  res.setHeader("X-Fusion-Academia-Slug", String(tenant.slug || rota.slug));
+
+  const arquivo = rota.tipo === "matricula"
+    ? "public/pages/matricula-online/index.html"
+    : "public/pages/promocao/index.html";
+
+  res.sendFile(path.resolve(process.cwd(), arquivo));
+  return true;
+}
+
 export function loginRateLimit(req, res, next) {
   const key = clientKey(req);
   const now = Date.now();
@@ -254,13 +351,24 @@ export function clearLoginRateLimit(req) {
   loginAttempts.delete(clientKey(req));
 }
 
-export function securityHeaders(_req, res, next) {
+export async function securityHeaders(req, res, next) {
   res.setHeader("X-Content-Type-Options", "nosniff");
   res.setHeader("X-Frame-Options", "SAMEORIGIN");
   res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
   res.setHeader("Permissions-Policy", "camera=(self), microphone=(), geolocation=()");
   res.setHeader("Cross-Origin-Resource-Policy", "same-origin");
-  next();
+
+  try {
+    if (await servirRotaPublica(req, res)) return;
+  } catch (error) {
+    console.error(`[Site público] Falha ao resolver academia: ${error.message}`);
+    if (!res.headersSent) {
+      return res.status(503).send("Não foi possível carregar o site da academia.");
+    }
+    return;
+  }
+
+  return next();
 }
 
 export async function apiSecurity(req, res, next) {
@@ -269,6 +377,7 @@ export async function apiSecurity(req, res, next) {
 
   if (isPublic(req)) {
     const authorization = req.headers.authorization || "";
+
     if (authorization) {
       try {
         const usuario = await autenticarSessao(req);
@@ -282,10 +391,20 @@ export async function apiSecurity(req, res, next) {
     }
 
     const tenantPublico = tenantInformado(req);
+
     if (tenantPublico) {
       res.setHeader("X-Fusion-Tenant", tenantPublico);
       return executarComTenant(tenantPublico, () => next());
     }
+
+    if (publicExigeTenant(req)) {
+      return res.status(400).json({
+        ok: false,
+        codigo: "FUSION_TENANT_REQUIRED",
+        mensagem: "Academia não identificada. Acesse o site pelo endereço público da academia."
+      });
+    }
+
     return next();
   }
 
@@ -334,7 +453,10 @@ export async function apiSecurity(req, res, next) {
   }
 
   if (!req.usuario?.tenantId) {
-    return res.status(401).json({ ok: false, mensagem: "Sessão sem empresa vinculada. Faça login novamente." });
+    return res.status(401).json({
+      ok: false,
+      mensagem: "Sessão sem empresa vinculada. Faça login novamente."
+    });
   }
 
   res.setHeader("X-Fusion-Tenant", normalizarTenantId(req.usuario.tenantId));

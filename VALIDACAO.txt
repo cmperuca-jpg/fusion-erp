@@ -1,5 +1,3 @@
-modules/financeiro/relatorios.service.mjs: OK
-public/pages/bi-financeiro/index.js: OK
-modules/financeiro/caixa.service.mjs: OK
-modules/financeiro/mensalidades.service.mjs: OK
-public/pages/caixa/index.js: OK
+modules/security/api-security.middleware.mjs: OK
+modules/saas/saas.routes.mjs: OK
+public/assets/js/fusion-public-tenant.js: OK

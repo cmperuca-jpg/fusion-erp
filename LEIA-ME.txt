@@ -1,20 +1,52 @@
-FUSION ERP — KPIs FINANCEIROS COMPACTOS
-Data: 08/08/2026
+FUSION ERP — ROTAS PÚBLICAS POR SLUG
+Data: 10/08/2026
 
-ARQUIVOS
-========
-public/pages/financeiro/financeiro.css
-public/pages/financeiro/index.html
+ENDEREÇOS
+=========
+https://fusionsistema.com.br/
+  -> página central do Fusion Sistema (acesso + cadastro de academias)
 
-ALTERAÇÕES
+https://fusionsistema.com.br/academia-piloto
+  -> site público da Academia Piloto
+
+https://fusionsistema.com.br/<slug>
+  -> site público de qualquer tenant active/trial
+
+https://fusionsistema.com.br/<slug>/matricula
+  -> matrícula online no mesmo tenant
+
+COMO FUNCIONA
+=============
+1. securityHeaders intercepta apenas rotas públicas curtas /<slug> e /<slug>/matricula.
+2. O slug é validado em fusion_tenants.
+3. O navegador resolve o slug em /api/saas/publico/<slug>.
+4. fusion-public-tenant.js injeta X-Fusion-Tenant em todas as chamadas /api/ da página.
+5. Planos, leads, chat, aparência e matrícula passam a exigir tenant.
+6. Sem tenant essas APIs retornam FUSION_TENANT_REQUIRED, em vez de cair silenciosamente em academia-piloto.
+7. Links antigos da matrícula são convertidos no navegador para /<slug>/matricula.
+
+NÃO ALTERA
 ==========
-- reduz o tamanho dos valores dos 5 KPIs financeiros;
-- impede quebra de linha em todos os valores;
-- mantém o sinal negativo junto do valor;
-- usa números tabulares para melhor alinhamento;
-- preserva responsividade;
-- adiciona cache bust no CSS.
+- login interno;
+- JWT;
+- código da academia;
+- tenant_id existente;
+- dados financeiros;
+- cadastro de tenant: o slug já existe em fusion_tenants.
 
-CACHE
-=====
-/pages/financeiro/financeiro.css?v=20260808-kpi-compacto-1
+TESTE CRUZADO
+=============
+Academia Piloto:
+- abrir /academia-piloto
+- planos devem ser somente dela
+- enviar lead de teste e conferir tenant_id academia-piloto
+
+Outra academia:
+- abrir /<slug-da-outra>
+- a lista de planos deve ser diferente conforme os dados dela
+- lead/matrícula devem cair somente no tenant dela
+
+Teste de bloqueio:
+- abrir diretamente /pages/promocao/index.html
+- chamadas de planos/leads sem tenant devem falhar com FUSION_TENANT_REQUIRED
+  e NÃO podem usar academia-piloto por fallback.

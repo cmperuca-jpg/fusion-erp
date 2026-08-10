@@ -1,0 +1,62 @@
+MATRIZ DE TESTE CRUZADO — APÓS DEPLOY
+
+Tenants confirmados na produção em 10/08/2026:
+- academia-piloto — active
+- studio-fitness — trial
+- academia-marechais — trial
+
+A) URL CENTRAL
+1. Abrir https://fusionsistema.com.br/
+2. A URL deve permanecer na raiz.
+3. Deve abrir a tela Fusion Sistema de acesso/cadastro.
+
+B) SITE ACADEMIA PILOTO
+1. Abrir /academia-piloto.
+2. Conferir planos.
+3. Enviar um lead de teste.
+4. Conferir no Supabase que o registro foi gravado em tenant_id academia-piloto.
+5. Abrir /academia-piloto/matricula e validar carregamento dos planos.
+
+C) SITE STUDIO FITNESS
+1. Abrir /studio-fitness.
+2. Os planos devem ser os da Studio Fitness.
+3. Enviar um lead de teste.
+4. Confirmar tenant_id studio-fitness.
+5. Nenhum dado da Academia Piloto deve aparecer.
+
+D) SITE ACADEMIA MARECHAIS
+1. Abrir /academia-marechais.
+2. Validar isolamento da mesma forma.
+
+E) API SEM TENANT
+1. Acessar diretamente /pages/promocao/index.html.
+2. GET /api/planos sem X-Fusion-Tenant deve retornar HTTP 400.
+3. Corpo esperado: codigo FUSION_TENANT_REQUIRED.
+4. Não pode consultar academia-piloto por fallback.
+
+F) BACKUP PILOTO
+1. Login como admin da Academia Piloto.
+2. Abrir Restore Backup.
+3. Pasta esperada: backups/academia-piloto.
+4. Criar um novo backup.
+5. O novo objeto deve começar por backups/academia-piloto/.
+
+G) BACKUP STUDIO
+1. Login como admin da Studio Fitness.
+2. Pasta esperada: backups/studio-fitness.
+3. Não pode listar os arquivos da pasta academia-piloto.
+4. Criar backup e confirmar prefixo backups/studio-fitness/.
+
+H) TESTE DE ATAQUE CRUZADO
+Logado na Studio Fitness, enviar manualmente para /api/backup/restaurar:
+caminho = backups/academia-piloto/qualquer-backup.zip
+confirmacao = RESTAURAR
+
+Resultado obrigatório:
+HTTP 403
+"Backup bloqueado: caminho não pertence à academia autenticada."
+
+I) BACKUPS LEGADOS
+Os objetos antigos diretamente em backups/FusionERP_Backup_... NÃO devem
+aparecer para nenhum tenant no painel após o deploy.
+Eles não devem ser apagados automaticamente.
