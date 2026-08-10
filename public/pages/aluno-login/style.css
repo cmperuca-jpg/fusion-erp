@@ -156,3 +156,85 @@ small { display: block; margin-top: 8px; color: var(--muted); line-height: 1.4; 
   .card { padding: 20px; border-radius: 18px; }
   .grid-cards { grid-template-columns: 1fr; }
 }
+
+/* Home do aluno — dados reais do Fusion ERP */
+.app-shell { width: min(100%, 680px); }
+.profile-row { display: flex; align-items: center; gap: 18px; }
+.profile-copy { min-width: 0; flex: 1; }
+.profile-copy h1 { margin-bottom: 8px; }
+.profile-subtitle { margin-top: 8px; color: var(--muted); font-size: 13px; font-weight: 700; }
+.student-photo {
+  width: 88px;
+  height: 88px;
+  flex: 0 0 88px;
+  border-radius: 24px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  border: 1px solid #cfe1dd;
+  background: linear-gradient(145deg, #dff2ee, #f7fbfa);
+  color: var(--brand-dark);
+  font-size: 30px;
+  font-weight: 900;
+  box-shadow: inset 0 0 0 5px rgba(255,255,255,.7);
+}
+.student-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.student-photo span { letter-spacing: -.04em; }
+
+.feature-card { min-height: 140px; gap: 8px; justify-content: flex-start; }
+.feature-card > span { color: var(--brand-dark); }
+.feature-card strong { margin-top: auto; color: var(--text); font-size: 16px; line-height: 1.25; }
+.feature-card small { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.45; }
+.feature-card-wide { grid-column: 1 / -1; min-height: 112px; }
+
+.home-section { margin-top: 14px; }
+.section-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
+.section-heading h2 { margin: 4px 0 0; }
+.section-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  border-radius: 999px;
+  padding: 5px 10px;
+  background: #eef7f5;
+  color: var(--brand-dark);
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.section-intro { margin: 12px 0 16px !important; font-size: 13px; }
+
+.training-divisions { display: grid; gap: 10px; }
+.training-division { border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: #fbfdfd; }
+.training-division summary { cursor: pointer; padding: 14px 15px; font-weight: 800; color: var(--brand-dark); }
+.exercise-list { border-top: 1px solid var(--line); }
+.exercise-row { padding: 12px 15px; display: grid; gap: 4px; border-bottom: 1px solid #edf3f2; }
+.exercise-row:last-child { border-bottom: 0; }
+.exercise-row strong { font-size: 13px; }
+.exercise-row small { margin: 0; font-size: 11px; }
+
+.data-list { display: grid; gap: 0; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.data-row { display: flex; justify-content: space-between; gap: 14px; padding: 13px 14px; background: #fff; border-bottom: 1px solid #edf3f2; }
+.data-row:last-child { border-bottom: 0; }
+.data-row-copy { min-width: 0; display: grid; gap: 3px; }
+.data-row-copy strong { font-size: 13px; }
+.data-row-copy small { margin: 0; font-size: 11px; }
+.data-row > span { flex: 0 0 auto; text-align: right; color: var(--muted); font-size: 12px; font-weight: 800; }
+.notice-alerta { border-left: 4px solid #b42318; }
+.notice-financeiro { border-left: 4px solid #c26a15; }
+.notice-ok { border-left: 4px solid var(--brand); }
+.notice-info, .notice-treino { border-left: 4px solid #5a7eaa; }
+
+@media (max-width: 520px) {
+  .profile-row { align-items: flex-start; gap: 14px; }
+  .student-photo { width: 76px; height: 76px; flex-basis: 76px; border-radius: 20px; font-size: 26px; }
+  .home-hero.card { padding: 20px; }
+  .feature-card { min-height: 132px; padding: 16px; }
+}
+
+@media (max-width: 390px) {
+  .grid-cards { grid-template-columns: 1fr; }
+  .feature-card-wide { grid-column: auto; }
+  .data-row { flex-direction: column; gap: 6px; }
+  .data-row > span { text-align: left; }
+}

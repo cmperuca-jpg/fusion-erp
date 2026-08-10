@@ -190,14 +190,6 @@ async function alunoERPPorCpf(tenant, cpfNormalizado) {
       "ERP_STUDENT_NAME_INVALID"
     );
   }
-  if (telefone.length < 10) {
-    throw new AlunoAppError(
-      "Cadastre um telefone/WhatsApp válido para o aluno antes de gerar o código do aplicativo.",
-      422,
-      "ERP_STUDENT_PHONE_INVALID"
-    );
-  }
-
   return {
     legacyId,
     nome,
@@ -422,16 +414,372 @@ async function sessaoValida(req, res) {
   return { accessToken, usuario };
 }
 
+function textoSeguro(valor) {
+  return String(valor ?? "").trim();
+}
+
+function numeroSeguro(valor, fallback = 0) {
+  const numero = Number(valor);
+  return Number.isFinite(numero) ? numero : fallback;
+}
+
+function normalizarTexto(valor) {
+  return textoSeguro(valor)
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function dataValida(valor) {
+  const data = new Date(valor || "");
+  return Number.isNaN(data.getTime()) ? null : data;
+}
+
+function payloadRegistro(row) {
+  return row?.payload && typeof row.payload === "object" && !Array.isArray(row.payload)
+    ? row.payload
+    : {};
+}
+
+function fotoAlunoSegura(payload = {}) {
+  const foto = textoSeguro(
+    payload.foto_base64 ||
+    payload.fotoBase64 ||
+    payload.foto ||
+    payload.avatar ||
+    ""
+  );
+  if (/^data:image\/(jpeg|jpg|png|webp);base64,/i.test(foto) && foto.length <= 4_000_000) return foto;
+  if (foto.startsWith("/")) return foto;
+  return "";
+}
+
+async function registrosAlunoERP(supabase, tabela, tenant, colecao, alunoId, limite = 80) {
+  let query = supabase
+    .from(tabela)
+    .select("record_id,payload,updated_at")
+    .eq("tenant_id", tenant)
+    .eq("collection", colecao)
+    .order("updated_at", { ascending: false })
+    .limit(limite);
+
+  if (alunoId) query = query.eq("payload->>alunoId", alunoId);
+
+  const { data, error } = await query;
+  if (error) {
+    throw new AlunoAppError(
+      `Não foi possível carregar ${colecao} do aluno no Fusion ERP.`,
+      502,
+      "ERP_HOME_DATA_FAILED"
+    );
+  }
+  return Array.isArray(data) ? data : [];
+}
+
+async function cadastroAlunoERP(supabase, tabela, tenant, legacyId) {
+  const { data, error } = await supabase
+    .from(tabela)
+    .select("record_id,payload,updated_at")
+    .eq("tenant_id", tenant)
+    .eq("collection", "alunos")
+    .eq("record_id", legacyId)
+    .limit(1);
+
+  if (error) {
+    throw new AlunoAppError(
+      "Não foi possível carregar o cadastro do aluno no Fusion ERP.",
+      502,
+      "ERP_STUDENT_HOME_FAILED"
+    );
+  }
+  return payloadRegistro(Array.isArray(data) ? data[0] : null);
+}
+
+function escolherMatricula(rows = []) {
+  const itens = rows.map(payloadRegistro).filter(item => Object.keys(item).length);
+  return itens.find(item => ["ativa", "ativo", "active"].includes(normalizarTexto(item.status))) || itens[0] || null;
+}
+
+function resumoPlano(matricula = null, alunoERP = {}) {
+  if (!matricula) {
+    const nome = textoSeguro(alunoERP.plano);
+    return nome ? {
+      nome,
+      status: textoSeguro(alunoERP.matriculaStatus || alunoERP.statusMatricula || ""),
+      modalidade: textoSeguro(alunoERP.modalidade),
+      tipo: textoSeguro(alunoERP.tipoPlano),
+      valor_mensal: numeroSeguro(alunoERP.valorMensalTotal || alunoERP.valorMensal || alunoERP.valorPlano),
+      proximo_vencimento: textoSeguro(alunoERP.proximoVencimento),
+      horario: textoSeguro(alunoERP.horario),
+      professor: textoSeguro(alunoERP.professorNome || alunoERP.professor)
+    } : null;
+  }
+
+  return {
+    id: textoSeguro(matricula.id),
+    nome: textoSeguro(matricula.plano),
+    status: textoSeguro(matricula.status),
+    modalidade: textoSeguro(matricula.modalidade),
+    tipo: textoSeguro(matricula.tipoPlano || matricula.tipoCobranca),
+    valor_mensal: numeroSeguro(matricula.valorMensalTotal || matricula.valorMensal || matricula.valorPlano),
+    data_inicio: textoSeguro(matricula.dataInicio || matricula.dataMatricula),
+    data_fim: textoSeguro(matricula.dataFim),
+    proximo_vencimento: textoSeguro(matricula.proximoVencimento),
+    dia_vencimento: numeroSeguro(matricula.diaVencimento, 0),
+    horario: textoSeguro(matricula.horario),
+    turma: textoSeguro(matricula.turma),
+    professor: textoSeguro(matricula.professorNome || matricula.professor),
+    numero_matricula: textoSeguro(matricula.numeroMatricula || matricula.numero)
+  };
+}
+
+function resumoTreinos(rows = []) {
+  const treinos = rows.map(payloadRegistro).filter(item => Object.keys(item).length);
+  const treino = treinos.find(item => item.ativo !== false) || treinos[0] || null;
+  if (!treino) return { total: 0, ativo: false, divisoes: [] };
+
+  const divisoes = (Array.isArray(treino.divisoes) ? treino.divisoes : [])
+    .slice(0, 8)
+    .map(divisao => ({
+      nome: textoSeguro(divisao?.nome) || "Treino",
+      itens: (Array.isArray(divisao?.itens) ? divisao.itens : [])
+        .slice(0, 40)
+        .map(item => ({
+          nome: textoSeguro(item?.nome),
+          grupo: textoSeguro(item?.grupo),
+          series: textoSeguro(item?.series),
+          repeticoes: textoSeguro(item?.repeticoes),
+          carga: textoSeguro(item?.carga),
+          descanso: textoSeguro(item?.descanso),
+          observacao: textoSeguro(item?.obs || item?.observacao),
+          foto: textoSeguro(item?.foto).startsWith("/") ? textoSeguro(item?.foto) : ""
+        }))
+        .filter(item => item.nome)
+    }));
+
+  return {
+    id: textoSeguro(treino.id),
+    total: treinos.length,
+    ativo: treino.ativo !== false,
+    objetivo: textoSeguro(treino.objetivo),
+    validade: textoSeguro(treino.validade),
+    data_prescricao: textoSeguro(treino.dataPrescricao || treino.criadoEm),
+    professor: textoSeguro(treino.professorNome),
+    observacoes: textoSeguro(treino.observacoes),
+    divisoes
+  };
+}
+
+function dataDoAcesso(item = {}) {
+  return dataValida(
+    item.entradaEm || item.dataHora || item.data_hora || item.criadoEm ||
+    item.criado_em || item.data || item.timestamp || item.atualizadoEm
+  );
+}
+
+function resumoFrequencia(rows = []) {
+  const agora = Date.now();
+  const inicio30 = agora - (30 * 24 * 60 * 60 * 1000);
+  const acessos = rows
+    .map(payloadRegistro)
+    .filter(item => normalizarTexto(item.tipo) !== "vinculo_matricula")
+    .map(item => ({ item, data: dataDoAcesso(item) }))
+    .filter(registro => registro.data)
+    .sort((a, b) => b.data.getTime() - a.data.getTime());
+
+  return {
+    total: acessos.length,
+    ultimos_30_dias: acessos.filter(registro => registro.data.getTime() >= inicio30).length,
+    ultimo_acesso: acessos[0]?.data?.toISOString() || "",
+    acessos: acessos.slice(0, 8).map(registro => ({
+      data: registro.data.toISOString(),
+      status: textoSeguro(registro.item.status || registro.item.resultado || "Registrado"),
+      local: textoSeguro(registro.item.local || registro.item.sala || registro.item.dispositivo || "")
+    }))
+  };
+}
+
+function statusPago(valor) {
+  return ["pago", "paga", "recebido", "recebida", "quitado", "quitada", "baixado", "baixada"].includes(normalizarTexto(valor));
+}
+
+function statusCancelado(valor) {
+  return ["cancelado", "cancelada", "estornado", "estornada", "encerrado", "encerrada"].includes(normalizarTexto(valor));
+}
+
+function statusProgramado(valor) {
+  return ["programada", "programado", "previsto", "prevista"].includes(normalizarTexto(valor));
+}
+
+function resumoFinanceiro(rowsMensalidades = [], rowsFinanceiro = []) {
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+
+  const mensalidades = rowsMensalidades
+    .map(payloadRegistro)
+    .filter(item => Object.keys(item).length)
+    .map(item => {
+      const vencimento = dataValida(item.vencimento || item.emitirEm);
+      const valor = numeroSeguro(item.valorOriginal || item.valor || item.total);
+      const restante = numeroSeguro(item.valorRestante ?? item.saldoRestante ?? (statusPago(item.status) ? 0 : valor));
+      return {
+        id: textoSeguro(item.id),
+        competencia: textoSeguro(item.competencia),
+        status: textoSeguro(item.status),
+        vencimento: vencimento?.toISOString() || "",
+        valor,
+        valor_restante: Math.max(0, restante),
+        data_pagamento: textoSeguro(item.dataPagamento),
+        forma_pagamento: textoSeguro(item.formaPagamento || item.forma),
+        programada: item.programada === true || statusProgramado(item.status)
+      };
+    });
+
+  const emAberto = mensalidades.filter(item =>
+    !statusPago(item.status) && !statusCancelado(item.status) && !item.programada && item.valor_restante > 0
+  );
+  const atrasadas = emAberto.filter(item => {
+    const vencimento = dataValida(item.vencimento);
+    return vencimento && vencimento.getTime() < hoje.getTime();
+  });
+
+  const futuras = mensalidades
+    .filter(item => {
+      const vencimento = dataValida(item.vencimento);
+      return vencimento && vencimento.getTime() >= hoje.getTime() && !statusCancelado(item.status);
+    })
+    .sort((a, b) => new Date(a.vencimento) - new Date(b.vencimento));
+
+  const pagamentos = rowsFinanceiro
+    .map(payloadRegistro)
+    .filter(item => statusPago(item.status))
+    .map(item => ({
+      data: dataValida(item.dataPagamento || item.pagamento || item.atualizadoEm),
+      valor: numeroSeguro(item.valorPago || item.valorRecebido || item.valorLiquido || item.valor)
+    }))
+    .filter(item => item.data)
+    .sort((a, b) => b.data - a.data);
+
+  const proxima = futuras[0] || null;
+  return {
+    situacao: atrasadas.length ? "Em atraso" : (emAberto.length ? "Pendente" : "Em dia"),
+    valor_em_aberto: emAberto.reduce((soma, item) => soma + item.valor_restante, 0),
+    proximo_vencimento: proxima?.vencimento || "",
+    proximo_valor: proxima?.valor || 0,
+    ultimo_pagamento: pagamentos[0]?.data?.toISOString() || "",
+    ultimo_pagamento_valor: pagamentos[0]?.valor || 0,
+    mensalidades: mensalidades
+      .sort((a, b) => (new Date(b.vencimento || 0)) - (new Date(a.vencimento || 0)))
+      .slice(0, 6)
+  };
+}
+
+function dataCurtaBR(valor) {
+  const texto = textoSeguro(valor);
+  const match = texto.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return match ? `${match[3]}/${match[2]}/${match[1]}` : texto;
+}
+
+function montarAvisos({ alunoERP = {}, plano = null, treinos = {}, financeiro = {} } = {}) {
+  const avisos = [];
+  if (alunoERP.bloqueado === true || alunoERP.bloqueioCheckin === true) {
+    avisos.push({
+      tipo: "alerta",
+      titulo: "Acesso bloqueado",
+      mensagem: textoSeguro(alunoERP.motivoBloqueioCheckin || alunoERP.motivoBloqueio || "Procure a recepção da academia.")
+    });
+  }
+  if (financeiro.situacao === "Em atraso") {
+    avisos.push({
+      tipo: "financeiro",
+      titulo: "Financeiro em atraso",
+      mensagem: financeiro.valor_em_aberto > 0
+        ? `Há R$ ${financeiro.valor_em_aberto.toFixed(2).replace(".", ",")} em aberto.`
+        : "Há uma cobrança vencida."
+    });
+  }
+  if (plano?.proximo_vencimento) {
+    avisos.push({
+      tipo: "info",
+      titulo: "Próximo vencimento",
+      mensagem: `Sua próxima cobrança está prevista para ${dataCurtaBR(plano.proximo_vencimento)}.`
+    });
+  }
+  if (!treinos?.divisoes?.some(divisao => divisao.itens?.length)) {
+    avisos.push({
+      tipo: "treino",
+      titulo: "Treino",
+      mensagem: "Nenhum treino foi prescrito para você no momento."
+    });
+  }
+  if (!avisos.length) {
+    avisos.push({ tipo: "ok", titulo: "Tudo certo", mensagem: "Não há avisos pendentes para o seu acesso." });
+  }
+  return avisos.slice(0, 5);
+}
+
+async function carregarHomeERP(alunoApp = {}) {
+  const tenant = normalizarTenant(alunoApp?.dados?.erp_tenant_id || "");
+  const legacyId = textoSeguro(alunoApp?.legacy_id);
+  if (!legacyId) {
+    throw new AlunoAppError("Aluno ainda não está vinculado ao cadastro principal do Fusion ERP.", 409, "ERP_STUDENT_NOT_LINKED");
+  }
+
+  const supabase = obterSupabaseAdmin({ obrigatorio: true });
+  const tabela = process.env.FUSION_SUPABASE_RECORDS_TABLE || "fusion_v3_records";
+
+  const [alunoERP, matriculasRows, treinosRows, checkinRows, checkinsRows, mensalidadesRows, financeiroRows] = await Promise.all([
+    cadastroAlunoERP(supabase, tabela, tenant, legacyId),
+    registrosAlunoERP(supabase, tabela, tenant, "matriculas", legacyId, 12),
+    registrosAlunoERP(supabase, tabela, tenant, "treinos_prescritos", legacyId, 12),
+    registrosAlunoERP(supabase, tabela, tenant, "checkin", legacyId, 80),
+    registrosAlunoERP(supabase, tabela, tenant, "checkins", legacyId, 80),
+    registrosAlunoERP(supabase, tabela, tenant, "mensalidades", legacyId, 40),
+    registrosAlunoERP(supabase, tabela, tenant, "financeiro", legacyId, 40)
+  ]);
+
+  const matricula = escolherMatricula(matriculasRows);
+  const plano = resumoPlano(matricula, alunoERP);
+  const treinos = resumoTreinos(treinosRows);
+  const frequencia = resumoFrequencia([...checkinRows, ...checkinsRows]);
+  const financeiro = resumoFinanceiro(mensalidadesRows, financeiroRows);
+
+  const aluno = {
+    id: textoSeguro(alunoApp.id),
+    legacy_id: legacyId,
+    nome: textoSeguro(alunoERP.nome || alunoApp.nome),
+    status: textoSeguro(alunoERP.status || alunoERP.situacao || alunoApp.status),
+    matricula: textoSeguro(plano?.numero_matricula || alunoERP.numeroMatricula || alunoApp.matricula),
+    modalidade: textoSeguro(plano?.modalidade || alunoERP.modalidade),
+    objetivo: textoSeguro(alunoERP.objetivo),
+    foto: fotoAlunoSegura(alunoERP)
+  };
+
+  return {
+    aluno,
+    plano,
+    treinos,
+    frequencia,
+    financeiro,
+    avisos: montarAvisos({ alunoERP, plano, treinos, financeiro })
+  };
+}
+
 export async function obterHomeAlunoApp(req, res, deviceToken) {
   const status = await statusAlunoApp(deviceToken);
   const { accessToken, usuario } = await sessaoValida(req, res);
   const filtro = encodeURIComponent(`eq.${usuario.id}`);
-  const alunos = await chamarSupabase(`/rest/v1/alunos?select=id,nome,status,matricula&usuario_id=${filtro}&limit=1`, {
-    accessToken
-  });
-  const aluno = Array.isArray(alunos) ? alunos[0] : null;
-  if (!aluno) throw new AlunoAppError("Cadastro do aluno não encontrado para esta sessão.", 404, "STUDENT_NOT_FOUND");
-  return { aluno, academia_nome: status.academia_nome };
+  const alunos = await chamarSupabase(
+    `/rest/v1/alunos?select=id,nome,status,matricula,legacy_id,dados&usuario_id=${filtro}&limit=1`,
+    { accessToken }
+  );
+  const alunoApp = Array.isArray(alunos) ? alunos[0] : null;
+  if (!alunoApp) {
+    throw new AlunoAppError("Cadastro do aluno não encontrado para esta sessão.", 404, "STUDENT_NOT_FOUND");
+  }
+
+  const home = await carregarHomeERP(alunoApp);
+  return { ...home, academia_nome: status.academia_nome };
 }
 
 export { AlunoAppError };

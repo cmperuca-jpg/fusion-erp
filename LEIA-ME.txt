@@ -1,24 +1,51 @@
-HOTFIX — FUSION ALUNO / CONTADOR DO CÓDIGO
+FUSION ALUNO — HOME COM DADOS REAIS
 
-Motivo:
-A primeira versão do contador alterava o texto do botão dentro de uma área
-observada por MutationObserver. Isso podia disparar callbacks repetidamente
-e travar a página/aba.
+Substitua estes 4 arquivos no repositório fusion-erp:
 
-Esta versão:
-- só altera o texto do botão quando o valor realmente mudou;
-- o MutationObserver apenas injeta botões novos;
-- o contador de 1 segundo não chama novamente a rotina geral de observação;
-- mantém o código visível até expirar;
-- clicar no código válido reabre o modal, sem gerar outro.
+1. modules/treinos/aluno-app.service.mjs
+2. public/pages/aluno-login/index.html
+3. public/pages/aluno-login/index.js
+4. public/pages/aluno-login/style.css
 
-RECUPERAÇÃO RECOMENDADA:
-1. Na Render, faça rollback do deploy 4e052e15 para o commit anterior
-   73ce25d0f3f5cca9f7d5bedf3bcf678be308faf2.
-2. Confirme que o site voltou.
-3. Depois substitua:
-   public/pages/alunos/app-access.js
-   por este arquivo.
-4. Commit sugerido:
-   fix: evita loop do contador do codigo do app
-5. Aguarde Deploy live e teste novamente.
+O QUE MUDA
+
+- A Home deixa de mostrar "Em breve".
+- Mostra caixa de foto do aluno.
+  - Se houver foto_base64 no cadastro do Fusion ERP, mostra a foto.
+  - Se não houver, mostra as iniciais do aluno.
+- Mostra plano/matrícula real.
+- Mostra modalidade, tipo de plano, valor mensal e próximo vencimento.
+- Mostra treino prescrito real e suas divisões/exercícios quando existir.
+- Se não houver treino, informa claramente "Nenhum treino prescrito".
+- Mostra frequência real dos registros de check-in existentes.
+- Mostra situação financeira real e últimas mensalidades.
+- Mostra avisos derivados do estado real da matrícula/financeiro.
+- Não expõe Supabase no navegador: o frontend continua chamando somente
+  /api/treinos/aluno-app/me dentro de fusionsistema.com.br.
+- Também preserva a correção para permitir emissão de código sem telefone.
+
+EXEMPLO VERIFICADO — WARNER
+
+O banco principal possui:
+- Plano: NATAÇÃO INFANTIL
+- Matrícula: MAT-202608-000008
+- Valor mensal: R$ 100,00
+- Próximo vencimento: 10/09/2026
+- Situação financeira atual: paga/em dia
+- Nenhum treino prescrito encontrado no momento
+- Nenhuma frequência de treino/check-in real encontrada no momento
+
+A Home refletirá esses dados, sem inventar conteúdo.
+
+VALIDAÇÃO EXECUTADA
+
+- node --check public/pages/aluno-login/index.js
+- node --check modules/treinos/aluno-app.service.mjs
+- conferência dos IDs usados pelo JavaScript contra o HTML: nenhum ID ausente
+
+COMMIT SUGERIDO
+
+feat: conecta home do Fusion Aluno aos dados reais do ERP
+
+Após o commit na main, aguarde o Auto-Deploy da Render e teste em:
+https://www.fusionsistema.com.br/pages/aluno-login/index.html

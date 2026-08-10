@@ -232,16 +232,227 @@ async function entrar() {
   }
 }
 
+function textoSeguro(value) {
+  return String(value ?? "").trim();
+}
+
+function moedaBR(value) {
+  const numero = Number(value || 0);
+  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(Number.isFinite(numero) ? numero : 0);
+}
+
+function dataBR(value) {
+  if (!value) return "";
+  const texto = textoSeguro(value);
+  const dataSomente = texto.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (dataSomente) return `${dataSomente[3]}/${dataSomente[2]}/${dataSomente[1]}`;
+  const data = new Date(texto);
+  if (Number.isNaN(data.getTime())) return texto;
+  return data.toLocaleDateString("pt-BR");
+}
+
+function iniciais(nome = "") {
+  const partes = textoSeguro(nome).split(/\s+/).filter(Boolean);
+  if (!partes.length) return "A";
+  return `${partes[0][0] || ""}${partes.length > 1 ? (partes.at(-1)?.[0] || "") : ""}`.toUpperCase();
+}
+
+function mostrarFotoAluno(aluno = {}) {
+  const img = $("fotoAlunoImg");
+  const fallback = $("fotoAlunoIniciais");
+  const foto = textoSeguro(aluno.foto);
+  fallback.textContent = iniciais(aluno.nome);
+  fallback.classList.remove("hidden");
+  img.classList.add("hidden");
+  img.removeAttribute("src");
+
+  if (!foto || !(foto.startsWith("data:image/") || foto.startsWith("/"))) return;
+  img.onload = () => {
+    img.classList.remove("hidden");
+    fallback.classList.add("hidden");
+  };
+  img.onerror = () => {
+    img.classList.add("hidden");
+    fallback.classList.remove("hidden");
+  };
+  img.src = foto;
+}
+
+function detalhePlano(plano = {}) {
+  return [plano.modalidade, plano.tipo, plano.valor_mensal > 0 ? moedaBR(plano.valor_mensal) : ""]
+    .filter(Boolean)
+    .join(" · ");
+}
+
+function limparLista(id) {
+  const node = $(id);
+  node.replaceChildren();
+  return node;
+}
+
+function criarLinha(titulo, valor, detalhe = "") {
+  const linha = document.createElement("div");
+  linha.className = "data-row";
+
+  const texto = document.createElement("div");
+  texto.className = "data-row-copy";
+  const strong = document.createElement("strong");
+  strong.textContent = titulo;
+  texto.appendChild(strong);
+  if (detalhe) {
+    const small = document.createElement("small");
+    small.textContent = detalhe;
+    texto.appendChild(small);
+  }
+
+  const valorEl = document.createElement("span");
+  valorEl.textContent = valor;
+  linha.append(texto, valorEl);
+  return linha;
+}
+
+function renderPlano(plano = null) {
+  if (!plano?.nome) {
+    $("planoNome").textContent = "Sem plano ativo";
+    $("planoDetalhe").textContent = "Procure a recepção para verificar sua matrícula.";
+    $("planoVencimento").textContent = "";
+    return;
+  }
+  $("planoNome").textContent = plano.nome;
+  $("planoDetalhe").textContent = detalhePlano(plano);
+  $("planoVencimento").textContent = plano.proximo_vencimento
+    ? `Próximo vencimento: ${dataBR(plano.proximo_vencimento)}`
+    : (plano.horario ? `Horário: ${plano.horario}` : "");
+}
+
+function renderTreinos(treinos = {}) {
+  const divisoes = Array.isArray(treinos.divisoes) ? treinos.divisoes : [];
+  const totalExercicios = divisoes.reduce((total, divisao) => total + (Array.isArray(divisao.itens) ? divisao.itens.length : 0), 0);
+  const temTreino = totalExercicios > 0;
+
+  $("treinoResumo").textContent = temTreino
+    ? `${divisoes.length} divisão${divisoes.length === 1 ? "" : "ões"}`
+    : "Nenhum treino prescrito";
+  $("treinoDetalhe").textContent = temTreino
+    ? `${totalExercicios} exercício${totalExercicios === 1 ? "" : "s"}${treinos.professor ? ` · ${treinos.professor}` : ""}`
+    : "Quando o professor prescrever, aparecerá aqui.";
+
+  const section = $("treinoSection");
+  section.classList.toggle("hidden", !temTreino);
+  if (!temTreino) return;
+
+  $("treinoValidade").textContent = treinos.validade ? `Até ${dataBR(treinos.validade)}` : "Ativo";
+  $("treinoObjetivo").textContent = [
+    treinos.objetivo ? `Objetivo: ${treinos.objetivo}` : "",
+    treinos.professor ? `Professor: ${treinos.professor}` : ""
+  ].filter(Boolean).join(" · ");
+
+  const container = limparLista("treinoDivisoes");
+  divisoes.forEach((divisao) => {
+    const details = document.createElement("details");
+    details.className = "training-division";
+    const summary = document.createElement("summary");
+    const itens = Array.isArray(divisao.itens) ? divisao.itens : [];
+    summary.textContent = `${divisao.nome || "Treino"} · ${itens.length} exercício${itens.length === 1 ? "" : "s"}`;
+    details.appendChild(summary);
+
+    const lista = document.createElement("div");
+    lista.className = "exercise-list";
+    itens.forEach((item) => {
+      const linha = document.createElement("div");
+      linha.className = "exercise-row";
+      const nome = document.createElement("strong");
+      nome.textContent = item.nome || "Exercício";
+      const meta = document.createElement("small");
+      meta.textContent = [
+        item.series ? `${item.series} série${item.series === "1" ? "" : "s"}` : "",
+        item.repeticoes ? `${item.repeticoes} rep.` : "",
+        item.carga ? `Carga: ${item.carga}` : "",
+        item.descanso ? `Descanso: ${item.descanso}` : ""
+      ].filter(Boolean).join(" · ");
+      linha.append(nome, meta);
+      lista.appendChild(linha);
+    });
+    details.appendChild(lista);
+    container.appendChild(details);
+  });
+}
+
+function renderFrequencia(frequencia = {}) {
+  const total30 = Number(frequencia.ultimos_30_dias || 0);
+  $("frequenciaResumo").textContent = `${total30} acesso${total30 === 1 ? "" : "s"} em 30 dias`;
+  $("frequenciaDetalhe").textContent = frequencia.ultimo_acesso
+    ? `Último acesso: ${dataBR(frequencia.ultimo_acesso)}`
+    : "Nenhuma frequência registrada ainda.";
+}
+
+function renderFinanceiro(financeiro = {}) {
+  const situacao = textoSeguro(financeiro.situacao) || "Sem dados";
+  $("financeiroResumo").textContent = situacao;
+  $("financeiroSituacao").textContent = situacao;
+
+  if (financeiro.valor_em_aberto > 0) {
+    $("financeiroDetalhe").textContent = `${moedaBR(financeiro.valor_em_aberto)} em aberto`;
+  } else if (financeiro.proximo_vencimento) {
+    $("financeiroDetalhe").textContent = `Próximo: ${dataBR(financeiro.proximo_vencimento)} · ${moedaBR(financeiro.proximo_valor)}`;
+  } else {
+    $("financeiroDetalhe").textContent = "Nenhuma cobrança em aberto.";
+  }
+
+  const lista = limparLista("financeiroLista");
+  const mensalidades = Array.isArray(financeiro.mensalidades) ? financeiro.mensalidades : [];
+  if (!mensalidades.length) {
+    lista.appendChild(criarLinha("Mensalidades", "Sem lançamentos", "Nenhuma cobrança encontrada."));
+    return;
+  }
+  mensalidades.slice(0, 5).forEach((item) => {
+    const competencia = item.competencia ? `Mensalidade ${item.competencia}` : "Mensalidade";
+    const detalhe = item.vencimento ? `Vencimento ${dataBR(item.vencimento)}` : "";
+    lista.appendChild(criarLinha(competencia, `${item.status || "—"} · ${moedaBR(item.valor)}`, detalhe));
+  });
+}
+
+function renderAvisos(avisos = []) {
+  const listaAvisos = Array.isArray(avisos) ? avisos : [];
+  const primeiro = listaAvisos[0] || {};
+  $("avisosResumo").textContent = listaAvisos.length
+    ? `${listaAvisos.length} aviso${listaAvisos.length === 1 ? "" : "s"}`
+    : "Sem avisos";
+  $("avisosDetalhe").textContent = primeiro.titulo || "Nenhum aviso pendente.";
+
+  const lista = limparLista("avisosLista");
+  if (!listaAvisos.length) {
+    lista.appendChild(criarLinha("Tudo certo", "OK", "Nenhum aviso pendente para sua conta."));
+    return;
+  }
+  listaAvisos.forEach((aviso) => {
+    const linha = criarLinha(aviso.titulo || "Aviso", aviso.tipo === "alerta" ? "Atenção" : "", aviso.mensagem || "");
+    linha.classList.add(`notice-${aviso.tipo || "info"}`);
+    lista.appendChild(linha);
+  });
+}
+
 async function carregarHome() {
   const data = await request("/me", {
     method: "GET",
     headers: { "X-Fusion-Device-Token": deviceToken() }
   });
   if (data.academia_nome) setAcademia(data.academia_nome);
+
   const aluno = data.aluno || {};
-  $("saudacaoAluno").textContent = aluno.nome ? `Olá, ${String(aluno.nome).split(/\s+/)[0]}` : "Olá";
+  const primeiroNome = textoSeguro(aluno.nome).split(/\s+/).filter(Boolean)[0] || "";
+  $("saudacaoAluno").textContent = primeiroNome ? `Olá, ${primeiroNome}` : "Olá";
   $("statusAluno").textContent = aluno.status || "Aluno";
   $("matriculaAluno").textContent = aluno.matricula ? `Matrícula ${aluno.matricula}` : "";
+  $("modalidadeAluno").textContent = aluno.modalidade || "";
+
+  mostrarFotoAluno(aluno);
+  renderPlano(data.plano || null);
+  renderTreinos(data.treinos || {});
+  renderFrequencia(data.frequencia || {});
+  renderFinanceiro(data.financeiro || {});
+  renderAvisos(data.avisos || []);
+
   setMessage("homeMessage");
   show("homeScreen");
 }

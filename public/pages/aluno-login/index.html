@@ -7,7 +7,7 @@
   <meta name="color-scheme" content="light">
   <title>Fusion Aluno</title>
   <link rel="manifest" href="/manifest-aluno.webmanifest">
-  <link rel="stylesheet" href="/pages/aluno-login/style.css?v=20260810-1">
+  <link rel="stylesheet" href="/pages/aluno-login/style.css?v=20260810-2">
 </head>
 <body>
   <main class="app-shell" aria-live="polite">
@@ -88,21 +88,84 @@
 
     <section id="homeScreen" class="screen hidden">
       <div class="home-hero card">
-        <div class="eyebrow">Sua área</div>
-        <h1 id="saudacaoAluno">Olá</h1>
-        <div class="student-meta">
-          <span id="statusAluno" class="status-badge"></span>
-          <span id="matriculaAluno" class="muted"></span>
+        <div class="profile-row">
+          <div id="fotoAluno" class="student-photo" aria-label="Foto do aluno">
+            <img id="fotoAlunoImg" class="hidden" alt="Foto do aluno">
+            <span id="fotoAlunoIniciais" aria-hidden="true">A</span>
+          </div>
+          <div class="profile-copy">
+            <div class="eyebrow">Sua área</div>
+            <h1 id="saudacaoAluno">Olá</h1>
+            <div class="student-meta">
+              <span id="statusAluno" class="status-badge"></span>
+              <span id="matriculaAluno" class="muted"></span>
+            </div>
+            <div id="modalidadeAluno" class="profile-subtitle"></div>
+          </div>
         </div>
       </div>
 
-      <div class="grid-cards" aria-label="Recursos do aluno">
-        <article class="feature-card"><span>Plano</span><strong>Em breve</strong></article>
-        <article class="feature-card"><span>Treinos</span><strong>Em breve</strong></article>
-        <article class="feature-card"><span>Frequência</span><strong>Em breve</strong></article>
-        <article class="feature-card"><span>Financeiro</span><strong>Em breve</strong></article>
-        <article class="feature-card"><span>Avisos</span><strong>Em breve</strong></article>
+      <div class="grid-cards" aria-label="Resumo do aluno">
+        <article class="feature-card">
+          <span>Plano</span>
+          <strong id="planoNome">Carregando...</strong>
+          <small id="planoDetalhe"></small>
+          <small id="planoVencimento"></small>
+        </article>
+        <article class="feature-card">
+          <span>Treinos</span>
+          <strong id="treinoResumo">Carregando...</strong>
+          <small id="treinoDetalhe"></small>
+        </article>
+        <article class="feature-card">
+          <span>Frequência</span>
+          <strong id="frequenciaResumo">Carregando...</strong>
+          <small id="frequenciaDetalhe"></small>
+        </article>
+        <article class="feature-card">
+          <span>Financeiro</span>
+          <strong id="financeiroResumo">Carregando...</strong>
+          <small id="financeiroDetalhe"></small>
+        </article>
+        <article class="feature-card feature-card-wide">
+          <span>Avisos</span>
+          <strong id="avisosResumo">Carregando...</strong>
+          <small id="avisosDetalhe"></small>
+        </article>
       </div>
+
+      <section id="treinoSection" class="card home-section hidden">
+        <div class="section-heading">
+          <div>
+            <div class="eyebrow">Meu treino</div>
+            <h2>Treino prescrito</h2>
+          </div>
+          <span id="treinoValidade" class="section-chip"></span>
+        </div>
+        <p id="treinoObjetivo" class="section-intro"></p>
+        <div id="treinoDivisoes" class="training-divisions"></div>
+      </section>
+
+      <section id="financeiroSection" class="card home-section">
+        <div class="section-heading">
+          <div>
+            <div class="eyebrow">Pagamentos</div>
+            <h2>Financeiro</h2>
+          </div>
+          <span id="financeiroSituacao" class="section-chip"></span>
+        </div>
+        <div id="financeiroLista" class="data-list"></div>
+      </section>
+
+      <section id="avisosSection" class="card home-section">
+        <div class="section-heading">
+          <div>
+            <div class="eyebrow">Informações</div>
+            <h2>Avisos</h2>
+          </div>
+        </div>
+        <div id="avisosLista" class="data-list"></div>
+      </section>
 
       <section class="card account-card">
         <h2>Minha conta</h2>
@@ -114,7 +177,7 @@
     </section>
   </main>
 
-  <script src="/pages/aluno-login/index.js?v=20260810-1"></script>
+  <script src="/pages/aluno-login/index.js?v=20260810-2"></script>
   <script src="/assets/pwa/fusion-pwa-install.js" defer></script>
 </body>
 </html>
