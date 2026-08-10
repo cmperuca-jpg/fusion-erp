@@ -1,3 +1,5 @@
+import { obterSupabaseAdmin } from "../../config/supabase.mjs";
+
 const COOKIE_ACCESS = "fusion_aluno_access";
 const COOKIE_REFRESH = "fusion_aluno_refresh";
 
@@ -109,6 +111,133 @@ function primeiraLinha(data) {
   return Array.isArray(data) ? (data[0] || null) : (data || null);
 }
 
+function dataIsoOuNula(valor) {
+  const texto = String(valor || "").trim();
+  const match = texto.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return match ? `${match[1]}-${match[2]}-${match[3]}` : null;
+}
+
+function statusAlunoERP(payload = {}) {
+  const valor = String(
+    payload.status ||
+    payload.situacao ||
+    payload.statusMatricula ||
+    payload.matriculaStatus ||
+    (payload.ativo === true ? "ativo" : "")
+  ).trim();
+  return valor || "ativo";
+}
+
+async function alunoERPPorCpf(tenant, cpfNormalizado) {
+  const supabase = obterSupabaseAdmin({ obrigatorio: true });
+  const tabela = process.env.FUSION_SUPABASE_RECORDS_TABLE || "fusion_v3_records";
+
+  const { data, error } = await supabase
+    .from(tabela)
+    .select("record_id,payload")
+    .eq("tenant_id", tenant)
+    .eq("collection", "alunos")
+    .eq("payload->cpf", cpfNormalizado)
+    .limit(2);
+
+  if (error) {
+    throw new AlunoAppError(
+      `Falha ao localizar o aluno no Fusion ERP: ${error.message}`,
+      502,
+      "ERP_STUDENT_LOOKUP_FAILED"
+    );
+  }
+
+  const registros = Array.isArray(data) ? data : [];
+  if (!registros.length) {
+    throw new AlunoAppError(
+      "Aluno com este CPF não encontrado no banco principal do Fusion ERP.",
+      404,
+      "ERP_STUDENT_NOT_FOUND"
+    );
+  }
+  if (registros.length > 1) {
+    throw new AlunoAppError(
+      "Mais de um aluno foi encontrado com este CPF no Fusion ERP. Corrija o cadastro antes de gerar o acesso.",
+      409,
+      "ERP_DUPLICATE_CPF"
+    );
+  }
+
+  const registro = registros[0] || {};
+  const payload = registro.payload && typeof registro.payload === "object" ? registro.payload : {};
+  const legacyId = String(registro.record_id || payload.id || "").trim();
+  const nome = String(payload.nome || payload.nomeCompleto || payload.aluno || "").trim();
+  const telefone = apenasDigitos(payload.whatsapp || payload.telefone || payload.celular || "");
+  const matricula = String(
+    payload.numeroMatricula ||
+    payload.matricula ||
+    payload.numero_matricula ||
+    ""
+  ).trim();
+
+  if (!legacyId) {
+    throw new AlunoAppError(
+      "O cadastro do aluno no Fusion ERP está sem identificador interno.",
+      422,
+      "ERP_STUDENT_LEGACY_ID_MISSING"
+    );
+  }
+  if (nome.length < 3) {
+    throw new AlunoAppError(
+      "O cadastro do aluno no Fusion ERP está sem nome válido.",
+      422,
+      "ERP_STUDENT_NAME_INVALID"
+    );
+  }
+  if (telefone.length < 10) {
+    throw new AlunoAppError(
+      "Cadastre um telefone/WhatsApp válido para o aluno antes de gerar o código do aplicativo.",
+      422,
+      "ERP_STUDENT_PHONE_INVALID"
+    );
+  }
+
+  return {
+    legacyId,
+    nome,
+    cpf: cpfNormalizado,
+    telefone,
+    dataNascimento: dataIsoOuNula(payload.data_nascimento || payload.dataNascimento),
+    matricula: matricula || null,
+    status: statusAlunoERP(payload)
+  };
+}
+
+async function sincronizarAlunoNoApp({ tenant, cpfNormalizado }) {
+  const alunoERP = await alunoERPPorCpf(tenant, cpfNormalizado);
+
+  const data = await chamarSupabase("/rest/v1/rpc/fusion_sincronizar_aluno_backend", {
+    method: "POST",
+    body: {
+      p_erp_tenant_id: tenant,
+      p_legacy_id: alunoERP.legacyId,
+      p_nome: alunoERP.nome,
+      p_cpf: alunoERP.cpf,
+      p_telefone: alunoERP.telefone,
+      p_data_nascimento: alunoERP.dataNascimento,
+      p_matricula: alunoERP.matricula,
+      p_status: alunoERP.status
+    }
+  });
+
+  const row = primeiraLinha(data);
+  if (!row?.aluno_id) {
+    throw new AlunoAppError(
+      "O aluno não pôde ser sincronizado com o banco do aplicativo.",
+      502,
+      "APP_STUDENT_SYNC_FAILED"
+    );
+  }
+
+  return row;
+}
+
 export async function gerarAtivacaoAlunoERP({ tenantId, cpf, validadeMinutos = 30 } = {}) {
   const tenant = normalizarTenant(tenantId);
   const cpfNormalizado = apenasDigitos(cpf);
@@ -120,6 +249,10 @@ export async function gerarAtivacaoAlunoERP({ tenantId, cpf, validadeMinutos = 3
   if (!Number.isInteger(validade) || validade < 5 || validade > 120) {
     throw new AlunoAppError("A validade do código deve ficar entre 5 e 120 minutos.", 400, "INVALID_EXPIRATION");
   }
+
+  // O ERP é a fonte operacional do cadastro. Antes de emitir o código,
+  // sincroniza os dados essenciais no banco dedicado do Fusion Aluno.
+  await sincronizarAlunoNoApp({ tenant, cpfNormalizado });
 
   const data = await chamarSupabase("/rest/v1/rpc/fusion_gerar_ativacao_aluno_backend", {
     method: "POST",

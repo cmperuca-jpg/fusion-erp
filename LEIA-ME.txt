@@ -1,19 +1,33 @@
-ARQUIVO PRONTO — FUSION ALUNO
+FUSION ALUNO — SINCRONIZAÇÃO AUTOMÁTICA ERP -> APP
 
-Substitua no repositório:
-modules/security/api-security.middleware.mjs
+Substitua somente este arquivo no repositório fusion-erp:
 
-pelo arquivo de mesmo caminho deste pacote.
+modules/treinos/aluno-app.service.mjs
 
-O arquivo já contém:
-- remoção do redirecionamento interno www -> sem www;
-- manutenção dos redirecionamentos internos de rotas;
-- liberação somente das 6 rotas do Fusion Aluno no middleware global.
+O que esta versão faz:
+1. A academia clica em "Código app" no aluno do ERP.
+2. O servidor localiza o aluno no banco principal do Fusion ERP por tenant + CPF.
+3. Sincroniza nome, CPF, WhatsApp/telefone, nascimento, matrícula, status e legacy_id
+   no banco dedicado do Fusion Aluno.
+4. Gera o código de ativação no banco do aplicativo.
+5. Não exige cadastro duplicado do aluno.
+6. Não envia foto/base64 para o banco do app.
+7. Mantém as chaves secretas somente no servidor.
 
-Depois faça commit na main:
-fix: aplica dominio canonico e rotas Fusion Aluno
+Variáveis Render já necessárias:
+FUSION_APP_SUPABASE_URL
+FUSION_APP_SUPABASE_SECRET_KEY
 
-A Render deve iniciar o Auto-Deploy automaticamente.
+Nenhuma variável nova precisa ser criada.
+
+Depois de substituir:
+git add modules/treinos/aluno-app.service.mjs
+git commit -m "fix: sincroniza aluno antes de gerar codigo do app"
+git push origin main
+
+A Render fará Auto-Deploy.
 
 Teste:
-https://www.fusionsistema.com.br/pages/aluno-login/index.html
+Fusion Sistema > Alunos > Ariana > Código app.
+Agora a resposta esperada é o código de 8 caracteres, não mais
+"Aluno ativo com este CPF não encontrado no banco do aplicativo".
