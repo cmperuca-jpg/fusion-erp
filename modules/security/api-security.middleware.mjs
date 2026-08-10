@@ -351,7 +351,67 @@ export function clearLoginRateLimit(req) {
   loginAttempts.delete(clientKey(req));
 }
 
+
+function destinoCanonicoPublico(pathname = "") {
+  const rota = String(pathname || "").split("?")[0].replace(/\/+/g, "/");
+
+  if (/^\/(?:pages\/)?comecar(?:\/index\.html)?\/?$/i.test(rota)) {
+    return "/";
+  }
+
+  const comecarTenant = rota.match(
+    /^\/(?:pages\/)?comecar\/([a-z0-9][a-z0-9_-]{1,79})(?:\/index\.html)?\/?$/i
+  );
+  if (comecarTenant) {
+    const slug = normalizarTenantId(comecarTenant[1]);
+    if (slug && !RESERVED_PUBLIC_SLUGS.has(slug)) return `/${slug}`;
+  }
+
+  if (/^\/pages\/promocao(?:\/index\.html)?\/?$/i.test(rota)) {
+    return "/";
+  }
+
+  if (/^\/pages\/matricula-online(?:\/index\.html)?\/?$/i.test(rota)) {
+    return "/";
+  }
+
+  return "";
+}
+
+function hostRequisicao(req) {
+  return String(
+    req.headers["x-forwarded-host"] ||
+    req.headers.host ||
+    ""
+  )
+    .split(",")[0]
+    .trim()
+    .split(":")[0]
+    .toLowerCase();
+}
+
+function redirecionarCanonicoPublico(req, res) {
+  if (!["GET", "HEAD"].includes(req.method)) return false;
+
+  const destinoRota = destinoCanonicoPublico(req.path);
+  const host = hostRequisicao(req);
+  const www = host === "www.fusionsistema.com.br";
+
+  if (!destinoRota && !www) return false;
+
+  const caminho = destinoRota || req.originalUrl || req.url || "/";
+  const destino = www
+    ? `https://fusionsistema.com.br${caminho}`
+    : caminho;
+
+  res.setHeader("Cache-Control", "no-store");
+  res.redirect(308, destino);
+  return true;
+}
+
 export async function securityHeaders(req, res, next) {
+  if (redirecionarCanonicoPublico(req, res)) return;
+
   res.setHeader("X-Content-Type-Options", "nosniff");
   res.setHeader("X-Frame-Options", "SAMEORIGIN");
   res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
