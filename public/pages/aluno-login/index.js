@@ -676,6 +676,31 @@ function navegarGaleria(delta) {
   }
 }
 
+
+function renderAvaliacao(avaliacao = {}) {
+  const status = textoSeguro(avaliacao.status) || "Pendente";
+  const codigo = textoSeguro(avaliacao.codigo_status) || "pendente";
+
+  $("avaliacaoResumo").textContent = status;
+  $("avaliacaoCard").dataset.statusAvaliacao = codigo;
+
+  if (avaliacao.total > 0) {
+    const detalhes = [];
+    if (avaliacao.ultima_data) detalhes.push(`Última: ${dataBR(avaliacao.ultima_data)}`);
+    if (avaliacao.validade) detalhes.push(`Validade: ${dataBR(avaliacao.validade)}`);
+    else if (avaliacao.proxima_data) detalhes.push(`Próxima: ${dataBR(avaliacao.proxima_data)}`);
+    $("avaliacaoDetalhe").textContent = detalhes.join(" · ") || avaliacao.mensagem || "Resultado disponível.";
+    $("avaliacaoAcao").textContent = "Toque para ver resultados";
+  } else {
+    $("avaliacaoDetalhe").textContent = avaliacao.mensagem || "Nenhuma avaliação física registrada.";
+    $("avaliacaoAcao").textContent = "Toque para acompanhar o status";
+  }
+}
+
+function abrirAvaliacao() {
+  location.href = "/pages/aluno-avaliacao/index.html";
+}
+
 function renderFrequencia(frequencia = {}) {
   const total30 = Number(frequencia.ultimos_30_dias || 0);
   $("frequenciaResumo").textContent = `${total30} acesso${total30 === 1 ? "" : "s"} em 30 dias`;
@@ -747,6 +772,7 @@ async function carregarHome() {
   mostrarFotoAluno(aluno);
   renderPlano(data.plano || null);
   renderTreinos(data.treinos || {});
+  renderAvaliacao(data.avaliacao || {});
   renderFrequencia(data.frequencia || {});
   renderFinanceiro(data.financeiro || {});
   renderAvisos(data.avisos || []);
@@ -828,6 +854,14 @@ $("entrar").addEventListener("click", entrar);
 $("sair").addEventListener("click", sair);
 $("trocarAcademiaLogin").addEventListener("click", trocarAcademia);
 $("trocarAcademiaHome").addEventListener("click", trocarAcademia);
+
+$("avaliacaoCard").addEventListener("click", abrirAvaliacao);
+$("avaliacaoCard").addEventListener("keydown", (event) => {
+  if (event.key === "Enter" || event.key === " ") {
+    event.preventDefault();
+    abrirAvaliacao();
+  }
+});
 
 $("treinoCard").addEventListener("click", () => abrirGaleriaTreino(0, 0));
 $("treinoCard").addEventListener("keydown", (event) => {

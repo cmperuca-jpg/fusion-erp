@@ -578,6 +578,241 @@ function resumoTreinos(rows = []) {
   };
 }
 
+
+const CAMPOS_AVALIACAO_ALUNO = [
+  "data", "hora", "objetivo", "observacoes",
+  "professorNome", "professor_nome", "professor",
+  "peso", "altura", "imc", "classificacao_imc",
+  "percentual_gordura", "percentual_ideal", "massa_magra", "massa_gorda",
+  "agua_corporal", "gordura_visceral", "idade_metabolica", "tmb",
+  "composicao_resultado",
+  "pescoco", "punho", "ombro",
+  "braco_relaxado_direito", "braco_relaxado_esquerdo",
+  "braco_contraido_direito", "braco_contraido_esquerdo",
+  "antebraco_direito", "antebraco_esquerdo",
+  "torax_relaxado", "torax_inspirado",
+  "cintura", "abdomen", "quadril",
+  "coxa_proximal_direita", "coxa_proximal_esquerda",
+  "coxa_medial_direita", "coxa_medial_esquerda",
+  "panturrilha_direita", "panturrilha_esquerda",
+  "rcq", "rcq_classificacao", "soma_perimetros",
+  "protocolo_dobras", "subescapular", "bicipital", "tricipital",
+  "axilar_media", "supra_iliaca", "peitoral", "dobra_abdominal",
+  "dobra_coxa", "dobra_panturrilha",
+  "condicao_fisica", "protocolo_cardio", "vo2_obtido", "vo2_previsto",
+  "deficit_aerobico", "cardio_info",
+  "flexao_bracos", "flexao_resultado", "abdominal_repeticoes",
+  "abdominal_resultado", "banco_wells", "wells_resultado",
+  "pratica_atividade", "medicamentos", "cirurgias", "doencas_familia",
+  "alergias", "restricoes_medicas", "lesoes", "anamnese_observacoes",
+  "status", "statusAvaliacao", "status_avaliacao",
+  "validade", "data_validade", "validadeAte",
+  "proxima_avaliacao", "proximaAvaliacao", "reavaliacao_em", "reavaliacaoEm"
+];
+
+const FOTOS_AVALIACAO_ALUNO = [
+  "foto_frente_base64",
+  "foto_costas_base64",
+  "foto_lateral_direita_base64",
+  "foto_lateral_esquerda_base64"
+];
+
+function imagemAvaliacaoSegura(valor) {
+  const imagem = textoSeguro(valor);
+  if (!imagem) return "";
+  if (/^data:image\/(jpeg|jpg|png|webp);base64,/i.test(imagem) && imagem.length <= 4_000_000) return imagem;
+  if (imagem.startsWith("/")) return imagem;
+  return "";
+}
+
+function dataAvaliacaoERP(item = {}) {
+  return dataValida(
+    item.data ||
+    item.data_avaliacao ||
+    item.dataAvaliacao ||
+    item.criado_em ||
+    item.criadoEm ||
+    item.createdAt ||
+    item.atualizado_em ||
+    item.atualizadoEm
+  );
+}
+
+function dataExpiracaoAvaliacao(item = {}) {
+  return dataValida(
+    item.validade ||
+    item.data_validade ||
+    item.validadeAte
+  );
+}
+
+function dataProximaAvaliacao(item = {}) {
+  return dataValida(
+    item.proxima_avaliacao ||
+    item.proximaAvaliacao ||
+    item.reavaliacao_em ||
+    item.reavaliacaoEm
+  );
+}
+
+function avaliacaoSeguraParaAluno(row = {}) {
+  const item = payloadRegistro(row);
+  const avaliacao = {
+    id: textoSeguro(item.id || row.record_id),
+    data: textoSeguro(item.data || item.data_avaliacao || item.dataAvaliacao),
+    criado_em: textoSeguro(item.criado_em || item.criadoEm),
+    atualizado_em: textoSeguro(item.atualizado_em || item.atualizadoEm)
+  };
+
+  for (const campo of CAMPOS_AVALIACAO_ALUNO) {
+    const valor = item[campo];
+    if (valor === undefined || valor === null) continue;
+    if (typeof valor === "string" || typeof valor === "number" || typeof valor === "boolean") {
+      avaliacao[campo] = valor;
+    }
+  }
+
+  for (const campo of FOTOS_AVALIACAO_ALUNO) {
+    const imagem = imagemAvaliacaoSegura(item[campo]);
+    if (imagem) avaliacao[campo] = imagem;
+  }
+
+  return avaliacao;
+}
+
+async function registrosAvaliacoesERP(supabase, tabela, tenant, alunoId, limite = 40) {
+  async function consultar(campo) {
+    const { data, error } = await supabase
+      .from(tabela)
+      .select("record_id,payload,updated_at")
+      .eq("tenant_id", tenant)
+      .eq("collection", "avaliacoes")
+      .eq(`payload->>${campo}`, alunoId)
+      .order("updated_at", { ascending: false })
+      .limit(limite);
+
+    if (error) {
+      throw new AlunoAppError(
+        "Não foi possível carregar as avaliações físicas do aluno no Fusion ERP.",
+        502,
+        "ERP_EVALUATION_DATA_FAILED"
+      );
+    }
+    return Array.isArray(data) ? data : [];
+  }
+
+  const [camel, snake] = await Promise.all([
+    consultar("alunoId"),
+    consultar("aluno_id")
+  ]);
+
+  const unicos = new Map();
+  for (const row of [...camel, ...snake]) {
+    const chave = textoSeguro(row.record_id) || JSON.stringify(row.payload || {});
+    if (!unicos.has(chave)) unicos.set(chave, row);
+  }
+
+  return [...unicos.values()]
+    .sort((a, b) => {
+      const da = dataAvaliacaoERP(payloadRegistro(a))?.getTime() || 0;
+      const db = dataAvaliacaoERP(payloadRegistro(b))?.getTime() || 0;
+      return db - da;
+    })
+    .slice(0, limite);
+}
+
+function resumoAvaliacoes(rows = []) {
+  const avaliacoes = rows
+    .map(avaliacaoSeguraParaAluno)
+    .filter(item => item.id || item.data || item.criado_em);
+
+  const ultima = avaliacoes[0] || null;
+
+  if (!ultima) {
+    return {
+      total: 0,
+      status: "Pendente",
+      codigo_status: "pendente",
+      ultima_data: "",
+      validade: "",
+      proxima_data: "",
+      professor: "",
+      objetivo: "",
+      mensagem: "Nenhuma avaliação física foi registrada para você até o momento.",
+      itens: []
+    };
+  }
+
+  const ultimaData = dataAvaliacaoERP(ultima);
+  const validade = dataExpiracaoAvaliacao(ultima);
+  const proxima = dataProximaAvaliacao(ultima);
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+
+  let status = "Realizada";
+  let codigo = "realizada";
+  let mensagem = ultimaData
+    ? `Sua última avaliação foi realizada em ${dataCurtaBR(ultimaData.toISOString())}.`
+    : "Sua avaliação física está registrada.";
+
+  const statusInformado = normalizarTexto(
+    ultima.statusAvaliacao ||
+    ultima.status_avaliacao ||
+    ultima.status
+  );
+
+  if (statusInformado.includes("vencid")) {
+    status = "Vencida";
+    codigo = "vencida";
+    mensagem = "Sua avaliação física está marcada como vencida. Procure a academia para uma reavaliação.";
+  } else if (statusInformado.includes("pendent")) {
+    status = "Pendente";
+    codigo = "pendente";
+    mensagem = "Sua avaliação física está pendente.";
+  } else if (statusInformado.includes("agend")) {
+    status = "Agendada";
+    codigo = "agendada";
+    mensagem = proxima
+      ? `Sua avaliação está agendada para ${dataCurtaBR(proxima.toISOString())}.`
+      : "Sua avaliação física está agendada.";
+  } else if (validade) {
+    const validadeDia = new Date(validade);
+    validadeDia.setHours(0, 0, 0, 0);
+    const dias = Math.ceil((validadeDia.getTime() - hoje.getTime()) / (24 * 60 * 60 * 1000));
+
+    if (dias < 0) {
+      status = "Vencida";
+      codigo = "vencida";
+      mensagem = `Sua avaliação venceu em ${dataCurtaBR(validade.toISOString())}. Procure a academia para uma reavaliação.`;
+    } else if (dias <= 15) {
+      status = "Próxima do vencimento";
+      codigo = "proxima";
+      mensagem = `Sua avaliação vence em ${dataCurtaBR(validade.toISOString())}.`;
+    } else {
+      status = "Em dia";
+      codigo = "em_dia";
+      mensagem = `Avaliação válida até ${dataCurtaBR(validade.toISOString())}.`;
+    }
+  } else if (proxima && proxima.getTime() >= hoje.getTime()) {
+    status = "Reavaliação agendada";
+    codigo = "agendada";
+    mensagem = `Sua próxima avaliação está prevista para ${dataCurtaBR(proxima.toISOString())}.`;
+  }
+
+  return {
+    total: avaliacoes.length,
+    status,
+    codigo_status: codigo,
+    ultima_data: ultimaData?.toISOString() || "",
+    validade: validade?.toISOString() || "",
+    proxima_data: proxima?.toISOString() || "",
+    professor: textoSeguro(ultima.professorNome || ultima.professor_nome || ultima.professor),
+    objetivo: textoSeguro(ultima.objetivo),
+    mensagem,
+    itens: avaliacoes
+  };
+}
+
 function dataDoAcesso(item = {}) {
   return dataValida(
     item.entradaEm || item.dataHora || item.data_hora || item.criadoEm ||
@@ -688,7 +923,7 @@ function dataCurtaBR(valor) {
   return match ? `${match[3]}/${match[2]}/${match[1]}` : texto;
 }
 
-function montarAvisos({ alunoERP = {}, plano = null, treinos = {}, financeiro = {} } = {}) {
+function montarAvisos({ alunoERP = {}, plano = null, treinos = {}, financeiro = {}, avaliacao = {} } = {}) {
   const avisos = [];
   if (alunoERP.bloqueado === true || alunoERP.bloqueioCheckin === true) {
     avisos.push({
@@ -720,6 +955,31 @@ function montarAvisos({ alunoERP = {}, plano = null, treinos = {}, financeiro = 
       mensagem: "Nenhum treino foi prescrito para você no momento."
     });
   }
+  if (avaliacao?.codigo_status === "pendente") {
+    avisos.push({
+      tipo: "avaliacao",
+      titulo: "Avaliação física pendente",
+      mensagem: avaliacao.mensagem || "Nenhuma avaliação física foi registrada."
+    });
+  } else if (avaliacao?.codigo_status === "vencida") {
+    avisos.push({
+      tipo: "avaliacao",
+      titulo: "Avaliação física vencida",
+      mensagem: avaliacao.mensagem || "Procure a academia para realizar uma reavaliação."
+    });
+  } else if (avaliacao?.codigo_status === "proxima") {
+    avisos.push({
+      tipo: "avaliacao",
+      titulo: "Avaliação física",
+      mensagem: avaliacao.mensagem || "Sua avaliação está próxima do vencimento."
+    });
+  } else if (avaliacao?.codigo_status === "agendada") {
+    avisos.push({
+      tipo: "avaliacao",
+      titulo: "Avaliação física agendada",
+      mensagem: avaliacao.mensagem || "Há uma avaliação programada."
+    });
+  }
   if (!avisos.length) {
     avisos.push({ tipo: "ok", titulo: "Tudo certo", mensagem: "Não há avisos pendentes para o seu acesso." });
   }
@@ -736,14 +996,15 @@ async function carregarHomeERP(alunoApp = {}) {
   const supabase = obterSupabaseAdmin({ obrigatorio: true });
   const tabela = process.env.FUSION_SUPABASE_RECORDS_TABLE || "fusion_v3_records";
 
-  const [alunoERP, matriculasRows, treinosRows, checkinRows, checkinsRows, mensalidadesRows, financeiroRows] = await Promise.all([
+  const [alunoERP, matriculasRows, treinosRows, checkinRows, checkinsRows, mensalidadesRows, financeiroRows, avaliacoesRows] = await Promise.all([
     cadastroAlunoERP(supabase, tabela, tenant, legacyId),
     registrosAlunoERP(supabase, tabela, tenant, "matriculas", legacyId, 12),
     registrosAlunoERP(supabase, tabela, tenant, "treinos_prescritos", legacyId, 12),
     registrosAlunoERP(supabase, tabela, tenant, "checkin", legacyId, 80),
     registrosAlunoERP(supabase, tabela, tenant, "checkins", legacyId, 80),
     registrosAlunoERP(supabase, tabela, tenant, "mensalidades", legacyId, 40),
-    registrosAlunoERP(supabase, tabela, tenant, "financeiro", legacyId, 40)
+    registrosAlunoERP(supabase, tabela, tenant, "financeiro", legacyId, 40),
+    registrosAvaliacoesERP(supabase, tabela, tenant, legacyId, 40)
   ]);
 
   const matricula = escolherMatricula(matriculasRows);
@@ -751,6 +1012,7 @@ async function carregarHomeERP(alunoApp = {}) {
   const treinos = resumoTreinos(treinosRows);
   const frequencia = resumoFrequencia([...checkinRows, ...checkinsRows]);
   const financeiro = resumoFinanceiro(mensalidadesRows, financeiroRows);
+  const avaliacao = resumoAvaliacoes(avaliacoesRows);
 
   const aluno = {
     id: textoSeguro(alunoApp.id),
@@ -769,7 +1031,8 @@ async function carregarHomeERP(alunoApp = {}) {
     treinos,
     frequencia,
     financeiro,
-    avisos: montarAvisos({ alunoERP, plano, treinos, financeiro })
+    avaliacao,
+    avisos: montarAvisos({ alunoERP, plano, treinos, financeiro, avaliacao })
   };
 }
 

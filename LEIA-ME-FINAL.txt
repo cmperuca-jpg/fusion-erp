@@ -1,0 +1,66 @@
+FUSION ALUNO — PACOTE CUMULATIVO
+GALERIA POR DIVISÃO + FIM DO TREINO + AVALIAÇÃO FÍSICA
+
+USE SOMENTE ESTE PACOTE.
+
+Substitua estes arquivos:
+
+1. modules/treinos/aluno-app.service.mjs
+2. public/pages/aluno-login/index.html
+3. public/pages/aluno-login/index.js
+4. public/pages/aluno-login/style.css
+5. public/pages/aluno-avaliacao/index.html
+6. public/pages/aluno-avaliacao/index.js
+7. public/pages/aluno-avaliacao/style.css
+
+GALERIA DO TREINO
+- A, B, C etc. são galerias separadas.
+- Anterior/próximo nunca atravessam divisões.
+- O último exercício mostra a tela "Treino A/B/C concluído".
+- Não volta automaticamente ao primeiro exercício.
+- A tela final permite concluir e fechar.
+- Para trocar de divisão, o aluno usa as abas A/B/C.
+
+AVALIAÇÃO FÍSICA
+- Novo cartão "Avaliação física" na Home.
+- Status possíveis sem inventar prazo:
+  * Pendente: nenhuma avaliação registrada.
+  * Realizada: existe avaliação, mas não há validade explícita cadastrada.
+  * Em dia: existe validade explícita e ainda está distante.
+  * Próxima do vencimento: validade explícita dentro de 15 dias.
+  * Vencida: validade explícita já passou ou o registro está marcado como vencido.
+  * Agendada/Reavaliação agendada: quando o ERP possui data explícita.
+- O cartão abre /pages/aluno-avaliacao/index.html.
+- A página usa a sessão atual do Fusion Aluno por cookie + device token.
+- Não usa o login antigo do portal do aluno.
+- Mostra:
+  * última avaliação;
+  * avaliação anterior;
+  * professor;
+  * objetivo;
+  * comparação automática;
+  * composição corporal;
+  * perímetros e RCQ;
+  * dobras cutâneas;
+  * cardiorrespiratória;
+  * neuromotores;
+  * anamnese;
+  * fotos posturais, quando existirem.
+- Avisos da Home também comunicam avaliação pendente, vencida,
+  próxima do vencimento ou agendada.
+
+SEGURANÇA
+- O navegador não recebe chave do Supabase.
+- A página de avaliação lê apenas /api/treinos/aluno-app/me no próprio domínio.
+- O backend filtra as avaliações pelo legacy_id do aluno autenticado.
+- Somente campos conhecidos da avaliação são devolvidos ao aluno.
+- Fotos só são devolvidas se forem data:image segura ou caminho local "/".
+
+NÃO PRECISA
+- Não precisa criar tabela nova.
+- Não precisa alterar variável da Render.
+- Não precisa alterar Supabase.
+- Não precisa enviar os ZIPs anteriores.
+
+Commit sugerido:
+feat: adiciona avaliacao fisica ao Fusion Aluno

@@ -570,3 +570,27 @@ body.gallery-open { overflow: hidden; }
   width: min(100%, 300px);
   min-height: 48px;
 }
+
+
+/* Avaliação física */
+.evaluation-card[data-status-avaliacao="pendente"] {
+  border-color: #f3c66c;
+  background: #fffaf0;
+}
+.evaluation-card[data-status-avaliacao="vencida"] {
+  border-color: #f0a3a3;
+  background: #fff5f5;
+}
+.evaluation-card[data-status-avaliacao="proxima"],
+.evaluation-card[data-status-avaliacao="agendada"] {
+  border-color: #9ec5e6;
+  background: #f5faff;
+}
+.evaluation-card[data-status-avaliacao="em_dia"],
+.evaluation-card[data-status-avaliacao="realizada"] {
+  border-color: #9fd7c8;
+  background: #f4fbf8;
+}
+.notice-avaliacao {
+  border-left: 4px solid #0f766e;
+}
