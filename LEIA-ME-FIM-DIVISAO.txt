@@ -1,0 +1,32 @@
+FUSION ALUNO — FIM DE CADA DIVISÃO SEM LOOP
+
+Substitua somente:
+- public/pages/aluno-login/index.html
+- public/pages/aluno-login/index.js
+- public/pages/aluno-login/style.css
+
+COMPORTAMENTO
+
+Treino A:
+A1 -> A2 -> A3 -> ... -> último exercício -> TELA "TREINO A CONCLUÍDO"
+
+Treino B:
+B1 -> B2 -> ... -> último exercício -> TELA "TREINO B CONCLUÍDO"
+
+Treino C:
+C1 -> C2 -> ... -> último exercício -> TELA "TREINO C CONCLUÍDO"
+
+REGRAS
+
+- O último exercício NÃO volta ao primeiro.
+- A tela final usa uma imagem/gráfico de conclusão com check.
+- Na tela final o botão Próximo desaparece.
+- Anterior na tela final volta ao último exercício da mesma divisão.
+- No primeiro exercício, Anterior não aparece.
+- Swipe respeita a mesma regra.
+- Nenhuma navegação atravessa automaticamente A -> B, B -> C etc.
+- Para trocar de divisão, o aluno usa as abas A/B/C.
+- Botão "Concluir e fechar" fecha a galeria.
+
+Commit sugerido:
+fix: mostra fim de cada divisao sem reiniciar galeria

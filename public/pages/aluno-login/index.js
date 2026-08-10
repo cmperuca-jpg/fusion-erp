@@ -8,8 +8,11 @@ const KEYS = {
 const $ = (id) => document.getElementById(id);
 const screens = ["loadingScreen", "activationScreen", "firstAccessScreen", "loginScreen", "homeScreen"];
 
+let treinoGaleriaDivisoes = [];
+let treinoGaleriaDivisaoIndice = 0;
 let treinoGaleriaItens = [];
 let treinoGaleriaIndice = 0;
+let treinoGaleriaNoFim = false;
 let treinoGaleriaTouchX = null;
 
 function uuid() {
@@ -335,15 +338,19 @@ function imagemTreino(item = {}) {
     .find((valor) => valor.startsWith("/")) || "";
 }
 
-function montarGaleriaTreino(divisoes = []) {
-  return divisoes.flatMap((divisao) => {
-    const itens = Array.isArray(divisao?.itens) ? divisao.itens : [];
-    return itens.map((item) => ({
-      ...item,
-      divisao: textoSeguro(divisao?.nome) || "Treino",
-      imagem: imagemTreino(item)
-    }));
-  });
+function montarGaleriaPorDivisao(divisoes = []) {
+  return divisoes
+    .map((divisao) => {
+      const itens = Array.isArray(divisao?.itens) ? divisao.itens : [];
+      return {
+        nome: textoSeguro(divisao?.nome) || "Treino",
+        itens: itens.map((item) => ({
+          ...item,
+          imagem: imagemTreino(item)
+        }))
+      };
+    })
+    .filter((divisao) => divisao.itens.length > 0);
 }
 
 function renderTreinos(treinos = {}) {
@@ -352,15 +359,18 @@ function renderTreinos(treinos = {}) {
   const temTreino = totalExercicios > 0;
   const card = $("treinoCard");
 
-  treinoGaleriaItens = temTreino ? montarGaleriaTreino(divisoes) : [];
+  treinoGaleriaDivisoes = temTreino ? montarGaleriaPorDivisao(divisoes) : [];
+  treinoGaleriaDivisaoIndice = 0;
+  treinoGaleriaItens = treinoGaleriaDivisoes[0]?.itens || [];
+  treinoGaleriaIndice = 0;
 
   $("treinoResumo").textContent = temTreino
-    ? `${divisoes.length} divisão${divisoes.length === 1 ? "" : "ões"}`
+    ? `${treinoGaleriaDivisoes.length} divisão${treinoGaleriaDivisoes.length === 1 ? "" : "ões"}`
     : "Nenhum treino prescrito";
   $("treinoDetalhe").textContent = temTreino
     ? `${totalExercicios} exercício${totalExercicios === 1 ? "" : "s"}${treinos.professor ? ` · ${treinos.professor}` : ""}`
     : "Quando o professor prescrever, aparecerá aqui.";
-  $("treinoAcao").textContent = temTreino ? "Toque para abrir a galeria de exercícios" : "";
+  $("treinoAcao").textContent = temTreino ? "Abra uma divisão para ver os exercícios" : "";
 
   card.classList.toggle("feature-card-disabled", !temTreino);
   card.setAttribute("aria-disabled", temTreino ? "false" : "true");
@@ -376,25 +386,24 @@ function renderTreinos(treinos = {}) {
   ].filter(Boolean).join(" · ");
 
   const container = limparLista("treinoDivisoes");
-  let indiceGlobal = 0;
 
-  divisoes.forEach((divisao) => {
+  treinoGaleriaDivisoes.forEach((divisaoGaleria, indiceDivisao) => {
     const details = document.createElement("details");
     details.className = "training-division";
+
     const summary = document.createElement("summary");
-    const itens = Array.isArray(divisao.itens) ? divisao.itens : [];
-    summary.textContent = `${divisao.nome || "Treino"} · ${itens.length} exercício${itens.length === 1 ? "" : "s"}`;
+    summary.textContent = `${divisaoGaleria.nome} · ${divisaoGaleria.itens.length} exercício${divisaoGaleria.itens.length === 1 ? "" : "s"}`;
     details.appendChild(summary);
 
     const lista = document.createElement("div");
     lista.className = "exercise-list";
 
-    itens.forEach((item) => {
-      const indice = indiceGlobal++;
+    divisaoGaleria.itens.forEach((item, indiceItem) => {
       const linha = document.createElement("button");
       linha.type = "button";
       linha.className = "exercise-row exercise-row-button";
-      linha.dataset.galleryIndex = String(indice);
+      linha.dataset.galleryDivision = String(indiceDivisao);
+      linha.dataset.galleryIndex = String(indiceItem);
 
       const thumb = document.createElement("span");
       thumb.className = "exercise-thumb";
@@ -430,7 +439,7 @@ function renderTreinos(treinos = {}) {
       copy.append(nome, meta, acao);
 
       linha.append(thumb, copy);
-      linha.addEventListener("click", () => abrirGaleriaTreino(indice));
+      linha.addEventListener("click", () => abrirGaleriaTreino(indiceDivisao, indiceItem));
       lista.appendChild(linha);
     });
 
@@ -439,8 +448,51 @@ function renderTreinos(treinos = {}) {
   });
 }
 
+function galeriaDivisaoAtual() {
+  return treinoGaleriaDivisoes[treinoGaleriaDivisaoIndice] || null;
+}
+
 function galeriaItemAtual() {
   return treinoGaleriaItens[treinoGaleriaIndice] || null;
+}
+
+function selecionarDivisaoGaleria(indiceDivisao, indiceItem = 0) {
+  if (!treinoGaleriaDivisoes.length) return false;
+
+  const indiceSeguro = Math.max(
+    0,
+    Math.min(Number(indiceDivisao) || 0, treinoGaleriaDivisoes.length - 1)
+  );
+
+  treinoGaleriaDivisaoIndice = indiceSeguro;
+  treinoGaleriaItens = treinoGaleriaDivisoes[indiceSeguro]?.itens || [];
+  treinoGaleriaIndice = Math.max(
+    0,
+    Math.min(Number(indiceItem) || 0, Math.max(0, treinoGaleriaItens.length - 1))
+  );
+  treinoGaleriaNoFim = false;
+  return treinoGaleriaItens.length > 0;
+}
+
+function renderDivisoesGaleria() {
+  const container = $("treinoGaleriaDivisoesTabs");
+  container.replaceChildren();
+
+  treinoGaleriaDivisoes.forEach((divisao, indice) => {
+    const botao = document.createElement("button");
+    botao.type = "button";
+    botao.className = `gallery-division-tab${indice === treinoGaleriaDivisaoIndice ? " active" : ""}`;
+    botao.textContent = divisao.nome || `Divisão ${indice + 1}`;
+    botao.setAttribute(
+      "aria-label",
+      `Abrir ${divisao.nome || `divisão ${indice + 1}`}, ${divisao.itens.length} exercícios`
+    );
+    botao.addEventListener("click", () => {
+      if (!selecionarDivisaoGaleria(indice, 0)) return;
+      renderGaleriaTreino();
+    });
+    container.appendChild(botao);
+  });
 }
 
 function renderMiniaturasGaleria() {
@@ -450,7 +502,7 @@ function renderMiniaturasGaleria() {
   treinoGaleriaItens.forEach((item, indice) => {
     const botao = document.createElement("button");
     botao.type = "button";
-    botao.className = `gallery-thumb${indice === treinoGaleriaIndice ? " active" : ""}`;
+    botao.className = `gallery-thumb${!treinoGaleriaNoFim && indice === treinoGaleriaIndice ? " active" : ""}`;
     botao.setAttribute("aria-label", `Abrir ${item.nome || `exercício ${indice + 1}`}`);
 
     const imagem = imagemTreino(item);
@@ -469,6 +521,7 @@ function renderMiniaturasGaleria() {
     }
 
     botao.addEventListener("click", () => {
+      treinoGaleriaNoFim = false;
       treinoGaleriaIndice = indice;
       renderGaleriaTreino();
     });
@@ -483,12 +536,51 @@ function renderMiniaturasGaleria() {
 }
 
 function renderGaleriaTreino() {
+  const divisao = galeriaDivisaoAtual();
+  if (!divisao || !treinoGaleriaItens.length) return fecharGaleriaTreino();
+
+  const img = $("treinoGaleriaImagem");
+  const semImagem = $("treinoGaleriaSemImagem");
+  const fim = $("treinoGaleriaFim");
+
+  img.onload = null;
+  img.onerror = null;
+  img.classList.add("hidden");
+  img.removeAttribute("src");
+  semImagem.classList.add("hidden");
+  fim.classList.add("hidden");
+
+  if (treinoGaleriaNoFim) {
+    $("treinoGaleriaDivisao").textContent = divisao.nome || "Treino";
+    $("treinoGaleriaTitulo").textContent = "Fim do treino";
+    $("treinoGaleriaContador").textContent =
+      `${divisao.nome || "Treino"} · ${treinoGaleriaItens.length} exercício${treinoGaleriaItens.length === 1 ? "" : "s"} concluídos`;
+
+    $("treinoGaleriaMeta").textContent = "";
+    $("treinoGaleriaObservacao").classList.add("hidden");
+    $("treinoGaleriaDescricao").classList.add("hidden");
+
+    $("treinoGaleriaFimTitulo").textContent = `${divisao.nome || "Treino"} concluído`;
+    $("treinoGaleriaFimTexto").textContent =
+      `Você chegou ao fim dos ${treinoGaleriaItens.length} exercício${treinoGaleriaItens.length === 1 ? "" : "s"} desta divisão.`;
+    fim.classList.remove("hidden");
+
+    // No fim: anterior volta ao último exercício; próximo nunca reinicia.
+    $("treinoGaleriaAnterior").classList.remove("hidden");
+    $("treinoGaleriaProximo").classList.add("hidden");
+
+    renderDivisoesGaleria();
+    renderMiniaturasGaleria();
+    return;
+  }
+
   const item = galeriaItemAtual();
   if (!item) return fecharGaleriaTreino();
 
-  $("treinoGaleriaDivisao").textContent = item.divisao || "Treino";
+  $("treinoGaleriaDivisao").textContent = divisao.nome || "Treino";
   $("treinoGaleriaTitulo").textContent = item.nome || "Exercício";
-  $("treinoGaleriaContador").textContent = `${treinoGaleriaIndice + 1} de ${treinoGaleriaItens.length}`;
+  $("treinoGaleriaContador").textContent =
+    `${divisao.nome || "Treino"} · ${treinoGaleriaIndice + 1} de ${treinoGaleriaItens.length}`;
 
   const meta = [
     item.grupo,
@@ -508,16 +600,7 @@ function renderGaleriaTreino() {
   $("treinoGaleriaDescricao").textContent = descricao;
   $("treinoGaleriaDescricao").classList.toggle("hidden", !descricao);
 
-  const img = $("treinoGaleriaImagem");
-  const semImagem = $("treinoGaleriaSemImagem");
   const imagem = imagemTreino(item);
-
-  img.onload = null;
-  img.onerror = null;
-  img.classList.add("hidden");
-  img.removeAttribute("src");
-  semImagem.classList.remove("hidden");
-
   if (imagem) {
     img.alt = `Demonstração do exercício ${item.nome || ""}`;
     img.onload = () => {
@@ -529,17 +612,25 @@ function renderGaleriaTreino() {
       semImagem.classList.remove("hidden");
     };
     img.src = imagem;
+  } else {
+    semImagem.classList.remove("hidden");
   }
 
-  const temVarios = treinoGaleriaItens.length > 1;
-  $("treinoGaleriaAnterior").classList.toggle("hidden", !temVarios);
-  $("treinoGaleriaProximo").classList.toggle("hidden", !temVarios);
+  // Em qualquer exercício há anterior apenas se não for o primeiro.
+  $("treinoGaleriaAnterior").classList.toggle("hidden", treinoGaleriaIndice === 0);
+
+  // Próximo continua visível inclusive no último exercício:
+  // no último, ele abre a tela final em vez de voltar ao início.
+  $("treinoGaleriaProximo").classList.remove("hidden");
+
+  renderDivisoesGaleria();
   renderMiniaturasGaleria();
 }
 
-function abrirGaleriaTreino(indice = 0) {
-  if (!treinoGaleriaItens.length) return;
-  treinoGaleriaIndice = Math.max(0, Math.min(Number(indice) || 0, treinoGaleriaItens.length - 1));
+function abrirGaleriaTreino(indiceDivisao = 0, indiceItem = 0) {
+  if (!selecionarDivisaoGaleria(indiceDivisao, indiceItem)) return;
+
+  treinoGaleriaNoFim = false;
   renderGaleriaTreino();
   $("treinoGaleria").classList.remove("hidden");
   document.body.classList.add("gallery-open");
@@ -553,8 +644,36 @@ function fecharGaleriaTreino() {
 
 function navegarGaleria(delta) {
   if (!treinoGaleriaItens.length) return;
-  treinoGaleriaIndice = (treinoGaleriaIndice + delta + treinoGaleriaItens.length) % treinoGaleriaItens.length;
-  renderGaleriaTreino();
+
+  if (delta > 0) {
+    if (treinoGaleriaNoFim) return;
+
+    if (treinoGaleriaIndice >= treinoGaleriaItens.length - 1) {
+      // Último exercício -> imagem/tela de fim. Nunca volta ao começo.
+      treinoGaleriaNoFim = true;
+      renderGaleriaTreino();
+      return;
+    }
+
+    treinoGaleriaIndice += 1;
+    renderGaleriaTreino();
+    return;
+  }
+
+  if (delta < 0) {
+    if (treinoGaleriaNoFim) {
+      treinoGaleriaNoFim = false;
+      treinoGaleriaIndice = treinoGaleriaItens.length - 1;
+      renderGaleriaTreino();
+      return;
+    }
+
+    // Primeiro exercício: não atravessa para outra divisão nem volta pelo final.
+    if (treinoGaleriaIndice <= 0) return;
+
+    treinoGaleriaIndice -= 1;
+    renderGaleriaTreino();
+  }
 }
 
 function renderFrequencia(frequencia = {}) {
@@ -710,14 +829,15 @@ $("sair").addEventListener("click", sair);
 $("trocarAcademiaLogin").addEventListener("click", trocarAcademia);
 $("trocarAcademiaHome").addEventListener("click", trocarAcademia);
 
-$("treinoCard").addEventListener("click", () => abrirGaleriaTreino(0));
+$("treinoCard").addEventListener("click", () => abrirGaleriaTreino(0, 0));
 $("treinoCard").addEventListener("keydown", (event) => {
   if ((event.key === "Enter" || event.key === " ") && treinoGaleriaItens.length) {
     event.preventDefault();
-    abrirGaleriaTreino(0);
+    abrirGaleriaTreino(0, 0);
   }
 });
 $("treinoGaleriaFechar").addEventListener("click", fecharGaleriaTreino);
+$("treinoGaleriaFimFechar").addEventListener("click", fecharGaleriaTreino);
 $("treinoGaleriaAnterior").addEventListener("click", () => navegarGaleria(-1));
 $("treinoGaleriaProximo").addEventListener("click", () => navegarGaleria(1));
 $("treinoGaleria").addEventListener("click", (event) => {

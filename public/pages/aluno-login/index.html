@@ -7,7 +7,7 @@
   <meta name="color-scheme" content="light">
   <title>Fusion Aluno</title>
   <link rel="manifest" href="/manifest-aluno.webmanifest">
-  <link rel="stylesheet" href="/pages/aluno-login/style.css?v=20260810-3">
+  <link rel="stylesheet" href="/pages/aluno-login/style.css?v=20260810-5">
 </head>
 <body>
   <main class="app-shell" aria-live="polite">
@@ -188,11 +188,27 @@
           <button id="treinoGaleriaFechar" class="gallery-close" type="button" aria-label="Fechar galeria">×</button>
         </header>
 
+        <div id="treinoGaleriaDivisoesTabs" class="gallery-division-tabs" aria-label="Divisões do treino"></div>
+
         <div class="training-gallery-stage">
           <button id="treinoGaleriaAnterior" class="gallery-nav gallery-prev" type="button" aria-label="Exercício anterior">‹</button>
           <div class="training-gallery-media">
             <img id="treinoGaleriaImagem" class="hidden" alt="">
             <div id="treinoGaleriaSemImagem" class="gallery-no-image">Imagem não disponível</div>
+
+            <div id="treinoGaleriaFim" class="gallery-finish hidden" aria-live="polite">
+              <div class="gallery-finish-art" aria-hidden="true">
+                <svg viewBox="0 0 220 220" role="img">
+                  <circle cx="110" cy="110" r="94" class="finish-ring"></circle>
+                  <circle cx="110" cy="110" r="74" class="finish-core"></circle>
+                  <path d="M70 111l27 28 55-61" class="finish-check"></path>
+                </svg>
+              </div>
+              <div class="gallery-finish-kicker">Fim desta divisão</div>
+              <h3 id="treinoGaleriaFimTitulo">Treino concluído</h3>
+              <p id="treinoGaleriaFimTexto">Você chegou ao fim desta sequência.</p>
+              <button id="treinoGaleriaFimFechar" type="button" class="btn primary gallery-finish-button">Concluir e fechar</button>
+            </div>
           </div>
           <button id="treinoGaleriaProximo" class="gallery-nav gallery-next" type="button" aria-label="Próximo exercício">›</button>
         </div>
@@ -208,7 +224,7 @@
       </div>
     </div>
 
-  <script src="/pages/aluno-login/index.js?v=20260810-3"></script>
+  <script src="/pages/aluno-login/index.js?v=20260810-5"></script>
   <script src="/assets/pwa/fusion-pwa-install.js" defer></script>
 </body>
 </html>
