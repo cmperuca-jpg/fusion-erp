@@ -7,6 +7,7 @@
   const API_ALUNOS = '/api/alunos';
   const APP_PATH = '/pages/aluno-login/index.html';
   const BUTTON_ATTR = 'data-fusion-app-code';
+  const SESSION_PREFIX = 'fusion_aluno_codigo_';
 
   function texto(valor) {
     return String(valor ?? '').trim();
@@ -14,15 +15,6 @@
 
   function somenteNumeros(valor) {
     return texto(valor).replace(/\D/g, '');
-  }
-
-  function escapeHtml(valor) {
-    return texto(valor)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;');
   }
 
   function safeJson(response) {
@@ -58,6 +50,58 @@
     return idDoOnclick(botaoEditar?.getAttribute('onclick') || '');
   }
 
+  function chaveSessao(alunoId) {
+    return `${SESSION_PREFIX}${texto(alunoId)}`;
+  }
+
+  function expiraEmMs(dados) {
+    const valor = new Date(dados?.expira_em || '').getTime();
+    return Number.isFinite(valor) ? valor : 0;
+  }
+
+  function limparCodigoSessao(alunoId) {
+    try {
+      sessionStorage.removeItem(chaveSessao(alunoId));
+    } catch {}
+  }
+
+  function salvarCodigoSessao(alunoId, dados) {
+    const codigo = texto(dados?.codigo).toUpperCase();
+    const expira = expiraEmMs(dados);
+    if (!alunoId || !/^[0-9A-F]{8}$/.test(codigo) || !expira || expira <= Date.now()) return;
+    try {
+      sessionStorage.setItem(chaveSessao(alunoId), JSON.stringify({ ...dados, codigo }));
+    } catch {}
+  }
+
+  function lerCodigoSessao(alunoId) {
+    if (!alunoId) return null;
+    try {
+      const bruto = sessionStorage.getItem(chaveSessao(alunoId));
+      if (!bruto) return null;
+      const dados = JSON.parse(bruto);
+      const codigo = texto(dados?.codigo).toUpperCase();
+      const expira = expiraEmMs(dados);
+
+      if (!/^[0-9A-F]{8}$/.test(codigo) || !expira || expira <= Date.now()) {
+        limparCodigoSessao(alunoId);
+        return null;
+      }
+      return { ...dados, codigo };
+    } catch {
+      limparCodigoSessao(alunoId);
+      return null;
+    }
+  }
+
+  function tempoRestante(dados) {
+    const ms = Math.max(0, expiraEmMs(dados) - Date.now());
+    const total = Math.ceil(ms / 1000);
+    const minutos = Math.floor(total / 60);
+    const segundos = total % 60;
+    return `${String(minutos).padStart(2, '0')}:${String(segundos).padStart(2, '0')}`;
+  }
+
   function aplicarVisualBotao(botao, mobile = false) {
     if (!botao) return;
     botao.style.setProperty('background', '#0b4452', 'important');
@@ -70,15 +114,51 @@
     if (mobile) botao.style.setProperty('min-height', '40px', 'important');
   }
 
+  function atualizarEstadoBotao(botao) {
+    if (!botao) return;
+    const alunoId = texto(botao.dataset.alunoId);
+    const padrao =
+      botao.dataset.textoPadrao ||
+      (botao.getAttribute(BUTTON_ATTR) === 'modal' ? 'Gerar código do app' : 'Código app');
+
+    botao.dataset.textoPadrao = padrao;
+    const ativo = lerCodigoSessao(alunoId);
+
+    if (ativo) {
+      botao.textContent = `Código: ${ativo.codigo} • ${tempoRestante(ativo)}`;
+      botao.title = 'Código válido. Clique para copiar ou enviar ao aluno.';
+      botao.dataset.codigoAtivo = '1';
+    } else {
+      botao.textContent = padrao;
+      botao.title = '';
+      delete botao.dataset.codigoAtivo;
+    }
+
+    botao.disabled = false;
+    aplicarVisualBotao(botao, Boolean(botao.closest('#alunosMobileCards')));
+  }
+
+  function atualizarBotoesDoAluno(alunoId) {
+    document.querySelectorAll(`[${BUTTON_ATTR}]`).forEach((botao) => {
+      if (texto(botao.dataset.alunoId) === texto(alunoId)) atualizarEstadoBotao(botao);
+    });
+  }
+
+  function atualizarTodosBotoes() {
+    document.querySelectorAll(`[${BUTTON_ATTR}]`).forEach(atualizarEstadoBotao);
+  }
+
   function criarBotaoCodigo(id, mobile = false) {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.textContent = 'Código app';
+    btn.dataset.textoPadrao = 'Código app';
     btn.setAttribute(BUTTON_ATTR, '1');
     btn.dataset.alunoId = id;
     if (!mobile) btn.className = 'btn-row';
     aplicarVisualBotao(btn, mobile);
-    btn.addEventListener('click', () => gerarCodigo(id, btn));
+    btn.addEventListener('click', () => acionarCodigo(id, btn));
+    atualizarEstadoBotao(btn);
     return btn;
   }
 
@@ -87,6 +167,7 @@
       if (acoes.querySelector(`[${BUTTON_ATTR}]`)) return;
       const id = localizarIdNoContainer(acoes);
       if (!id) return;
+
       const editar = Array.from(acoes.querySelectorAll('button')).find((btn) =>
         /abrirEdicao\(/i.test(btn.getAttribute('onclick') || '')
       );
@@ -99,6 +180,7 @@
       if (acoes.querySelector(`[${BUTTON_ATTR}]`)) return;
       const id = localizarIdNoContainer(acoes);
       if (!id) return;
+
       const editar = Array.from(acoes.querySelectorAll('button')).find((btn) =>
         /abrirEdicao\(/i.test(btn.getAttribute('onclick') || '')
       );
@@ -110,28 +192,44 @@
 
   function injetarBotaoModalAluno() {
     const acoes = document.querySelector('#modalAluno .modal-actions');
-    if (!acoes || acoes.querySelector(`[${BUTTON_ATTR}="modal"]`)) return;
+    if (!acoes) return;
 
-    const btn = document.createElement('button');
+    let btn = acoes.querySelector(`[${BUTTON_ATTR}="modal"]`);
+    const idAtual = texto(document.getElementById('alunoId')?.value);
+
+    if (btn) {
+      btn.dataset.alunoId = idAtual;
+      atualizarEstadoBotao(btn);
+      return;
+    }
+
+    btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'btn-light';
     btn.textContent = 'Gerar código do app';
+    btn.dataset.textoPadrao = 'Gerar código do app';
+    btn.dataset.alunoId = idAtual;
     btn.setAttribute(BUTTON_ATTR, 'modal');
     aplicarVisualBotao(btn, false);
+
     btn.addEventListener('click', () => {
       const id = texto(document.getElementById('alunoId')?.value);
+      btn.dataset.alunoId = id;
+
       if (!id) {
         mostrarAlertaLocal('Salve o aluno antes de gerar o código do aplicativo.', 'erro');
         return;
       }
-      gerarCodigo(id, btn);
+      acionarCodigo(id, btn);
     });
 
     acoes.insertBefore(btn, acoes.firstChild);
+    atualizarEstadoBotao(btn);
   }
 
   function garantirEstilosModal() {
     if (document.getElementById('fusionAlunoAppAccessStyles')) return;
+
     const style = document.createElement('style');
     style.id = 'fusionAlunoAppAccessStyles';
     style.textContent = `
@@ -156,6 +254,7 @@
 
   function garantirModalCodigo() {
     garantirEstilosModal();
+
     let modal = document.getElementById('fusionAlunoCodigoModal');
     if (modal) return modal;
 
@@ -165,7 +264,10 @@
     modal.innerHTML = `
       <div class="fusion-app-code-card" role="dialog" aria-modal="true" aria-labelledby="fusionAlunoCodigoTitulo">
         <div class="fusion-app-code-head">
-          <div><h3 id="fusionAlunoCodigoTitulo">Acesso ao Fusion Aluno</h3><small id="fusionAlunoCodigoAcademia"></small></div>
+          <div>
+            <h3 id="fusionAlunoCodigoTitulo">Acesso ao Fusion Aluno</h3>
+            <small id="fusionAlunoCodigoAcademia"></small>
+          </div>
           <button type="button" class="fusion-app-code-close" aria-label="Fechar">×</button>
         </div>
         <div class="fusion-app-code-meta">
@@ -179,13 +281,19 @@
           <button type="button" class="fusion-app-code-whatsapp" id="fusionAlunoCodigoWhatsApp">Enviar pelo WhatsApp</button>
         </div>
         <div class="fusion-app-code-url" id="fusionAlunoCodigoUrl"></div>
-      </div>`;
+      </div>
+    `;
 
     document.body.appendChild(modal);
-    modal.querySelector('.fusion-app-code-close')?.addEventListener('click', () => modal.classList.add('hidden'));
+
+    modal.querySelector('.fusion-app-code-close')?.addEventListener('click', () => {
+      modal.classList.add('hidden');
+    });
+
     modal.addEventListener('click', (event) => {
       if (event.target === modal) modal.classList.add('hidden');
     });
+
     return modal;
   }
 
@@ -209,7 +317,9 @@
   function telefoneWhatsApp(valor) {
     let numero = somenteNumeros(valor);
     if (!numero) return '';
-    if ((numero.length === 10 || numero.length === 11) && !numero.startsWith('55')) numero = `55${numero}`;
+    if ((numero.length === 10 || numero.length === 11) && !numero.startsWith('55')) {
+      numero = `55${numero}`;
+    }
     return numero;
   }
 
@@ -217,6 +327,7 @@
     if (!valor) return 'horário não informado';
     const data = new Date(valor);
     if (Number.isNaN(data.getTime())) return texto(valor);
+
     return data.toLocaleString('pt-BR', {
       dateStyle: 'short',
       timeStyle: 'short'
@@ -234,23 +345,30 @@
 
     modal.querySelector('#fusionAlunoCodigoAcademia').textContent = academia;
     modal.querySelector('#fusionAlunoCodigoNome').textContent = nome;
-    modal.querySelector('#fusionAlunoCodigoTelefone').textContent = telefone ? `WhatsApp: ${telefone}` : 'WhatsApp não informado';
+    modal.querySelector('#fusionAlunoCodigoTelefone').textContent =
+      telefone ? `WhatsApp: ${telefone}` : 'WhatsApp não informado';
     modal.querySelector('#fusionAlunoCodigoValor').textContent = codigo;
-    modal.querySelector('#fusionAlunoCodigoExpira').textContent = `Código de uso único. Válido até ${expira}.`;
-    modal.querySelector('#fusionAlunoCodigoUrl').textContent = `Acesso do aluno: ${appUrl}`;
+    modal.querySelector('#fusionAlunoCodigoExpira').textContent =
+      `Código de uso único. Válido até ${expira}.`;
+    modal.querySelector('#fusionAlunoCodigoUrl').textContent =
+      `Acesso do aluno: ${appUrl}`;
 
     const copiar = modal.querySelector('#fusionAlunoCodigoCopiar');
     copiar.onclick = async () => {
       const ok = await copiarTexto(codigo);
       copiar.textContent = ok ? 'Código copiado' : 'Não foi possível copiar';
-      setTimeout(() => { copiar.textContent = 'Copiar código'; }, 1800);
+      setTimeout(() => {
+        copiar.textContent = 'Copiar código';
+      }, 1800);
     };
 
     const whatsapp = modal.querySelector('#fusionAlunoCodigoWhatsApp');
     whatsapp.disabled = !telefone;
     whatsapp.title = telefone ? '' : 'Aluno sem telefone/WhatsApp válido';
+
     whatsapp.onclick = () => {
       if (!telefone) return;
+
       const primeiroNome = nome.split(/\s+/).filter(Boolean)[0] || 'aluno';
       const mensagem = [
         `Olá, ${primeiroNome}!`,
@@ -261,6 +379,7 @@
         `Acesse: ${appUrl}`,
         'No primeiro acesso, o aplicativo solicitará seu CPF e a criação da sua senha.'
       ].join('\n');
+
       const url = `https://wa.me/${telefone}?text=${encodeURIComponent(mensagem)}`;
       window.open(url, '_blank', 'noopener,noreferrer');
     };
@@ -268,36 +387,67 @@
     modal.classList.remove('hidden');
   }
 
+  function acionarCodigo(id, botao) {
+    const alunoId = texto(id);
+    if (!alunoId) return;
+
+    const ativo = lerCodigoSessao(alunoId);
+    if (ativo) {
+      abrirResultado(ativo);
+      atualizarEstadoBotao(botao);
+      return;
+    }
+
+    gerarCodigo(alunoId, botao);
+  }
+
   async function gerarCodigo(id, botao) {
     const alunoId = texto(id);
     if (!alunoId) return;
 
-    const original = botao?.textContent || 'Código app';
+    const original =
+      botao?.dataset.textoPadrao ||
+      botao?.textContent ||
+      'Código app';
+
     if (botao) {
+      botao.dataset.textoPadrao = original;
       botao.disabled = true;
       botao.textContent = 'Gerando...';
     }
 
     try {
-      const response = await fetch(`${API_ALUNOS}/${encodeURIComponent(alunoId)}/app-ativacao`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ validade_minutos: 30 })
-      });
+      const response = await fetch(
+        `${API_ALUNOS}/${encodeURIComponent(alunoId)}/app-ativacao`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ validade_minutos: 30 })
+        }
+      );
+
       const payload = await safeJson(response);
+
       if (!response.ok || payload.ok === false) {
-        throw new Error(payload.mensagem || payload.erro || `Erro HTTP ${response.status}`);
+        throw new Error(
+          payload.mensagem ||
+          payload.erro ||
+          `Erro HTTP ${response.status}`
+        );
       }
+
       const dados = payload.dados || payload;
+
+      salvarCodigoSessao(alunoId, dados);
+      atualizarBotoesDoAluno(alunoId);
       abrirResultado(dados);
     } catch (error) {
-      mostrarAlertaLocal(error.message || 'Não foi possível gerar o código do aplicativo.', 'erro');
+      mostrarAlertaLocal(
+        error.message || 'Não foi possível gerar o código do aplicativo.',
+        'erro'
+      );
     } finally {
-      if (botao) {
-        botao.disabled = false;
-        botao.textContent = original;
-        aplicarVisualBotao(botao, Boolean(botao.closest('#alunosMobileCards')));
-      }
+      if (botao) atualizarEstadoBotao(botao);
     }
   }
 
@@ -306,18 +456,30 @@
   function aplicarTudo() {
     injetarBotoesLista();
     injetarBotaoModalAluno();
+    atualizarTodosBotoes();
   }
 
   function iniciar() {
     aplicarTudo();
-    const alvos = [document.getElementById('tabelaAlunos'), document.getElementById('alunosMobileCards'), document.getElementById('modalAluno')].filter(Boolean);
+
+    const alvos = [
+      document.getElementById('tabelaAlunos'),
+      document.getElementById('alunosMobileCards'),
+      document.getElementById('modalAluno')
+    ].filter(Boolean);
+
     alvos.forEach((alvo) => {
       if (alvo.dataset.fusionAppCodeObserver === '1') return;
       alvo.dataset.fusionAppCodeObserver = '1';
-      new MutationObserver(aplicarTudo).observe(alvo, { childList: true, subtree: true });
+      new MutationObserver(aplicarTudo).observe(alvo, {
+        childList: true,
+        subtree: true
+      });
     });
+
     setTimeout(aplicarTudo, 300);
     setTimeout(aplicarTudo, 1000);
+    setInterval(atualizarTodosBotoes, 1000);
   }
 
   if (document.readyState === 'loading') {

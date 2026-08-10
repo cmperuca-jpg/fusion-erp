@@ -1,27 +1,22 @@
-FUSION ALUNO — CORREÇÃO DO FILTRO CPF
+FUSION ALUNO — CÓDIGO VISÍVEL NO BOTÃO POR 30 MINUTOS
 
 Substitua somente:
-modules/treinos/aluno-app.service.mjs
+public/pages/alunos/app-access.js
 
-Correção aplicada:
-payload->cpf
-para:
-payload->>cpf
+Novo comportamento:
+- Ao gerar, o botão passa a mostrar:
+  Código: A7C91F2B • 29:59
+- A contagem regressiva é atualizada a cada segundo.
+- O código permanece visível até o horário expira_em retornado pelo servidor.
+- Se clicar no botão enquanto ainda está válido, NÃO gera outro código:
+  reabre a janela do código atual.
+- Se a página for recarregada na mesma aba, o código continua visível
+  durante a sessão do navegador.
+- Ao expirar, o botão volta automaticamente para:
+  Gerar código do app / Código app
+- A validade real continua sendo controlada pelo backend.
 
-Motivo:
-o CPF armazenado dentro de payload é texto. O filtro PostgREST precisa usar
-->> para comparar um valor JSON como texto.
+Commit sugerido:
+feat: mantém código do app visível no botão até expirar
 
-Depois faça commit na main:
-fix: corrige filtro CPF na sincronizacao do Fusion Aluno
-
-A Render fará o Auto-Deploy.
-
-Após Deploy live:
-1. Abra Fusion Sistema > Alunos.
-2. Localize Ariana.
-3. Clique em Código app / Gerar código do app.
-4. Deve abrir o modal com o código de 8 caracteres, validade,
-   Copiar código e Enviar pelo WhatsApp.
-
-Nenhuma variável da Render precisa ser alterada.
+Depois do commit na main, aguarde o Auto-Deploy da Render.
