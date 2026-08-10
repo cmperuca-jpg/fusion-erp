@@ -284,3 +284,14 @@
   setTimeout(iniciarObservacao, 300);
   setTimeout(iniciarObservacao, 1000);
 })();
+
+/* Fusion Aluno - carrega o módulo de emissão de código da academia. */
+(() => {
+  if (!window.location.pathname.includes('/pages/alunos/')) return;
+  if (document.querySelector('script[data-fusion-aluno-app-access="1"]')) return;
+  const script = document.createElement('script');
+  script.src = './app-access.js?v=20260810-emissao-1';
+  script.defer = true;
+  script.dataset.fusionAlunoAppAccess = '1';
+  document.head.appendChild(script);
+})();

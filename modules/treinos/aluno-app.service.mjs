@@ -11,10 +11,18 @@ class AlunoAppError extends Error {
 }
 
 function configSupabase() {
-  const url = String(process.env.SUPABASE_URL || "").trim().replace(/\/+$/, "");
-  const serviceKey = String(process.env.SUPABASE_SERVICE_ROLE_KEY || "").trim();
+  const url = String(process.env.FUSION_APP_SUPABASE_URL || "").trim().replace(/\/+$/, "");
+  const serviceKey = String(
+    process.env.FUSION_APP_SUPABASE_SECRET_KEY ||
+    process.env.FUSION_APP_SUPABASE_SERVICE_ROLE_KEY ||
+    ""
+  ).trim();
   if (!url || !serviceKey) {
-    throw new AlunoAppError("Integração do aplicativo do aluno indisponível.", 503, "SUPABASE_NOT_CONFIGURED");
+    throw new AlunoAppError(
+      "Integração do Fusion Aluno não configurada no servidor.",
+      503,
+      "FUSION_APP_SUPABASE_NOT_CONFIGURED"
+    );
   }
   return { url, serviceKey };
 }
@@ -29,9 +37,15 @@ async function chamarSupabase(pathname, { method = "GET", body, accessToken } = 
   const { url, serviceKey } = configSupabase();
   const headers = {
     apikey: serviceKey,
-    Authorization: `Bearer ${accessToken || serviceKey}`,
     Accept: "application/json"
   };
+  if (accessToken) {
+    headers.Authorization = `Bearer ${accessToken}`;
+  } else if (serviceKey.split(".").length === 3) {
+    // Compatibilidade com a chave service_role JWT legada. Chaves sb_secret_*
+    // autenticam pelo header apikey e não devem ser usadas como Bearer JWT.
+    headers.Authorization = `Bearer ${serviceKey}`;
+  }
   if (body !== undefined) headers["Content-Type"] = "application/json";
 
   let response;
@@ -78,9 +92,59 @@ function normalizarCodigo(valor) {
   return codigo;
 }
 
+function normalizarTenant(valor) {
+  const tenant = String(valor || "").trim().toLowerCase();
+  if (!/^[a-z0-9][a-z0-9_-]{1,79}$/.test(tenant)) {
+    throw new AlunoAppError("Academia do Fusion ERP não identificada.", 400, "INVALID_ERP_TENANT");
+  }
+  return tenant;
+}
+
 function academiaNome(data) {
   if (typeof data?.academia === "string") return data.academia;
   return String(data?.academia?.nome || data?.academia_nome || data?.nome_academia || "").trim();
+}
+
+function primeiraLinha(data) {
+  return Array.isArray(data) ? (data[0] || null) : (data || null);
+}
+
+export async function gerarAtivacaoAlunoERP({ tenantId, cpf, validadeMinutos = 30 } = {}) {
+  const tenant = normalizarTenant(tenantId);
+  const cpfNormalizado = apenasDigitos(cpf);
+  if (cpfNormalizado.length !== 11) {
+    throw new AlunoAppError("CPF válido é obrigatório para gerar o acesso ao aplicativo.", 400, "INVALID_CPF");
+  }
+
+  const validade = Number(validadeMinutos || 30);
+  if (!Number.isInteger(validade) || validade < 5 || validade > 120) {
+    throw new AlunoAppError("A validade do código deve ficar entre 5 e 120 minutos.", 400, "INVALID_EXPIRATION");
+  }
+
+  const data = await chamarSupabase("/rest/v1/rpc/fusion_gerar_ativacao_aluno_backend", {
+    method: "POST",
+    body: {
+      p_erp_tenant_id: tenant,
+      p_cpf: cpfNormalizado,
+      p_validade_minutos: validade
+    }
+  });
+
+  const row = primeiraLinha(data);
+  const codigo = String(row?.codigo || "").trim().toUpperCase();
+  if (!/^[0-9A-F]{8}$/.test(codigo)) {
+    throw new AlunoAppError("O servidor não retornou um código de ativação válido.", 502, "ACTIVATION_CODE_NOT_RETURNED");
+  }
+
+  return {
+    codigo,
+    expira_em: row?.expira_em || null,
+    telefone_destino: apenasDigitos(row?.telefone_destino || ""),
+    academia_id: String(row?.academia_id || ""),
+    academia_nome: String(row?.academia_nome || "").trim(),
+    aluno_id: String(row?.aluno_id || ""),
+    aluno_nome: String(row?.aluno_nome || "").trim()
+  };
 }
 
 export async function ativarAlunoApp(payload = {}) {

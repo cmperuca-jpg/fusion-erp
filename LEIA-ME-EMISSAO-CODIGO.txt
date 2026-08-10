@@ -1,0 +1,68 @@
+FUSION ALUNO — EMISSÃO DE CÓDIGO PELA ACADEMIA
+
+Destino do repositório:
+cmperuca-jpg/fusion-erp
+branch: main
+
+ARQUIVOS PARA SUBSTITUIR/ADICIONAR
+1. modules/treinos/aluno-app.service.mjs
+2. modules/alunos/alunos.routes.mjs
+3. public/pages/alunos/app-access.js
+4. public/pages/alunos/cep-autofill.js
+
+O QUE FOI IMPLEMENTADO
+- botão "Código app" na lista de alunos (desktop e mobile);
+- botão "Gerar código do app" dentro da edição do aluno;
+- geração de código de uso único válido por 30 minutos;
+- modal com código, academia, aluno, validade e telefone;
+- botão para copiar o código;
+- botão para abrir WhatsApp com mensagem pronta;
+- acesso enviado ao aluno sempre em:
+  https://www.fusionsistema.com.br/pages/aluno-login/index.html
+- rota protegida no ERP:
+  POST /api/alunos/:id/app-ativacao
+- somente Administrador, Gerente e Recepção podem emitir;
+- tenant da sessão é enviado ao banco do app para impedir emissão por outra academia;
+- o backend do app fica separado do Supabase principal do ERP.
+
+BANCO DO APP
+A parte de banco já foi aplicada no projeto Supabase:
+fusion-sistema-novo (kruujujuxeqexxuugwci)
+
+Foi criado o vínculo:
+academia-piloto -> academia ativa do Fusion Aluno
+
+A função de emissão backend está restrita a service_role/secret key.
+anon = sem EXECUTE
+authenticated = sem EXECUTE
+
+CONFIGURAÇÃO OBRIGATÓRIA NA RENDER
+No serviço fusion-erp > Environment, adicione:
+
+FUSION_APP_SUPABASE_URL=https://kruujujuxeqexxuugwci.supabase.co
+
+E UMA das opções abaixo:
+FUSION_APP_SUPABASE_SECRET_KEY=<chave secreta do projeto fusion-sistema-novo>
+OU
+FUSION_APP_SUPABASE_SERVICE_ROLE_KEY=<service_role JWT legado do projeto fusion-sistema-novo>
+
+IMPORTANTE
+- NÃO altere SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY já usados pelo Fusion ERP.
+- A nova conexão do app usa somente variáveis FUSION_APP_SUPABASE_*.
+- Nunca coloque a chave secreta/service_role em arquivo público ou JavaScript do navegador.
+
+COMMIT SUGERIDO
+feat: academia gera código de acesso do Fusion Aluno
+
+DEPOIS DO DEPLOY
+1. Acesse https://www.fusionsistema.com.br/pages/alunos/
+2. Localize um aluno ativo com CPF e telefone válidos.
+3. Clique em "Código app".
+4. Confirme que aparece um código de 8 caracteres.
+5. Clique em "Enviar pelo WhatsApp" ou copie o código.
+6. No navegador do aluno, abra:
+   https://www.fusionsistema.com.br/pages/aluno-login/index.html
+7. Digite o código e continue para primeiro acesso/criação de senha.
+
+OBSERVAÇÃO
+Alunos sem CPF no banco do aplicativo não poderão concluir o primeiro acesso. O sistema retorna uma mensagem clara nesses casos.

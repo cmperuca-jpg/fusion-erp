@@ -1,13 +1,15 @@
 import { Router } from "express";
 import * as alunosService from "./alunos.service.mjs";
+import { gerarAtivacaoAlunoERP } from "../treinos/aluno-app.service.mjs";
 
 const router = Router();
 
 function erro(res, error, status = 500) {
-  return res.status(error.status || status).json({
+  return res.status(error.status || error.statusCode || status).json({
     ok: false,
     erro: error.message,
-    mensagem: error.message
+    mensagem: error.message,
+    code: error.code || ""
   });
 }
 
@@ -42,6 +44,16 @@ function responsavelTecnico(req) {
     perfil === "responsavel tecnico" ||
     permissoes.includes("professores") ||
     permissoes.includes("*");
+}
+
+function podeGerarCodigoApp(req) {
+  if (req.usuario?.portal) return false;
+  const perfil = normalizar(req.usuario?.perfil);
+  return ["administrador", "admin", "gerente", "recepcao"].includes(perfil);
+}
+
+function cpfAluno(aluno = {}) {
+  return texto(aluno.cpf || aluno.documento).replace(/\D/g, "");
 }
 
 function alunoPertenceAoProfessor(aluno = {}, usuario = {}) {
@@ -98,6 +110,53 @@ router.get("/", async (req, res) => {
   }
 });
 
+router.post("/:id/app-ativacao", async (req, res) => {
+  try {
+    if (!podeGerarCodigoApp(req)) {
+      return res.status(403).json({
+        ok: false,
+        mensagem: "Somente administrador, gerente ou recepção pode gerar código do aplicativo."
+      });
+    }
+
+    const aluno = await alunosService.buscar(req.params.id);
+    if (!aluno) {
+      return res.status(404).json({ ok: false, mensagem: "Aluno não encontrado." });
+    }
+
+    const cpf = cpfAluno(aluno);
+    if (cpf.length !== 11) {
+      return res.status(422).json({
+        ok: false,
+        mensagem: "Cadastre um CPF válido para o aluno antes de gerar o código do aplicativo."
+      });
+    }
+
+    const tenantId = texto(req.usuario?.tenantId);
+    if (!tenantId) {
+      return res.status(401).json({
+        ok: false,
+        mensagem: "Sessão sem academia vinculada. Faça login novamente."
+      });
+    }
+
+    const validade = Number(req.body?.validade_minutos ?? req.body?.validadeMinutos ?? 30);
+    const dados = await gerarAtivacaoAlunoERP({
+      tenantId,
+      cpf,
+      validadeMinutos: validade
+    });
+
+    return res.json({
+      ok: true,
+      dados,
+      mensagem: `Código gerado para ${dados.aluno_nome || aluno.nome || "o aluno"}.`
+    });
+  } catch (error) {
+    erro(res, error, 400);
+  }
+});
+
 router.post("/:id/desligar", async (req, res) => {
   try {
     const resultado = await alunosService.desligar(req.params.id, {
@@ -119,8 +178,6 @@ router.post("/:id/desligar", async (req, res) => {
     erro(res, error);
   }
 });
-
-
 
 router.post("/:id/reativar-cobranca", async (req, res) => {
   try {
@@ -167,7 +224,6 @@ router.post("/:id/reativar", async (req, res) => {
     erro(res, error, 400);
   }
 });
-
 
 router.get("/:id/prontuario", async (req, res) => {
   try {
