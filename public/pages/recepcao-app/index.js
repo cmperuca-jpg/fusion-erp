@@ -6,7 +6,7 @@
   const $ = id => document.getElementById(id);
 
   function normalizar(v) {
-    return String(v || "").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    return String(v || "").trim().toLowerCase().normalize("NFD").replace(/[\\u0300-\\u036f]/g, "");
   }
 
   function usuarioAtual() {
@@ -16,7 +16,17 @@
   function academiaAtual() {
     return {
       tenantId: String(localStorage.getItem("fusionTenantId") || "").trim(),
-      nome: String(sessionStorage.getItem("fusionAcademiaSelecionadaNome") || "").trim()
+      nome: String(sessionStorage.getItem("fusionAcademiaSelecionadaNome") || "").trim(),
+      selectionToken: String(sessionStorage.getItem("fusionTenantSelectionToken") || "").trim()
+    };
+  }
+
+  function academiaEsperada() {
+    const params = new URLSearchParams(location.search);
+    return {
+      tenantId: String(params.get("tenant") || "").trim(),
+      nome: String(params.get("nome") || "").trim(),
+      slug: String(params.get("academia") || "").trim()
     };
   }
 
@@ -38,8 +48,11 @@
     return location.pathname + location.search;
   }
 
-  function irSelecionarAcademia() {
-    location.href = `/pages/comecar/?next=${encodeURIComponent(urlRetorno())}`;
+  function irSelecionarAcademia(esperada = academiaEsperada()) {
+    const params = new URLSearchParams();
+    if (esperada.tenantId || esperada.slug) params.set("academia", esperada.tenantId || esperada.slug);
+    params.set("next", urlRetorno());
+    location.href = `/pages/comecar/?${params.toString()}`;
   }
 
   function irLogin() {
@@ -55,18 +68,39 @@
   }
 
   function render() {
-    const academia = academiaAtual();
+    const atual = academiaAtual();
+    const esperada = academiaEsperada();
     const u = usuarioAtual();
     const perfil = perfilDoUsuario(u || {});
 
-    $("academiaNome").textContent = academia.nome || academia.tenantId || "Não selecionada";
+    const academiaDiferente = Boolean(
+      esperada.tenantId &&
+      atual.tenantId &&
+      normalizar(esperada.tenantId) !== normalizar(atual.tenantId)
+    );
+    const precisaConfirmar = Boolean(
+      esperada.tenantId &&
+      (!atual.tenantId || !atual.selectionToken || academiaDiferente)
+    );
+
+    $("academiaNome").textContent =
+      esperada.nome || atual.nome || esperada.tenantId || atual.tenantId || "Não selecionada";
     $("usuarioNome").textContent = u ? nomeDoUsuario(u) : "Não conectado";
     $("quick").classList.add("hidden");
     mostrarErro("");
 
-    if (!academia.tenantId) {
+    if (precisaConfirmar) {
+      $("btnAbrir").textContent = "Confirmar esta academia e entrar";
+      $("btnAbrir").onclick = () => irSelecionarAcademia(esperada);
+      if (academiaDiferente) {
+        mostrarErro("Há outra academia selecionada neste navegador. Confirme a academia deste link antes de entrar.");
+      }
+      return;
+    }
+
+    if (!atual.tenantId || !atual.selectionToken) {
       $("btnAbrir").textContent = "Selecionar academia e entrar";
-      $("btnAbrir").onclick = irSelecionarAcademia;
+      $("btnAbrir").onclick = () => irSelecionarAcademia(esperada);
       return;
     }
 

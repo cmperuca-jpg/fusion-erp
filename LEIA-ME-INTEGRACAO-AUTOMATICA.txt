@@ -1,0 +1,60 @@
+FUSION — APPS AUTOMÁTICOS NA PÁGINA DE CADA ACADEMIA
+
+OBJETIVO
+Depois deste pacote, não é necessário editar a página de cada academia.
+
+Uma academia ativa/trial cadastrada em fusion_tenants passa a responder em:
+  https://www.fusionsistema.com.br/SLUG-DA-ACADEMIA
+
+Exemplo:
+  https://www.fusionsistema.com.br/academia-piloto
+
+Nessa própria página aparece automaticamente:
+- Fusion Aluno
+- Fusion Professor
+- Fusion Recepção
+- Fusion Administração
+
+O nome e o tenant são resolvidos pelo cadastro real da academia.
+Não existe HTML individual por academia.
+
+ARQUIVOS PARA SUBSTITUIR
+1. modules/comercial/comercial.routes.mjs
+2. public/pages/promocao/index.html
+3. public/assets/js/fusion-academia-apps-widget.js
+4. public/pages/recepcao-app/index.js
+5. public/pages/administracao-app/index.js
+
+SEGURANÇA
+- O servidor só entrega /SLUG se encontrar exatamente uma academia active/trial.
+- Recepção/Administração NÃO pulam o código/seleção da academia.
+- O link pré-seleciona a academia e encaminha para /pages/comecar quando necessário.
+- Professor continua usando suas credenciais próprias.
+- Aluno continua usando ativação/login do Fusion Aluno.
+
+MATRÍCULA
+A rota /SLUG/matricula também passa a funcionar automaticamente e entrega
+a página de matrícula online já com o tenant público resolvido pelo script
+fusion-public-tenant.js.
+
+APK
+O widget testa os arquivos:
+  /downloads/fusion-aluno.apk
+  /downloads/fusion-professor.apk
+  /downloads/fusion-recepcao.apk
+  /downloads/fusion-administracao.apk
+
+O botão "Baixar Android (.apk)" só aparece se o APK REAL existir.
+Sem APK, permanece "Instalar / abrir" para o PWA.
+
+COMMIT SUGERIDO
+feat: integra quatro apps automaticamente nas paginas das academias
+
+TESTE APÓS DEPLOY LIVE
+1. Abra janela anônima.
+2. Acesse https://www.fusionsistema.com.br/academia-piloto
+3. Confirme o bloco "Aplicativos da academia".
+4. Abra Fusion Professor e confirme que o tenant vai no link.
+5. Abra Recepção/Administração e confirme que exige seleção/código quando não
+   existir selectionToken válido.
+6. Teste /academia-piloto/matricula.

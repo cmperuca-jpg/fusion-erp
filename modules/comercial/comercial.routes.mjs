@@ -1,4 +1,8 @@
 import express from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { obterSupabaseAdmin } from '../../config/supabase.mjs';
+import { normalizarTenantId } from '../core/persistence/tenant-context.mjs';
 import {
   atualizarServicoContrato,
   atualizarValorMatricula,
@@ -20,10 +24,82 @@ import {
 } from './comercial.financeiro.service.mjs';
 
 const router = express.Router();
-function erro(res, err) { return res.status(err.status || 500).json({ ok: false, erro: err.message || 'Erro no módulo comercial.' }); }
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const PUBLIC_PAGES_ROOT = path.resolve(__dirname, '../../public/pages');
+const SLUGS_RESERVADOS = new Set([
+  'api', 'pages', 'assets', 'uploads', 'downloads',
+  'favicon-ico', 'manifest-json', 'robots-txt'
+]);
+
+function erro(res, err) {
+  return res.status(err.status || 500).json({ ok: false, erro: err.message || 'Erro no módulo comercial.' });
+}
+
 async function sincronizarSilencioso(contratoId) {
   try { if (contratoId) await sincronizarContratoFinanceiro(contratoId); } catch { /* não bloqueia a alteração comercial */ }
 }
+
+function normalizarSlugPublico(valor = '') {
+  return normalizarTenantId(
+    String(valor || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+  );
+}
+
+async function resolverAcademiaPublica(slugInformado = '') {
+  const slug = normalizarSlugPublico(slugInformado);
+  if (!slug || SLUGS_RESERVADOS.has(slug)) return null;
+
+  const supabase = obterSupabaseAdmin({ obrigatorio: true });
+  const { data, error } = await supabase
+    .from('fusion_tenants')
+    .select('tenant_id,slug,name,status')
+    .or(`tenant_id.eq.${slug},slug.eq.${slug}`)
+    .limit(2);
+
+  if (error) throw error;
+
+  const ativos = (data || []).filter(item =>
+    ['active', 'trial'].includes(String(item.status || '').toLowerCase())
+  );
+
+  if (ativos.length !== 1) return null;
+  return ativos[0];
+}
+
+async function paginaPublicaAcademia(req, res, next, pagina) {
+  try {
+    const academia = await resolverAcademiaPublica(req.params.slug);
+    if (!academia) return next();
+
+    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('X-Fusion-Public-Tenant', normalizarTenantId(academia.tenant_id));
+    return res.sendFile(path.join(PUBLIC_PAGES_ROOT, pagina, 'index.html'));
+  } catch (error) {
+    console.error(`[Site público] Falha ao resolver ${req.params.slug}: ${error.message}`);
+    return next();
+  }
+}
+
+/*
+ * PÁGINAS PÚBLICAS AUTOMÁTICAS POR ACADEMIA
+ *
+ * Uma academia ativa/trial cadastrada em fusion_tenants passa a responder
+ * automaticamente em:
+ *   /slug-da-academia
+ *   /slug-da-academia/matricula
+ *
+ * Não há HTML individual por cliente. O tenant é confirmado no banco antes
+ * de qualquer página ser entregue.
+ */
+router.get('/:slug/matricula', (req, res, next) =>
+  paginaPublicaAcademia(req, res, next, 'matricula-online')
+);
+
+router.get('/:slug', (req, res, next) =>
+  paginaPublicaAcademia(req, res, next, 'promocao')
+);
 
 router.get('/api/comercial/status', async (req, res) => res.json({ ...(await statusComercial()), rotas: [
   'GET /api/comercial/status',
