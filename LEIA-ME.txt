@@ -1,44 +1,46 @@
-FUSION ERP — AJUSTES CANÔNICOS DE URL + CHAT
-Data: 10/08/2026
+FUSION ALUNO — CORREÇÃO PARA DEPLOY
 
-ARQUIVOS
-========
+Esta correção faz apenas duas mudanças em:
 modules/security/api-security.middleware.mjs
-public/pages/promocao/index.html
-public/pages/matricula-online/index.html
 
-URLS
-====
-- www.fusionsistema.com.br -> fusionsistema.com.br (preserva caminho)
-- /pages/comecar/ -> /
-- /comecar/ -> /
-- /pages/comecar/<slug> -> /<slug>
-- /comecar/<slug> -> /<slug>
-- /pages/promocao/ -> /
-- /pages/matricula-online/ -> /
+1. Remove o redirecionamento interno:
+   www.fusionsistema.com.br -> fusionsistema.com.br
 
-CHAT
-====
-- página promocional passa a usar origem "promocao", que já é reconhecida
-  pelo backend para resposta automática;
-- acrescenta cache-bust ao fusion-site-chat.js para evitar navegador/PWA
-  manter uma versão anterior do script;
-- matrícula online também recebe o mesmo cache-bust.
+   A Render já está configurada para:
+   fusionsistema.com.br -> www.fusionsistema.com.br
 
-NÃO ALTERA
-==========
-- dados do Supabase;
-- regras da catraca;
-- financeiro;
-- tenant_id;
-- planos.
+   Assim elimina o ERR_TOO_MANY_REDIRECTS.
+
+2. Libera no middleware global somente as rotas necessárias do Fusion Aluno:
+   POST /api/treinos/aluno-app/ativar
+   POST /api/treinos/aluno-app/status
+   POST /api/treinos/aluno-app/login
+   POST /api/treinos/aluno-app/primeiro-acesso
+   GET  /api/treinos/aluno-app/me
+   POST /api/treinos/aluno-app/logout
+
+Nenhuma outra API é aberta.
+
+OPÇÃO A — PowerShell (Windows)
+Na raiz do repositório fusion-erp:
+  powershell -ExecutionPolicy Bypass -File .\CORRIGIR-FUSION-ALUNO.ps1 -Repo .
+
+Depois:
+  git diff -- modules/security/api-security.middleware.mjs
+  git add modules/security/api-security.middleware.mjs
+  git commit -m "fix: dominio canonico e acesso Fusion Aluno"
+  git push origin main
+
+OPÇÃO B — Git patch
+  git apply .\fusion-aluno-dominio-e-rotas.patch
+
+Depois faça commit/push.
+
+A Render está com Auto-Deploy na main, então o push deve iniciar o deploy.
 
 TESTE APÓS DEPLOY
-=================
-1. Abrir https://www.fusionsistema.com.br/pages/comecar/
-   Deve terminar em https://fusionsistema.com.br/
-2. Abrir /pages/comecar/academia-piloto
-   Deve terminar em /academia-piloto
-3. Na /academia-piloto, abrir Chat, enviar "teste chat".
-   Deve aparecer resposta automática e a mensagem deve chegar ao atendimento.
-4. Repetir em outro tenant e verificar isolamento.
+Abra em janela anônima:
+https://www.fusionsistema.com.br/pages/aluno-login/index.html
+
+O navegador deve permanecer em www.fusionsistema.com.br, sem loop.
+A primeira tela deve ser "Ative seu aplicativo".
