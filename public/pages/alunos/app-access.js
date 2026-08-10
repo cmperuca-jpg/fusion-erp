@@ -125,11 +125,12 @@
     const ativo = lerCodigoSessao(alunoId);
 
     if (ativo) {
-      botao.textContent = `Código: ${ativo.codigo} • ${tempoRestante(ativo)}`;
+      const novoTexto = `Código: ${ativo.codigo} • ${tempoRestante(ativo)}`;
+      if (botao.textContent !== novoTexto) botao.textContent = novoTexto;
       botao.title = 'Código válido. Clique para copiar ou enviar ao aluno.';
       botao.dataset.codigoAtivo = '1';
     } else {
-      botao.textContent = padrao;
+      if (botao.textContent !== padrao) botao.textContent = padrao;
       botao.title = '';
       delete botao.dataset.codigoAtivo;
     }
@@ -471,7 +472,10 @@
     alvos.forEach((alvo) => {
       if (alvo.dataset.fusionAppCodeObserver === '1') return;
       alvo.dataset.fusionAppCodeObserver = '1';
-      new MutationObserver(aplicarTudo).observe(alvo, {
+      new MutationObserver(() => {
+        injetarBotoesLista();
+        injetarBotaoModalAluno();
+      }).observe(alvo, {
         childList: true,
         subtree: true
       });

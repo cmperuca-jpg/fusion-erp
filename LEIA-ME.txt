@@ -1,22 +1,24 @@
-FUSION ALUNO — CÓDIGO VISÍVEL NO BOTÃO POR 30 MINUTOS
+HOTFIX — FUSION ALUNO / CONTADOR DO CÓDIGO
 
-Substitua somente:
-public/pages/alunos/app-access.js
+Motivo:
+A primeira versão do contador alterava o texto do botão dentro de uma área
+observada por MutationObserver. Isso podia disparar callbacks repetidamente
+e travar a página/aba.
 
-Novo comportamento:
-- Ao gerar, o botão passa a mostrar:
-  Código: A7C91F2B • 29:59
-- A contagem regressiva é atualizada a cada segundo.
-- O código permanece visível até o horário expira_em retornado pelo servidor.
-- Se clicar no botão enquanto ainda está válido, NÃO gera outro código:
-  reabre a janela do código atual.
-- Se a página for recarregada na mesma aba, o código continua visível
-  durante a sessão do navegador.
-- Ao expirar, o botão volta automaticamente para:
-  Gerar código do app / Código app
-- A validade real continua sendo controlada pelo backend.
+Esta versão:
+- só altera o texto do botão quando o valor realmente mudou;
+- o MutationObserver apenas injeta botões novos;
+- o contador de 1 segundo não chama novamente a rotina geral de observação;
+- mantém o código visível até expirar;
+- clicar no código válido reabre o modal, sem gerar outro.
 
-Commit sugerido:
-feat: mantém código do app visível no botão até expirar
-
-Depois do commit na main, aguarde o Auto-Deploy da Render.
+RECUPERAÇÃO RECOMENDADA:
+1. Na Render, faça rollback do deploy 4e052e15 para o commit anterior
+   73ce25d0f3f5cca9f7d5bedf3bcf678be308faf2.
+2. Confirme que o site voltou.
+3. Depois substitua:
+   public/pages/alunos/app-access.js
+   por este arquivo.
+4. Commit sugerido:
+   fix: evita loop do contador do codigo do app
+5. Aguarde Deploy live e teste novamente.
