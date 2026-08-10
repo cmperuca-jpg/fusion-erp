@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0f766e">
+  <meta name="color-scheme" content="light">
+  <title>Fusion Administração</title>
+  <link rel="manifest" href="/manifest-administracao.webmanifest">
+  <link rel="stylesheet" href="./style.css?v=20260810-1">
+</head>
+<body data-app="administracao">
+  <main class="shell">
+    <div class="brand">
+      <div class="mark" aria-hidden="true">F</div>
+      <div><strong>Fusion Administração</strong><small>Gestão da academia</small></div>
+    </div>
+    <section class="card">
+      <div class="eyebrow">Aplicativo oficial</div>
+      <h1>Fusion Administração</h1>
+      <p>Acesso ao painel gerencial, financeiro, alunos e demais funções autorizadas ao perfil administrativo.</p>
+
+      <div class="context">
+        <div><span>Academia</span><strong id="academiaNome">Não selecionada</strong></div>
+        <div><span>Usuário</span><strong id="usuarioNome">Não conectado</strong></div>
+      </div>
+
+      <div class="actions">
+        <button id="btnAbrir" class="primary" type="button">Selecionar academia e entrar</button>
+        <button id="btnInstalar" class="secondary" type="button">Instalar aplicativo</button>
+        <a class="action ghost" href="/pages/apps-academia/index.html">Ver todos os aplicativos</a>
+      </div>
+      <div id="instalacaoInfo" class="install-info"></div>
+      <div id="mensagem" class="message hidden" role="alert"></div>
+
+      <div id="quick" class="quick hidden">
+        <h2>Acessos rápidos</h2>
+        <div class="quick-grid"><a href="/pages/dashboard/index.html">Dashboard</a><a href="/pages/alunos/index.html">Alunos</a><a href="/pages/financeiro/index.html">Financeiro</a><a href="/pages/configuracoes/index.html">Configurações</a></div>
+      </div>
+    </section>
+  </main>
+
+  <script src="/assets/js/fusion-auth.js"></script>
+  <script src="./index.js?v=20260810-1"></script>
+  <script src="/assets/js/fusion-profile-pwa-install.js?v=20260810-1" defer></script>
+</body>
+</html>

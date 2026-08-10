@@ -1,0 +1,29 @@
+{
+  "updated_at": "2026-08-10",
+  "apps": {
+    "aluno": {
+      "name": "Fusion Aluno",
+      "web": "/pages/aluno-login/index.html?app=fusion-aluno",
+      "manifest": "/manifest-aluno.webmanifest",
+      "apk": "/downloads/fusion-aluno.apk"
+    },
+    "professor": {
+      "name": "Fusion Professor",
+      "web": "/pages/professor-login/index.html?app=fusion-professor",
+      "manifest": "/manifest-professor.webmanifest",
+      "apk": "/downloads/fusion-professor.apk"
+    },
+    "recepcao": {
+      "name": "Fusion Recepção",
+      "web": "/pages/recepcao-app/index.html?app=fusion-recepcao",
+      "manifest": "/manifest-recepcao.webmanifest",
+      "apk": "/downloads/fusion-recepcao.apk"
+    },
+    "administracao": {
+      "name": "Fusion Administração",
+      "web": "/pages/administracao-app/index.html?app=fusion-administracao",
+      "manifest": "/manifest-administracao.webmanifest",
+      "apk": "/downloads/fusion-administracao.apk"
+    }
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "id": "/pages/administracao-app/index.html?app=fusion-administracao",
+  "name": "Fusion Administração",
+  "short_name": "Fusion Admin",
+  "description": "Aplicativo oficial de administração da academia no Fusion Sistema.",
+  "lang": "pt-BR",
+  "start_url": "/pages/administracao-app/index.html?app=fusion-administracao",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0b1320",
+  "theme_color": "#0f766e",
+  "orientation": "any",
+  "categories": [
+    "business",
+    "productivity"
+  ],
+  "icons": [
+    {
+      "src": "/assets/brand/pwa/fusion-sistema-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/brand/pwa/fusion-sistema-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

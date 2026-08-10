@@ -1,0 +1,31 @@
+{
+  "id": "/pages/recepcao-app/index.html?app=fusion-recepcao",
+  "name": "Fusion Recepção",
+  "short_name": "Fusion Recepção",
+  "description": "Aplicativo oficial da recepção no Fusion Sistema.",
+  "lang": "pt-BR",
+  "start_url": "/pages/recepcao-app/index.html?app=fusion-recepcao",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f2f8f7",
+  "theme_color": "#0f766e",
+  "orientation": "any",
+  "categories": [
+    "business",
+    "productivity"
+  ],
+  "icons": [
+    {
+      "src": "/assets/brand/pwa/fusion-sistema-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/brand/pwa/fusion-sistema-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,0 +1,105 @@
+FUSION — 4 APLICATIVOS POR ACADEMIA
+Entrega funcional imediata (PWA) + preparada para APK
+
+O QUE ESTE PACOTE CRIA
+
+1. Fusion Aluno
+   Já existente no sistema.
+   /pages/aluno-login/index.html?app=fusion-aluno
+
+2. Fusion Professor
+   Já existente no sistema.
+   /pages/professor-login/index.html?app=fusion-professor
+
+3. Fusion Recepção
+   Novo PWA separado por identidade.
+   /pages/recepcao-app/index.html?app=fusion-recepcao
+
+4. Fusion Administração
+   Novo PWA separado por identidade.
+   /pages/administracao-app/index.html?app=fusion-administracao
+
+5. Página central da academia:
+   /pages/apps-academia/index.html
+
+Exemplo:
+   /pages/apps-academia/index.html?nome=Academia%20Piloto&tenant=academia-piloto
+
+COMO COLOCAR NA PÁGINA DE CADA ACADEMIA
+
+No ponto da página em que devem aparecer os quatro aplicativos, adicione:
+
+<div data-fusion-academia-apps
+     data-academia-nome="NOME DA ACADEMIA"
+     data-academia-id="TENANT_ID"></div>
+<script src="/assets/js/fusion-academia-apps-widget.js" defer></script>
+
+O widget usa Shadow DOM para não quebrar o CSS da página existente.
+
+IMPORTANTE SOBRE APK
+
+Nenhum APK foi inventado. Hoje /public/downloads está sem os APKs.
+A página tenta verificar automaticamente estes arquivos:
+
+/downloads/fusion-aluno.apk
+/downloads/fusion-professor.apk
+/downloads/fusion-recepcao.apk
+/downloads/fusion-administracao.apk
+
+Quando um APK REAL for colocado nesses nomes, o botão
+"Baixar Android (.apk)" aparecerá automaticamente na página central.
+Até lá, os quatro funcionam como aplicativos PWA instaláveis.
+
+INSTALAÇÃO
+
+Android:
+- abrir o aplicativo
+- tocar "Instalar aplicativo"
+- ou usar o menu do navegador > Instalar aplicativo
+
+iPhone:
+- abrir no Safari
+- Compartilhar
+- Adicionar à Tela de Início
+
+RECEPÇÃO E ADMINISTRAÇÃO
+
+Os dois usam o login e as permissões que já existem no Fusion ERP.
+Não foi criado outro banco, outra senha nem outro usuário.
+
+Recepção aceita os perfis:
+recepcao, recepcionista, atendimento
+e também perfis administrativos de supervisão.
+
+Administração aceita:
+gerente, admin, administrador, dono e master.
+
+ARQUIVOS NOVOS
+
+public/manifest-recepcao.webmanifest
+public/manifest-administracao.webmanifest
+public/assets/js/fusion-profile-pwa-install.js
+public/assets/js/fusion-academia-apps-widget.js
+public/pages/apps-academia/index.html
+public/pages/apps-academia/index.js
+public/pages/apps-academia/style.css
+public/pages/recepcao-app/index.html
+public/pages/recepcao-app/index.js
+public/pages/recepcao-app/style.css
+public/pages/administracao-app/index.html
+public/pages/administracao-app/index.js
+public/pages/administracao-app/style.css
+public/downloads/apps.json
+
+NÃO SOBRESCREVE
+
+Este pacote não substitui:
+- Fusion Aluno
+- Fusion Professor
+- banco de dados
+- funções do Supabase
+- autenticação existente
+
+COMMIT SUGERIDO
+
+feat: adiciona central de 4 apps por academia
