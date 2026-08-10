@@ -1,0 +1,49 @@
+FUSION ALUNO — INTEGRAÇÃO NO FUSION ERP
+
+Destino:
+cmperuca-jpg/fusion-erp
+branch principal: main
+Render: serviço fusion-erp
+domínio final: fusionsistema.com.br
+
+Arquivos deste pacote:
+1. modules/treinos/aluno-app.service.mjs
+2. modules/treinos/treinos.routes.mjs
+3. public/pages/aluno-login/index.html
+4. public/pages/aluno-login/index.js
+5. public/pages/aluno-login/style.css
+
+O fluxo implementado:
+- ativação por código de 8 caracteres;
+- device_token vinculado ao aparelho;
+- primeiro acesso e criação de senha;
+- login CPF + senha;
+- sessão protegida por cookie HTTP-only;
+- restauração/refresh de sessão;
+- home do aluno;
+- sair;
+- trocar academia;
+- frontend chama apenas rotas do próprio Fusion ERP.
+
+APIs internas usadas no navegador:
+- /api/treinos/aluno-app/ativar
+- /api/treinos/aluno-app/status
+- /api/treinos/aluno-app/login
+- /api/treinos/aluno-app/primeiro-acesso
+- /api/treinos/aluno-app/me
+- /api/treinos/aluno-app/logout
+
+O servidor usa as variáveis já previstas no Fusion ERP:
+SUPABASE_URL
+SUPABASE_SERVICE_ROLE_KEY
+
+Não há chave service_role no frontend.
+
+Após aplicar os arquivos no repositório e fazer commit/push em main,
+a Render deve executar o Auto-Deploy já configurado para o serviço fusion-erp.
+
+Teste inicial:
+https://www.fusionsistema.com.br/pages/aluno-login/index.html
+
+IMPORTANTE:
+Faça o primeiro teste com um código de ativação válido emitido pelo backend.

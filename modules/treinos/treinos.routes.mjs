@@ -10,6 +10,15 @@ import {
   liberarCatracaPortalAluno,
   obterContadorCatracaPortalAluno
 } from "./treinos.service.mjs";
+import {
+  ativarAlunoApp,
+  statusAlunoApp,
+  loginAlunoApp,
+  primeiroAcessoAlunoApp,
+  gravarSessaoAluno,
+  limparSessaoAluno,
+  obterHomeAlunoApp
+} from "./aluno-app.service.mjs";
 import * as alunosService from "../alunos/alunos.service.mjs";
 
 const router = Router();
@@ -98,6 +107,49 @@ async function treinoPermitidoParaProfessor(req, treinoId = "") {
   return treinos.some(treino => mesmo(treino.id, treinoId));
 }
 
+const tentativasAlunoApp = new Map();
+function limitarAlunoApp(req, res, next) {
+  const janelaMs = 10 * 60 * 1000;
+  const limite = 12;
+  const agora = Date.now();
+  const chave = String(req.ip || req.socket?.remoteAddress || "desconhecido");
+  const atual = tentativasAlunoApp.get(chave);
+  if (!atual || atual.resetAt <= agora) {
+    tentativasAlunoApp.set(chave, { count: 1, resetAt: agora + janelaMs });
+    return next();
+  }
+  atual.count += 1;
+  if (atual.count > limite) {
+    res.setHeader("Retry-After", String(Math.max(1, Math.ceil((atual.resetAt - agora) / 1000))));
+    return res.status(429).json({ ok: false, code: "RATE_LIMIT", mensagem: "Muitas tentativas. Aguarde alguns minutos e tente novamente." });
+  }
+  return next();
+}
+
+function origemDoProprioSistema(req) {
+  const origin = String(req.headers.origin || "").trim();
+  if (!origin) return true;
+  try {
+    const url = new URL(origin);
+    return url.host === req.get("host");
+  } catch {
+    return false;
+  }
+}
+
+function somenteMesmoSistema(req, res, next) {
+  if (!origemDoProprioSistema(req)) {
+    return res.status(403).json({ ok: false, code: "ORIGIN_NOT_ALLOWED", mensagem: "Origem não permitida." });
+  }
+  return next();
+}
+
+function responderErroAlunoApp(res, erro, fallback = "Erro no aplicativo do aluno.") {
+  const status = Number(erro?.statusCode || erro?.status || 500);
+  const code = String(erro?.code || "");
+  return res.status(status).json({ ok: false, code, mensagem: erro?.message || fallback });
+}
+
 router.get("/biblioteca", async (_req, res) => {
   try {
     res.json({ ok: true, dados: await obterBiblioteca() });
@@ -112,6 +164,56 @@ router.post("/aluno-login", async (req, res) => {
   } catch (erro) {
     res.status(erro.statusCode || 500).json({ ok: false, mensagem: erro.message || "Erro ao autenticar aluno" });
   }
+});
+
+router.post("/aluno-app/ativar", somenteMesmoSistema, limitarAlunoApp, async (req, res) => {
+  try {
+    res.json({ ok: true, dados: await ativarAlunoApp(req.body || {}) });
+  } catch (erro) {
+    responderErroAlunoApp(res, erro, "Erro ao ativar o aplicativo.");
+  }
+});
+
+router.post("/aluno-app/status", somenteMesmoSistema, async (req, res) => {
+  try {
+    res.json({ ok: true, dados: await statusAlunoApp(req.body?.device_token || req.body?.deviceToken) });
+  } catch (erro) {
+    responderErroAlunoApp(res, erro, "Dispositivo não ativado.");
+  }
+});
+
+router.post("/aluno-app/login", somenteMesmoSistema, limitarAlunoApp, async (req, res) => {
+  try {
+    const dados = await loginAlunoApp(req.body || {});
+    gravarSessaoAluno(res, dados);
+    res.json({ ok: true });
+  } catch (erro) {
+    responderErroAlunoApp(res, erro, "CPF ou senha inválidos.");
+  }
+});
+
+router.post("/aluno-app/primeiro-acesso", somenteMesmoSistema, limitarAlunoApp, async (req, res) => {
+  try {
+    const dados = await primeiroAcessoAlunoApp(req.body || {});
+    gravarSessaoAluno(res, dados);
+    res.json({ ok: true });
+  } catch (erro) {
+    responderErroAlunoApp(res, erro, "Não foi possível criar sua senha.");
+  }
+});
+
+router.get("/aluno-app/me", somenteMesmoSistema, async (req, res) => {
+  try {
+    const deviceToken = req.headers["x-fusion-device-token"];
+    res.json({ ok: true, dados: await obterHomeAlunoApp(req, res, deviceToken) });
+  } catch (erro) {
+    responderErroAlunoApp(res, erro, "Não foi possível carregar seus dados.");
+  }
+});
+
+router.post("/aluno-app/logout", somenteMesmoSistema, async (_req, res) => {
+  limparSessaoAluno(res);
+  res.json({ ok: true });
 });
 
 router.get("/aluno-sessao", async (req, res) => {
