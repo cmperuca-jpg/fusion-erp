@@ -18,6 +18,12 @@ const PUBLIC_RULES = [
   ["POST", "/api/saas/empresas"],
   ["POST", "/api/professores/login"],
   ["POST", "/api/treinos/aluno-login"],
+  ["POST", "/api/treinos/aluno-app/ativar"],
+  ["POST", "/api/treinos/aluno-app/status"],
+  ["POST", "/api/treinos/aluno-app/login"],
+  ["POST", "/api/treinos/aluno-app/primeiro-acesso"],
+  ["GET", "/api/treinos/aluno-app/me"],
+  ["POST", "/api/treinos/aluno-app/logout"],
   ["POST", "/api/matricula-online"],
   ["GET", "/api/matricula-online/validar-cpf"],
   ["GET", "/api/planos"],
@@ -378,34 +384,14 @@ function destinoCanonicoPublico(pathname = "") {
   return "";
 }
 
-function hostRequisicao(req) {
-  return String(
-    req.headers["x-forwarded-host"] ||
-    req.headers.host ||
-    ""
-  )
-    .split(",")[0]
-    .trim()
-    .split(":")[0]
-    .toLowerCase();
-}
-
 function redirecionarCanonicoPublico(req, res) {
   if (!["GET", "HEAD"].includes(req.method)) return false;
 
   const destinoRota = destinoCanonicoPublico(req.path);
-  const host = hostRequisicao(req);
-  const www = host === "www.fusionsistema.com.br";
-
-  if (!destinoRota && !www) return false;
-
-  const caminho = destinoRota || req.originalUrl || req.url || "/";
-  const destino = www
-    ? `https://fusionsistema.com.br${caminho}`
-    : caminho;
+  if (!destinoRota) return false;
 
   res.setHeader("Cache-Control", "no-store");
-  res.redirect(308, destino);
+  res.redirect(308, destinoRota);
   return true;
 }
 

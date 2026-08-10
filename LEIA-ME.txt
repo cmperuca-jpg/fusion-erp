@@ -1,46 +1,19 @@
-FUSION ALUNO — CORREÇÃO PARA DEPLOY
+ARQUIVO PRONTO — FUSION ALUNO
 
-Esta correção faz apenas duas mudanças em:
+Substitua no repositório:
 modules/security/api-security.middleware.mjs
 
-1. Remove o redirecionamento interno:
-   www.fusionsistema.com.br -> fusionsistema.com.br
+pelo arquivo de mesmo caminho deste pacote.
 
-   A Render já está configurada para:
-   fusionsistema.com.br -> www.fusionsistema.com.br
+O arquivo já contém:
+- remoção do redirecionamento interno www -> sem www;
+- manutenção dos redirecionamentos internos de rotas;
+- liberação somente das 6 rotas do Fusion Aluno no middleware global.
 
-   Assim elimina o ERR_TOO_MANY_REDIRECTS.
+Depois faça commit na main:
+fix: aplica dominio canonico e rotas Fusion Aluno
 
-2. Libera no middleware global somente as rotas necessárias do Fusion Aluno:
-   POST /api/treinos/aluno-app/ativar
-   POST /api/treinos/aluno-app/status
-   POST /api/treinos/aluno-app/login
-   POST /api/treinos/aluno-app/primeiro-acesso
-   GET  /api/treinos/aluno-app/me
-   POST /api/treinos/aluno-app/logout
+A Render deve iniciar o Auto-Deploy automaticamente.
 
-Nenhuma outra API é aberta.
-
-OPÇÃO A — PowerShell (Windows)
-Na raiz do repositório fusion-erp:
-  powershell -ExecutionPolicy Bypass -File .\CORRIGIR-FUSION-ALUNO.ps1 -Repo .
-
-Depois:
-  git diff -- modules/security/api-security.middleware.mjs
-  git add modules/security/api-security.middleware.mjs
-  git commit -m "fix: dominio canonico e acesso Fusion Aluno"
-  git push origin main
-
-OPÇÃO B — Git patch
-  git apply .\fusion-aluno-dominio-e-rotas.patch
-
-Depois faça commit/push.
-
-A Render está com Auto-Deploy na main, então o push deve iniciar o deploy.
-
-TESTE APÓS DEPLOY
-Abra em janela anônima:
+Teste:
 https://www.fusionsistema.com.br/pages/aluno-login/index.html
-
-O navegador deve permanecer em www.fusionsistema.com.br, sem loop.
-A primeira tela deve ser "Ative seu aplicativo".
