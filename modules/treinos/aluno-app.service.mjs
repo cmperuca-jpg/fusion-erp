@@ -546,13 +546,21 @@ function resumoTreinos(rows = []) {
         .slice(0, 40)
         .map(item => ({
           nome: textoSeguro(item?.nome),
+          codigo: textoSeguro(item?.codigo),
           grupo: textoSeguro(item?.grupo),
+          metodo: textoSeguro(item?.metodo),
           series: textoSeguro(item?.series),
           repeticoes: textoSeguro(item?.repeticoes),
           carga: textoSeguro(item?.carga),
           descanso: textoSeguro(item?.descanso),
           observacao: textoSeguro(item?.obs || item?.observacao),
-          foto: textoSeguro(item?.foto).startsWith("/") ? textoSeguro(item?.foto) : ""
+          descricao: textoSeguro(item?.descricao),
+          musculos: textoSeguro(item?.musculos),
+          foto: textoSeguro(item?.foto).startsWith("/") ? textoSeguro(item?.foto) : "",
+          gif: textoSeguro(item?.gif).startsWith("/") ? textoSeguro(item?.gif) : "",
+          imagem: textoSeguro(item?.gif).startsWith("/")
+            ? textoSeguro(item?.gif)
+            : (textoSeguro(item?.foto).startsWith("/") ? textoSeguro(item?.foto) : "")
         }))
         .filter(item => item.nome)
     }));

@@ -7,7 +7,7 @@
   <meta name="color-scheme" content="light">
   <title>Fusion Aluno</title>
   <link rel="manifest" href="/manifest-aluno.webmanifest">
-  <link rel="stylesheet" href="/pages/aluno-login/style.css?v=20260810-2">
+  <link rel="stylesheet" href="/pages/aluno-login/style.css?v=20260810-3">
 </head>
 <body>
   <main class="app-shell" aria-live="polite">
@@ -112,10 +112,11 @@
           <small id="planoDetalhe"></small>
           <small id="planoVencimento"></small>
         </article>
-        <article class="feature-card">
+        <article id="treinoCard" class="feature-card feature-card-action" role="button" tabindex="0" aria-haspopup="dialog" aria-controls="treinoGaleria">
           <span>Treinos</span>
           <strong id="treinoResumo">Carregando...</strong>
           <small id="treinoDetalhe"></small>
+          <small id="treinoAcao" class="card-action-hint"></small>
         </article>
         <article class="feature-card">
           <span>Frequência</span>
@@ -177,7 +178,37 @@
     </section>
   </main>
 
-  <script src="/pages/aluno-login/index.js?v=20260810-2"></script>
+    <div id="treinoGaleria" class="training-gallery hidden" role="dialog" aria-modal="true" aria-labelledby="treinoGaleriaTitulo">
+      <div class="training-gallery-panel">
+        <header class="training-gallery-header">
+          <div>
+            <div id="treinoGaleriaDivisao" class="eyebrow">Treino</div>
+            <h2 id="treinoGaleriaTitulo">Exercício</h2>
+          </div>
+          <button id="treinoGaleriaFechar" class="gallery-close" type="button" aria-label="Fechar galeria">×</button>
+        </header>
+
+        <div class="training-gallery-stage">
+          <button id="treinoGaleriaAnterior" class="gallery-nav gallery-prev" type="button" aria-label="Exercício anterior">‹</button>
+          <div class="training-gallery-media">
+            <img id="treinoGaleriaImagem" class="hidden" alt="">
+            <div id="treinoGaleriaSemImagem" class="gallery-no-image">Imagem não disponível</div>
+          </div>
+          <button id="treinoGaleriaProximo" class="gallery-nav gallery-next" type="button" aria-label="Próximo exercício">›</button>
+        </div>
+
+        <div class="training-gallery-body">
+          <div class="gallery-counter" id="treinoGaleriaContador"></div>
+          <div id="treinoGaleriaMeta" class="gallery-meta"></div>
+          <p id="treinoGaleriaObservacao" class="gallery-observation hidden"></p>
+          <p id="treinoGaleriaDescricao" class="gallery-description hidden"></p>
+        </div>
+
+        <div id="treinoGaleriaMiniaturas" class="gallery-thumbnails" aria-label="Exercícios do treino"></div>
+      </div>
+    </div>
+
+  <script src="/pages/aluno-login/index.js?v=20260810-3"></script>
   <script src="/assets/pwa/fusion-pwa-install.js" defer></script>
 </body>
 </html>

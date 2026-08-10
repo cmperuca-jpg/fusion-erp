@@ -8,6 +8,10 @@ const KEYS = {
 const $ = (id) => document.getElementById(id);
 const screens = ["loadingScreen", "activationScreen", "firstAccessScreen", "loginScreen", "homeScreen"];
 
+let treinoGaleriaItens = [];
+let treinoGaleriaIndice = 0;
+let treinoGaleriaTouchX = null;
+
 function uuid() {
   if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
@@ -325,10 +329,30 @@ function renderPlano(plano = null) {
     : (plano.horario ? `Horário: ${plano.horario}` : "");
 }
 
+function imagemTreino(item = {}) {
+  return [item.imagem, item.gif, item.foto]
+    .map(textoSeguro)
+    .find((valor) => valor.startsWith("/")) || "";
+}
+
+function montarGaleriaTreino(divisoes = []) {
+  return divisoes.flatMap((divisao) => {
+    const itens = Array.isArray(divisao?.itens) ? divisao.itens : [];
+    return itens.map((item) => ({
+      ...item,
+      divisao: textoSeguro(divisao?.nome) || "Treino",
+      imagem: imagemTreino(item)
+    }));
+  });
+}
+
 function renderTreinos(treinos = {}) {
   const divisoes = Array.isArray(treinos.divisoes) ? treinos.divisoes : [];
   const totalExercicios = divisoes.reduce((total, divisao) => total + (Array.isArray(divisao.itens) ? divisao.itens.length : 0), 0);
   const temTreino = totalExercicios > 0;
+  const card = $("treinoCard");
+
+  treinoGaleriaItens = temTreino ? montarGaleriaTreino(divisoes) : [];
 
   $("treinoResumo").textContent = temTreino
     ? `${divisoes.length} divisão${divisoes.length === 1 ? "" : "ões"}`
@@ -336,6 +360,10 @@ function renderTreinos(treinos = {}) {
   $("treinoDetalhe").textContent = temTreino
     ? `${totalExercicios} exercício${totalExercicios === 1 ? "" : "s"}${treinos.professor ? ` · ${treinos.professor}` : ""}`
     : "Quando o professor prescrever, aparecerá aqui.";
+  $("treinoAcao").textContent = temTreino ? "Toque para abrir a galeria de exercícios" : "";
+
+  card.classList.toggle("feature-card-disabled", !temTreino);
+  card.setAttribute("aria-disabled", temTreino ? "false" : "true");
 
   const section = $("treinoSection");
   section.classList.toggle("hidden", !temTreino);
@@ -348,6 +376,8 @@ function renderTreinos(treinos = {}) {
   ].filter(Boolean).join(" · ");
 
   const container = limparLista("treinoDivisoes");
+  let indiceGlobal = 0;
+
   divisoes.forEach((divisao) => {
     const details = document.createElement("details");
     details.className = "training-division";
@@ -358,9 +388,33 @@ function renderTreinos(treinos = {}) {
 
     const lista = document.createElement("div");
     lista.className = "exercise-list";
+
     itens.forEach((item) => {
-      const linha = document.createElement("div");
-      linha.className = "exercise-row";
+      const indice = indiceGlobal++;
+      const linha = document.createElement("button");
+      linha.type = "button";
+      linha.className = "exercise-row exercise-row-button";
+      linha.dataset.galleryIndex = String(indice);
+
+      const thumb = document.createElement("span");
+      thumb.className = "exercise-thumb";
+      const imagem = imagemTreino(item);
+      if (imagem) {
+        const img = document.createElement("img");
+        img.src = imagem;
+        img.alt = "";
+        img.loading = "lazy";
+        img.onerror = () => {
+          img.remove();
+          thumb.textContent = "🏋";
+        };
+        thumb.appendChild(img);
+      } else {
+        thumb.textContent = "🏋";
+      }
+
+      const copy = document.createElement("span");
+      copy.className = "exercise-copy";
       const nome = document.createElement("strong");
       nome.textContent = item.nome || "Exercício";
       const meta = document.createElement("small");
@@ -370,12 +424,137 @@ function renderTreinos(treinos = {}) {
         item.carga ? `Carga: ${item.carga}` : "",
         item.descanso ? `Descanso: ${item.descanso}` : ""
       ].filter(Boolean).join(" · ");
-      linha.append(nome, meta);
+      const acao = document.createElement("small");
+      acao.className = "exercise-open-hint";
+      acao.textContent = imagem ? "Ver imagem" : "Ver exercício";
+      copy.append(nome, meta, acao);
+
+      linha.append(thumb, copy);
+      linha.addEventListener("click", () => abrirGaleriaTreino(indice));
       lista.appendChild(linha);
     });
+
     details.appendChild(lista);
     container.appendChild(details);
   });
+}
+
+function galeriaItemAtual() {
+  return treinoGaleriaItens[treinoGaleriaIndice] || null;
+}
+
+function renderMiniaturasGaleria() {
+  const container = $("treinoGaleriaMiniaturas");
+  container.replaceChildren();
+
+  treinoGaleriaItens.forEach((item, indice) => {
+    const botao = document.createElement("button");
+    botao.type = "button";
+    botao.className = `gallery-thumb${indice === treinoGaleriaIndice ? " active" : ""}`;
+    botao.setAttribute("aria-label", `Abrir ${item.nome || `exercício ${indice + 1}`}`);
+
+    const imagem = imagemTreino(item);
+    if (imagem) {
+      const img = document.createElement("img");
+      img.src = imagem;
+      img.alt = "";
+      img.loading = "lazy";
+      img.onerror = () => {
+        img.remove();
+        botao.textContent = String(indice + 1);
+      };
+      botao.appendChild(img);
+    } else {
+      botao.textContent = String(indice + 1);
+    }
+
+    botao.addEventListener("click", () => {
+      treinoGaleriaIndice = indice;
+      renderGaleriaTreino();
+    });
+    container.appendChild(botao);
+  });
+
+  container.querySelector(".gallery-thumb.active")?.scrollIntoView({
+    block: "nearest",
+    inline: "center",
+    behavior: "smooth"
+  });
+}
+
+function renderGaleriaTreino() {
+  const item = galeriaItemAtual();
+  if (!item) return fecharGaleriaTreino();
+
+  $("treinoGaleriaDivisao").textContent = item.divisao || "Treino";
+  $("treinoGaleriaTitulo").textContent = item.nome || "Exercício";
+  $("treinoGaleriaContador").textContent = `${treinoGaleriaIndice + 1} de ${treinoGaleriaItens.length}`;
+
+  const meta = [
+    item.grupo,
+    item.series ? `${item.series} série${item.series === "1" ? "" : "s"}` : "",
+    item.repeticoes ? `${item.repeticoes} rep.` : "",
+    item.carga ? `Carga: ${item.carga}` : "",
+    item.descanso ? `Descanso: ${item.descanso}` : "",
+    item.metodo ? `Método: ${item.metodo}` : ""
+  ].filter(Boolean);
+  $("treinoGaleriaMeta").textContent = meta.join(" · ");
+
+  const observacao = textoSeguro(item.observacao);
+  $("treinoGaleriaObservacao").textContent = observacao ? `Observação: ${observacao}` : "";
+  $("treinoGaleriaObservacao").classList.toggle("hidden", !observacao);
+
+  const descricao = textoSeguro(item.descricao);
+  $("treinoGaleriaDescricao").textContent = descricao;
+  $("treinoGaleriaDescricao").classList.toggle("hidden", !descricao);
+
+  const img = $("treinoGaleriaImagem");
+  const semImagem = $("treinoGaleriaSemImagem");
+  const imagem = imagemTreino(item);
+
+  img.onload = null;
+  img.onerror = null;
+  img.classList.add("hidden");
+  img.removeAttribute("src");
+  semImagem.classList.remove("hidden");
+
+  if (imagem) {
+    img.alt = `Demonstração do exercício ${item.nome || ""}`;
+    img.onload = () => {
+      img.classList.remove("hidden");
+      semImagem.classList.add("hidden");
+    };
+    img.onerror = () => {
+      img.classList.add("hidden");
+      semImagem.classList.remove("hidden");
+    };
+    img.src = imagem;
+  }
+
+  const temVarios = treinoGaleriaItens.length > 1;
+  $("treinoGaleriaAnterior").classList.toggle("hidden", !temVarios);
+  $("treinoGaleriaProximo").classList.toggle("hidden", !temVarios);
+  renderMiniaturasGaleria();
+}
+
+function abrirGaleriaTreino(indice = 0) {
+  if (!treinoGaleriaItens.length) return;
+  treinoGaleriaIndice = Math.max(0, Math.min(Number(indice) || 0, treinoGaleriaItens.length - 1));
+  renderGaleriaTreino();
+  $("treinoGaleria").classList.remove("hidden");
+  document.body.classList.add("gallery-open");
+  $("treinoGaleriaFechar").focus();
+}
+
+function fecharGaleriaTreino() {
+  $("treinoGaleria").classList.add("hidden");
+  document.body.classList.remove("gallery-open");
+}
+
+function navegarGaleria(delta) {
+  if (!treinoGaleriaItens.length) return;
+  treinoGaleriaIndice = (treinoGaleriaIndice + delta + treinoGaleriaItens.length) % treinoGaleriaItens.length;
+  renderGaleriaTreino();
 }
 
 function renderFrequencia(frequencia = {}) {
@@ -530,6 +709,37 @@ $("entrar").addEventListener("click", entrar);
 $("sair").addEventListener("click", sair);
 $("trocarAcademiaLogin").addEventListener("click", trocarAcademia);
 $("trocarAcademiaHome").addEventListener("click", trocarAcademia);
+
+$("treinoCard").addEventListener("click", () => abrirGaleriaTreino(0));
+$("treinoCard").addEventListener("keydown", (event) => {
+  if ((event.key === "Enter" || event.key === " ") && treinoGaleriaItens.length) {
+    event.preventDefault();
+    abrirGaleriaTreino(0);
+  }
+});
+$("treinoGaleriaFechar").addEventListener("click", fecharGaleriaTreino);
+$("treinoGaleriaAnterior").addEventListener("click", () => navegarGaleria(-1));
+$("treinoGaleriaProximo").addEventListener("click", () => navegarGaleria(1));
+$("treinoGaleria").addEventListener("click", (event) => {
+  if (event.target === $("treinoGaleria")) fecharGaleriaTreino();
+});
+$("treinoGaleria").addEventListener("touchstart", (event) => {
+  treinoGaleriaTouchX = event.changedTouches?.[0]?.clientX ?? null;
+}, { passive: true });
+$("treinoGaleria").addEventListener("touchend", (event) => {
+  if (treinoGaleriaTouchX == null) return;
+  const fim = event.changedTouches?.[0]?.clientX ?? treinoGaleriaTouchX;
+  const delta = fim - treinoGaleriaTouchX;
+  treinoGaleriaTouchX = null;
+  if (Math.abs(delta) < 55) return;
+  navegarGaleria(delta > 0 ? -1 : 1);
+}, { passive: true });
+document.addEventListener("keydown", (event) => {
+  if ($("treinoGaleria").classList.contains("hidden")) return;
+  if (event.key === "Escape") fecharGaleriaTreino();
+  if (event.key === "ArrowLeft") navegarGaleria(-1);
+  if (event.key === "ArrowRight") navegarGaleria(1);
+});
 
 [["codigo", ativar], ["senhaConfirmar", criarSenha], ["senhaLogin", entrar]].forEach(([id, action]) => {
   $(id).addEventListener("keydown", (event) => { if (event.key === "Enter") action(); });

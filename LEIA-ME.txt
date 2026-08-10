@@ -1,51 +1,37 @@
-FUSION ALUNO — HOME COM DADOS REAIS
+FUSION ALUNO — GALERIA DE IMAGENS DO TREINO
 
-Substitua estes 4 arquivos no repositório fusion-erp:
-
+Substitua estes 4 arquivos:
 1. modules/treinos/aluno-app.service.mjs
 2. public/pages/aluno-login/index.html
 3. public/pages/aluno-login/index.js
 4. public/pages/aluno-login/style.css
 
-O QUE MUDA
+NOVO COMPORTAMENTO
 
-- A Home deixa de mostrar "Em breve".
-- Mostra caixa de foto do aluno.
-  - Se houver foto_base64 no cadastro do Fusion ERP, mostra a foto.
-  - Se não houver, mostra as iniciais do aluno.
-- Mostra plano/matrícula real.
-- Mostra modalidade, tipo de plano, valor mensal e próximo vencimento.
-- Mostra treino prescrito real e suas divisões/exercícios quando existir.
-- Se não houver treino, informa claramente "Nenhum treino prescrito".
-- Mostra frequência real dos registros de check-in existentes.
-- Mostra situação financeira real e últimas mensalidades.
-- Mostra avisos derivados do estado real da matrícula/financeiro.
-- Não expõe Supabase no navegador: o frontend continua chamando somente
-  /api/treinos/aluno-app/me dentro de fusionsistema.com.br.
-- Também preserva a correção para permitir emissão de código sem telefone.
+- O cartão "Treinos" é clicável quando existe treino prescrito.
+- Ao tocar no cartão, abre a galeria em tela cheia.
+- Cada exercício mostra a imagem/GIF existente em /assets/exercicios/flash/.
+- Botões anterior/próximo.
+- Teclas ← e → no computador.
+- Swipe para esquerda/direita no celular.
+- Miniaturas na parte inferior.
+- Mostra divisão A/B/C, nome, grupo, séries, repetições, carga,
+  descanso, método, observação e descrição quando existirem.
+- A lista do treino também passa a mostrar miniatura; tocar em qualquer
+  exercício abre a galeria já naquele item.
+- Se o aluno não tiver treino prescrito, o cartão continua informando isso
+  e não abre galeria.
 
-EXEMPLO VERIFICADO — WARNER
+SEGURANÇA
 
-O banco principal possui:
-- Plano: NATAÇÃO INFANTIL
-- Matrícula: MAT-202608-000008
-- Valor mensal: R$ 100,00
-- Próximo vencimento: 10/09/2026
-- Situação financeira atual: paga/em dia
-- Nenhum treino prescrito encontrado no momento
-- Nenhuma frequência de treino/check-in real encontrada no momento
+- As imagens são servidas pelo próprio domínio fusionsistema.com.br.
+- O backend só envia caminhos locais iniciados por "/".
+- Nenhum domínio Lovable/Supabase/Render é exibido ao aluno.
 
-A Home refletirá esses dados, sem inventar conteúdo.
+VALIDAÇÃO
 
-VALIDAÇÃO EXECUTADA
+- node --check no index.js
+- node --check no aluno-app.service.mjs
 
-- node --check public/pages/aluno-login/index.js
-- node --check modules/treinos/aluno-app.service.mjs
-- conferência dos IDs usados pelo JavaScript contra o HTML: nenhum ID ausente
-
-COMMIT SUGERIDO
-
-feat: conecta home do Fusion Aluno aos dados reais do ERP
-
-Após o commit na main, aguarde o Auto-Deploy da Render e teste em:
-https://www.fusionsistema.com.br/pages/aluno-login/index.html
+Commit sugerido:
+feat: adiciona galeria de imagens ao treino do Fusion Aluno
