@@ -1,0 +1,81 @@
+FUSION — PROTEÇÃO DA IMPLANTAÇÃO / ROLLBACK
+
+REGRA NOVA
+
+Uma academia recém-criada fica com:
+onboarding_status = pending
+
+Ela só muda para:
+onboarding_status = completed
+
+quando o administrador chega ao final da implantação e escolhe entrar no sistema
+ou cadastrar o primeiro aluno.
+
+SE DER ERRO
+
+1. Erro de rede/navegador:
+   - NÃO apaga automaticamente.
+   - o cliente pode recarregar e continuar do ponto salvo.
+
+2. Erro fatal e o cliente quer começar de novo:
+   - existe “Cancelar implantação e recomeçar”.
+   - pede duas confirmações.
+   - o backend verifica que a academia ainda é provisória.
+   - apaga todos os registros da academia em uma única transação.
+   - libera novamente e-mail, CPF/CNPJ e nome para novo cadastro.
+
+3. Academia já concluída:
+   - o botão de rollback NÃO pode apagar.
+   - o banco rejeita a operação.
+
+PROTEÇÃO ABSOLUTA
+
+academia-piloto nunca pode ser apagada pelas RPCs de onboarding.
+
+O QUE É APAGADO NO ROLLBACK PROVISÓRIO
+
+- fusion_tenants
+- fusion_tenant_login_index
+- fusion_v3_records
+- fusion_v4_operations
+- fusion_v4_audit
+- recuperações de acesso
+- Access Bridge / agentes / comandos
+- dados Fusion Edge
+- sessões/auditorias de suporte ligadas ao tenant
+- challenge de signup do e-mail/documento/nome
+- arquivos de aparência/logo do tenant no servidor
+
+IMPORTANTE
+
+Não é seguro apagar automaticamente só porque uma aba travou.
+Fechar o Chrome, perder internet ou ficar alguns segundos sem resposta não prova
+que o cadastro está corrompido. Por isso a academia fica PROVISÓRIA e recuperável.
+
+O rollback destrutivo só ocorre:
+- por ação explícita do administrador enquanto a implantação está pending; ou
+- por falha transacional do próprio backend antes de concluir uma operação.
+
+SUPABASE
+
+A migration protect_provisional_tenant_onboarding JÁ FOI APLICADA.
+
+No banco atual:
+- academia-piloto = completed/protegida
+- academias novas de hoje sem conclusão = pending
+
+ARQUIVOS PARA SUBSTITUIR/ADICIONAR
+
+1. modules/saas/onboarding-lifecycle.service.mjs (novo)
+2. modules/auth/auth.routes.mjs
+3. public/pages/configuracao-inicial/index.html
+4. public/pages/configuracao-inicial/index.js
+5. public/pages/configuracao-inicial/style.css
+6. public/assets/js/fusion-tenant-experience.js
+7. modules/comercial/comercial.routes.mjs
+
+Os dois últimos já incluem a correção do travamento do MutationObserver.
+
+COMMIT SUGERIDO
+
+fix: protege onboarding com rollback de academia provisoria

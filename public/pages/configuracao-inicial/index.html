@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#0b6574">
   <title>Configuração inicial | Fusion Sistema</title>
-  <link rel="stylesheet" href="/pages/configuracao-inicial/style.css?v=20260811-entrega-1">
+  <link rel="stylesheet" href="/pages/configuracao-inicial/style.css?v=20260811-rollback-1">
   <script src="/assets/js/fusion-auth.js?v=20260811-1"></script>
   <script>FusionAuth.proteger(["admin"]);</script>
 </head>
@@ -49,10 +49,13 @@
 
     <footer class="onboarding-footer">
       <span>Você não precisa preencher cadastros avançados agora.</span>
-      <button id="btnSair" class="link-button" type="button">Sair com segurança</button>
+      <div class="onboarding-footer-actions">
+        <button id="btnCancelarImplantacao" class="link-button danger-link" type="button">Cancelar implantação e recomeçar</button>
+        <button id="btnSair" class="link-button" type="button">Sair com segurança</button>
+      </div>
     </footer>
   </main>
 
-  <script src="/pages/configuracao-inicial/index.js?v=20260811-entrega-1"></script>
+  <script src="/pages/configuracao-inicial/index.js?v=20260811-rollback-1"></script>
 </body>
 </html>

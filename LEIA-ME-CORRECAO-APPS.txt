@@ -1,0 +1,25 @@
+FUSION — CORREÇÃO DOS APLICATIVOS NAS ROTAS POR ACADEMIA
+
+CAUSA
+Nas URLs limpas como /gladiadores-academia/apps/administracao, o HTML era servido do arquivo public/pages/administracao-app/index.html, mas os caminhos ./style.css e ./index.js eram resolvidos pelo navegador em /gladiadores-academia/apps/. Isso deixava a tela sem CSS e podia impedir o JavaScript do aplicativo.
+
+CORREÇÃO CENTRAL
+A rota de tenant converte automaticamente recursos relativos para o diretório físico correto antes de entregar a página. Isso cobre a Central de Aplicativos, Fusion Administração, Fusion Recepção, Fusion Professor e outras páginas com assets ./...
+
+PWA POR ACADEMIA
+Também passa a existir manifesto dinâmico por academia e perfil. Ao instalar Administração pela Gladiadores, o start_url passa a ser /gladiadores-academia/apps/administracao, preservando a academia no aplicativo instalado.
+
+SUBSTITUA SOMENTE
+modules/comercial/comercial.routes.mjs
+
+Aplique depois do pacote FUSION-PROTECAO-IMPLANTACAO-ROLLBACK.zip.
+
+COMMIT SUGERIDO
+fix: corrige assets e pwa nas rotas por academia
+
+TESTE
+1. /gladiadores-academia/apps
+2. /gladiadores-academia/apps/administracao
+3. /gladiadores-academia/apps/recepcao
+4. /gladiadores-academia/apps/professor
+5. instalar Administração e reabrir o PWA.

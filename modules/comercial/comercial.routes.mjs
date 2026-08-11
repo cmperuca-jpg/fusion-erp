@@ -26,7 +26,8 @@ import {
 
 const router = express.Router();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const PUBLIC_PAGES_ROOT = path.resolve(__dirname, '../../public/pages');
+const PUBLIC_ROOT = path.resolve(__dirname, '../../public');
+const PUBLIC_PAGES_ROOT = path.resolve(PUBLIC_ROOT, 'pages');
 const APP_PAGE_MAP = Object.freeze({
   login: 'login/index.html',
   'configuracao-inicial': 'configuracao-inicial/index.html',
@@ -67,6 +68,13 @@ const APP_PROFILE_MAP = Object.freeze({
   professor: 'professor-login/index.html',
   recepcao: 'recepcao-app/index.html',
   administracao: 'administracao-app/index.html'
+});
+
+const APP_MANIFEST_MAP = Object.freeze({
+  aluno: 'manifest-aluno.webmanifest',
+  professor: 'manifest-professor.webmanifest',
+  recepcao: 'manifest-recepcao.webmanifest',
+  administracao: 'manifest-administracao.webmanifest'
 });
 
 const SLUGS_RESERVADOS = new Set([
@@ -142,7 +150,56 @@ try{
 </script>`;
 }
 
-async function servirPaginaTenant(req, res, next, arquivoRelativo, { persistirTenant = false } = {}) {
+
+function corrigirAssetsRelativos(html = '', arquivoRelativo = '') {
+  const pasta = path.posix.dirname(String(arquivoRelativo || '').replace(/\\/g, '/'));
+  if (!pasta || pasta === '.') return html;
+
+  const prefixo = `/pages/${pasta}/`;
+
+  return String(html).replace(
+    /\b(href|src)=(["'])\.\/([^"']+)\2/gi,
+    (_match, atributo, aspas, recurso) =>
+      `${atributo}=${aspas}${prefixo}${recurso}${aspas}`
+  );
+}
+
+function nomeAplicativoPerfil(perfil = '') {
+  return ({
+    aluno: 'Fusion Aluno',
+    professor: 'Fusion Professor',
+    recepcao: 'Fusion Recepção',
+    administracao: 'Fusion Administração'
+  })[String(perfil || '').toLowerCase()] || 'Fusion Sistema';
+}
+
+async function manifestoDaAcademia(academia = {}, perfil = '') {
+  const chave = String(perfil || '').toLowerCase();
+  const arquivoManifesto = APP_MANIFEST_MAP[chave];
+  if (!arquivoManifesto) return null;
+
+  const arquivo = path.resolve(PUBLIC_ROOT, arquivoManifesto);
+  if (!arquivo.startsWith(PUBLIC_ROOT)) return null;
+
+  const bruto = await fs.readFile(arquivo, 'utf8');
+  const manifesto = JSON.parse(bruto);
+
+  const slug = normalizarSlugPublico(academia.slug || academia.tenant_id);
+  const nomeAcademia = String(academia.name || slug).trim();
+  const nomeApp = nomeAplicativoPerfil(chave);
+  const startUrl = `/${encodeURIComponent(slug)}/apps/${encodeURIComponent(chave)}`;
+
+  manifesto.id = startUrl;
+  manifesto.start_url = startUrl;
+  manifesto.scope = '/';
+  manifesto.name = `${nomeApp} — ${nomeAcademia}`;
+  manifesto.short_name = `${nomeApp.replace(/^Fusion\s+/i, '')} · ${nomeAcademia}`;
+  manifesto.description = `${nomeApp} da ${nomeAcademia}, com tecnologia Fusion Sistema.`;
+
+  return manifesto;
+}
+
+async function servirPaginaTenant(req, res, next, arquivoRelativo, { persistirTenant = false, manifestPerfil = '' } = {}) {
   try {
     const academia = await resolverAcademiaPublica(req.params.slug);
     if (!academia) return next();
@@ -151,8 +208,18 @@ async function servirPaginaTenant(req, res, next, arquivoRelativo, { persistirTe
     if (!arquivo.startsWith(PUBLIC_PAGES_ROOT)) return next();
 
     let html = await fs.readFile(arquivo, 'utf8');
+    html = corrigirAssetsRelativos(html, arquivoRelativo);
+
+    if (manifestPerfil && APP_MANIFEST_MAP[String(manifestPerfil).toLowerCase()]) {
+      const manifestUrl = `/${encodeURIComponent(normalizarSlugPublico(academia.slug || academia.tenant_id))}/manifest/${encodeURIComponent(String(manifestPerfil).toLowerCase())}.webmanifest`;
+      html = html.replace(
+        /<link\b([^>]*?)rel=(['"])manifest\2([^>]*?)>/i,
+        `<link rel="manifest" href="${manifestUrl}">`
+      );
+    }
+
     const contexto = scriptContextoTenant(academia, persistirTenant);
-    const experiencia = '<script src="/assets/js/fusion-tenant-experience.js?v=20260811-tenant-2" defer></script>';
+    const experiencia = '<script src="/assets/js/fusion-tenant-experience.js?v=20260811-tenant-3" defer></script>';
 
     if (/<head[^>]*>/i.test(html)) {
       html = html.replace(/<head([^>]*)>/i, match => `${match}\n${contexto}`);
@@ -191,10 +258,30 @@ async function paginaPublicaAcademia(req, res, next, pagina) {
  * Não há HTML individual por cliente. O tenant é confirmado no banco antes
  * de qualquer página ser entregue.
  */
+router.get('/:slug/manifest/:perfil.webmanifest', async (req, res, next) => {
+  try {
+    const perfil = String(req.params.perfil || '').toLowerCase();
+    if (!APP_MANIFEST_MAP[perfil]) return next();
+
+    const academia = await resolverAcademiaPublica(req.params.slug);
+    if (!academia) return next();
+
+    const manifesto = await manifestoDaAcademia(academia, perfil);
+    if (!manifesto) return next();
+
+    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('Content-Type', 'application/manifest+json; charset=utf-8');
+    return res.json(manifesto);
+  } catch (error) {
+    console.error(`[Manifest PWA] Falha ao gerar manifesto de ${req.params.slug}: ${error.message}`);
+    return next();
+  }
+});
+
 router.get('/:slug/apps/:perfil', (req, res, next) => {
   const arquivo = APP_PROFILE_MAP[String(req.params.perfil || '').toLowerCase()];
   if (!arquivo) return next();
-  return servirPaginaTenant(req, res, next, arquivo, { persistirTenant: true });
+  return servirPaginaTenant(req, res, next, arquivo, { persistirTenant: true, manifestPerfil: req.params.perfil });
 });
 
 router.get('/:slug/apps', (req, res, next) =>
@@ -212,9 +299,11 @@ router.get('/:slug/app', async (req, res, next) => {
 });
 
 router.get('/:slug/app/:area', (req, res, next) => {
-  const arquivo = APP_PAGE_MAP[String(req.params.area || '').toLowerCase()];
+  const area = String(req.params.area || '').toLowerCase();
+  const arquivo = APP_PAGE_MAP[area];
   if (!arquivo) return next();
-  return servirPaginaTenant(req, res, next, arquivo, { persistirTenant: true });
+  const manifestPerfil = APP_MANIFEST_MAP[area] ? area : '';
+  return servirPaginaTenant(req, res, next, arquivo, { persistirTenant: true, manifestPerfil });
 });
 
 router.get('/:slug/matricula', (req, res, next) =>

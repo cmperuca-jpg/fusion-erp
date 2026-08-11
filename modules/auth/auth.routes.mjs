@@ -12,6 +12,11 @@ import {
   redefinirSenhaRecuperacao
 } from "./recovery.service.mjs";
 import {
+  obterStatusImplantacao,
+  concluirImplantacao,
+  cancelarImplantacao
+} from "../saas/onboarding-lifecycle.service.mjs";
+import {
   autenticar,
   listarUsuarios,
   obterUsuario,
@@ -114,6 +119,56 @@ router.post("/recuperacao/redefinir-senha", async (req, res) => {
 
 router.get("/me", autenticarRequisicao, async (req, res) => {
   res.json({ ok: true, usuario: req.usuario });
+});
+
+
+router.get("/onboarding/status", autenticarRequisicao, exigirAdministrador, async (req, res) => {
+  try {
+    if (req.usuario?.supportAccess === true) {
+      return res.status(403).json({ ok: false, mensagem: "Sessão de suporte não pode alterar a implantação do cliente." });
+    }
+    res.json({
+      ok: true,
+      implantacao: await obterStatusImplantacao(req.usuario?.tenantId || "")
+    });
+  } catch (erro) {
+    tratarErro(res, erro);
+  }
+});
+
+router.post("/onboarding/concluir", autenticarRequisicao, exigirAdministrador, async (req, res) => {
+  try {
+    if (req.usuario?.supportAccess === true) {
+      return res.status(403).json({ ok: false, mensagem: "Sessão de suporte não pode concluir a implantação do cliente." });
+    }
+    res.json({
+      ok: true,
+      resultado: await concluirImplantacao({
+        tenantId: req.usuario?.tenantId || "",
+        usuarioId: req.usuario?.id || ""
+      })
+    });
+  } catch (erro) {
+    tratarErro(res, erro);
+  }
+});
+
+router.delete("/onboarding/cancelar", autenticarRequisicao, exigirAdministrador, async (req, res) => {
+  try {
+    if (req.usuario?.supportAccess === true) {
+      return res.status(403).json({ ok: false, mensagem: "Sessão de suporte não pode apagar a implantação do cliente." });
+    }
+    res.json({
+      ok: true,
+      resultado: await cancelarImplantacao({
+        tenantId: req.usuario?.tenantId || "",
+        usuarioId: req.usuario?.id || "",
+        confirmacao: req.body?.confirmacao || ""
+      })
+    });
+  } catch (erro) {
+    tratarErro(res, erro);
+  }
 });
 
 router.get("/codigo-acesso", autenticarRequisicao, async (req, res) => {

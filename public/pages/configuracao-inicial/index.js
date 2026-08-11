@@ -9,7 +9,10 @@
     modalidades: "/api/modalidades",
     planos: "/api/planos",
     turmas: "/api/turmas",
-    aparencia: "/api/modalidades/onboarding/aparencia"
+    aparencia: "/api/modalidades/onboarding/aparencia",
+    onboardingStatus: "/api/auth/onboarding/status",
+    onboardingConcluir: "/api/auth/onboarding/concluir",
+    onboardingCancelar: "/api/auth/onboarding/cancelar"
   };
 
   const ETAPAS = [
@@ -747,19 +750,80 @@
       renderTudo();
     });
 
-    function finalizarOnboarding(destino) {
-      salvarEntrega({ paginaPublica:true, aplicativos:true, finalizado:true });
-      atualizarProgresso();
-      location.href = destino;
+    async function finalizarOnboarding(destino) {
+      alerta("Finalizando a implantação com segurança...", "info");
+      try {
+        await concluirImplantacaoNoServidor();
+        salvarEntrega({ paginaPublica:true, aplicativos:true, finalizado:true });
+        atualizarProgresso();
+        location.href = destino;
+      } catch (error) {
+        alerta(
+          error.message || "Não foi possível concluir a implantação. Nenhum dado será apagado; tente novamente.",
+          "error"
+        );
+      }
     }
 
     $("btnPrimeiroAluno")?.addEventListener("click", () => finalizarOnboarding(urlApp("alunos")));
     $("btnDashboard")?.addEventListener("click", () => finalizarOnboarding(urlApp("dashboard")));
     $("btnMinhaPagina")?.addEventListener("click", () => {
-      salvarEntrega({ paginaPublica:true, aplicativos:true, finalizado:true });
-      atualizarProgresso();
       window.open(urlPublica(), "_blank", "noopener");
     });
+  }
+
+  async function concluirImplantacaoNoServidor() {
+    return request(API.onboardingConcluir, {
+      method:"POST",
+      body:JSON.stringify({})
+    });
+  }
+
+  function limparDadosLocaisDaAcademia() {
+    const chavesLocal = [
+      "fusionToken","fusionUsuario","usuarioLogado","usuarioNome","usuarioEmail",
+      "usuarioPerfil","fusionTenantId","fusionAcademiaSlug","fusionAcademiaNome",
+      "fusionTenantDeviceBinding",chaveEntrega()
+    ];
+    chavesLocal.forEach(k => {
+      try { localStorage.removeItem(k); } catch {}
+    });
+
+    [
+      "fusionTenantSelectionToken","fusionAcademiaSelecionadaNome","fusionAcademiaSlug"
+    ].forEach(k => {
+      try { sessionStorage.removeItem(k); } catch {}
+    });
+  }
+
+  async function cancelarImplantacaoERecomecar() {
+    const nome = academiaNome();
+    const primeira = confirm(
+      `Cancelar a implantação de "${nome}"?\n\nIsso apagará esta academia provisória e todos os cadastros feitos nela. Esta ação não pode ser desfeita.`
+    );
+    if (!primeira) return;
+
+    const segunda = confirm(
+      `Confirma a exclusão total da implantação provisória de "${nome}"?\n\nUse esta opção somente se desejar recomeçar o cadastro do zero.`
+    );
+    if (!segunda) return;
+
+    alerta("Cancelando a implantação e removendo os dados provisórios...", "info");
+    const btn = $("btnCancelarImplantacao");
+    if (btn) btn.disabled = true;
+
+    try {
+      await request(API.onboardingCancelar, {
+        method:"DELETE",
+        body:JSON.stringify({ confirmacao:"CANCELAR IMPLANTACAO" })
+      });
+
+      limparDadosLocaisDaAcademia();
+      location.replace("/pages/comecar/?acao=criar&implantacao=cancelada");
+    } catch (error) {
+      alerta(error.message || "Não foi possível cancelar a implantação.", "error");
+      if (btn) btn.disabled = false;
+    }
   }
 
   function renderTudo() {
@@ -785,12 +849,18 @@
           <div class="final-icon" style="background:#fff0f0;color:#9b2f38">!</div>
           <h2>Não foi possível carregar a configuração</h2>
           <p>${escapar(error.message || "Atualize a página e tente novamente.")}</p>
-          <div class="final-actions"><button class="btn btn-primary" id="btnRecarregar" type="button">Tentar novamente</button></div>
+          <div class="fatal-actions">
+            <button class="btn btn-primary" id="btnRecarregar" type="button">Tentar novamente</button>
+            <button class="btn btn-danger-outline" id="btnCancelarFatal" type="button">Apagar implantação e recomeçar</button>
+          </div>
+          <p style="margin-top:14px;font-size:12px">Se o problema for apenas navegador ou internet, tente novamente primeiro. Use “apagar” somente se quiser reiniciar toda a implantação.</p>
         </div>`;
       $("btnRecarregar")?.addEventListener("click", () => location.reload());
+      $("btnCancelarFatal")?.addEventListener("click", cancelarImplantacaoERecomecar);
     }
   }
 
+  $("btnCancelarImplantacao")?.addEventListener("click", cancelarImplantacaoERecomecar);
   $("btnSair").addEventListener("click", () => FusionAuth.sair());
   init();
 })();

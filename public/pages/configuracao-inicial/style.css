@@ -151,3 +151,18 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   .delivery-grid,.app-delivery-grid{grid-template-columns:1fr}
   .url-box{display:grid}.url-box .btn{width:100%}
 }
+
+
+/* Proteção da implantação provisória */
+.onboarding-footer-actions{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.danger-link{color:#9a2832!important}
+.danger-link:hover{color:#711c24!important}
+.danger-link:disabled{opacity:.55;cursor:wait}
+.fatal-actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:18px}
+.btn-danger-outline{background:#fff;color:#932a34;border:1px solid #cc8e94}
+.btn-danger-outline:hover{background:#fff4f4}
+@media(max-width:620px){
+  .onboarding-footer-actions{display:grid}
+  .fatal-actions{display:grid}
+  .fatal-actions .btn{width:100%}
+}
