@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import { createCommand, claimNext, finishCommand, getCommand, saveHeartbeat, getAgent } from './access-bridge.repository.mjs';
 import { normalizarTenantId } from '../core/persistence/tenant-context.mjs';
+import { credencialAccessAgentRuntime } from './access-agent-config.service.mjs';
 
 function safeEqual(a, b) {
   const aa = Buffer.from(String(a || '')); const bb = Buffer.from(String(b || ''));
@@ -126,6 +127,8 @@ function credentialsFromEnv() {
       : Object.entries(raw);
     for (const [agentId, item] of entries) addCredential(map, normalizeCredential(item, agentId));
   }
+
+  addCredential(map, normalizeCredential(credencialAccessAgentRuntime() || {}));
 
   addCredential(map, normalizeCredential({
     agentId: process.env.ACCESS_AGENT_ID,
