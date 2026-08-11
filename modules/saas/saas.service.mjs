@@ -427,6 +427,8 @@ async function criarEmpresaConfirmada(d,contexto={}) {
     empresa:{nome:d.nomeEmpresa,status:"trial",trialDias:14},
     selectionToken:selecao.selectionToken,
     selectionExpiraMinutos:selecao.expiraMinutos,
+    deviceBindingToken:selecao.deviceBindingToken,
+    bindingExpiraDias:selecao.bindingExpiraDias,
     academia:selecao.academia,
     mensagem:"E-mail confirmado. Academia criada e pronta para a configuração inicial."
   }));

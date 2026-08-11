@@ -2,32 +2,26 @@
   "use strict";
 
   const APP = "Fusion Administração";
-  const PERFIS = new Set(["gerente","admin","administrador","dono","master"]);
+  const PERFIS = new Set(["gerente", "admin", "administrador", "dono", "master"]);
+  const BINDING_KEY = "fusionTenantDeviceBinding";
   const $ = id => document.getElementById(id);
 
   function normalizar(v) {
-    return String(v || "").trim().toLowerCase().normalize("NFD").replace(/[\\u0300-\\u036f]/g, "");
+    return String(v || "").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  }
+
+  function contexto() {
+    const c = window.__FUSION_TENANT_CONTEXT__ || {};
+    const partes = location.pathname.split("/").filter(Boolean);
+    return {
+      tenantId:String(c.tenantId || localStorage.getItem("fusionTenantId") || "").trim(),
+      nome:String(c.nome || sessionStorage.getItem("fusionAcademiaSelecionadaNome") || "").trim(),
+      slug:String(c.slug || (partes[1] === "apps" ? partes[0] : "") || "").trim()
+    };
   }
 
   function usuarioAtual() {
     try { return window.FusionAuth?.usuarioAtual?.() || null; } catch { return null; }
-  }
-
-  function academiaAtual() {
-    return {
-      tenantId: String(localStorage.getItem("fusionTenantId") || "").trim(),
-      nome: String(sessionStorage.getItem("fusionAcademiaSelecionadaNome") || "").trim(),
-      selectionToken: String(sessionStorage.getItem("fusionTenantSelectionToken") || "").trim()
-    };
-  }
-
-  function academiaEsperada() {
-    const params = new URLSearchParams(location.search);
-    return {
-      tenantId: String(params.get("tenant") || "").trim(),
-      nome: String(params.get("nome") || "").trim(),
-      slug: String(params.get("academia") || "").trim()
-    };
   }
 
   function perfilDoUsuario(u = {}) {
@@ -44,69 +38,67 @@
     el.classList.toggle("hidden", !texto);
   }
 
-  function urlRetorno() {
-    return location.pathname + location.search;
+  function selectionToken() {
+    return String(sessionStorage.getItem("fusionTenantSelectionToken") || "").trim();
   }
 
-  function irSelecionarAcademia(esperada = academiaEsperada()) {
-    const params = new URLSearchParams();
-    if (esperada.tenantId || esperada.slug) params.set("academia", esperada.tenantId || esperada.slug);
-    params.set("next", urlRetorno());
-    location.href = `/pages/comecar/?${params.toString()}`;
-  }
+  async function garantirSelecao(ctx) {
+    if (selectionToken()) return true;
+    const binding = String(localStorage.getItem(BINDING_KEY) || "").trim();
+    if (!binding || !ctx.tenantId) return false;
 
-  function irLogin() {
-    location.href = `/pages/login/index.html?next=${encodeURIComponent(urlRetorno())}`;
-  }
-
-  function destino(u) {
     try {
-      return window.FusionAuth?.destinoPorPerfil?.(u?.perfil) || "/pages/dashboard/index.html";
+      const resp = await fetch("/api/auth/vinculo-dispositivo/selecionar", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({tenant:ctx.tenantId,deviceBindingToken:binding})
+      });
+      const json = await resp.json().catch(()=>({}));
+      if (!resp.ok || !json.ok || !json.selectionToken) throw new Error(json.mensagem || "Vínculo inválido.");
+
+      sessionStorage.setItem("fusionTenantSelectionToken",json.selectionToken);
+      sessionStorage.setItem("fusionAcademiaSelecionadaNome",json.academia?.nome || ctx.nome);
+      localStorage.setItem("fusionTenantId",json.tenantId || ctx.tenantId);
+      if (json.deviceBindingToken) localStorage.setItem(BINDING_KEY,json.deviceBindingToken);
+      return true;
     } catch {
-      return "/pages/dashboard/index.html";
+      localStorage.removeItem(BINDING_KEY);
+      return false;
     }
   }
 
-  function render() {
-    const atual = academiaAtual();
-    const esperada = academiaEsperada();
+  function irSelecionarAcademia(ctx) {
+    const params = new URLSearchParams({
+      academia:ctx.slug || ctx.tenantId,
+      next:location.pathname
+    });
+    location.href = `/pages/comecar/?${params.toString()}`;
+  }
+
+  function irLogin(ctx) {
+    location.href = `/${encodeURIComponent(ctx.slug || ctx.tenantId)}/app/login?next=${encodeURIComponent(location.pathname)}`;
+  }
+
+  async function render() {
+    const ctx = contexto();
+    const temSelecao = await garantirSelecao(ctx);
     const u = usuarioAtual();
     const perfil = perfilDoUsuario(u || {});
 
-    const academiaDiferente = Boolean(
-      esperada.tenantId &&
-      atual.tenantId &&
-      normalizar(esperada.tenantId) !== normalizar(atual.tenantId)
-    );
-    const precisaConfirmar = Boolean(
-      esperada.tenantId &&
-      (!atual.tenantId || !atual.selectionToken || academiaDiferente)
-    );
-
-    $("academiaNome").textContent =
-      esperada.nome || atual.nome || esperada.tenantId || atual.tenantId || "Não selecionada";
+    $("academiaNome").textContent = ctx.nome || ctx.slug || ctx.tenantId || "Não selecionada";
     $("usuarioNome").textContent = u ? nomeDoUsuario(u) : "Não conectado";
     $("quick").classList.add("hidden");
     mostrarErro("");
 
-    if (precisaConfirmar) {
-      $("btnAbrir").textContent = "Confirmar esta academia e entrar";
-      $("btnAbrir").onclick = () => irSelecionarAcademia(esperada);
-      if (academiaDiferente) {
-        mostrarErro("Há outra academia selecionada neste navegador. Confirme a academia deste link antes de entrar.");
-      }
-      return;
-    }
-
-    if (!atual.tenantId || !atual.selectionToken) {
-      $("btnAbrir").textContent = "Selecionar academia e entrar";
-      $("btnAbrir").onclick = () => irSelecionarAcademia(esperada);
+    if (!ctx.tenantId) {
+      $("btnAbrir").textContent = "Selecionar academia";
+      $("btnAbrir").onclick = () => irSelecionarAcademia(ctx);
       return;
     }
 
     if (!u) {
-      $("btnAbrir").textContent = "Entrar";
-      $("btnAbrir").onclick = irLogin;
+      $("btnAbrir").textContent = temSelecao ? "Entrar" : "Vincular este aparelho";
+      $("btnAbrir").onclick = temSelecao ? () => irLogin(ctx) : () => irSelecionarAcademia(ctx);
       return;
     }
 
@@ -114,17 +106,18 @@
       $("btnAbrir").textContent = "Entrar com outro usuário";
       $("btnAbrir").onclick = () => {
         try { window.FusionAuth?.sair?.(); } catch {}
-        irLogin();
       };
       mostrarErro(`O perfil “${u.perfil || perfil || "não identificado"}” não possui acesso ao ${APP}.`);
       return;
     }
 
-    $("btnAbrir").textContent = "Abrir painel";
-    $("btnAbrir").onclick = () => { location.href = destino(u); };
+    $("btnAbrir").textContent = "Abrir meu sistema";
+    $("btnAbrir").onclick = () => {
+      location.href = `/${encodeURIComponent(ctx.slug || ctx.tenantId)}/app/dashboard`;
+    };
     $("quick").classList.remove("hidden");
   }
 
-  window.addEventListener("pageshow", render);
+  window.addEventListener("pageshow",render);
   render();
 })();

@@ -1,6 +1,7 @@
 import express from "express";
 import {
   selecionarAcademia,
+  selecionarAcademiaComVinculo,
   validarTokenSelecaoAcademia,
   obterCodigoAcademia,
   regenerarCodigoAcademia
@@ -52,9 +53,11 @@ router.post("/login", async (req, res) => {
     const { email, senha, tenant, tenantId, selectionToken } = req.body || {};
     const tenantEsperado = req.headers["x-fusion-tenant"] || tenant || tenantId || "";
     const tokenSelecao = req.headers["x-fusion-tenant-selection"] || selectionToken || "";
+
     if (!tenantEsperado) {
       return res.status(400).json({ ok: false, mensagem: "Selecione a academia antes de fazer login." });
     }
+
     validarTokenSelecaoAcademia(tokenSelecao, tenantEsperado);
     res.json(await autenticar(email, senha, tenantEsperado));
   } catch (erro) {
@@ -62,6 +65,13 @@ router.post("/login", async (req, res) => {
   }
 });
 
+router.post("/vinculo-dispositivo/selecionar", async (req, res) => {
+  try {
+    res.json(await selecionarAcademiaComVinculo(req.body || {}));
+  } catch (erro) {
+    tratarErro(res, erro);
+  }
+});
 
 router.post("/login-empresa", async (_req, res) => {
   return res.status(410).json({
@@ -81,7 +91,6 @@ router.post("/selecionar-empresa", async (req, res) => {
   }
 });
 
-
 router.post("/recuperacao/iniciar", async (req, res) => {
   try {
     res.json(await iniciarRecuperacao(req.body || {}, {
@@ -94,19 +103,13 @@ router.post("/recuperacao/iniciar", async (req, res) => {
 });
 
 router.post("/recuperacao/confirmar", async (req, res) => {
-  try {
-    res.json(await confirmarRecuperacao(req.body || {}));
-  } catch (erro) {
-    tratarErro(res, erro);
-  }
+  try { res.json(await confirmarRecuperacao(req.body || {})); }
+  catch (erro) { tratarErro(res, erro); }
 });
 
 router.post("/recuperacao/redefinir-senha", async (req, res) => {
-  try {
-    res.json(await redefinirSenhaRecuperacao(req.body || {}));
-  } catch (erro) {
-    tratarErro(res, erro);
-  }
+  try { res.json(await redefinirSenhaRecuperacao(req.body || {})); }
+  catch (erro) { tratarErro(res, erro); }
 });
 
 router.get("/me", autenticarRequisicao, async (req, res) => {
@@ -116,73 +119,48 @@ router.get("/me", autenticarRequisicao, async (req, res) => {
 router.get("/codigo-acesso", autenticarRequisicao, async (req, res) => {
   try {
     res.json({ ok: true, ...(await obterCodigoAcademia(req.usuario?.tenantId || "")) });
-  } catch (erro) {
-    tratarErro(res, erro);
-  }
+  } catch (erro) { tratarErro(res, erro); }
 });
 
 router.post("/codigo-acesso/regenerar", autenticarRequisicao, exigirAdministrador, async (req, res) => {
   try {
     res.json({ ok: true, ...(await regenerarCodigoAcademia(req.usuario?.tenantId || "")) });
-  } catch (erro) {
-    tratarErro(res, erro);
-  }
+  } catch (erro) { tratarErro(res, erro); }
 });
 
 router.get("/usuarios", autenticarRequisicao, exigirAdministrador, async (req, res) => {
-  try {
-    res.json({ ok: true, usuarios: await listarUsuarios() });
-  } catch (erro) {
-    tratarErro(res, erro);
-  }
+  try { res.json({ ok: true, usuarios: await listarUsuarios() }); }
+  catch (erro) { tratarErro(res, erro); }
 });
 
 router.get("/usuarios/:id", autenticarRequisicao, exigirAdministrador, async (req, res) => {
-  try {
-    res.json({ ok: true, usuario: await obterUsuario(req.params.id) });
-  } catch (erro) {
-    tratarErro(res, erro);
-  }
+  try { res.json({ ok: true, usuario: await obterUsuario(req.params.id) }); }
+  catch (erro) { tratarErro(res, erro); }
 });
 
 router.post("/usuarios", autenticarRequisicao, exigirAdministrador, async (req, res) => {
-  try {
-    res.status(201).json({ ok: true, usuario: await criarUsuario(req.body || {}) });
-  } catch (erro) {
-    tratarErro(res, erro);
-  }
+  try { res.status(201).json({ ok: true, usuario: await criarUsuario(req.body || {}) }); }
+  catch (erro) { tratarErro(res, erro); }
 });
 
 router.put("/usuarios/:id", autenticarRequisicao, exigirAdministrador, async (req, res) => {
-  try {
-    res.json({ ok: true, usuario: await atualizarUsuario(req.params.id, req.body || {}) });
-  } catch (erro) {
-    tratarErro(res, erro);
-  }
+  try { res.json({ ok: true, usuario: await atualizarUsuario(req.params.id, req.body || {}) }); }
+  catch (erro) { tratarErro(res, erro); }
 });
 
 router.post("/usuarios/:id/status", autenticarRequisicao, exigirAdministrador, async (req, res) => {
-  try {
-    res.json({ ok: true, usuario: await alternarStatusUsuario(req.params.id) });
-  } catch (erro) {
-    tratarErro(res, erro);
-  }
+  try { res.json({ ok: true, usuario: await alternarStatusUsuario(req.params.id) }); }
+  catch (erro) { tratarErro(res, erro); }
 });
 
 router.delete("/usuarios/:id", autenticarRequisicao, exigirAdministrador, async (req, res) => {
-  try {
-    res.json({ ok: true, ...(await removerUsuario(req.params.id)) });
-  } catch (erro) {
-    tratarErro(res, erro);
-  }
+  try { res.json({ ok: true, ...(await removerUsuario(req.params.id)) }); }
+  catch (erro) { tratarErro(res, erro); }
 });
 
 router.get("/perfis", autenticarRequisicao, exigirAdministrador, async (req, res) => {
-  try {
-    res.json({ ok: true, perfis: await obterPerfis() });
-  } catch (erro) {
-    tratarErro(res, erro);
-  }
+  try { res.json({ ok: true, perfis: await obterPerfis() }); }
+  catch (erro) { tratarErro(res, erro); }
 });
 
 export default router;

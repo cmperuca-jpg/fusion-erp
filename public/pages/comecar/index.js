@@ -5,6 +5,7 @@
   const tabs = Array.from(document.querySelectorAll("[data-tab]"));
   const panels = Array.from(document.querySelectorAll("[data-panel]"));
   let cadastroPendente = null;
+  const DEVICE_BINDING_KEY = "fusionTenantDeviceBinding";
 
   function status(el,texto="",tipo="") {
     if (!el) return;
@@ -62,13 +63,18 @@
     limparSessaoAnterior();
     const tenantId = String(json.tenantId || "").trim();
     const nome = String(json.academia?.nome || tenantId).trim();
+    const slug = String(json.academia?.slug || json.slug || tenantId).trim();
     const selectionToken = String(json.selectionToken || "").trim();
+    const binding = String(json.deviceBindingToken || "").trim();
 
     if (!tenantId || !selectionToken) {
       throw new Error("A seleção da academia não foi concluída.");
     }
 
     localStorage.setItem("fusionTenantId",tenantId);
+    localStorage.setItem("fusionAcademiaSlug",slug);
+    localStorage.setItem("fusionAcademiaNome",nome);
+    if (binding) localStorage.setItem(DEVICE_BINDING_KEY,binding);
     sessionStorage.setItem("fusionTenantSelectionToken",selectionToken);
     sessionStorage.setItem("fusionAcademiaSelecionadaNome",nome);
   }
@@ -247,7 +253,8 @@
       salvarSelecao(json);
 
       const tenant = String(json.tenantId || "").trim();
-      const onboarding = `/pages/configuracao-inicial/index.html?tenant=${encodeURIComponent(tenant)}`;
+      const slug = String(json.academia?.slug || tenant).trim();
+      const onboarding = `/${encodeURIComponent(slug)}/app/configuracao-inicial`;
 
       status($("mensagemAtivacao"),"E-mail confirmado. Preparando a configuração inicial...","ok");
 
@@ -342,9 +349,27 @@
     );
   });
 
+  const params = new URLSearchParams(location.search);
+  const trocarAcademia = params.get("trocar") === "1";
+
+  if (trocarAcademia) {
+    localStorage.removeItem(DEVICE_BINDING_KEY);
+    localStorage.removeItem("fusionAcademiaSlug");
+    localStorage.removeItem("fusionAcademiaNome");
+  }
+
+  const academiaHint = String(params.get("academia") || "").trim();
+  const vinculoExistente = String(localStorage.getItem(DEVICE_BINDING_KEY) || "").trim();
+
+  if (!trocarAcademia && academiaHint && vinculoExistente && params.get("acao") !== "criar" && !params.get("codigo")) {
+    const next = params.get("next") || "";
+    const destino = next || `/${encodeURIComponent(academiaHint)}/app/login`;
+    location.replace(destino);
+    return;
+  }
+
   limparSessaoAnterior();
 
-  const params = new URLSearchParams(location.search);
   if (params.get("acao") === "criar") abrirTab("criar");
   else abrirTab("entrar");
 

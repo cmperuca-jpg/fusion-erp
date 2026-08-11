@@ -1,8 +1,10 @@
+import crypto from "node:crypto";
 import jwt from "jsonwebtoken";
 import { obterSupabaseAdmin } from "../../config/supabase.mjs";
 import { normalizarTenantId } from "../core/persistence/tenant-context.mjs";
 
 const SELECTION_TTL_MIN = Math.min(Math.max(Number(process.env.FUSION_TENANT_SELECTION_MINUTES || 20), 5), 60);
+const DEVICE_BINDING_DAYS = Math.min(Math.max(Number(process.env.FUSION_TENANT_DEVICE_DAYS || 180), 7), 365);
 const WINDOW_MS = 15 * 60 * 1000;
 const MAX_ATTEMPTS = 12;
 const tentativas = new Map();
@@ -81,6 +83,47 @@ function criarTokenSelecao(tenant = {}) {
   );
 }
 
+function fingerprintVinculo(tenant = {}) {
+  return crypto
+    .createHmac("sha256", segredoSelecao())
+    .update([
+      "fusion-device-binding",
+      normalizarTenantId(tenant.tenant_id),
+      texto(tenant.access_code).toUpperCase()
+    ].join("|"))
+    .digest("hex");
+}
+
+function criarTokenVinculo(tenant = {}) {
+  return jwt.sign(
+    {
+      purpose: "fusion_tenant_device_binding",
+      tenantId: normalizarTenantId(tenant.tenant_id),
+      academiaNome: texto(tenant.name),
+      academiaSlug: texto(tenant.slug),
+      accessFingerprint: fingerprintVinculo(tenant)
+    },
+    segredoSelecao(),
+    { expiresIn: `${DEVICE_BINDING_DAYS}d` }
+  );
+}
+
+function saidaSelecao(tenant = {}) {
+  return {
+    ok: true,
+    tenantId: normalizarTenantId(tenant.tenant_id),
+    selectionToken: criarTokenSelecao(tenant),
+    expiraMinutos: SELECTION_TTL_MIN,
+    deviceBindingToken: criarTokenVinculo(tenant),
+    bindingExpiraDias: DEVICE_BINDING_DAYS,
+    academia: {
+      nome: tenant.name,
+      slug: tenant.slug,
+      status: tenant.status
+    }
+  };
+}
+
 export function validarTokenSelecaoAcademia(token = "", tenantEsperado = "") {
   let payload;
   try {
@@ -99,6 +142,58 @@ export function validarTokenSelecaoAcademia(token = "", tenantEsperado = "") {
   return { ...payload, tenantId: tenant };
 }
 
+export async function validarTokenVinculoDispositivo(token = "", tenantEsperado = "") {
+  let payload;
+  try {
+    payload = jwt.verify(texto(token), segredoSelecao());
+  } catch {
+    throw erro("O vínculo deste aparelho com a academia expirou.", 401);
+  }
+
+  if (payload?.purpose !== "fusion_tenant_device_binding" || !payload?.tenantId || !payload?.accessFingerprint) {
+    throw erro("Vínculo do aparelho inválido.", 401);
+  }
+
+  const tenantId = normalizarTenantId(payload.tenantId);
+  const esperado = normalizarTenantId(tenantEsperado);
+  if (esperado && tenantId !== esperado) {
+    throw erro("Este aparelho está vinculado a outra academia.", 401);
+  }
+
+  const supabase = obterSupabaseAdmin({ obrigatorio: true });
+  const { data: tenant, error } = await supabase
+    .from("fusion_tenants")
+    .select("tenant_id,slug,name,status,access_code")
+    .eq("tenant_id", tenantId)
+    .maybeSingle();
+
+  if (error) throw erro(`Falha ao validar vínculo do aparelho: ${error.message}`, 500);
+
+  const status = String(tenant?.status || "").toLowerCase();
+  if (!tenant || !["active", "trial"].includes(status)) {
+    throw erro("A academia deste aparelho não está disponível.", 401);
+  }
+
+  const esperadoFingerprint = fingerprintVinculo(tenant);
+  const atual = Buffer.from(String(payload.accessFingerprint));
+  const correto = Buffer.from(esperadoFingerprint);
+
+  if (atual.length !== correto.length || !crypto.timingSafeEqual(atual, correto)) {
+    throw erro("O vínculo deste aparelho foi revogado. Informe o código da academia novamente.", 401);
+  }
+
+  return { payload, tenant };
+}
+
+export async function selecionarAcademiaComVinculo(payload = {}) {
+  const token = texto(payload.deviceBindingToken || payload.bindingToken || payload.token);
+  const academia = texto(payload.tenant || payload.tenantId || payload.academia);
+  if (!token || !academia) throw erro("Vínculo do aparelho ou academia ausente.", 400);
+
+  const { tenant } = await validarTokenVinculoDispositivo(token, academia);
+  return saidaSelecao(tenant);
+}
+
 export async function selecionarAcademia(payload = {}, contexto = {}) {
   consumirTentativa(contexto);
   const academia = texto(payload.academia || payload.empresa);
@@ -108,22 +203,13 @@ export async function selecionarAcademia(payload = {}, contexto = {}) {
   const supabase = obterSupabaseAdmin({ obrigatorio: true });
   const tenant = await localizarAcademia(supabase, academia);
   const status = String(tenant?.status || "").toLowerCase();
+
   if (!tenant || !["active", "trial"].includes(status) || texto(tenant.access_code).toUpperCase() !== codigo) {
     throw erro("Academia ou código da academia inválidos.", 401);
   }
 
   limparTentativas(contexto);
-  return {
-    ok: true,
-    tenantId: normalizarTenantId(tenant.tenant_id),
-    selectionToken: criarTokenSelecao(tenant),
-    expiraMinutos: SELECTION_TTL_MIN,
-    academia: {
-      nome: tenant.name,
-      slug: tenant.slug,
-      status: tenant.status
-    }
-  };
+  return saidaSelecao(tenant);
 }
 
 export async function obterCodigoAcademia(tenantId = "") {

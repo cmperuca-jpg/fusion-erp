@@ -20,7 +20,10 @@
     { id:"modalidade", titulo:"Modalidade", subtitulo:"Atividade oferecida" },
     { id:"plano", titulo:"Plano", subtitulo:"Preço e cobrança" },
     { id:"turma", titulo:"Turma", subtitulo:"Horário e capacidade" },
-    { id:"marca", titulo:"Marca", subtitulo:"Nome, cor e logotipo" }
+    { id:"marca", titulo:"Marca", subtitulo:"Nome, cor e logotipo" },
+    { id:"pagina", titulo:"Página pública", subtitulo:"Seu endereço na internet" },
+    { id:"aplicativos", titulo:"Aplicativos", subtitulo:"Aluno, professor e equipe" },
+    { id:"pronto", titulo:"Academia pronta", subtitulo:"Entrar no seu sistema" }
   ];
 
   let dados = {
@@ -50,6 +53,47 @@
   }
   function usuarioAdmin() {
     return window.FusionAuth?.usuarioAtual?.() || {};
+  }
+
+  function tenantIdAtual() {
+    return texto(localStorage.getItem("fusionTenantId") || usuarioAdmin()?.tenantId);
+  }
+
+  function slugAcademia() {
+    return texto(
+      localStorage.getItem("fusionAcademiaSlug") ||
+      window.__FUSION_TENANT_CONTEXT__?.slug ||
+      tenantIdAtual()
+    );
+  }
+
+  function urlPublica() {
+    return `${location.origin}/${encodeURIComponent(slugAcademia())}`;
+  }
+
+  function urlApp(area = "dashboard") {
+    return `/${encodeURIComponent(slugAcademia())}/app/${encodeURIComponent(area)}`;
+  }
+
+  function urlApps(perfil = "") {
+    const base = `/${encodeURIComponent(slugAcademia())}/apps`;
+    return perfil ? `${base}/${encodeURIComponent(perfil)}` : base;
+  }
+
+  function chaveEntrega() {
+    return `fusion_onboarding_entrega_${tenantIdAtual() || slugAcademia()}`;
+  }
+
+  function lerEntrega() {
+    try { return JSON.parse(localStorage.getItem(chaveEntrega()) || "{}"); }
+    catch { return {}; }
+  }
+
+  function salvarEntrega(parcial = {}) {
+    const atual = lerEntrega();
+    const novo = { ...atual, ...parcial, atualizadoEm:new Date().toISOString() };
+    localStorage.setItem(chaveEntrega(), JSON.stringify(novo));
+    return novo;
   }
 
   function alerta(msg = "", tipo = "info") {
@@ -138,6 +182,7 @@
   }
 
   function estadoEtapas() {
+    const entrega = lerEntrega();
     return [
       true,
       Boolean(recepcaoExistente()),
@@ -146,7 +191,10 @@
       Boolean(modalidadeExistente()),
       Boolean(planoExistente()),
       Boolean(turmaExistente()),
-      marcaConfigurada()
+      marcaConfigurada(),
+      entrega.paginaPublica === true,
+      entrega.aplicativos === true,
+      entrega.finalizado === true
     ];
   }
 
@@ -398,8 +446,50 @@
         <div class="field full">
           <div class="logo-preview" id="logoPreview">${marca.logoUrl ? `<img src="${escapar(marca.logoUrl)}" alt="Logotipo atual">` : "Sem logo"}</div>
         </div>
-        <div class="field full">${botoes({label:concluida ? "Salvar alterações e concluir" : "Salvar Marca e concluir"})}</div>
+        <div class="field full">${botoes({label:concluida ? "Salvar alterações e conhecer minha página" : "Salvar Marca e conhecer minha página"})}</div>
       </form>`;
+  }
+
+  function renderPaginaPublica() {
+    const nome = dados.aparencia?.marca?.nome || academiaNome();
+    const url = urlPublica();
+    return `
+      ${stageHead(9,"Conheça a página pública da sua academia","Este é o endereço que você poderá divulgar para alunos, interessados e equipe. A página já leva o nome da sua academia e reúne matrícula e aplicativos.")}
+      <div class="delivery-hero">
+        <span class="eyebrow">Seu endereço oficial</span>
+        <h3>${escapar(nome)}</h3>
+        <div class="url-box"><code>${escapar(url)}</code><button class="btn btn-secondary" type="button" id="btnCopiarPagina">Copiar link</button></div>
+      </div>
+      <div class="delivery-grid">
+        <article class="delivery-card"><strong>Página da academia</strong><p>Abra a página exatamente como seus clientes verão.</p><button class="btn btn-secondary" id="btnAbrirPagina" type="button">Abrir página pública</button></article>
+        <article class="delivery-card"><strong>Matrícula online</strong><p>Link direto para quem deseja iniciar uma matrícula.</p><button class="btn btn-secondary" id="btnAbrirMatricula" type="button">Abrir matrícula</button></article>
+      </div>
+      <div class="note">A página SaaS do Fusion fica para apresentação e criação de novas academias. Depois desta implantação, sua rotina passa a acontecer dentro do endereço da sua própria academia.</div>
+      <div class="actions"><button class="btn btn-secondary" type="button" data-voltar>Voltar</button><div class="actions-right"><button class="btn btn-primary" id="btnConfirmarPagina" type="button">Minha página está pronta — continuar</button></div></div>
+    `;
+  }
+
+  function renderAplicativos() {
+    const apps = [
+      ["Administração","Gestão completa da academia","administracao"],
+      ["Recepção","Atendimento, matrículas e caixa","recepcao"],
+      ["Professor","Treinos e avaliações","professor"],
+      ["Aluno","Treino, avaliação, frequência e financeiro","aluno"]
+    ];
+
+    return `
+      ${stageHead(10,"Instale e compartilhe os aplicativos","Agora você já pode deixar Administração e Recepção instalados nos aparelhos de trabalho e enviar Professor e Aluno para a equipe e clientes.")}
+      <div class="app-delivery-grid">
+        ${apps.map(([nome,desc,perfil]) => `
+          <article class="app-delivery-card">
+            <span class="app-mini-icon">${nome[0]}</span>
+            <div><strong>Fusion ${nome}</strong><p>${desc}</p></div>
+            <a class="btn btn-secondary" href="${urlApps(perfil)}" target="_blank" rel="noopener">Instalar / abrir</a>
+          </article>`).join("")}
+      </div>
+      <div class="note"><strong>Nos aparelhos da Administração e Recepção:</strong> o código da academia é usado apenas para o primeiro vínculo. Depois, o aparelho reconhece a academia e o login diário pede somente usuário e senha.</div>
+      <div class="actions"><button class="btn btn-secondary" type="button" data-voltar>Voltar</button><div class="actions-right"><a class="btn btn-secondary" href="${urlApps()}" target="_blank" rel="noopener">Abrir central de aplicativos</a><button class="btn btn-primary" id="btnConfirmarApps" type="button">Aplicativos preparados — continuar</button></div></div>
+    `;
   }
 
   function renderFinal() {
@@ -411,33 +501,41 @@
       ["Modalidade", modalidadeExistente()?.nome || "-"],
       ["Plano", planoExistente()?.nome || "-"],
       ["Turma", turmaExistente()?.nome || "-"],
-      ["Marca", dados.aparencia?.marca?.nome || academiaNome()]
+      ["Marca", dados.aparencia?.marca?.nome || academiaNome()],
+      ["Página pública", urlPublica()],
+      ["Aplicativos", "Administração, Recepção, Professor e Aluno"]
     ];
     return `
       <div class="final-hero">
         <div class="final-icon">✓</div>
-        <span class="eyebrow">Configuração mínima concluída</span>
-        <h2>Sua academia está pronta para o primeiro aluno</h2>
-        <p>O Fusion já tem equipe, modalidade, preço, turma e identidade básica. Agora você pode iniciar o cadastro e a matrícula sem cair em um sistema vazio.</p>
+        <span class="eyebrow">Implantação concluída</span>
+        <h2>${escapar(dados.aparencia?.marca?.nome || academiaNome())} está pronta</h2>
+        <p>Você configurou a operação mínima, recebeu sua página pública e já sabe onde instalar os aplicativos. A partir de agora, o sistema é acessado pelo endereço da sua academia.</p>
+      </div>
+      <div class="system-address-card">
+        <span>Seu sistema</span>
+        <strong>${escapar(location.origin + urlApp("dashboard"))}</strong>
+        <small>Tecnologia Fusion Sistema</small>
       </div>
       <div class="summary-list">
         ${resumo.map(([a,b]) => `<div class="summary-item"><span class="summary-check">✓</span><div><strong>${escapar(a)}</strong><small>${escapar(b)}</small></div></div>`).join("")}
       </div>
       <div class="final-actions">
-        <button class="btn btn-primary" type="button" id="btnPrimeiroAluno">Cadastrar primeiro aluno</button>
-        <button class="btn btn-secondary" type="button" id="btnDashboard">Abrir o Fusion</button>
+        <button class="btn btn-primary" type="button" id="btnDashboard">Entrar no meu sistema</button>
+        <button class="btn btn-secondary" type="button" id="btnPrimeiroAluno">Cadastrar primeiro aluno</button>
+        <button class="btn btn-secondary" type="button" id="btnMinhaPagina">Abrir minha página</button>
       </div>`;
   }
 
   function renderEtapa() {
     const host = $("etapaConteudo");
-    if (etapaAtual >= ETAPAS.length) host.innerHTML = renderFinal();
-    else {
-      host.innerHTML = [
-        renderAdmin, renderRecepcao, renderProfessor, renderCategoria,
-        renderModalidade, renderPlano, renderTurma, renderMarca
-      ][etapaAtual]();
-    }
+    const renderers = [
+      renderAdmin, renderRecepcao, renderProfessor, renderCategoria,
+      renderModalidade, renderPlano, renderTurma, renderMarca,
+      renderPaginaPublica, renderAplicativos, renderFinal
+    ];
+    const indice = Math.min(etapaAtual, renderers.length - 1);
+    host.innerHTML = renderers[indice]();
     conectarEventosEtapa();
   }
 
@@ -623,11 +721,44 @@
       $("logoPreview").innerHTML = `<img src="${url}" alt="Prévia do logotipo selecionado">`;
     });
 
-    $("btnPrimeiroAluno")?.addEventListener("click", () => {
-      location.href = "/pages/alunos/index.html";
+    $("btnCopiarPagina")?.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(urlPublica());
+        alerta("Link da página copiado.", "ok");
+      } catch {
+        alerta(urlPublica(), "info");
+      }
     });
-    $("btnDashboard")?.addEventListener("click", () => {
-      location.href = "/pages/dashboard/index.html";
+
+    $("btnAbrirPagina")?.addEventListener("click", () => window.open(urlPublica(), "_blank", "noopener"));
+    $("btnAbrirMatricula")?.addEventListener("click", () => window.open(`/${encodeURIComponent(slugAcademia())}/matricula`, "_blank", "noopener"));
+
+    $("btnConfirmarPagina")?.addEventListener("click", () => {
+      salvarEntrega({ paginaPublica:true });
+      etapaAtual = 9;
+      alerta("");
+      renderTudo();
+    });
+
+    $("btnConfirmarApps")?.addEventListener("click", () => {
+      salvarEntrega({ aplicativos:true });
+      etapaAtual = 10;
+      alerta("");
+      renderTudo();
+    });
+
+    function finalizarOnboarding(destino) {
+      salvarEntrega({ paginaPublica:true, aplicativos:true, finalizado:true });
+      atualizarProgresso();
+      location.href = destino;
+    }
+
+    $("btnPrimeiroAluno")?.addEventListener("click", () => finalizarOnboarding(urlApp("alunos")));
+    $("btnDashboard")?.addEventListener("click", () => finalizarOnboarding(urlApp("dashboard")));
+    $("btnMinhaPagina")?.addEventListener("click", () => {
+      salvarEntrega({ paginaPublica:true, aplicativos:true, finalizado:true });
+      atualizarProgresso();
+      window.open(urlPublica(), "_blank", "noopener");
     });
   }
 
@@ -642,7 +773,7 @@
     try {
       await carregarDados();
       const pendente = primeiraPendente();
-      etapaAtual = pendente >= ETAPAS.length ? ETAPAS.length : pendente;
+      etapaAtual = pendente >= ETAPAS.length ? ETAPAS.length - 1 : pendente;
       $("carregando").classList.add("hidden");
       $("etapaConteudo").classList.remove("hidden");
       renderTudo();

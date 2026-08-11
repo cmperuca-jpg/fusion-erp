@@ -127,3 +127,27 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   .actions{display:grid}.actions-right{display:grid;width:100%;margin:0}.actions .btn{width:100%}
   .onboarding-footer{display:grid}.final-actions{display:grid}.final-actions .btn{width:100%}
 }
+
+
+/* Entrega final: página pública + aplicativos */
+.delivery-hero{border:1px solid var(--line);background:linear-gradient(135deg,#f5fbf9,#eef8f7);border-radius:16px;padding:18px;margin-bottom:14px}
+.delivery-hero h3{margin:4px 0 12px;font-size:24px}
+.url-box{display:flex;gap:9px;align-items:center;background:#fff;border:1px solid #c9ddda;border-radius:12px;padding:9px}
+.url-box code{flex:1;overflow-wrap:anywhere;color:#0a5d63;font-weight:850}
+.delivery-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+.delivery-card{border:1px solid var(--line);border-radius:14px;padding:15px;background:#fff}
+.delivery-card strong{display:block;font-size:16px}
+.delivery-card p{color:var(--muted);font-size:12px;line-height:1.45;min-height:36px}
+.app-delivery-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin:14px 0}
+.app-delivery-card{display:grid;grid-template-columns:44px minmax(0,1fr);gap:11px;align-items:start;border:1px solid var(--line);border-radius:14px;padding:13px;background:#fff}
+.app-delivery-card .btn{grid-column:1/-1;text-align:center;text-decoration:none}
+.app-delivery-card p{margin:3px 0 0;color:var(--muted);font-size:11px;line-height:1.35}
+.app-mini-icon{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:#e5f5f1;color:#0b665f;font-weight:950}
+.system-address-card{display:grid;gap:5px;margin:14px 0;padding:17px;border:1px solid #99cdc3;border-radius:15px;background:#eef9f6;text-align:center}
+.system-address-card span{color:#4e706d;font-size:10px;font-weight:900;text-transform:uppercase}
+.system-address-card strong{color:#0a585a;font-size:16px;overflow-wrap:anywhere}
+.system-address-card small{color:#66817d}
+@media(max-width:620px){
+  .delivery-grid,.app-delivery-grid{grid-template-columns:1fr}
+  .url-box{display:grid}.url-box .btn{width:100%}
+}

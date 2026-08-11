@@ -1,0 +1,150 @@
+FUSION — EXPERIÊNCIA COMPLETA DA ACADEMIA
+
+ESTE PACOTE É CUMULATIVO.
+Ele também mantém a regra:
+- Modalidade: sem preço
+- Turma: sem preço
+- Plano: único local de preço/cobrança
+
+NOVO DESENHO DO PRODUTO
+
+1. Página SaaS
+   fusionsistema.com.br
+   Serve para apresentação do Fusion e criação de uma nova academia.
+
+2. Página pública do cliente
+   fusionsistema.com.br/studio-fitness
+
+3. Matrícula pública
+   fusionsistema.com.br/studio-fitness/matricula
+
+4. Central de aplicativos
+   fusionsistema.com.br/studio-fitness/apps
+
+5. Aplicativos
+   /studio-fitness/apps/aluno
+   /studio-fitness/apps/professor
+   /studio-fitness/apps/recepcao
+   /studio-fitness/apps/administracao
+
+6. Sistema da academia
+   /studio-fitness/app/dashboard
+   /studio-fitness/app/alunos
+   /studio-fitness/app/financeiro
+   /studio-fitness/app/planos
+   /studio-fitness/app/turmas
+   etc.
+
+O ARQUIVO REAL CONTINUA ÚNICO.
+Exemplo:
+  /studio-fitness/app/dashboard
+continua servindo internamente:
+  public/pages/dashboard/index.html
+
+Não existem cópias do ERP por academia.
+
+ONBOARDING — AGORA SÃO 11 ETAPAS
+
+1. Administrador
+2. Recepção
+3. Professor
+4. Categoria
+5. Modalidade
+6. Plano
+7. Turma
+8. Marca
+9. Página pública
+10. Aplicativos
+11. Academia pronta
+
+Depois da Marca, o cliente obrigatoriamente vê:
+- URL pública da academia
+- matrícula online
+- Fusion Administração
+- Fusion Recepção
+- Fusion Professor
+- Fusion Aluno
+
+No final aparecem:
+- Entrar no meu sistema
+- Cadastrar primeiro aluno
+- Abrir minha página
+
+VÍNCULO DO APARELHO
+
+O código permanente da academia NÃO vira senha de login.
+
+Primeira vez naquele aparelho:
+  academia + código
+  -> servidor valida
+  -> emite vínculo criptográfico do aparelho
+  -> vínculo fica salvo no navegador/PWA
+
+Próximos logins naquele aparelho:
+  e-mail + senha
+  -> sem pedir o código da academia novamente
+
+O vínculo:
+- não autentica o usuário;
+- apenas identifica a academia;
+- tem validade configurável (padrão 180 dias);
+- é revogado automaticamente se o código permanente da academia for regenerado.
+
+Se o aparelho perder dados/localStorage ou o dono regenerar o código:
+  o código da academia será solicitado novamente uma vez.
+
+IDENTIDADE VISUAL
+
+Nas rotas /NOME-DA-ACADEMIA/... o servidor injeta o contexto do tenant.
+O script fusion-tenant-experience.js:
+- troca o título do navegador para o nome da academia;
+- troca a marca do menu superior para o nome da academia;
+- usa o logo salvo quando existir;
+- reescreve links técnicos /pages/... para URLs limpas da academia;
+- mantém "Tecnologia Fusion Sistema" como identidade secundária.
+
+ARQUIVOS PRINCIPAIS
+
+Backend:
+modules/auth/academy-access.service.mjs
+modules/auth/auth.routes.mjs
+modules/saas/saas.service.mjs
+modules/comercial/comercial.routes.mjs
+
+Frontend:
+public/assets/js/fusion-tenant-experience.js
+public/assets/js/fusion-academia-apps-widget.js
+public/pages/login/index.js
+public/pages/comecar/*
+public/pages/configuracao-inicial/*
+public/pages/apps-academia/*
+public/pages/recepcao-app/*
+public/pages/administracao-app/*
+
+Também inclui:
+modules/modalidades/modalidades.service.mjs
+modules/turmas/turmas.service.mjs
+public/pages/modalidades/*
+
+TESTE APÓS DEPLOY LIVE
+
+1. Criar uma academia nova e confirmar o e-mail.
+2. Concluir as 8 configurações operacionais.
+3. Etapa 9 deve mostrar:
+   https://www.fusionsistema.com.br/SLUG
+4. Abrir a página pública.
+5. Confirmar Matrícula.
+6. Etapa 10: abrir os quatro aplicativos.
+7. Abrir Administração.
+8. Na primeira vez, vincular o aparelho usando o código da academia.
+9. Fazer login.
+10. Sair.
+11. Abrir Administração novamente.
+12. Esperado: NÃO pedir código da academia. Apenas usuário e senha.
+13. No ERP, navegar pelo menu.
+14. Esperado: URL no formato /SLUG/app/...
+15. Esperado: nome/logo da academia no menu/título.
+
+COMMIT SUGERIDO
+
+feat: entrega pagina apps e sistema com identidade da academia
