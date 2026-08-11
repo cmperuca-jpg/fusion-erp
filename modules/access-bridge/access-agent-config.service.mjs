@@ -45,8 +45,8 @@ function salvarRuntime(config) {
 function configuracaoBase() {
   const agentId = normalizarAgentId(process.env.ACCESS_AGENT_ID);
   const tenantId = normalizarTenantId(process.env.ACCESS_AGENT_TENANT_ID || process.env.FUSION_TENANT_ID || "");
-  const equipmentId = normalizarEquipmentId(process.env.ACCESS_EQUIPMENT_ID);
-  const equipmentIds = listaDe(process.env.ACCESS_EQUIPMENT_IDS || process.env.ACCESS_EQUIPMENT_ID);
+  const equipmentId = normalizarEquipmentId(process.env.ACCESS_EQUIPMENT_ID || "disp_henry7x_01");
+  const equipmentIds = listaDe(process.env.ACCESS_EQUIPMENT_IDS || process.env.ACCESS_EQUIPMENT_ID || equipmentId);
   if (equipmentId && !equipmentIds.includes(equipmentId)) equipmentIds.unshift(equipmentId);
   return {
     agentId,
