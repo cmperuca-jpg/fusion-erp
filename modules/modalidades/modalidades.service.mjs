@@ -18,6 +18,18 @@ function chaveTexto(valor) {
     .replace(/[\u0300-\u036f]/g, "");
 }
 
+function semCamposDePrecoModalidade(item = {}) {
+  const {
+    valorSugerido,
+    valor,
+    valorMensal,
+    preco,
+    mensalidade,
+    ...restante
+  } = item || {};
+  return restante;
+}
+
 async function categoriasSalvas() {
   const lista = await lerJsonDuravel(ARQUIVO_CATEGORIAS, []);
   return Array.isArray(lista) ? lista : [];
@@ -84,7 +96,6 @@ function validarPayload(payload) {
     professorResponsavel: normalizarTexto(payload.professorResponsavel),
     duracaoMinutos: Number(payload.duracaoMinutos || 60),
     capacidadeMaxima: Number(payload.capacidadeMaxima || 20),
-    valorSugerido: Number(payload.valorSugerido || 0),
     cor: normalizarTexto(payload.cor) || "#ff6b00",
     icone: normalizarTexto(payload.icone) || "🏋️",
     status: normalizarTexto(payload.status) || "Ativa"
@@ -92,7 +103,7 @@ function validarPayload(payload) {
 }
 
 export async function obterModalidades(filtros = {}) {
-  let modalidades = await listarModalidades();
+  let modalidades = (await listarModalidades()).map(semCamposDePrecoModalidade);
   const termo = normalizarTexto(filtros.q).toLowerCase();
   const status = normalizarTexto(filtros.status);
 
@@ -119,15 +130,15 @@ export async function criarModalidade(payload) {
   // Mantém a categoria disponível também para os próximos cadastros.
   await criarCategoriaModalidade({ nome: dados.categoria });
 
-  const nova = {
+  const nova = semCamposDePrecoModalidade({
     id: crypto.randomUUID(),
     ...dados,
     criadoEm: new Date().toISOString(),
     atualizadoEm: new Date().toISOString()
-  };
+  });
 
   modalidades.push(nova);
-  await salvarModalidades(modalidades);
+  await salvarModalidades(modalidades.map(semCamposDePrecoModalidade));
   return nova;
 }
 
@@ -140,13 +151,13 @@ export async function atualizarModalidade(id, payload) {
   const dados = validarPayload(payload);
   await criarCategoriaModalidade({ nome: dados.categoria });
 
-  modalidades[indice] = {
+  modalidades[indice] = semCamposDePrecoModalidade({
     ...modalidades[indice],
     ...dados,
     atualizadoEm: new Date().toISOString()
-  };
+  });
 
-  await salvarModalidades(modalidades);
+  await salvarModalidades(modalidades.map(semCamposDePrecoModalidade));
   return modalidades[indice];
 }
 

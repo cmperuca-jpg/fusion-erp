@@ -6,6 +6,24 @@ function texto(v){ return String(v ?? "").trim(); }
 function numero(v,p=0){ const n=Number(v); return Number.isFinite(n)?Number(n.toFixed(2)):p; }
 function normalizar(v){ return texto(v).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); }
 
+function semCamposDePrecoTurma(item = {}) {
+  const {
+    valor,
+    valorMensal,
+    valor_mensal,
+    valorPrePago,
+    valor_pre_pago,
+    valorDiarista,
+    valor_diarista,
+    valorAvulso,
+    preco,
+    mensalidade,
+    tipoCobranca,
+    ...restante
+  } = item || {};
+  return restante;
+}
+
 function statusAtivo(item = {}) {
   return matriculaEstaAtiva(item);
 }
@@ -94,7 +112,6 @@ async function mapaOcupacaoPorTurma(turmas = []) {
 }
 
 function normalizarTurma(dados = {}, alunosMatriculados = 0) {
-  const valorMensal = numero(dados.valorMensal ?? dados.valor_mensal ?? dados.valor ?? 0);
   return {
     nome: texto(dados.nome),
     modalidade: texto(dados.modalidade),
@@ -104,10 +121,6 @@ function normalizarTurma(dados = {}, alunosMatriculados = 0) {
     horario: texto(dados.horario),
     capacidade: numero(dados.capacidade, 0),
     alunosMatriculados: numero(alunosMatriculados, 0),
-    valorMensal,
-    valorPrePago: numero(dados.valorPrePago ?? dados.valor_pre_pago ?? valorMensal, valorMensal),
-    valorDiarista: numero(dados.valorDiarista ?? dados.valor_diarista ?? dados.valorAvulso ?? 0),
-    tipoCobranca: texto(dados.tipoCobranca) || "Por contratação",
     status: texto(dados.status) || "Ativa",
     observacoes: texto(dados.observacoes)
   };
@@ -123,7 +136,7 @@ function validarTurma(dados) {
   if(!t.horario) erros.push("Horário é obrigatório.");
   if(!(t.capacidade > 0)) erros.push("Capacidade deve ser maior que zero.");
   if(erros.length){ const e=new Error(erros.join(" ")); e.statusCode=400; throw e; }
-  return t;
+  return semCamposDePrecoTurma(t);
 }
 
 export async function obterTurmas(filtros = {}) {
@@ -133,12 +146,17 @@ export async function obterTurmas(filtros = {}) {
   const turmas = await listarTurmas();
   const ocupacao = await mapaOcupacaoPorTurma(turmas);
 
-  return turmas.map(t => ({ ...t, ...normalizarTurma(t, ocupacao.get(idTurma(t)) || 0) })).filter(t => {
-    const textoBusca=[t.nome,t.modalidade,t.professor,t.sala].join(" ").toLowerCase();
-    return (!busca || textoBusca.includes(busca)) &&
-      (!status || ["todos","todas"].includes(normalizarStatusMatricula(status)) || normalizarStatusMatricula(t.status) === normalizarStatusMatricula(status)) &&
-      (!modalidade || String(t.modalidade).toLowerCase() === modalidade);
-  });
+  return turmas
+    .map(t => semCamposDePrecoTurma({
+      ...t,
+      ...normalizarTurma(t, ocupacao.get(idTurma(t)) || 0)
+    }))
+    .filter(t => {
+      const textoBusca=[t.nome,t.modalidade,t.professor,t.sala].join(" ").toLowerCase();
+      return (!busca || textoBusca.includes(busca)) &&
+        (!status || ["todos","todas"].includes(normalizarStatusMatricula(status)) || normalizarStatusMatricula(t.status) === normalizarStatusMatricula(status)) &&
+        (!modalidade || String(t.modalidade).toLowerCase() === modalidade);
+    });
 }
 
 export async function obterResumoTurmas() {
@@ -152,10 +170,15 @@ export async function obterTurma(id) {
   const turma = await buscarTurmaPorId(id);
   if(!turma){ const e=new Error("Turma não encontrada."); e.statusCode=404; throw e; }
   const ocupacao = await mapaOcupacaoPorTurma([turma]);
-  return { ...turma, ...normalizarTurma(turma, ocupacao.get(idTurma(turma)) || 0) };
+  return semCamposDePrecoTurma({
+    ...turma,
+    ...normalizarTurma(turma, ocupacao.get(idTurma(turma)) || 0)
+  });
 }
 
-export async function cadastrarTurma(dados) { return criarTurma(validarTurma(dados)); }
+export async function cadastrarTurma(dados) {
+  return criarTurma(validarTurma(dados));
+}
 
 export async function editarTurma(id,dados) {
   const turma = await atualizarTurma(id, validarTurma(dados));

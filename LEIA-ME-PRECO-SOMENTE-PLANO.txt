@@ -1,0 +1,63 @@
+FUSION — REGRA COMERCIAL: PREÇO SOMENTE NO PLANO
+
+REGRA DEFINITIVA
+- Categoria: sem preço.
+- Modalidade: sem preço.
+- Turma: sem preço.
+- Plano: único cadastro responsável por valores e cobrança.
+
+MODALIDADE FICA COM
+- nome
+- categoria
+- professor responsável
+- duração
+- capacidade sugerida
+- ícone/cor
+- status
+- descrição
+
+TURMA FICA COM
+- nome
+- modalidade
+- professor
+- dias
+- horário
+- capacidade
+- sala/local
+- status
+- observações
+
+PLANO FICA COM
+- valor
+- taxa de matrícula
+- periodicidade/tipo
+- modalidade(s) incluída(s)
+- limites e regras comerciais
+
+CORREÇÕES DESTE PACOTE
+1. Remove "Valor sugerido" da etapa Modalidade no onboarding.
+2. Remove "Valor mensal de referência" da etapa Turma no onboarding.
+3. Remove valor da tela normal de Modalidades.
+4. Backend de Modalidades deixa de aceitar/gravar campos de preço.
+5. Backend de Turmas deixa de aceitar/expor/gravar:
+   valor, valorMensal, valorPrePago, valorDiarista, valorAvulso,
+   mensalidade, preço e tipoCobranca.
+6. Registros antigos com preço em Modalidade/Turma deixam de ser expostos
+   pelas APIs e serão eliminados quando o registro for salvo novamente.
+
+ARQUIVOS PARA SUBSTITUIR
+- public/pages/configuracao-inicial/index.html
+- public/pages/configuracao-inicial/index.js
+- public/pages/modalidades/index.html
+- public/pages/modalidades/modalidades.js
+- modules/modalidades/modalidades.service.mjs
+- modules/turmas/turmas.service.mjs
+
+NÃO PRECISA ALTERAR
+- página normal de Turmas: ela já não exibe valor.
+- módulo de Planos.
+- Supabase.
+- server.mjs.
+
+COMMIT SUGERIDO
+fix: centraliza todos os valores exclusivamente em planos

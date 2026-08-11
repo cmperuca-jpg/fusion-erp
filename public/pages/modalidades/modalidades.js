@@ -14,9 +14,6 @@ const elementos = {
   listaCategorias: document.getElementById("listaCategoriasModalidade")
 };
 
-function moeda(valor) {
-  return Number(valor || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-}
 
 async function request(url, options = {}) {
   const resposta = await fetch(url, {
@@ -58,7 +55,7 @@ async function carregarModalidades() {
 
 function renderizarTabela() {
   if (!modalidades.length) {
-    elementos.tabela.innerHTML = `<tr><td colspan="8">Nenhuma modalidade encontrada.</td></tr>`;
+    elementos.tabela.innerHTML = `<tr><td colspan="7">Nenhuma modalidade encontrada.</td></tr>`;
     return;
   }
   elementos.tabela.innerHTML = modalidades.map((item) => `
@@ -68,7 +65,6 @@ function renderizarTabela() {
       <td>${item.professorResponsavel || "-"}</td>
       <td>${item.duracaoMinutos} min</td>
       <td>${item.capacidadeMaxima}</td>
-      <td>${moeda(item.valorSugerido)}</td>
       <td><span class="badge ${item.status === "Ativa" ? "ativa" : "inativa"}">${item.status}</span></td>
       <td><div class="acoes"><button class="btn-secondary" onclick="editarModalidade('${item.id}')">Editar</button><button class="btn-danger" onclick="excluirModalidade('${item.id}')">Excluir</button></div></td>
     </tr>
@@ -80,7 +76,6 @@ function abrirModal() {
   document.getElementById("modalidadeId").value = "";
   document.getElementById("duracaoMinutos").value = 60;
   document.getElementById("capacidadeMaxima").value = 20;
-  document.getElementById("valorSugerido").value = 0;
   document.getElementById("cor").value = "#ff6b00";
   elementos.modalTitulo.textContent = "Nova Modalidade";
   elementos.modal.classList.add("aberto");
@@ -97,7 +92,6 @@ window.editarModalidade = function (id) {
   document.getElementById("professorResponsavel").value = item.professorResponsavel || "";
   document.getElementById("duracaoMinutos").value = item.duracaoMinutos || 60;
   document.getElementById("capacidadeMaxima").value = item.capacidadeMaxima || 20;
-  document.getElementById("valorSugerido").value = item.valorSugerido || 0;
   document.getElementById("icone").value = item.icone || "";
   document.getElementById("cor").value = item.cor || "#ff6b00";
   document.getElementById("status").value = item.status || "Ativa";
@@ -121,7 +115,6 @@ elementos.form.addEventListener("submit", async (event) => {
     professorResponsavel: document.getElementById("professorResponsavel").value,
     duracaoMinutos: document.getElementById("duracaoMinutos").value,
     capacidadeMaxima: document.getElementById("capacidadeMaxima").value,
-    valorSugerido: document.getElementById("valorSugerido").value,
     icone: document.getElementById("icone").value,
     cor: document.getElementById("cor").value,
     status: document.getElementById("status").value,

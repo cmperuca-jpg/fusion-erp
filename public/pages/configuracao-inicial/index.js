@@ -318,7 +318,7 @@
         <div class="field"><label for="modProfessor">Professor responsável</label><select id="modProfessor"><option value="">Sem responsável por enquanto</option>${profs}</select></div>
         <div class="field"><label for="modDuracao">Duração sugerida (min)</label><input id="modDuracao" type="number" min="1" value="60"></div>
         <div class="field"><label for="modCapacidade">Capacidade sugerida</label><input id="modCapacidade" type="number" min="1" value="30"></div>
-        <div class="field"><label for="modValor">Valor sugerido</label><input id="modValor" type="number" min="0" step="0.01" value="0"></div>
+        <div class="field full"><div class="note"><strong>Preço não é definido na Modalidade.</strong> Valores, mensalidades e cobranças serão configurados exclusivamente na etapa Plano.</div></div>
         <div class="field full">${botoes({label:"Criar Modalidade e avançar"})}</div>
       </form>`;
   }
@@ -365,7 +365,6 @@
 
     const mod0 = dados.modalidades[0] || {};
     const prof0 = dados.professores[0] || {};
-    const plano0 = dados.planos[0] || {};
     const mods = dados.modalidades.map(m => `<option value="${escapar(m.nome)}">${escapar(m.nome)}</option>`).join("");
     const profs = dados.professores.map(p => `<option value="${escapar(p.nome)}">${escapar(p.nome)}</option>`).join("");
     return `
@@ -378,7 +377,6 @@
         <div class="field"><label for="turmaHorario">Horário *</label><input id="turmaHorario" type="time" required value="06:00"></div>
         <div class="field"><label for="turmaCapacidade">Capacidade *</label><input id="turmaCapacidade" type="number" min="1" required value="30"></div>
         <div class="field"><label for="turmaSala">Sala/local</label><input id="turmaSala" placeholder="Ex.: Sala principal"></div>
-        <div class="field"><label for="turmaValor">Valor mensal de referência</label><input id="turmaValor" type="number" min="0" step="0.01" value="${Number(plano0.valorMensal || 0)}"></div>
         <div class="field full">${botoes({label:"Criar Turma e avançar"})}</div>
       </form>`;
   }
@@ -526,7 +524,6 @@
             professorResponsavel:$("modProfessor").value,
             duracaoMinutos:Number($("modDuracao").value || 60),
             capacidadeMaxima:Number($("modCapacidade").value || 20),
-            valorSugerido:Number($("modValor").value || 0),
             status:"Ativa"
           })
         });
@@ -562,7 +559,6 @@
             horario:$("turmaHorario").value,
             capacidade:Number($("turmaCapacidade").value || 0),
             sala:$("turmaSala").value.trim(),
-            valorMensal:Number($("turmaValor").value || 0),
             status:"Ativa"
           })
         });
