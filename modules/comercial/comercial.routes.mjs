@@ -152,7 +152,7 @@ async function servirPaginaTenant(req, res, next, arquivoRelativo, { persistirTe
 
     let html = await fs.readFile(arquivo, 'utf8');
     const contexto = scriptContextoTenant(academia, persistirTenant);
-    const experiencia = '<script src="/assets/js/fusion-tenant-experience.js?v=20260811-tenant-1" defer></script>';
+    const experiencia = '<script src="/assets/js/fusion-tenant-experience.js?v=20260811-tenant-2" defer></script>';
 
     if (/<head[^>]*>/i.test(html)) {
       html = html.replace(/<head([^>]*)>/i, match => `${match}\n${contexto}`);

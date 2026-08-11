@@ -1,0 +1,29 @@
+FUSION — CORREÇÃO URGENTE DO TRAVAMENTO NAS ROTAS DA ACADEMIA
+
+PROBLEMA
+O script fusion-tenant-experience.js observava alterações no DOM e, dentro do
+próprio MutationObserver, alterava novamente elementos observados. Isso podia
+gerar um ciclo contínuo e deixar o Chrome em "Página sem resposta".
+
+CORREÇÃO
+- Observer agora reage somente quando novos elementos são inseridos.
+- Observer é desconectado enquanto a identidade/links são atualizados.
+- textContent, atributos e title só são modificados quando realmente mudaram.
+- O título usa uma base fixa e não repete o nome da academia.
+- A carga da identidade visual continua sem bloquear o onboarding.
+- A versão do script foi alterada de tenant-1 para tenant-2 para evitar cache.
+
+SUBSTITUA SOMENTE:
+1. public/assets/js/fusion-tenant-experience.js
+2. modules/comercial/comercial.routes.mjs
+
+DEPOIS
+1. Commit.
+2. Aguarde Deploy live no Render.
+3. Feche a aba travada.
+4. Abra uma janela anônima ou use Ctrl+Shift+R.
+5. Acesse novamente:
+   /gladiadores-academia/app/configuracao-inicial
+
+COMMIT SUGERIDO
+fix: evita loop de identidade nas rotas da academia
