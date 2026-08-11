@@ -1,6 +1,7 @@
 if (typeof carregarLayout === "function") carregarLayout("Modalidades");
 
 let modalidades = [];
+let categorias = [];
 const API = "/api/modalidades";
 
 const elementos = {
@@ -9,7 +10,8 @@ const elementos = {
   statusFiltro: document.getElementById("filtroStatus"),
   modal: document.getElementById("modalModalidade"),
   form: document.getElementById("formModalidade"),
-  modalTitulo: document.getElementById("modalTitulo")
+  modalTitulo: document.getElementById("modalTitulo"),
+  listaCategorias: document.getElementById("listaCategoriasModalidade")
 };
 
 function moeda(valor) {
@@ -21,13 +23,19 @@ async function request(url, options = {}) {
     headers: { "Content-Type": "application/json" },
     ...options
   });
-
   const json = await resposta.json().catch(() => ({}));
   if (!resposta.ok || json.ok === false || json.sucesso === false) {
     throw new Error(json.mensagem || json.erro || "Erro na operação.");
   }
   if (Array.isArray(json)) return json;
   return json.dados ?? json.modalidades ?? json.data ?? json.itens ?? json;
+}
+
+async function carregarCategorias() {
+  categorias = await request(`${API}/categorias`);
+  elementos.listaCategorias.innerHTML = categorias
+    .map(item => `<option value="${String(item.nome || "").replace(/"/g, "&quot;")}"></option>`)
+    .join("");
 }
 
 async function carregarResumo() {
@@ -43,10 +51,9 @@ async function carregarModalidades() {
     q: elementos.busca.value,
     status: elementos.statusFiltro.value
   });
-
   modalidades = await request(`${API}?${params.toString()}`);
   renderizarTabela();
-  await carregarResumo();
+  await Promise.all([carregarResumo(), carregarCategorias()]);
 }
 
 function renderizarTabela() {
@@ -54,27 +61,16 @@ function renderizarTabela() {
     elementos.tabela.innerHTML = `<tr><td colspan="8">Nenhuma modalidade encontrada.</td></tr>`;
     return;
   }
-
   elementos.tabela.innerHTML = modalidades.map((item) => `
     <tr>
-      <td>
-        <div class="modalidade-nome">
-          <span class="modalidade-icone" style="background:${item.cor}">${item.icone || "🏋️"}</span>
-          <span>${item.nome}</span>
-        </div>
-      </td>
+      <td><div class="modalidade-nome"><span class="modalidade-icone" style="background:${item.cor}">${item.icone || "🏋️"}</span><span>${item.nome}</span></div></td>
       <td>${item.categoria}</td>
       <td>${item.professorResponsavel || "-"}</td>
       <td>${item.duracaoMinutos} min</td>
       <td>${item.capacidadeMaxima}</td>
       <td>${moeda(item.valorSugerido)}</td>
       <td><span class="badge ${item.status === "Ativa" ? "ativa" : "inativa"}">${item.status}</span></td>
-      <td>
-        <div class="acoes">
-          <button class="btn-secondary" onclick="editarModalidade('${item.id}')">Editar</button>
-          <button class="btn-danger" onclick="excluirModalidade('${item.id}')">Excluir</button>
-        </div>
-      </td>
+      <td><div class="acoes"><button class="btn-secondary" onclick="editarModalidade('${item.id}')">Editar</button><button class="btn-danger" onclick="excluirModalidade('${item.id}')">Excluir</button></div></td>
     </tr>
   `).join("");
 }
@@ -90,14 +86,11 @@ function abrirModal() {
   elementos.modal.classList.add("aberto");
 }
 
-function fecharModal() {
-  elementos.modal.classList.remove("aberto");
-}
+function fecharModal() { elementos.modal.classList.remove("aberto"); }
 
 window.editarModalidade = function (id) {
   const item = modalidades.find((modalidade) => modalidade.id === id);
   if (!item) return;
-
   document.getElementById("modalidadeId").value = item.id;
   document.getElementById("nome").value = item.nome;
   document.getElementById("categoria").value = item.categoria;
@@ -109,7 +102,6 @@ window.editarModalidade = function (id) {
   document.getElementById("cor").value = item.cor || "#ff6b00";
   document.getElementById("status").value = item.status || "Ativa";
   document.getElementById("descricao").value = item.descricao || "";
-
   elementos.modalTitulo.textContent = "Editar Modalidade";
   elementos.modal.classList.add("aberto");
 };
@@ -122,7 +114,6 @@ window.excluirModalidade = async function (id) {
 
 elementos.form.addEventListener("submit", async (event) => {
   event.preventDefault();
-
   const id = document.getElementById("modalidadeId").value;
   const payload = {
     nome: document.getElementById("nome").value,
@@ -136,13 +127,8 @@ elementos.form.addEventListener("submit", async (event) => {
     status: document.getElementById("status").value,
     descricao: document.getElementById("descricao").value
   };
-
-  if (id) {
-    await request(`${API}/${id}`, { method: "PUT", body: JSON.stringify(payload) });
-  } else {
-    await request(API, { method: "POST", body: JSON.stringify(payload) });
-  }
-
+  if (id) await request(`${API}/${id}`, { method: "PUT", body: JSON.stringify(payload) });
+  else await request(API, { method: "POST", body: JSON.stringify(payload) });
   fecharModal();
   await carregarModalidades();
 });

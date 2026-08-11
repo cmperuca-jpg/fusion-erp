@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0b6574">
+  <title>Configuração inicial | Fusion Sistema</title>
+  <link rel="stylesheet" href="/pages/configuracao-inicial/style.css?v=20260811-1">
+  <script src="/assets/js/fusion-auth.js?v=20260811-1"></script>
+  <script>FusionAuth.proteger(["admin"]);</script>
+</head>
+<body>
+  <main class="onboarding-shell">
+    <header class="topbar">
+      <div>
+        <span class="kicker">Fusion Sistema</span>
+        <h1>Prepare sua academia para o primeiro aluno</h1>
+        <p>Vamos configurar somente o necessário para começar a operar. Você poderá alterar tudo depois.</p>
+      </div>
+      <div class="academy-pill">
+        <span>Academia</span>
+        <strong id="academiaNomeTopo">Carregando...</strong>
+      </div>
+    </header>
+
+    <section class="progress-card" aria-label="Progresso da configuração">
+      <div class="progress-head">
+        <strong id="progressoTexto">0 de 8 etapas concluídas</strong>
+        <span id="progressoPercentual">0%</span>
+      </div>
+      <div class="progress-track"><div id="progressoBarra" class="progress-bar"></div></div>
+      <p id="progressoAjuda">Sua configuração é salva no Fusion a cada etapa.</p>
+    </section>
+
+    <div class="workspace">
+      <nav class="steps-card" aria-label="Etapas da configuração inicial">
+        <ol id="listaEtapas"></ol>
+      </nav>
+
+      <section class="stage-card">
+        <div id="alerta" class="alert hidden" role="status" aria-live="polite"></div>
+        <div id="carregando" class="loading-state">
+          <div class="spinner" aria-hidden="true"></div>
+          <strong>Verificando sua academia...</strong>
+        </div>
+        <div id="etapaConteudo" class="hidden"></div>
+      </section>
+    </div>
+
+    <footer class="onboarding-footer">
+      <span>Você não precisa preencher cadastros avançados agora.</span>
+      <button id="btnSair" class="link-button" type="button">Sair com segurança</button>
+    </footer>
+  </main>
+
+  <script src="/pages/configuracao-inicial/index.js?v=20260811-1"></script>
+</body>
+</html>

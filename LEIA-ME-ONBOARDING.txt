@@ -1,0 +1,72 @@
+FUSION SISTEMA — ONBOARDING INICIAL COMPLETO
+
+OBJETIVO
+Depois de criar uma academia, o cliente não entra mais em um ERP vazio.
+
+FLUXO
+1. Administrador principal — já é criado automaticamente junto com a academia.
+2. Recepção — usuário interno próprio.
+3. Professor — cadastro e senha para o Fusion Professor.
+4. Categoria — classificação das modalidades.
+5. Modalidade — usa categoria e professor.
+6. Plano — usa a modalidade e define o preço.
+7. Turma — usa modalidade + professor + horário.
+8. Marca — nome, cor e logo (logo opcional).
+9. Final — “Cadastrar primeiro aluno” ou “Abrir o Fusion”.
+
+POR QUE A ORDEM FOI AJUSTADA
+Turma exige modalidade e professor.
+Modalidade exige categoria.
+O plano fica melhor quando já consegue vincular a modalidade real.
+Isso evita registros soltos ou inconsistentes.
+
+COMPORTAMENTO
+- O botão após criar academia passa a ser “Avançar para configuração inicial”.
+- O Fusion tenta autenticar automaticamente o administrador recém-criado.
+- A senha não é colocada em URL nem persistida pelo onboarding; fica apenas na
+  memória da página até a navegação.
+- Se o login automático não funcionar, abre o login normal já apontando para
+  a configuração inicial.
+- O progresso é calculado a partir dos cadastros reais do tenant, não de
+  localStorage. Se fechar e voltar, continua do ponto real.
+- Etapas futuras ficam bloqueadas até as dependências mínimas existirem.
+- O cliente pode alterar tudo depois nos módulos normais.
+
+CATEGORIAS
+Foi criada uma persistência leve de categorias em categorias_modalidades.json.
+O módulo de Modalidades também recebeu /api/modalidades/categorias e passou a
+sugerir as categorias salvas no campo Categoria.
+
+ARQUIVOS DO PACOTE
+public/pages/comecar/index.html
+public/pages/comecar/index.js
+public/pages/comecar/style.css
+public/pages/configuracao-inicial/index.html
+public/pages/configuracao-inicial/index.js
+public/pages/configuracao-inicial/style.css
+modules/modalidades/modalidades.routes.mjs
+modules/modalidades/modalidades.service.mjs
+public/pages/modalidades/index.html
+public/pages/modalidades/modalidades.js
+
+IMPORTANTE
+Este pacote já inclui a correção anterior de contraste da página /pages/comecar.
+Use este pacote no lugar do ZIP de contraste anterior se ele ainda não foi enviado.
+
+TESTE
+1. Criar uma academia de teste em /pages/comecar/?acao=criar
+2. Verificar tela “Academia criada”
+3. Clicar “Avançar para configuração inicial”
+4. Confirmar que Administrador aparece concluído
+5. Criar Recepção
+6. Criar Professor
+7. Criar Categoria
+8. Criar Modalidade
+9. Criar Plano
+10. Criar Turma
+11. Salvar Marca
+12. Confirmar tela “Sua academia está pronta para o primeiro aluno”
+13. Clicar “Cadastrar primeiro aluno”
+
+COMMIT SUGERIDO
+feat: adiciona onboarding inicial completo para novas academias

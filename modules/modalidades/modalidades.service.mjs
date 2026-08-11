@@ -4,9 +4,70 @@ import {
   salvarModalidades,
   buscarModalidadePorId
 } from "./modalidades.repository.mjs";
+import { lerJsonDuravel, salvarJsonDuravel } from "../core/persistence/durable-json.mjs";
+
+const ARQUIVO_CATEGORIAS = "categorias_modalidades.json";
 
 function normalizarTexto(valor) {
   return String(valor || "").trim();
+}
+function chaveTexto(valor) {
+  return normalizarTexto(valor)
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+async function categoriasSalvas() {
+  const lista = await lerJsonDuravel(ARQUIVO_CATEGORIAS, []);
+  return Array.isArray(lista) ? lista : [];
+}
+
+export async function obterCategoriasModalidades() {
+  const [salvas, modalidades] = await Promise.all([
+    categoriasSalvas(),
+    listarModalidades()
+  ]);
+
+  const mapa = new Map();
+  for (const item of salvas) {
+    const nome = normalizarTexto(item?.nome || item);
+    if (!nome) continue;
+    mapa.set(chaveTexto(nome), {
+      id: item?.id || crypto.randomUUID(),
+      nome,
+      status: normalizarTexto(item?.status) || "Ativa",
+      criadoEm: item?.criadoEm || ""
+    });
+  }
+  for (const modalidade of modalidades) {
+    const nome = normalizarTexto(modalidade?.categoria);
+    const chave = chaveTexto(nome);
+    if (!nome || mapa.has(chave)) continue;
+    mapa.set(chave, { id: `legado-${chave}`, nome, status: "Ativa", criadoEm: "" });
+  }
+  return [...mapa.values()].sort((a,b) => a.nome.localeCompare(b.nome, "pt-BR"));
+}
+
+export async function criarCategoriaModalidade(payload = {}) {
+  const nome = normalizarTexto(payload.nome || payload.categoria);
+  if (nome.length < 2) throw new Error("Informe o nome da categoria.");
+
+  const lista = await categoriasSalvas();
+  const chave = chaveTexto(nome);
+  const existente = lista.find(item => chaveTexto(item?.nome || item) === chave);
+  if (existente) return existente;
+
+  const nova = {
+    id: crypto.randomUUID(),
+    nome,
+    status: "Ativa",
+    criadoEm: new Date().toISOString(),
+    atualizadoEm: new Date().toISOString()
+  };
+  lista.push(nova);
+  await salvarJsonDuravel(ARQUIVO_CATEGORIAS, lista);
+  return nova;
 }
 
 function validarPayload(payload) {
@@ -55,6 +116,9 @@ export async function criarModalidade(payload) {
   const modalidades = await listarModalidades();
   const dados = validarPayload(payload);
 
+  // Mantém a categoria disponível também para os próximos cadastros.
+  await criarCategoriaModalidade({ nome: dados.categoria });
+
   const nova = {
     id: crypto.randomUUID(),
     ...dados,
@@ -74,6 +138,8 @@ export async function atualizarModalidade(id, payload) {
   if (indice === -1) throw new Error("Modalidade não encontrada.");
 
   const dados = validarPayload(payload);
+  await criarCategoriaModalidade({ nome: dados.categoria });
+
   modalidades[indice] = {
     ...modalidades[indice],
     ...dados,
@@ -95,11 +161,14 @@ export async function removerModalidade(id) {
 }
 
 export async function obterResumoModalidades() {
-  const modalidades = await listarModalidades();
+  const [modalidades, categorias] = await Promise.all([
+    listarModalidades(),
+    obterCategoriasModalidades()
+  ]);
   return {
     total: modalidades.length,
     ativas: modalidades.filter((item) => item.status === "Ativa").length,
     inativas: modalidades.filter((item) => item.status === "Inativa").length,
-    categorias: [...new Set(modalidades.map((item) => item.categoria).filter(Boolean))].length
+    categorias: categorias.length
   };
 }

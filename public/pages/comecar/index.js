@@ -69,7 +69,6 @@
       academia: json.academia?.nome || json.tenantId
     });
     if (extras.next) params.set("next", extras.next);
-    if (extras.onboarding) params.set("onboarding", "1");
     location.replace(`/pages/login/index.html?${params.toString()}`);
   }
 
@@ -141,10 +140,13 @@
       const codigo = String(json.codigoAcesso || json.resultado?.academy_access_code || json.resultado?.access_code || "").toUpperCase();
       if (!codigo) throw new Error("Academia criada, mas o código da academia não foi retornado.");
 
+      // Credenciais ficam somente na memória desta página e desaparecem na navegação.
       novaAcademia = {
         academia: dados.nomeEmpresa,
         codigo,
-        tenantId: json.tenantId
+        tenantId: json.tenantId,
+        emailAdmin: dados.email,
+        senhaAdmin: dados.senha
       };
 
       panels.forEach(panel => panel.hidden = true);
@@ -152,7 +154,11 @@
       $("painelSucesso").hidden = false;
       $("sucessoAcademia").textContent = dados.nomeEmpresa;
       $("sucessoCodigo").textContent = codigo;
-      status($("mensagemSucesso"), "Guarde este código. Ele identifica a academia; usuários e senhas continuam individuais.", "ok");
+      status(
+        $("mensagemSucesso"),
+        "Próximo passo: recepção, professor, modalidade, plano, turma e identidade da academia. Leva poucos minutos.",
+        "ok"
+      );
     } catch (error) {
       status($("mensagemCriacao"), error.message || "Não foi possível concluir o cadastro.", "erro");
     } finally {
@@ -175,15 +181,34 @@
     if (!novaAcademia) return;
     const botao = $("btnEntrarNovo");
     botao.disabled = true;
-    botao.textContent = "Preparando login...";
+    botao.textContent = "Preparando sua academia...";
     status($("mensagemSucesso"), "");
+
     try {
-      const json = await selecionarAcademia(novaAcademia.academia, novaAcademia.codigo);
-      irParaLogin(json, { onboarding: true });
+      const selecao = await selecionarAcademia(novaAcademia.academia, novaAcademia.codigo);
+      salvarSelecao(selecao);
+
+      const tenant = String(selecao.tenantId || novaAcademia.tenantId || "").trim();
+      const onboarding = `/pages/configuracao-inicial/index.html?tenant=${encodeURIComponent(tenant)}`;
+
+      // Entrada contínua: usa a credencial que o próprio cliente acabou de criar.
+      if (window.FusionAuth?.login && novaAcademia.emailAdmin && novaAcademia.senhaAdmin) {
+        try {
+          await window.FusionAuth.login(novaAcademia.emailAdmin, novaAcademia.senhaAdmin, tenant);
+          novaAcademia.senhaAdmin = "";
+          location.replace(onboarding);
+          return;
+        } catch (error) {
+          console.warn("[Onboarding] Login automático não concluído:", error.message);
+        }
+      }
+
+      // Fallback seguro: mantém a academia selecionada e pede login normal.
+      irParaLogin(selecao, { next: onboarding });
     } catch (error) {
-      status($("mensagemSucesso"), error.message || "Não foi possível abrir o login.", "erro");
+      status($("mensagemSucesso"), error.message || "Não foi possível iniciar a configuração.", "erro");
       botao.disabled = false;
-      botao.textContent = "Ir para o login";
+      botao.textContent = "Avançar para configuração inicial";
     }
   });
 

@@ -1,37 +1,14 @@
-FUSION ALUNO — GALERIA DE IMAGENS DO TREINO
+Substitua somente:
+- public/pages/comecar/index.html
+- public/pages/comecar/style.css
 
-Substitua estes 4 arquivos:
-1. modules/treinos/aluno-app.service.mjs
-2. public/pages/aluno-login/index.html
-3. public/pages/aluno-login/index.js
-4. public/pages/aluno-login/style.css
-
-NOVO COMPORTAMENTO
-
-- O cartão "Treinos" é clicável quando existe treino prescrito.
-- Ao tocar no cartão, abre a galeria em tela cheia.
-- Cada exercício mostra a imagem/GIF existente em /assets/exercicios/flash/.
-- Botões anterior/próximo.
-- Teclas ← e → no computador.
-- Swipe para esquerda/direita no celular.
-- Miniaturas na parte inferior.
-- Mostra divisão A/B/C, nome, grupo, séries, repetições, carga,
-  descanso, método, observação e descrição quando existirem.
-- A lista do treino também passa a mostrar miniatura; tocar em qualquer
-  exercício abre a galeria já naquele item.
-- Se o aluno não tiver treino prescrito, o cartão continua informando isso
-  e não abre galeria.
-
-SEGURANÇA
-
-- As imagens são servidas pelo próprio domínio fusionsistema.com.br.
-- O backend só envia caminhos locais iniciados por "/".
-- Nenhum domínio Lovable/Supabase/Render é exibido ao aluno.
-
-VALIDAÇÃO
-
-- node --check no index.js
-- node --check no aluno-app.service.mjs
+Correções:
+- fundo escuro próprio no painel esquerdo;
+- textos brancos legíveis em toda a área;
+- contraste reforçado em textos secundários e placeholders;
+- link de recuperação mais visível;
+- foco de teclado reforçado;
+- suporte a prefers-contrast: more.
 
 Commit sugerido:
-feat: adiciona galeria de imagens ao treino do Fusion Aluno
+fix: melhora contraste e acessibilidade da entrada multiempresa

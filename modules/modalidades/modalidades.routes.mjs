@@ -4,10 +4,28 @@ import {
   criarModalidade,
   atualizarModalidade,
   removerModalidade,
-  obterResumoModalidades
+  obterResumoModalidades,
+  obterCategoriasModalidades,
+  criarCategoriaModalidade
 } from "./modalidades.service.mjs";
 
 const router = express.Router();
+
+router.get("/categorias", async (_req, res) => {
+  try {
+    res.json({ sucesso: true, dados: await obterCategoriasModalidades() });
+  } catch (error) {
+    res.status(500).json({ sucesso: false, erro: error.message });
+  }
+});
+
+router.post("/categorias", async (req, res) => {
+  try {
+    res.status(201).json({ sucesso: true, dados: await criarCategoriaModalidade(req.body || {}) });
+  } catch (error) {
+    res.status(400).json({ sucesso: false, erro: error.message });
+  }
+});
 
 router.get("/", async (req, res) => {
   try {

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#0b6574">
   <title>Acesso às academias | Fusion Sistema</title>
-  <link rel="stylesheet" href="/pages/comecar/style.css?v=20260810-url-raiz-1">
+  <link rel="stylesheet" href="/pages/comecar/style.css?v=20260811-acessibilidade-1">
 </head>
 <body>
   <main class="acesso-shell">
@@ -14,7 +14,7 @@
       <span class="etiqueta">Acesso multiempresa</span>
       <h1>Uma entrada.<br>Todas as academias.</h1>
       <p>Primeiro identifique a academia. Depois cada administrador, gerente ou operador entra com o próprio usuário e senha.</p>
-      <div class="seguranca">
+      <div class="seguranca" aria-label="Etapas de acesso">
         <span><b>1</b> Identifica a academia</span>
         <span><b>2</b> Valida o código da academia</span>
         <span><b>3</b> Abre o login dos usuários internos</span>
@@ -88,7 +88,7 @@
       <section class="sucesso" id="painelSucesso" hidden>
         <span class="sucesso-tag">Academia criada</span>
         <h2>Guarde o código da academia</h2>
-        <p>Este código identifica a empresa. Depois dele, cada funcionário entra com seu próprio e-mail e senha.</p>
+        <p>Academia criada. Agora vamos preparar o básico para você receber seu primeiro aluno sem entrar em um sistema vazio.</p>
         <div class="credencial">
           <small>Academia</small>
           <strong id="sucessoAcademia">—</strong>
@@ -99,13 +99,14 @@
         </div>
         <div class="sucesso-acoes">
           <button type="button" id="btnCopiarCodigo" class="btn-secondary">Copiar código</button>
-          <button type="button" id="btnEntrarNovo" class="btn-primary">Ir para o login</button>
+          <button type="button" id="btnEntrarNovo" class="btn-primary">Avançar para configuração inicial</button>
         </div>
         <div id="mensagemSucesso" class="mensagem" role="status" aria-live="polite"></div>
       </section>
     </section>
   </main>
 
-  <script src="/pages/comecar/index.js?v=20260810-url-raiz-1"></script>
+  <script src="/assets/js/fusion-auth.js?v=20260811-onboarding-1"></script>
+  <script src="/pages/comecar/index.js?v=20260811-onboarding-1"></script>
 </body>
 </html>
