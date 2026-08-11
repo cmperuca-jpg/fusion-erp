@@ -2,77 +2,27 @@
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#0f766e">
-  <title>Aplicativos da Academia - Fusion Sistema</title>
-  <link rel="stylesheet" href="./style.css?v=20260811-tenant-1">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Aplicativos da academia</title>
 </head>
 <body>
-  <main class="hub">
-    <header class="hero">
-      <div class="brand"><span>F</span><strong>Fusion Sistema</strong></div>
-      <div class="eyebrow">Aplicativos oficiais</div>
-      <h1>Aplicativos da academia</h1>
-      <p id="academiaNome">Escolha o aplicativo conforme seu perfil.</p>
-      <div class="hub-shortcuts"><a id="paginaPublicaLink" href="#">Página da academia</a><a id="matriculaLink" href="#">Matrícula online</a></div>
-    </header>
+  <p>Redirecionando para a página da academia…</p>
+  <script>
+    (() => {
+      const ctx = window.__FUSION_TENANT_CONTEXT__ || {};
+      const slug = String(
+        ctx.slug ||
+        location.pathname.split("/").filter(Boolean)[0] ||
+        ""
+      ).trim();
 
-    <section class="apps-grid" aria-label="Aplicativos disponíveis">
-      <article class="app-card">
-        <div class="app-icon aluno">A</div>
-        <div class="app-copy">
-          <span>Aluno</span><h2>Fusion Aluno</h2>
-          <p>Treinos, avaliação física, frequência, financeiro e avisos.</p>
-        </div>
-        <div class="buttons">
-          <a class="primary" data-app-link="aluno" href="#">Instalar / abrir</a>
-          <a class="apk hidden" data-apk="fusion-aluno" href="/downloads/fusion-aluno.apk" download>Baixar Android (.apk)</a>
-        </div>
-      </article>
-
-      <article class="app-card">
-        <div class="app-icon professor">P</div>
-        <div class="app-copy">
-          <span>Professor</span><h2>Fusion Professor</h2>
-          <p>Alunos, treinos, avaliações e rotina do professor.</p>
-        </div>
-        <div class="buttons">
-          <a class="primary" data-app-link="professor" href="#">Instalar / abrir</a>
-          <a class="apk hidden" data-apk="fusion-professor" href="/downloads/fusion-professor.apk" download>Baixar Android (.apk)</a>
-        </div>
-      </article>
-
-      <article class="app-card">
-        <div class="app-icon recepcao">R</div>
-        <div class="app-copy">
-          <span>Recepção</span><h2>Fusion Recepção</h2>
-          <p>Alunos, matrículas, caixa, agenda e atendimento.</p>
-        </div>
-        <div class="buttons">
-          <a class="primary" data-app-link="recepcao" href="#">Instalar / abrir</a>
-          <a class="apk hidden" data-apk="fusion-recepcao" href="/downloads/fusion-recepcao.apk" download>Baixar Android (.apk)</a>
-        </div>
-      </article>
-
-      <article class="app-card">
-        <div class="app-icon administracao">G</div>
-        <div class="app-copy">
-          <span>Gestão</span><h2>Fusion Administração</h2>
-          <p>Painel gerencial, financeiro, alunos e configurações.</p>
-        </div>
-        <div class="buttons">
-          <a class="primary" data-app-link="administracao" href="#">Instalar / abrir</a>
-          <a class="apk hidden" data-apk="fusion-administracao" href="/downloads/fusion-administracao.apk" download>Baixar Android (.apk)</a>
-        </div>
-      </article>
-    </section>
-
-    <section class="help">
-      <strong>Como instalar</strong>
-      <p>Android: abra o aplicativo e toque em “Instalar aplicativo”. iPhone: abra pelo Safari, toque em Compartilhar e escolha “Adicionar à Tela de Início”.</p>
-      <a id="trocarAcademiaLink" href="/pages/comecar/">Selecionar ou trocar academia</a>
-    </section>
-  </main>
-  <script src="./index.js?v=20260811-tenant-1"></script>
+      if (slug) {
+        location.replace("/" + encodeURIComponent(slug) + "#aplicativos");
+      } else {
+        location.replace("/");
+      }
+    })();
+  </script>
 </body>
 </html>

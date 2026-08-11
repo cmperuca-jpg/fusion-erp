@@ -1,0 +1,63 @@
+FUSION — PÚBLICO SIMPLES: APENAS 2 PÁGINAS POR ACADEMIA
+
+OBJETIVO
+A experiência pública da academia fica reduzida a:
+
+1. /NOME-DA-ACADEMIA
+   Página principal.
+   Tem somente:
+   - identidade/nome da academia;
+   - botão Matrícula online;
+   - botão Aplicativos;
+   - os quatro aplicativos para abrir/instalar.
+
+2. /NOME-DA-ACADEMIA/matricula
+   Formulário de matrícula online existente.
+   NÃO FOI ALTERADO.
+
+O QUE SAI DA PÁGINA PRINCIPAL
+- promoções;
+- lista de planos;
+- aula experimental;
+- formulário de lead;
+- WhatsApp promocional;
+- chat promocional;
+- benefícios comerciais;
+- qualquer terceira página pública de navegação.
+
+O QUE ACONTECE COM /NOME-DA-ACADEMIA/apps
+Não mostra mais outra página.
+Redireciona automaticamente para:
+/NOME-DA-ACADEMIA#aplicativos
+
+Os endereços:
+/NOME-DA-ACADEMIA/apps/aluno
+/NOME-DA-ACADEMIA/apps/professor
+/NOME-DA-ACADEMIA/apps/recepcao
+/NOME-DA-ACADEMIA/apps/administracao
+
+continuam existindo apenas como ENTRADAS DOS APLICATIVOS.
+Não são tratados como páginas comerciais independentes.
+
+ARQUIVOS ALTERADOS
+1. public/pages/promocao/index.html
+2. public/pages/promocao/index.js
+3. public/pages/promocao/style.css
+4. public/pages/apps-academia/index.html
+5. public/pages/apps-academia/index.js
+
+NÃO ALTERA
+- Supabase;
+- matrícula online;
+- alunos;
+- planos;
+- turmas;
+- financeiro;
+- autenticação;
+- rotas do backend;
+- Fusion Aluno/Professor/Recepção/Administração;
+- PWA/manifests;
+- banco de dados.
+
+COMMIT SUGERIDO
+refactor: reduz site publico da academia a pagina principal e matricula

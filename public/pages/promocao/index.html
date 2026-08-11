@@ -3,90 +3,99 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#ff6600">
-  <meta name="description" content="Promoções exclusivas para novos clientes da academia.">
-  <title>Promoções para novos clientes</title>
-  <link rel="stylesheet" href="/pages/promocao/style.css">
-  <link rel="stylesheet" href="/assets/css/fusion-site-chat.css">
-  <link rel="stylesheet" href="/pages/promocao/contraste.css?v=20260810-site-slug-2">
-  <link rel="stylesheet" href="/assets/css/fusion-site-premium.css?v=20260810-site-slug-2">
+  <meta name="theme-color" content="#0f766e">
+  <meta name="description" content="Página oficial da academia. Matrícula online e aplicativos.">
+  <title>Academia</title>
+  <link rel="stylesheet" href="/pages/promocao/style.css?v=20260811-publico-simples-1">
 </head>
-<body class="fusion-site-premium">
-  <header class="promo-hero">
-    <nav class="promo-nav">
-      <div class="brand"><span>F</span><strong>Fusion ERP</strong></div>
-    </nav>
-
-    <div class="promo-hero-content">
-      <div>
-        <p class="tag">Oferta exclusiva para novos clientes</p>
-        <h1>Comece agora com condições especiais.</h1>
-        <p>Consulte os planos disponíveis, escolha a melhor opção e envie seus dados para receber atendimento da equipe comercial.</p>
-        <div class="hero-actions">
-          <a class="cta" href="#planos">Ver promoções</a>
-          <a class="cta cta-secondary" href="#aplicativos">Baixar aplicativos</a>
-          <a class="cta cta-secondary" href="#interesse" data-aula-experimental="1">Agendar aula experimental</a>
+<body>
+  <main class="public-shell">
+    <header class="hero">
+      <div class="brand-row">
+        <div class="brand-mark" aria-hidden="true">F</div>
+        <div>
+          <span class="brand-tech">Tecnologia Fusion Sistema</span>
+          <strong id="academiaNomeTopo">Academia</strong>
         </div>
       </div>
-      <aside class="offer-card">
-        <span>Novos clientes</span>
-        <strong>Condições especiais</strong>
-        <p>Valores, benefícios e disponibilidade são confirmados pela academia no atendimento.</p>
-      </aside>
-    </div>
-  </header>
 
-  <main>
-    <section id="aplicativos" class="section">
-      <div data-fusion-academia-apps></div>
-    </section>
+      <div class="hero-copy">
+        <span class="eyebrow">Página oficial</span>
+        <h1 id="academiaNomeHero">Sua academia</h1>
+        <p>Faça sua matrícula online ou acesse o aplicativo correspondente ao seu perfil.</p>
 
-    <section id="planos" class="section">
+        <div class="hero-actions">
+          <a id="btnMatricula" class="btn primary" href="#">Matrícula online</a>
+          <a class="btn secondary" href="#aplicativos">Aplicativos</a>
+        </div>
+      </div>
+    </header>
+
+    <section id="aplicativos" class="apps-section">
       <div class="section-head">
-        <div><p class="eyebrow">Planos promocionais</p><h2>Escolha seu plano</h2></div>
-        <p>Os planos são carregados diretamente do Fusion ERP e podem ser atualizados pela academia.</p>
+        <span class="eyebrow">Aplicativos oficiais</span>
+        <h2>Aplicativos da academia</h2>
+        <p>Escolha seu perfil. A instalação é oferecida dentro do aplicativo quando o navegador permitir.</p>
       </div>
-      <div id="listaPlanos" class="planos"><div class="loading">Carregando planos...</div></div>
+
+      <div class="apps-grid">
+        <article class="app-card">
+          <div class="app-icon aluno">A</div>
+          <div class="app-copy">
+            <span>Aluno</span>
+            <h3>Fusion Aluno</h3>
+            <p>Treinos, avaliação física, frequência, financeiro e avisos.</p>
+          </div>
+          <a class="app-button" data-app="aluno" href="#">Abrir aplicativo</a>
+        </article>
+
+        <article class="app-card">
+          <div class="app-icon professor">P</div>
+          <div class="app-copy">
+            <span>Professor</span>
+            <h3>Fusion Professor</h3>
+            <p>Alunos, treinos, avaliações e rotina do professor.</p>
+          </div>
+          <a class="app-button" data-app="professor" href="#">Abrir aplicativo</a>
+        </article>
+
+        <article class="app-card">
+          <div class="app-icon recepcao">R</div>
+          <div class="app-copy">
+            <span>Recepção</span>
+            <h3>Fusion Recepção</h3>
+            <p>Alunos, matrículas, caixa, agenda e atendimento.</p>
+          </div>
+          <a class="app-button" data-app="recepcao" href="#">Abrir aplicativo</a>
+        </article>
+
+        <article class="app-card">
+          <div class="app-icon administracao">G</div>
+          <div class="app-copy">
+            <span>Gestão</span>
+            <h3>Fusion Administração</h3>
+            <p>Painel gerencial, financeiro, alunos e configurações.</p>
+          </div>
+          <a class="app-button" data-app="administracao" href="#">Abrir aplicativo</a>
+        </article>
+      </div>
     </section>
 
-    <section class="section benefit-grid">
-      <article><span>01</span><h3>Atendimento rápido</h3><p>A equipe comercial entra em contato para confirmar a promoção e orientar os próximos passos.</p></article>
-      <article><span>02</span><h3>Plano adequado</h3><p>Escolha a opção que melhor combina com sua rotina, modalidade e objetivo.</p></article>
-      <article><span>03</span><h3>Início simplificado</h3><p>Após a confirmação, a academia conclui o cadastro e libera seu acesso.</p></article>
-    </section>
-
-    <section id="interesse" class="section lead-card">
+    <section class="matricula-callout">
       <div>
-        <p class="eyebrow">Quero aproveitar</p>
-        <h2>Receba a promoção pelo WhatsApp</h2>
-        <p>Preencha os dados abaixo. A equipe comercial confirmará as condições disponíveis para novos clientes.</p>
+        <span class="eyebrow">Novo aluno</span>
+        <h2>Quer começar agora?</h2>
+        <p>Preencha sua matrícula online. A academia receberá a solicitação para análise e continuidade do atendimento.</p>
       </div>
-      <form id="formLead" class="lead-form">
-        <input id="leadNome" required placeholder="Nome completo">
-        <input id="leadTelefone" required inputmode="tel" placeholder="WhatsApp">
-        <input id="leadEmail" type="email" placeholder="E-mail">
-        <select id="leadPlano"><option value="">Plano de interesse</option></select>
-        <select id="leadIntencao">
-          <option value="promocao">Receber promoção</option>
-          <option value="aula_experimental">Agendar aula experimental</option>
-        </select>
-        <input id="leadDataAula" type="date" aria-label="Data desejada para aula experimental">
-        <input id="leadHorario" placeholder="Melhor horário para contato ou aula">
-        <textarea id="leadObjetivo" rows="3" placeholder="Objetivo ou observação"></textarea>
-        <button id="leadSubmit" type="submit">Solicitar promoção</button>
-      </form>
-      <div id="alertaLead" class="alerta hidden"></div>
+      <a id="btnMatriculaRodape" class="btn primary" href="#">Fazer matrícula online</a>
     </section>
+
+    <footer>
+      <strong id="academiaNomeRodape">Academia</strong>
+      <span>Tecnologia Fusion Sistema</span>
+    </footer>
   </main>
 
-  <footer class="promo-footer">
-    <strong>Fusion ERP</strong>
-    <span>Página exclusiva para novas matrículas</span>
-  </footer>
-
-  <script src="/assets/js/fusion-public-tenant.js?v=20260810-site-slug-2"></script>
-  <script src="/assets/js/fusion-academia-apps-widget.js?v=20260810-apps-slug-2"></script>
-  <script src="/pages/promocao/index.js?v=20260810-site-slug-2"></script>
-  <script src="/assets/js/fusion-site-chat.js?v=20260810-chat-tenant-2" data-chat-origem="promocao"></script>
+  <script src="/pages/promocao/index.js?v=20260811-publico-simples-1"></script>
 </body>
 </html>
