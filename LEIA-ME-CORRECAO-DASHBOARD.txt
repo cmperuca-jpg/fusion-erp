@@ -1,0 +1,50 @@
+FUSION — CORREÇÃO CENTRAL DAS ROTAS DA ACADEMIA / DASHBOARD
+
+SINTOMA
+O Dashboard abria em /SLUG/app/dashboard, mas:
+- o menu superior não aparecia;
+- KPIs ficavam em 0;
+- os cards perdiam o layout em grade;
+- a aparência parecia parcialmente sem CSS.
+
+CAUSAS
+1. fusion-layout.js só reconhecia URLs antigas /pages/...
+2. Dashboard usa src="index.js" (sem ./), que na rota limpa apontava para
+   /SLUG/app/index.js em vez de /pages/dashboard/index.js.
+3. O tema do Dashboard só aplica o grid completo quando
+   body.fusion-menu-superior-ativo está ativo; como o layout não reconhecia
+   a página, essa classe não era ativada.
+
+CORREÇÃO
+- A rota do tenant agora serve uma versão adaptada do fusion-layout.js.
+- /SLUG/app/dashboard é reconhecido internamente como /pages/dashboard/index.html.
+- O mesmo vale para Alunos, Financeiro, Planos, Turmas, BI, Configurações etc.
+- Assets relativos passam a aceitar:
+  ./style.css
+  index.js
+  ../arquivo.js
+  sem quebrar na URL limpa.
+- Mantém URLs visíveis no padrão /SLUG/app/...
+- Mantém correção anterior dos apps e manifestos PWA por academia.
+
+SUBSTITUA SOMENTE
+modules/comercial/comercial.routes.mjs
+
+NÃO APAGUE A ACADEMIA.
+Este problema é de rota/layout, não de dados.
+
+COMMIT SUGERIDO
+fix: adapta layout e assets do erp para rotas por academia
+
+TESTE APÓS DEPLOY LIVE
+1. Feche o PWA/janela atual.
+2. Abra novamente Administração.
+3. Entre no Dashboard.
+4. Esperado:
+   - menu superior completo;
+   - 4 KPIs em grade;
+   - cards Academia / Financeiro / BI em 3 colunas;
+   - dados carregados pelo index.js;
+   - nome da academia no topo;
+   - navegação mantendo /SLUG/app/...
+5. Teste Alunos, Financeiro, Planos, Turmas e Configurações.

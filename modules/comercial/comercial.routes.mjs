@@ -155,12 +155,20 @@ function corrigirAssetsRelativos(html = '', arquivoRelativo = '') {
   const pasta = path.posix.dirname(String(arquivoRelativo || '').replace(/\\/g, '/'));
   if (!pasta || pasta === '.') return html;
 
-  const prefixo = `/pages/${pasta}/`;
-
   return String(html).replace(
-    /\b(href|src)=(["'])\.\/([^"']+)\2/gi,
-    (_match, atributo, aspas, recurso) =>
-      `${atributo}=${aspas}${prefixo}${recurso}${aspas}`
+    /\b(href|src)=(["'])(?!\/|https?:\/\/|data:|blob:|#|mailto:|tel:|javascript:)([^"']+)\2/gi,
+    (_match, atributo, aspas, recursoOriginal) => {
+      const recurso = String(recursoOriginal || '');
+      const indiceSufixo = recurso.search(/[?#]/);
+      const caminho = indiceSufixo >= 0 ? recurso.slice(0, indiceSufixo) : recurso;
+      const sufixo = indiceSufixo >= 0 ? recurso.slice(indiceSufixo) : '';
+
+      const resolvido = path.posix.normalize(
+        path.posix.join('/pages', pasta, caminho)
+      );
+
+      return `${atributo}=${aspas}${resolvido}${sufixo}${aspas}`;
+    }
   );
 }
 
@@ -199,6 +207,95 @@ async function manifestoDaAcademia(academia = {}, perfil = '') {
   return manifesto;
 }
 
+
+function mapaLayoutPorArea() {
+  return Object.fromEntries(
+    Object.entries(APP_PAGE_MAP).map(([area, arquivo]) => [
+      area,
+      `/pages/${String(arquivo || '').replace(/^\/+/, '')}`
+    ])
+  );
+}
+
+function patchFusionLayoutParaTenant(conteudo = '', slug = '') {
+  const mapa = mapaLayoutPorArea();
+  const mapaJson = JSON.stringify(mapa);
+  const slugSeguro = JSON.stringify(normalizarSlugPublico(slug));
+
+  const funcaoOriginal = `  function normalizarPath(pathname) {
+    let path = String(pathname || location.pathname || "/").split(/[?#]/)[0];
+    const indicePages = path.indexOf("/pages/");
+    if (indicePages >= 0) path = path.slice(indicePages);
+    path = path.replace(/\\/{2,}/g, "/");
+    if (path.length > 1 && path.endsWith("/")) path += "index.html";
+    return path;
+  }`;
+
+  const funcaoNova = `  const FUSION_TENANT_LAYOUT_MAP = ${mapaJson};
+  const FUSION_TENANT_LAYOUT_SLUG = ${slugSeguro};
+
+  function normalizarPath(pathname) {
+    let path = String(pathname || location.pathname || "/").split(/[?#]/)[0];
+    path = path.replace(/\\/{2,}/g, "/");
+
+    const slug = String(
+      window.__FUSION_TENANT_CONTEXT__?.slug ||
+      FUSION_TENANT_LAYOUT_SLUG ||
+      ""
+    ).trim();
+
+    if (slug) {
+      const prefixoApp = "/" + slug + "/app/";
+      if (path.startsWith(prefixoApp)) {
+        const area = decodeURIComponent(path.slice(prefixoApp.length).split("/")[0] || "");
+        if (FUSION_TENANT_LAYOUT_MAP[area]) {
+          return FUSION_TENANT_LAYOUT_MAP[area];
+        }
+      }
+
+      if (path === "/" + slug || path === "/" + slug + "/") {
+        return "/pages/promocao/index.html";
+      }
+
+      if (path === "/" + slug + "/matricula") {
+        return "/pages/matricula-online/index.html";
+      }
+    }
+
+    const indicePages = path.indexOf("/pages/");
+    if (indicePages >= 0) path = path.slice(indicePages);
+    if (path.length > 1 && path.endsWith("/")) path += "index.html";
+    return path;
+  }`;
+
+  if (!String(conteudo).includes(funcaoOriginal)) {
+    throw new Error("Não foi possível adaptar normalizarPath do fusion-layout.js.");
+  }
+
+  return String(conteudo).replace(funcaoOriginal, funcaoNova);
+}
+
+async function servirFusionLayoutTenant(req, res, next) {
+  try {
+    const academia = await resolverAcademiaPublica(req.params.slug);
+    if (!academia) return next();
+
+    const arquivo = path.resolve(PUBLIC_ROOT, 'assets/js/fusion-layout.js');
+    let conteudo = await fs.readFile(arquivo, 'utf8');
+    conteudo = patchFusionLayoutParaTenant(
+      conteudo,
+      academia.slug || academia.tenant_id
+    );
+
+    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+    return res.send(conteudo);
+  } catch (error) {
+    console.error(`[Layout tenant] Falha em ${req.params.slug}: ${error.message}`);
+    return next();
+  }
+}
+
 async function servirPaginaTenant(req, res, next, arquivoRelativo, { persistirTenant = false, manifestPerfil = '' } = {}) {
   try {
     const academia = await resolverAcademiaPublica(req.params.slug);
@@ -210,6 +307,13 @@ async function servirPaginaTenant(req, res, next, arquivoRelativo, { persistirTe
     let html = await fs.readFile(arquivo, 'utf8');
     html = corrigirAssetsRelativos(html, arquivoRelativo);
 
+    const slugPublico = normalizarSlugPublico(academia.slug || academia.tenant_id);
+    html = html.replace(
+      /(<script\b[^>]*?src=(['"]))\/assets\/js\/fusion-layout\.js(?:\?[^"']*)?\2([^>]*><\/script>)/gi,
+      (_match, inicio, aspas, fim) =>
+        `${inicio}/${encodeURIComponent(slugPublico)}/assets/fusion-layout.js?v=20260811-layout-tenant-1${aspas}${fim}`
+    );
+
     if (manifestPerfil && APP_MANIFEST_MAP[String(manifestPerfil).toLowerCase()]) {
       const manifestUrl = `/${encodeURIComponent(normalizarSlugPublico(academia.slug || academia.tenant_id))}/manifest/${encodeURIComponent(String(manifestPerfil).toLowerCase())}.webmanifest`;
       html = html.replace(
@@ -219,7 +323,7 @@ async function servirPaginaTenant(req, res, next, arquivoRelativo, { persistirTe
     }
 
     const contexto = scriptContextoTenant(academia, persistirTenant);
-    const experiencia = '<script src="/assets/js/fusion-tenant-experience.js?v=20260811-tenant-3" defer></script>';
+    const experiencia = '<script src="/assets/js/fusion-tenant-experience.js?v=20260811-tenant-4" defer></script>';
 
     if (/<head[^>]*>/i.test(html)) {
       html = html.replace(/<head([^>]*)>/i, match => `${match}\n${contexto}`);
@@ -258,6 +362,8 @@ async function paginaPublicaAcademia(req, res, next, pagina) {
  * Não há HTML individual por cliente. O tenant é confirmado no banco antes
  * de qualquer página ser entregue.
  */
+router.get('/:slug/assets/fusion-layout.js', servirFusionLayoutTenant);
+
 router.get('/:slug/manifest/:perfil.webmanifest', async (req, res, next) => {
   try {
     const perfil = String(req.params.perfil || '').toLowerCase();
