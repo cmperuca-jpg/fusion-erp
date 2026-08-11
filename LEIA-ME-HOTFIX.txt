@@ -1,0 +1,31 @@
+FUSION — HOTFIX DO ONBOARDING
+
+Causa confirmada:
+A configuração inicial chamava GET /api/aparencia em Promise.all.
+O server.mjs atual não monta aparenciaRoutes. O 404 bloqueava todos os cards.
+
+Substitua somente:
+- public/pages/configuracao-inicial/index.html
+- public/pages/configuracao-inicial/index.js
+- public/pages/configuracao-inicial/style.css
+- modules/modalidades/modalidades.routes.mjs
+- modules/aparencia/aparencia.service.mjs
+
+Correções:
+- onboarding usa /api/modalidades/onboarding/aparencia;
+- não precisa alterar server.mjs;
+- se uma API falhar, os demais cards continuam;
+- administrador vem da sessão autenticada;
+- aparência é persistida por tenant;
+- logos ficam em /uploads/aparencia/TENANT/;
+- cache do JS foi atualizado para v=20260811-2.
+
+Não recrie a academia-teste.
+
+Após Deploy live:
+1. Abra a mesma URL da configuração inicial.
+2. Pressione Ctrl+F5.
+3. O esperado é 1 de 8 etapas concluídas e o Administrador visível.
+
+Commit sugerido:
+fix: desbloqueia onboarding e isola aparencia por academia

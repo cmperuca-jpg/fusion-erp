@@ -1,7 +1,8 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import { lerJsonDuravel, salvarJsonDuravel } from "../core/persistence/durable-json.mjs";
+import { tenantAtual, normalizarTenantId } from "../core/persistence/tenant-context.mjs";
 
-const DATA_FILE = path.resolve(process.cwd(), "data", "aparencia.json");
 const UPLOAD_DIR = path.resolve(process.cwd(), "uploads", "aparencia");
 
 const PAGINAS = {
@@ -39,7 +40,7 @@ const PAGINAS = {
 };
 
 export const PADRAO_APARENCIA = {
-  versao: 3,
+  versao: 4,
   tema: {
     corPrimaria: "#ff6600",
     corPrimariaHover: "#d95600",
@@ -80,7 +81,6 @@ function urlSegura(valor = "") {
   if (/^https:\/\//i.test(v)) return v.slice(0, 500);
   return "";
 }
-
 function normalizarPaginas(paginas = {}) {
   const saida = {};
   for (const [paginaId, padraoPagina] of Object.entries(PAGINAS)) {
@@ -103,7 +103,7 @@ export function normalizarAparencia(payload = {}) {
   const t = payload.tema || {};
   const m = payload.marca || {};
   return {
-    versao: 3,
+    versao: 4,
     tema: {
       corPrimaria: cor(t.corPrimaria, PADRAO_APARENCIA.tema.corPrimaria),
       corPrimariaHover: cor(t.corPrimariaHover, PADRAO_APARENCIA.tema.corPrimariaHover),
@@ -126,27 +126,19 @@ export function normalizarAparencia(payload = {}) {
   };
 }
 
-async function gravar(dados) {
-  await fs.mkdir(path.dirname(DATA_FILE), { recursive: true });
-  const temp = `${DATA_FILE}.tmp-${process.pid}-${Date.now()}`;
-  await fs.writeFile(temp, JSON.stringify(dados, null, 2), "utf8");
-  await fs.rename(temp, DATA_FILE);
-}
-
 export async function obterAparencia() {
-  try {
-    const bruto = await fs.readFile(DATA_FILE, "utf8");
-    return normalizarAparencia(JSON.parse(bruto));
-  } catch {
-    const padrao = normalizarAparencia(PADRAO_APARENCIA);
-    await gravar(padrao);
-    return padrao;
+  const salvo = await lerJsonDuravel("aparencia.json", null);
+  if (salvo && typeof salvo === "object" && !Array.isArray(salvo)) {
+    return normalizarAparencia(salvo);
   }
+  const padrao = normalizarAparencia(PADRAO_APARENCIA);
+  await salvarJsonDuravel("aparencia.json", padrao);
+  return padrao;
 }
 
 export async function salvarAparencia(payload = {}) {
   const dados = normalizarAparencia(payload);
-  await gravar(dados);
+  await salvarJsonDuravel("aparencia.json", dados);
   return dados;
 }
 
@@ -157,12 +149,23 @@ export async function restaurarAparencia() {
 export async function salvarImagem({ dataUrl, tipo } = {}) {
   const match = String(dataUrl || "").match(/^data:image\/(png|jpeg|webp);base64,([A-Za-z0-9+/=]+)$/);
   if (!match) throw Object.assign(new Error("Imagem inválida. Use PNG, JPG ou WEBP."), { status: 400 });
+
   const buffer = Buffer.from(match[2], "base64");
-  if (buffer.length > 5 * 1024 * 1024) throw Object.assign(new Error("A imagem deve ter no máximo 5 MB."), { status: 400 });
+  if (buffer.length > 5 * 1024 * 1024) {
+    throw Object.assign(new Error("A imagem deve ter no máximo 5 MB."), { status: 400 });
+  }
+
+  const tenant = normalizarTenantId(tenantAtual() || "");
+  if (!tenant) {
+    throw Object.assign(new Error("Academia não identificada para salvar a imagem."), { status: 400 });
+  }
+
   const ext = match[1] === "jpeg" ? "jpg" : match[1];
   const nomeTipo = tipo === "banner" ? "banner" : "logo";
-  await fs.mkdir(UPLOAD_DIR, { recursive: true });
+  const dirTenant = path.join(UPLOAD_DIR, tenant);
+  await fs.mkdir(dirTenant, { recursive: true });
+
   const nome = `${nomeTipo}-${Date.now()}.${ext}`;
-  await fs.writeFile(path.join(UPLOAD_DIR, nome), buffer);
-  return { url: `/uploads/aparencia/${nome}` };
+  await fs.writeFile(path.join(dirTenant, nome), buffer);
+  return { url: `/uploads/aparencia/${tenant}/${nome}` };
 }

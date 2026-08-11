@@ -9,7 +9,7 @@
     modalidades: "/api/modalidades",
     planos: "/api/planos",
     turmas: "/api/turmas",
-    aparencia: "/api/aparencia"
+    aparencia: "/api/modalidades/onboarding/aparencia"
   };
 
   const ETAPAS = [
@@ -77,23 +77,46 @@
   }
 
   async function carregarDados() {
-    const resultados = await Promise.all([
-      request(API.usuarios),
-      request(API.professores),
-      request(API.categorias),
-      request(API.modalidades),
-      request(API.planos),
-      request(API.turmas),
-      request(API.aparencia)
-    ]);
+    const consultas = [
+      ["usuarios", API.usuarios, ["usuarios"]],
+      ["professores", API.professores, ["professores"]],
+      ["categorias", API.categorias, ["categorias"]],
+      ["modalidades", API.modalidades, ["modalidades"]],
+      ["planos", API.planos, ["planos"]],
+      ["turmas", API.turmas, ["turmas"]],
+      ["aparencia", API.aparencia, []]
+    ];
 
-    dados.usuarios = listaDe(resultados[0], ["usuarios"]);
-    dados.professores = listaDe(resultados[1], ["professores"]);
-    dados.categorias = listaDe(resultados[2], ["categorias"]);
-    dados.modalidades = listaDe(resultados[3], ["modalidades"]);
-    dados.planos = listaDe(resultados[4], ["planos"]);
-    dados.turmas = listaDe(resultados[5], ["turmas"]);
-    dados.aparencia = resultados[6]?.aparencia || resultados[6]?.dados || null;
+    const resultados = await Promise.all(consultas.map(async ([chave, url, chaves]) => {
+      try {
+        const json = await request(url);
+        return { ok: true, chave, chaves, json };
+      } catch (error) {
+        console.error(`[Onboarding] Falha ao carregar ${chave} (${url}):`, error);
+        return { ok: false, chave, chaves, error };
+      }
+    }));
+
+    const falhas = [];
+    for (const item of resultados) {
+      if (!item.ok) {
+        falhas.push(item.chave);
+        continue;
+      }
+
+      if (item.chave === "aparencia") {
+        dados.aparencia = item.json?.aparencia || item.json?.dados || null;
+      } else {
+        dados[item.chave] = listaDe(item.json, item.chaves);
+      }
+    }
+
+    if (falhas.length) {
+      alerta(
+        `A configuração foi aberta. Alguns dados não puderam ser verificados agora: ${falhas.join(", ")}. Você pode continuar; cada etapa validará o cadastro ao salvar.`,
+        "info"
+      );
+    }
   }
 
   function recepcaoExistente() {

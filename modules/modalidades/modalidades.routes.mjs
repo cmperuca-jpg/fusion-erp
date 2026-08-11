@@ -1,4 +1,5 @@
 import express from "express";
+import { obterAparencia, salvarAparencia, salvarImagem } from "../aparencia/aparencia.service.mjs";
 import {
   obterModalidades,
   criarModalidade,
@@ -10,6 +11,37 @@ import {
 } from "./modalidades.service.mjs";
 
 const router = express.Router();
+
+const responderAparencia = (res, error) =>
+  res.status(error.status || 500).json({
+    ok: false,
+    mensagem: error.message || "Erro ao configurar a identidade da academia."
+  });
+
+router.get("/onboarding/aparencia", async (_req, res) => {
+  try {
+    res.json({ ok: true, aparencia: await obterAparencia() });
+  } catch (error) {
+    responderAparencia(res, error);
+  }
+});
+
+router.put("/onboarding/aparencia", async (req, res) => {
+  try {
+    res.json({ ok: true, aparencia: await salvarAparencia(req.body || {}) });
+  } catch (error) {
+    responderAparencia(res, error);
+  }
+});
+
+router.post("/onboarding/aparencia/imagem", async (req, res) => {
+  try {
+    res.status(201).json({ ok: true, ...(await salvarImagem(req.body || {})) });
+  } catch (error) {
+    responderAparencia(res, error);
+  }
+});
+
 
 router.get("/categorias", async (_req, res) => {
   try {
