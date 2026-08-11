@@ -253,24 +253,31 @@ export function resolveCommandTarget(body = {}) {
   const requestedAgent = body.agentId || body.agent_id || process.env.ACCESS_AGENT_ID;
   const agentId = normalizeAgentId(requestedAgent);
   if (!agentId) throw configError('ACCESS_AGENT_ID deve ser configurado ou informado no comando.');
+  const tenantId = normalizarTenantId(body.tenantId || body.tenant_id || process.env.ACCESS_AGENT_TENANT_ID || process.env.FUSION_TENANT_ID || '');
+  if (!tenantId) throw configError('ACCESS_AGENT_TENANT_ID ou FUSION_TENANT_ID deve ser configurado para comandos da catraca.');
   const equipmentId = normalizeEquipmentId(body.equipmentId || body.equipment_id || process.env.ACCESS_EQUIPMENT_ID);
   if (!equipmentId) throw configError('ACCESS_EQUIPMENT_ID deve ser configurado ou informado no comando.');
   const credential = credentialsFromEnv().get(agentId);
+  if (credential?.tenantId && tenantId !== credential.tenantId) {
+    throw httpError('Tenant nao autorizado para o agente configurado.', 403, 'ACCESS_BRIDGE_TENANT_DENIED');
+  }
   if (credential && !equipmentAllowed(credential, equipmentId)) {
     throw httpError('Equipamento nao autorizado para o agente configurado.', 403, 'ACCESS_BRIDGE_EQUIPMENT_DENIED');
   }
-  return { agentId, equipmentId };
+  return { agentId, tenantId, equipmentId };
 }
 
 export async function queueRelease(body = {}) {
   const target = resolveCommandTarget(body);
   return createCommand({
     agentId: target.agentId,
+    tenantId: target.tenantId,
     equipmentId: target.equipmentId, action: 'release',
     expiresAt: new Date(Date.now() + Math.min(Math.max(Number(body.ttlSeconds || 30), 5), 120) * 1000).toISOString(),
     payload: {
       host: body.host || '10.0.0.236', port: Number(body.port || 3000),
       tempoSegundos: Math.min(Math.max(Number(body.tempoSegundos || 5), 1), 10),
+      tenantId: target.tenantId, equipmentId: target.equipmentId,
       direcao: body.direcao || 'ambos', alunoId: body.alunoId || null,
       alunoNome: body.alunoNome || null, operadorId: body.operadorId || null,
       origem: body.origem || 'render', motivo: body.motivo || 'liberacao-remota'

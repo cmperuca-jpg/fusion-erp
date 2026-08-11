@@ -11,11 +11,13 @@ Exigencias tratadas:
 - `x-agent-id` passou a ser obrigatorio; removido fallback permissivo para `academia-01`.
 - `x-agent-token` passou a ser validado por comparacao segura.
 - Credencial pode ser vinculada a `agentId`, `tenantId` e `equipmentIds`.
+- Catraca fisica consolidada como recurso isolado da `academia-piloto`: `academia-piloto-agent-01` + `catraca-piloto-01`.
 - Suporte a token em texto claro, hash SHA-256, token de rotacao e expiracao.
 - Requisicoes do agente exigem timestamp e nonce, com bloqueio de replay dentro da janela configurada.
-- Comandos de liberacao exigem `ACCESS_AGENT_ID` e `ACCESS_EQUIPMENT_ID` ou valores explicitos no payload.
+- Comandos de liberacao exigem `ACCESS_AGENT_ID`, tenant (`ACCESS_AGENT_TENANT_ID` ou `FUSION_TENANT_ID`) e `ACCESS_EQUIPMENT_ID` ou valores explicitos no payload.
 - Agente Node e agente PowerShell legado passaram a enviar timestamp, nonce, tenant e equipamento.
-- SQL auxiliar do Access Bridge recebeu colunas opcionais para credenciais por agente no Supabase, mantendo RLS e acesso por service role.
+- SQL auxiliar do Access Bridge recebeu tenant obrigatorio nos comandos e credenciais por agente no Supabase, mantendo RLS e acesso por service role.
+- Supabase SaaS novo (`fusion-sistema-novo`, ref `kruujujuxeqexxuugwci`) recebeu a migracao `consolidar_catraca_piloto_isolada` com academia, dispositivo e agente isolados.
 - Criado teste local `npm run test:access-agent-auth`.
 
 ## P0 - Isolamento Multiempresa

@@ -17,6 +17,7 @@ function normalize(row) {
   return {
     id: row.id,
     agentId: row.agent_id ?? row.agentId,
+    tenantId: row.tenant_id ?? row.tenantId,
     equipmentId: row.equipment_id ?? row.equipmentId,
     action: row.action,
     payload: row.payload || {},
@@ -32,10 +33,12 @@ function normalize(row) {
 
 export async function createCommand(input) {
   if (!input?.agentId) throw new Error('agentId obrigatorio para comando de acesso.');
+  if (!input?.tenantId) throw new Error('tenantId obrigatorio para comando de acesso.');
   if (!input?.equipmentId) throw new Error('equipmentId obrigatorio para comando de acesso.');
   const command = {
     id: makeId('cmd'),
     agentId: input.agentId,
+    tenantId: input.tenantId,
     equipmentId: input.equipmentId,
     action: input.action || 'release',
     payload: input.payload || {},
@@ -50,7 +53,7 @@ export async function createCommand(input) {
   const supabase = await supabaseClient();
   if (supabase) {
     const { data, error } = await supabase.from('access_bridge_commands').insert({
-      id: command.id, agent_id: command.agentId, equipment_id: command.equipmentId,
+      id: command.id, agent_id: command.agentId, tenant_id: command.tenantId, equipment_id: command.equipmentId,
       action: command.action, payload: command.payload, status: command.status,
       created_at: command.createdAt, expires_at: command.expiresAt
     }).select().single();
@@ -121,6 +124,12 @@ export async function getCommand(id) {
 
 export async function saveHeartbeat(agentId, details = {}) {
   const row = { agent_id: agentId, last_seen_at: isoDate(), status: 'online', details };
+  const tenantId = details.tenantId || details.tenant_id || null;
+  const equipmentIds = Array.isArray(details.equipmentIds)
+    ? details.equipmentIds
+    : (details.equipmentId || details.equipment_id ? [details.equipmentId || details.equipment_id] : []);
+  if (tenantId) row.tenant_id = tenantId;
+  if (equipmentIds.length) row.equipment_ids = equipmentIds;
   const supabase = await supabaseClient();
   if (supabase) {
     const { error } = await supabase.from('access_bridge_agents').upsert(row, { onConflict: 'agent_id' });

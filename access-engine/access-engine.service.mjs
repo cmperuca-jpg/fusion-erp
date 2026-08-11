@@ -14,8 +14,9 @@ const HENRY_PADRAO = {
 
 async function enfileirarLiberacaoRemota({ aluno, dispositivo, direcao = 'entrada', origem = 'access-engine', operadorId = null, motivo = 'liberacao-autorizada' } = {}) {
   const command = await queueRelease({
-    agentId: process.env.ACCESS_AGENT_ID || 'academia-01',
-    equipmentId: dispositivo?.id || 'catraca-01',
+    agentId: process.env.ACCESS_AGENT_ID,
+    tenantId: process.env.ACCESS_AGENT_TENANT_ID || process.env.FUSION_TENANT_ID,
+    equipmentId: process.env.ACCESS_EQUIPMENT_ID || dispositivo?.equipmentId || dispositivo?.codigo || dispositivo?.id,
     host: String(dispositivo?.ip || HENRY_PADRAO.host).trim(),
     port: Number(dispositivo?.porta || HENRY_PADRAO.port),
     tempoSegundos: Number(HENRY_PADRAO.tempoSegundos),
@@ -367,7 +368,10 @@ export async function diagnosticoRedeHenry7x(payload = {}) {
 
 
 export async function statusAgenteAcesso() {
-  const agentId = process.env.ACCESS_AGENT_ID || 'academia-01';
+  const agentId = process.env.ACCESS_AGENT_ID || '';
+  if (!agentId) {
+    return { ok: false, agentId: '', online: false, ultimoContato: null, estado: 'nao-configurado', agent: null };
+  }
   const agent = await getAgent(agentId);
   const ultimoContato = agent?.updatedAt || agent?.lastSeenAt || agent?.last_seen_at || null;
   const idadeMs = ultimoContato ? Date.now() - new Date(ultimoContato).getTime() : null;

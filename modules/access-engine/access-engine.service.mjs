@@ -4,6 +4,7 @@ import * as simulador from './drivers/simulador.driver.mjs';
 import { listarDrivers, obterDriver } from './drivers/driver-registry.mjs';
 import { mapaLegado } from './drivers/sdk-legacy.adapter.mjs';
 import { queueRelease, getAgent, getCommand } from '../access-bridge/access-bridge.service.mjs';
+import { normalizarTenantId, tenantAtual } from '../core/persistence/tenant-context.mjs';
 
 
 const HENRY_PADRAO = {
@@ -12,10 +13,26 @@ const HENRY_PADRAO = {
   tempoSegundos: Number(process.env.HENRY7X_TEMPO_SEGUNDOS || 5)
 };
 
+function erroHttp(mensagem, status = 400) {
+  const erro = new Error(mensagem);
+  erro.status = status;
+  return erro;
+}
+
+function tenantPermitidoParaCatraca() {
+  const configurado = normalizarTenantId(process.env.ACCESS_AGENT_TENANT_ID || process.env.FUSION_TENANT_ID || '');
+  const atual = normalizarTenantId(tenantAtual());
+  if (configurado && atual && atual !== configurado) {
+    throw erroHttp('A catraca fisica esta vinculada somente a academia-piloto.', 403);
+  }
+  return atual || configurado;
+}
+
 async function enfileirarLiberacaoRemota({ aluno, dispositivo, direcao = 'entrada', origem = 'access-engine', operadorId = null, motivo = 'liberacao-autorizada' } = {}) {
   const command = await queueRelease({
     agentId: process.env.ACCESS_AGENT_ID,
-    equipmentId: dispositivo?.id || process.env.ACCESS_EQUIPMENT_ID,
+    tenantId: tenantPermitidoParaCatraca(),
+    equipmentId: process.env.ACCESS_EQUIPMENT_ID || dispositivo?.equipmentId || dispositivo?.codigo || dispositivo?.id,
     host: String(dispositivo?.ip || HENRY_PADRAO.host).trim(),
     port: Number(dispositivo?.porta || HENRY_PADRAO.port),
     tempoSegundos: Number(HENRY_PADRAO.tempoSegundos),
@@ -199,7 +216,7 @@ export async function dashboard() {
 }
 
 async function executarAvaliacao({ aluno, identificador = '', dispositivoId = '', direcao = 'entrada', origem = 'simulador' } = {}) {
-  const dispositivo = await obterDispositivoOuPadrao(dispositivoId || 'disp_henry7x_01');
+  const dispositivo = await obterDispositivoOuPadrao(dispositivoId || process.env.ACCESS_EQUIPMENT_ID || 'disp_henry7x_01');
   const matricula = aluno ? await repo.buscarMatriculaAtualDoAluno(aluno) : null;
 
   let autorizado = true;
@@ -323,14 +340,14 @@ export async function eventoHenry7x(payload = {}) {
 }
 
 export async function statusHenry7x(query = {}) {
-  const dispositivo = await obterDispositivoOuPadrao(query.dispositivoId || query.equipamentoId || '');
+  const dispositivo = await obterDispositivoOuPadrao(query.dispositivoId || query.equipamentoId || process.env.ACCESS_EQUIPMENT_ID || '');
   const driver = await import('./drivers/henry7x.driver.mjs');
   return await driver.status({ dispositivo });
 }
 
 
 export async function testarTcpHenry7x(payload = {}) {
-  const dispositivo = await obterDispositivoOuPadrao(payload.dispositivoId || payload.equipamentoId || 'disp_henry7x_01');
+  const dispositivo = await obterDispositivoOuPadrao(payload.dispositivoId || payload.equipamentoId || process.env.ACCESS_EQUIPMENT_ID || 'disp_henry7x_01');
   const driver = await import('./drivers/henry7x.driver.mjs');
   const resultado = await driver.testarDispositivo({
     dispositivo: {
@@ -356,7 +373,7 @@ export async function testarTcpHenry7x(payload = {}) {
 }
 
 export async function diagnosticoRedeHenry7x(payload = {}) {
-  const dispositivo = await obterDispositivoOuPadrao(payload.dispositivoId || payload.equipamentoId || 'disp_henry7x_01');
+  const dispositivo = await obterDispositivoOuPadrao(payload.dispositivoId || payload.equipamentoId || process.env.ACCESS_EQUIPMENT_ID || 'disp_henry7x_01');
   const driver = await import('./drivers/henry7x.driver.mjs');
   const portas = Array.isArray(payload.portas) && payload.portas.length ? payload.portas : [3000, 80, 8080, 1001, 4370];
   const resultado = await driver.diagnosticoRede({
@@ -403,7 +420,7 @@ export async function statusAgenteAcesso() {
 }
 
 export async function liberarRemoto(payload = {}) {
-  const dispositivo = await obterDispositivoOuPadrao(payload.dispositivoId || 'disp_henry7x_01');
+  const dispositivo = await obterDispositivoOuPadrao(payload.dispositivoId || process.env.ACCESS_EQUIPMENT_ID || 'disp_henry7x_01');
   const catraca = await enfileirarLiberacaoRemota({
     aluno: { id: payload.alunoId || null, nome: payload.alunoNome || 'Liberação manual' },
     dispositivo,

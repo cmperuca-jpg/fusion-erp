@@ -61,7 +61,13 @@ services:
       - key: FUSION_BACKUP_RESTORE_MAX_MB
         value: 250
       - key: ACCESS_AGENT_ID
-        value: academia-01
+        value: academia-piloto-agent-01
+      - key: ACCESS_AGENT_TENANT_ID
+        value: academia-piloto
+      - key: ACCESS_EQUIPMENT_ID
+        value: catraca-piloto-01
+      - key: ACCESS_EQUIPMENT_IDS
+        value: catraca-piloto-01
       - key: ACCESS_AGENT_TOKEN
         sync: false
       - key: ACCESS_COMMAND_API_KEY
