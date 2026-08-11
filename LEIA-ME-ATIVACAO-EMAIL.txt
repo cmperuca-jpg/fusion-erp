@@ -1,0 +1,73 @@
+FUSION — CADASTRO DE ACADEMIA COM ATIVAÇÃO POR E-MAIL
+
+NOVO FLUXO
+1. Cliente preenche o cadastro.
+2. Backend valida CPF/CNPJ, inclusive dígitos verificadores.
+3. Backend consulta duplicidade por CPF/CNPJ, nome da academia, razão social e e-mail.
+4. Se houver cadastro existente, NÃO cria academia.
+5. Se os dados estiverem livres, cria apenas uma solicitação temporária.
+6. Envia código de 6 dígitos para o e-mail pelo Resend.
+7. A tela NÃO mostra o código.
+8. Somente depois do código correto:
+   - cria o tenant;
+   - cria o primeiro administrador;
+   - gera o código permanente da academia;
+   - envia o código permanente por e-mail;
+   - gera o token temporário de seleção;
+   - abre a configuração inicial.
+
+NÃO HÁ MAIS
+- código permanente aparecendo na tela de criação;
+- academia criada antes de validar e-mail;
+- tenant criado apenas por preencher o formulário.
+
+SEGURANÇA
+- senha não é salva em texto aberto no challenge;
+- somente hash bcrypt é armazenado;
+- OTP é armazenado somente como HMAC;
+- validade padrão do OTP: 10 minutos;
+- máximo: 5 tentativas;
+- limites por IP/e-mail;
+- tabela com RLS;
+- anon/authenticated sem acesso.
+
+E-MAIL
+Reutiliza a infraestrutura Resend já usada na recuperação de acesso.
+Variáveis aceitas:
+RESEND_API_KEY ou FUSION_RESEND_API_KEY
+
+Remetente:
+FUSION_SIGNUP_FROM_EMAIL
+ou FUSION_RECOVERY_FROM_EMAIL
+ou RESEND_FROM_EMAIL
+
+Em produção use um domínio verificado, por exemplo:
+Fusion Sistema <acesso@fusionsistema.com.br>
+
+ARQUIVOS
+1. modules/saas/saas.service.mjs
+2. modules/saas/saas.routes.mjs
+3. modules/saas/signup-mail.service.mjs
+4. public/pages/comecar/index.html
+5. public/pages/comecar/index.js
+6. public/pages/comecar/style.css
+
+SUPABASE
+A migration fusion_tenant_signup_challenges JÁ FOI APLICADA ao projeto Fusion ERP.
+O arquivo SUPABASE-MIGRACAO-JA-APLICADA.sql é apenas histórico.
+
+IMPORTANTE
+O banco atual já possui duplicidades antigas. O novo fluxo bloqueia novas duplicações,
+mas não exclui registros antigos automaticamente.
+
+TESTE
+1. Use CPF/CNPJ, nome, razão social e e-mail ainda não cadastrados.
+2. Clique “Validar dados e enviar código”.
+3. Confirme que nenhuma academia foi criada e nenhum código aparece na tela.
+4. Abra o e-mail e copie o OTP.
+5. Digite o OTP e clique “Ativar e continuar”.
+6. Confirme a entrada na configuração inicial.
+7. Confira o segundo e-mail com o código permanente da academia.
+
+COMMIT SUGERIDO
+feat: exige ativacao por email antes de criar academia
