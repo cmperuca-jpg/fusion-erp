@@ -36,7 +36,7 @@ async function exigirGestor(req, res, next) {
 
 router.post("/codigo", exigirGestor, (req, res) => {
   limpar();
-  if (!process.env.ACCESS_AGENT_TOKEN) return res.status(503).json({ ok: false, mensagem: "O agente ainda não foi habilitado no servidor." });
+  if (!process.env.ACCESS_AGENT_ID || !process.env.ACCESS_AGENT_TOKEN || !process.env.ACCESS_EQUIPMENT_ID) return res.status(503).json({ ok: false, mensagem: "O agente ainda não foi habilitado no servidor." });
   const codigo = codigoNovo();
   const expiraEm = Date.now() + DURACAO_MS;
   codigos.set(codigo, { expiraEm, usado: false, criadoPor: req.usuario?.id || req.usuario?.email || "admin" });
@@ -60,9 +60,11 @@ router.post("/ativar", (req, res) => {
     ok: true,
     configuracao: {
       serverUrl: String(process.env.RENDER_EXTERNAL_URL || process.env.ACCESS_SERVER_URL || `${req.protocol}://${req.get("host")}`).replace(/\/$/, ""),
-      agentId: process.env.ACCESS_AGENT_ID || "academia-01",
+      agentId: process.env.ACCESS_AGENT_ID,
+      tenantId: process.env.ACCESS_AGENT_TENANT_ID || process.env.FUSION_TENANT_ID || "",
       agentToken: process.env.ACCESS_AGENT_TOKEN,
       driver: process.env.ACCESS_DRIVER || "henry7x",
+      equipmentId: process.env.ACCESS_EQUIPMENT_ID,
       equipmentHost: process.env.HENRY7X_HOST || "10.0.0.236",
       equipmentPort: Number(process.env.HENRY7X_PORT || 3000),
       pollMs: 1500

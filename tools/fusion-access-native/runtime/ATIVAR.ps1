@@ -15,11 +15,12 @@ if (-not $result.ok -or -not $result.configuracao.agentToken) { throw "O servido
 $cfg = $result.configuracao
 $content = @"
 ACCESS_AGENT_ID=$($cfg.agentId)
+ACCESS_AGENT_TENANT_ID=$($cfg.tenantId)
 ACCESS_AGENT_TOKEN=$($cfg.agentToken)
 ACCESS_SERVER_URL=$($cfg.serverUrl)
 ACCESS_AGENT_POLL_MS=$($cfg.pollMs)
 ACCESS_DRIVER=$($cfg.driver)
-ACCESS_EQUIPMENT_ID=catraca-01
+ACCESS_EQUIPMENT_ID=$($cfg.equipmentId)
 ACCESS_HOST=$($cfg.equipmentHost)
 ACCESS_PORT=$($cfg.equipmentPort)
 ACCESS_RELEASE_SECONDS=5

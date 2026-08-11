@@ -1,9 +1,16 @@
-import { createClient } from '@supabase/supabase-js';
 import { readJson, writeJson, makeId, isoDate } from '../../lib/fusion-json-store.mjs';
 
 const FILE = 'access_bridge_commands.json';
 const useSupabase = Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
-const supabase = useSupabase ? createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } }) : null;
+let supabasePromise = null;
+
+async function supabaseClient() {
+  if (!useSupabase) return null;
+  supabasePromise ||= import('@supabase/supabase-js').then(({ createClient }) =>
+    createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } })
+  );
+  return supabasePromise;
+}
 
 function normalize(row) {
   if (!row) return null;
@@ -24,10 +31,12 @@ function normalize(row) {
 }
 
 export async function createCommand(input) {
+  if (!input?.agentId) throw new Error('agentId obrigatorio para comando de acesso.');
+  if (!input?.equipmentId) throw new Error('equipmentId obrigatorio para comando de acesso.');
   const command = {
     id: makeId('cmd'),
     agentId: input.agentId,
-    equipmentId: input.equipmentId || 'catraca-01',
+    equipmentId: input.equipmentId,
     action: input.action || 'release',
     payload: input.payload || {},
     status: 'pending',
@@ -38,6 +47,7 @@ export async function createCommand(input) {
     result: null,
     error: null
   };
+  const supabase = await supabaseClient();
   if (supabase) {
     const { data, error } = await supabase.from('access_bridge_commands').insert({
       id: command.id, agent_id: command.agentId, equipment_id: command.equipmentId,
@@ -55,6 +65,7 @@ export async function createCommand(input) {
 
 export async function claimNext(agentId) {
   const now = new Date().toISOString();
+  const supabase = await supabaseClient();
   if (supabase) {
     const { data: rows, error } = await supabase.from('access_bridge_commands')
       .select('*').eq('agent_id', agentId).eq('status', 'pending').gt('expires_at', now)
@@ -82,6 +93,7 @@ export async function finishCommand(id, agentId, outcome) {
     result: outcome.result || null,
     error: outcome.error || null
   };
+  const supabase = await supabaseClient();
   if (supabase) {
     const { data, error } = await supabase.from('access_bridge_commands').update({
       status: patch.status, finished_at: patch.finishedAt, result: patch.result, error: patch.error
@@ -98,6 +110,7 @@ export async function finishCommand(id, agentId, outcome) {
 }
 
 export async function getCommand(id) {
+  const supabase = await supabaseClient();
   if (supabase) {
     const { data, error } = await supabase.from('access_bridge_commands').select('*').eq('id', id).maybeSingle();
     if (error) throw error;
@@ -108,6 +121,7 @@ export async function getCommand(id) {
 
 export async function saveHeartbeat(agentId, details = {}) {
   const row = { agent_id: agentId, last_seen_at: isoDate(), status: 'online', details };
+  const supabase = await supabaseClient();
   if (supabase) {
     const { error } = await supabase.from('access_bridge_agents').upsert(row, { onConflict: 'agent_id' });
     if (error) throw error;
@@ -121,6 +135,7 @@ export async function saveHeartbeat(agentId, details = {}) {
 }
 
 export async function getAgent(agentId) {
+  const supabase = await supabaseClient();
   if (supabase) {
     const { data, error } = await supabase.from('access_bridge_agents').select('*').eq('agent_id', agentId).maybeSingle();
     if (error) throw error;

@@ -1,17 +1,32 @@
 import dotenv from 'dotenv';
+import crypto from 'node:crypto';
 import { liberarCatraca } from '../modules/henry7x/henry7x.service.mjs';
 dotenv.config();
 
 const server = String(process.env.ACCESS_SERVER_URL || '').replace(/\/$/, '');
-const agentId = process.env.ACCESS_AGENT_ID || 'academia-01';
+const agentId = String(process.env.ACCESS_AGENT_ID || '').trim();
+const tenantId = String(process.env.ACCESS_AGENT_TENANT_ID || process.env.FUSION_TENANT_ID || '').trim();
+const equipmentId = String(process.env.ACCESS_EQUIPMENT_ID || '').trim();
 const token = process.env.ACCESS_AGENT_TOKEN || '';
 const pollMs = Math.max(Number(process.env.ACCESS_AGENT_POLL_MS || 1500), 1000);
-if (!server || !token) { console.error('Configure ACCESS_SERVER_URL e ACCESS_AGENT_TOKEN no .env'); process.exit(1); }
-const headers = { 'content-type':'application/json', 'x-agent-id':agentId, 'x-agent-token':token };
+if (!server || !agentId || !token) { console.error('Configure ACCESS_SERVER_URL, ACCESS_AGENT_ID e ACCESS_AGENT_TOKEN no .env'); process.exit(1); }
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
+function agentHeaders() {
+  const headers = {
+    'content-type': 'application/json',
+    'x-agent-id': agentId,
+    'x-agent-token': token,
+    'x-agent-timestamp': new Date().toISOString(),
+    'x-agent-nonce': crypto.randomUUID()
+  };
+  if (tenantId) headers['x-agent-tenant-id'] = tenantId;
+  if (equipmentId) headers['x-agent-equipment-id'] = equipmentId;
+  return headers;
+}
+
 async function request(path, options={}) {
-  const res = await fetch(`${server}${path}`, { ...options, headers:{...headers,...(options.headers||{})}, signal:AbortSignal.timeout(15000) });
+  const res = await fetch(`${server}${path}`, { ...options, headers:{...agentHeaders(),...(options.headers||{})}, signal:AbortSignal.timeout(15000) });
   const data = await res.json().catch(()=>({}));
   if (!res.ok) throw new Error(data.erro || `HTTP ${res.status}`);
   return data;

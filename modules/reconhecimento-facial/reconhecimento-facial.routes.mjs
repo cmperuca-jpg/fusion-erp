@@ -158,28 +158,32 @@ router.delete("/cadastros/:pessoaTipo/:pessoaId", autenticarGestor, async (req, 
   try { res.json({ ok: true, cadastro: await removerRosto(req.params.pessoaId, req.usuario, req.params.pessoaTipo) }); } catch (erro) { respostaErro(res, erro); }
 });
 
-router.get("/agent/next", (req, res) => {
-  const agentId = validateAgent(req);
-  if (!agentId) return res.status(401).json({ ok: false, mensagem: "Agente não autorizado." });
-  const tarefa = obterTarefaFacial(agentId, { versao: req.get("x-facial-agent-version"), motor: req.get("x-facial-engine-status") });
-  return res.json({ ok: true, tarefa });
+router.get("/agent/next", async (req, res) => {
+  try {
+    const agent = await validateAgent(req);
+    const tarefa = obterTarefaFacial(agent.agentId, { versao: req.get("x-facial-agent-version"), motor: req.get("x-facial-engine-status"), tenantId: agent.tenantId });
+    return res.json({ ok: true, tarefa });
+  } catch (erro) { return respostaErro(res, erro); }
 });
-router.post("/agent/tasks/:id/result", (req, res) => {
-  const agentId = validateAgent(req);
-  if (!agentId) return res.status(401).json({ ok: false, mensagem: "Agente não autorizado." });
-  const tarefa = finalizarTarefaFacial(req.params.id, agentId, req.body || {});
-  if (!tarefa) return res.status(404).json({ ok: false, mensagem: "Tarefa facial não encontrada ou expirada." });
-  return res.json({ ok: true, tarefa });
+router.post("/agent/tasks/:id/result", async (req, res) => {
+  try {
+    const agent = await validateAgent(req);
+    const tarefa = finalizarTarefaFacial(req.params.id, agent.agentId, req.body || {});
+    if (!tarefa) return res.status(404).json({ ok: false, mensagem: "Tarefa facial não encontrada ou expirada." });
+    return res.json({ ok: true, tarefa });
+  } catch (erro) { return respostaErro(res, erro); }
 });
 router.get("/agent/offline/snapshot", async (req, res) => {
-  const agentId = validateAgent(req);
-  if (!agentId) return res.status(401).json({ ok: false, mensagem: "Agente não autorizado." });
-  try { return res.json({ ok: true, snapshot: await snapshotFacialOffline() }); } catch (erro) { return respostaErro(res, erro); }
+  try {
+    await validateAgent(req);
+    return res.json({ ok: true, snapshot: await snapshotFacialOffline() });
+  } catch (erro) { return respostaErro(res, erro); }
 });
 router.post("/agent/offline/eventos", async (req, res) => {
-  const agentId = validateAgent(req);
-  if (!agentId) return res.status(401).json({ ok: false, mensagem: "Agente não autorizado." });
-  try { return res.json({ ok: true, ...(await receberEventosFaciaisOffline(req.body?.eventos)) }); } catch (erro) { return respostaErro(res, erro); }
+  try {
+    await validateAgent(req);
+    return res.json({ ok: true, ...(await receberEventosFaciaisOffline(req.body?.eventos)) });
+  } catch (erro) { return respostaErro(res, erro); }
 });
 
 export default router;

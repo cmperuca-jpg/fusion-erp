@@ -104,7 +104,14 @@ function Invoke-SelectedDriver($Payload){
 }
 
 function Invoke-AgentApi([string]$Method,[string]$Path,$Body=$null){
-  $headers=@{"x-agent-id"=$script:AgentId;"x-agent-token"=$script:Token}
+  $headers=@{
+    "x-agent-id"=$script:AgentId
+    "x-agent-token"=$script:Token
+    "x-agent-timestamp"=([DateTime]::UtcNow.ToString("o"))
+    "x-agent-nonce"=([Guid]::NewGuid().ToString("N"))
+  }
+  if($script:TenantId){$headers["x-agent-tenant-id"]=$script:TenantId}
+  if($script:EquipmentId){$headers["x-agent-equipment-id"]=$script:EquipmentId}
   $p=@{Uri="$script:Server$Path";Method=$Method;Headers=$headers;TimeoutSec=20;UseBasicParsing=$true}
   if($null -ne $Body){$p["ContentType"]="application/json";$p["Body"]=($Body|ConvertTo-Json -Depth 20 -Compress)}
   return Invoke-RestMethod @p
@@ -115,6 +122,8 @@ try{
   $script:Cfg=Read-EnvFile $ConfigPath
   $script:AgentId=[string]$Cfg["ACCESS_AGENT_ID"]
   $script:Token=[string]$Cfg["ACCESS_AGENT_TOKEN"]
+  $script:TenantId=[string]$Cfg["ACCESS_AGENT_TENANT_ID"]
+  $script:EquipmentId=[string]$Cfg["ACCESS_EQUIPMENT_ID"]
   $script:Server=([string]$Cfg["ACCESS_SERVER_URL"]).TrimEnd("/")
   $script:PollMs=[Math]::Max([int]$Cfg["ACCESS_AGENT_POLL_MS"],1000)
   $script:Driver=([string]$Cfg["ACCESS_DRIVER"]).ToLower()

@@ -1,6 +1,15 @@
-import { createClient } from "@supabase/supabase-js";
+import { createRequire } from "node:module";
 
+const require = createRequire(import.meta.url);
 let clienteAdmin = null;
+let createClientSupabase = null;
+
+function carregarCreateClient() {
+  if (!createClientSupabase) {
+    ({ createClient: createClientSupabase } = require("@supabase/supabase-js"));
+  }
+  return createClientSupabase;
+}
 
 export function supabaseConfigurado() {
   return Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
@@ -12,6 +21,7 @@ export function obterSupabaseAdmin({ obrigatorio = false } = {}) {
     return null;
   }
   if (!clienteAdmin) {
+    const createClient = carregarCreateClient();
     clienteAdmin = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, {
       auth: { persistSession: false, autoRefreshToken: false },
       global: { headers: { "X-Fusion-Backend": "erp" } }
