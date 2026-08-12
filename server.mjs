@@ -53,6 +53,7 @@ import reconhecimentoFacialRoutes from "./modules/reconhecimento-facial/reconhec
 import accessOnboardingRoutes from "./modules/access-onboarding/access-onboarding.routes.mjs";
 import whatsappRoutes from "./modules/whatsapp/whatsapp.routes.mjs";
 import resetDadosRoutes from "./modules/reset-dados/reset-dados.routes.mjs";
+import { observabilidadeSistema } from "./modules/observabilidade/observabilidade.service.mjs";
 import { apiSecurity, loginRateLimit, securityHeaders } from "./modules/security/api-security.middleware.mjs";
 import { executarLembretesVencimento } from "./modules/whatsapp/whatsapp.service.mjs";
 import { inicializarPersistenciaSupabase, encerrarPersistenciaSupabase } from "./modules/backup/supabase-data.service.mjs";
@@ -955,6 +956,18 @@ app.get("/api/sistema/seguranca", async (req, res) => {
     avisos,
     recomendacao: "Aprovado para piloto apos executar a validacao do projeto e configurar os segredos do ambiente."
   });
+});
+
+app.get("/api/sistema/observabilidade", async (req, res) => {
+  try {
+    res.json(await observabilidadeSistema(req.query || {}));
+  } catch (erro) {
+    res.status(500).json({
+      ok: false,
+      modulo: "observabilidade",
+      mensagem: erro.message || "Falha ao montar observabilidade operacional."
+    });
+  }
 });
 
 

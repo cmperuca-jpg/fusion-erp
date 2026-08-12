@@ -68,9 +68,18 @@ Proxima acao recomendada: criar roteiro/teste de segunda academia do zero sem pa
 
 ## P1 - Observabilidade
 
-Status: pendente.
+Status: iniciado com endpoint operacional e teste HTTP.
 
-Proxima acao recomendada: centralizar logs, alertas de erro, heartbeat dos agentes e falhas de cobranca/acesso.
+Exigencias tratadas nesta etapa:
+
+- Criado endpoint autenticado `GET /api/sistema/observabilidade`.
+- Consolidado heartbeat dos agentes de catraca, comandos pendentes/processando/concluidos/falhos/expirados e comandos antigos.
+- Consolidado resumo de acessos do dia, bloqueios e falhas de enfileiramento/liberacao da catraca.
+- Consolidado resumo de cobranca: falhas no `cobranca_log`, financeiro vencido, mensalidades vencidas e mensalidades programadas.
+- Criados alertas operacionais por severidade para agente offline, comando falho/expirado, comando antigo, falha de catraca, falha de cobranca e vencidos.
+- Criado teste HTTP `npm run test:observabilidade`.
+
+Proxima acao recomendada: persistir eventos operacionais em tabela/colecao propria e criar notificacao ativa para falhas criticas.
 
 ## P2 - Experiencia e Refinamentos
 
