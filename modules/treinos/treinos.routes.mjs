@@ -23,6 +23,7 @@ import * as alunosService from "../alunos/alunos.service.mjs";
 import {
   atualizarFotoAlunoApp,
   contadorCatracaAlunoApp,
+  frequenciaAlunoApp,
   liberarCatracaAlunoApp
 } from "./aluno-app-actions.service.mjs";
 
@@ -240,6 +241,15 @@ router.get("/aluno-app/catraca-contador", somenteMesmoSistema, async (req, res) 
     res.json({ ok: true, dados: await contadorCatracaAlunoApp(req, res, deviceToken) });
   } catch (erro) {
     responderErroAlunoApp(res, erro, "Não foi possível consultar seus acessos.");
+  }
+});
+
+router.get("/aluno-app/frequencia", somenteMesmoSistema, async (req, res) => {
+  try {
+    const deviceToken = req.headers["x-fusion-device-token"];
+    res.json({ ok: true, dados: await frequenciaAlunoApp(req, res, deviceToken) });
+  } catch (erro) {
+    responderErroAlunoApp(res, erro, "Não foi possível carregar sua frequência.");
   }
 });
 

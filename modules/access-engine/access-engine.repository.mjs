@@ -4,6 +4,7 @@ import {
   lerJsonDuravel,
   salvarJsonDuravel
 } from '../core/persistence/durable-json.mjs';
+import { sincronizarAccessLogFrequenciaDuravel } from './access-frequency-sync.runtime.mjs';
 
 const ARQUIVOS = {
   alunos: 'alunos.json',
@@ -157,6 +158,16 @@ export async function registrarLog(log) {
     const registro = { id: log.id || novoId('log'), criadoEm: new Date().toISOString(), ...log };
     lista.unshift(registro);
     await salvarLogs(lista.slice(0, 5000));
+
+    // Frequência é consequência do acesso autorizado. A sincronização ocorre
+    // no ponto central do Access Engine para atender app, catraca e demais origens.
+    // Falha no espelho de frequência nunca desfaz o log de acesso nem a liberação.
+    try {
+      await sincronizarAccessLogFrequenciaDuravel(registro);
+    } catch (erro) {
+      console.warn(`[Access/Frequencia] ${String(erro?.message || erro).slice(0, 240)}`);
+    }
+
     return registro;
   });
 }

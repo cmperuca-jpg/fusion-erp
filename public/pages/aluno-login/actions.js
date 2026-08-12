@@ -223,6 +223,38 @@
     }
   }
 
+  function dataHoraBR(valor = "") {
+    if (!valor) return "";
+    const data = new Date(valor);
+    if (Number.isNaN(data.getTime())) return "";
+    return data.toLocaleString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+  }
+
+  async function atualizarFrequencia() {
+    if (!deviceToken()) return;
+    const resumo = $("frequenciaResumo");
+    const detalhe = $("frequenciaDetalhe");
+    if (!resumo || !detalhe) return;
+
+    try {
+      const data = await request("/frequencia", { method: "GET" });
+      const total30 = Number(data.ultimos_30_dias || 0);
+      resumo.textContent = `${total30} acesso${total30 === 1 ? "" : "s"} em 30 dias`;
+      detalhe.textContent = data.ultimo_acesso
+        ? `Último acesso: ${dataHoraBR(data.ultimo_acesso)}`
+        : "Nenhuma frequência registrada ainda.";
+    } catch (error) {
+      if (error.status === 401) return;
+      detalhe.textContent = "Não foi possível atualizar a frequência agora.";
+    }
+  }
+
   function textoContador(data = {}) {
     const usados = Number(data.usados || data.acessosUsadosHoje || 0);
     const limite = Number(data.limite || data.limiteDiario || 0);
@@ -239,9 +271,15 @@
     try {
       const data = await request("/catraca-contador", { method: "GET" });
       const btn = $("liberarCatracaApp");
-      btn.disabled = Boolean(data.limiteAtingido);
-      btn.title = data.limiteAtingido ? "Limite diário de acessos atingido." : "";
-      setStatus(textoContador(data), data.limiteAtingido ? "erro" : "");
+      const saida = data.proximaDirecao === "saida";
+      btn.textContent = saida ? "Liberar saída" : "Liberar entrada";
+      // O limite diário só bloqueia nova entrada. Quem está dentro sempre pode sair.
+      btn.disabled = Boolean(data.limiteAtingido && !saida);
+      btn.title = data.limiteAtingido && !saida ? "Limite diário de entradas atingido." : "";
+      setStatus(
+        saida ? "Você está dentro da academia. Próximo giro: saída." : textoContador(data),
+        data.limiteAtingido && !saida ? "erro" : ""
+      );
     } catch (error) {
       if (error.status === 401) return;
       setStatus(error.message || "Não foi possível consultar o limite de acessos.", "erro");
@@ -255,16 +293,20 @@
     try {
       const data = await request("/catraca", {
         method: "POST",
-        body: JSON.stringify({ direcao: "entrada" })
+        body: JSON.stringify({ direcao: "auto" })
       });
 
       if (data.autorizado) {
-        setStatus(data.motivo || "Catraca liberada.", "ok");
+        const movimento = data.direcao === "saida" ? "Saída liberada." : "Entrada liberada.";
+        setStatus(data.motivo || movimento, "ok");
       } else {
         setStatus(data.motivo || "Acesso não autorizado.", "erro");
       }
 
-      window.setTimeout(atualizarContador, 600);
+      window.setTimeout(() => {
+        atualizarContador();
+        atualizarFrequencia();
+      }, 600);
     } catch (error) {
       setStatus(error.message || "Não foi possível liberar a catraca.", "erro");
     } finally {
@@ -279,14 +321,20 @@
     let estavaVisivel = !home.classList.contains("hidden");
     const verificar = () => {
       const visivel = !home.classList.contains("hidden");
-      if (visivel && !estavaVisivel) atualizarContador();
+      if (visivel && !estavaVisivel) {
+        atualizarContador();
+        atualizarFrequencia();
+      }
       estavaVisivel = visivel;
     };
 
     const observer = new MutationObserver(verificar);
     observer.observe(home, { attributes: true, attributeFilter: ["class"] });
 
-    if (estavaVisivel) atualizarContador();
+    if (estavaVisivel) {
+      atualizarContador();
+      atualizarFrequencia();
+    }
   }
 
   function iniciar() {

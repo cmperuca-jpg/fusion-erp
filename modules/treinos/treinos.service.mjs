@@ -204,7 +204,8 @@ export async function liberarCatracaPortalAluno({ alunoId, token, direcao = "ent
   const direcaoNormalizada = direcao === "saida" ? "saida" : "entrada";
   const controleAntes = await contadorAcessosPortal(idPessoa(aluno));
 
-  if (controleAntes.limiteAtingido) {
+  // Saída nunca consome nem é bloqueada pelo limite diário de entradas.
+  if (direcaoNormalizada !== "saida" && controleAntes.limiteAtingido) {
     await registrarBloqueioLimitePortal({ aluno, controle: controleAntes, direcao: direcaoNormalizada });
     return {
       autorizado: false,

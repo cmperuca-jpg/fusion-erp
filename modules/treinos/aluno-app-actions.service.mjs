@@ -1,5 +1,6 @@
 import { obterSupabaseAdmin } from "../../config/supabase.mjs";
 import { executarComTenant, normalizarTenantId } from "../core/persistence/tenant-context.mjs";
+import { lerJsonDuravel } from "../core/persistence/durable-json.mjs";
 import { gerarTokenPortal } from "../auth/auth.service.mjs";
 import * as alunosService from "../alunos/alunos.service.mjs";
 import {
@@ -7,6 +8,8 @@ import {
   obterContadorCatracaPortalAluno
 } from "./treinos.service.mjs";
 import { obterHomeAlunoApp } from "./aluno-app.service.mjs";
+import { reconciliarAccessLogsFrequenciaDuravel } from "../access-engine/access-frequency-sync.runtime.mjs";
+import { resumirFrequenciaRegistros } from "./aluno-app-frequencia.mjs";
 
 const FOTO_MAX_CHARS = 4_000_000;
 
@@ -101,6 +104,35 @@ function tokenEfemeroAluno(alunoId) {
   });
 }
 
+
+async function estadoEntradaSaidaAluno(alunoId = "") {
+  const id = texto(alunoId);
+  const [presentesRaw, checkinRaw] = await Promise.all([
+    lerJsonDuravel("access_pessoas_presentes.json", []),
+    lerJsonDuravel("checkin.json", [])
+  ]);
+
+  const presentes = Array.isArray(presentesRaw) ? presentesRaw : [];
+  const checkins = Array.isArray(checkinRaw) ? checkinRaw : [];
+
+  const presenteAccess = presentes.some(item =>
+    texto(item.alunoId || item.id) === id
+  );
+
+  const aberto = [...checkins].reverse().find(item =>
+    texto(item.alunoId) === id &&
+    !texto(item.horaSaida) &&
+    String(item.status || "").trim().toLowerCase() === "liberado"
+  );
+
+  const presente = presenteAccess || Boolean(aberto);
+  return {
+    presente,
+    proximaDirecao: presente ? "saida" : "entrada",
+    checkinAbertoId: texto(aberto?.id)
+  };
+}
+
 export async function atualizarFotoAlunoApp(req, res, deviceToken, payload = {}) {
   const foto = texto(payload.foto_base64 || payload.fotoBase64 || payload.foto);
   if (!fotoValida(foto)) {
@@ -130,17 +162,34 @@ export async function atualizarFotoAlunoApp(req, res, deviceToken, payload = {})
 
 export async function liberarCatracaAlunoApp(req, res, deviceToken, payload = {}) {
   const identidade = await identidadeAlunoApp(req, res, deviceToken);
-  const direcao = texto(payload.direcao).toLowerCase() === "saida" ? "saida" : "entrada";
 
   return executarComTenant(identidade.tenantId, async () => {
+    const solicitado = texto(payload.direcao).toLowerCase();
+    const estadoAntes = await estadoEntradaSaidaAluno(identidade.legacyId);
+    const direcao = ["entrada", "saida"].includes(solicitado)
+      ? solicitado
+      : estadoAntes.proximaDirecao;
+
     // Token nunca é enviado ao navegador; existe apenas durante esta chamada
-    // para reutilizar o fluxo antigo já testado de limite + access-engine.
+    // para reutilizar o fluxo já testado de limite + Access Engine.
     const token = tokenEfemeroAluno(identidade.legacyId);
-    return liberarCatracaPortalAluno({
+    const resultado = await liberarCatracaPortalAluno({
       alunoId: identidade.legacyId,
       token,
       direcao
     });
+
+    const estadoDepois = resultado.autorizado
+      ? await estadoEntradaSaidaAluno(identidade.legacyId)
+      : estadoAntes;
+
+    return {
+      ...resultado,
+      direcao,
+      presenteAntes: estadoAntes.presente,
+      presenteDepois: estadoDepois.presente,
+      proximaDirecao: estadoDepois.proximaDirecao
+    };
   });
 }
 
@@ -149,9 +198,65 @@ export async function contadorCatracaAlunoApp(req, res, deviceToken) {
 
   return executarComTenant(identidade.tenantId, async () => {
     const token = tokenEfemeroAluno(identidade.legacyId);
-    return obterContadorCatracaPortalAluno({
-      alunoId: identidade.legacyId,
-      token
-    });
+    const [controle, estado] = await Promise.all([
+      obterContadorCatracaPortalAluno({
+        alunoId: identidade.legacyId,
+        token
+      }),
+      estadoEntradaSaidaAluno(identidade.legacyId)
+    ]);
+
+    return {
+      ...controle,
+      presente: estado.presente,
+      proximaDirecao: estado.proximaDirecao,
+      checkinAbertoId: estado.checkinAbertoId
+    };
   });
 }
+
+async function registrosFrequenciaAluno(tenantId, alunoId, colecao, limite = 400) {
+  const supabase = obterSupabaseAdmin({ obrigatorio: true });
+  const tabela = process.env.FUSION_SUPABASE_RECORDS_TABLE || "fusion_v3_records";
+  const { data, error } = await supabase
+    .from(tabela)
+    .select("record_id,payload,updated_at")
+    .eq("tenant_id", tenantId)
+    .eq("collection", colecao)
+    .eq("payload->>alunoId", alunoId)
+    .order("updated_at", { ascending: false })
+    .limit(limite);
+
+  if (error) {
+    throw erroHttp(
+      `Não foi possível carregar a frequência do aluno (${colecao}).`,
+      502,
+      "ERP_STUDENT_FREQUENCY_FAILED"
+    );
+  }
+  return Array.isArray(data) ? data : [];
+}
+
+export async function frequenciaAlunoApp(req, res, deviceToken) {
+  const identidade = await identidadeAlunoApp(req, res, deviceToken);
+
+  return executarComTenant(identidade.tenantId, async () => {
+    // Reconciliador idempotente corrige também logs antigos que ainda não
+    // chegaram ao checkin/checkins. Novos acessos são sincronizados no repository.
+    await reconciliarAccessLogsFrequenciaDuravel();
+
+    const [accessLogs, checkin, checkins] = await Promise.all([
+      registrosFrequenciaAluno(identidade.tenantId, identidade.legacyId, "access_logs", 400),
+      registrosFrequenciaAluno(identidade.tenantId, identidade.legacyId, "checkin", 400),
+      registrosFrequenciaAluno(identidade.tenantId, identidade.legacyId, "checkins", 400)
+    ]);
+
+    return {
+      alunoId: identidade.legacyId,
+      tenantId: identidade.tenantId,
+      ...resumirFrequenciaRegistros({ accessLogs, checkin, checkins }),
+      atualizadoEm: new Date().toISOString()
+    };
+  });
+}
+
