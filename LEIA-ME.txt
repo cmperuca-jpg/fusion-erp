@@ -1,17 +1,31 @@
-Fusion ERP - Correção de datas e próximo vencimento V5
+Fusion ERP - Regressões P0 V1
 
-Substitua na raiz do projeto:
-  modules/treinos/aluno-app.service.mjs
+Arquivos:
+- package.json
+- scripts/test-regressoes-p0-fusion.mjs
 
-Correções:
-1. Datas de calendário YYYY-MM-DD passam a ser tratadas como dia civil, evitando exibição do dia anterior no Brasil.
-2. Mensalidades já pagas/recebidas deixam de ser consideradas como "próximo vencimento".
-3. Mantém todo o hardening V4 do fluxo de ativação e rate limit persistente.
+Instalação:
+1. Copie o conteúdo deste ZIP para a raiz do fusion-erp.
+2. Escolha substituir package.json quando solicitado.
+3. O novo script não altera dados e não chama o Supabase real: o teste de ativação usa fetch simulado e o teste multiempresa usa armazenamento JSON temporário.
 
-Teste esperado na academia-homologacao:
-- Avaliação cadastrada em 12/08/2026 deve aparecer como 12/08/2026.
-- Mensalidade programada para 15/09/2026 deve aparecer como 15/09/2026.
-- Mensalidade já paga em 12/08/2026 não deve aparecer no card como "Próximo".
-- O card Financeiro deve apontar a mensalidade programada de setembro.
+Executar apenas a nova suíte:
+  npm run test:regressoes-p0
 
-Após substituir, publique/reinicie o backend e use Ctrl+F5 no Fusion Aluno.
+Executar toda a auditoria P0:
+  npm run test:p0-auditoria
+
+Cobertura nova:
+- contrato de datas civis YYYY-MM-DD;
+- mensalidade paga não pode ser próximo vencimento;
+- rate limit precisa rodar antes da ativação;
+- bloqueio 429 impede o RPC de ativação;
+- fluxo permitido chama rate limit e depois ativação;
+- instalação inválida falha antes de upstream;
+- professor com token do tenant A e header do tenant B recebe 403;
+- professor sem header herda tenant do token.
+
+CI adicionada:
+- .github/workflows/p0-auditoria.yml
+- Em push na main, pull request ou execução manual, o GitHub instala dependências, roda npm run check e npm run test:p0-auditoria.
+- A workflow usa apenas permissao de leitura e não recebe segredos.
