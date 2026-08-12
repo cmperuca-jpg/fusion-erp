@@ -47,7 +47,7 @@ function exigirResponsavelTecnico(req, res) {
   if (responsavelTecnicoEstrito(req)) return true;
   res.status(403).json({
     ok: false,
-    mensagem: "Somente o Responsavel Tecnico pode criar, editar ou excluir avaliacoes fisicas."
+    mensagem: "Somente o Responsavel Tecnico pode executar esta operacao administrativa em avaliacoes fisicas."
   });
   return false;
 }
@@ -127,6 +127,23 @@ async function exigirAcessoAvaliacao(req, res, avaliacao = {}) {
   return false;
 }
 
+// Professor do portal pode criar avaliacao somente para aluno vinculado.
+// Fora do portal, preserva a regra administrativa anterior: somente RT.
+function exigirCriacaoAvaliacao(req, res) {
+  if (usuarioPortalProfessor(req)) return true;
+  return exigirResponsavelTecnico(req, res);
+}
+
+// Professor comum pode alterar/excluir somente avaliacao criada por ele.
+// Responsavel Tecnico mantem acesso global. Fora do portal, preserva a regra de RT.
+function exigirAlteracaoAvaliacao(req, res, avaliacao = {}) {
+  if (!usuarioPortalProfessor(req)) return exigirResponsavelTecnico(req, res);
+  if (responsavelTecnico(req)) return true;
+  if (registroDoProfessor(avaliacao, req.usuario)) return true;
+  res.status(403).json({ ok: false, mensagem: "O professor so pode editar ou excluir avaliacoes criadas por ele." });
+  return false;
+}
+
 router.get("/", async (req, res) => {
   try {
     const avaliacoes = await avaliacoesService.listar(req.query.aluno_id || req.query.alunoId);
@@ -149,7 +166,7 @@ router.get("/:id", async (req, res) => {
 
 router.post("/", async (req, res) => {
   try {
-    if (!exigirResponsavelTecnico(req, res)) return;
+    if (!exigirCriacaoAvaliacao(req, res)) return;
     const dados = payloadProfessor(req, req.body || {});
     if (!await alunoPermitidoParaProfessor(req, dados.alunoId || dados.aluno_id)) {
       return res.status(403).json({ ok: false, mensagem: "Professor sem acesso a este aluno." });
@@ -163,10 +180,9 @@ router.post("/", async (req, res) => {
 
 router.put("/:id", async (req, res) => {
   try {
-    if (!exigirResponsavelTecnico(req, res)) return;
     const existente = await avaliacoesService.buscar(req.params.id);
     if (!existente) return res.status(404).json({ ok: false, erro: "Avaliacao nao encontrada", mensagem: "Avaliacao nao encontrada" });
-    if (!await exigirAcessoAvaliacao(req, res, existente)) return;
+    if (!exigirAlteracaoAvaliacao(req, res, existente)) return;
 
     const dados = payloadProfessor(req, req.body || {});
     if (!await alunoPermitidoParaProfessor(req, dados.alunoId || dados.aluno_id || existente.alunoId || existente.aluno_id)) {
@@ -183,10 +199,9 @@ router.put("/:id", async (req, res) => {
 
 router.delete("/:id", async (req, res) => {
   try {
-    if (!exigirResponsavelTecnico(req, res)) return;
     const avaliacao = await avaliacoesService.buscar(req.params.id);
     if (!avaliacao) return res.status(404).json({ ok: false, erro: "Avaliacao nao encontrada", mensagem: "Avaliacao nao encontrada" });
-    if (!await exigirAcessoAvaliacao(req, res, avaliacao)) return;
+    if (!exigirAlteracaoAvaliacao(req, res, avaliacao)) return;
 
     const excluido = await avaliacoesService.excluir(req.params.id);
     if (!excluido) return res.status(404).json({ ok: false, erro: "Avaliacao nao encontrada", mensagem: "Avaliacao nao encontrada" });

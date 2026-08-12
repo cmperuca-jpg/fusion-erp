@@ -1,61 +1,23 @@
-FUSION SISTEMA - CORRECAO ACCESS ENGINE V2
-==========================================
+CORRECAO - AVALIACOES DO PORTAL DO PROFESSOR
 
-Objetivo
---------
-1. Manter a correcao de isolamento da catraca entre tenants.
-2. Corrigir o painel que mostrava "6 equipamentos / 6 online" por contar
-   registros antigos com status=ativo como se fossem equipamentos conectados.
-3. Fazer o painel operacional usar os equipmentIds realmente vinculados ao
-   Fusion Access Agent (ACCESS_EQUIPMENT_ID / ACCESS_EQUIPMENT_IDS).
-4. Fazer o estado ONLINE depender do heartbeat do Access Agent para a academia
-   que possui a catraca fisica.
+Problema corrigido:
+- Professor comum conseguia abrir a tela de Avaliacao Fisica, mas POST /api/avaliacoes exigia perfil estrito de Responsavel Tecnico e bloqueava a gravacao.
 
-Resultado esperado na academia-piloto
--------------------------------------
-- Se houver um unico ACCESS_EQUIPMENT_ID (catraca-piloto-01):
-  Equipamentos: 1
-  Online: 1, quando o Access Agent estiver online
-  Online: 0, quando o Access Agent estiver offline
-- A tabela de equipamentos mostra somente o equipamento vinculado ao agente.
-- Cadastros antigos de simuladores/duplicados nao sao apagados; apenas deixam
-  de contaminar o painel operacional da catraca fisica.
+Nova regra:
+- Professor comum do portal pode criar avaliacao somente para aluno vinculado a ele.
+- Professor comum pode editar/excluir somente avaliacao criada por ele.
+- Responsavel Tecnico continua com acesso global.
+- Usuario administrativo fora do portal preserva a regra anterior de Responsavel Tecnico para escrita.
 
-Resultado esperado na academia-homologacao
--------------------------------------------
-- Sem agente proprio: Sem catraca / Nao configurado
-- Equipamentos: 0, enquanto nenhum equipamento proprio for cadastrado
-- Nao enxerga a Henry 7X da academia-piloto
+Arquivo para substituir:
+modules/avaliacoes/avaliacoes.routes.mjs
 
-Como aplicar
-------------
-1. Feche qualquer editor que esteja gravando estes arquivos.
-2. Extraia este ZIP.
-3. Copie as pastas "modules" e "public" para a raiz do projeto:
+Copie a pasta modules para a raiz do repositorio Fusion e escolha substituir o arquivo no destino.
+Depois publique/reinicie o backend e use Ctrl+F5 no navegador.
 
-   C:\Users\academia01\Documents\GitHub\fusion-erp\
-
-4. Quando o Windows perguntar, escolha "Substituir os arquivos no destino".
-5. Reinicie/republique o servidor se o seu fluxo de deploy nao fizer isso
-   automaticamente.
-6. Atualize a tela da academia-piloto com Ctrl+F5.
-
-Arquivos incluidos
-------------------
-modules/access-engine/access-engine.routes.mjs
-modules/access-onboarding/access-onboarding.routes.mjs
-public/pages/access-engine/index.js
-public/assets/js/fusion-layout.js
-
-Validacoes feitas antes de gerar o ZIP
---------------------------------------
-- node --check nos quatro arquivos: OK
-- Teste isolado da nova regra com 1 Henry + 5 registros antigos: OK
-  Resultado: 1 equipamento operacional, 1 online, 5 ignorados no painel.
-
-Observacao
-----------
-O numero ONLINE agora representa disponibilidade do equipamento vinculado por
-meio do heartbeat do Access Agent. Para uma futura instalacao com varias
-catracas no mesmo agente, uma evolucao posterior pode adicionar heartbeat/
-status individual de cada equipamento fisico.
+Teste esperado na academia-homologacao:
+1. Entrar como shaikyschana.
+2. Abrir Avaliacao Fisica.
+3. Selecionar MARIA MARIANA (aluna vinculada).
+4. Preencher e salvar.
+5. Deve aparecer "Avaliacao cadastrada" e o historico deve passar de 0 para 1 registro.
