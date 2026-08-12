@@ -43,10 +43,37 @@ async function popularTenant(base, sufixo) {
     status: 'Ativo',
     ativo: true
   }]);
-  await escrever(base, 'planos', [{ id: `pla-${sufixo}`, nome: `Plano ${sufixo.toUpperCase()}`, valorMensal: sufixo === 'a' ? 100 : 120, status: 'ativo' }]);
-  await escrever(base, 'matriculas', [{ id: `mat-${sufixo}`, alunoId: `alu-${sufixo}`, numero: `MAT-${sufixo.toUpperCase()}`, planoId: `pla-${sufixo}`, status: 'Ativa' }]);
-  await escrever(base, 'financeiro', [{ id: `fin-${sufixo}`, tipo: 'receber', alunoId: `alu-${sufixo}`, matriculaId: `mat-${sufixo}`, descricao: `Mensalidade ${sufixo.toUpperCase()}`, valor: sufixo === 'a' ? 100 : 120, status: 'Aberto' }]);
-  await escrever(base, 'caixa', { caixas: [{ id: `cx-${sufixo}`, status: 'aberto', dataAbertura: '2026-08-11', valorAbertura: 0 }], movimentos: [] });
+  await escrever(base, 'planos', [{
+    id: `pla-${sufixo}`,
+    nome: `Plano ${sufixo.toUpperCase()}`,
+    valorMensal: sufixo === 'a' ? 100 : 120,
+    status: 'ativo'
+  }]);
+  await escrever(base, 'matriculas', [{
+    id: `mat-${sufixo}`,
+    alunoId: `alu-${sufixo}`,
+    numero: `MAT-${sufixo.toUpperCase()}`,
+    planoId: `pla-${sufixo}`,
+    status: 'Ativa'
+  }]);
+  await escrever(base, 'financeiro', [{
+    id: `fin-${sufixo}`,
+    tipo: 'receber',
+    alunoId: `alu-${sufixo}`,
+    matriculaId: `mat-${sufixo}`,
+    descricao: `Mensalidade ${sufixo.toUpperCase()}`,
+    valor: sufixo === 'a' ? 100 : 120,
+    status: 'Aberto'
+  }]);
+  await escrever(base, 'caixa', {
+    caixas: [{
+      id: `cx-${sufixo}`,
+      status: 'aberto',
+      dataAbertura: '2026-08-11',
+      valorAbertura: 0
+    }],
+    movimentos: []
+  });
   await escrever(base, 'recibos', []);
   await escrever(base, 'recebimentos', []);
   await escrever(base, 'access_dispositivos', [{
@@ -100,19 +127,35 @@ processo.stderr.on('data', parte => { saida += parte; });
 processo.once('exit', (code, signal) => { encerrado = { code, signal }; });
 
 function token(tenantId, sub) {
-  return jwt.sign({ sub, email: `${sub}@example.local`, perfil: 'Administrador', permissoes: ['*'], tenantId }, jwtSecret, { expiresIn: '1h' });
+  return jwt.sign(
+    {
+      sub,
+      email: `${sub}@example.local`,
+      perfil: 'Administrador',
+      permissoes: ['*'],
+      tenantId
+    },
+    jwtSecret,
+    { expiresIn: '1h' }
+  );
 }
 
 const tokenA = token('academia-a', 'usr-a');
 const tokenB = token('academia-b', 'usr-b');
 
 function authHeaders(tokenJwt, extra = {}) {
-  return { authorization: `Bearer ${tokenJwt}`, 'Content-Type': 'application/json', ...extra };
+  return {
+    authorization: `Bearer ${tokenJwt}`,
+    'Content-Type': 'application/json',
+    ...extra
+  };
 }
 
 async function esperarServidor() {
   for (let i = 0; i < 200; i += 1) {
-    if (encerrado) throw new Error(`Servidor encerrou antes do smoke: ${JSON.stringify(encerrado)}.\n${saida}`);
+    if (encerrado) {
+      throw new Error(`Servidor encerrou antes do smoke: ${JSON.stringify(encerrado)}.\n${saida}`);
+    }
     try {
       const resposta = await fetch(`http://127.0.0.1:${porta}/api/health`);
       if (resposta.ok) return;
@@ -150,7 +193,10 @@ try {
   assert.equal(r.resposta.headers.get('x-fusion-tenant'), 'academia-b');
   assert.deepEqual(r.json.map(item => item.id), ['alu-b']);
 
-  r = await chamar('/api/alunos', { tokenJwt: tokenA, headers: { 'x-fusion-tenant': 'academia-b' } });
+  r = await chamar('/api/alunos', {
+    tokenJwt: tokenA,
+    headers: { 'x-fusion-tenant': 'academia-b' }
+  });
   assert.equal(r.resposta.status, 403);
 
   r = await chamar('/api/matriculas', { tokenJwt: tokenA });
@@ -181,14 +227,24 @@ try {
   assert.equal(r.resposta.status, 200, r.texto);
   assert.deepEqual(r.json.dispositivos.map(item => item.id), ['catraca-a']);
 
+  // Hardening atual: apenas academia-a possui Access Agent físico vinculado.
+  // Mesmo havendo um cadastro Henry antigo/fixture no tenant B, ele não deve
+  // ser exposto no dashboard nem reutilizado por engano.
   r = await chamar('/api/access-engine/dashboard', { tokenJwt: tokenB });
   assert.equal(r.resposta.status, 200, r.texto);
-  assert.deepEqual(r.json.dispositivos.map(item => item.id), ['catraca-b']);
+  assert.deepEqual(r.json.dispositivos.map(item => item.id), []);
+  assert.equal(r.json.resumo?.dispositivos, 0);
+  assert.equal(r.json.resumo?.online, 0);
+  assert.equal(r.json.resumo?.cadastrosIgnorados >= 1, true);
 
   r = await chamar('/api/access-engine/liberar-remoto', {
     tokenJwt: tokenA,
     method: 'POST',
-    body: { alunoId: 'alu-a', alunoNome: 'Aluno A', dispositivoId: 'catraca-a' }
+    body: {
+      alunoId: 'alu-a',
+      alunoNome: 'Aluno A',
+      dispositivoId: 'catraca-a'
+    }
   });
   assert.equal(r.resposta.status, 202, r.texto);
   assert.equal(r.json.catraca.command.tenantId, 'academia-a');
@@ -197,14 +253,20 @@ try {
   r = await chamar('/api/access-engine/liberar-remoto', {
     tokenJwt: tokenB,
     method: 'POST',
-    body: { alunoId: 'alu-b', alunoNome: 'Aluno B', dispositivoId: 'catraca-b' }
+    body: {
+      alunoId: 'alu-b',
+      alunoNome: 'Aluno B',
+      dispositivoId: 'catraca-b'
+    }
   });
   assert.equal(r.resposta.status, 403);
 
   r = await chamar('/api/planos');
   assert.equal(r.resposta.status, 400);
 
-  r = await chamar('/api/planos', { headers: { 'x-fusion-tenant': 'academia-b' } });
+  r = await chamar('/api/planos', {
+    headers: { 'x-fusion-tenant': 'academia-b' }
+  });
   assert.equal(r.resposta.status, 200, r.texto);
   assert.deepEqual(r.json.dados.map(item => item.id), ['pla-b']);
 
@@ -215,8 +277,15 @@ try {
   console.log(JSON.stringify({
     ok: true,
     porta,
-    alunos: { academiaA: 'alu-a', academiaB: 'alu-b' },
-    accessEngine: { academiaA: 'catraca-a', academiaB: 'catraca-b' },
+    alunos: {
+      academiaA: 'alu-a',
+      academiaB: 'alu-b'
+    },
+    accessEngine: {
+      academiaA: ['catraca-a'],
+      academiaB: [],
+      academiaBSemAgentFisico: true
+    },
     uploadsProtegidos: true
   }, null, 2));
 } finally {

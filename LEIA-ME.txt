@@ -1,53 +1,46 @@
-Fusion ERP - Regressões P0 V1
+Fusion ERP - P1 Provisionamento Fusion Aluno V1
 
 Arquivos:
-- package.json
-- scripts/test-regressoes-p0-fusion.mjs
+- scripts/provisionar-academia-fusion-aluno.mjs
+- scripts/test-provisionamento-academia-fusion-aluno.mjs
 
-Instalação:
-1. Copie o conteúdo deste ZIP para a raiz do fusion-erp.
-2. Escolha substituir package.json quando solicitado.
-3. O novo script não altera dados e não chama o Supabase real: o teste de ativação usa fetch simulado e o teste multiempresa usa armazenamento JSON temporário.
+Objetivo:
+Eliminar a etapa manual de criar/vincular uma academia do ERP ao Fusion Aluno.
 
-Executar apenas a nova suíte:
-  npm run test:regressoes-p0
+Segurança:
+- O comando é dry-run por padrão.
+- Para alterar o Supabase, exige ao mesmo tempo:
+  --apply
+  --confirmar=PROVISIONAR-ACADEMIA
+- A RPC no Supabase é executável apenas por service_role.
+- Chaves sb_secret_* são enviadas apenas no header apikey.
+- Chaves JWT service_role legadas usam apikey + Bearer.
+- O script não imprime a chave.
+- Repetir o mesmo provisionamento é idempotente.
 
-Executar toda a auditoria P0:
-  npm run test:p0-auditoria
+1) Testar a ferramenta localmente:
+  node scripts/test-provisionamento-academia-fusion-aluno.mjs
 
-Cobertura nova:
-- contrato de datas civis YYYY-MM-DD;
-- mensalidade paga não pode ser próximo vencimento;
-- rate limit precisa rodar antes da ativação;
-- bloqueio 429 impede o RPC de ativação;
-- fluxo permitido chama rate limit e depois ativação;
-- instalação inválida falha antes de upstream;
-- professor com token do tenant A e header do tenant B recebe 403;
-- professor sem header herda tenant do token.
+2) Fazer apenas dry-run de uma academia:
+  node scripts/provisionar-academia-fusion-aluno.mjs --tenant=academia-exemplo --nome="Academia Exemplo" --timezone=America/Maceio
 
-CI adicionada:
-- .github/workflows/p0-auditoria.yml
-- Em push na main, pull request ou execução manual, o GitHub instala dependências, roda npm run check e npm run test:p0-auditoria.
-- A workflow usa apenas permissao de leitura e não recebe segredos.
+3) Aplicar somente depois de revisar:
+  node scripts/provisionar-academia-fusion-aluno.mjs --tenant=academia-exemplo --nome="Academia Exemplo" --timezone=America/Maceio --apply --confirmar=PROVISIONAR-ACADEMIA
 
+Variáveis esperadas no .env:
+- FUSION_APP_SUPABASE_URL
+- FUSION_APP_SUPABASE_SECRET_KEY
+  ou FUSION_APP_SUPABASE_SERVICE_ROLE_KEY
 
-V2 - Jornada integrada Financeiro + Acesso:
-- Novo comando: npm run test:p0-jornada-financeiro-acesso
-- Cria aluno/plano em armazenamento temporario.
-- Cria matricula pela API real.
-- Confirma cobranca inicial e mensalidade inicial.
-- Abre caixa e baixa o pagamento.
-- Confirma ativacao da matricula e do aluno.
-- Confirma recibo e movimento de caixa.
-- Confirma programacao da proxima mensalidade sem divida antecipada.
-- Simula acesso do aluno.
-- Confirma comando de catraca tenant/equipment-aware.
-- Simula heartbeat, claim e conclusao do Access Agent.
-- Confirma log e presenca.
-- Nao usa dados reais e nao chama Supabase de producao.
+Não envie ou cole essas chaves no chat.
 
-Depois de copiar:
-  npm run test:p0-jornada-financeiro-acesso
+Status Supabase:
+A RPC public.fusion_provisionar_academia_backend já foi instalada no projeto Fusion Aluno.
+Ela foi validada para:
+- anon: sem EXECUTE
+- authenticated: sem EXECUTE
+- service_role: EXECUTE
+- criação em transação + rollback sem resíduos
+- chamada repetida sobre academia-homologacao retorna criado=false/vinculo_criado=false
 
-Se passar:
-  npm run test:p0-auditoria
+Ainda não faça Git/Render antes de o teste local acima passar.

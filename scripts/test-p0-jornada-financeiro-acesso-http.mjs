@@ -62,7 +62,7 @@ await escrever("planos", [{
   tipoPlano: "Mensal",
   renovacaoAutomatica: true,
   geraMensalidade: true,
-  cobraMatricula: true,
+  cobraMatricula: false,
   valorMatricula: 0,
   status: "ativo"
 }]);

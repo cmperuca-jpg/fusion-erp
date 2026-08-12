@@ -34,9 +34,13 @@ async function testarContratosDeCodigo() {
     fs.readFile(frontendPath, "utf8")
   ]);
 
-  assert.match(
-    serviceSource,
-    /const calendario = texto\.match\(\/\^\\d\{4\}.*T12:00:00\.000Z/s,
+  const contratoDataBackend = String.raw`const calendario = texto.match(/^(\d{4})-(\d{2})-(\d{2})$/);`;
+  assert.ok(
+    serviceSource.includes(contratoDataBackend),
+    "Backend precisa reconhecer datas civis no formato YYYY-MM-DD."
+  );
+  assert.ok(
+    serviceSource.includes("T12:00:00.000Z"),
     "Datas civis YYYY-MM-DD precisam continuar protegidas contra deslocamento de fuso."
   );
   assert.match(
@@ -54,9 +58,13 @@ async function testarContratosDeCodigo() {
     "O rate limit persistente precisa rodar antes do RPC de ativação."
   );
 
-  assert.match(
-    frontendSource,
-    /const dataSomente = texto\.match\(\/\^\\d\{4\}.*if \(dataSomente\) return/s,
+  const contratoDataFrontend = String.raw`const dataSomente = texto.match(/^(\d{4})-(\d{2})-(\d{2})$/);`;
+  assert.ok(
+    frontendSource.includes(contratoDataFrontend),
+    "Frontend precisa reconhecer datas civis no formato YYYY-MM-DD."
+  );
+  assert.ok(
+    frontendSource.includes('if (dataSomente) return `${dataSomente[3]}/${dataSomente[2]}/${dataSomente[1]}`;'),
     "O frontend precisa formatar YYYY-MM-DD diretamente, sem depender de timezone."
   );
 }

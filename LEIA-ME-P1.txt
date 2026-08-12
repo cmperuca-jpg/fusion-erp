@@ -1,0 +1,48 @@
+Fusion ERP — P1 Implantação Repetível — pacote final V1
+
+OBJETIVO
+Versionar no GitHub o que já foi validado localmente e no Supabase real.
+
+ARQUIVOS
+- package.json
+- scripts/test-implantacao-repetivel.mjs
+- scripts/provisionar-academia-fusion-aluno.mjs
+- scripts/test-provisionamento-academia-fusion-aluno.mjs
+- supabase/fusion-aluno/migrations/20260812071300_provisionar_academia_backend.sql
+
+IMPORTANTE
+- A migration é do projeto Supabase FUSION ALUNO.
+- Ela NÃO deve ser aplicada no banco principal fusion_v3_records do ERP.
+- A RPC já está aplicada no Supabase real; este arquivo serve para eliminar drift e versionar o estado.
+- Não há segredo, token ou chave neste pacote.
+- O arquivo .env não está incluído e não deve entrar no Git.
+
+COMANDOS NOVOS
+npm run provisionar:fusion-aluno -- --tenant=academia-exemplo --nome="Academia Exemplo"
+  Dry-run por padrão.
+
+npm run provisionar:fusion-aluno -- --tenant=academia-exemplo --nome="Academia Exemplo" --apply --confirmar=PROVISIONAR-ACADEMIA
+  Aplica no Fusion Aluno usando as variáveis FUSION_APP_SUPABASE_*.
+
+npm run test:provisionamento-fusion-aluno
+  Testa dry-run, confirmação, chamada service_role simulada e ausência de vazamento do segredo.
+
+npm run test:p1-implantacao
+  Executa o smoke de duas academias + o teste do provisionador.
+
+VALIDAÇÕES JÁ OBTIDAS
+- test:implantacao-repetivel: PASSOU no Windows do operador.
+- test:provisionamento-fusion-aluno: PASSOU no Windows do operador.
+- provisionamento real academia-qa-implantacao: primeira chamada criou.
+- segunda chamada: criado=false, vinculoCriado=false, idempotente=true.
+- banco real: exatamente um vínculo para academia-qa-implantacao.
+- RPC: anon/authenticated sem EXECUTE; service_role com EXECUTE.
+- tenant QA NÃO deve ser removido automaticamente por este pacote.
+
+ANTES DO COMMIT
+1. Extraia o ZIP na raiz e substitua os arquivos.
+2. Rode:
+   npm run test:p1-implantacao
+3. Rode:
+   npm run test:p0-auditoria
+4. Se ambos passarem, então faça commit/push.
