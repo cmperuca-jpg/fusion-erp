@@ -29,3 +29,25 @@ CI adicionada:
 - .github/workflows/p0-auditoria.yml
 - Em push na main, pull request ou execução manual, o GitHub instala dependências, roda npm run check e npm run test:p0-auditoria.
 - A workflow usa apenas permissao de leitura e não recebe segredos.
+
+
+V2 - Jornada integrada Financeiro + Acesso:
+- Novo comando: npm run test:p0-jornada-financeiro-acesso
+- Cria aluno/plano em armazenamento temporario.
+- Cria matricula pela API real.
+- Confirma cobranca inicial e mensalidade inicial.
+- Abre caixa e baixa o pagamento.
+- Confirma ativacao da matricula e do aluno.
+- Confirma recibo e movimento de caixa.
+- Confirma programacao da proxima mensalidade sem divida antecipada.
+- Simula acesso do aluno.
+- Confirma comando de catraca tenant/equipment-aware.
+- Simula heartbeat, claim e conclusao do Access Agent.
+- Confirma log e presenca.
+- Nao usa dados reais e nao chama Supabase de producao.
+
+Depois de copiar:
+  npm run test:p0-jornada-financeiro-acesso
+
+Se passar:
+  npm run test:p0-auditoria
