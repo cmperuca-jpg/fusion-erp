@@ -1,23 +1,14 @@
-CORRECAO - AVALIACOES DO PORTAL DO PROFESSOR
+Fusion ERP - Hardening do fluxo de ativação
 
-Problema corrigido:
-- Professor comum conseguia abrir a tela de Avaliacao Fisica, mas POST /api/avaliacoes exigia perfil estrito de Responsavel Tecnico e bloqueava a gravacao.
+Substitua na raiz do projeto:
+  modules/treinos/aluno-app.service.mjs
 
-Nova regra:
-- Professor comum do portal pode criar avaliacao somente para aluno vinculado a ele.
-- Professor comum pode editar/excluir somente avaliacao criada por ele.
-- Responsavel Tecnico continua com acesso global.
-- Usuario administrativo fora do portal preserva a regra anterior de Responsavel Tecnico para escrita.
+O Supabase já recebeu as migrations:
+- restringir_rpc_publico_ativacao_apps
+- rate_limit_persistente_ativacao_apps
 
-Arquivo para substituir:
-modules/avaliacoes/avaliacoes.routes.mjs
+O backend passa a consultar o limitador persistente antes de ativar o app.
+Limite: 8 tentativas por instalacao_id em 10 minutos.
+O identificador é armazenado no Supabase somente como SHA-256.
 
-Copie a pasta modules para a raiz do repositorio Fusion e escolha substituir o arquivo no destino.
-Depois publique/reinicie o backend e use Ctrl+F5 no navegador.
-
-Teste esperado na academia-homologacao:
-1. Entrar como shaikyschana.
-2. Abrir Avaliacao Fisica.
-3. Selecionar MARIA MARIANA (aluna vinculada).
-4. Preencher e salvar.
-5. Deve aparecer "Avaliacao cadastrada" e o historico deve passar de 0 para 1 registro.
+Depois de substituir, reinicie/publice o backend e faça um smoke de ativação com um código NOVO de homologação.

@@ -279,6 +279,26 @@ export async function ativarAlunoApp(payload = {}) {
     throw new AlunoAppError("Identificação deste aparelho inválida.", 400, "INVALID_INSTALLATION_ID");
   }
 
+  const limiteAtivacao = await chamarSupabase("/rest/v1/rpc/fusion_app_verificar_limite_ativacao_backend", {
+    method: "POST",
+    body: {
+      p_instalacao_id: instalacaoId,
+      p_limite: 8,
+      p_janela_segundos: 600
+    }
+  });
+
+  if (limiteAtivacao?.permitido === false) {
+    const retryAfter = Number(limiteAtivacao?.retry_after || 600);
+    const erro = new AlunoAppError(
+      "Muitas tentativas de ativação neste dispositivo. Aguarde alguns minutos e tente novamente.",
+      429,
+      "RATE_LIMIT"
+    );
+    erro.retryAfter = Number.isFinite(retryAfter) && retryAfter > 0 ? Math.ceil(retryAfter) : 600;
+    throw erro;
+  }
+
   const data = await chamarSupabase("/rest/v1/rpc/fusion_ativar_app", {
     method: "POST",
     body: {
