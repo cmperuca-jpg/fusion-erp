@@ -20,6 +20,12 @@ async function consultarAgente() {
   try {
     const data = await json(`${API}/agente/status`, { cache: 'no-store' });
     const box = $('agenteStatus');
+    if (data.configurado === false || !data.agentId) {
+      box.dataset.status = 'offline';
+      box.querySelector('strong').textContent = 'Não configurado';
+      $('agenteMensagem').textContent = 'Nenhum Fusion Access Agent está vinculado a esta academia. Configure um agente próprio desta unidade antes de usar uma catraca física.';
+      return;
+    }
     box.dataset.status = data.online ? 'online' : 'offline';
     box.querySelector('strong').textContent = data.online ? 'Online' : 'Offline';
     $('agenteMensagem').textContent = data.online
@@ -100,8 +106,13 @@ async function carregar() {
   $('kpiLiberados').textContent = r.liberadosHoje || 0;
   $('kpiBloqueados').textContent = r.bloqueadosHoje || 0;
   const dispositivos = data.dispositivos || [];
-  $('dispositivoId').innerHTML = dispositivos.map(d => `<option value="${d.id}">${d.nome} · ${d.fabricante}</option>`).join('');
-  $('tabelaDispositivos').innerHTML = dispositivos.map(d => `<tr><td>${d.nome || '-'}</td><td>${d.fabricante || '-'}</td><td>${d.driver || '-'}</td><td>${d.status || '-'}</td></tr>`).join('') || '<tr><td colspan="4">Nenhum equipamento cadastrado.</td></tr>';
+  const temDispositivo = dispositivos.length > 0;
+  $('dispositivoId').innerHTML = temDispositivo
+    ? dispositivos.map(d => `<option value="${d.id}">${d.nome} · ${d.fabricante}</option>`).join('')
+    : '<option value="">Nenhum equipamento configurado</option>';
+  $('btnSimular').disabled = !temDispositivo;
+  $('btnLiberarManual').disabled = !temDispositivo;
+  $('tabelaDispositivos').innerHTML = dispositivos.map(d => `<tr><td>${d.nome || '-'}</td><td>${d.fabricante || '-'}</td><td>${d.driver || '-'}</td><td>${d.status || '-'}</td></tr>`).join('') || '<tr><td colspan="4">Nenhum equipamento cadastrado para esta academia.</td></tr>';
   $('listaPresentes').innerHTML = (data.presentes || []).map(p => `<div class="access-person"><strong>${p.nome || '-'}</strong><small>${p.numeroMatricula || ''} · entrada ${hora(p.entradaEm)}</small></div>`).join('') || '<div class="access-muted access-result">Nenhuma pessoa registrada dentro da academia.</div>';
   $('tabelaLogs').innerHTML = (data.ultimosLogs || []).map(l => `<tr><td>${hora(l.criadoEm)}</td><td>${l.alunoNome || l.identificador || '-'}</td><td>${l.direcao || '-'}</td><td>${badge(!!l.autorizado)}</td><td>${l.motivo || '-'}</td><td>${l.dispositivoNome || '-'}<br><small>${l.fabricante || ''} ${l.driver ? '· '+l.driver : ''}</small></td></tr>`).join('') || '<tr><td colspan="6">Nenhum acesso registrado.</td></tr>';
 }

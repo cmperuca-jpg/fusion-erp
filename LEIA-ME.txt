@@ -1,14 +1,30 @@
-Substitua somente:
-- public/pages/comecar/index.html
-- public/pages/comecar/style.css
+CORREÇÃO FUSION ACCESS — ISOLAMENTO DE CATRACA POR ACADEMIA
 
-Correções:
-- fundo escuro próprio no painel esquerdo;
-- textos brancos legíveis em toda a área;
-- contraste reforçado em textos secundários e placeholders;
-- link de recuperação mais visível;
-- foco de teclado reforçado;
-- suporte a prefers-contrast: more.
+COMO SUBSTITUIR
+1. Feche o Fusion/servidor local se estiver aberto.
+2. Faça uma cópia de segurança da pasta fusion-erp.
+3. Extraia este ZIP.
+4. Copie as pastas "modules" e "public" extraídas para dentro da raiz do seu fusion-erp.
+5. Quando o Windows perguntar, escolha "Substituir os arquivos no destino".
 
-Commit sugerido:
-fix: melhora contraste e acessibilidade da entrada multiempresa
+PASTA DE DESTINO ESPERADA
+C:\Users\academia01\Documents\GitHub\fusion-erp\
+
+ARQUIVOS SUBSTITUÍDOS
+- modules\access-engine\access-engine.routes.mjs
+- modules\access-onboarding\access-onboarding.routes.mjs
+- public\pages\access-engine\index.js
+- public\assets\js\fusion-layout.js
+
+IMPORTANTE
+Este pacote foi preparado para o main auditado em 11/08/2026. Os arquivos originais esperados tinham estes Git blob SHAs:
+- access-engine.routes.mjs: 9ee741ba45b2a18e0e6f32d98f913411cc792cf3
+- access-onboarding.routes.mjs: c9cf5e963365f4ea6e394ed531229757e34802bf
+- public/pages/access-engine/index.js: 29eb824b798f1ae8fbc2ebb2ca9a816c4a4f7921
+- public/assets/js/fusion-layout.js: b181d6887fa28e64fab57d8173076fd23a5abd71
+
+RESULTADO ESPERADO NA ACADEMIA DE HOMOLOGAÇÃO
+- nenhuma catraca física da academia piloto aparece;
+- agente fica como "Não configurado";
+- indicador superior mostra "Sem catraca";
+- comandos/rotas Henry da outra academia ficam bloqueados.

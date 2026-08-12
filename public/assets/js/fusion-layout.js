@@ -568,36 +568,53 @@
     });
   }
 
-  const CATRACA_STORAGE_KEY = "fusion_catraca_painel_ativa";
-
   function perfilPodeControlarCatraca(user) {
     const perfil = normalizarPermissao(user?.perfil || user?.perfilOriginal);
     return ["admin", "administrador", "gerente", "recepcao", "comercial"].includes(perfil);
   }
 
-  function catracaAtiva() {
-    return localStorage.getItem(CATRACA_STORAGE_KEY) !== "0";
-  }
-
-  function salvarCatracaAtiva(ativa) {
-    localStorage.setItem(CATRACA_STORAGE_KEY, ativa ? "1" : "0");
-  }
-
   function atualizarControleCatraca(controle, estado = {}) {
     if (!controle) return;
-    const ativa = estado.ativa ?? catracaAtiva();
+    const configurado = estado.configurado === true;
+    const online = configurado && estado.online === true;
     const ocupada = estado.ocupada === true;
     const status = controle.querySelector("[data-catraca-status]");
     const alternar = controle.querySelector("[data-catraca-alternar]");
 
-    controle.classList.toggle("catraca-ativa", ativa);
-    controle.classList.toggle("catraca-inativa", !ativa);
+    controle.classList.toggle("catraca-ativa", online);
+    controle.classList.toggle("catraca-inativa", !online);
     controle.classList.toggle("catraca-ocupada", ocupada);
 
-    if (status) status.textContent = ocupada ? "Comunicando..." : (ativa ? "Catraca ligada" : "Controle desligado");
+    if (status) {
+      status.textContent = ocupada
+        ? "Verificando..."
+        : (!configurado ? "Sem catraca" : (online ? "Catraca online" : "Catraca offline"));
+    }
     if (alternar) {
-      alternar.textContent = ativa ? "Desligar" : "Ligar";
+      alternar.textContent = "Catracas";
       alternar.disabled = ocupada;
+    }
+  }
+
+  async function consultarControleCatraca(controle) {
+    if (!controle) return;
+    atualizarControleCatraca(controle, { configurado: false, online: false, ocupada: true });
+    try {
+      const request = window.FusionAuth?.fetchAuth
+        ? FusionAuth.fetchAuth("/api/access-engine/agente/status", { cache: "no-store" })
+        : fetch("/api/access-engine/agente/status", { cache: "no-store" });
+      const response = await request;
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || data.ok === false) throw new Error(data.mensagem || data.erro || "Falha ao consultar catraca");
+      atualizarControleCatraca(controle, {
+        configurado: data.configurado !== false && Boolean(data.agentId),
+        online: data.online === true,
+        ocupada: false
+      });
+    } catch {
+      atualizarControleCatraca(controle, { configurado: false, online: false, ocupada: false });
+    } finally {
+      if (controle.isConnected) setTimeout(() => consultarControleCatraca(controle), 15000);
     }
   }
 
@@ -606,16 +623,13 @@
 
     const controle = document.createElement("div");
     controle.className = "fusion-catraca-controle";
-    controle.innerHTML = '<span class="fusion-catraca-status" data-catraca-status>Catraca ligada</span><button type="button" class="fusion-catraca-toggle" data-catraca-alternar>Desligar</button>';
+    controle.innerHTML = '<span class="fusion-catraca-status" data-catraca-status>Verificando...</span><button type="button" class="fusion-catraca-toggle" data-catraca-alternar>Catracas</button>';
 
     controle.querySelector("[data-catraca-alternar]")?.addEventListener("click", () => {
-      const vaiLigar = !catracaAtiva();
-      atualizarControleCatraca(controle, { ativa: catracaAtiva(), ocupada: true });
-      salvarCatracaAtiva(vaiLigar);
-      atualizarControleCatraca(controle, { ativa: vaiLigar, ocupada: false });
+      location.href = "/pages/access-engine/index.html";
     });
 
-    atualizarControleCatraca(controle);
+    setTimeout(() => consultarControleCatraca(controle), 0);
     return controle;
   }
 

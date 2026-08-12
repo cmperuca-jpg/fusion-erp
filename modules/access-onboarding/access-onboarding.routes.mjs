@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import { Router } from "express";
 import { validarToken } from "../auth/auth.service.mjs";
 import { resolverAccessAgentConfig } from "../access-bridge/access-agent-config.service.mjs";
+import { normalizarTenantId, tenantAtual } from "../core/persistence/tenant-context.mjs";
 
 const router = Router();
 const codigos = new Map();
@@ -35,18 +36,51 @@ async function exigirGestor(req, res, next) {
   }
 }
 
+function tenantFisicoConfigurado() {
+  return normalizarTenantId(process.env.ACCESS_AGENT_TENANT_ID || process.env.FUSION_TENANT_ID || "academia-piloto");
+}
+
+function tenantDaRequisicao(req) {
+  return normalizarTenantId(req.usuario?.tenantId || req.usuario?.tenant_id || tenantAtual());
+}
+
+function exigirTenantProvisionado(req) {
+  const tenantId = tenantDaRequisicao(req);
+  const tenantConfigurado = tenantFisicoConfigurado();
+  if (!tenantId) {
+    const erro = new Error("Sessão sem academia vinculada.");
+    erro.status = 401;
+    throw erro;
+  }
+  if (!tenantConfigurado || tenantId !== tenantConfigurado) {
+    const erro = new Error("Nenhum Fusion Access Agent físico está provisionado para esta academia.");
+    erro.status = 403;
+    throw erro;
+  }
+  return tenantId;
+}
+
 router.post("/codigo", exigirGestor, (req, res) => {
-  limpar();
-  const config = resolverAccessAgentConfig({ criarToken: true });
-  if (!config.configurado) return res.status(503).json({ ok: false, mensagem: config.erro || "O agente ainda nao foi habilitado no servidor." });
-  if (!process.env.ACCESS_AGENT_TOKEN && config.agentToken) process.env.ACCESS_AGENT_TOKEN = config.agentToken;
-  if (!process.env.ACCESS_EQUIPMENT_ID && config.equipmentId) process.env.ACCESS_EQUIPMENT_ID = config.equipmentId;
-  if (!process.env.ACCESS_EQUIPMENT_IDS && config.equipmentIds?.length) process.env.ACCESS_EQUIPMENT_IDS = config.equipmentIds.join(",");
-  if (!process.env.ACCESS_AGENT_ID || !process.env.ACCESS_AGENT_TOKEN || !process.env.ACCESS_EQUIPMENT_ID) return res.status(503).json({ ok: false, mensagem: "O agente ainda não foi habilitado no servidor." });
-  const codigo = codigoNovo();
-  const expiraEm = Date.now() + DURACAO_MS;
-  codigos.set(codigo, { expiraEm, usado: false, criadoPor: req.usuario?.id || req.usuario?.email || "admin" });
-  res.status(201).json({ ok: true, codigo, expiraEm: new Date(expiraEm).toISOString(), duracaoMinutos: 15 });
+  try {
+    limpar();
+    const tenantId = exigirTenantProvisionado(req);
+    const config = resolverAccessAgentConfig({ criarToken: true });
+    if (!config.configurado) return res.status(503).json({ ok: false, mensagem: config.erro || "O agente ainda nao foi habilitado no servidor." });
+    const tenantConfig = normalizarTenantId(config.tenantId || config.config?.tenantId || process.env.ACCESS_AGENT_TENANT_ID || process.env.FUSION_TENANT_ID || "");
+    if (tenantConfig && tenantConfig !== tenantId) {
+      return res.status(403).json({ ok: false, mensagem: "A configuração do agente pertence a outra academia." });
+    }
+    if (!process.env.ACCESS_AGENT_TOKEN && config.agentToken) process.env.ACCESS_AGENT_TOKEN = config.agentToken;
+    if (!process.env.ACCESS_EQUIPMENT_ID && config.equipmentId) process.env.ACCESS_EQUIPMENT_ID = config.equipmentId;
+    if (!process.env.ACCESS_EQUIPMENT_IDS && config.equipmentIds?.length) process.env.ACCESS_EQUIPMENT_IDS = config.equipmentIds.join(",");
+    if (!process.env.ACCESS_AGENT_ID || !process.env.ACCESS_AGENT_TOKEN || !process.env.ACCESS_EQUIPMENT_ID) return res.status(503).json({ ok: false, mensagem: "O agente ainda não foi habilitado no servidor." });
+    const codigo = codigoNovo();
+    const expiraEm = Date.now() + DURACAO_MS;
+    codigos.set(codigo, { expiraEm, usado: false, tenantId, criadoPor: req.usuario?.id || req.usuario?.email || "admin" });
+    res.status(201).json({ ok: true, codigo, expiraEm: new Date(expiraEm).toISOString(), duracaoMinutos: 15 });
+  } catch (erro) {
+    res.status(erro.status || 500).json({ ok: false, mensagem: erro.message || "Falha ao gerar código de instalação." });
+  }
 });
 
 router.post("/ativar", (req, res) => {
@@ -64,6 +98,10 @@ router.post("/ativar", (req, res) => {
   const config = resolverAccessAgentConfig({ criarToken: true });
   if (!config.configurado || !config.agentToken) {
     return res.status(503).json({ ok: false, mensagem: config.erro || "O agente ainda nao foi habilitado no servidor." });
+  }
+  const tenantConfig = normalizarTenantId(config.tenantId || config.config?.tenantId || process.env.ACCESS_AGENT_TENANT_ID || process.env.FUSION_TENANT_ID || "");
+  if (!tenantConfig || tenantConfig !== normalizarTenantId(registro.tenantId)) {
+    return res.status(403).json({ ok: false, mensagem: "O código de instalação não pertence à configuração atual desta academia." });
   }
   if (!process.env.ACCESS_AGENT_TOKEN && config.agentToken) process.env.ACCESS_AGENT_TOKEN = config.agentToken;
   registro.usado = true;
