@@ -47,9 +47,10 @@ Exigencias tratadas nesta etapa:
 - Faturas futuras permanecem em `mensalidades.json` com `status: "programada"` e saldo zero.
 - O motor de cobranca emite a mensalidade e cria o titulo financeiro somente quando a data programada chega.
 - Atualizado `npm run test:cobranca-automatica` para usar JWT administrativo e validar o fluxo HTTP completo: baixa -> programacao -> emissao no vencimento.
+- Criada regressao `npm run test:access-liberacao-integrada` cobrindo avaliacao de acesso, comando enfileirado para a catraca, heartbeat do agente, claim, conclusao e bloqueio cross-tenant/equipamento.
 - Criada suite agregada `npm run test:p0-auditoria`.
 
-Proxima acao recomendada: ampliar regressao para liberacao fisica integrada com comando de catraca em ambiente com agente real/simulador.
+Proxima acao recomendada: ampliar smoke HTTP real das rotas de alunos, matriculas, financeiro, caixa, uploads e access-engine com dados de dois tenants.
 
 ## P1 - Billing do Proprio Fusion
 
