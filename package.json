@@ -35,7 +35,7 @@
     "test:saas-billing-manual": "node scripts/test-saas-billing-manual.mjs",
     "test:saas-billing-policy": "node scripts/test-saas-billing-policy.mjs",
     "test:saas-billing-automatico": "node scripts/test-saas-billing-automatico.mjs",
-    "test:saas-billing": "npm run test:saas-billing-manual && npm run test:saas-billing-policy && npm run test:saas-billing-automatico",
+    "test:saas-billing": "npm run test:saas-billing-manual && npm run test:saas-billing-policy && npm run test:saas-billing-automatico && npm run test:saas-billing-enforcement",
     "test:implantacao-repetivel": "node scripts/test-implantacao-repetivel.mjs",
     "provisionar:fusion-aluno": "node scripts/provisionar-academia-fusion-aluno.mjs",
     "test:provisionamento-fusion-aluno": "node scripts/test-provisionamento-academia-fusion-aluno.mjs",
@@ -44,7 +44,8 @@
     "reconciliar:financeiro": "node scripts/reconciliar-financeiro-caixa.mjs --supabase --apply",
     "piloto:280": "npm run check && npm run backup:data",
     "access:agent": "node scripts/fusion-access-agent.mjs",
-    "test:p0-jornada-financeiro-acesso": "node scripts/test-p0-jornada-financeiro-acesso-http.mjs"
+    "test:p0-jornada-financeiro-acesso": "node scripts/test-p0-jornada-financeiro-acesso-http.mjs",
+    "test:saas-billing-enforcement": "node scripts/test-saas-billing-enforcement.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.53.0",

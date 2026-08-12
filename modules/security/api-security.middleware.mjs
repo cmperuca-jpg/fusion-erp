@@ -3,6 +3,7 @@ import { validarToken, validarTokenPortal } from "../auth/auth.service.mjs";
 import { executarComTenant, normalizarTenantId } from "../core/persistence/tenant-context.mjs";
 import { validarSessaoSuporteAtiva, registrarAuditoriaSuporte } from "../suporte/suporte.service.mjs";
 import { obterSupabaseAdmin } from "../../config/supabase.mjs";
+import { executarEnforcementBilling } from "./billing-enforcement.middleware.mjs";
 
 const PUBLIC_RULES = [
   ["GET", "/api/health"],
@@ -431,7 +432,7 @@ export async function apiSecurity(req, res, next) {
           if (tenantConflita(req, usuario)) return responderConflitoTenant(res);
           req.usuario = usuario;
           res.setHeader("X-Fusion-Tenant", normalizarTenantId(usuario.tenantId));
-          return executarComTenant(usuario.tenantId, () => next());
+          return executarComTenant(usuario.tenantId, () => executarEnforcementBilling(req, res, next));
         }
       } catch {}
     }
@@ -440,7 +441,7 @@ export async function apiSecurity(req, res, next) {
 
     if (tenantPublico) {
       res.setHeader("X-Fusion-Tenant", tenantPublico);
-      return executarComTenant(tenantPublico, () => next());
+      return executarComTenant(tenantPublico, () => executarEnforcementBilling(req, res, next));
     }
 
     if (publicExigeTenant(req)) {
@@ -506,5 +507,5 @@ export async function apiSecurity(req, res, next) {
   }
 
   res.setHeader("X-Fusion-Tenant", normalizarTenantId(req.usuario.tenantId));
-  return executarComTenant(req.usuario.tenantId, () => next());
+  return executarComTenant(req.usuario.tenantId, () => executarEnforcementBilling(req, res, next));
 }
