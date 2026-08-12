@@ -77,9 +77,10 @@ Exigencias tratadas nesta etapa:
 - Consolidado resumo de acessos do dia, bloqueios e falhas de enfileiramento/liberacao da catraca.
 - Consolidado resumo de cobranca: falhas no `cobranca_log`, financeiro vencido, mensalidades vencidas e mensalidades programadas.
 - Criados alertas operacionais por severidade para agente offline, comando falho/expirado, comando antigo, falha de catraca, falha de cobranca e vencidos.
+- Criado `POST /api/sistema/observabilidade/notificar` para persistir eventos operacionais em `observabilidade_eventos` e gerar notificacoes administrativas sem duplicar a mesma ocorrencia do dia.
 - Criado teste HTTP `npm run test:observabilidade`.
 
-Proxima acao recomendada: persistir eventos operacionais em tabela/colecao propria e criar notificacao ativa para falhas criticas.
+Proxima acao recomendada: adicionar job/automacao para executar a notificacao periodicamente e integrar canal externo para falhas criticas.
 
 ## P2 - Experiencia e Refinamentos
 

@@ -119,6 +119,22 @@ async function getObservabilidade(headers = {}) {
   return { resposta, json };
 }
 
+async function postJson(caminho, headers = {}, body = {}) {
+  const resposta = await fetch(`http://127.0.0.1:${porta}${caminho}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...headers },
+    body: JSON.stringify(body)
+  });
+  const json = await resposta.json().catch(() => null);
+  return { resposta, json };
+}
+
+async function getJson(caminho, headers = {}) {
+  const resposta = await fetch(`http://127.0.0.1:${porta}${caminho}`, { headers });
+  const json = await resposta.json().catch(() => null);
+  return { resposta, json };
+}
+
 try {
   await esperarServidor();
 
@@ -153,12 +169,37 @@ try {
   assert.equal(obs.alertas.some(item => item.codigo === 'BILLING_JOB_FAILURE'), true);
   assert.equal(obs.alertas.some(item => item.codigo === 'BILLING_OVERDUE'), true);
 
+  const authHeaders = { authorization: `Bearer ${token}` };
+  resultado = await postJson('/api/sistema/observabilidade/notificar', authHeaders);
+  assert.equal(resultado.resposta.status, 201, JSON.stringify(resultado.json));
+  assert.equal(resultado.json.eventosRegistrados, 4);
+  assert.equal(resultado.json.notificacoesCriadasOuAtualizadas, 4);
+  assert.equal(resultado.json.eventos.every(evento => ['critico', 'alto'].includes(evento.nivel)), true);
+
+  resultado = await postJson('/api/sistema/observabilidade/notificar', authHeaders);
+  assert.equal(resultado.resposta.status, 201, JSON.stringify(resultado.json));
+  assert.equal(resultado.json.eventosRegistrados, 4);
+  assert.equal(resultado.json.notificacoesCriadasOuAtualizadas, 4);
+
+  const eventos = JSON.parse(await fs.readFile(path.join(dataDir, 'observabilidade_eventos.json'), 'utf8'));
+  assert.equal(eventos.length, 4);
+  assert.equal(eventos.every(evento => evento.ocorrencias === 2), true);
+
+  const notificacoes = JSON.parse(await fs.readFile(path.join(dataDir, 'notificacoes.json'), 'utf8'));
+  assert.equal(notificacoes.length, 4);
+  assert.equal(notificacoes.every(item => item.tipo === 'observabilidade'), true);
+
+  resultado = await getJson('/api/notificacoes?naoLidas=1', authHeaders);
+  assert.equal(resultado.resposta.status, 200, JSON.stringify(resultado.json));
+  assert.equal(resultado.json.naoLidas, 4);
+
   console.log(JSON.stringify({
     ok: true,
     endpoint: '/api/sistema/observabilidade',
     alertas: obs.resumo.alertas,
     criticos: obs.resumo.criticos,
-    agentesOnline: obs.resumo.agentesOnline
+    agentesOnline: obs.resumo.agentesOnline,
+    notificacoes: notificacoes.length
   }, null, 2));
 } finally {
   processo.kill('SIGTERM');

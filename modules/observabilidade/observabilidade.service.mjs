@@ -1,5 +1,9 @@
-import { lerJsonDuravel } from "../core/persistence/durable-json.mjs";
+import { executarTransacaoJson, lerJsonDuravel, salvarJsonDuravel } from "../core/persistence/durable-json.mjs";
 import { tenantAtual } from "../core/persistence/tenant-context.mjs";
+import { criarNotificacao } from "../notificacoes/notificacoes.service.mjs";
+
+const EVENTOS_COLECAO = "observabilidade_eventos";
+const ALERTAS_NOTIFICAVEIS = new Set(["critico", "alto"]);
 
 function lista(valor) {
   return Array.isArray(valor) ? valor : [];
@@ -200,6 +204,103 @@ function montarAlertas({ agentes, comandos, acessos, cobranca }) {
   return alertas;
 }
 
+function prioridadeNotificacao(nivel = "") {
+  return nivel === "critico" || nivel === "alto" ? "alta" : "normal";
+}
+
+function chaveEvento({ tenantId, alerta = {}, data = hojeISO() }) {
+  return [
+    "observabilidade",
+    tenantId || "tenant",
+    alerta.codigo || "alerta",
+    data
+  ].join(":");
+}
+
+function tituloAlerta(alerta = {}) {
+  const codigo = texto(alerta.codigo, 120).replace(/_/g, " ");
+  const nivel = texto(alerta.nivel, 40).toUpperCase();
+  return `${nivel}: ${codigo}`;
+}
+
+function resumoEvento(alerta = {}, observabilidade = {}) {
+  const partes = [
+    alerta.mensagem,
+    `Agentes online: ${observabilidade.agentes?.online ?? 0}/${observabilidade.agentes?.total ?? 0}`,
+    `Comandos falhos/expirados: ${(observabilidade.accessBridge?.falhos ?? 0) + (observabilidade.accessBridge?.expirados ?? 0)}`,
+    `Falhas de catraca: ${observabilidade.acessos?.falhasCatraca ?? 0}`,
+    `Falhas de cobranca: ${observabilidade.cobranca?.falhasLog ?? 0}`
+  ];
+  return partes.filter(Boolean).join(" | ");
+}
+
+async function registrarEventosOperacionais(observabilidade = {}) {
+  const tenantId = observabilidade.tenantId || tenantAtual();
+  const hoje = hojeISO();
+  const agora = new Date().toISOString();
+  const alertas = (observabilidade.alertas || []).filter(alerta => ALERTAS_NOTIFICAVEIS.has(alerta.nivel));
+  if (!alertas.length) return [];
+
+  return executarTransacaoJson(async () => {
+    const eventos = await lerJsonDuravel(EVENTOS_COLECAO, []);
+    const lista = Array.isArray(eventos) ? eventos : [];
+    const registrados = [];
+
+    for (const alerta of alertas) {
+      const eventoId = chaveEvento({ tenantId, alerta, data: hoje });
+      let evento = lista.find(item => item.eventoId === eventoId);
+      if (evento) {
+        evento.ocorrencias = Number(evento.ocorrencias || 0) + 1;
+        evento.ultimoAlertaEm = agora;
+        evento.mensagem = texto(alerta.mensagem, 600);
+        evento.resumo = resumoEvento(alerta, observabilidade);
+        evento.atualizadoEm = agora;
+      } else {
+        evento = {
+          id: eventoId,
+          eventoId,
+          tenantId,
+          tipo: "observabilidade",
+          codigo: texto(alerta.codigo, 120),
+          nivel: texto(alerta.nivel, 40),
+          titulo: tituloAlerta(alerta),
+          mensagem: texto(alerta.mensagem, 600),
+          resumo: resumoEvento(alerta, observabilidade),
+          primeiroAlertaEm: agora,
+          ultimoAlertaEm: agora,
+          ocorrencias: 1,
+          status: "aberto",
+          criadoEm: agora,
+          atualizadoEm: agora
+        };
+        lista.unshift(evento);
+      }
+      registrados.push(evento);
+    }
+
+    await salvarJsonDuravel(EVENTOS_COLECAO, lista.slice(0, 1000));
+    return registrados;
+  }, { operacaoId: `observabilidade-eventos-${tenantId}-${hoje}` });
+}
+
+async function criarNotificacoesEventos(eventos = []) {
+  const notificacoes = [];
+  for (const evento of eventos) {
+    const notificacao = await criarNotificacao({
+      eventoId: evento.eventoId,
+      tipo: "observabilidade",
+      prioridade: prioridadeNotificacao(evento.nivel),
+      titulo: evento.titulo,
+      mensagem: evento.resumo || evento.mensagem,
+      link: "/pages/dashboard/index.html",
+      referenciaId: evento.eventoId,
+      destinatarios: ["admin", "gerente"]
+    });
+    notificacoes.push(notificacao);
+  }
+  return notificacoes;
+}
+
 export async function observabilidadeSistema(opcoes = {}) {
   const now = Date.now();
   const onlineMs = Math.max(5000, Math.min(300000, Number(opcoes.onlineMs || process.env.FUSION_OBSERVABILITY_AGENT_ONLINE_MS || 30000)));
@@ -252,5 +353,22 @@ export async function observabilidadeSistema(opcoes = {}) {
     acessos,
     cobranca,
     alertas
+  };
+}
+
+export async function notificarAlertasObservabilidade(opcoes = {}) {
+  const observabilidade = await observabilidadeSistema(opcoes);
+  const eventos = await registrarEventosOperacionais(observabilidade);
+  const notificacoes = await criarNotificacoesEventos(eventos);
+  return {
+    ok: true,
+    modulo: "observabilidade",
+    tenantId: observabilidade.tenantId,
+    timestamp: new Date().toISOString(),
+    alertasDetectados: observabilidade.alertas.length,
+    eventosRegistrados: eventos.length,
+    notificacoesCriadasOuAtualizadas: notificacoes.length,
+    eventos,
+    notificacoes
   };
 }
