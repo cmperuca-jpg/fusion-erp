@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import { executarTransacaoJson, lerJsonDuravel, salvarJsonDuravel } from "../core/persistence/durable-json.mjs";
+import { enviarWebhookObservabilidade } from "../observabilidade/observabilidade-webhook.service.mjs";
 
 const COLECAO = "notificacoes";
 const LIMITE_HISTORICO = 500;
@@ -27,12 +28,12 @@ function visivelPara(notificacao, usuario = {}) {
 }
 
 export async function criarNotificacao(dados = {}) {
-  return executarTransacaoJson(async () => {
+  const resultado = await executarTransacaoJson(async () => {
     const lista = await lerJsonDuravel(COLECAO, []);
     const eventoId = texto(dados.eventoId || dados.evento_id, 180);
     if (eventoId) {
       const existente = lista.find(item => String(item.eventoId || "") === eventoId);
-      if (existente) return existente;
+      if (existente) return { notificacao: existente, criada: false };
     }
 
     const agora = new Date().toISOString();
@@ -54,8 +55,17 @@ export async function criarNotificacao(dados = {}) {
 
     lista.unshift(notificacao);
     await salvarJsonDuravel(COLECAO, lista.slice(0, LIMITE_HISTORICO));
-    return notificacao;
+    return { notificacao, criada: true };
   }, { operacaoId: `notificacao-${dados.eventoId || crypto.randomUUID()}` });
+
+  if (resultado.criada && resultado.notificacao.tipo === "observabilidade") {
+    const entrega = await enviarWebhookObservabilidade(resultado.notificacao);
+    if (!entrega.ok) {
+      console.error(`[Observabilidade] Webhook externo nao enviado: ${entrega.ultimoErro || "falha desconhecida"}`);
+    }
+  }
+
+  return resultado.notificacao;
 }
 
 export async function listarNotificacoes({ usuario = {}, limite = 40, somenteNaoLidas = false } = {}) {

@@ -1,0 +1,29 @@
+Fusion ERP — P1 Observabilidade Webhook V1
+
+OBJETIVO
+Adicionar um canal externo opcional para alertas críticos/altos já detectados pela observabilidade do Fusion.
+
+ARQUIVOS
+- modules/observabilidade/observabilidade-webhook.service.mjs
+- modules/notificacoes/notificacoes.service.mjs
+- scripts/test-observabilidade-webhook.mjs
+- package.json
+
+COMPORTAMENTO
+- Sem FUSION_OBSERVABILITY_WEBHOOK_URL: nenhuma chamada externa é feita.
+- Só notificações internas do tipo observabilidade disparam webhook.
+- O envio ocorre apenas quando a notificação é nova; o mesmo eventoId deduplicado não envia novamente.
+- Falha/timeout do webhook NÃO impede a notificação interna nem derruba o Fusion.
+- HTTPS é obrigatório; HTTP é permitido apenas em localhost para testes.
+- Token opcional vai em Authorization: Bearer e nunca no JSON enviado.
+- URL/token não são registrados nos logs.
+
+VARIÁVEIS OPCIONAIS
+FUSION_OBSERVABILITY_WEBHOOK_URL=https://seu-endpoint
+FUSION_OBSERVABILITY_WEBHOOK_TOKEN=segredo-opcional
+FUSION_OBSERVABILITY_WEBHOOK_TIMEOUT_MS=5000
+
+VALIDAÇÃO
+npm run test:observabilidade
+
+Não configure URL real no Render ainda. Primeiro execute a suíte local.
