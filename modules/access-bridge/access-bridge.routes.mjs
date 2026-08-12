@@ -1,6 +1,7 @@
 import express from 'express';
 import { validateAgent, validateCommandApi, queueRelease, claimNext, finishCommand, getCommand, saveHeartbeat, getAgent } from './access-bridge.service.mjs';
 import * as accessEngine from '../access-engine/access-engine.service.mjs';
+import { executarComTenant } from '../core/persistence/tenant-context.mjs';
 
 const router = express.Router();
 const wrap = fn => async (req, res) => {
@@ -66,11 +67,16 @@ router.post('/agent/commands/:id/result', wrap(async (req, res) => {
 }));
 
 router.post('/agent/biometria/acesso', wrap(async (req, res) => {
+  const agent = await validateAgent(req);
+
   if (!biometricEnabled()) {
     return res.status(503).json({ ok: false, erro: 'Biometria do Access Agent desativada no servidor.' });
   }
 
-  const agent = await validateAgent(req);
+  if (!agent.tenantId) {
+    return res.status(503).json({ ok: false, erro: 'Tenant do Access Agent nao configurado.' });
+  }
+
   const alunoId = texto(req.body?.alunoId);
   if (!alunoId) {
     return res.status(400).json({ ok: false, erro: 'alunoId obrigatorio.' });
@@ -79,12 +85,14 @@ router.post('/agent/biometria/acesso', wrap(async (req, res) => {
   const direcao = texto(req.body?.direcao, 20) === 'saida' ? 'saida' : 'entrada';
   const dispositivoId = agent.equipmentId || '';
 
-  const resultado = await accessEngine.avaliarAcesso({
-    identificador: alunoId,
-    dispositivoId,
-    direcao,
-    origem: 'biometria-fs80'
-  });
+  const resultado = await executarComTenant(agent.tenantId, () =>
+    accessEngine.avaliarAcesso({
+      identificador: alunoId,
+      dispositivoId,
+      direcao,
+      origem: 'biometria-fs80'
+    })
+  );
 
   res.json({
     ok: true,
