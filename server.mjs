@@ -53,7 +53,12 @@ import reconhecimentoFacialRoutes from "./modules/reconhecimento-facial/reconhec
 import accessOnboardingRoutes from "./modules/access-onboarding/access-onboarding.routes.mjs";
 import whatsappRoutes from "./modules/whatsapp/whatsapp.routes.mjs";
 import resetDadosRoutes from "./modules/reset-dados/reset-dados.routes.mjs";
-import { notificarAlertasObservabilidade, observabilidadeSistema } from "./modules/observabilidade/observabilidade.service.mjs";
+import {
+  iniciarNotificadorObservabilidade,
+  notificarAlertasObservabilidade,
+  observabilidadeSistema,
+  statusNotificadorObservabilidade
+} from "./modules/observabilidade/observabilidade.service.mjs";
 import { apiSecurity, loginRateLimit, securityHeaders } from "./modules/security/api-security.middleware.mjs";
 import { executarLembretesVencimento } from "./modules/whatsapp/whatsapp.service.mjs";
 import { inicializarPersistenciaSupabase, encerrarPersistenciaSupabase } from "./modules/backup/supabase-data.service.mjs";
@@ -70,6 +75,10 @@ const __dirname = path.dirname(__filename);
 
 const isRender = Boolean(process.env.RENDER || process.env.RENDER_EXTERNAL_URL);
 const persistentRoot = process.env.FUSION_PERSISTENT_DIR || "/var/data/fusion";
+
+function envAtivo(valor) {
+  return ["1", "true", "sim", "yes", "on"].includes(String(valor || "").trim().toLowerCase());
+}
 
 
 console.log("Biometria removida: controle físico exclusivo pelo Fusion Access Agent.");
@@ -982,6 +991,14 @@ app.post("/api/sistema/observabilidade/notificar", async (req, res) => {
   }
 });
 
+app.get("/api/sistema/observabilidade/notificador", async (req, res) => {
+  res.json({
+    ok: true,
+    modulo: "observabilidade-notificador",
+    ...statusNotificadorObservabilidade()
+  });
+});
+
 
 app.get("/api/sistema/interface", async (req, res) => {
   const paginasCriticas = [
@@ -1053,6 +1070,12 @@ app.listen(PORT, HOST, async () => {
   console.log("Controle de catraca online: Fusion Access Bridge ativo.");
   const backupNoAmbiente = isRender || ["1", "true", "sim", "yes"].includes(String(process.env.FUSION_BACKUP_AUTO_ON_LOCAL || "false").toLowerCase());
   const backupAutomatico = backupNoAmbiente ? iniciarBackupAutomatico() : { ativo: false };
+  const observabilidadeNoAmbiente = isRender || envAtivo(process.env.FUSION_OBSERVABILITY_NOTIFY_AUTO);
+  const observabilidadeAgendada = iniciarNotificadorObservabilidade({
+    ativo: observabilidadeNoAmbiente,
+    intervaloMs: process.env.FUSION_OBSERVABILITY_NOTIFY_INTERVAL_MS
+  });
+  console.log(`Observabilidade automatica: ${observabilidadeAgendada.ativo ? "ativa" : "inativa"}.`);
   console.log(`Backup automático: ${backupAutomatico.ativo ? "ativo" : "inativo"}.`);
 
   // Confere na inicialização e a cada hora. Só emite títulos cujo vencimento

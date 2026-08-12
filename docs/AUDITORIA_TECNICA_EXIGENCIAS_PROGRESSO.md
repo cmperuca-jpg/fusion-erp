@@ -68,7 +68,7 @@ Proxima acao recomendada: criar roteiro/teste de segunda academia do zero sem pa
 
 ## P1 - Observabilidade
 
-Status: iniciado com endpoint operacional e teste HTTP.
+Status: iniciado com endpoint operacional, notificacao administrativa e agendador automatico.
 
 Exigencias tratadas nesta etapa:
 
@@ -78,9 +78,11 @@ Exigencias tratadas nesta etapa:
 - Consolidado resumo de cobranca: falhas no `cobranca_log`, financeiro vencido, mensalidades vencidas e mensalidades programadas.
 - Criados alertas operacionais por severidade para agente offline, comando falho/expirado, comando antigo, falha de catraca, falha de cobranca e vencidos.
 - Criado `POST /api/sistema/observabilidade/notificar` para persistir eventos operacionais em `observabilidade_eventos` e gerar notificacoes administrativas sem duplicar a mesma ocorrencia do dia.
+- Criado agendador automatico de notificacoes de observabilidade, ativo por padrao no Render ou via `FUSION_OBSERVABILITY_NOTIFY_AUTO=true`, com intervalo ajustavel por `FUSION_OBSERVABILITY_NOTIFY_INTERVAL_MS`.
+- Criado endpoint autenticado `GET /api/sistema/observabilidade/notificador` para auditar se o job esta ativo, em execucao e qual foi o ultimo resultado.
 - Criado teste HTTP `npm run test:observabilidade`.
 
-Proxima acao recomendada: adicionar job/automacao para executar a notificacao periodicamente e integrar canal externo para falhas criticas.
+Proxima acao recomendada: integrar canal externo para falhas criticas, como WhatsApp, e-mail ou webhook operacional.
 
 ## P2 - Experiencia e Refinamentos
 

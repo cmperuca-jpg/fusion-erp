@@ -4,6 +4,11 @@ import { criarNotificacao } from "../notificacoes/notificacoes.service.mjs";
 
 const EVENTOS_COLECAO = "observabilidade_eventos";
 const ALERTAS_NOTIFICAVEIS = new Set(["critico", "alto"]);
+let notificadorTimer = null;
+let notificadorExecutando = false;
+let notificadorIntervaloMs = null;
+let ultimoNotificadorResultado = null;
+let ultimoNotificadorErro = "";
 
 function lista(valor) {
   return Array.isArray(valor) ? valor : [];
@@ -234,6 +239,10 @@ function resumoEvento(alerta = {}, observabilidade = {}) {
   return partes.filter(Boolean).join(" | ");
 }
 
+function flagAtiva(valor) {
+  return ["1", "true", "sim", "yes", "on"].includes(String(valor || "").trim().toLowerCase());
+}
+
 async function registrarEventosOperacionais(observabilidade = {}) {
   const tenantId = observabilidade.tenantId || tenantAtual();
   const hoje = hojeISO();
@@ -370,5 +379,74 @@ export async function notificarAlertasObservabilidade(opcoes = {}) {
     notificacoesCriadasOuAtualizadas: notificacoes.length,
     eventos,
     notificacoes
+  };
+}
+
+function intervaloNotificadorMs(valor = process.env.FUSION_OBSERVABILITY_NOTIFY_INTERVAL_MS) {
+  const n = Number(valor || 15 * 60 * 1000);
+  const minimo = flagAtiva(process.env.FUSION_OBSERVABILITY_NOTIFY_TEST_INTERVALS) || process.env.NODE_ENV === "test" ? 200 : 60 * 1000;
+  if (!Number.isFinite(n)) return 15 * 60 * 1000;
+  return Math.max(minimo, Math.min(24 * 60 * 60 * 1000, Math.round(n)));
+}
+
+function atrasoInicialNotificadorMs(intervalo) {
+  const minimo = flagAtiva(process.env.FUSION_OBSERVABILITY_NOTIFY_TEST_INTERVALS) || process.env.NODE_ENV === "test" ? 200 : 1000;
+  return Math.min(5000, Math.max(minimo, Math.floor(intervalo / 4)));
+}
+
+export async function executarNotificadorObservabilidade({ origem = "agendador-observabilidade" } = {}) {
+  if (notificadorExecutando) return ultimoNotificadorResultado || { ok: true, aguardando: true };
+  notificadorExecutando = true;
+  try {
+    const resultado = await notificarAlertasObservabilidade({ origem });
+    ultimoNotificadorResultado = {
+      ...resultado,
+      executadoEm: new Date().toISOString()
+    };
+    ultimoNotificadorErro = "";
+    return ultimoNotificadorResultado;
+  } catch (erro) {
+    ultimoNotificadorErro = erro.message || String(erro);
+    throw erro;
+  } finally {
+    notificadorExecutando = false;
+  }
+}
+
+export function iniciarNotificadorObservabilidade({ ativo = false, executarAoIniciar = true, intervaloMs = undefined } = {}) {
+  if (notificadorTimer) {
+    return {
+      ativo: true,
+      jaIniciado: true,
+      intervaloMs: notificadorIntervaloMs || intervaloNotificadorMs(intervaloMs),
+      ultimoResultado: ultimoNotificadorResultado,
+      ultimoErro: ultimoNotificadorErro
+    };
+  }
+  if (!ativo) {
+    return { ativo: false, intervaloMs: intervaloNotificadorMs(intervaloMs), ultimoResultado: null, ultimoErro: "" };
+  }
+
+  const intervalo = intervaloNotificadorMs(intervaloMs);
+  notificadorIntervaloMs = intervalo;
+  const executar = () => {
+    executarNotificadorObservabilidade().catch(erro => {
+      console.error(`[Observabilidade] Falha ao notificar alertas: ${erro.message}`);
+    });
+  };
+
+  if (executarAoIniciar) setTimeout(executar, atrasoInicialNotificadorMs(intervalo)).unref?.();
+  notificadorTimer = setInterval(executar, intervalo);
+  notificadorTimer.unref?.();
+  return { ativo: true, intervaloMs: intervalo, ultimoResultado: ultimoNotificadorResultado, ultimoErro: ultimoNotificadorErro };
+}
+
+export function statusNotificadorObservabilidade() {
+  return {
+    ativo: Boolean(notificadorTimer),
+    executando: notificadorExecutando,
+    intervaloMs: notificadorIntervaloMs,
+    ultimoResultado: ultimoNotificadorResultado,
+    ultimoErro: ultimoNotificadorErro
   };
 }
