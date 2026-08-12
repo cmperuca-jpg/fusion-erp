@@ -1,4 +1,4 @@
-name: Auditoria P0 Fusion
+name: Auditoria P0/P1 Fusion
 
 on:
   push:
@@ -11,9 +11,9 @@ permissions:
   contents: read
 
 jobs:
-  auditoria-p0:
+  auditoria-p0-p1:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     steps:
       - name: Checkout
@@ -31,5 +31,8 @@ jobs:
       - name: Verificar estrutura
         run: npm run check
 
-      - name: Executar regressões P0
+      - name: Executar regressoes P0
         run: npm run test:p0-auditoria
+
+      - name: Executar implantacao repetivel P1
+        run: npm run test:p1-implantacao
