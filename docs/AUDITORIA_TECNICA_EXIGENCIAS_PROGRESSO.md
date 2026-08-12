@@ -56,9 +56,16 @@ Proxima acao recomendada: ampliar smoke Supabase/RLS em staging e iniciar observ
 
 ## P1 - Billing do Proprio Fusion
 
-Status: pendente.
+Status: iniciado com fluxo manual auditavel.
 
-Proxima acao recomendada: formalizar primeiro fluxo manual e depois automatizar contratacao, pagamento, renovacao, inadimplencia, suspensao e reativacao.
+Exigencias tratadas nesta etapa:
+
+- Criado modulo `saas-billing` com assinatura Fusion por tenant, historico de eventos e pagamentos.
+- Criados endpoints administrativos `GET/POST /api/saas/billing/fusion/*` para formalizar contratacao, registrar pagamento, renovar, marcar inadimplencia, suspender e reativar.
+- Fluxo manual exige usuario administrador da academia, mesmo fora do prefixo administrativo global.
+- Criado teste HTTP `npm run test:saas-billing` cobrindo 401, 403 e o ciclo completo contratacao -> pagamento -> renovacao -> inadimplencia -> suspensao -> reativacao.
+
+Proxima acao recomendada: automatizar cobranca recorrente, grace period e enforcement do status do tenant apos validar o fluxo manual com cliente real.
 
 ## P1 - Implantacao Repetivel
 

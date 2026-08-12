@@ -30,6 +30,7 @@
     "test:p0-http-multiempresa": "node scripts/test-p0-http-multiempresa-smoke.mjs",
     "test:p0-auditoria": "npm run test:access-agent-auth && npm run test:access-liberacao-integrada && npm run test:multiempresa-isolamento && npm run test:p0-http-multiempresa && npm run test:financeiro && npm run test:cobranca-automatica",
     "test:observabilidade": "node scripts/test-observabilidade-http.mjs && node scripts/test-observabilidade-agendador.mjs",
+    "test:saas-billing": "node scripts/test-saas-billing-manual.mjs",
     "reconciliar:financeiro:simular": "node scripts/reconciliar-financeiro-caixa.mjs --supabase",
     "reconciliar:financeiro": "node scripts/reconciliar-financeiro-caixa.mjs --supabase --apply",
     "piloto:280": "npm run check && npm run backup:data",
