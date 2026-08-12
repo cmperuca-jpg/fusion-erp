@@ -20,6 +20,11 @@ import {
   obterHomeAlunoApp
 } from "./aluno-app.service.mjs";
 import * as alunosService from "../alunos/alunos.service.mjs";
+import {
+  atualizarFotoAlunoApp,
+  contadorCatracaAlunoApp,
+  liberarCatracaAlunoApp
+} from "./aluno-app-actions.service.mjs";
 
 const router = Router();
 
@@ -208,6 +213,33 @@ router.get("/aluno-app/me", somenteMesmoSistema, async (req, res) => {
     res.json({ ok: true, dados: await obterHomeAlunoApp(req, res, deviceToken) });
   } catch (erro) {
     responderErroAlunoApp(res, erro, "Não foi possível carregar seus dados.");
+  }
+});
+
+router.put("/aluno-app/foto", somenteMesmoSistema, async (req, res) => {
+  try {
+    const deviceToken = req.headers["x-fusion-device-token"];
+    res.json({ ok: true, dados: await atualizarFotoAlunoApp(req, res, deviceToken, req.body || {}) });
+  } catch (erro) {
+    responderErroAlunoApp(res, erro, "Não foi possível atualizar sua foto.");
+  }
+});
+
+router.post("/aluno-app/catraca", somenteMesmoSistema, async (req, res) => {
+  try {
+    const deviceToken = req.headers["x-fusion-device-token"];
+    res.json({ ok: true, dados: await liberarCatracaAlunoApp(req, res, deviceToken, req.body || {}) });
+  } catch (erro) {
+    responderErroAlunoApp(res, erro, "Não foi possível liberar a catraca.");
+  }
+});
+
+router.get("/aluno-app/catraca-contador", somenteMesmoSistema, async (req, res) => {
+  try {
+    const deviceToken = req.headers["x-fusion-device-token"];
+    res.json({ ok: true, dados: await contadorCatracaAlunoApp(req, res, deviceToken) });
+  } catch (erro) {
+    responderErroAlunoApp(res, erro, "Não foi possível consultar seus acessos.");
   }
 });
 
