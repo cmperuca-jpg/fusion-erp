@@ -40,6 +40,8 @@ router.post("/codigo", exigirGestor, (req, res) => {
   const config = resolverAccessAgentConfig({ criarToken: true });
   if (!config.configurado) return res.status(503).json({ ok: false, mensagem: config.erro || "O agente ainda nao foi habilitado no servidor." });
   if (!process.env.ACCESS_AGENT_TOKEN && config.agentToken) process.env.ACCESS_AGENT_TOKEN = config.agentToken;
+  if (!process.env.ACCESS_EQUIPMENT_ID && config.equipmentId) process.env.ACCESS_EQUIPMENT_ID = config.equipmentId;
+  if (!process.env.ACCESS_EQUIPMENT_IDS && config.equipmentIds?.length) process.env.ACCESS_EQUIPMENT_IDS = config.equipmentIds.join(",");
   if (!process.env.ACCESS_AGENT_ID || !process.env.ACCESS_AGENT_TOKEN || !process.env.ACCESS_EQUIPMENT_ID) return res.status(503).json({ ok: false, mensagem: "O agente ainda não foi habilitado no servidor." });
   const codigo = codigoNovo();
   const expiraEm = Date.now() + DURACAO_MS;
