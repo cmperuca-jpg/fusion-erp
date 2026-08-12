@@ -3,7 +3,7 @@ import path from "node:path";
 import crypto from "node:crypto";
 import { DATABASE_CONFIG } from "../../../config/database.config.mjs";
 import { obterSupabaseAdmin } from "../../../config/supabase.mjs";
-import { tenantAtual } from "./tenant-context.mjs";
+import { normalizarTenantId, tenantAtual, tenantPadrao } from "./tenant-context.mjs";
 
 const DATA_DIR = path.resolve(process.cwd(), "data");
 const TABLE = process.env.FUSION_SUPABASE_RECORDS_TABLE || "fusion_v3_records";
@@ -15,7 +15,17 @@ function nomeColecao(valor = "") {
   return path.basename(String(valor)).replace(/\.json$/i, "").replace(/[^a-z0-9_-]/gi, "_").toLowerCase();
 }
 
-function arquivoColecao(colecao) { return path.join(DATA_DIR, `${nomeColecao(colecao)}.json`); }
+function tenantJsonAtual() {
+  return normalizarTenantId(tenantId()) || tenantPadrao();
+}
+
+function arquivoColecao(colecao) {
+  const nomeArquivo = `${nomeColecao(colecao)}.json`;
+  const tenant = tenantJsonAtual();
+  const padrao = tenantPadrao();
+  if (!tenant || tenant === padrao) return path.join(DATA_DIR, nomeArquivo);
+  return path.join(DATA_DIR, "tenants", tenant, nomeArquivo);
+}
 function idRegistro(item = {}) { return String(item.id || item.uuid || item.codigo || item.chave || crypto.randomUUID()); }
 function fallbackPermitido() { return DATABASE_CONFIG.jsonFallbackEnabled && process.env.NODE_ENV !== "production"; }
 
@@ -32,8 +42,8 @@ async function lerJson(colecao, fallback = []) {
 }
 
 async function salvarJson(colecao, dados) {
-  await fs.mkdir(DATA_DIR, { recursive: true });
   const destino = arquivoColecao(colecao);
+  await fs.mkdir(path.dirname(destino), { recursive: true });
   const temporario = `${destino}.tmp-${process.pid}-${Date.now()}`;
   await fs.writeFile(temporario, JSON.stringify(dados, null, 2), "utf8");
   await fs.rename(temporario, destino);

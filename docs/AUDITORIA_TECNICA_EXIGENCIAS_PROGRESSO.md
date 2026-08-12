@@ -33,8 +33,10 @@ Exigencias tratadas nesta etapa:
 - Coberto acesso permitido quando token e tenant informado pertencem a mesma academia.
 - Coberto bloqueio de portal de aluno tentando acessar dados de outro aluno.
 - Coberta verificacao estatica da protecao de `/uploads`: whitelist de extensoes, `dotfiles: "deny"`, `index: false` e `Cache-Control: private, no-store`.
+- JSON local passou a isolar tenants secundarios em `data/tenants/<tenant>/`, preservando a academia padrao nos arquivos atuais.
+- Criado smoke HTTP real `npm run test:p0-http-multiempresa` com servidor temporario, dados de duas academias e rotas de alunos, matriculas, financeiro, caixa, access-engine, planos publicos e uploads.
 
-Proxima acao recomendada: ampliar para smoke HTTP real com rotas de alunos, matriculas, financeiro, caixa e uploads com dados de dois tenants.
+Proxima acao recomendada: ampliar para um smoke Supabase/RLS em staging com duas academias reais antes de liberar venda externa.
 
 ## P0 - Regressao Financeira e Acesso
 
@@ -50,7 +52,7 @@ Exigencias tratadas nesta etapa:
 - Criada regressao `npm run test:access-liberacao-integrada` cobrindo avaliacao de acesso, comando enfileirado para a catraca, heartbeat do agente, claim, conclusao e bloqueio cross-tenant/equipamento.
 - Criada suite agregada `npm run test:p0-auditoria`.
 
-Proxima acao recomendada: ampliar smoke HTTP real das rotas de alunos, matriculas, financeiro, caixa, uploads e access-engine com dados de dois tenants.
+Proxima acao recomendada: ampliar smoke Supabase/RLS em staging e iniciar observabilidade centralizada de falhas de cobranca/acesso.
 
 ## P1 - Billing do Proprio Fusion
 

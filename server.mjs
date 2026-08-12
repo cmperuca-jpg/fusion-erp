@@ -473,12 +473,12 @@ function cabecalhosEstaticos(res, filePath) {
 }
 
 function protegerUploads(req, res, next) {
+  res.setHeader("Cache-Control", "private, no-store");
+  res.setHeader("X-Content-Type-Options", "nosniff");
   const ext = path.extname(req.path || "").toLowerCase();
   if (!uploadExtensionsPermitidas.has(ext)) {
     return res.status(404).json({ ok: false, mensagem: "Arquivo indisponivel." });
   }
-  res.setHeader("Cache-Control", "private, no-store");
-  res.setHeader("X-Content-Type-Options", "nosniff");
   return next();
 }
 
