@@ -451,7 +451,16 @@ function normalizarTexto(valor) {
 }
 
 function dataValida(valor) {
-  const data = new Date(valor || "");
+  const texto = textoSeguro(valor);
+  if (!texto) return null;
+
+  // Datas de calendário do ERP (YYYY-MM-DD) não representam um instante UTC.
+  // Usar meia-noite UTC faz o navegador no Brasil exibir o dia anterior.
+  // Meio-dia UTC preserva o mesmo dia civil nos fusos usados pelo Fusion.
+  const calendario = texto.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  const data = calendario
+    ? new Date(`${calendario[1]}-${calendario[2]}-${calendario[3]}T12:00:00.000Z`)
+    : new Date(texto);
   return Number.isNaN(data.getTime()) ? null : data;
 }
 
@@ -909,7 +918,10 @@ function resumoFinanceiro(rowsMensalidades = [], rowsFinanceiro = []) {
   const futuras = mensalidades
     .filter(item => {
       const vencimento = dataValida(item.vencimento);
-      return vencimento && vencimento.getTime() >= hoje.getTime() && !statusCancelado(item.status);
+      return vencimento
+        && vencimento.getTime() >= hoje.getTime()
+        && !statusPago(item.status)
+        && !statusCancelado(item.status);
     })
     .sort((a, b) => new Date(a.vencimento) - new Date(b.vencimento));
 

@@ -1,14 +1,17 @@
-Fusion ERP - Hardening do fluxo de ativação
+Fusion ERP - Correção de datas e próximo vencimento V5
 
 Substitua na raiz do projeto:
   modules/treinos/aluno-app.service.mjs
 
-O Supabase já recebeu as migrations:
-- restringir_rpc_publico_ativacao_apps
-- rate_limit_persistente_ativacao_apps
+Correções:
+1. Datas de calendário YYYY-MM-DD passam a ser tratadas como dia civil, evitando exibição do dia anterior no Brasil.
+2. Mensalidades já pagas/recebidas deixam de ser consideradas como "próximo vencimento".
+3. Mantém todo o hardening V4 do fluxo de ativação e rate limit persistente.
 
-O backend passa a consultar o limitador persistente antes de ativar o app.
-Limite: 8 tentativas por instalacao_id em 10 minutos.
-O identificador é armazenado no Supabase somente como SHA-256.
+Teste esperado na academia-homologacao:
+- Avaliação cadastrada em 12/08/2026 deve aparecer como 12/08/2026.
+- Mensalidade programada para 15/09/2026 deve aparecer como 15/09/2026.
+- Mensalidade já paga em 12/08/2026 não deve aparecer no card como "Próximo".
+- O card Financeiro deve apontar a mensalidade programada de setembro.
 
-Depois de substituir, reinicie/publice o backend e faça um smoke de ativação com um código NOVO de homologação.
+Após substituir, publique/reinicie o backend e use Ctrl+F5 no Fusion Aluno.
