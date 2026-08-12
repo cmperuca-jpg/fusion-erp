@@ -8,3 +8,4 @@ uploads/
 *.zip
 .DS_Store
 npm-debug.log*
+tools/fusion-access-native/legacy/logs/
