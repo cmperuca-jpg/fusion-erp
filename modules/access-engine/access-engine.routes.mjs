@@ -63,11 +63,58 @@ function dispositivoReservado(dispositivo = {}) {
   return Boolean((id && contexto.equipmentIds.has(id)) || dispositivoFisico(dispositivo));
 }
 
-function filtrarDispositivos(lista = []) {
+function escolherBaseFisica(dispositivos = [], usados = new Set()) {
+  const candidatos = dispositivos.filter(dispositivo => dispositivoFisico(dispositivo));
+  const livre = candidatos.find(dispositivo => !usados.has(idDispositivo(dispositivo)));
+  return livre || candidatos[0] || null;
+}
+
+function normalizarDispositivoVinculado(dispositivo = {}, equipmentId, agenteOnline = null) {
+  const id = texto(equipmentId || idDispositivo(dispositivo));
+  const host = texto(dispositivo.ip || dispositivo.host || process.env.HENRY7X_HOST || '10.0.0.236');
+  const porta = texto(dispositivo.porta || dispositivo.port || process.env.HENRY7X_PORT || '3000');
+  const base = {
+    ...dispositivo,
+    id,
+    equipmentId: id,
+    codigo: dispositivo.codigo || id,
+    nome: dispositivo.nome || 'Catraca Henry 7X',
+    fabricante: dispositivo.fabricante || 'Henry',
+    modelo: dispositivo.modelo || '7X',
+    driver: dispositivo.driver || 'henry7x',
+    ip: host,
+    porta
+  };
+  if (agenteOnline === true) base.status = 'online';
+  else if (agenteOnline === false) base.status = 'offline';
+  return base;
+}
+
+function dispositivosVinculadosAoAgente(lista = [], agenteOnline = null) {
   const contexto = contextoFisico();
   const dispositivos = Array.isArray(lista) ? lista : [];
-  if (contexto.configurado) return dispositivos;
-  return dispositivos.filter(dispositivo => !dispositivoReservado(dispositivo));
+
+  if (!contexto.configurado) {
+    return dispositivos.filter(dispositivo => !dispositivoReservado(dispositivo));
+  }
+
+  const idsVinculados = [...contexto.equipmentIds];
+  if (!idsVinculados.length) {
+    const fisicos = dispositivos.filter(dispositivoFisico);
+    return fisicos.map(dispositivo => normalizarDispositivoVinculado(dispositivo, idDispositivo(dispositivo), agenteOnline));
+  }
+
+  const usados = new Set();
+  return idsVinculados.map(equipmentId => {
+    let base = dispositivos.find(dispositivo => idDispositivo(dispositivo) === equipmentId) || null;
+    if (!base) base = escolherBaseFisica(dispositivos, usados);
+    if (base) usados.add(idDispositivo(base));
+    return normalizarDispositivoVinculado(base || {}, equipmentId, agenteOnline);
+  });
+}
+
+function filtrarDispositivos(lista = []) {
+  return dispositivosVinculadosAoAgente(lista, null);
 }
 
 function logFisicoReservado(log = {}) {
@@ -130,21 +177,21 @@ async function dashboardSeguro() {
     repo.listarPresentes(),
     statusAgenteSeguro()
   ]);
-  const dispositivos = filtrarDispositivos(dispositivosBrutos);
+  const dispositivos = dispositivosVinculadosAoAgente(dispositivosBrutos, agente.online === true);
   const logs = filtrarLogs(logsBrutos);
   const hoje = new Date().toISOString().slice(0, 10);
   const logsHoje = logs.filter(log => String(log.criadoEm || '').startsWith(hoje));
-  const simuladoresOnline = dispositivos.filter(dispositivo =>
-    !dispositivoFisico(dispositivo) && repo.normalizar(dispositivo.status) === 'ativo'
-  ).length;
-  const fisicos = dispositivos.filter(dispositivoFisico).length;
-  const fisicosOnline = agente.online ? fisicos : 0;
+  const contexto = contextoFisico();
+  const online = contexto.configurado
+    ? (agente.online ? dispositivos.length : 0)
+    : dispositivos.filter(dispositivo => repo.normalizar(dispositivo.status) === 'ativo').length;
 
   return {
     ok: true,
     resumo: {
       dispositivos: dispositivos.length,
-      online: simuladoresOnline + fisicosOnline,
+      online,
+      cadastrosIgnorados: Math.max(0, dispositivosBrutos.length - dispositivos.length),
       pessoasDentro: presentes.length,
       acessosHoje: logsHoje.length,
       liberadosHoje: logsHoje.filter(log => log.autorizado).length,

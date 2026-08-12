@@ -1,30 +1,61 @@
-CORREÇÃO FUSION ACCESS — ISOLAMENTO DE CATRACA POR ACADEMIA
+FUSION SISTEMA - CORRECAO ACCESS ENGINE V2
+==========================================
 
-COMO SUBSTITUIR
-1. Feche o Fusion/servidor local se estiver aberto.
-2. Faça uma cópia de segurança da pasta fusion-erp.
-3. Extraia este ZIP.
-4. Copie as pastas "modules" e "public" extraídas para dentro da raiz do seu fusion-erp.
-5. Quando o Windows perguntar, escolha "Substituir os arquivos no destino".
+Objetivo
+--------
+1. Manter a correcao de isolamento da catraca entre tenants.
+2. Corrigir o painel que mostrava "6 equipamentos / 6 online" por contar
+   registros antigos com status=ativo como se fossem equipamentos conectados.
+3. Fazer o painel operacional usar os equipmentIds realmente vinculados ao
+   Fusion Access Agent (ACCESS_EQUIPMENT_ID / ACCESS_EQUIPMENT_IDS).
+4. Fazer o estado ONLINE depender do heartbeat do Access Agent para a academia
+   que possui a catraca fisica.
 
-PASTA DE DESTINO ESPERADA
-C:\Users\academia01\Documents\GitHub\fusion-erp\
+Resultado esperado na academia-piloto
+-------------------------------------
+- Se houver um unico ACCESS_EQUIPMENT_ID (catraca-piloto-01):
+  Equipamentos: 1
+  Online: 1, quando o Access Agent estiver online
+  Online: 0, quando o Access Agent estiver offline
+- A tabela de equipamentos mostra somente o equipamento vinculado ao agente.
+- Cadastros antigos de simuladores/duplicados nao sao apagados; apenas deixam
+  de contaminar o painel operacional da catraca fisica.
 
-ARQUIVOS SUBSTITUÍDOS
-- modules\access-engine\access-engine.routes.mjs
-- modules\access-onboarding\access-onboarding.routes.mjs
-- public\pages\access-engine\index.js
-- public\assets\js\fusion-layout.js
+Resultado esperado na academia-homologacao
+-------------------------------------------
+- Sem agente proprio: Sem catraca / Nao configurado
+- Equipamentos: 0, enquanto nenhum equipamento proprio for cadastrado
+- Nao enxerga a Henry 7X da academia-piloto
 
-IMPORTANTE
-Este pacote foi preparado para o main auditado em 11/08/2026. Os arquivos originais esperados tinham estes Git blob SHAs:
-- access-engine.routes.mjs: 9ee741ba45b2a18e0e6f32d98f913411cc792cf3
-- access-onboarding.routes.mjs: c9cf5e963365f4ea6e394ed531229757e34802bf
-- public/pages/access-engine/index.js: 29eb824b798f1ae8fbc2ebb2ca9a816c4a4f7921
-- public/assets/js/fusion-layout.js: b181d6887fa28e64fab57d8173076fd23a5abd71
+Como aplicar
+------------
+1. Feche qualquer editor que esteja gravando estes arquivos.
+2. Extraia este ZIP.
+3. Copie as pastas "modules" e "public" para a raiz do projeto:
 
-RESULTADO ESPERADO NA ACADEMIA DE HOMOLOGAÇÃO
-- nenhuma catraca física da academia piloto aparece;
-- agente fica como "Não configurado";
-- indicador superior mostra "Sem catraca";
-- comandos/rotas Henry da outra academia ficam bloqueados.
+   C:\Users\academia01\Documents\GitHub\fusion-erp\
+
+4. Quando o Windows perguntar, escolha "Substituir os arquivos no destino".
+5. Reinicie/republique o servidor se o seu fluxo de deploy nao fizer isso
+   automaticamente.
+6. Atualize a tela da academia-piloto com Ctrl+F5.
+
+Arquivos incluidos
+------------------
+modules/access-engine/access-engine.routes.mjs
+modules/access-onboarding/access-onboarding.routes.mjs
+public/pages/access-engine/index.js
+public/assets/js/fusion-layout.js
+
+Validacoes feitas antes de gerar o ZIP
+--------------------------------------
+- node --check nos quatro arquivos: OK
+- Teste isolado da nova regra com 1 Henry + 5 registros antigos: OK
+  Resultado: 1 equipamento operacional, 1 online, 5 ignorados no painel.
+
+Observacao
+----------
+O numero ONLINE agora representa disponibilidade do equipamento vinculado por
+meio do heartbeat do Access Agent. Para uma futura instalacao com varias
+catracas no mesmo agente, uma evolucao posterior pode adicionar heartbeat/
+status individual de cada equipamento fisico.
