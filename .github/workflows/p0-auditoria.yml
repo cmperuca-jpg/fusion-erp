@@ -13,7 +13,7 @@ permissions:
 jobs:
   auditoria-p0-p1:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
 
     steps:
       - name: Checkout
@@ -39,3 +39,6 @@ jobs:
 
       - name: Executar observabilidade P1
         run: npm run test:observabilidade
+
+      - name: Executar Billing SaaS P1
+        run: npm run test:saas-billing

@@ -1,6 +1,14 @@
 import crypto from "node:crypto";
 import { executarTransacaoJson, lerJsonDuravel, salvarJsonDuravel } from "../core/persistence/durable-json.mjs";
 import { tenantAtual } from "../core/persistence/tenant-context.mjs";
+import {
+  adicionarDiasBilling,
+  adicionarMesesBilling,
+  avaliarAcessoBilling,
+  calcularTransicoesBilling,
+  dataCivil,
+  normalizarDiasTolerancia
+} from "./billing-policy.mjs";
 
 const COLECAO = "fusion_billing";
 const STATUS_VALIDOS = new Set(["trial", "ativa", "inadimplente", "suspensa", "cancelada"]);
@@ -23,28 +31,24 @@ function hojeISO() {
 }
 
 function dataISO(valor = "") {
-  const bruto = texto(valor, 40);
-  if (!bruto) return "";
-  if (/^\d{4}-\d{2}-\d{2}$/.test(bruto)) return bruto;
-  const d = new Date(bruto);
-  return Number.isFinite(d.getTime()) ? d.toISOString().slice(0, 10) : "";
+  return dataCivil(valor);
 }
 
 function adicionarDias(dataBase = hojeISO(), dias = 0) {
-  const d = new Date(`${dataISO(dataBase) || hojeISO()}T00:00:00.000Z`);
-  d.setUTCDate(d.getUTCDate() + Number(dias || 0));
-  return d.toISOString().slice(0, 10);
+  return adicionarDiasBilling(dataISO(dataBase) || hojeISO(), dias);
 }
 
 function adicionarMeses(dataBase = hojeISO(), meses = 1) {
-  const d = new Date(`${dataISO(dataBase) || hojeISO()}T00:00:00.000Z`);
-  d.setUTCMonth(d.getUTCMonth() + Math.max(1, Number(meses || 1)));
-  return d.toISOString().slice(0, 10);
+  return adicionarMesesBilling(dataISO(dataBase) || hojeISO(), meses);
+}
+
+function diasToleranciaPadrao() {
+  return normalizarDiasTolerancia(process.env.FUSION_BILLING_GRACE_DAYS, 7);
 }
 
 function estadoInicial() {
   return {
-    versao: 1,
+    versao: 2,
     tenantId: tenantAtual(),
     assinatura: null,
     pagamentos: [],
@@ -55,7 +59,7 @@ function estadoInicial() {
 function normalizarEstado(valor = {}) {
   const base = valor && typeof valor === "object" && !Array.isArray(valor) ? valor : {};
   return {
-    versao: 1,
+    versao: 2,
     tenantId: texto(base.tenantId || tenantAtual(), 120),
     assinatura: base.assinatura && typeof base.assinatura === "object" ? base.assinatura : null,
     pagamentos: Array.isArray(base.pagamentos) ? base.pagamentos : [],
@@ -132,6 +136,14 @@ async function salvarEstado(estado) {
   return normalizado;
 }
 
+function politicaAtual(assinatura = null) {
+  return {
+    diasTolerancia: diasToleranciaPadrao(),
+    suspensaoAutomatica: true,
+    acesso: avaliarAcessoBilling(assinatura)
+  };
+}
+
 export async function obterBillingFusion() {
   const estado = await carregarEstado();
   return {
@@ -139,6 +151,7 @@ export async function obterBillingFusion() {
     modulo: "saas-billing",
     tenantId: estado.tenantId,
     assinatura: estado.assinatura,
+    politica: politicaAtual(estado.assinatura),
     pagamentos: estado.pagamentos.slice(0, 20),
     eventos: estado.eventos.slice(0, 50)
   };
@@ -165,6 +178,7 @@ export async function formalizarContratacaoFusion(payload = {}, usuario = {}) {
     return {
       ok: true,
       acao: novoContrato ? "contratacao_formalizada" : "contratacao_atualizada",
+      politica: politicaAtual(estado.assinatura),
       ...(await salvarEstado(estado))
     };
   }, { operacaoId: `saas-billing-contratacao-${tenantAtual()}-${Date.now()}` });
@@ -195,6 +209,7 @@ export async function registrarPagamentoFusion(payload = {}, usuario = {}) {
       throw Object.assign(new Error("Informe um valor positivo para o pagamento."), { status: 400 });
     }
 
+    const statusAntes = assinatura.status;
     estado.pagamentos.unshift(pagamento);
     estado.assinatura = {
       ...assinatura,
@@ -210,13 +225,15 @@ export async function registrarPagamentoFusion(payload = {}, usuario = {}) {
       pagamentoId: pagamento.id,
       valor: pagamento.valor,
       recebidoEm,
-      coberturaAte
+      coberturaAte,
+      reativouAutomaticamente: ["inadimplente", "suspensa"].includes(statusAntes)
     }, usuario));
 
     return {
       ok: true,
       acao: "pagamento_registrado",
       pagamento,
+      politica: politicaAtual(estado.assinatura),
       ...(await salvarEstado(estado))
     };
   }, { operacaoId: `saas-billing-pagamento-${tenantAtual()}-${Date.now()}` });
@@ -253,9 +270,91 @@ export async function renovarAssinaturaFusion(payload = {}, usuario = {}) {
     return {
       ok: true,
       acao: "assinatura_renovada",
+      politica: politicaAtual(estado.assinatura),
       ...(await salvarEstado(estado))
     };
   }, { operacaoId: `saas-billing-renovacao-${tenantAtual()}-${Date.now()}` });
+}
+
+export async function processarBillingFusion(payload = {}, usuario = {}) {
+  return executarTransacaoJson(async () => {
+    const estado = await carregarEstado();
+    if (!estado.assinatura?.id) {
+      return {
+        ok: true,
+        acao: "sem_assinatura",
+        alterado: false,
+        tenantId: tenantAtual(),
+        transicoes: [],
+        politica: politicaAtual(null)
+      };
+    }
+
+    const diasTolerancia = normalizarDiasTolerancia(payload.diasTolerancia, diasToleranciaPadrao());
+    const avaliacao = calcularTransicoesBilling(estado.assinatura, {
+      dataReferencia: payload.dataReferencia || payload.data,
+      diasTolerancia
+    });
+
+    if (!avaliacao.transicoes.length) {
+      return {
+        ok: true,
+        acao: "billing_sem_transicao",
+        alterado: false,
+        tenantId: tenantAtual(),
+        assinatura: estado.assinatura,
+        transicoes: [],
+        avaliacao,
+        politica: { diasTolerancia, suspensaoAutomatica: true, acesso: avaliacao.acesso }
+      };
+    }
+
+    const aplicadas = [];
+    for (const transicao of avaliacao.transicoes) {
+      if (transicao.para === "inadimplente") {
+        estado.assinatura = {
+          ...estado.assinatura,
+          status: "inadimplente",
+          inadimplenteDesde: transicao.em,
+          suspensoEm: "",
+          motivoStatus: transicao.motivo,
+          atualizadoEm: agoraISO()
+        };
+      } else if (transicao.para === "suspensa") {
+        estado.assinatura = {
+          ...estado.assinatura,
+          status: "suspensa",
+          inadimplenteDesde: estado.assinatura.inadimplenteDesde || avaliacao.inadimplenteDesde,
+          suspensoEm: transicao.em,
+          motivoStatus: transicao.motivo,
+          atualizadoEm: agoraISO()
+        };
+      }
+
+      estado.eventos.unshift(evento(transicao.tipoEvento, {
+        de: transicao.de,
+        para: transicao.para,
+        data: transicao.em,
+        vencimento: avaliacao.vencimento,
+        diasTolerancia,
+        motivo: transicao.motivo,
+        automatico: true
+      }, usuario));
+      aplicadas.push(transicao);
+    }
+
+    const salvo = await salvarEstado(estado);
+    return {
+      ok: true,
+      acao: aplicadas.at(-1)?.tipoEvento || "billing_processado",
+      alterado: true,
+      tenantId: tenantAtual(),
+      transicoes: aplicadas,
+      avaliacao: calcularTransicoesBilling(salvo.assinatura, { dataReferencia: avaliacao.dataReferencia, diasTolerancia }),
+      politica: { diasTolerancia, suspensaoAutomatica: true, acesso: avaliarAcessoBilling(salvo.assinatura) },
+      ...salvo
+    };
+  }, { operacaoId: `saas-billing-processar-${tenantAtual()}-${dataISO(payload.dataReferencia || payload.data) || hojeISO()}` });
 }
 
 export async function marcarInadimplenciaFusion(payload = {}, usuario = {}) {
@@ -306,6 +405,7 @@ async function atualizarStatusManual(status, payload = {}, usuario = {}, opcoes 
     return {
       ok: true,
       acao: opcoes.tipoEvento,
+      politica: politicaAtual(estado.assinatura),
       ...(await salvarEstado(estado))
     };
   }, { operacaoId: `saas-billing-status-${status}-${tenantAtual()}-${Date.now()}` });

@@ -8,11 +8,16 @@ import {
   formalizarContratacaoFusion,
   marcarInadimplenciaFusion,
   obterBillingFusion,
+  processarBillingFusion,
   reativarAssinaturaFusion,
   registrarPagamentoFusion,
   renovarAssinaturaFusion,
   suspenderAssinaturaFusion
 } from "./billing.service.mjs";
+import {
+  iniciarAgendadorBillingFusion,
+  statusAgendadorBillingFusion
+} from "./billing.scheduler.mjs";
 import { obterSupabaseAdmin } from "../../config/supabase.mjs";
 import { normalizarTenantId } from "../core/persistence/tenant-context.mjs";
 
@@ -131,6 +136,10 @@ router.get("/billing/fusion", exigirAdmin, async (req, res) => {
   }
 });
 
+router.get("/billing/fusion/agendador", exigirAdmin, async (req, res) => {
+  res.json({ ok: true, ...statusAgendadorBillingFusion() });
+});
+
 router.post("/billing/fusion/contratacao", exigirAdmin, async (req, res) => {
   try {
     res.status(201).json(await formalizarContratacaoFusion(req.body || {}, req.usuario || {}));
@@ -144,6 +153,14 @@ router.post("/billing/fusion/pagamentos", exigirAdmin, async (req, res) => {
     res.status(201).json(await registrarPagamentoFusion(req.body || {}, req.usuario || {}));
   } catch (error) {
     tratarErro(res, error, "Nao foi possivel registrar o pagamento.");
+  }
+});
+
+router.post("/billing/fusion/processar", exigirAdmin, async (req, res) => {
+  try {
+    res.json(await processarBillingFusion(req.body || {}, req.usuario || {}));
+  } catch (error) {
+    tratarErro(res, error, "Nao foi possivel processar o billing Fusion.");
   }
 });
 
@@ -178,5 +195,13 @@ router.post("/billing/fusion/reativar", exigirAdmin, async (req, res) => {
     tratarErro(res, error, "Nao foi possivel reativar a assinatura.");
   }
 });
+
+const agendadorBilling = iniciarAgendadorBillingFusion({
+  ativo: ["1", "true", "sim", "yes", "on"].includes(String(process.env.FUSION_BILLING_AUTO || "").trim().toLowerCase()),
+  intervaloMs: process.env.FUSION_BILLING_INTERVAL_MS
+});
+if (agendadorBilling.ativo) {
+  console.log(`Billing SaaS automatico: ativo a cada ${agendadorBilling.intervaloMs} ms.`);
+}
 
 export default router;
