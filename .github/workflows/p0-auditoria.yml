@@ -13,7 +13,7 @@ permissions:
 jobs:
   auditoria-p0-p1:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
 
     steps:
       - name: Checkout
@@ -36,3 +36,6 @@ jobs:
 
       - name: Executar implantacao repetivel P1
         run: npm run test:p1-implantacao
+
+      - name: Executar observabilidade P1
+        run: npm run test:observabilidade
