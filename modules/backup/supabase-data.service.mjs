@@ -29,7 +29,7 @@ function obrigatorio() {
 }
 
 function tenantId() {
-  return String(process.env.FUSION_TENANT_ID || process.env.FUSION_ACADEMIA_ID || "academia-piloto")
+  return String(process.env.FUSION_TARGET_TENANT_ID || process.env.FUSION_TENANT_ID || process.env.FUSION_ACADEMIA_ID || "academia-piloto")
     .trim().toLowerCase().replace(/[^a-z0-9_-]+/g, "-").replace(/^-+|-+$/g, "") || "academia-piloto";
 }
 

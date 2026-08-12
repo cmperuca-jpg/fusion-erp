@@ -12,6 +12,7 @@ const IMPORTACAO = path.join(DATA, "importacao");
 const CONFIRMACAO = "RESETAR-MODELO";
 const DRY_RUN = process.argv.includes("--dry-run");
 const confirmacao = process.argv.find(arg => arg.startsWith("--confirmar="))?.split("=").slice(1).join("=") || "";
+const tenantAlvoArg = process.argv.find(arg => arg.startsWith("--tenant="))?.split("=").slice(1).join("=") || "";
 const agora = new Date();
 const agoraIso = agora.toISOString();
 const hoje = agoraIso.slice(0, 10);
@@ -39,8 +40,29 @@ function hashProfessor(senha, salt = crypto.randomBytes(16).toString("hex")) {
   return `${salt}:${hash}`;
 }
 function tenantId() {
+  return String(tenantAlvoArg || process.env.FUSION_TARGET_TENANT_ID || process.env.FUSION_TENANT_ID || process.env.FUSION_ACADEMIA_ID || "academia-piloto")
+    .trim().toLowerCase().replace(/[^a-z0-9_-]+/g, "-").replace(/^-+|-+$/g, "") || "academia-piloto";
+}
+function tenantPadrao() {
   return String(process.env.FUSION_TENANT_ID || process.env.FUSION_ACADEMIA_ID || "academia-piloto")
     .trim().toLowerCase().replace(/[^a-z0-9_-]+/g, "-").replace(/^-+|-+$/g, "") || "academia-piloto";
+}
+function tenantSecundario() {
+  return tenantId() !== tenantPadrao();
+}
+function dataTenantDir() {
+  return tenantSecundario() ? path.join(DATA, "tenants", tenantId()) : DATA;
+}
+function arquivoDadosTenant(nome) {
+  return path.join(dataTenantDir(), `${nome}.json`);
+}
+function importacaoTenantDir() {
+  return tenantSecundario() ? path.join(dataTenantDir(), "importacao") : IMPORTACAO;
+}
+function credenciaisPath() {
+  return tenantSecundario()
+    ? path.join(dataTenantDir(), "CREDENCIAIS-INICIAIS-FUSION-ERP.txt")
+    : path.join(ROOT, "CREDENCIAIS-INICIAIS-FUSION-ERP.txt");
 }
 function usuario({ id, nome, email, senha, perfil, permissoes }) {
   return { id, nome, email, senhaHash: bcrypt.hashSync(String(senha), BCRYPT_ROUNDS), perfil, status: "ativo", permissoes,
@@ -233,6 +255,16 @@ async function montarColecoesReset(modelo, lerColecao) {
     const local = await lerJsonLocal(path.join(DATA, item.name), []);
     colecoes[nome] = PRESERVAR.has(nome) ? await lerColecao(nome, local) : (Array.isArray(local) ? [] : {});
   }
+  if (tenantSecundario()) {
+    let itensTenant = [];
+    try { itensTenant = await fs.readdir(dataTenantDir(), { withFileTypes: true }); } catch {}
+    for (const item of itensTenant.filter(item => item.isFile() && item.name.endsWith(".json"))) {
+      const nome = item.name.replace(/\.json$/i, "").replace(/[^a-z0-9_-]/gi, "_").toLowerCase();
+      if (Object.hasOwn(colecoes, nome)) continue;
+      const local = await lerJsonLocal(path.join(dataTenantDir(), item.name), []);
+      colecoes[nome] = PRESERVAR.has(nome) ? await lerColecao(nome, local) : (Array.isArray(local) ? [] : {});
+    }
+  }
   for (const nome of await colecoesAtuaisSupabase()) {
     if (!Object.hasOwn(colecoes, nome)) colecoes[nome] = PRESERVAR.has(nome) ? await lerColecao(nome, []) : [];
   }
@@ -281,7 +313,9 @@ async function limparStorageTenant() {
 }
 async function salvarCredenciais() {
   const conteudo = `FUSION ERP — CREDENCIAIS INICIAIS DO MODELO\n\nAdministrador\nE-mail: admin@fusionerp.local\nSenha: ${SENHAS.admin}\n\nRecepção\nE-mail: recepcao@fusionerp.local\nSenha: ${SENHAS.recepcao}\n\nResponsável técnico\nLogin: tecnico@fusionerp.local\nSenha: ${SENHAS.tecnico}\n\nAluno modelo\nLogin: aluno@fusionerp.local ou CPF 12345678909\nSenha: ${SENHAS.aluno}\n\nIMPORTANTE: altere todas as senhas e substitua os dados fictícios antes de iniciar a operação real.\n`;
-  await fs.writeFile(path.join(ROOT, "CREDENCIAIS-INICIAIS-FUSION-ERP.txt"), conteudo, "utf8");
+  const destino = credenciaisPath();
+  await fs.mkdir(path.dirname(destino), { recursive: true });
+  await fs.writeFile(destino, conteudo, "utf8");
 }
 
 async function main() {
@@ -293,25 +327,34 @@ async function main() {
     return;
   }
   if (confirmacao !== CONFIRMACAO) throw new Error(`Confirmação ausente. Execute com --confirmar=${CONFIRMACAO}.`);
+  process.env.FUSION_TARGET_TENANT_ID = tenantId();
+  const { executarComTenant } = await import("../modules/core/persistence/tenant-context.mjs");
   const { lerColecao, salvarColecoesAtomicas } = await import("../modules/core/persistence/collection-store.mjs");
   const { criarBackupLocal, enviarBackupSupabase } = await import("../modules/backup/backup.service.mjs");
   const { restaurarArquivosNoSupabase } = await import("../modules/backup/supabase-data.service.mjs");
+  await executarComTenant(tenantId(), async () => {
   console.log(`Tenant selecionado: ${tenantId()}`);
   console.log("Criando backup obrigatório antes do reset...");
   const backup = process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY
-    ? await enviarBackupSupabase({ sufixo: "antes-reset-modelo" }) : await criarBackupLocal();
+    ? await enviarBackupSupabase({ sufixo: "antes-reset-modelo" }, tenantId()) : await criarBackupLocal(tenantId());
   const colecoes = await montarColecoesReset(modelo, lerColecao);
   await salvarColecoesAtomicas(colecoes, { operacaoId: `reset-modelo-${crypto.randomUUID()}` });
   const colecoesAninhadas = new Set(["contratos", "servicos_contratados"]);
   for (const [nome, dados] of Object.entries(colecoes)) {
-    if (!colecoesAninhadas.has(nome)) await salvarJsonAtomico(path.join(DATA, `${nome}.json`), dados);
+    if (!colecoesAninhadas.has(nome)) await salvarJsonAtomico(arquivoDadosTenant(nome), dados);
   }
-  await salvarJsonAtomico(path.join(DATA, "comercial", "contratos.json"), modelo.contratos);
-  await salvarJsonAtomico(path.join(DATA, "comercial", "servicos_contratados.json"), modelo.servicos_contratados);
-  await limparPastaConteudo(UPLOADS);
-  await limparPastaConteudo(IMPORTACAO);
-  await fs.mkdir(UPLOADS, { recursive: true });
-  await fs.mkdir(IMPORTACAO, { recursive: true });
+  await salvarJsonAtomico(path.join(dataTenantDir(), "comercial", "contratos.json"), modelo.contratos);
+  await salvarJsonAtomico(path.join(dataTenantDir(), "comercial", "servicos_contratados.json"), modelo.servicos_contratados);
+  if (tenantSecundario()) {
+    await fs.rm(path.join(UPLOADS, "aparencia", tenantId()), { recursive: true, force: true });
+    await fs.rm(path.join(UPLOADS, "tenants", tenantId()), { recursive: true, force: true });
+    await fs.mkdir(path.join(UPLOADS, "tenants", tenantId()), { recursive: true });
+  } else {
+    await limparPastaConteudo(UPLOADS);
+    await fs.mkdir(UPLOADS, { recursive: true });
+  }
+  await limparPastaConteudo(importacaoTenantDir());
+  await fs.mkdir(importacaoTenantDir(), { recursive: true });
   await salvarCredenciais();
   const storageLimpo = await limparStorageTenant();
   const storage = await restaurarArquivosNoSupabase();
@@ -319,7 +362,8 @@ async function main() {
     colecoesAtualizadas: Object.keys(colecoes).length, contasCriadas: modelo.usuarios.length,
     alunoModelo: modelo.alunos[0].nome, avaliacaoModelo: modelo.avaliacoes.length,
     treinosModelo: modelo.treinos_integrados.map(item => item.nome), financeiroZerado: true,
-    storageLimpo, storage, credenciais: "CREDENCIAIS-INICIAIS-FUSION-ERP.txt" }, null, 2));
+    storageLimpo, storage, credenciais: credenciaisPath() }, null, 2));
+  });
 }
 
 main().catch(erro => { console.error(`Falha no reset: ${erro.message}`); process.exitCode = 1; });

@@ -37,4 +37,12 @@ Para validar o pacote sem apagar dados:
 npm run reset:simular
 ```
 
+Para preparar uma segunda academia no mesmo ambiente, informe o tenant alvo sem alterar o tenant padrao:
+
+```text
+node scripts/resetar-sistema-virgem.mjs --tenant=academia-segunda --confirmar=RESETAR-MODELO
+```
+
+Nesse modo, os dados ficam em `data/tenants/academia-segunda/`, as credenciais iniciais ficam na mesma pasta do tenant e os arquivos da academia padrao em `data/*.json` sao preservados.
+
 Não execute o reset na academia piloto se os dados reais ainda forem necessários. Use o backup criado para qualquer recuperação.

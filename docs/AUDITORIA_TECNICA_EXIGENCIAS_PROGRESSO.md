@@ -69,9 +69,17 @@ Proxima acao recomendada: automatizar cobranca recorrente, grace period e enforc
 
 ## P1 - Implantacao Repetivel
 
-Status: pendente.
+Status: iniciado com reset multiempresa testado.
 
-Proxima acao recomendada: criar roteiro/teste de segunda academia do zero sem patch especifico.
+Exigencias tratadas nesta etapa:
+
+- `scripts/resetar-sistema-virgem.mjs` passou a aceitar `--tenant=<tenant>` ou `FUSION_TARGET_TENANT_ID` para preparar uma academia alvo sem trocar a academia padrao do ambiente.
+- Reset de tenant secundario grava JSON local em `data/tenants/<tenant>/`, preservando `data/*.json` da academia padrao.
+- Backup local passou a funcionar em modo JSON sem Supabase, mantendo a exigencia de backup antes do reset.
+- Credenciais iniciais de tenant secundario ficam dentro da pasta do tenant alvo.
+- Criado teste `npm run test:implantacao-repetivel` cobrindo duas execucoes de reset para uma segunda academia, preservacao da raiz, plano preservado e backup local.
+
+Proxima acao recomendada: repetir o smoke em staging com Supabase/RLS e uma academia real de homologacao antes de liberar venda externa.
 
 ## P1 - Observabilidade
 

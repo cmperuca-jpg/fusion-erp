@@ -23,6 +23,7 @@ function erro(mensagem, status = 500) {
 function tenantSeguro(valor = "") {
   const tenant = normalizarTenantId(
     valor ||
+    process.env.FUSION_TARGET_TENANT_ID ||
     process.env.FUSION_TENANT_ID ||
     process.env.FUSION_ACADEMIA_ID ||
     ""
@@ -43,6 +44,10 @@ function supabaseClient() {
   return createClient(url, key, {
     auth: { persistSession: false, autoRefreshToken: false }
   });
+}
+
+function supabaseConfigurado() {
+  return Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
 }
 
 function limparNomeArquivo(valor, fallback = DEFAULT_BACKUP_PREFIX) {
@@ -112,6 +117,10 @@ function configPadrao(tenant = {}) {
 }
 
 export async function lerConfiguracaoBackup(tenantId = "") {
+  if (!supabaseConfigurado()) {
+    const tenant = tenantSeguro(tenantId);
+    return configPadrao({ tenant_id: tenant, name: tenant, settings: {} });
+  }
   const tenant = await obterTenant(tenantId);
   const salvo = tenant.settings?.backup && typeof tenant.settings.backup === "object"
     ? tenant.settings.backup
@@ -295,9 +304,83 @@ async function exportarBancoSupabase(tenantId) {
   };
 }
 
+function tenantPadraoLocal() {
+  return normalizarTenantId(process.env.FUSION_TENANT_ID || process.env.FUSION_ACADEMIA_ID || "academia-piloto") || "academia-piloto";
+}
+
+function pastaDadosLocalTenant(tenantId) {
+  const tenant = tenantSeguro(tenantId);
+  const padrao = tenantPadraoLocal();
+  return tenant === padrao
+    ? path.resolve(ROOT_DIR, "data")
+    : path.resolve(ROOT_DIR, "data", "tenants", tenant);
+}
+
+function recordIdLocal(item, indice) {
+  if (item && typeof item === "object" && !Array.isArray(item)) {
+    return String(item.id || item.uuid || item.codigo || item.chave || `idx_${indice}`);
+  }
+  return `idx_${indice}`;
+}
+
+async function exportarBancoLocal(tenantId) {
+  const tenant = tenantSeguro(tenantId);
+  const base = pastaDadosLocalTenant(tenant);
+  const registros = [];
+  let arquivos = [];
+
+  try {
+    arquivos = await fs.readdir(base, { withFileTypes: true });
+  } catch {}
+
+  for (const arquivo of arquivos.filter(item => item.isFile() && item.name.endsWith(".json"))) {
+    const collection = arquivo.name.replace(/\.json$/i, "").replace(/[^a-z0-9_-]/gi, "_").toLowerCase();
+    const absoluto = path.join(base, arquivo.name);
+    let payload;
+    try {
+      const bruto = await fs.readFile(absoluto, "utf8");
+      payload = bruto.trim() ? JSON.parse(bruto) : [];
+    } catch {
+      continue;
+    }
+
+    if (Array.isArray(payload)) {
+      payload.forEach((item, indice) => {
+        registros.push({
+          tenant_id: tenant,
+          collection,
+          record_id: recordIdLocal(item, indice),
+          payload: item,
+          updated_at: new Date().toISOString()
+        });
+      });
+    } else {
+      registros.push({
+        tenant_id: tenant,
+        collection,
+        record_id: "__document__",
+        payload: { __fusion_document__: payload },
+        updated_at: new Date().toISOString()
+      });
+    }
+  }
+
+  return {
+    sistema: "Fusion ERP",
+    tipo: "snapshot-json-local-v1",
+    tabela: "json-local",
+    tenantId: tenant,
+    criadoEm: new Date().toISOString(),
+    totalRegistros: registros.length,
+    registros
+  };
+}
+
 async function montarZip(tenantId) {
   const tenant = tenantSeguro(tenantId);
-  const banco = await exportarBancoSupabase(tenant);
+  const banco = supabaseConfigurado()
+    ? await exportarBancoSupabase(tenant)
+    : await exportarBancoLocal(tenant);
   const manifesto = {
     sistema: "Fusion ERP",
     tipo: "backup-saas-tenant-v2",
