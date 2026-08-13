@@ -66,13 +66,15 @@ export async function createCommand(input) {
   return command;
 }
 
-export async function claimNext(agentId) {
+export async function claimNext(agentId, actions = []) {
   const now = new Date().toISOString();
+  const actionList = Array.isArray(actions) ? actions.map(item => String(item || '').trim()).filter(Boolean) : [];
   const supabase = await supabaseClient();
   if (supabase) {
-    const { data: rows, error } = await supabase.from('access_bridge_commands')
-      .select('*').eq('agent_id', agentId).eq('status', 'pending').gt('expires_at', now)
-      .order('created_at', { ascending: true }).limit(1);
+    let query = supabase.from('access_bridge_commands')
+      .select('*').eq('agent_id', agentId).eq('status', 'pending').gt('expires_at', now);
+    if (actionList.length) query = query.in('action', actionList);
+    const { data: rows, error } = await query.order('created_at', { ascending: true }).limit(1);
     if (error) throw error;
     const row = rows?.[0];
     if (!row) return null;
@@ -82,7 +84,7 @@ export async function claimNext(agentId) {
     return normalize(data);
   }
   const rows = await readJson(FILE, []);
-  const row = rows.find(item => item.agentId === agentId && item.status === 'pending' && item.expiresAt > now);
+  const row = rows.find(item => item.agentId === agentId && item.status === 'pending' && item.expiresAt > now && (!actionList.length || actionList.includes(item.action)));
   if (!row) return null;
   row.status = 'processing'; row.claimedAt = now;
   await writeJson(FILE, rows);

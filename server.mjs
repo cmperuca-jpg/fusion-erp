@@ -49,6 +49,7 @@ import emergencyAccessRoutes from "./modules/emergency-access/emergency-access.r
 import notificacoesRoutes from "./modules/notificacoes/notificacoes.routes.mjs";
 import fidelidadeRoutes from "./modules/fidelidade/fidelidade.routes.mjs";
 import accessBridgeRoutes from "./modules/access-bridge/access-bridge.routes.mjs";
+import biometriaRoutes from "./modules/biometria/biometria.routes.mjs";
 import reconhecimentoFacialRoutes from "./modules/reconhecimento-facial/reconhecimento-facial.routes.mjs";
 import accessOnboardingRoutes from "./modules/access-onboarding/access-onboarding.routes.mjs";
 import whatsappRoutes from "./modules/whatsapp/whatsapp.routes.mjs";
@@ -81,7 +82,7 @@ function envAtivo(valor) {
 }
 
 
-console.log("Biometria removida: controle físico exclusivo pelo Fusion Access Agent.");
+console.log("Biometria Futronic: cadastro e acesso fisico via Fusion Access Agent; templates permanecem locais.");
 
 function garantirDiretorio(absPath) {
   const stat = fs.lstatSync(absPath, { throwIfNoEntry: false });
@@ -785,6 +786,7 @@ app.use("/api/importador-access", importadorAccessRoutes);
 app.use("/api/access-engine", accessEngineRoutes);
 app.use("/api/henry7x", henry7xRoutes);
 app.use("/api/access-bridge", accessBridgeRoutes);
+app.use("/api/biometria", biometriaRoutes);
 app.use("/api/reconhecimento-facial", reconhecimentoFacialRoutes);
 app.use("/api/access-onboarding", accessOnboardingRoutes);
 app.use("/api/whatsapp", whatsappRoutes);

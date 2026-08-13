@@ -1,124 +1,84 @@
-import { Router } from "express";
-import * as service from "./biometria.service.mjs";
+import { Router } from 'express';
+import { executarBiometria } from './biometria-bridge.service.mjs';
 
 const router = Router();
 
-const tratar = (res, e) =>
-  res.status(e.status || 500).json({
+function tratar(res, error) {
+  res.status(error?.status || error?.statusCode || 500).json({
     ok: false,
-    mensagem: e.message || "Erro biométrico."
+    mensagem: error?.message || 'Erro biometrico.'
   });
+}
 
-
-router.get("/status", async (req, res) => {
+router.get('/status', async (req, res) => {
   try {
+    const { result } = await executarBiometria('biometria_status', {}, { ttlSeconds: 15, timeoutMs: 9000 });
     res.json({
       ok: true,
-      local: await service.statusLocal()
+      local: {
+        ok: result?.ok !== false,
+        conectado: result?.conectado === true,
+        monitorAtivo: result?.monitorAtivo === true,
+        monitorSaudavel: result?.monitorSaudavel === true,
+        sensor: result?.sensor || 'Futronic FS80',
+        tenantId: result?.tenantId || '',
+        templateExposto: false
+      }
     });
-  } catch (e) {
-    tratar(res, e);
+  } catch (error) {
+    tratar(res, error);
   }
 });
 
-
-router.get("/motor/status", (req, res) => {
-  res.json(service.statusMotor());
-});
-
-
-router.post("/motor/iniciar", async (req, res) => {
+router.get('/aluno/:alunoId', async (req, res) => {
   try {
-    res.json(await service.iniciarMotorAcessoBiometrico());
-  } catch (e) {
-    tratar(res, e);
+    const { result } = await executarBiometria('biometria_exists', { alunoId: req.params.alunoId }, { ttlSeconds: 15, timeoutMs: 9000 });
+    res.json({
+      ok: true,
+      biometria: result?.existe === true
+        ? { alunoId: req.params.alunoId, cadastrada: true, armazenamento: 'local-dpapi', templateExposto: false }
+        : null
+    });
+  } catch (error) {
+    tratar(res, error);
   }
 });
 
-
-router.post("/motor/parar", async (req, res) => {
+router.post('/sdk/cadastrar', async (req, res) => {
   try {
-    res.json(await service.pararMotorAcessoBiometrico());
-  } catch (e) {
-    tratar(res, e);
-  }
-});
-
-
-router.post("/sdk/cadastrar", async (req, res) => {
-  try {
+    const alunoId = String(req.body?.alunoId || '').trim();
+    const { command, result } = await executarBiometria('biometria_enroll', { alunoId }, { ttlSeconds: 120, timeoutMs: 95000 });
     res.status(201).json({
       ok: true,
-      biometria: await service.cadastrarSdk(req.body || {}),
-      mensagem: "Template Futronic cadastrado."
+      biometria: {
+        alunoId,
+        cadastrada: true,
+        qualidade: Number(result?.qualidade || 0) || undefined,
+        qualidadeMedia: Number(result?.qualidade || 0) || undefined,
+        armazenamento: 'local-dpapi',
+        tenantIsolado: true,
+        templateExposto: false
+      },
+      commandId: command.id,
+      mensagem: 'Biometria Futronic cadastrada no computador da academia.'
     });
-  } catch (e) {
-    tratar(res, e);
+  } catch (error) {
+    tratar(res, error);
   }
 });
 
-
-// ADICIONAR ESTA ROTA
-router.get("/sdk/templates-monitor", async (req, res) => {
+router.delete('/aluno/:alunoId', async (req, res) => {
   try {
-    const templates = await service.listarTemplatesMonitor();
-
+    const { command, result } = await executarBiometria('biometria_delete', { alunoId: req.params.alunoId }, { ttlSeconds: 20, timeoutMs: 12000 });
     res.json({
       ok: true,
-      templates
+      removido: result?.removido === true,
+      commandId: command.id,
+      templateExposto: false
     });
-
-  } catch (e) {
-    tratar(res, e);
+  } catch (error) {
+    tratar(res, error);
   }
 });
-
-
-router.post("/sdk/identificar", async (req, res) => {
-  try {
-    res.json({
-      ok: true,
-      resultado: await service.identificarSdk()
-    });
-  } catch (e) {
-    tratar(res, e);
-  }
-});
-
-
-router.post("/sdk/acesso", async (req, res) => {
-  try {
-    res.json(
-      await service.processarAcessoBiometrico(req.body || {})
-    );
-  } catch (e) {
-    tratar(res, e);
-  }
-});
-
-
-router.get("/aluno/:alunoId", async (req, res) => {
-  try {
-    res.json({
-      ok: true,
-      biometria: await service.obterBiometriaAluno(req.params.alunoId)
-    });
-  } catch (e) {
-    tratar(res, e);
-  }
-});
-
-
-router.delete("/aluno/:alunoId", async (req, res) => {
-  try {
-    res.json({
-      ok: true,
-      ...await service.excluirBiometriaAluno(req.params.alunoId)
-    });
-  } catch (e) {
-    tratar(res, e);
-  }
-});
-
 
 export default router;

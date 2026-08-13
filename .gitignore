@@ -9,3 +9,8 @@ uploads/
 .DS_Store
 npm-debug.log*
 tools/fusion-access-native/legacy/logs/
+
+# Futronic FS80: binarios locais e templates DPAPI nunca vao para o Git
+scripts/biometria/*.dll
+scripts/biometria/*.exe
+scripts/biometria/templates-dpapi/

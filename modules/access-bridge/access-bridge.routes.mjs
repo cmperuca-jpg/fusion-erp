@@ -54,8 +54,12 @@ router.post('/agent/heartbeat', wrap(async (req, res) => {
 
 router.get('/agent/next', wrap(async (req, res) => {
   const agent = await validateAgent(req);
-  await saveHeartbeat(agent.agentId, { state: 'polling', tenantId: agent.tenantId || undefined });
-  const command = await claimNext(agent.agentId);
+  const consumer = String(req.query?.consumer || 'catraca').trim().toLowerCase();
+  const actions = consumer === 'biometria'
+    ? ['biometria_status', 'biometria_exists', 'biometria_enroll', 'biometria_delete']
+    : ['release'];
+  await saveHeartbeat(agent.agentId, { state: 'polling', consumer, tenantId: agent.tenantId || undefined });
+  const command = await claimNext(agent.agentId, actions);
   res.json({ ok: true, command });
 }));
 

@@ -1823,7 +1823,10 @@ setTimeout(inicializarPainelComercialMatricula, 0);
     try {
       const r = await bioApi(`/aluno/${encodeURIComponent(aluno.id)}`);
       const bio = r.biometria;
-      if (el("biometriaStatus")) el("biometriaStatus").textContent = bio ? `Cadastrada — qualidade ${bio.qualidadeMedia || bio.qualidade || 0}%` : "Não cadastrada";
+      if (el("biometriaStatus")) {
+        const qualidade = Number(bio?.qualidadeMedia || bio?.qualidade || 0);
+        el("biometriaStatus").textContent = bio ? (qualidade > 0 ? `Cadastrada — qualidade ${qualidade}%` : "Cadastrada") : "Não cadastrada";
+      }
       if (el("btnBiometriaApagar")) el("btnBiometriaApagar").disabled = !bio;
       if (bio) renderAmostras(true, bio.qualidadeMedia || bio.qualidade || 0);
     } catch (e) { mensagem(e.message, "erro"); }
