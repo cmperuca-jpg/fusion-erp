@@ -462,6 +462,41 @@ internal static class Program
 
         using (var fs80 = new Fs80())
         {
+            int farMinimo = ResolveFarMin();
+            var existentes = LoadAll(tenantId)
+                .Where(item => !String.Equals(item.AlunoId, alunoId, StringComparison.Ordinal))
+                .ToList();
+
+            try
+            {
+                if (existentes.Count > 0)
+                {
+                    // Antes do cadastro, faz uma leitura 1:N contra todas as
+                    // digitais dos OUTROS alunos. Se houver correspondencia
+                    // forte, o cadastro e interrompido e nenhum template e salvo.
+                    Tuple<string, int> duplicada = fs80.Identify(existentes, farMinimo);
+                    if (!String.IsNullOrEmpty(duplicada.Item1))
+                    {
+                        Print(new Dictionary<string, object> {
+                            {"ok", false},
+                            {"acao", "enroll"},
+                            {"tenantId", tenantId},
+                            {"erro", "Esta digital ja esta cadastrada para outro aluno."},
+                            {"digitalDuplicadaBloqueada", true},
+                            {"farNumerico", duplicada.Item2},
+                            {"farMinimo", farMinimo},
+                            {"templateExposto", false},
+                            {"versao", "2"}
+                        });
+                        return 3;
+                    }
+                }
+            }
+            finally
+            {
+                ClearTemplates(existentes);
+            }
+
             int quality;
             byte[] template = fs80.Enroll(out quality);
             byte[] plain = null;
