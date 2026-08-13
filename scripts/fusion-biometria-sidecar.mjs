@@ -83,6 +83,25 @@ let requestInFlight = false;
 let adminCommandInFlight = false;
 let adminTimer = null;
 let monitorHealthy = false;
+let biometricMode = 'acesso';
+const sdkReleaseMs = Math.max(Number(process.env.FUSION_BIOMETRIA_SDK_RELEASE_MS || 1400), 800);
+const sdkRearmMs = Math.max(Number(process.env.FUSION_BIOMETRIA_SDK_REARM_MS || 1200), 800);
+const modoCadastroExclusivo = true;
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function setBiometricMode(mode) {
+  biometricMode = mode;
+  console.log(JSON.stringify({
+    event: 'biometria-mode',
+    modo: mode,
+    tenantId,
+    sensor: 'Futronic FS80',
+    exclusivo: true
+  }));
+}
 
 async function sendIdentified(evt) {
   const alunoId = String(evt?.alunoId || '').trim().slice(0, 160);
@@ -197,15 +216,60 @@ function startMonitor() {
   });
 }
 
-function stopMonitorForAdmin() {
-  return new Promise(resolve => {
-    if (!monitor) return resolve();
-    const current = monitor;
-    const done = () => resolve();
-    current.once('exit', done);
-    try { current.kill(); } catch { resolve(); }
-    setTimeout(() => { try { current.kill('SIGKILL'); } catch {} resolve(); }, 2000);
+async function stopMonitorForAdmin() {
+  if (!monitor) {
+    await sleep(sdkReleaseMs);
+    return;
+  }
+
+  const current = monitor;
+
+  await new Promise((resolve, reject) => {
+    let finished = false;
+    let deadline = null;
+
+    const finish = (error = null) => {
+      if (finished) return;
+      finished = true;
+      if (deadline) clearTimeout(deadline);
+      if (error) reject(error); else resolve();
+    };
+
+    current.once('exit', () => finish());
+
+    try {
+      if (process.platform === 'win32') {
+        const killer = spawn('taskkill', ['/PID', String(current.pid), '/T', '/F'], {
+          windowsHide: true,
+          stdio: 'ignore'
+        });
+        killer.on('error', () => {
+          try { current.kill('SIGKILL'); } catch {}
+        });
+        killer.on('exit', code => {
+          if (code !== 0) {
+            try { current.kill('SIGKILL'); } catch {}
+          }
+        });
+      } else {
+        current.kill('SIGTERM');
+        setTimeout(() => {
+          try { if (current.exitCode === null) current.kill('SIGKILL'); } catch {}
+        }, 1500);
+      }
+    } catch {
+      try { current.kill('SIGKILL'); } catch {}
+    }
+
+    deadline = setTimeout(() => {
+      if (current.exitCode !== null || current.signalCode) return finish();
+      finish(new Error('O modo acesso nao liberou o leitor FS80. Cadastro cancelado para evitar conflito de SDK.'));
+    }, 7000);
   });
+
+  // O processo acabou, mas o driver USB/Futronic ainda precisa de uma pequena
+  // janela para concluir FTRTerminate e liberar o dispositivo.
+  await sleep(sdkReleaseMs);
 }
 
 function runExe(args, timeoutMs = 90000) {
@@ -252,14 +316,19 @@ async function executeAdminCommand(command) {
   try {
     let result;
     if (action === 'biometria_status') {
-      result = { ok: true, conectado: Boolean(monitor), monitorAtivo: Boolean(monitor), monitorSaudavel: monitorHealthy, sensor: 'Futronic FS80', tenantId, templateExposto: false };
+      result = { ok: true, conectado: Boolean(monitor) || biometricMode === 'cadastro', monitorAtivo: Boolean(monitor), monitorSaudavel: monitorHealthy, modo: biometricMode, cadastroEmAndamento: biometricMode === 'cadastro', modoExclusivo: modoCadastroExclusivo, sensor: 'Futronic FS80', tenantId, templateExposto: false };
     } else if (action === 'biometria_exists') {
       result = await runExe(['exists', alunoId, tenantId], 15000);
     } else if (action === 'biometria_delete') {
       result = await runExe(['delete', alunoId, tenantId], 15000);
     } else if (action === 'biometria_enroll') {
+      // Um unico dono do FS80 por vez:
+      // acesso OFF -> aguarda SDK liberar -> cadastro ON.
+      setBiometricMode('cadastro');
       await stopMonitorForAdmin();
       result = await runExe(['enroll', alunoId, tenantId], 90000);
+      // Garante que o processo de cadastro fechou FTRAPI antes do rearmamento.
+      await sleep(sdkReleaseMs);
     } else {
       throw new Error(`Acao biometrica nao suportada: ${action}`);
     }
@@ -270,7 +339,17 @@ async function executeAdminCommand(command) {
     console.error(`[BIOMETRIA] comando administrativo falhou ${action}: ${error.message}`);
   } finally {
     adminCommandInFlight = false;
-    if (!stopping && !monitor) startMonitor();
+
+    if (action === 'biometria_enroll') {
+      // cadastro OFF -> aguarda USB/SDK liberar -> acesso ON.
+      setBiometricMode('acesso');
+      if (!stopping && !monitor) {
+        await sleep(sdkRearmMs);
+        startMonitor();
+      }
+    } else if (!stopping && !monitor) {
+      startMonitor();
+    }
   }
 }
 
