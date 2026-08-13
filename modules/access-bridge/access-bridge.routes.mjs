@@ -1,7 +1,9 @@
+import crypto from 'node:crypto';
 import express from 'express';
 import { validateAgent, validateCommandApi, queueRelease, claimNext, finishCommand, getCommand, saveHeartbeat, getAgent } from './access-bridge.service.mjs';
 import * as accessEngine from '../access-engine/access-engine.service.mjs';
 import { executarComTenant } from '../core/persistence/tenant-context.mjs';
+import { saveEdgeDeviceCredential } from './access-bridge.repository.mjs';
 
 const router = express.Router();
 const wrap = fn => async (req, res) => {
@@ -30,6 +32,17 @@ function agentEquipmentDetails(agent = {}) {
   };
 }
 
+async function syncEdgeCredential(req, agent) {
+  const rawToken = String(req.get('x-agent-token') || '');
+  if (!rawToken || !agent?.tenantId || !agent?.agentId) return;
+  await saveEdgeDeviceCredential({
+    agentId: agent.agentId,
+    tenantId: agent.tenantId,
+    equipmentId: agent.equipmentId || agent.equipmentIds?.[0] || '',
+    secretHash: crypto.createHash('sha256').update(rawToken).digest('hex')
+  });
+}
+
 router.get('/health', (req, res) => res.json({
   ok: true,
   modulo: 'access-bridge',
@@ -53,6 +66,7 @@ router.get('/commands/:id', wrap(async (req, res) => {
 
 router.post('/agent/heartbeat', wrap(async (req, res) => {
   const agent = await validateAgent(req);
+  await syncEdgeCredential(req, agent);
   await saveHeartbeat(agent.agentId, {
     ...(req.body || {}),
     tenantId: agent.tenantId || undefined,
@@ -64,6 +78,7 @@ router.post('/agent/heartbeat', wrap(async (req, res) => {
 
 router.get('/agent/next', wrap(async (req, res) => {
   const agent = await validateAgent(req);
+  await syncEdgeCredential(req, agent);
   const consumer = String(req.query?.consumer || 'catraca').trim().toLowerCase();
   const actions = consumer === 'biometria'
     ? ['biometria_status', 'biometria_exists', 'biometria_enroll', 'biometria_delete']

@@ -202,3 +202,46 @@ export async function getAgentForTenant(tenantId) {
       new Date(a.last_seen_at || a.lastSeenAt || 0).getTime()
     )[0] || null;
 }
+
+
+export async function saveEdgeDeviceCredential({ agentId, tenantId, equipmentId, secretHash } = {}) {
+  const safeHash = String(secretHash || '').trim().toLowerCase();
+  if (!agentId || !tenantId || !/^[a-f0-9]{64}$/.test(safeHash)) return null;
+  const supabase = await supabaseClient();
+  if (!supabase) return null;
+
+  const { data: existing, error: readError } = await supabase
+    .from('fusion_edge_devices')
+    .select('device_id,name,timezone,details,created_at')
+    .eq('tenant_id', tenantId)
+    .eq('agent_id', agentId)
+    .maybeSingle();
+  if (readError) throw readError;
+
+  const row = {
+    tenant_id: tenantId,
+    agent_id: agentId,
+    device_id: existing?.device_id || `${agentId}-edge`,
+    name: existing?.name || 'Fusion Edge',
+    secret_hash: safeHash,
+    timezone: existing?.timezone || 'America/Maceio',
+    status: 'active',
+    last_seen_at: isoDate(),
+    updated_at: isoDate(),
+    details: {
+      ...(existing?.details && typeof existing.details === 'object' ? existing.details : {}),
+      equipmentId: equipmentId || undefined,
+      source: 'fusion-access-agent',
+      biometricOffline: true
+    }
+  };
+  if (existing?.created_at) row.created_at = existing.created_at;
+
+  const { data, error } = await supabase
+    .from('fusion_edge_devices')
+    .upsert(row, { onConflict: 'tenant_id,agent_id' })
+    .select()
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}

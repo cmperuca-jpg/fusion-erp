@@ -336,6 +336,57 @@ internal static class Program
         }
     }
 
+    private static string BackupDirForTenant(string tenantId)
+    {
+        return Path.Combine(BaseStoreDir, "backups", "tenants", TenantHash(tenantId));
+    }
+
+    private static void AtomicWriteTemplate(string tenantId, string alunoId, byte[] protectedBytes)
+    {
+        string target = FileFor(tenantId, alunoId);
+        Directory.CreateDirectory(Path.GetDirectoryName(target));
+        string temp = target + ".tmp-" + Guid.NewGuid().ToString("N");
+
+        try
+        {
+            using (var stream = new FileStream(temp, FileMode.CreateNew, FileAccess.Write, FileShare.None, 4096, FileOptions.WriteThrough))
+            {
+                stream.Write(protectedBytes, 0, protectedBytes.Length);
+                stream.Flush(true);
+            }
+
+            if (File.Exists(target))
+            {
+                string backupDir = BackupDirForTenant(tenantId);
+                Directory.CreateDirectory(backupDir);
+                string backup = Path.Combine(
+                    backupDir,
+                    Path.GetFileName(target) + "." + DateTime.UtcNow.ToString("yyyyMMddHHmmssfff") + ".bak"
+                );
+                File.Replace(temp, target, backup, true);
+            }
+            else
+            {
+                File.Move(temp, target);
+            }
+        }
+        finally
+        {
+            if (File.Exists(temp)) File.Delete(temp);
+        }
+    }
+
+    private static void ArchiveDeletedTemplate(string tenantId, string source)
+    {
+        string dir = Path.Combine(BaseStoreDir, "deleted-backups", "tenants", TenantHash(tenantId));
+        Directory.CreateDirectory(dir);
+        string destination = Path.Combine(
+            dir,
+            Path.GetFileName(source) + "." + DateTime.UtcNow.ToString("yyyyMMddHHmmssfff") + "." + Guid.NewGuid().ToString("N").Substring(0, 8) + ".bak"
+        );
+        File.Move(source, destination);
+    }
+
     private static byte[] PackV2(string tenantId, string alunoId, byte[] template)
     {
         byte[] tenant = Encoding.UTF8.GetBytes(tenantId);
@@ -505,7 +556,7 @@ internal static class Program
             {
                 plain = PackV2(tenantId, alunoId, template);
                 protectedBytes = ProtectedData.Protect(plain, null, DataProtectionScope.CurrentUser);
-                File.WriteAllBytes(FileFor(tenantId, alunoId), protectedBytes);
+                AtomicWriteTemplate(tenantId, alunoId, protectedBytes);
 
                 Print(new Dictionary<string, object> {
                     {"ok", true},
@@ -537,7 +588,7 @@ internal static class Program
 
         string file = FileFor(tenantId, alunoId);
         bool removido = File.Exists(file);
-        if (removido) File.Delete(file);
+        if (removido) ArchiveDeletedTemplate(tenantId, file);
 
         Print(new Dictionary<string, object> {
             {"ok", true},

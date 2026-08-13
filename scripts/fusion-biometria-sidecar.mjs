@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
+import { createLocalAccessEngine } from './fusion-access-local-engine.mjs';
 
 const server = String(process.env.ACCESS_SERVER_URL || '').replace(/\/+$/, '');
 const agentId = String(process.env.ACCESS_AGENT_ID || '').trim();
@@ -45,6 +46,15 @@ if (validateOnly) {
 }
 
 if (!enabled) fail('FUSION_BIOMETRIA_ENABLED esta desativada. Nenhum monitor foi iniciado.', 3);
+
+const localAccessEngine = createLocalAccessEngine({
+  tenantId,
+  agentId,
+  token,
+  equipmentId,
+  host: process.env.ACCESS_HOST || process.env.HENRY7X_HOST || '10.0.0.236',
+  port: Number(process.env.ACCESS_PORT || process.env.HENRY7X_PORT || 3000)
+});
 
 function agentHeaders(json = true) {
   return {
@@ -103,9 +113,9 @@ function setBiometricMode(mode) {
   }));
 }
 
-async function sendIdentified(evt) {
+async function sendIdentifiedOnline(evt, skipCooldown = false) {
   const alunoId = String(evt?.alunoId || '').trim().slice(0, 160);
-  if (!alunoId || requestInFlight || adminCommandInFlight || inCooldown(alunoId)) return;
+  if (!alunoId || requestInFlight || adminCommandInFlight || (!skipCooldown && inCooldown(alunoId))) return;
   if (String(evt?.tenantId || '').trim().toLowerCase() !== tenantId) {
     console.error('[BIOMETRIA] Evento rejeitado: tenant do monitor diverge do tenant do Agent.');
     return;
@@ -147,6 +157,43 @@ async function sendIdentified(evt) {
     requestInFlight = false;
     if (once) stop(0);
   }
+}
+
+async function sendIdentified(evt) {
+  const alunoId = String(evt?.alunoId || '').trim().slice(0, 160);
+  if (!alunoId || requestInFlight || adminCommandInFlight || inCooldown(alunoId)) return;
+
+  if (String(evt?.tenantId || '').trim().toLowerCase() !== tenantId) {
+    console.error('[BIOMETRIA] Evento rejeitado: tenant do monitor diverge do tenant do Agent.');
+    return;
+  }
+
+  requestInFlight = true;
+  try {
+    const local = await localAccessEngine.handleIdentified(alunoId, evt?.farNumerico ?? null);
+    if (local?.handled) {
+      console.log(JSON.stringify({
+        event: 'local-access-result',
+        tenantId,
+        aluno: maskId(alunoId),
+        autorizado: local.autorizado === true,
+        motivo: local.motivo || '',
+        modo: 'local',
+        acessosHoje: local.acessosHoje ?? null,
+        templateEnviadoAoServidor: false
+      }));
+      if (once) stop(local.autorizado ? 0 : 4);
+      return;
+    }
+  } catch (error) {
+    console.error(`[BIOMETRIA] motor local falhou; usando fallback online: ${error.message}`);
+  } finally {
+    requestInFlight = false;
+  }
+
+  // Antes do primeiro snapshot, ou se o motor local ainda nao conhece a pessoa,
+  // preserva o fluxo online ja validado.
+  await sendIdentifiedOnline(evt, true);
 }
 
 function processLine(line) {
@@ -316,7 +363,7 @@ async function executeAdminCommand(command) {
   try {
     let result;
     if (action === 'biometria_status') {
-      result = { ok: true, conectado: Boolean(monitor) || biometricMode === 'cadastro', monitorAtivo: Boolean(monitor), monitorSaudavel: monitorHealthy, modo: biometricMode, cadastroEmAndamento: biometricMode === 'cadastro', modoExclusivo: modoCadastroExclusivo, sensor: 'Futronic FS80', tenantId, templateExposto: false };
+      result = { ok: true, conectado: Boolean(monitor) || biometricMode === 'cadastro', monitorAtivo: Boolean(monitor), monitorSaudavel: monitorHealthy, modo: biometricMode, cadastroEmAndamento: biometricMode === 'cadastro', modoExclusivo: modoCadastroExclusivo, sensor: 'Futronic FS80', tenantId, templateExposto: false, motorLocal: localAccessEngine.status() };
     } else if (action === 'biometria_exists') {
       result = await runExe(['exists', alunoId, tenantId], 15000);
     } else if (action === 'biometria_delete') {
@@ -384,6 +431,7 @@ function stop(code = 0) {
   restartTimer = null;
   adminTimer = null;
   try { monitor?.kill(); } catch {}
+  try { localAccessEngine.stop(); } catch {}
   setTimeout(() => process.exit(code), 50);
 }
 
