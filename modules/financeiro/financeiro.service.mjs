@@ -391,22 +391,12 @@ async function registrarSaidaPagaNoCaixa(lancamento = {}, dados = {}) {
   if (!Array.isArray(caixa.caixas)) caixa.caixas = [];
   if (!Array.isArray(caixa.movimentos)) caixa.movimentos = [];
 
-  let aberto = caixa.caixas.find((item) => String(item.status || "").toLowerCase() === "aberto");
+  const aberto = caixa.caixas.find((item) => String(item.status || "").toLowerCase() === "aberto");
   if (!aberto) {
-    aberto = {
-      id: `cx_${Date.now()}_${Math.random().toString(16).slice(2, 8)}`,
-      dataAbertura: hojeISO(),
-      valorAbertura: 0,
-      responsavel: "Administrador",
-      observacaoAbertura: "Caixa aberto automaticamente pelo financeiro.",
-      status: "aberto",
-      abertoEm: new Date().toISOString(),
-      fechadoEm: "",
-      valorFechamentoInformado: null,
-      diferenca: null,
-      observacaoFechamento: ""
-    };
-    caixa.caixas.push(aberto);
+    const erro = new Error("Abra o caixa antes de registrar qualquer pagamento.");
+    erro.status = 409;
+    erro.code = "CAIXA_FECHADO";
+    throw erro;
   }
 
   const movimento = {
@@ -538,7 +528,7 @@ export async function baixarLancamento(id, dados = {}) {
   // Todo lançamento do tipo RECEBER deve passar pelo motor de recebimentos,
   // que grava recebimentos.json, movimenta caixa.json e sincroniza mensalidade/financeiro.
   // Isso impede pagamento marcado como Pago sem dinheiro registrado no caixa do dia.
-  if (String(atual.tipo || '').toLowerCase() === 'receber' && dados.fluxoRecebimentoUnico !== false && !dados._viaRecebimentos) {
+  if (String(atual.tipo || '').toLowerCase() === 'receber' && !dados._viaRecebimentos) {
     const resultadoRecebimento = await confirmarRecebimento(id, {
       ...dados,
       valorRecebido: valorPago,

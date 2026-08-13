@@ -815,8 +815,15 @@ export async function criarRecebimento(dados = {}) {
   const taxaPercentual = numero(dados.taxaPercentual, 0);
   const valorLiquido = calcularLiquido(valorBruto, taxaValor, taxaPercentual);
 
-  const statusInicial = statusRecebimento(dados.status || 'aberto');
-  const valorRecebidoInicial = statusInicial === 'recebido' ? valorLiquido : numero(dados.valorRecebido, 0);
+  const statusSolicitado = statusRecebimento(dados.status || 'aberto');
+  if (statusSolicitado !== 'aberto') {
+    const erro = new Error('Novo titulo deve ser criado em aberto. Para receber, use Baixar e passe pelo caixa.');
+    erro.status = 409;
+    erro.code = 'RECEBIMENTO_DEVE_PASSAR_PELO_CAIXA';
+    throw erro;
+  }
+  const statusInicial = 'aberto';
+  const valorRecebidoInicial = 0;
 
   const recebimento = {
     id: gerarId('rec'),
@@ -1012,6 +1019,20 @@ export async function atualizarRecebimento(id, dados = {}) {
     throw erro;
   }
 
+  const statusSolicitadoAtualizacao = dados.status !== undefined
+    ? statusRecebimento(dados.status)
+    : recebimentos[idx].status;
+
+  if (
+    ['recebido', 'parcial'].includes(statusSolicitadoAtualizacao) &&
+    statusSolicitadoAtualizacao !== recebimentos[idx].status
+  ) {
+    const erro = new Error('Status de pagamento nao pode ser alterado manualmente. Use Baixar e passe pelo caixa.');
+    erro.status = 409;
+    erro.code = 'STATUS_PAGAMENTO_SOMENTE_PELO_CAIXA';
+    throw erro;
+  }
+
   const valorBruto = dados.valorBruto !== undefined ? numero(dados.valorBruto, 0) : numero(recebimentos[idx].valorBruto, 0);
   const taxaValor = dados.taxaValor !== undefined ? numero(dados.taxaValor, 0) : numero(recebimentos[idx].taxaValor, 0);
   const taxaPercentual = dados.taxaPercentual !== undefined ? numero(dados.taxaPercentual, 0) : numero(recebimentos[idx].taxaPercentual, 0);
@@ -1025,7 +1046,7 @@ export async function atualizarRecebimento(id, dados = {}) {
     taxaPercentual,
     valorLiquido,
     valorRecebido: numero(dados.valorRecebido ?? recebimentos[idx].valorRecebido, 0),
-    status: statusRecebimento(dados.status || recebimentos[idx].status),
+    status: statusSolicitadoAtualizacao,
     atualizadoEm: agoraISO()
   };
 

@@ -125,9 +125,14 @@ async function obterMensagemErroResposta(resp, fallback = "Erro na operação.")
 async function verificarCaixaAbertoAntesDaBaixa() {
   try {
     const resp = await fetch("/api/caixa/atual", { cache: "no-store" });
-    if (!resp.ok) return { ok: true };
+    if (!resp.ok) {
+      return {
+        ok: false,
+        mensagem: "Não foi possível confirmar o caixa. Atualize a tela do Caixa antes de receber."
+      };
+    }
     const json = await resp.json().catch(() => ({}));
-    if (json.aberto === false) {
+    if (json.aberto !== true) {
       return {
         ok: false,
         mensagem: "Não existe caixa aberto. Abra o caixa antes de confirmar um recebimento."
@@ -135,7 +140,10 @@ async function verificarCaixaAbertoAntesDaBaixa() {
     }
     return { ok: true };
   } catch {
-    return { ok: true };
+    return {
+      ok: false,
+      mensagem: "Não foi possível confirmar o caixa. O recebimento foi bloqueado por segurança."
+    };
   }
 }
 
@@ -806,9 +814,46 @@ async function consultarIntegridade() {
   const resp = await fetch(`${API_LEDGER}/integridade`, { cache: "no-store" });
   const json = await resp.json().catch(() => ({}));
   if (!resp.ok) return alert(json.erro || "Falha na verificação.");
+
   const rel = json.relatorio || json.dados || json;
   const falhas = rel.falhas || [];
-  abrirConsultaFinanceira("Integridade financeira", `<p><strong>${rel.ok ? "Base íntegra" : "Atenção necessária"}</strong> — ${falhas.length} ocorrência(s).</p><table><thead><tr><th>Nível</th><th>Código</th><th>Registro</th></tr></thead><tbody>${falhas.map((f) => `<tr><td>${escapeHtml(f.nivel)}</td><td>${escapeHtml(f.codigo)}</td><td>${escapeHtml(f.registroId || "-")}</td></tr>`).join("") || '<tr><td colspan="3">Nenhuma inconsistência encontrada.</td></tr>'}</tbody></table>`);
+  const hoje = hojeISO();
+
+  const contasReceberAbertas = lancamentos.filter((item) => {
+    const tipo = normalizarTexto(item.tipo);
+    const st = normalizarTexto(item.status);
+    if (tipo !== "receber") return false;
+    if (["cancelado", "cancelada", "programado", "programada"].includes(st)) return false;
+    return !lancamentoPago(item) && saldoLancamento(item) > 0;
+  });
+
+  const vencidos = contasReceberAbertas.filter((item) =>
+    String(item.vencimento || "").slice(0, 10) < hoje
+  );
+  const venceHoje = contasReceberAbertas.filter((item) =>
+    String(item.vencimento || "").slice(0, 10) === hoje
+  );
+
+  const textoIntegridade = rel.ok
+    ? "Base tecnicamente íntegra"
+    : "Atenção técnica necessária";
+
+  abrirConsultaFinanceira(
+    "Integridade técnica financeira",
+    `<p><strong>${textoIntegridade}</strong> — ${falhas.length} inconsistência(s) estrutural(is).</p>
+     <p><strong>Pendências financeiras são outra informação:</strong>
+       ${contasReceberAbertas.length} título(s) em aberto,
+       ${vencidos.length} vencido(s) e
+       ${venceHoje.length} vencendo hoje.
+     </p>
+     <p style="font-size:13px;color:#64748b">
+       “Base íntegra” significa que os vínculos técnicos estão consistentes; não significa que todos os alunos pagaram.
+     </p>
+     <table><thead><tr><th>Nível</th><th>Código</th><th>Registro</th></tr></thead><tbody>
+       ${falhas.map((f) => `<tr><td>${escapeHtml(f.nivel)}</td><td>${escapeHtml(f.codigo)}</td><td>${escapeHtml(f.registroId || "-")}</td></tr>`).join("") ||
+         '<tr><td colspan="3">Nenhuma inconsistência técnica encontrada.</td></tr>'}
+     </tbody></table>`
+  );
 }
 
 function abrirBaixaPorUrlSeExistir() {
