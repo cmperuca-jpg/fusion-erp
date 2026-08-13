@@ -319,29 +319,73 @@ async function stopMonitorForAdmin() {
   await sleep(sdkReleaseMs);
 }
 
-function runExe(args, timeoutMs = 90000) {
+function runExe(args, timeoutMs = 90000, onEvent = null) {
   return new Promise((resolve, reject) => {
     const child = spawn(exe, args, { cwd: path.dirname(exe), windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
     let out = '';
     let err = '';
-    const timer = setTimeout(() => { try { child.kill(); } catch {} reject(new Error('Tempo limite da operacao biometrica excedido.')); }, timeoutMs);
+    let liveBuffer = '';
+
+    const emitLine = line => {
+      const text = String(line || '').trim();
+      if (!text || typeof onEvent !== 'function') return;
+      try { onEvent(JSON.parse(text)); } catch {}
+    };
+
+    const timer = setTimeout(() => {
+      try { child.kill(); } catch {}
+      reject(new Error('Tempo limite da operacao biometrica excedido.'));
+    }, timeoutMs);
+
     child.stdout.setEncoding('utf8');
     child.stderr.setEncoding('utf8');
-    child.stdout.on('data', chunk => { out += chunk; });
+    child.stdout.on('data', chunk => {
+      const text = String(chunk || '');
+      out += text;
+      liveBuffer += text;
+      let pos;
+      while ((pos = liveBuffer.indexOf('\n')) >= 0) {
+        emitLine(liveBuffer.slice(0, pos));
+        liveBuffer = liveBuffer.slice(pos + 1);
+      }
+    });
     child.stderr.on('data', chunk => { err += chunk; });
     child.on('error', error => { clearTimeout(timer); reject(error); });
     child.on('exit', code => {
       clearTimeout(timer);
+      if (liveBuffer.trim()) emitLine(liveBuffer);
       const lines = out.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
       let payload = null;
       for (let i = lines.length - 1; i >= 0; i--) {
-        try { payload = JSON.parse(lines[i]); break; } catch {}
+        try {
+          const candidate = JSON.parse(lines[i]);
+          if (candidate && (Object.prototype.hasOwnProperty.call(candidate, 'ok') || candidate.acao)) {
+            payload = candidate;
+            break;
+          }
+        } catch {}
       }
       if (!payload) return reject(new Error(err.trim() || `Operacao biometrica encerrou sem resposta valida (code=${code}).`));
       if (code !== 0 || payload.ok === false) return reject(new Error(payload.erro || err.trim() || 'Falha na operacao biometrica.'));
       resolve(payload);
     });
   });
+}
+
+async function sendAdminProgress(commandId, progress = {}) {
+  try {
+    const response = await fetch(`${server}/api/access-bridge/agent/commands/${encodeURIComponent(commandId)}/progress`, {
+      method: 'POST',
+      headers: agentHeaders(),
+      body: JSON.stringify(progress),
+      signal: AbortSignal.timeout(8000)
+    });
+    if (!response.ok && response.status !== 404) {
+      console.error(`[BIOMETRIA] progresso HTTP ${response.status}`);
+    }
+  } catch (error) {
+    console.error(`[BIOMETRIA] falha ao enviar progresso: ${error.message}`);
+  }
 }
 
 async function finishAdminCommand(commandId, outcome) {
@@ -372,8 +416,39 @@ async function executeAdminCommand(command) {
       // Um unico dono do FS80 por vez:
       // acesso OFF -> aguarda SDK liberar -> cadastro ON.
       setBiometricMode('cadastro');
+      await sendAdminProgress(command.id, {
+        percentual: 5,
+        etapa: 'preparando',
+        mensagem: 'Preparando o leitor Futronic para cadastro.',
+        atividade: 0
+      });
+
       await stopMonitorForAdmin();
-      result = await runExe(['enroll', alunoId, tenantId], 90000);
+
+      await sendAdminProgress(command.id, {
+        percentual: 12,
+        etapa: 'leitor_exclusivo',
+        mensagem: 'Leitor reservado para o cadastro. Verificando a digital.',
+        atividade: 0
+      });
+
+      result = await runExe(['enroll', alunoId, tenantId], 90000, evt => {
+        if (evt?.event !== 'enroll-progress') return;
+        void sendAdminProgress(command.id, {
+          percentual: Number(evt.percentual || 0),
+          etapa: String(evt.etapa || 'capturando'),
+          mensagem: String(evt.mensagem || 'Capturando amostras no Futronic.'),
+          atividade: Number(evt.atividade || 0)
+        });
+      });
+
+      await sendAdminProgress(command.id, {
+        percentual: 97,
+        etapa: 'finalizando',
+        mensagem: 'Template protegido e salvo. Finalizando cadastro.',
+        atividade: 3
+      });
+
       // Garante que o processo de cadastro fechou FTRAPI antes do rearmamento.
       await sleep(sdkReleaseMs);
     } else {

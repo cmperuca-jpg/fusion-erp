@@ -1786,12 +1786,60 @@ setTimeout(inicializarPainelComercialMatricula, 0);
     return aluno;
   }
 
+  function garantirPainelProgresso() {
+    let painel = el("biometriaProgresso");
+    if (painel) return painel;
+    const mensagemBox = el("biometriaMensagem");
+    if (!mensagemBox) return null;
+
+    painel = document.createElement("div");
+    painel.id = "biometriaProgresso";
+    painel.className = "biometria-progresso";
+    painel.innerHTML = `
+      <div class="biometria-progresso-topo">
+        <span id="biometriaProgressoEtapa">Pronto para iniciar</span>
+        <strong id="biometriaProgressoPercentual">0%</strong>
+      </div>
+      <div class="biometria-progresso-barra" aria-hidden="true"><i id="biometriaProgressoBarra"></i></div>
+      <small id="biometriaProgressoDetalhe">O progresso aparece aqui durante o cadastro.</small>
+    `;
+    mensagemBox.insertAdjacentElement("afterend", painel);
+    return painel;
+  }
+
+  function atualizarProgresso(progresso = {}) {
+    garantirPainelProgresso();
+    const percentual = Math.max(0, Math.min(100, Number(progresso.percentual || 0)));
+    const etapa = String(progresso.etapa || "").replaceAll("_", " ");
+    const detalhe = String(progresso.mensagem || "");
+    const atividade = Math.max(0, Math.min(3, Number(progresso.atividade || 0)));
+
+    if (el("biometriaProgressoPercentual")) el("biometriaProgressoPercentual").textContent = `${Math.round(percentual)}%`;
+    if (el("biometriaProgressoEtapa")) el("biometriaProgressoEtapa").textContent = etapa || "Processando cadastro";
+    if (el("biometriaProgressoDetalhe")) el("biometriaProgressoDetalhe").textContent = detalhe || "Cadastro biométrico em andamento.";
+    if (el("biometriaProgressoBarra")) el("biometriaProgressoBarra").style.width = `${percentual}%`;
+
+    if (atividade > 0 && percentual < 100) {
+      document.querySelectorAll("#biometriaCapturas [data-captura]").forEach((card, indice) => {
+        card.classList.remove("aceita", "rejeitada");
+        const strong = card.querySelector("strong");
+        if (!strong) return;
+        if (indice + 1 < atividade) strong.textContent = "Processada";
+        else if (indice + 1 === atividade) strong.textContent = "Em leitura...";
+        else strong.textContent = "Aguardando";
+      });
+    }
+  }
+
   function renderAmostras(concluidas = false, qualidade = 0) {
-    document.querySelectorAll("#biometriaCapturas [data-captura]").forEach((card, indice) => {
+    const q = Number(qualidade || 0);
+    document.querySelectorAll("#biometriaCapturas [data-captura]").forEach((card) => {
       card.classList.toggle("aceita", concluidas);
       card.classList.remove("rejeitada");
       const strong = card.querySelector("strong");
-      if (strong) strong.textContent = concluidas ? `${qualidade}% — aceita` : "Aguardando";
+      if (strong) strong.textContent = concluidas
+        ? (q > 0 ? `Aceita · qualidade ${q}%` : "Aceita")
+        : "Aguardando";
     });
     const salvar = el("btnBiometriaSalvar");
     if (salvar) { salvar.disabled = true; salvar.textContent = "Salvo automaticamente"; }
@@ -1838,28 +1886,70 @@ setTimeout(inicializarPainelComercialMatricula, 0);
     await carregarCadastro();
   }
 
+  function esperar(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  async function acompanharCadastro(commandId) {
+    const inicio = Date.now();
+    while (Date.now() - inicio < 100000) {
+      const r = await bioApi(`/sdk/comandos/${encodeURIComponent(commandId)}`, { method: "GET" });
+      if (r.progresso) atualizarProgresso(r.progresso);
+
+      if (r.status === "completed") return r;
+      if (r.status === "failed" || r.status === "expired") {
+        throw new Error(r.erro || r.mensagem || "Falha no cadastro biométrico.");
+      }
+      await esperar(300);
+    }
+    throw new Error("Tempo limite aguardando o cadastro biométrico.");
+  }
+
   async function cadastrar() {
     if (estado.ocupada) return;
     const aluno = atualizarVinculo();
     if (!aluno.id) return mensagem("Salve o aluno antes de cadastrar a biometria.", "erro");
     estado.ocupada = true;
     const botao = el("btnBiometriaCapturar");
-    if (botao) { botao.disabled = true; botao.textContent = "Aguardando as 3 amostras..."; }
+    if (botao) { botao.disabled = true; botao.textContent = "Cadastro em andamento..."; }
+
+    garantirPainelProgresso();
     renderAmostras(false);
-    mensagem("Coloque o mesmo dedo no leitor. O SDK solicitará três amostras; retire e recoloque quando indicado.");
+    atualizarProgresso({
+      percentual: 1,
+      etapa: "iniciando",
+      mensagem: "Enviando o cadastro ao computador da academia.",
+      atividade: 0
+    });
+    mensagem("Cadastro iniciado. Acompanhe abaixo o andamento do leitor.");
+
     try {
-      const r = await bioApi("/sdk/cadastrar", {
+      const inicio = await bioApi("/sdk/cadastrar", {
         method: "POST",
         body: JSON.stringify({ alunoId: aluno.id, alunoNome: aluno.nome })
       });
+
+      if (!inicio.commandId) throw new Error("O servidor não retornou o identificador do cadastro.");
+      if (inicio.progresso) atualizarProgresso(inicio.progresso);
+
+      const r = await acompanharCadastro(inicio.commandId);
       const bio = r.biometria || {};
+      atualizarProgresso(r.progresso || {
+        percentual: 100,
+        etapa: "concluído",
+        mensagem: "Biometria cadastrada e salva.",
+        atividade: 3
+      });
       renderAmostras(true, bio.qualidadeMedia || bio.qualidade || 0);
       mensagem(r.mensagem || "Biometria cadastrada e vinculada ao aluno.", "sucesso");
       await carregarCadastro();
       if (typeof carregarAlunos === "function") await carregarAlunos();
     } catch (e) {
-      renderAmostras(false);
       mensagem(e.message, "erro");
+      document.querySelectorAll("#biometriaCapturas [data-captura]").forEach(card => {
+        if (!card.classList.contains("aceita")) card.classList.add("rejeitada");
+      });
+      if (el("biometriaProgressoEtapa")) el("biometriaProgressoEtapa").textContent = "Cadastro interrompido";
     } finally {
       estado.ocupada = false;
       if (botao) { botao.disabled = false; botao.textContent = "Cadastrar biometria"; }
@@ -1879,6 +1969,7 @@ setTimeout(inicializarPainelComercialMatricula, 0);
   }
 
   document.addEventListener("DOMContentLoaded", () => {
+    garantirPainelProgresso();
     el("btnBiometriaTestar")?.addEventListener("click", testarLeitor);
     el("btnBiometriaCapturar")?.addEventListener("click", cadastrar);
     el("btnBiometriaSalvar")?.addEventListener("click", cadastrar);

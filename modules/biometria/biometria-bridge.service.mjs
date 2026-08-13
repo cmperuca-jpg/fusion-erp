@@ -114,3 +114,18 @@ export async function executarBiometria(action, payload = {}, { ttlSeconds = 100
   const result = await aguardarComando(command.id, timeoutMs);
   return { command, result };
 }
+
+
+export async function consultarComandoBiometria(commandId) {
+  const id = texto(commandId, 160);
+  if (!id) throw erro('commandId obrigatorio.', 400);
+
+  const command = await getCommand(id);
+  if (!command) throw erro('Comando biometrico nao encontrado.', 404);
+
+  const tenantId = tenantAtual();
+  if (command.tenantId !== tenantId) throw erro('Comando pertence a outro tenant.', 403);
+  if (command.action !== 'biometria_enroll') throw erro('Comando nao pertence ao cadastro biometrico.', 400);
+
+  return command;
+}

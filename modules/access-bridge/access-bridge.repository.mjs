@@ -138,6 +138,39 @@ export async function finishCommand(id, agentId, outcome) {
   return row;
 }
 
+export async function updateCommandProgress(id, agentId, progress = {}) {
+  const safe = progress && typeof progress === 'object' && !Array.isArray(progress)
+    ? {
+        percentual: Math.max(0, Math.min(99, Number(progress.percentual || 0))),
+        etapa: String(progress.etapa || '').slice(0, 80),
+        mensagem: String(progress.mensagem || '').slice(0, 220),
+        atividade: Math.max(0, Math.min(3, Number(progress.atividade || 0))),
+        atualizadoEm: isoDate()
+      }
+    : {};
+
+  const result = { progress: safe };
+  const supabase = await supabaseClient();
+  if (supabase) {
+    const { data, error } = await supabase.from('access_bridge_commands')
+      .update({ result })
+      .eq('id', id)
+      .eq('agent_id', agentId)
+      .eq('status', 'processing')
+      .select()
+      .maybeSingle();
+    if (error) throw error;
+    return normalize(data);
+  }
+
+  const rows = await readJson(FILE, []);
+  const row = rows.find(item => item.id === id && item.agentId === agentId && item.status === 'processing');
+  if (!row) return null;
+  row.result = result;
+  await writeJson(FILE, rows);
+  return row;
+}
+
 export async function getCommand(id) {
   const supabase = await supabaseClient();
   if (supabase) {

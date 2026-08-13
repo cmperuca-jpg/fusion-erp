@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { executarBiometria } from './biometria-bridge.service.mjs';
+import { executarBiometria, enfileirarBiometria, consultarComandoBiometria } from './biometria-bridge.service.mjs';
 
 const router = Router();
 
@@ -47,20 +47,63 @@ router.get('/aluno/:alunoId', async (req, res) => {
 router.post('/sdk/cadastrar', async (req, res) => {
   try {
     const alunoId = String(req.body?.alunoId || '').trim();
-    const { command, result } = await executarBiometria('biometria_enroll', { alunoId }, { ttlSeconds: 120, timeoutMs: 95000 });
-    res.status(201).json({
+    if (!alunoId) return res.status(400).json({ ok: false, mensagem: 'alunoId obrigatorio.' });
+
+    const command = await enfileirarBiometria('biometria_enroll', { alunoId }, 120);
+    res.status(202).json({
       ok: true,
-      biometria: {
-        alunoId,
-        cadastrada: true,
-        qualidade: Number(result?.qualidade || 0) || undefined,
-        qualidadeMedia: Number(result?.qualidade || 0) || undefined,
-        armazenamento: 'local-dpapi',
-        tenantIsolado: true,
-        templateExposto: false
-      },
       commandId: command.id,
-      mensagem: 'Biometria Futronic cadastrada no computador da academia.'
+      status: command.status,
+      progresso: {
+        percentual: 2,
+        etapa: 'fila',
+        mensagem: 'Cadastro enviado ao computador da academia.',
+        atividade: 0
+      }
+    });
+  } catch (error) {
+    tratar(res, error);
+  }
+});
+
+router.get('/sdk/comandos/:commandId', async (req, res) => {
+  try {
+    const command = await consultarComandoBiometria(req.params.commandId);
+    const result = command.result && typeof command.result === 'object' ? command.result : {};
+    const progress = result.progress && typeof result.progress === 'object' ? result.progress : null;
+
+    if (command.status === 'completed') {
+      const qualidade = Number(result.qualidade || 0);
+      return res.json({
+        ok: true,
+        status: command.status,
+        commandId: command.id,
+        progresso: {
+          percentual: 100,
+          etapa: 'concluido',
+          mensagem: 'Biometria cadastrada e salva.',
+          atividade: 3
+        },
+        biometria: {
+          alunoId: String(result.alunoId || ''),
+          cadastrada: true,
+          qualidade: qualidade > 0 ? qualidade : undefined,
+          qualidadeMedia: qualidade > 0 ? qualidade : undefined,
+          armazenamento: 'local-dpapi',
+          tenantIsolado: true,
+          templateExposto: false
+        },
+        mensagem: 'Biometria Futronic cadastrada no computador da academia.'
+      });
+    }
+
+    return res.json({
+      ok: true,
+      status: command.status,
+      commandId: command.id,
+      progresso: progress,
+      erro: command.status === 'failed' ? (command.error || 'Falha no cadastro biometrico.') : '',
+      mensagem: command.status === 'failed' ? (command.error || 'Falha no cadastro biometrico.') : ''
     });
   } catch (error) {
     tratar(res, error);

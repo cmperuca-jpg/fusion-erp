@@ -88,6 +88,9 @@ internal sealed class Fs80 : IDisposable
 {
     private readonly Native.StateControl callback;
     private bool initialized;
+    private DateTime lastEnrollmentActivityAt = DateTime.MinValue;
+    private int enrollmentActivitySequence = 0;
+    public Action<int> EnrollmentActivity { get; set; }
 
     public Fs80()
     {
@@ -101,6 +104,25 @@ internal sealed class Fs80 : IDisposable
     private void Callback(IntPtr context, uint stateMask, ref uint response, uint signal, IntPtr bitmap)
     {
         response = Native.CONTINUE;
+
+        // Este evento e apenas telemetria visual para o operador. Ele NAO decide
+        // se uma amostra foi aceita e NAO altera o algoritmo Futronic.
+        // Agrupa atividade do callback em no maximo 3 etapas visuais.
+        Action<int> progress = EnrollmentActivity;
+        if (progress != null)
+        {
+            DateTime now = DateTime.UtcNow;
+            if (lastEnrollmentActivityAt == DateTime.MinValue ||
+                (now - lastEnrollmentActivityAt).TotalMilliseconds >= 1200)
+            {
+                lastEnrollmentActivityAt = now;
+                if (enrollmentActivitySequence < 3)
+                {
+                    enrollmentActivitySequence += 1;
+                    try { progress(enrollmentActivitySequence); } catch {}
+                }
+            }
+        }
     }
 
     private static void Check(uint rc, string operation)
@@ -564,8 +586,39 @@ internal static class Program
                 ClearTemplates(existentes);
             }
 
+            Print(new Dictionary<string, object> {
+                {"event", "enroll-progress"},
+                {"etapa", "aguardando_amostras"},
+                {"percentual", 22},
+                {"atividade", 0},
+                {"mensagem", "Leitor pronto. Posicione o mesmo dedo e siga as tres leituras."},
+                {"tenantId", tenantId}
+            });
+
+            fs80.EnrollmentActivity = delegate(int atividade) {
+                int percentual = atividade == 1 ? 38 : (atividade == 2 ? 58 : 78);
+                Print(new Dictionary<string, object> {
+                    {"event", "enroll-progress"},
+                    {"etapa", "capturando"},
+                    {"percentual", percentual},
+                    {"atividade", atividade},
+                    {"mensagem", "Futronic recebeu atividade do dedo. Continue seguindo as solicitacoes do leitor."},
+                    {"tenantId", tenantId}
+                });
+            };
+
             int quality;
             byte[] template = fs80.Enroll(out quality);
+            fs80.EnrollmentActivity = null;
+
+            Print(new Dictionary<string, object> {
+                {"event", "enroll-progress"},
+                {"etapa", "protegendo"},
+                {"percentual", 90},
+                {"atividade", 3},
+                {"mensagem", "Tres amostras concluidas. Protegendo e salvando a biometria."},
+                {"tenantId", tenantId}
+            });
             byte[] plain = null;
             byte[] protectedBytes = null;
             try

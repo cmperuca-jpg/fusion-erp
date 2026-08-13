@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import { createCommand, claimNext, finishCommand, getCommand, saveHeartbeat, getAgent } from './access-bridge.repository.mjs';
+import { createCommand, claimNext, finishCommand, getCommand, saveHeartbeat, getAgent, updateCommandProgress } from './access-bridge.repository.mjs';
 import { normalizarTenantId } from '../core/persistence/tenant-context.mjs';
 import { credencialAccessAgentRuntime } from './access-agent-config.service.mjs';
 
@@ -288,4 +288,4 @@ export async function queueRelease(body = {}) {
   });
 }
 
-export { claimNext, finishCommand, getCommand, saveHeartbeat, getAgent };
+export { claimNext, finishCommand, getCommand, saveHeartbeat, getAgent, updateCommandProgress };

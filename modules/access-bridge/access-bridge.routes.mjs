@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 import express from 'express';
-import { validateAgent, validateCommandApi, queueRelease, claimNext, finishCommand, getCommand, saveHeartbeat, getAgent } from './access-bridge.service.mjs';
+import { validateAgent, validateCommandApi, queueRelease, claimNext, finishCommand, getCommand, saveHeartbeat, getAgent, updateCommandProgress } from './access-bridge.service.mjs';
 import * as accessEngine from '../access-engine/access-engine.service.mjs';
 import { executarComTenant } from '../core/persistence/tenant-context.mjs';
 import { saveEdgeDeviceCredential } from './access-bridge.repository.mjs';
@@ -93,6 +93,13 @@ router.get('/agent/next', wrap(async (req, res) => {
 
   const command = await claimNext(agent.agentId, actions);
   res.json({ ok: true, command });
+}));
+
+router.post('/agent/commands/:id/progress', wrap(async (req, res) => {
+  const agent = await validateAgent(req);
+  const command = await updateCommandProgress(req.params.id, agent.agentId, req.body || {});
+  if (!command) return res.status(404).json({ ok: false, erro: 'Comando em processamento nao encontrado' });
+  res.json({ ok: true });
 }));
 
 router.post('/agent/commands/:id/result', wrap(async (req, res) => {

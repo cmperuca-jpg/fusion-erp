@@ -833,3 +833,15 @@ html, body { max-width:100%; overflow-x:hidden !important; }
 }
 /* /FUSION_MATRICULAS_ACOES_CONTRASTE_20260807 */
 
+
+
+/* Progresso operacional do cadastro Futronic.
+   O percentual representa o andamento do processo, nao uma nota biometrica inventada. */
+.biometria-progresso{display:grid;gap:8px;border:1px solid #bae6fd;background:#f0f9ff;border-radius:11px;padding:12px}
+.biometria-progresso-topo{display:flex;align-items:center;justify-content:space-between;gap:12px;color:#0c4a6e}
+.biometria-progresso-topo span{font-weight:800;text-transform:capitalize}
+.biometria-progresso-topo strong{font-size:18px}
+.biometria-progresso-barra{height:10px;overflow:hidden;border-radius:999px;background:#dbeafe}
+.biometria-progresso-barra i{display:block;width:0;height:100%;background:#06b6d4;border-radius:999px;transition:width .22s ease}
+.biometria-progresso small{color:#475569}
+.biometria-capturas>div:not(.aceita):not(.rejeitada) strong{color:#0f172a}
