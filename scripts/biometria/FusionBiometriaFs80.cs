@@ -344,8 +344,15 @@ internal static class Program
     private static void AtomicWriteTemplate(string tenantId, string alunoId, byte[] protectedBytes)
     {
         string target = FileFor(tenantId, alunoId);
-        Directory.CreateDirectory(Path.GetDirectoryName(target));
-        string temp = target + ".tmp-" + Guid.NewGuid().ToString("N");
+        string targetDir = Path.GetDirectoryName(target);
+        Directory.CreateDirectory(targetDir);
+
+        // Nao concatena GUID ao nome completo do template. O caminho do repo +
+        // hashes de tenant/aluno ja e longo e pode ultrapassar MAX_PATH no Windows.
+        string temp = Path.Combine(
+            targetDir,
+            "w-" + Guid.NewGuid().ToString("N").Substring(0, 8) + ".tmp"
+        );
 
         try
         {
@@ -359,10 +366,15 @@ internal static class Program
             {
                 string backupDir = BackupDirForTenant(tenantId);
                 Directory.CreateDirectory(backupDir);
+
+                string targetHash = Path.GetFileNameWithoutExtension(target);
+                if (targetHash.Length > 12) targetHash = targetHash.Substring(0, 12);
+
                 string backup = Path.Combine(
                     backupDir,
-                    Path.GetFileName(target) + "." + DateTime.UtcNow.ToString("yyyyMMddHHmmssfff") + ".bak"
+                    "b-" + targetHash + "-" + DateTime.UtcNow.ToString("yyyyMMddHHmmssfff") + ".bak"
                 );
+
                 File.Replace(temp, target, backup, true);
             }
             else
@@ -380,9 +392,13 @@ internal static class Program
     {
         string dir = Path.Combine(BaseStoreDir, "deleted-backups", "tenants", TenantHash(tenantId));
         Directory.CreateDirectory(dir);
+
+        string sourceHash = Path.GetFileNameWithoutExtension(source);
+        if (sourceHash.Length > 12) sourceHash = sourceHash.Substring(0, 12);
+
         string destination = Path.Combine(
             dir,
-            Path.GetFileName(source) + "." + DateTime.UtcNow.ToString("yyyyMMddHHmmssfff") + "." + Guid.NewGuid().ToString("N").Substring(0, 8) + ".bak"
+            "d-" + sourceHash + "-" + DateTime.UtcNow.ToString("yyyyMMddHHmmssfff") + "-" + Guid.NewGuid().ToString("N").Substring(0, 6) + ".bak"
         );
         File.Move(source, destination);
     }
