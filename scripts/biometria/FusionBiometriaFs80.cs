@@ -141,7 +141,7 @@ internal sealed class Fs80 : IDisposable
         finally { Marshal.FreeHGlobal(mem); }
     }
 
-    public Tuple<string, int> Identify(IReadOnlyList<TemplateEntry> templates)
+    public Tuple<string, int> Identify(IReadOnlyList<TemplateEntry> templates, int minFarAttained)
     {
         if (templates == null || templates.Count == 0) return Tuple.Create<string, int>(null, 0);
 
@@ -207,10 +207,32 @@ internal sealed class Fs80 : IDisposable
 
             if (matchCount == 0) return Tuple.Create<string, int>(null, 0);
 
-            var best = (Native.FTR_MATCHED_X_RECORD)Marshal.PtrToStructure(
-                matchesMem,
-                typeof(Native.FTR_MATCHED_X_RECORD)
-            );
+            int returned = Math.Min((int)matchCount, maxMatches);
+            bool hasBest = false;
+            Native.FTR_MATCHED_X_RECORD best = new Native.FTR_MATCHED_X_RECORD();
+
+            for (int i = 0; i < returned; i++)
+            {
+                var candidate = (Native.FTR_MATCHED_X_RECORD)Marshal.PtrToStructure(
+                    IntPtr.Add(matchesMem, i * matchSize),
+                    typeof(Native.FTR_MATCHED_X_RECORD)
+                );
+
+                if (!hasBest || candidate.FarAttained > best.FarAttained)
+                {
+                    best = candidate;
+                    hasBest = true;
+                }
+            }
+
+            if (!hasBest) return Tuple.Create<string, int>(null, 0);
+
+            // Calibracao fisica da Academia Piloto em 13/08/2026:
+            // cadastrados: FAR 469..806; nao cadastrados candidatos: FAR 82..170.
+            // O limite padrao 400 mantem margem para variacao genuina e rejeita
+            // todos os falsos candidatos observados. Pode ser elevado por env.
+            if (best.FarAttained < minFarAttained)
+                return Tuple.Create<string, int>(null, best.FarAttained);
 
             string keyHex = Program.Hex(best.KeyValue);
             TemplateEntry found;
@@ -271,6 +293,16 @@ internal static class Program
         if (String.IsNullOrWhiteSpace(value)) value = Environment.GetEnvironmentVariable("ACCESS_AGENT_TENANT_ID");
         if (String.IsNullOrWhiteSpace(value)) value = Environment.GetEnvironmentVariable("FUSION_TENANT_ID");
         return NormalizeTenantId(value);
+    }
+
+    private static int ResolveFarMin()
+    {
+        const int defaultFar = 400;
+        string raw = Environment.GetEnvironmentVariable("FUSION_BIOMETRIA_FAR_MIN");
+        int parsed;
+        if (!String.IsNullOrWhiteSpace(raw) && Int32.TryParse(raw, out parsed))
+            return Math.Max(1, Math.Min(5000, parsed));
+        return defaultFar;
     }
 
     private static string TenantHash(string tenantId)
@@ -596,12 +628,14 @@ internal static class Program
     private static int Monitor(string tenantId)
     {
         tenantId = ResolveTenant(tenantId);
+        int farMinimo = ResolveFarMin();
         Print(new Dictionary<string, object> {
             {"event", "status"},
             {"estado", "monitor-iniciando"},
             {"sensor", "Futronic FS80"},
             {"tenantId", tenantId},
             {"tenantIsolado", true},
+            {"farMinimo", farMinimo},
             {"versao", "2"}
         });
 
@@ -623,7 +657,7 @@ internal static class Program
                         continue;
                     }
 
-                    Tuple<string, int> result = fs80.Identify(items);
+                    Tuple<string, int> result = fs80.Identify(items, farMinimo);
                     if (!String.IsNullOrEmpty(result.Item1))
                     {
                         Print(new Dictionary<string, object> {
@@ -631,6 +665,7 @@ internal static class Program
                             {"tenantId", tenantId},
                             {"alunoId", result.Item1},
                             {"farNumerico", result.Item2},
+                            {"farMinimo", farMinimo},
                             {"templateExposto", false}
                         });
                         Thread.Sleep(1500);
@@ -640,6 +675,9 @@ internal static class Program
                         Print(new Dictionary<string, object> {
                             {"event", "no-match"},
                             {"tenantId", tenantId},
+                            {"farNumerico", result.Item2},
+                            {"farMinimo", farMinimo},
+                            {"motivo", result.Item2 > 0 ? "abaixo-limite-seguranca" : "sem-correspondencia"},
                             {"templateExposto", false}
                         });
                         Thread.Sleep(700);
