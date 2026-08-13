@@ -66,27 +66,51 @@ export async function createCommand(input) {
   return command;
 }
 
-export async function claimNext(agentId, actions = []) {
+export async function claimNext(agentId, allowedActions = null) {
   const now = new Date().toISOString();
-  const actionList = Array.isArray(actions) ? actions.map(item => String(item || '').trim()).filter(Boolean) : [];
+  const actions = Array.isArray(allowedActions)
+    ? allowedActions.map(item => String(item || '').trim()).filter(Boolean)
+    : [];
+
   const supabase = await supabaseClient();
   if (supabase) {
     let query = supabase.from('access_bridge_commands')
-      .select('*').eq('agent_id', agentId).eq('status', 'pending').gt('expires_at', now);
-    if (actionList.length) query = query.in('action', actionList);
-    const { data: rows, error } = await query.order('created_at', { ascending: true }).limit(1);
+      .select('*')
+      .eq('agent_id', agentId)
+      .eq('status', 'pending')
+      .gt('expires_at', now);
+
+    if (actions.length) query = query.in('action', actions);
+
+    const { data: rows, error } = await query
+      .order('created_at', { ascending: true })
+      .limit(1);
+
     if (error) throw error;
     const row = rows?.[0];
     if (!row) return null;
+
     const { data, error: updateError } = await supabase.from('access_bridge_commands')
-      .update({ status: 'processing', claimed_at: now }).eq('id', row.id).eq('status', 'pending').select().maybeSingle();
+      .update({ status: 'processing', claimed_at: now })
+      .eq('id', row.id)
+      .eq('status', 'pending')
+      .select()
+      .maybeSingle();
+
     if (updateError) throw updateError;
     return normalize(data);
   }
+
   const rows = await readJson(FILE, []);
-  const row = rows.find(item => item.agentId === agentId && item.status === 'pending' && item.expiresAt > now && (!actionList.length || actionList.includes(item.action)));
+  const row = rows.find(item =>
+    item.agentId === agentId &&
+    item.status === 'pending' &&
+    item.expiresAt > now &&
+    (!actions.length || actions.includes(String(item.action || '')))
+  );
   if (!row) return null;
-  row.status = 'processing'; row.claimedAt = now;
+  row.status = 'processing';
+  row.claimedAt = now;
   await writeJson(FILE, rows);
   return row;
 }
@@ -153,4 +177,28 @@ export async function getAgent(agentId) {
     return data;
   }
   return (await readJson('access_bridge_agents.json', [])).find(item => item.agent_id === agentId) || null;
+}
+
+export async function getAgentForTenant(tenantId) {
+  const tenant = String(tenantId || '').trim();
+  if (!tenant) return null;
+
+  const supabase = await supabaseClient();
+  if (supabase) {
+    const { data, error } = await supabase.from('access_bridge_agents')
+      .select('*')
+      .eq('tenant_id', tenant)
+      .order('last_seen_at', { ascending: false })
+      .limit(10);
+    if (error) throw error;
+    return data?.[0] || null;
+  }
+
+  const agents = await readJson('access_bridge_agents.json', []);
+  return agents
+    .filter(item => String(item.tenant_id || item.tenantId || item?.details?.tenantId || item?.details?.tenant_id || '').trim() === tenant)
+    .sort((a, b) =>
+      new Date(b.last_seen_at || b.lastSeenAt || 0).getTime() -
+      new Date(a.last_seen_at || a.lastSeenAt || 0).getTime()
+    )[0] || null;
 }

@@ -1,5 +1,4 @@
-import { createCommand, getCommand, getAgent } from '../access-bridge/access-bridge.repository.mjs';
-import { resolveCommandTarget } from '../access-bridge/access-bridge.service.mjs';
+import { createCommand, getCommand, getAgent, getAgentForTenant } from '../access-bridge/access-bridge.repository.mjs';
 import { tenantAtual } from '../core/persistence/tenant-context.mjs';
 
 const ACOES = new Set(['biometria_status', 'biometria_exists', 'biometria_enroll', 'biometria_delete']);
@@ -19,11 +18,44 @@ function erro(message, status = 400) {
   return e;
 }
 
-function targetAtual() {
+function equipmentIdsDoAgent(agent = {}) {
+  const details = agent?.details && typeof agent.details === 'object' ? agent.details : {};
+  const raw =
+    agent.equipment_ids ??
+    agent.equipmentIds ??
+    details.equipmentIds ??
+    details.equipment_ids ??
+    details.equipmentId ??
+    details.equipment_id ??
+    [];
+
+  if (Array.isArray(raw)) return raw.map(item => texto(item, 120)).filter(Boolean);
+  return String(raw || '').split(',').map(item => texto(item, 120)).filter(Boolean);
+}
+
+async function targetAtual() {
   const tenantId = tenantAtual();
-  const target = resolveCommandTarget({ tenantId });
-  if (target.tenantId !== tenantId) throw erro('Agente biometrico pertence a outro tenant.', 403);
-  return target;
+  const agent = await getAgentForTenant(tenantId).catch(() => null);
+
+  if (!agent) {
+    throw erro('Nenhum Fusion Access Agent foi localizado para esta academia.', 503);
+  }
+
+  const details = agent?.details && typeof agent.details === 'object' ? agent.details : {};
+  const agentTenant = texto(agent.tenant_id || agent.tenantId || details.tenantId || details.tenant_id, 120);
+  if (agentTenant && agentTenant !== tenantId) {
+    throw erro('Agente biometrico pertence a outro tenant.', 403);
+  }
+
+  const agentId = texto(agent.agent_id || agent.agentId, 120);
+  const equipmentId = equipmentIdsDoAgent(agent)[0] || '';
+
+  if (!agentId) throw erro('Fusion Access Agent sem identificador valido.', 503);
+  if (!equipmentId) {
+    throw erro('O Fusion Access Agent ainda nao informou o equipamento desta academia. Aguarde alguns segundos e tente novamente.', 503);
+  }
+
+  return { agentId, tenantId, equipmentId };
 }
 
 async function agenteOnline(agentId) {
@@ -38,7 +70,7 @@ export async function enfileirarBiometria(action, payload = {}, ttlSeconds = 100
   if (!biometriaAtiva()) throw erro('Biometria desativada no servidor.', 503);
   if (!ACOES.has(action)) throw erro('Acao biometrica invalida.', 400);
 
-  const target = targetAtual();
+  const target = await targetAtual();
   if (!(await agenteOnline(target.agentId))) {
     throw erro('Fusion Access Agent offline. Verifique o computador da academia.', 503);
   }

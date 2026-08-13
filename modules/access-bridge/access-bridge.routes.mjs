@@ -21,10 +21,19 @@ function texto(value, limit = 160) {
   return String(value ?? '').trim().slice(0, limit);
 }
 
+function agentEquipmentDetails(agent = {}) {
+  const equipmentIds = Array.isArray(agent.equipmentIds) ? agent.equipmentIds.filter(Boolean) : [];
+  const equipmentId = agent.equipmentId || (equipmentIds.length === 1 ? equipmentIds[0] : '');
+  return {
+    equipmentId: equipmentId || undefined,
+    equipmentIds: equipmentIds.length ? equipmentIds : (equipmentId ? [equipmentId] : undefined)
+  };
+}
+
 router.get('/health', (req, res) => res.json({
   ok: true,
   modulo: 'access-bridge',
-  versao: '1.2.0',
+  versao: '1.2.1',
   storage: process.env.SUPABASE_URL ? 'supabase' : 'json-local',
   biometria: biometricEnabled() ? 'enabled' : 'disabled'
 }));
@@ -47,6 +56,7 @@ router.post('/agent/heartbeat', wrap(async (req, res) => {
   await saveHeartbeat(agent.agentId, {
     ...(req.body || {}),
     tenantId: agent.tenantId || undefined,
+    ...agentEquipmentDetails(agent),
     authenticatedAt: new Date().toISOString()
   });
   res.json({ ok: true, serverTime: new Date().toISOString() });
@@ -58,7 +68,14 @@ router.get('/agent/next', wrap(async (req, res) => {
   const actions = consumer === 'biometria'
     ? ['biometria_status', 'biometria_exists', 'biometria_enroll', 'biometria_delete']
     : ['release'];
-  await saveHeartbeat(agent.agentId, { state: 'polling', consumer, tenantId: agent.tenantId || undefined });
+
+  await saveHeartbeat(agent.agentId, {
+    state: 'polling',
+    consumer,
+    tenantId: agent.tenantId || undefined,
+    ...agentEquipmentDetails(agent)
+  });
+
   const command = await claimNext(agent.agentId, actions);
   res.json({ ok: true, command });
 }));
