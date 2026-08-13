@@ -158,24 +158,13 @@ async function criarCreditoAluno({ recebimento, valorCredito }) {
 
 async function criarMovimentoCaixa(recebimento) {
   const dados = await lerCaixa();
-  let caixa = caixaAberto(dados);
+  const caixa = caixaAberto(dados);
 
   if (!caixa) {
-    const novoCaixa = {
-      id: gerarId('cx'),
-      dataAbertura: hojeISO(),
-      valorAbertura: 0,
-      responsavel: 'Administrador',
-      observacaoAbertura: 'Caixa aberto automaticamente pela baixa de recebimento.',
-      status: 'aberto',
-      abertoEm: agoraISO(),
-      fechadoEm: '',
-      valorFechamentoInformado: null,
-      diferenca: null,
-      observacaoFechamento: ''
-    };
-    dados.caixas.push(novoCaixa);
-    caixa = novoCaixa;
+    const erro = new Error('Abra o caixa antes de confirmar qualquer recebimento.');
+    erro.status = 400;
+    erro.code = 'CAIXA_FECHADO';
+    throw erro;
   }
 
   const movimentoId = recebimento.movimentoCaixaId || gerarId('mov');

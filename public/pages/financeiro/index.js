@@ -562,7 +562,12 @@ async function confirmarBaixa(event) {
   btn.disabled = true;
   btn.textContent = "Confirmando...";
   try {
-    // O motor financeiro abre o caixa oficial automaticamente quando necessário.
+    const situacaoCaixa = await verificarCaixaAbertoAntesDaBaixa();
+    if (!situacaoCaixa.ok) {
+      throw new Error(situacaoCaixa.mensagem || "Abra o caixa antes de confirmar um recebimento.");
+    }
+
+    // O caixa deve ter sido aberto explicitamente pelo operador.
     const dadosCartao = calcularDadosCartao();
     const formaPagamento = valor("baixaFormaPagamento");
     const valorDevido = numero(valor("baixaValorDevido"));

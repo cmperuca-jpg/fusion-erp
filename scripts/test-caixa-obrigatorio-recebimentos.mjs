@@ -1,0 +1,11 @@
+import assert from "node:assert/strict";
+import fs from "node:fs/promises";
+const service=await fs.readFile(new URL("../modules/financeiro/recebimentos.service.mjs",import.meta.url),"utf8");
+const ui=await fs.readFile(new URL("../public/pages/financeiro/index.js",import.meta.url),"utf8");
+const men=await fs.readFile(new URL("../modules/mensalidades/mensalidades.service.mjs",import.meta.url),"utf8");
+assert.doesNotMatch(service,/Caixa aberto automaticamente pela baixa de recebimento/);
+assert.match(service,/CAIXA_FECHADO/);
+assert.match(service,/Abra o caixa antes de confirmar qualquer recebimento/);
+assert.match(ui,/const situacaoCaixa = await verificarCaixaAbertoAntesDaBaixa/);
+assert.match(men,/Abra o caixa antes de baixar mensalidade/);
+console.log(JSON.stringify({ok:true,aberturaAutomaticaCaixa:false,financeiroSemCaixa:"bloqueado",mensalidadesSemCaixa:"bloqueado"},null,2));
