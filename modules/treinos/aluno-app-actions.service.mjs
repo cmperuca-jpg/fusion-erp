@@ -237,6 +237,43 @@ async function registrosFrequenciaAluno(tenantId, alunoId, colecao, limite = 400
   return Array.isArray(data) ? data : [];
 }
 
+async function registrosBiometriaEdgeAluno(tenantId, alunoId, limite = 400) {
+  const supabase = obterSupabaseAdmin({ obrigatorio: true });
+  const { data, error } = await supabase
+    .from("fusion_edge_access_events")
+    .select("event_id,equipment_id,occurred_at,source")
+    .eq("tenant_id", tenantId)
+    .eq("student_id", alunoId)
+    .eq("authorized", true)
+    .eq("physical_confirmed", true)
+    .eq("direction", "entrada")
+    .order("occurred_at", { ascending: false })
+    .limit(limite);
+
+  if (error) {
+    throw erroHttp(
+      `Não foi possível carregar a frequência biométrica do aluno: ${error.message}`,
+      502,
+      "ERP_STUDENT_BIOMETRIC_FREQUENCY_FAILED"
+    );
+  }
+
+  return (Array.isArray(data) ? data : []).map((row = {}) => ({
+    record_id: `edge:${texto(row.event_id)}`,
+    updated_at: row.occurred_at,
+    payload: {
+      id: `edge:${texto(row.event_id)}`,
+      alunoId,
+      autorizado: true,
+      direcao: "entrada",
+      origem: texto(row.source) || "fusion-biometria-local",
+      criadoEm: row.occurred_at,
+      dispositivoNome: texto(row.equipment_id) || "Catraca Henry 7X",
+      edgeEventId: texto(row.event_id)
+    }
+  }));
+}
+
 export async function frequenciaAlunoApp(req, res, deviceToken) {
   const identidade = await identidadeAlunoApp(req, res, deviceToken);
 
@@ -245,16 +282,22 @@ export async function frequenciaAlunoApp(req, res, deviceToken) {
     // chegaram ao checkin/checkins. Novos acessos são sincronizados no repository.
     await reconciliarAccessLogsFrequenciaDuravel();
 
-    const [accessLogs, checkin, checkins] = await Promise.all([
+    const [accessLogs, checkin, checkins, biometriaEdge] = await Promise.all([
       registrosFrequenciaAluno(identidade.tenantId, identidade.legacyId, "access_logs", 400),
       registrosFrequenciaAluno(identidade.tenantId, identidade.legacyId, "checkin", 400),
-      registrosFrequenciaAluno(identidade.tenantId, identidade.legacyId, "checkins", 400)
+      registrosFrequenciaAluno(identidade.tenantId, identidade.legacyId, "checkins", 400),
+      registrosBiometriaEdgeAluno(identidade.tenantId, identidade.legacyId, 400)
     ]);
 
     return {
       alunoId: identidade.legacyId,
       tenantId: identidade.tenantId,
-      ...resumirFrequenciaRegistros({ accessLogs, checkin, checkins }),
+      ...resumirFrequenciaRegistros({
+        accessLogs: [...accessLogs, ...biometriaEdge],
+        checkin,
+        checkins
+      }),
+      acessosBiometriaLocal: biometriaEdge.length,
       atualizadoEm: new Date().toISOString()
     };
   });

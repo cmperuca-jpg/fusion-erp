@@ -2,6 +2,9 @@ import { listarBiblioteca, listarTreinos, salvarTreinos } from "./treinos.reposi
 import { avaliarAcessoAluno } from "../access-engine/access-engine.service.mjs";
 import { listarLogs as listarLogsAcesso, registrarLog as registrarLogAcesso } from "../access-engine/access-engine.repository.mjs";
 import { lerJsonDuravel } from "../core/persistence/durable-json.mjs";
+import { tenantAtual } from "../core/persistence/tenant-context.mjs";
+import { obterSupabaseAdmin } from "../../config/supabase.mjs";
+import { combinarContadorAcessos } from "./aluno-app-access-counter.mjs";
 import { gerarTokenPortal, validarTokenPortal } from "../auth/auth.service.mjs";
 import fs from "node:fs";
 import path from "node:path";
@@ -86,22 +89,54 @@ function logContaComoAcessoPortal(log = {}, alunoId = "", dataAlvo = dataLocalIS
   const direcao = String(log.direcao || log.movimento || "entrada").trim().toLowerCase();
   if (direcao === "saida") return false;
   if (origem.includes("teste") || origem.includes("diagnostico") || origem.includes("simulador")) return false;
+  if (origem === "fusion-biometria-local") return false;
   return dataLocalISO(log.criadoEm || log.data || log.timestamp) === dataAlvo;
+}
+
+async function acessosBiometriaEdgeHoje(alunoId, dataAlvo) {
+  const supabase = obterSupabaseAdmin();
+  if (!supabase) return 0;
+
+  const { data, error } = await supabase
+    .from("fusion_edge_daily_frequency")
+    .select("entry_count")
+    .eq("tenant_id", tenantAtual())
+    .eq("student_id", alunoId)
+    .eq("attendance_date", dataAlvo)
+    .eq("modality", "biometria")
+    .maybeSingle();
+
+  if (error) {
+    throw erroHttp(
+      `Nao foi possivel consultar os acessos biometricos do dia: ${error.message}`,
+      502
+    );
+  }
+
+  const quantidade = Number(data?.entry_count || 0);
+  return Number.isFinite(quantidade) ? Math.max(0, Math.trunc(quantidade)) : 0;
 }
 
 async function contadorAcessosPortal(alunoId) {
   const data = dataLocalISO();
-  const logs = await listarLogsAcesso();
-  const usados = logs.filter((log) => logContaComoAcessoPortal(log, alunoId, data)).length;
-  const limite = LIMITE_ACESSOS_PORTAL_DIA;
-  const restantes = limite > 0 ? Math.max(0, limite - usados) : null;
+  const [logs, biometricos] = await Promise.all([
+    listarLogsAcesso(),
+    acessosBiometriaEdgeHoje(String(alunoId || ""), data)
+  ]);
+
+  const centrais = logs.filter((log) =>
+    logContaComoAcessoPortal(log, alunoId, data)
+  ).length;
 
   return {
     data,
-    limite,
-    usados,
-    restantes,
-    limiteAtingido: limite > 0 && usados >= limite
+    ...combinarContadorAcessos({
+      central: centrais,
+      biometria: biometricos,
+      limite: LIMITE_ACESSOS_PORTAL_DIA
+    }),
+    acessosCentralHoje: centrais,
+    acessosBiometriaHoje: biometricos
   };
 }
 
