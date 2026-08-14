@@ -16,6 +16,22 @@ const estado = {
   movimentos: []
 };
 
+const recebimentoPendente = (() => {
+  const params = new URLSearchParams(location.search);
+  const financeiroId = params.get('financeiroId') || '';
+  const mensalidadeId = params.get('mensalidadeId') || '';
+  if (!financeiroId && !mensalidadeId) return null;
+
+  return {
+    financeiroId,
+    mensalidadeId,
+    alunoId: params.get('alunoId') || '',
+    aluno: params.get('aluno') || 'Aluno',
+    valor: numero(params.get('valor') || 0),
+    retorno: params.get('retorno') || ''
+  };
+})();
+
 function moeda(valor) {
   return Number(valor || 0).toLocaleString('pt-BR', {
     style: 'currency',
@@ -56,6 +72,51 @@ function valorLiquidoMovimento(movimento = {}) {
 
 function hojeISO() {
   return new Date().toISOString().slice(0, 10);
+}
+
+function retornoSeguro() {
+  if (!recebimentoPendente?.retorno) return '/pages/alunos/index.html';
+  try {
+    const alvo = new URL(recebimentoPendente.retorno, location.origin);
+    if (alvo.origin !== location.origin) return '/pages/alunos/index.html';
+    if (!alvo.pathname.startsWith('/')) return '/pages/alunos/index.html';
+    return alvo.pathname + alvo.search;
+  } catch {
+    return '/pages/alunos/index.html';
+  }
+}
+
+function renderRecebimentoPendente() {
+  const painel = $('#recebimentoPendente');
+  if (!painel) return;
+
+  if (!recebimentoPendente) {
+    painel.hidden = true;
+    return;
+  }
+
+  painel.hidden = false;
+  const aberto = Boolean(estado.caixa && estado.caixa.status === 'aberto');
+  const texto = $('#recebimentoPendenteTexto');
+  const status = $('#recebimentoPendenteStatus');
+  const continuar = $('#btnContinuarRecebimentoPendente');
+
+  if (texto) {
+    texto.textContent =
+      `${recebimentoPendente.aluno} · ${moeda(recebimentoPendente.valor)} · cobrança aguardando confirmação`;
+  }
+
+  if (status) {
+    status.textContent = aberto
+      ? 'Caixa aberto. Continue para escolher a forma de pagamento e confirmar a baixa.'
+      : 'Caixa fechado. Abra o caixa antes de continuar este recebimento.';
+  }
+
+  if (continuar) {
+    continuar.disabled = !aberto;
+    continuar.setAttribute('aria-disabled', aberto ? 'false' : 'true');
+    continuar.textContent = aberto ? 'Continuar recebimento' : 'Abra o caixa para continuar';
+  }
 }
 
 function limparElemento(el) {
@@ -141,6 +202,8 @@ function renderCaixa() {
     btnNovoMovimento.disabled = !aberto;
     btnNovoMovimento.setAttribute('aria-disabled', !aberto ? 'true' : 'false');
   }
+
+  renderRecebimentoPendente();
 }
 
 function renderMovimentos() {
@@ -295,6 +358,27 @@ $('#formFechar').addEventListener('submit', async ev => {
   } catch (erro) {
     alert(erro.message);
   }
+});
+
+$('#btnContinuarRecebimentoPendente')?.addEventListener('click', () => {
+  if (!recebimentoPendente) return;
+  const aberto = Boolean(estado.caixa && estado.caixa.status === 'aberto');
+  if (!aberto) {
+    alert('Abra o caixa antes de continuar o recebimento.');
+    return;
+  }
+
+  const params = new URLSearchParams({ origem: 'caixa' });
+  if (recebimentoPendente.financeiroId) params.set('financeiroId', recebimentoPendente.financeiroId);
+  if (recebimentoPendente.mensalidadeId) params.set('mensalidadeId', recebimentoPendente.mensalidadeId);
+  if (recebimentoPendente.alunoId) params.set('alunoId', recebimentoPendente.alunoId);
+  params.set('retorno', retornoSeguro());
+
+  location.href = `/pages/financeiro/index.html?${params.toString()}`;
+});
+
+$('#btnCancelarRecebimentoPendente')?.addEventListener('click', () => {
+  location.href = retornoSeguro();
 });
 
 $('#btnFiltrar').addEventListener('click', carregar);

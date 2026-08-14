@@ -195,7 +195,7 @@ function botaoReceberMensalidade(item = {}){
   const valor = valorMensalidadeReceber(item);
   if (valor <= 0) return '';
   const alvo = item.contratoSemMensalidade ? '__contrato__' : (item.origemRecebivel === 'financeiro' ? `financeiro:${item.id}` : item.id);
-  return `<button class="fusion-button prontuario-receber-btn" type="button" data-receber-mensalidade="${esc(alvo)}">Receber</button>`;
+  return `<button class="fusion-button prontuario-receber-btn" type="button" data-receber-mensalidade="${esc(alvo)}">Receber no caixa</button>`;
 }
 
 function ultimoPagamento(){
@@ -327,48 +327,40 @@ async function receberMensalidadeProntuario(id){
       ? contratoInfoBase().recebivel
       : (prontuario?.mensalidades || []).find(m => String(m.id) === String(id));
   }
-  if (!mensalidade || (!mensalidade.id && !mensalidade.contratoSemMensalidade)) return alerta('Cobranca nao encontrada no prontuario.');
+
+  if (!mensalidade || (!mensalidade.id && !mensalidade.contratoSemMensalidade)) {
+    return alerta('Cobranca nao encontrada no prontuario.');
+  }
 
   const valorPrevisto = valorMensalidadeReceber(mensalidade);
   if (valorPrevisto <= 0) return alerta('Nao ha valor em aberto para receber.');
 
-  const forma = prompt('Forma de pagamento:', 'PIX');
-  if (forma === null) return;
-  const formaPagamento = String(forma || '').trim() || 'PIX';
-
-  if (!confirm(`Confirmar recebimento de ${moeda(valorPrevisto)} para ${nomeAluno(prontuario?.aluno)}?`)) return;
-
   try {
     const receberFinanceiro = mensalidade.origemRecebivel === 'financeiro';
-    if (!receberFinanceiro) mensalidade = await garantirMensalidadeParaReceber(mensalidade);
-    const valor = valorMensalidadeReceber(mensalidade) || valorPrevisto;
-    if (!mensalidade?.id) throw new Error('Cobranca nao identificada para baixa.');
-    const url = receberFinanceiro
-      ? `/api/financeiro/${encodeURIComponent(mensalidade.id)}/baixar`
-      : `/api/mensalidades/${encodeURIComponent(mensalidade.id)}/baixar`;
-    const resp = await fetch(url, {
-      method: receberFinanceiro ? 'PATCH' : 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        formaPagamento,
-        valorAplicado: valor,
-        valorPago: valor,
-        valorEntregue: valor,
-        valorRecebido: valor,
-        valorBaixa: valor,
-        valor,
-        operacaoId: `prontuario-${mensalidade.id}-${Date.now()}`,
-        usuario: 'Prontuario do aluno',
-        observacao: 'Recebimento confirmado pelo prontuario do aluno.'
-      })
-    });
-    const json = await resp.json().catch(() => ({}));
-    if (!resp.ok || json.erro || json.ok === false) throw new Error(json.mensagem || json.message || `Erro HTTP ${resp.status}`);
 
-    alerta('Recebimento confirmado. A cobranca foi baixada e o caixa/financeiro foram atualizados.', 'sucesso');
-    await carregar();
+    // O prontuario NAO recebe dinheiro e NAO chama endpoint de baixa.
+    // Quando o contrato ainda nao tem titulo, apenas garante a existencia
+    // do titulo para que o fluxo oficial possa ser aberto no Caixa.
+    if (!receberFinanceiro) {
+      mensalidade = await garantirMensalidadeParaReceber(mensalidade);
+    }
+
+    if (!mensalidade?.id) throw new Error('Cobranca nao identificada para encaminhar ao caixa.');
+
+    const params = new URLSearchParams({
+      origem: 'prontuario',
+      alunoId: String(prontuario?.aluno?.id || prontuario?.aluno?._id || alunoId || ''),
+      aluno: nomeAluno(prontuario?.aluno),
+      valor: String(valorMensalidadeReceber(mensalidade) || valorPrevisto),
+      retorno: location.pathname + location.search
+    });
+
+    if (receberFinanceiro) params.set('financeiroId', String(mensalidade.id));
+    else params.set('mensalidadeId', String(mensalidade.id));
+
+    location.href = `/pages/caixa/index.html?${params.toString()}`;
   } catch (erro) {
-    alerta(erro.message || 'Nao foi possivel receber esta cobranca.');
+    alerta(erro.message || 'Nao foi possivel encaminhar esta cobranca ao caixa.');
   }
 }
 

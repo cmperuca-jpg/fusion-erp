@@ -43,6 +43,20 @@
       </div>
     </section>
 
+    <section id="recebimentoPendente" class="painel" hidden style="border:2px solid #0f766e;">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;">
+        <div>
+          <h2 style="margin:0 0 6px;">Recebimento aguardando no Caixa</h2>
+          <p id="recebimentoPendenteTexto" style="margin:0;">Carregando cobrança...</p>
+          <small id="recebimentoPendenteStatus">Confirme que o caixa está aberto para continuar.</small>
+        </div>
+        <div class="acoes" style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button type="button" id="btnCancelarRecebimentoPendente" class="sec">Voltar ao prontuário</button>
+          <button type="button" id="btnContinuarRecebimentoPendente">Continuar recebimento</button>
+        </div>
+      </div>
+    </section>
+
     <section class="cards">
       <div class="card"><span>Status</span><strong id="cStatus">Fechado</strong></div>
       <div class="card"><span>Entradas brutas</span><strong id="cEntradas">R$ 0,00</strong></div>
@@ -181,7 +195,7 @@
     </form>
   </dialog>
 
-  <script type="module" src="./index.js?v=caixa-turno1"></script>
+  <script type="module" src="./index.js?v=20260813-receber-caixa-1"></script>
     <script src="/assets/js/fusion-layout.js"></script>
 
 <script src="/assets/pwa/fusion-pwa-install.js" defer></script>
