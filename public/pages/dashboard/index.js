@@ -117,7 +117,8 @@ function setText(id, value) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          dispositivoId: "disp_henry7x_01",
+          // Não força mais um equipmentId no navegador.
+          // O backend/Access Agent resolve a catraca vinculada à academia.
           direcao: "ambos",
           tempoSegundos: 5,
           origem: "dashboard-liberacao-manual",
