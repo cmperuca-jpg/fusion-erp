@@ -856,7 +856,7 @@ async function consultarIntegridade() {
   );
 }
 
-function abrirBaixaPorUrlSeExistir() {
+async function abrirBaixaPorUrlSeExistir() {
   if (baixaAutomaticaUrlProcessada) return;
   const params = new URLSearchParams(location.search);
   const financeiroId = params.get("financeiroId") || params.get("financeiroid") || params.get("lancamentoId") || params.get("id");
@@ -869,12 +869,28 @@ function abrirBaixaPorUrlSeExistir() {
   if (financeiroId) lancamento = lancamentos.find((item) => String(item.id) === String(financeiroId));
   if (!lancamento && mensalidadeId) lancamento = lancamentos.find((item) => String(item.mensalidadeId) === String(mensalidadeId));
 
-  // Remove os parâmetros logo depois de processar a chamada automática.
-  // Assim, se o operador atualizar a página, o modal não abre novamente.
+  // Mensalidades programadas podem existir antes do espelho no Financeiro.
+  // Reconciliamos com upsert, sem criar outra mensalidade ou duplicar cobrança.
+  if (!lancamento && mensalidadeId) {
+    try {
+      const resp = await fetch(`/api/mensalidades/${encodeURIComponent(mensalidadeId)}/financeiro`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+      });
+      const json = await resp.json().catch(() => ({}));
+      if (!resp.ok || json.ok === false) throw new Error(json.mensagem || json.erro || `Erro HTTP ${resp.status}`);
+      lancamento = json.lancamento || null;
+    } catch (erro) {
+      limparParametrosBaixaDaUrl();
+      alert(erro.message || "Não foi possível vincular esta mensalidade ao Financeiro.");
+      return;
+    }
+  }
+
   limparParametrosBaixaDaUrl();
 
   if (!lancamento) {
-    alert("Lançamento financeiro da matrícula não foi encontrado. Atualize a página ou confira se o financeiroId existe.");
+    alert("O título da mensalidade não foi localizado nem pôde ser reconciliado no Financeiro.");
     return;
   }
 

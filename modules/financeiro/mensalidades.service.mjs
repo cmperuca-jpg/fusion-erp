@@ -399,6 +399,55 @@ async function upsertLancamentoFinanceiro(mensalidade) {
   return lancamentoId;
 }
 
+export async function garantirLancamentoFinanceiroMensalidade(id) {
+  const mensalidades = await lerJson(MENSALIDADES_FILE, []);
+  const idx = mensalidades.findIndex((m) => String(m.id) === String(id));
+  if (idx < 0) {
+    const erro = new Error('Mensalidade não encontrada.');
+    erro.status = 404;
+    throw erro;
+  }
+
+  const atual = mensalidades[idx];
+  if (statusInterno(atual.status) === 'cancelado') {
+    const erro = new Error('Mensalidade cancelada não pode ser encaminhada para recebimento.');
+    erro.status = 409;
+    throw erro;
+  }
+
+  const financeiroAntes = await lerJson(FINANCEIRO_FILE, []);
+  const existenteAntes = financeiroAntes.find((l) =>
+    String(l.mensalidadeId || '') === String(atual.id) ||
+    String(l.id || '') === String(atual.lancamentoFinanceiroId || '')
+  );
+
+  const financeiroId = await upsertLancamentoFinanceiro(atual);
+
+  if (String(atual.lancamentoFinanceiroId || '') !== String(financeiroId)) {
+    mensalidades[idx] = {
+      ...atual,
+      lancamentoFinanceiroId: financeiroId,
+      vinculoFinanceiroReconciliadoEm: agoraISO(),
+      atualizadoEm: agoraISO()
+    };
+    await salvarJson(MENSALIDADES_FILE, mensalidades);
+  }
+
+  const financeiroDepois = await lerJson(FINANCEIRO_FILE, []);
+  const lancamento = financeiroDepois.find((l) =>
+    String(l.id || '') === String(financeiroId) ||
+    String(l.mensalidadeId || '') === String(atual.id)
+  ) || null;
+
+  if (!lancamento) {
+    const erro = new Error('Não foi possível reconciliar o lançamento financeiro desta mensalidade.');
+    erro.status = 500;
+    throw erro;
+  }
+
+  return { ok:true, mensalidadeId:atual.id, financeiroId, criado:!existenteAntes, lancamento };
+}
+
 async function removerLancamentoFinanceiro(mensalidadeId) {
   const financeiro = await lerJson(FINANCEIRO_FILE, []);
   await salvarJson(FINANCEIRO_FILE, financeiro.filter(l => String(l.mensalidadeId) !== String(mensalidadeId)));

@@ -1,0 +1,37 @@
+Fusion ERP — P1 Billing SaaS Automático V1
+
+OBJETIVO
+Automatizar o lifecycle de cobrança Fusion sem ativar bloqueio real em produção ainda.
+
+ARQUIVOS
+- modules/saas/billing-policy.mjs (novo)
+- modules/saas/billing.scheduler.mjs (novo)
+- modules/saas/billing.service.mjs (substitui)
+- modules/saas/saas.routes.mjs (substitui)
+- scripts/test-saas-billing-policy.mjs (novo)
+- scripts/test-saas-billing-automatico.mjs (novo)
+- package.json (substitui)
+
+REGRAS
+- vencimento: continua ativo no próprio dia do vencimento;
+- dia seguinte sem pagamento: inadimplente;
+- tolerância padrão: 7 dias completos a partir da inadimplência;
+- fim da tolerância: suspensão automática;
+- pagamento após inadimplência/suspensão reativa automaticamente;
+- processamento repetido é idempotente e não duplica eventos;
+- status suspensa/cancelada produz política de acesso permitido=false, mas o middleware de bloqueio global ainda NÃO é ativado neste V1;
+- FUSION_BILLING_AUTO fica false por padrão;
+- cálculo mensal preserva dia civil e limita dia 31 ao último dia do mês.
+
+VARIÁVEIS FUTURAS (NÃO CONFIGURAR NO RENDER AINDA)
+FUSION_BILLING_AUTO=true
+FUSION_BILLING_GRACE_DAYS=7
+FUSION_BILLING_INTERVAL_MS=3600000
+
+VALIDAÇÃO
+npm run test:saas-billing
+npm run test:p0-auditoria
+npm run test:p1-implantacao
+npm run test:observabilidade
+
+O teste automático força FUSION_BILLING_AUTO=false e usa diretório temporário; não altera dados reais.

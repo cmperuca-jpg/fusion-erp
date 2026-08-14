@@ -1,26 +1,23 @@
-CI P0/P1 Fusion — Final V1
+Fusion ERP - Hotfix Acesso, Frequência e Contraste
 
-Substitua somente:
-.github/workflows/p0-auditoria.yml
+Corrige três pontos:
 
-O que muda:
-- mantém npm ci
-- mantém npm run check
-- mantém npm run test:p0-auditoria
-- acrescenta npm run test:p1-implantacao
-- não usa secrets
-- não chama Supabase real
-- não altera runtime do Fusion
+1. Releitura biométrica
+- janela padrão de 12 segundos;
+- uma releitura rápida do mesmo aluno não libera novamente a Henry;
+- não consome outro acesso do limite de 3;
+- a contagem local SQLite é reconstruída ao reiniciar a biometria.
 
-Recomendado: subir em branch para não disparar deploy do Render a partir do main.
+2. Fusion Aluno
+- ao voltar para a aba/app, contador X/3 e Frequência são consultados novamente;
+- não existe polling contínuo;
+- eventos biométricos repetidos em janela curta são deduplicados na Frequência.
 
-Comandos:
-git checkout -b ci/p1-implantacao-20260812
-git add .github/workflows/p0-auditoria.yml
-git commit -m "ci: incluir auditoria P1 de implantacao"
-git push -u origin ci/p1-implantacao-20260812
+3. Prontuário
+- corrige chips do cabeçalho (Plano/Professor etc.) que recebiam texto quase branco
+  sobre fundo claro por conflito de especificidade CSS;
+- força texto escuro e legível nos chips claros.
 
-Depois abra PR para main.
-O evento pull_request executará o workflow antes do merge.
-
-Se o Git disser que a branch já existe, use outro nome.
+O servidor Supabase já recebeu a proteção contra releitura rápida.
+O registro do Paulo de hoje foi preservado em auditoria e a frequência diária
+foi reconciliada de 3 para 2 acessos válidos.

@@ -1,0 +1,12 @@
+Correção Fusion ERP - Biometria FS80 multi-tenant
+
+Corrige:
+- erro ACCESS_EQUIPMENT_ID no cadastro biométrico pelo site;
+- descoberta automática do equipamento pelo heartbeat do Access Agent do tenant;
+- separação real das filas: catraca consome somente release e biometria somente comandos biométricos;
+- heartbeat passa a persistir tenant + equipamento autenticados.
+
+Uso:
+1. Extraia o ZIP diretamente na raiz do fusion-erp.
+2. Execute APLICAR-E-ENVIAR-CORRECAO-BIOMETRIA.bat.
+3. O script faz backup, valida, commita e executa git push.

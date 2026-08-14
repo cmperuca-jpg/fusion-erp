@@ -1,0 +1,31 @@
+Fusion ERP — P1 Billing Enforcement V1
+
+OBJETIVO
+Aplicar a suspensão comercial do Billing nas APIs tenant-scoped sem risco de bloquear a Academia Piloto.
+
+PROTEÇÕES
+- FUSION_BILLING_ENFORCE fica DESLIGADO por padrão.
+- academia-piloto é protegida por código e não é bloqueada neste V1.
+- /api/saas/billing/fusion e subrotas continuam acessíveis para consulta/pagamento/reativação.
+- sessão de suporte autorizada passa pelo bloqueio para permitir recuperação.
+- falha interna ao consultar Billing é fail-open: não derruba a academia.
+- tenant suspenso/cancelado recebe HTTP 402 + FUSION_BILLING_SUSPENDED.
+- APIs públicas tenant-scoped também são bloqueadas quando o tenant está suspenso.
+
+ARQUIVOS
+- modules/security/billing-enforcement.middleware.mjs (novo)
+- modules/security/api-security.middleware.mjs (substitui)
+- scripts/test-saas-billing-enforcement.mjs (novo)
+- package.json (substitui)
+
+VALIDAÇÃO
+npm run test:saas-billing
+npm run test:p0-auditoria
+npm run test:p1-implantacao
+npm run test:observabilidade
+
+NÃO CONFIGURAR NO RENDER AINDA
+FUSION_BILLING_ENFORCE=true
+
+O GitHub Actions já executa npm run test:saas-billing; após este pacote ser versionado,
+o novo teste de enforcement entra automaticamente no CI sem alterar o workflow.

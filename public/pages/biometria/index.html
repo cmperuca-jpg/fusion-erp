@@ -3,64 +3,118 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Fusion Biometria</title>
+  <title>Fusion Sistema - Cadastro de digitais</title>
   <link rel="stylesheet" href="/assets/css/fusion-app.css">
-  <link rel="stylesheet" href="/pages/biometria/style.css">
+  <link rel="stylesheet" href="/assets/css/fusion-menu-global.css">
+  <link rel="stylesheet" href="/pages/biometria/style.css?v=20260814-equipe-1">
   <script src="/assets/js/fusion-auth.js"></script>
   <script>FusionAuth.proteger();</script>
   <link rel="stylesheet" href="/assets/css/fusion-premium-final.css">
   <link rel="stylesheet" href="/pages/_shared/fusion-area-clara.css?v=20260729-contraste-global-2">
 </head>
 <body>
-  <main class="bio-page">
-    <section class="bio-card acesso-card">
-      <header>
-        <h1>Acesso biométrico da academia</h1>
-        <p id="acessoStatus" class="bio-status">Leitor parado. Clique em iniciar.</p>
-      </header>
+  <div class="fusion-shell">
+    <main class="fusion-main">
+      <section class="fusion-content bio-page">
+        <header class="bio-header">
+          <div>
+            <h2>Cadastro de digitais</h2>
+            <p>Alunos, professores e equipe em uma única tela.</p>
+          </div>
+          <div id="leitorBadge" class="leitor-badge aguardando">Verificando leitor...</div>
+        </header>
 
-      <div class="bio-grid acesso-config">
-        <label>Sentido
-          <select id="direcao">
-            <option value="entrada">Entrada</option>
-            <option value="saida">Saída</option>
-          </select>
-        </label>
-        <label>Equipamento
-          <input value="Catraca Henry 7X · 10.0.0.236:3000" readonly>
-        </label>
-      </div>
+        <section class="bio-card bio-help">
+          <strong>Como funciona</strong>
+          <span>
+            A digital fica protegida somente no computador da academia.
+            Desativar uma pessoa não apaga sua digital: quando ela for reativada,
+            não será necessário cadastrar novamente.
+          </span>
+        </section>
 
-      <div class="bio-actions">
-        <button id="btnIniciarAcesso" type="button">Iniciar leitura contínua</button>
-        <button id="btnPararAcesso" type="button" class="secondary" disabled>Parar</button>
-        <button id="btnTestarLeitor" type="button" class="secondary">Testar leitor</button>
-      </div>
+        <section class="bio-card">
+          <div class="bio-toolbar">
+            <label class="bio-search">
+              <span>Buscar pessoa</span>
+              <input id="buscaPessoa" placeholder="Digite o nome" autocomplete="off">
+            </label>
 
-      <div id="acessoResultado" class="acesso-resultado neutro">
-        <strong>Aguardando operação</strong>
-        <span>A identificação validará o aluno e liberará a Henry 7X automaticamente.</span>
-      </div>
-    </section>
+            <label>
+              <span>Mostrar</span>
+              <select id="tipoPessoaFiltro">
+                <option value="">Todos</option>
+                <option value="aluno">Alunos</option>
+                <option value="professor">Professores</option>
+                <option value="usuario">Equipe / funcionários</option>
+              </select>
+            </label>
 
-    <section class="bio-card">
-      <header>
-        <h2>Cadastro biométrico Futronic</h2>
-        <p id="status" class="bio-status">Informe o aluno para cadastrar ou atualizar a digital.</p>
-      </header>
+            <button id="btnAtualizarLista" type="button" class="secondary">Atualizar lista</button>
+          </div>
+        </section>
 
-      <div class="bio-grid">
-        <label>Aluno ID<input id="alunoId" placeholder="ID do aluno" autocomplete="off"></label>
-        <label>Nome<input id="alunoNome" placeholder="Nome do aluno" autocomplete="off"></label>
-      </div>
+        <div class="bio-layout">
+          <section class="bio-card">
+            <div class="bio-section-head">
+              <div>
+                <h3>Pessoas</h3>
+                <small id="contadorPessoas">Carregando...</small>
+              </div>
+            </div>
+            <div id="listaPessoas" class="pessoas-lista" aria-live="polite"></div>
+          </section>
 
-      <div class="bio-actions">
-        <button id="btnCadastrar" type="button">Cadastrar biometria</button>
-        <button id="btnExcluir" type="button" class="danger">Excluir biometria</button>
-      </div>
-    </section>
-  </main>
-  <script src="/pages/biometria/index.js"></script>
+          <section class="bio-card bio-detalhe">
+            <div id="semSelecao" class="bio-empty">
+              <strong>Selecione uma pessoa</strong>
+              <span>Escolha alguém da lista para consultar ou cadastrar a digital.</span>
+            </div>
+
+            <div id="pessoaSelecionada" hidden>
+              <div class="pessoa-topo">
+                <div>
+                  <span id="pessoaPerfil" class="perfil-chip"></span>
+                  <h3 id="pessoaNome"></h3>
+                  <p id="pessoaStatus"></p>
+                </div>
+                <span id="digitalStatus" class="digital-chip">Consultando...</span>
+              </div>
+
+              <div id="avisoAcesso" class="aviso-acesso"></div>
+
+              <div class="progresso-box" id="progressoBox" hidden>
+                <div class="progresso-linha">
+                  <strong id="progressoMensagem">Aguardando o leitor...</strong>
+                  <span id="progressoPercentual">0%</span>
+                </div>
+                <div class="barra"><i id="progressoBarra"></i></div>
+                <div class="capturas">
+                  <span id="captura1">1 · aguardando</span>
+                  <span id="captura2">2 · aguardando</span>
+                  <span id="captura3">3 · aguardando</span>
+                </div>
+              </div>
+
+              <div id="mensagemOperacao" class="mensagem-operacao" aria-live="polite"></div>
+
+              <div class="bio-actions">
+                <button id="btnCadastrarDigital" type="button">Cadastrar digital</button>
+                <button id="btnRemoverDigital" type="button" class="danger">Remover digital</button>
+              </div>
+
+              <small class="nota-seguranca">
+                Bloqueio explícito, pessoa inativa ou matrícula inválida continuam impedindo a catraca,
+                mesmo que a digital permaneça cadastrada.
+              </small>
+            </div>
+          </section>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="/pages/biometria/index.js?v=20260814-equipe-1"></script>
   <script src="/assets/js/fusion-layout.js"></script>
 </body>
 </html>

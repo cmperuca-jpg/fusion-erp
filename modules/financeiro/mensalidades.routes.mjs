@@ -7,7 +7,8 @@ import {
   atualizarMensalidade,
   cancelarMensalidade,
   excluirMensalidade,
-  historicoAluno
+  historicoAluno,
+  garantirLancamentoFinanceiroMensalidade
 } from './mensalidades.service.mjs';
 import { listarTitulos, receberTitulos, estornarRecibo } from './financeiro-ledger.service.mjs';
 import { programarProximaCobrancaAposPagamento } from '../cobranca/cobranca.service.mjs';
@@ -65,6 +66,14 @@ router.post('/gerar', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     res.json(await atualizarMensalidade(req.params.id, req.body || {}));
+  } catch (erro) {
+    tratarErro(res, erro);
+  }
+});
+
+router.post('/:id/financeiro', async (req, res) => {
+  try {
+    res.json(await garantirLancamentoFinanceiroMensalidade(req.params.id));
   } catch (erro) {
     tratarErro(res, erro);
   }
