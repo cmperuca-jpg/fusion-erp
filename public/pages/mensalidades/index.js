@@ -4,7 +4,6 @@ import {
   criarMensalidade,
   gerarMensalidades,
   atualizarMensalidade,
-  baixarMensalidade,
   estornarMensalidade,
   cancelarMensalidade,
   excluirMensalidade,
@@ -16,49 +15,55 @@ const $ = seletor => document.querySelector(seletor);
 const PARAMS_INICIAIS = new URLSearchParams(location.search);
 const ALUNO_ID_URL = PARAMS_INICIAIS.get('alunoId') || PARAMS_INICIAIS.get('aluno_id') || '';
 const estado = { mensalidades: [], alunos: [], planos: [], alunoContexto: null };
-let baixaMensalidadeAtual = null;
 
 function valorPrincipalMensalidade(item = {}) {
   const alvo = String([item.origem, item.categoria, item.descricao, item.recorrencia].join(' ')).toLowerCase();
-  const entrada = alvo.includes('matricula_inicial_unificada') || alvo.includes('entrada') || alvo.includes('matrícula') || alvo.includes('matricula');
-  if (entrada) return Number(item.total ?? item.valorTotalInicial ?? item.valorOriginal ?? item.valor ?? 0);
+  const entrada =
+    alvo.includes('matricula_inicial_unificada') ||
+    alvo.includes('entrada') ||
+    alvo.includes('matrícula') ||
+    alvo.includes('matricula');
+
+  if (entrada) {
+    return Number(item.total ?? item.valorTotalInicial ?? item.valorOriginal ?? item.valor ?? 0);
+  }
+
   return Number(item.valorOriginal ?? item.valor ?? item.total ?? 0);
 }
 
 function valorAtualizadoMensalidade(item = {}) {
   const alvo = String([item.origem, item.categoria, item.descricao, item.recorrencia].join(' ')).toLowerCase();
-  const entrada = alvo.includes('matricula_inicial_unificada') || alvo.includes('entrada') || alvo.includes('matrícula') || alvo.includes('matricula');
-  // Corrige registros já existentes que guardaram `valorAtualizado` apenas
-  // com o valor do plano (R$ 65), embora a cobrança inicial seja R$ 100.
+  const entrada =
+    alvo.includes('matricula_inicial_unificada') ||
+    alvo.includes('entrada') ||
+    alvo.includes('matrícula') ||
+    alvo.includes('matricula');
+
   const situacao = String(item.status || '').toLowerCase();
+
   if (entrada) {
     const saldo = Number(item.saldoRestante ?? item.valorRestante ?? 0);
     return saldo > 0 ? saldo : valorPrincipalMensalidade(item);
   }
+
   if (situacao === 'programada') return valorPrincipalMensalidade(item);
   if (situacao === 'pago' || situacao === 'cancelado') return 0;
 
   const saldoInformado = item.saldoRestante ?? item.valorRestante;
   const saldo = Number(saldoInformado ?? 0);
-  if (saldoInformado !== undefined && saldoInformado !== null && saldo > 0) return saldo;
+
+  if (saldoInformado !== undefined && saldoInformado !== null && saldo > 0) {
+    return saldo;
+  }
+
   return Number(item.valorAtualizado ?? item.valor ?? 0);
 }
 
-function valorDevidoBaixaMensalidade() {
-  const base = valorAtualizadoMensalidade(baixaMensalidadeAtual || {});
-  const desconto = Number($('#baixaDesconto')?.value || 0);
-  const multa = Number($('#baixaMulta')?.value || 0);
-  const juros = Number($('#baixaJuros')?.value || 0);
-  return Math.max(0, Number((base + multa + juros - desconto).toFixed(2)));
-}
-
-function recalcularBaixaMensalidade() {
-  const input = $('#baixaValor');
-  if (input) input.value = valorDevidoBaixaMensalidade().toFixed(2);
-}
-
 function moeda(valor) {
-  return Number(valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  return Number(valor || 0).toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL'
+  });
 }
 
 function hojeISO() {
@@ -82,7 +87,14 @@ function alunoId(item = {}) {
 }
 
 function alunoNome(item = {}) {
-  return textoSeguro(item.nome || item.nomeCompleto || item.alunoNome || item.aluno || item.name || 'Aluno');
+  return textoSeguro(
+    item.nome ||
+    item.nomeCompleto ||
+    item.alunoNome ||
+    item.aluno ||
+    item.name ||
+    'Aluno'
+  );
 }
 
 function filtros() {
@@ -102,13 +114,18 @@ function criarOpcao(valor, texto, extra = {}) {
   const opt = document.createElement('option');
   opt.value = textoSeguro(valor);
   opt.textContent = textoSeguro(texto);
-  Object.entries(extra).forEach(([chave, valorExtra]) => opt.dataset[chave] = textoSeguro(valorExtra));
+
+  Object.entries(extra).forEach(([chave, valorExtra]) => {
+    opt.dataset[chave] = textoSeguro(valorExtra);
+  });
+
   return opt;
 }
 
 function preencherSelects() {
   const alunoSelect = $('#alunoId');
   const planoSelect = $('#planoId');
+
   limparElemento(alunoSelect);
   limparElemento(planoSelect);
 
@@ -131,19 +148,26 @@ function preencherSelects() {
 
 function aplicarContextoAluno() {
   if (!ALUNO_ID_URL) return;
-  estado.alunoContexto = estado.alunos.find(aluno => alunoId(aluno) === textoSeguro(ALUNO_ID_URL)) || null;
+
+  estado.alunoContexto =
+    estado.alunos.find(aluno => alunoId(aluno) === textoSeguro(ALUNO_ID_URL)) || null;
 
   const faixa = $('#mensalidadeAlunoContexto');
+
   if (faixa) {
     const titulo = faixa.querySelector('strong');
     const texto = faixa.querySelector('span');
+
     if (estado.alunoContexto) {
       titulo.textContent = `Mensalidades de ${alunoNome(estado.alunoContexto)}`;
-      texto.textContent = 'Mostrando todos os vencimentos deste aluno, sem limitar ao mes atual.';
+      texto.textContent =
+        'Mostrando todos os vencimentos deste aluno. Todo recebimento é concluído pelo Caixa.';
     } else {
       titulo.textContent = 'Mensalidades do aluno selecionado';
-      texto.textContent = 'O filtro veio da ficha do aluno. Se nada aparecer, ainda nao existe mensalidade vinculada.';
+      texto.textContent =
+        'O filtro veio da ficha do aluno. Se nada aparecer, ainda não existe mensalidade vinculada.';
     }
+
     faixa.classList.remove('hidden');
   }
 
@@ -188,8 +212,45 @@ function renderResumo(resumo) {
   $('#rAbertas').textContent = moeda(resumo.valorAberto || 0);
   $('#rAtrasadas').textContent = moeda(resumo.valorAtrasado || 0);
   $('#rPagas').textContent = moeda(resumo.valorPago || 0);
+
   const programadas = $('#rProgramadas');
   if (programadas) programadas.textContent = moeda(resumo.valorProgramado || 0);
+}
+
+function nomeAlunoDaMensalidade(m = {}) {
+  return (
+    m.alunoNome ||
+    m.aluno ||
+    m.pessoa ||
+    m.alunoFornecedor ||
+    m.pessoaFornecedor ||
+    'Aluno'
+  );
+}
+
+function enviarMensalidadeAoCaixa(m = {}) {
+  const id = String(m.id || '').trim();
+  if (!id) {
+    alert('Mensalidade sem identificação. Atualize a página e tente novamente.');
+    return;
+  }
+
+  const valor = valorAtualizadoMensalidade(m);
+  if (!(valor > 0)) {
+    alert('Esta mensalidade não possui saldo para recebimento.');
+    return;
+  }
+
+  const params = new URLSearchParams({
+    origem: 'mensalidades',
+    mensalidadeId: id,
+    alunoId: String(m.alunoId || m.aluno_id || ''),
+    aluno: nomeAlunoDaMensalidade(m),
+    valor: String(valor),
+    retorno: location.pathname + location.search
+  });
+
+  location.href = `/pages/caixa/index.html?${params.toString()}`;
 }
 
 function renderLista() {
@@ -208,11 +269,8 @@ function renderLista() {
   estado.mensalidades.forEach(m => {
     const tr = document.createElement('tr');
 
-    const nomeAlunoLinha = m.alunoNome || m.aluno || m.pessoa || m.alunoFornecedor || m.pessoaFornecedor || '-';
-    const nomePlanoLinha = m.planoNome || m.plano || '-';
-
-    tr.appendChild(criarCelula(nomeAlunoLinha));
-    tr.appendChild(criarCelula(nomePlanoLinha));
+    tr.appendChild(criarCelula(nomeAlunoDaMensalidade(m)));
+    tr.appendChild(criarCelula(m.planoNome || m.plano || '-'));
     tr.appendChild(criarCelula(m.competencia || '-'));
     tr.appendChild(criarCelula(m.vencimento || '-'));
     tr.appendChild(criarCelula(moeda(valorPrincipalMensalidade(m))));
@@ -227,8 +285,16 @@ function renderLista() {
     div.className = 'acoes';
 
     div.appendChild(criarBotao('Editar', '', 'editar', m.id));
+
     if (!['pago', 'cancelado'].includes(m.status)) {
-      div.appendChild(criarBotao(m.status === 'programada' ? 'Pagar' : 'Baixar', 'baixar', 'baixar', m.id));
+      div.appendChild(
+        criarBotao(
+          'Receber no caixa',
+          'baixar',
+          'receberCaixa',
+          m.id
+        )
+      );
     }
 
     if (m.status === 'pago' || m.status === 'parcial') {
@@ -256,8 +322,18 @@ async function carregar() {
 }
 
 async function carregarBases() {
-  try { estado.alunos = await listarAlunos(); } catch { estado.alunos = []; }
-  try { estado.planos = await listarPlanos(); } catch { estado.planos = []; }
+  try {
+    estado.alunos = await listarAlunos();
+  } catch {
+    estado.alunos = [];
+  }
+
+  try {
+    estado.planos = await listarPlanos();
+  } catch {
+    estado.planos = [];
+  }
+
   preencherSelects();
   aplicarContextoAluno();
 }
@@ -274,6 +350,7 @@ function abrirModal(m = null) {
 
   if (m?.alunoId) $('#alunoId').value = m.alunoId;
   else if (ALUNO_ID_URL) $('#alunoId').value = ALUNO_ID_URL;
+
   if (m?.planoId) $('#planoId').value = m.planoId;
 
   $('#quantidade').disabled = Boolean(m);
@@ -297,25 +374,6 @@ function montarPayload() {
   };
 }
 
-function abrirModalBaixa(m) {
-  baixaMensalidadeAtual = m;
-  $('#formBaixa').reset();
-
-  $('#baixaId').value = m.id;
-  $('#baixaForma').value = 'Dinheiro';
-  $('#baixaValor').value = valorAtualizadoMensalidade(m).toFixed(2);
-  $('#baixaDesconto').value = 0;
-  $('#baixaMulta').value = Number(m.multa || 0).toFixed(2);
-  $('#baixaJuros').value = Number(m.juros || 0).toFixed(2);
-  $('#baixaObservacao').value = '';
-
-  $('#baixaInfo').textContent =
-    `${m.alunoNome || '-'} | Competência ${m.competencia || '-'} | Valor atualizado ${moeda(valorAtualizadoMensalidade(m))}`;
-
-  recalcularBaixaMensalidade();
-  $('#modalBaixa').showModal();
-}
-
 $('#btnSair').addEventListener('click', () => {
   if (window.FusionAuth?.logout) window.FusionAuth.logout();
   else location.href = '/pages/login/';
@@ -323,10 +381,6 @@ $('#btnSair').addEventListener('click', () => {
 
 $('#btnNova').addEventListener('click', () => abrirModal());
 $('#btnCancelar').addEventListener('click', () => $('#modal').close());
-$('#btnCancelarBaixa').addEventListener('click', () => { baixaMensalidadeAtual = null; $('#modalBaixa').close(); });
-['#baixaDesconto', '#baixaMulta', '#baixaJuros'].forEach(id => {
-  $(id)?.addEventListener('input', recalcularBaixaMensalidade);
-});
 
 $('#btnFiltrar').addEventListener('click', carregar);
 
@@ -360,9 +414,16 @@ $('#form').addEventListener('submit', async ev => {
     if (id) {
       await atualizarMensalidade(id, payload);
     } else if (payload.quantidade > 1) {
-      const resultado = await gerarMensalidades({ ...payload, primeiroVencimento: payload.vencimento });
+      const resultado = await gerarMensalidades({
+        ...payload,
+        primeiroVencimento: payload.vencimento
+      });
+
       if (resultado.ignoradas?.length) {
-        alert(`${resultado.criadas?.length || 0} mensalidade(s) criada(s). ${resultado.ignoradas.length} duplicada(s) ignorada(s).`);
+        alert(
+          `${resultado.criadas?.length || 0} mensalidade(s) criada(s). ` +
+          `${resultado.ignoradas.length} duplicada(s) ignorada(s).`
+        );
       }
     } else {
       await criarMensalidade(payload);
@@ -375,46 +436,12 @@ $('#form').addEventListener('submit', async ev => {
   }
 });
 
-$('#formBaixa').addEventListener('submit', async ev => {
-  ev.preventDefault();
-
-  const id = $('#baixaId').value;
-  const valorPago = Number($('#baixaValor').value || 0);
-  const valorDevido = valorDevidoBaixaMensalidade();
-  const valorAplicado = Math.min(valorPago, valorDevido);
-
-  try {
-    await baixarMensalidade(id, {
-      formaPagamento: $('#baixaForma').value,
-      valorAplicado,
-      valorPago,
-      valorEntregue: valorPago,
-      valorRecebido: valorPago,
-      valorBaixa: valorAplicado,
-      valor: valorAplicado,
-      desconto: Number($('#baixaDesconto').value || 0),
-      multa: Number($('#baixaMulta').value || 0),
-      juros: Number($('#baixaJuros').value || 0),
-      observacao: $('#baixaObservacao').value,
-      usuario: 'Administrador'
-    });
-
-    $('#modalBaixa').close();
-    baixaMensalidadeAtual = null;
-    await carregar();
-
-    alert('Baixa concluída. Movimento criado no Caixa e lançamento atualizado no Financeiro.');
-  } catch (erro) {
-    alert(erro.message);
-  }
-});
-
 $('#lista').addEventListener('click', async ev => {
   const btn = ev.target.closest('button');
   if (!btn) return;
 
   const idEditar = btn.dataset.editar;
-  const idBaixar = btn.dataset.baixar;
+  const idReceberCaixa = btn.dataset.receberCaixa;
   const idCancelar = btn.dataset.cancelar;
   const idEstornar = btn.dataset.estornar;
   const idExcluir = btn.dataset.excluir;
@@ -423,26 +450,43 @@ $('#lista').addEventListener('click', async ev => {
     if (idEditar) {
       const mensalidade = estado.mensalidades.find(x => x.id === idEditar);
       if (mensalidade) abrirModal(mensalidade);
+      return;
     }
 
-    if (idBaixar) {
-      const mensalidade = estado.mensalidades.find(x => x.id === idBaixar);
-      if (mensalidade) abrirModalBaixa(mensalidade);
+    if (idReceberCaixa) {
+      const mensalidade = estado.mensalidades.find(x => x.id === idReceberCaixa);
+      if (mensalidade) enviarMensalidadeAoCaixa(mensalidade);
+      return;
     }
 
     if (idCancelar) {
       if (!confirm('Cancelar esta mensalidade?')) return;
       await cancelarMensalidade(idCancelar);
       await carregar();
+      return;
     }
 
     if (idEstornar) {
       const motivo = prompt('Motivo do estorno:', 'Estorno de pagamento');
       if (motivo === null) return;
-      if (!confirm('Confirmar estorno da baixa? O movimento do caixa será marcado como estornado e o financeiro voltará para aberto.')) return;
-      await estornarMensalidade(idEstornar, { motivo, usuario: 'Administrador' });
+
+      if (!confirm(
+        'Confirmar estorno da baixa? O movimento do caixa será marcado como estornado ' +
+        'e o financeiro voltará para aberto.'
+      )) return;
+
+      await estornarMensalidade(idEstornar, {
+        motivo,
+        usuario: 'Administrador'
+      });
+
       await carregar();
-      alert('Baixa estornada. Mensalidade voltou para aberto, movimento do caixa foi estornado e financeiro atualizado.');
+
+      alert(
+        'Baixa estornada. Mensalidade voltou para aberto, movimento do caixa foi ' +
+        'estornado e financeiro atualizado.'
+      );
+      return;
     }
 
     if (idExcluir) {
@@ -456,5 +500,6 @@ $('#lista').addEventListener('click', async ev => {
 });
 
 $('#fCompetencia').value = ALUNO_ID_URL ? '' : competenciaAtual();
+
 await carregarBases();
 await carregar();
