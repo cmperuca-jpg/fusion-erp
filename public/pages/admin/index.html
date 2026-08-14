@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="/assets/css/fusion-app.css">
   <link rel="stylesheet" href="./style.css">
   <link rel="stylesheet" href="./backup-admin.css">
+  <link rel="stylesheet" href="./acesso-fisico.css?v=20260814-1">
   <script src="/assets/js/fusion-auth.js"></script>
   <script>FusionAuth.proteger(["admin","administrador"]);</script>
   <link rel="stylesheet" href="/assets/css/fusion-premium-final.css">
@@ -16,9 +17,9 @@
   <main class="main">
     <section class="admin-grid">
       <article class="fusion-card">
-        <div class="fusion-kpi-label">Usuários</div>
+        <div class="fusion-kpi-label">Contas internas</div>
         <div class="fusion-kpi-value" id="kpiUsuarios">0</div>
-        <small>Contas cadastradas</small>
+        <small>Administrador, gerente, recepção e comercial</small>
       </article>
       <article class="fusion-card">
         <div class="fusion-kpi-label">Ativos</div>
@@ -28,12 +29,17 @@
       <article class="fusion-card">
         <div class="fusion-kpi-label">Inativos</div>
         <div class="fusion-kpi-value" id="kpiInativos">0</div>
-        <small>Acesso bloqueado</small>
+        <small>Login e catraca bloqueados</small>
       </article>
     </section>
 
     <section class="fusion-card admin-form">
-      <h2 id="tituloForm">Novo usuário</h2>
+      <h2 id="tituloForm">Nova conta interna</h2>
+      <p class="admin-explicacao">
+        Alunos são criados pela matrícula. Professores são criados em Professores.
+        Esta tela é somente para a equipe administrativa do sistema.
+      </p>
+
       <form id="formUsuario">
         <input type="hidden" id="usuarioId">
         <div class="form-grid">
@@ -47,15 +53,14 @@
             <input id="senha" type="text" autocomplete="off" placeholder="Obrigatória no cadastro">
             <small>A senha salva aparece aqui para consulta administrativa.</small>
           </label>
-          <label>Perfil
+          <label>Perfil interno
             <select id="perfil">
               <option>Administrador</option>
               <option>Gerente</option>
               <option>Recepcao</option>
               <option>Comercial</option>
-              <option>Professor</option>
-              <option>Aluno</option>
             </select>
+            <small>Aluno e Professor possuem cadastros próprios e não aparecem aqui.</small>
           </label>
           <label>Status
             <select id="status">
@@ -77,7 +82,10 @@
 
     <section class="fusion-card">
       <div class="table-top">
-        <h2>Usuários do sistema</h2>
+        <div>
+          <h2>Equipe com acesso ao sistema</h2>
+          <small>Contas internas. O acesso físico é configurado abaixo.</small>
+        </div>
         <button type="button" class="btn-light" id="btnAtualizar">Atualizar</button>
       </div>
       <div class="table-wrap">
@@ -88,6 +96,38 @@
           <tbody id="tabelaUsuarios"><tr><td colspan="6">Carregando...</td></tr></tbody>
         </table>
       </div>
+    </section>
+
+    <section class="fusion-card acesso-fisico-card" id="painelAcessoFisico">
+      <div class="table-top">
+        <div>
+          <h2>Acesso físico à academia</h2>
+          <p>
+            Administrador, Gerente e Recepção podem usar a catraca com a própria digital.
+            O bloqueio explícito ou status inativo continua impedindo a entrada.
+          </p>
+        </div>
+        <div class="acesso-fisico-top-actions">
+          <a class="btn-light acesso-link" href="/pages/biometria/index.html?tipo=usuario">Digitais da equipe</a>
+          <a class="btn-light acesso-link" href="/pages/biometria/index.html?tipo=professor">Digitais dos professores</a>
+        </div>
+      </div>
+      <div id="listaAcessoFisico" class="acesso-fisico-lista">
+        <div class="acesso-carregando">Carregando equipe...</div>
+      </div>
+    </section>
+
+    <section class="fusion-card legacy-card" id="painelContasLegadas" hidden>
+      <div class="table-top">
+        <div>
+          <h2>Cadastros antigos a corrigir</h2>
+          <p>
+            Contas antigas com perfil Aluno ou Professor não pertencem mais ao Painel Administrativo.
+            Elas podem ser removidas aqui sem apagar o aluno matriculado nem o professor cadastrado nas telas próprias.
+          </p>
+        </div>
+      </div>
+      <div id="listaContasLegadas" class="legacy-lista"></div>
     </section>
 
     <section class="fusion-card" aria-labelledby="tituloResetDados">
@@ -127,8 +167,10 @@
       <div class="backup-result hidden" id="backupResultado" role="status"></div>
     </section>
   </main>
+
   <script src="/assets/js/fusion-layout.js"></script>
   <script src="./index.js?v=20260728-senha-cpf-1"></script>
+  <script src="./acesso-fisico.js?v=20260814-1"></script>
   <script>carregarLayout("Painel Administrativo");</script>
 </body>
 </html>
