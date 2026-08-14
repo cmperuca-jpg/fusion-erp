@@ -3,6 +3,7 @@ import net from 'node:net';
 import path from 'node:path';
 import fs from 'node:fs';
 import { DatabaseSync } from 'node:sqlite';
+import { deduplicarEventosBiometricos, resolverJanelaReleituraBiometricaMs } from '../modules/treinos/biometric-access-dedupe.mjs';
 
 const SUPABASE_URL = 'https://lsxogdipdagouqddgymd.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxzeG9nZGlwZGFnb3VxZGRneW1kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMxNzc4MjMsImV4cCI6MjA5ODc1MzgyM30.y0D4ynOw_A9ugPQK8KduHgkPknsuWzNAJ6KqfzAliDk';
@@ -85,7 +86,7 @@ export class FusionLocalAccessEngine {
     this.tenantId=tenantId; this.agentId=agentId; this.token=token; this.equipmentId=equipmentId;
     this.host=host||process.env.ACCESS_HOST||process.env.HENRY7X_HOST||'10.0.0.236';
     this.port=Number(port||process.env.ACCESS_PORT||process.env.HENRY7X_PORT||3000);
-    this.timeZone='America/Maceio'; this.syncing=false; this.pushing=false; this.releasing=false; this.timer=null; this.started=false;
+    this.timeZone='America/Maceio'; this.reReadCooldownMs=resolverJanelaReleituraBiometricaMs(process.env.FUSION_BIOMETRIA_RELEITURA_MS || 12000); this.syncing=false; this.pushing=false; this.releasing=false; this.timer=null; this.started=false;
     const base=path.resolve(process.cwd(),'data','fusion-access-local'); fs.mkdirSync(base,{recursive:true});
     this.dbPath=path.join(base,`${tenantId.replace(/[^a-z0-9_.-]/gi,'_')}.sqlite`);
     this.db=new DatabaseSync(this.dbPath);
@@ -104,7 +105,22 @@ export class FusionLocalAccessEngine {
   ready(){ return this.state('initial_sync_complete')==='1'; }
   getPerson(id){ return this.db.prepare('SELECT * FROM persons WHERE person_id=?').get(String(id||''))||null; }
   counts(id,d=localDate(this.timeZone)){ const r=this.db.prepare('SELECT server_count,local_count FROM daily_access WHERE person_id=? AND local_date=?').get(id,d); return {server:Number(r?.server_count||0),local:Number(r?.local_count||0),total:Number(r?.server_count||0)+Number(r?.local_count||0)}; }
-  start(){ if(this.started)return; this.started=true; void this.syncNow(true); this.timer=setInterval(()=>{void this.syncNow(false);void this.pushPending();},1000); }
+  rebuildLocalCountsFromEvents(){
+    const rows=this.db.prepare("SELECT person_id,local_date,occurred_at,payload FROM events WHERE authorized=1 AND physical_confirmed=1 AND direction='entrada' AND person_id IS NOT NULL ORDER BY occurred_at").all();
+    const aceitos=deduplicarEventosBiometricos(rows,{janelaMs:this.reReadCooldownMs});
+    const counts=new Map();
+    for(const row of aceitos){const key=`${row.person_id}|${row.local_date}`;counts.set(key,(counts.get(key)||0)+1);}
+    const now=new Date().toISOString();
+    const up=this.db.prepare('INSERT INTO daily_access(person_id,local_date,server_count,local_count,updated_at) VALUES(?,?,0,?,?) ON CONFLICT(person_id,local_date) DO UPDATE SET local_count=excluded.local_count,updated_at=excluded.updated_at');
+    this.db.exec('BEGIN IMMEDIATE');
+    try{
+      this.db.prepare('UPDATE daily_access SET local_count=0,updated_at=?').run(now);
+      for(const [key,count] of counts){const pos=key.lastIndexOf('|');up.run(key.slice(0,pos),key.slice(pos+1),count,now);}
+      this.db.exec('COMMIT');
+    }catch(e){this.db.exec('ROLLBACK');throw e;}
+  }
+  recentSuccessfulAccess(id,d){return this.db.prepare("SELECT occurred_at FROM events WHERE person_id=? AND local_date=? AND authorized=1 AND physical_confirmed=1 AND direction='entrada' ORDER BY occurred_at DESC LIMIT 1").get(id,d)||null;}
+  start(){ if(this.started)return; this.rebuildLocalCountsFromEvents(); this.started=true; void this.syncNow(true); this.timer=setInterval(()=>{void this.syncNow(false);void this.pushPending();},1000); }
   stop(){ if(this.timer)clearInterval(this.timer); try{this.db.close();}catch{} }
   async syncNow(forceFull=false){
     if(this.syncing)return false; this.syncing=true;
@@ -183,7 +199,11 @@ export class FusionLocalAccessEngine {
     const person=this.getPerson(personId); if(!person)return {handled:false,reason:'Pessoa ainda nao existe no snapshot local'};
     const d=localDate(this.timeZone),offline=Boolean(this.state('last_sync_error'));
     if(!person.access_allowed||person.explicit_blocked){const reason=person.access_reason||'Acesso bloqueado';this.insertEvent({person,authorized:false,physicalConfirmed:false,reason,far,offline});void this.pushPending();return {handled:true,autorizado:false,motivo:reason,modo:'local'};}
-    if(person.role==='aluno'){const count=this.counts(personId,d);if(count.total>=3){const reason='Limite de 3 acessos biometricos no dia atingido';this.insertEvent({person,authorized:false,physicalConfirmed:false,reason,far,offline});void this.pushPending();return {handled:true,autorizado:false,motivo:reason,modo:'local',acessosHoje:count.total};}}
+    if(person.role==='aluno'){
+      const recent=this.recentSuccessfulAccess(personId,d),recentMs=recent?.occurred_at?new Date(recent.occurred_at).getTime():NaN,delta=Date.now()-recentMs;
+      if(Number.isFinite(recentMs)&&delta>=0&&delta<this.reReadCooldownMs){const count=this.counts(personId,d);return {handled:true,autorizado:false,motivo:'Releitura biometrica ignorada; aguarde alguns segundos.',modo:'local',releituraIgnorada:true,acessosHoje:count.total};}
+      const count=this.counts(personId,d);if(count.total>=3){const reason='Limite de 3 acessos biometricos no dia atingido';this.insertEvent({person,authorized:false,physicalConfirmed:false,reason,far,offline});void this.pushPending();return {handled:true,autorizado:false,motivo:reason,modo:'local',acessosHoje:count.total};}
+    }
     if(this.releasing)return {handled:true,autorizado:false,motivo:'Catraca processando acesso anterior',modo:'local'};
     this.releasing=true;
     try{

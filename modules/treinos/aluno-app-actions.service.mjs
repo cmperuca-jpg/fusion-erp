@@ -10,6 +10,7 @@ import {
 import { obterHomeAlunoApp } from "./aluno-app.service.mjs";
 import { reconciliarAccessLogsFrequenciaDuravel } from "../access-engine/access-frequency-sync.runtime.mjs";
 import { resumirFrequenciaRegistros } from "./aluno-app-frequencia.mjs";
+import { deduplicarEventosBiometricos } from "./biometric-access-dedupe.mjs";
 
 const FOTO_MAX_CHARS = 4_000_000;
 
@@ -241,7 +242,7 @@ async function registrosBiometriaEdgeAluno(tenantId, alunoId, limite = 400) {
   const supabase = obterSupabaseAdmin({ obrigatorio: true });
   const { data, error } = await supabase
     .from("fusion_edge_access_events")
-    .select("event_id,equipment_id,occurred_at,source")
+    .select("event_id,equipment_id,occurred_at,source,payload")
     .eq("tenant_id", tenantId)
     .eq("student_id", alunoId)
     .eq("authorized", true)
@@ -258,7 +259,9 @@ async function registrosBiometriaEdgeAluno(tenantId, alunoId, limite = 400) {
     );
   }
 
-  return (Array.isArray(data) ? data : []).map((row = {}) => ({
+  const eventosValidos = deduplicarEventosBiometricos(Array.isArray(data) ? data : []);
+
+  return eventosValidos.map((row = {}) => ({
     record_id: `edge:${texto(row.event_id)}`,
     updated_at: row.occurred_at,
     payload: {

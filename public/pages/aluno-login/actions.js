@@ -314,6 +314,28 @@
     }
   }
 
+  let ultimaAtualizacaoRetorno = 0;
+
+  function atualizarAoRetornarParaApp() {
+    if (document.visibilityState === "hidden") return;
+    const home = $("homeScreen");
+    if (!home || home.classList.contains("hidden")) return;
+
+    const agora = Date.now();
+    if (agora - ultimaAtualizacaoRetorno < 800) return;
+    ultimaAtualizacaoRetorno = agora;
+
+    atualizarContador();
+    atualizarFrequencia();
+  }
+
+  function instalarAtualizacaoAoRetornar() {
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") atualizarAoRetornarParaApp();
+    });
+    window.addEventListener("focus", atualizarAoRetornarParaApp);
+  }
+
   function observarHome() {
     const home = $("homeScreen");
     if (!home) return;
@@ -341,6 +363,7 @@
     estilos();
     montarAcoes();
     observarHome();
+    instalarAtualizacaoAoRetornar();
   }
 
   if (document.readyState === "loading") {

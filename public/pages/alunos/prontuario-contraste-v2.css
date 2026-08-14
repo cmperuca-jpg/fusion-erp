@@ -262,3 +262,29 @@
     box-shadow:none!important;
   }
 }
+
+
+/* CONTRASTE DOS CHIPS DO CABECALHO
+   O seletor anterior do header aplicava texto claro a todo <span>, inclusive chips. */
+.prontuario-page .prontuario-header .chip{
+  background:#e8f4f6!important;
+  color:#123943!important;
+  border:1px solid #87b6bf!important;
+  opacity:1!important;
+  text-shadow:none!important;
+}
+.prontuario-page .prontuario-header .chip.ok{
+  background:#dcfce7!important;
+  color:#166534!important;
+  border-color:#86d9a5!important;
+}
+.prontuario-page .prontuario-header .chip.warn{
+  background:#fef3c7!important;
+  color:#854d0e!important;
+  border-color:#e7bd55!important;
+}
+.prontuario-page .prontuario-header .chip.bad{
+  background:#fee2e2!important;
+  color:#991b1b!important;
+  border-color:#f2a6a6!important;
+}
