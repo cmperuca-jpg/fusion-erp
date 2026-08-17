@@ -356,6 +356,12 @@ const isProduction = String(process.env.NODE_ENV || "").toLowerCase() === "produ
 const jsonBodyLimit = process.env.FUSION_JSON_BODY_LIMIT || "10mb";
 const urlEncodedBodyLimit = process.env.FUSION_FORM_BODY_LIMIT || "2mb";
 
+function capturarRawBodyPagbank(req, _res, buf) {
+  if (req.originalUrl?.startsWith("/api/pagamentos-online/webhooks/pagbank")) {
+    req.rawBody = buf.toString("utf8");
+  }
+}
+
 function origemLocalPermitida(origin) {
   try {
     const url = new URL(origin);
@@ -377,7 +383,7 @@ const corsOptions = {
 
 app.use(securityHeaders);
 app.use(cors(corsOptions));
-app.use(express.json({ limit: jsonBodyLimit }));
+app.use(express.json({ limit: jsonBodyLimit, verify: capturarRawBodyPagbank }));
 app.use(express.urlencoded({ extended: true, limit: urlEncodedBodyLimit }));
 app.use("/api/auth/login", loginRateLimit);
 app.use("/api/professores/login", loginRateLimit);

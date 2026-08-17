@@ -2,7 +2,8 @@ import express from "express";
 import {
   consultarPagamentoOnline,
   iniciarPagamentoContratacaoFusion,
-  receberWebhookAsaas
+  receberWebhookAsaas,
+  receberWebhookPagbank
 } from "./pagamentos-online.service.mjs";
 
 const router = express.Router();
@@ -50,6 +51,14 @@ router.post("/webhooks/asaas", async (req, res) => {
     res.json(await receberWebhookAsaas({ headers: req.headers, body: req.body || {} }));
   } catch (erro) {
     tratarErro(res, erro, "Não foi possível processar o webhook Asaas.");
+  }
+});
+
+router.post("/webhooks/pagbank", async (req, res) => {
+  try {
+    res.json(await receberWebhookPagbank({ headers: req.headers, body: req.body || {}, rawBody: req.rawBody || "" }));
+  } catch (erro) {
+    tratarErro(res, erro, "Não foi possível processar o webhook PagBank.");
   }
 });
 

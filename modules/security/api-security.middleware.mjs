@@ -32,6 +32,7 @@ const PUBLIC_RULES = [
   ["POST", "/api/treinos/aluno-app/pagamentos"],
   ["POST", "/api/treinos/aluno-app/logout"],
   ["POST", "/api/pagamentos-online/webhooks/asaas"],
+  ["POST", "/api/pagamentos-online/webhooks/pagbank"],
   ["POST", "/api/matricula-online"],
   ["GET", "/api/matricula-online/validar-cpf"],
   ["GET", "/api/planos"],

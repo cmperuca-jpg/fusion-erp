@@ -20,12 +20,18 @@ import {
   listarClientesAsaas,
   recuperarCobrancaAsaas
 } from "./asaas.client.mjs";
+import {
+  criarCheckoutPagbank,
+  linkPagamentoPagbank,
+  pagbankConfigurado
+} from "./pagbank.client.mjs";
 
 const COL_PAGAMENTOS = "pagamentos_online";
 const COL_CLIENTES = "pagamentos_online_clientes";
 const STATUS_ABERTOS = new Set(["criada", "pendente", "aguardando_pagamento"]);
 const STATUS_PAGOS_ASAAS = new Set(["RECEIVED", "CONFIRMED", "RECEIVED_IN_CASH", "APPROVED", "PAID"]);
 const EVENTOS_PAGOS_ASAAS = new Set(["PAYMENT_RECEIVED", "PAYMENT_CONFIRMED"]);
+const STATUS_PAGOS_PAGBANK = new Set(["PAID"]);
 
 function texto(valor = "") {
   return String(valor ?? "").trim();
@@ -46,6 +52,24 @@ function agoraISO() {
 
 function uid(prefixo = "payon") {
   return `${prefixo}_${crypto.randomUUID()}`;
+}
+
+function providerAtual() {
+  const bruto = statusNormalizado(
+    process.env.FUSION_PAYMENTS_PROVIDER ||
+    process.env.FUSION_PAYMENT_PROVIDER ||
+    process.env.FUSION_GATEWAY_PAGAMENTOS ||
+    "asaas"
+  );
+  return ["pagbank", "pagseguro"].includes(bruto) ? "pagbank" : "asaas";
+}
+
+function nomeProvider(provider = "") {
+  return provider === "pagbank" ? "PagBank" : "Asaas";
+}
+
+function providerConfigurado(provider = providerAtual()) {
+  return provider === "pagbank" ? pagbankConfigurado() : asaasConfigurado();
 }
 
 function erro(mensagem, status = 400, code = "") {
@@ -92,12 +116,34 @@ function pagamentoQuitadoAsaas(evento = "", pagamento = {}) {
     STATUS_PAGOS_ASAAS.has(texto(pagamento.status).toUpperCase());
 }
 
+function pagamentoQuitadoPagbank(_evento = "", pagamento = {}) {
+  return STATUS_PAGOS_PAGBANK.has(texto(pagamento.status).toUpperCase());
+}
+
+function pagamentoQuitadoProvider(provider = "", evento = "", pagamento = {}) {
+  return provider === "pagbank" ? pagamentoQuitadoPagbank(evento, pagamento) : pagamentoQuitadoAsaas(evento, pagamento);
+}
+
 function formaPagamentoAsaas(pagamento = {}) {
   const tipo = texto(pagamento.billingType || pagamento.billing_type).toUpperCase();
   if (tipo === "PIX") return "PIX";
   if (tipo === "CREDIT_CARD") return "Cartão de crédito";
   if (tipo === "BOLETO") return "Boleto online";
   return "Pagamento online";
+}
+
+function formaPagamentoPagbank(pagamento = {}) {
+  const metodo = pagamento.payment_method && typeof pagamento.payment_method === "object" ? pagamento.payment_method : {};
+  const tipo = texto(pagamento.billingType || pagamento.billing_type || metodo.type).toUpperCase();
+  if (tipo === "PIX") return "PIX";
+  if (tipo === "CREDIT_CARD") return "Cartão de crédito";
+  if (tipo === "DEBIT_CARD") return "Cartão de débito";
+  if (tipo === "BOLETO") return "Boleto online";
+  return "Pagamento online";
+}
+
+function formaPagamentoOnline(provider = "", pagamento = {}) {
+  return provider === "pagbank" ? formaPagamentoPagbank(pagamento) : formaPagamentoAsaas(pagamento);
 }
 
 function billingType(payload = {}) {
@@ -113,12 +159,45 @@ function vencimentoSeguro(valor = "") {
   return /^\d{4}-\d{2}-\d{2}$/.test(data) ? data : hojeISO();
 }
 
+function parteReferencia(valor = "", limite = 16) {
+  return texto(valor)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9_-]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, limite) || "x";
+}
+
+function codigoEscopo(escopo = "") {
+  const normalizado = texto(escopo);
+  if (normalizado === "aluno_mensalidade") return "am";
+  if (normalizado === "fusion_assinatura") return "fa";
+  return parteReferencia(normalizado, 8);
+}
+
+function escopoPorCodigo(codigo = "") {
+  if (codigo === "am") return "aluno_mensalidade";
+  if (codigo === "fa") return "fusion_assinatura";
+  return texto(codigo);
+}
+
 function externalReference({ escopo, tenantId, alvoId }) {
-  return ["fusion", texto(escopo), normalizarTenantId(tenantId), texto(alvoId), crypto.randomUUID()].join("|");
+  const tenantCompacto = parteReferencia(normalizarTenantId(tenantId), 20);
+  const alvoCompacto = parteReferencia(alvoId, 16);
+  const nonce = crypto.randomBytes(6).toString("hex");
+  return ["fp", codigoEscopo(escopo), tenantCompacto, alvoCompacto, nonce].join("|");
 }
 
 function parseExternalReference(ref = "") {
   const partes = texto(ref).split("|");
+  if (partes[0] === "fp" && partes.length >= 5) {
+    return {
+      escopo: escopoPorCodigo(partes[1]),
+      tenantId: normalizarTenantId(partes[2]),
+      alvoId: texto(partes[3]),
+      nonce: texto(partes.slice(4).join("|"))
+    };
+  }
   if (partes[0] !== "fusion" || partes.length < 5) return null;
   return {
     escopo: texto(partes[1]),
@@ -142,6 +221,84 @@ function resumoCobranca(cobranca = {}) {
     netValue: numero(cobranca.netValue, 0),
     dueDate: texto(cobranca.dueDate).slice(0, 10),
     billingType: texto(cobranca.billingType)
+  };
+}
+
+function valorEmCentavos(valor = 0) {
+  return Math.max(1, Math.round(numero(valor, 0) * 100));
+}
+
+function valorDeCentavos(valor = 0) {
+  const n = Number(valor);
+  return Number.isFinite(n) ? Number((n / 100).toFixed(2)) : 0;
+}
+
+function basePublicaFusion() {
+  return texto(
+    process.env.FUSION_PUBLIC_URL ||
+    process.env.FUSION_APP_URL ||
+    process.env.PUBLIC_URL ||
+    "https://fusionsistema.com.br"
+  ).replace(/\/+$/, "");
+}
+
+function urlWebhookPagbank() {
+  const custom = texto(process.env.FUSION_PAGBANK_WEBHOOK_URL);
+  return custom || `${basePublicaFusion()}/api/pagamentos-online/webhooks/pagbank`;
+}
+
+function urlRetornoPagbank({ escopo = "", tenantId = "" } = {}) {
+  const customAluno = texto(process.env.FUSION_PAGBANK_ALUNO_REDIRECT_URL);
+  const customFusion = texto(process.env.FUSION_PAGBANK_FUSION_REDIRECT_URL);
+  const customGeral = texto(process.env.FUSION_PAGBANK_REDIRECT_URL);
+  if (escopo === "aluno_mensalidade" && customAluno) return customAluno;
+  if (escopo === "fusion_assinatura" && customFusion) return customFusion;
+  if (customGeral) return customGeral;
+  const tenant = normalizarTenantId(tenantId) || "academia-piloto";
+  const caminho = escopo === "aluno_mensalidade" ? `/${tenant}/apps/aluno` : `/${tenant}/app/dashboard`;
+  return `${basePublicaFusion()}${caminho}`;
+}
+
+function expiracaoCheckoutPagbank() {
+  const horas = Number(process.env.FUSION_PAGBANK_CHECKOUT_EXPIRATION_HOURS || 72);
+  const ms = Number.isFinite(horas) && horas > 0 ? horas * 60 * 60 * 1000 : 72 * 60 * 60 * 1000;
+  return new Date(Date.now() + ms).toISOString();
+}
+
+function metodosPagamentoPagbank(payload = {}) {
+  const fonte = texto(payload.pagbankPaymentMethods || payload.paymentMethods || process.env.FUSION_PAGBANK_PAYMENT_METHODS || "PIX,CREDIT_CARD");
+  const permitidos = new Set(["PIX", "CREDIT_CARD", "DEBIT_CARD", "BOLETO"]);
+  const tipos = fonte
+    .split(/[,\s;]+/)
+    .map(item => texto(item).toUpperCase())
+    .filter(item => permitidos.has(item));
+  const finais = tipos.length ? [...new Set(tipos)] : ["PIX", "CREDIT_CARD"];
+  return finais.map(type => ({ type }));
+}
+
+function configsPagamentoPagbank() {
+  const limiteParcelas = Number(process.env.FUSION_PAGBANK_INSTALLMENTS_LIMIT || 1);
+  const parcelasSemJuros = Number(process.env.FUSION_PAGBANK_INTEREST_FREE_INSTALLMENTS || 1);
+  const config_options = [];
+  if (Number.isFinite(limiteParcelas) && limiteParcelas > 0) {
+    config_options.push({ option: "INSTALLMENTS_LIMIT", value: String(Math.floor(limiteParcelas)) });
+  }
+  if (Number.isFinite(parcelasSemJuros) && parcelasSemJuros > 0) {
+    config_options.push({ option: "INTEREST_FREE_INSTALLMENTS", value: String(Math.floor(parcelasSemJuros)) });
+  }
+  return config_options.length ? [{ type: "CREDIT_CARD", config_options }] : [];
+}
+
+function resumoCheckoutPagbank(checkout = {}, valor = 0) {
+  const url = linkPagamentoPagbank(checkout);
+  return {
+    providerPaymentId: texto(checkout.id),
+    statusGateway: texto(checkout.status),
+    invoiceUrl: url,
+    value: numero(valor, 0),
+    netValue: 0,
+    dueDate: hojeISO(),
+    billingType: "CHECKOUT"
   };
 }
 
@@ -214,7 +371,7 @@ async function obterOuCriarClienteAsaas({ escopo, ownerId, nome, documento: doc,
   return registro;
 }
 
-async function criarRegistroCobranca({ escopo, target, valor, descricao, vencimento, pagador, payload = {} }) {
+async function criarRegistroCobrancaAsaas({ escopo, target, valor, descricao, vencimento, pagador, payload = {} }) {
   if (!asaasConfigurado()) {
     throw erro("Asaas ainda não configurado no servidor. Configure FUSION_ASAAS_API_KEY antes de criar cobranças.", 503, "ASAAS_NOT_CONFIGURED");
   }
@@ -270,9 +427,85 @@ async function criarRegistroCobranca({ escopo, target, valor, descricao, vencime
   return registro;
 }
 
+async function criarRegistroCobrancaPagbank({ escopo, target, valor, descricao, vencimento, pagador: _pagador, payload = {} }) {
+  if (!pagbankConfigurado()) {
+    throw erro("PagBank ainda não configurado no servidor. Configure FUSION_PAGBANK_TOKEN antes de criar checkouts.", 503, "PAGBANK_NOT_CONFIGURED");
+  }
+
+  const tenantId = tenantAtual();
+  const alvoId = target.mensalidadeId || target.assinaturaId || target.planoCodigo || target.tituloId || uid("alvo");
+  const ref = externalReference({ escopo, tenantId, alvoId });
+  const webhookUrl = urlWebhookPagbank();
+  const paymentMethods = metodosPagamentoPagbank(payload);
+  const paymentMethodsConfigs = paymentMethods.some(item => item.type === "CREDIT_CARD") ? configsPagamentoPagbank() : [];
+
+  const checkoutPayload = {
+    reference_id: ref,
+    expiration_date: expiracaoCheckoutPagbank(),
+    customer_modifiable: true,
+    items: [
+      {
+        reference_id: parteReferencia(alvoId, 64),
+        name: texto(descricao || "Pagamento Fusion").slice(0, 100),
+        quantity: 1,
+        unit_amount: valorEmCentavos(valor)
+      }
+    ],
+    payment_methods: paymentMethods,
+    redirect_url: urlRetornoPagbank({ escopo, tenantId }),
+    notification_urls: [webhookUrl],
+    payment_notification_urls: [webhookUrl]
+  };
+  if (paymentMethodsConfigs.length) checkoutPayload.payment_methods_configs = paymentMethodsConfigs;
+
+  const checkout = await criarCheckoutPagbank(checkoutPayload);
+  const resumo = resumoCheckoutPagbank(checkout, valor);
+
+  if (!resumo.invoiceUrl) {
+    throw erro("PagBank criou o checkout, mas não retornou o link de pagamento.", 502, "PAGBANK_PAY_LINK_MISSING");
+  }
+
+  const registro = {
+    id: uid("payon"),
+    tenantId,
+    escopo,
+    provider: "pagbank",
+    providerPaymentId: resumo.providerPaymentId,
+    providerCheckoutId: resumo.providerPaymentId,
+    externalReference: ref,
+    status: "criada",
+    statusGateway: resumo.statusGateway,
+    valor: numero(valor, 0),
+    moeda: "BRL",
+    vencimento: vencimentoSeguro(vencimento),
+    descricao,
+    invoiceUrl: resumo.invoiceUrl,
+    checkoutUrl: resumo.invoiceUrl,
+    billingType: resumo.billingType,
+    target,
+    eventos: [],
+    criadoEm: agoraISO(),
+    atualizadoEm: agoraISO()
+  };
+
+  const pagamentos = await lerLista(COL_PAGAMENTOS);
+  pagamentos.unshift(registro);
+  await salvarLista(COL_PAGAMENTOS, pagamentos);
+  return registro;
+}
+
+async function criarRegistroCobranca(dados = {}) {
+  const provider = providerAtual();
+  if (!providerConfigurado(provider)) {
+    throw erro(`${nomeProvider(provider)} ainda não configurado no servidor. Configure as variáveis seguras antes de criar cobranças.`, 503, `${provider.toUpperCase()}_NOT_CONFIGURED`);
+  }
+  return provider === "pagbank" ? criarRegistroCobrancaPagbank(dados) : criarRegistroCobrancaAsaas(dados);
+}
+
 function pagamentoAbertoExistente(lista = [], filtro = {}) {
+  const provider = filtro.provider || providerAtual();
   return lista.find(item => {
-    if (item.provider !== "asaas") return false;
+    if (item.provider !== provider) return false;
     if (!STATUS_ABERTOS.has(statusNormalizado(item.status))) return false;
     if (filtro.escopo && item.escopo !== filtro.escopo) return false;
     if (filtro.mensalidadeId && texto(item.target?.mensalidadeId) !== texto(filtro.mensalidadeId)) return false;
@@ -493,8 +726,9 @@ async function baixaAlunoMensalidade(registro = {}, pagamento = {}, evento = "")
     const valor = valorPositivo(pagamento.value, registro.valor);
     const netValue = valorPositivo(pagamento.netValue);
     const taxa = netValue > 0 ? Math.max(0, Number((valor - netValue).toFixed(2))) : 0;
-    const formaPagamento = formaPagamentoAsaas(pagamento);
+    const formaPagamento = formaPagamentoOnline(registro.provider, pagamento);
     const dataPagamento = texto(pagamento.paymentDate || pagamento.clientPaymentDate || pagamento.confirmedDate).slice(0, 10) || hojeISO();
+    const providerNome = nomeProvider(registro.provider);
 
     const resultado = await receberTitulos({
       operacaoId: texto(pagamento.id || registro.providerPaymentId || registro.externalReference),
@@ -507,7 +741,7 @@ async function baixaAlunoMensalidade(registro = {}, pagamento = {}, evento = "")
       pagamentos: [{ formaPagamento, valor, taxa }],
       dataPagamento,
       usuario: "pagamento-online",
-      observacao: `Baixa automática Asaas ${texto(evento)} ${texto(pagamento.id || registro.providerPaymentId)}`.trim()
+      observacao: `Baixa automática ${providerNome} ${texto(evento)} ${texto(pagamento.id || registro.providerPaymentId)}`.trim()
     });
 
     let cobrancaAutomatica = { ok: true, programada: false };
@@ -549,13 +783,14 @@ async function atualizarTenantPagoFusion(tenantId = "", assinatura = {}) {
 async function baixaAssinaturaFusion(registro = {}, pagamento = {}) {
   const valor = valorPositivo(pagamento.value, registro.valor);
   const dataPagamento = texto(pagamento.paymentDate || pagamento.clientPaymentDate || pagamento.confirmedDate).slice(0, 10) || hojeISO();
+  const providerNome = nomeProvider(registro.provider);
   const resultado = await registrarPagamentoFusion({
     valor,
-    forma: formaPagamentoAsaas(pagamento),
+    forma: formaPagamentoOnline(registro.provider, pagamento),
     referencia: texto(pagamento.id || registro.providerPaymentId),
     recebidoEm: dataPagamento,
     periodoMeses: registro.target?.periodoMeses || 1,
-    observacao: "Pagamento online confirmado pelo Asaas."
+    observacao: `Pagamento online confirmado pelo ${providerNome}.`
   }, {
     id: "pagamento-online",
     nome: "Pagamento Online",
@@ -578,7 +813,7 @@ async function processarPagamentoConfirmado({ tenantId, evento, pagamento }) {
   return executarComTenant(tenantId, async () => executarTransacaoJson(async () => {
     const lista = await lerLista(COL_PAGAMENTOS);
     const registro = await obterRegistroPorPagamento({
-      providerPaymentId: pagamento.id,
+      providerPaymentId: pagamento.providerPaymentId || pagamento.checkoutId || pagamento.id,
       externalReference: pagamento.externalReference
     });
     if (!registro) return { ok: true, ignorado: true, motivo: "registro_nao_encontrado" };
@@ -597,8 +832,9 @@ async function processarPagamentoConfirmado({ tenantId, evento, pagamento }) {
     };
 
     let baixa = { ok: true, pendente: true };
-    let statusFinal = pagamentoQuitadoAsaas(evento, pagamento) ? "paga" : "pendente";
-    if (pagamentoQuitadoAsaas(evento, pagamento)) {
+    const quitado = pagamentoQuitadoProvider(registro.provider, evento, pagamento);
+    let statusFinal = quitado ? "paga" : "pendente";
+    if (quitado) {
       if (registro.escopo === "aluno_mensalidade") {
         baixa = await baixaAlunoMensalidade(registro, pagamento, evento);
         statusFinal = "baixada";
@@ -633,6 +869,67 @@ function validarWebhookToken(headers = {}) {
   }
 }
 
+function headerValor(headers = {}, nome = "") {
+  const alvo = texto(nome).toLowerCase();
+  const direto = headers[alvo] || headers[nome] || headers[nome.toUpperCase()];
+  if (direto) return texto(direto);
+  const entrada = Object.entries(headers).find(([chave]) => texto(chave).toLowerCase() === alvo);
+  return texto(entrada?.[1]);
+}
+
+function validarWebhookPagbank({ headers = {}, rawBody = "" } = {}) {
+  const esperado = texto(
+    process.env.FUSION_PAGBANK_WEBHOOK_TOKEN ||
+    process.env.PAGBANK_WEBHOOK_TOKEN ||
+    process.env.FUSION_PAGBANK_NOTIFICATION_TOKEN
+  );
+  if (!esperado) {
+    throw erro("Token de webhook PagBank não configurado no servidor.", 503, "PAGBANK_WEBHOOK_TOKEN_NOT_CONFIGURED");
+  }
+
+  const payload = typeof rawBody === "string" ? rawBody : "";
+  if (!payload) {
+    throw erro("Payload bruto do webhook PagBank não disponível para validação.", 400, "PAGBANK_WEBHOOK_RAW_BODY_REQUIRED");
+  }
+
+  const recebido = headerValor(headers, "x-authenticity-token");
+  const assinatura = crypto.createHash("sha256").update(`${esperado}-${payload}`).digest("hex");
+  const a = Buffer.from(assinatura, "utf8");
+  const b = Buffer.from(recebido, "utf8");
+  if (!recebido || a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
+    throw erro("Webhook PagBank não autorizado.", 401, "PAGBANK_WEBHOOK_UNAUTHORIZED");
+  }
+}
+
+function primeiraCobrancaPagbank(body = {}) {
+  const charges = Array.isArray(body.charges) ? body.charges : [];
+  return charges.find(item => texto(item.status)) || charges[0] || {};
+}
+
+function pagamentoDoWebhookPagbank(body = {}) {
+  const charge = primeiraCobrancaPagbank(body);
+  const amount = charge.amount && typeof charge.amount === "object" ? charge.amount : (body.amount || {});
+  const summary = amount.summary && typeof amount.summary === "object" ? amount.summary : {};
+  const valorCentavos = Number(summary.paid || amount.value || summary.total || 0);
+  const liquidoCentavos = Number(summary.net || summary.net_value || summary.netValue || 0);
+  const checkoutId = texto(body.id).startsWith("CHEC_") ? texto(body.id) : texto(body.checkout_id || body.checkoutId);
+  const status = texto(charge.status || body.status);
+  const eventId = texto(body.notification_id || body.notificationId || `${checkoutId || body.id}:${charge.id || ""}:${status}`);
+  return {
+    id: texto(charge.id || body.payment_id || body.paymentId || checkoutId || body.id),
+    providerPaymentId: checkoutId,
+    checkoutId,
+    webhookEventId: eventId,
+    externalReference: texto(body.reference_id || body.external_reference || body.externalReference || charge.reference_id),
+    status,
+    value: valorDeCentavos(valorCentavos),
+    netValue: valorDeCentavos(liquidoCentavos),
+    billingType: texto(charge.payment_method?.type || body.payment_method?.type),
+    payment_method: charge.payment_method || body.payment_method || {},
+    paymentDate: texto(charge.paid_at || body.paid_at || body.updated_at || body.created_at).slice(0, 10)
+  };
+}
+
 export async function receberWebhookAsaas({ headers = {}, body = {} } = {}) {
   validarWebhookToken(headers);
 
@@ -660,6 +957,22 @@ export async function receberWebhookAsaas({ headers = {}, body = {} } = {}) {
   return processarPagamentoConfirmado({
     tenantId: parsed.tenantId,
     evento,
+    pagamento
+  });
+}
+
+export async function receberWebhookPagbank({ headers = {}, body = {}, rawBody = "" } = {}) {
+  validarWebhookPagbank({ headers, rawBody });
+
+  const pagamento = pagamentoDoWebhookPagbank(body);
+  if (!pagamento.id && !pagamento.externalReference) return { ok: true, ignorado: true, motivo: "sem_identificador_pagbank" };
+
+  const parsed = parseExternalReference(pagamento.externalReference);
+  if (!parsed?.tenantId) return { ok: true, ignorado: true, motivo: "external_reference_fora_do_fusion" };
+
+  return processarPagamentoConfirmado({
+    tenantId: parsed.tenantId,
+    evento: "PAGBANK_WEBHOOK",
     pagamento
   });
 }
