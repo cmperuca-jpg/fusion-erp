@@ -13,6 +13,7 @@ const COL = Object.freeze({
 });
 
 const FORMAS = ["Dinheiro", "Cheque", "Boleto", "Cartão de crédito", "Cartão de débito", "Depósito", "Transferência", "PIX"];
+const RESIDUO_CENTAVOS_QUITACAO = 5;
 const CONTAS = [
   ["1.01", "Mensalidades", "receita"], ["1.02", "Taxa de matrícula", "receita"],
   ["1.03", "Avaliação física", "receita"], ["1.04", "Venda de produtos", "receita"],
@@ -417,7 +418,7 @@ export async function receberTitulos(dados = {}) {
       if (finalizado(titulo) || saldoC(titulo) <= 0) throw erro(`O título ${titulo.descricao} não está disponível para recebimento.`, 409);
       if (alunoUnico && idAluno(titulo) && alunoUnico !== idAluno(titulo)) throw erro("Um recibo não pode misturar títulos de alunos diferentes.");
       alunoUnico = alunoUnico || idAluno(titulo);
-      const descontoC = centavos(entrada.desconto || 0); const acrescimoC = centavos(entrada.acrescimo || entrada.juros || entrada.multa || 0);
+      let descontoC = centavos(entrada.desconto || 0); const acrescimoC = centavos(entrada.acrescimo || entrada.juros || entrada.multa || 0);
       const baseAntesDescontoC = Math.max(0, saldoC(titulo) + acrescimoC);
       const devidoC = Math.max(0, baseAntesDescontoC - descontoC);
       const valorEntrada = entrada.valorAplicado ?? entrada.valor;
@@ -426,8 +427,13 @@ export async function receberTitulos(dados = {}) {
       const aplicadoBrutoC = valorEntradaInformado ? centavos(valorEntrada) : devidoC;
       const ajusteFormularioDesconto = descontoC > 0 && aplicadoBrutoC > devidoC && aplicadoBrutoC === baseAntesDescontoC;
       const aplicadoC = ajusteFormularioDesconto ? devidoC : aplicadoBrutoC;
+      const residuoQuitacaoC = devidoC - aplicadoC;
+      const ajusteResiduoCentavos = descontoC === 0 && acrescimoC === 0 && residuoQuitacaoC > 0 && residuoQuitacaoC <= RESIDUO_CENTAVOS_QUITACAO
+        ? residuoQuitacaoC
+        : 0;
+      descontoC += ajusteResiduoCentavos;
       if (aplicadoC <= 0 || aplicadoC > devidoC) throw erro(`Valor inválido para ${titulo.descricao}. Saldo devido: ${reais(devidoC).toFixed(2)}.`);
-      totalAplicadoC += aplicadoC; alocacoes.push({ indice: i, titulo, aplicadoC, descontoC, acrescimoC, devidoC, ajusteFormularioDesconto, programadoAntesDaBaixa });
+      totalAplicadoC += aplicadoC; alocacoes.push({ indice: i, titulo, aplicadoC, descontoC, acrescimoC, devidoC, ajusteFormularioDesconto, ajusteResiduoCentavos, programadoAntesDaBaixa });
     }
     const usarTotalAplicadoComoMeio = alocacoes.length === 1 &&
       alocacoes[0].ajusteFormularioDesconto &&
@@ -537,7 +543,7 @@ export async function receberTitulos(dados = {}) {
         formaPagamento: meioUnico?.formaPagamento || "Múltiplas",
         atualizadoEm: agora()
       });
-      const item = { id: uid("reci"), reciboId: recibo.id, tituloId: a.titulo.id, alunoId: alunoUnico, matriculaId: idMatricula(a.titulo), mensalidadeId: txt(a.titulo.mensalidadeId), valorOriginalCentavos: valorTituloC(a.titulo), saldoAnteriorCentavos: saldoC(a.titulo), descontoCentavos: a.descontoC, acrescimoCentavos: a.acrescimoC, valorAplicadoCentavos: a.aplicadoC, valorAplicado: reais(a.aplicadoC), taxaOperadoraValorCentavos: taxaAtualC, taxaOperadoraValor: reais(taxaAtualC), valorLiquidoAplicadoCentavos: Math.max(0, a.aplicadoC - taxaAtualC), valorLiquidoAplicado: reais(Math.max(0, a.aplicadoC - taxaAtualC)), cancelado: false, criadoEm: agora() };
+      const item = { id: uid("reci"), reciboId: recibo.id, tituloId: a.titulo.id, alunoId: alunoUnico, matriculaId: idMatricula(a.titulo), mensalidadeId: txt(a.titulo.mensalidadeId), valorOriginalCentavos: valorTituloC(a.titulo), saldoAnteriorCentavos: saldoC(a.titulo), descontoCentavos: a.descontoC, acrescimoCentavos: a.acrescimoC, ajusteResiduoCentavos: a.ajusteResiduoCentavos || 0, valorAplicadoCentavos: a.aplicadoC, valorAplicado: reais(a.aplicadoC), taxaOperadoraValorCentavos: taxaAtualC, taxaOperadoraValor: reais(taxaAtualC), valorLiquidoAplicadoCentavos: Math.max(0, a.aplicadoC - taxaAtualC), valorLiquidoAplicado: reais(Math.max(0, a.aplicadoC - taxaAtualC)), cancelado: false, criadoEm: agora() };
       novosItens.push(item); itensRecibo.push(item);
       for (let m = 0; m < mensalidades.length; m += 1) {
         if (!mesmo(mensalidades[m].id, item.mensalidadeId) && !mesmo(mensalidades[m].lancamentoFinanceiroId || mensalidades[m].financeiroId, item.tituloId)) continue;

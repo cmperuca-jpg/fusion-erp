@@ -105,6 +105,25 @@ try {
   assert.equal(baixaReativacaoComDesconto.lancamento.valorBrutoRecebido, 50);
   assert.equal(baixaReativacaoComDesconto.lancamento.desconto, 15);
 
+  const tituloResiduoCentavos = await ledger.criarTitulo({ tipo: "receber", alunoId: alunoDesconto.id, descricao: "Reativação com resíduo de centavos", categoria: "Reativação", valor: 65, vencimento: "2026-08-12" });
+  const baixaResiduoCentavos = await ledger.receberTitulos({
+    operacaoId: "op_residuo_centavos_1",
+    tituloId: tituloResiduoCentavos.id,
+    valorAplicado: 64.95,
+    valorPago: 64.95,
+    formaPagamento: "Dinheiro",
+    usuario: "teste"
+  });
+  assert.equal(baixaResiduoCentavos.recibo.valorPago, 64.95);
+  assert.equal(baixaResiduoCentavos.recibo.valorAplicado, 64.95);
+  assert.equal(baixaResiduoCentavos.itens[0].descontoCentavos, 5);
+  assert.equal(baixaResiduoCentavos.itens[0].ajusteResiduoCentavos, 5);
+  assert.equal(baixaResiduoCentavos.lancamento.status, "Pago");
+  assert.equal(baixaResiduoCentavos.lancamento.valorPago, 65);
+  assert.equal(baixaResiduoCentavos.lancamento.valorBrutoRecebido, 64.95);
+  assert.equal(baixaResiduoCentavos.lancamento.valorRestante, 0);
+  assert.equal(baixaResiduoCentavos.lancamento.desconto, 0.05);
+
   await ledger.estornarRecibo(recebimento.recibo.id, { motivo: "Teste de estorno", usuario: "teste" });
   const tituloReaberto = (await ledger.listarTitulos()).find((x) => x.id === titulo1.id);
   assert.equal(tituloReaberto.status, "Aberto");

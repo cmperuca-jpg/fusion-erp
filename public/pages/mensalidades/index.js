@@ -176,6 +176,7 @@ function aplicarContextoAluno() {
 
 function statusTexto(status) {
   return {
+    em_aberto: 'Em aberto',
     aberto: 'Aberto',
     atrasado: 'Atrasado',
     parcial: 'Parcial',
@@ -500,6 +501,7 @@ $('#lista').addEventListener('click', async ev => {
 });
 
 $('#fCompetencia').value = ALUNO_ID_URL ? '' : competenciaAtual();
+if (!ALUNO_ID_URL) $('#fStatus').value = 'em_aberto';
 
 await carregarBases();
 await carregar();

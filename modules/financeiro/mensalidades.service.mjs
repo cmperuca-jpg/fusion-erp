@@ -96,6 +96,15 @@ function statusInterno(status) {
   return 'aberto';
 }
 
+function statusFiltroMensalidade(status) {
+  const s = normalizarTexto(status);
+  if (!s || s === 'todos') return [];
+  if (['em_aberto', 'em aberto', 'abertas', 'abertos', 'pendente', 'pendentes', 'a_receber', 'a receber'].includes(s)) {
+    return ['aberto', 'atrasado', 'parcial'];
+  }
+  return [statusInterno(s)];
+}
+
 function statusFinanceiro(status) {
   const s = statusInterno(status);
   if (s === 'programada') return 'Programado';
@@ -619,6 +628,7 @@ export async function listarMensalidades(filtros = {}) {
 
   const q = normalizarTexto(filtros.q);
   const status = normalizarTexto(filtros.status);
+  const statusFiltro = statusFiltroMensalidade(status);
   const competencia = String(filtros.competencia || '').trim();
   const alunoId = String(filtros.alunoId || '').trim();
 
@@ -660,7 +670,7 @@ export async function listarMensalidades(filtros = {}) {
         const alvo = normalizarTexto(`${m.alunoNome} ${m.aluno} ${m.descricao} ${m.planoNome} ${m.plano} ${m.competencia}`);
         if (!alvo.includes(q)) return false;
       }
-      if (status && status !== 'todos' && m.status !== status) return false;
+      if (statusFiltro.length && !statusFiltro.includes(m.status)) return false;
       if (competencia && m.competencia !== competencia) return false;
       if (alunoId && String(m.alunoId) !== alunoId) return false;
       return true;
