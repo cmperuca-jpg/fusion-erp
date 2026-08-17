@@ -7,6 +7,7 @@ import { executarEnforcementBilling } from "./billing-enforcement.middleware.mjs
 
 const PUBLIC_RULES = [
   ["GET", "/api/health"],
+  ["HEAD", "/api/health"],
   ["GET", "/api/v3/architecture/status"],
   ["GET", "/api/v3/persistence/status"],
   ["POST", "/api/auth/login"],
