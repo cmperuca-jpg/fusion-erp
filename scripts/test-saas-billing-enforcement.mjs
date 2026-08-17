@@ -22,6 +22,12 @@ assert.equal(classificarExcecaoEnforcementBilling({
 assert.equal(classificarExcecaoEnforcementBilling({
   ativo: true,
   tenantId: "academia-cliente",
+  caminho: "/api/pagamentos-online/fusion/contratacao"
+}).motivo, "rota_regularizacao");
+
+assert.equal(classificarExcecaoEnforcementBilling({
+  ativo: true,
+  tenantId: "academia-cliente",
   caminho: "/api/alunos",
   usuario: { supportAccess: true }
 }).motivo, "suporte_autorizado");

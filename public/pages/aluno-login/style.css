@@ -190,6 +190,13 @@ small { display: block; margin-top: 8px; color: var(--muted); line-height: 1.4; 
 .home-section { margin-top: 14px; }
 .section-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
 .section-heading h2 { margin: 4px 0 0; }
+.section-heading-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
 .section-chip {
   display: inline-flex;
   align-items: center;
@@ -202,6 +209,19 @@ small { display: block; margin-top: 8px; color: var(--muted); line-height: 1.4; 
   font-weight: 800;
   white-space: nowrap;
 }
+.section-action {
+  min-height: 34px;
+  border: 1px solid var(--brand);
+  border-radius: 999px;
+  background: var(--brand);
+  color: #fff;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.section-action:disabled { opacity: .6; cursor: wait; }
 .section-intro { margin: 12px 0 16px !important; font-size: 13px; }
 
 .training-divisions { display: grid; gap: 10px; }
@@ -235,6 +255,8 @@ small { display: block; margin-top: 8px; color: var(--muted); line-height: 1.4; 
 @media (max-width: 390px) {
   .grid-cards { grid-template-columns: 1fr; }
   .feature-card-wide { grid-column: auto; }
+  .section-heading { flex-direction: column; }
+  .section-heading-actions { justify-content: flex-start; }
   .data-row { flex-direction: column; gap: 6px; }
   .data-row > span { text-align: left; }
 }

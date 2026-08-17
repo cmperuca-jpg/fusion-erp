@@ -54,6 +54,7 @@ import reconhecimentoFacialRoutes from "./modules/reconhecimento-facial/reconhec
 import accessOnboardingRoutes from "./modules/access-onboarding/access-onboarding.routes.mjs";
 import whatsappRoutes from "./modules/whatsapp/whatsapp.routes.mjs";
 import resetDadosRoutes from "./modules/reset-dados/reset-dados.routes.mjs";
+import pagamentosOnlineRoutes from "./modules/pagamentos-online/pagamentos-online.routes.mjs";
 import {
   iniciarNotificadorObservabilidade,
   notificarAlertasObservabilidade,
@@ -767,6 +768,7 @@ app.use("/api/cobranca", cobrancaRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/saas", saasRoutes);
 app.use("/api/suporte", suporteRoutes);
+app.use("/api/pagamentos-online", pagamentosOnlineRoutes);
 app.use("/api/bi", biRoutes);
 app.use("/api/presencas", presencasRoutes);
 app.use("/api/frequencia", frequenciaRoutes);

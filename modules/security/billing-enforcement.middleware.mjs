@@ -4,7 +4,8 @@ import { normalizarTenantId, tenantAtual } from "../core/persistence/tenant-cont
 const TENANTS_PROTEGIDOS = new Set(["academia-piloto"]);
 const ROTAS_ISENTAS = [
   "/api/health",
-  "/api/saas/billing/fusion"
+  "/api/saas/billing/fusion",
+  "/api/pagamentos-online/fusion/contratacao"
 ];
 
 function envAtivo(valor) {

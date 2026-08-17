@@ -87,7 +87,7 @@ async function localizarRegistroERP(legacyId = "") {
   };
 }
 
-async function identidadeAlunoApp(req, res, deviceToken) {
+export async function identidadeAlunoApp(req, res, deviceToken) {
   // Reutiliza a mesma validação do /aluno-app/me:
   // dispositivo ativo + sessão httpOnly válida + usuário dono do cadastro.
   const home = await obterHomeAlunoApp(req, res, deviceToken);
@@ -305,4 +305,3 @@ export async function frequenciaAlunoApp(req, res, deviceToken) {
     };
   });
 }
-

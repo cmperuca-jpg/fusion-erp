@@ -14,6 +14,7 @@ let treinoGaleriaItens = [];
 let treinoGaleriaIndice = 0;
 let treinoGaleriaNoFim = false;
 let treinoGaleriaTouchX = null;
+let mensalidadePagamentoAtual = null;
 
 function uuid() {
   if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
@@ -316,6 +317,31 @@ function criarLinha(titulo, valor, detalhe = "") {
   valorEl.textContent = valor;
   linha.append(texto, valorEl);
   return linha;
+}
+
+function statusMensalidadeNormalizado(item = {}) {
+  return textoSeguro(item.status)
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function saldoMensalidade(item = {}) {
+  const n = Number(item.valor_restante ?? item.valorRestante ?? item.saldoRestante ?? item.valor ?? 0);
+  return Number.isFinite(n) ? Math.max(0, n) : 0;
+}
+
+function mensalidadePodePagar(item = {}) {
+  const status = statusMensalidadeNormalizado(item);
+  if (["pago", "paga", "recebido", "recebida", "quitado", "quitada", "cancelado", "cancelada"].includes(status)) return false;
+  if (item.programada === true || ["programada", "programado", "previsto", "prevista"].includes(status)) return false;
+  return Boolean(item.id && saldoMensalidade(item) > 0);
+}
+
+function escolherMensalidadeParaPagamento(mensalidades = []) {
+  return [...mensalidades]
+    .filter(mensalidadePodePagar)
+    .sort((a, b) => String(a.vencimento || "").localeCompare(String(b.vencimento || "")))[0] || null;
 }
 
 function renderPlano(plano = null) {
@@ -724,6 +750,15 @@ function renderFinanceiro(financeiro = {}) {
 
   const lista = limparLista("financeiroLista");
   const mensalidades = Array.isArray(financeiro.mensalidades) ? financeiro.mensalidades : [];
+  mensalidadePagamentoAtual = escolherMensalidadeParaPagamento(mensalidades);
+  const btnPagamento = $("pagarMensalidadeAluno");
+  if (btnPagamento) {
+    btnPagamento.classList.toggle("hidden", !mensalidadePagamentoAtual);
+    btnPagamento.textContent = mensalidadePagamentoAtual
+      ? `Pagar ${moedaBR(saldoMensalidade(mensalidadePagamentoAtual))}`
+      : "Pagar agora";
+  }
+
   if (!mensalidades.length) {
     lista.appendChild(criarLinha("Mensalidades", "Sem lançamentos", "Nenhuma cobrança encontrada."));
     return;
@@ -731,8 +766,39 @@ function renderFinanceiro(financeiro = {}) {
   mensalidades.slice(0, 5).forEach((item) => {
     const competencia = item.competencia ? `Mensalidade ${item.competencia}` : "Mensalidade";
     const detalhe = item.vencimento ? `Vencimento ${dataBR(item.vencimento)}` : "";
-    lista.appendChild(criarLinha(competencia, `${item.status || "—"} · ${moedaBR(item.valor)}`, detalhe));
+    const valor = saldoMensalidade(item) || item.valor;
+    lista.appendChild(criarLinha(competencia, `${item.status || "—"} · ${moedaBR(valor)}`, detalhe));
   });
+}
+
+async function pagarMensalidadeAluno() {
+  const btn = $("pagarMensalidadeAluno");
+  if (!mensalidadePagamentoAtual?.id || !btn) return;
+
+  setMessage("homeMessage");
+  const janela = window.open("", "_blank", "noopener");
+  buttonBusy(btn, true, "Gerando...");
+  try {
+    const resposta = await request("/pagamentos", {
+      method: "POST",
+      headers: { "X-Fusion-Device-Token": deviceToken() },
+      body: JSON.stringify({
+        mensalidadeId: mensalidadePagamentoAtual.id,
+        forma: "UNDEFINED"
+      })
+    });
+
+    const url = resposta.checkout?.url || resposta.invoiceUrl || "";
+    if (!url) throw new Error("A cobrança foi criada, mas o link de pagamento não foi retornado.");
+    if (janela) janela.location.href = url;
+    else location.href = url;
+    setMessage("homeMessage", "Pagamento aberto. Assim que o Asaas confirmar, a baixa será automática.", "success");
+  } catch (error) {
+    if (janela) janela.close();
+    setMessage("homeMessage", error.message || "Não foi possível iniciar o pagamento.");
+  } finally {
+    buttonBusy(btn, false);
+  }
 }
 
 function renderAvisos(avisos = []) {
@@ -854,6 +920,7 @@ $("entrar").addEventListener("click", entrar);
 $("sair").addEventListener("click", sair);
 $("trocarAcademiaLogin").addEventListener("click", trocarAcademia);
 $("trocarAcademiaHome").addEventListener("click", trocarAcademia);
+$("pagarMensalidadeAluno")?.addEventListener("click", pagarMensalidadeAluno);
 
 $("avaliacaoCard").addEventListener("click", abrirAvaliacao);
 $("avaliacaoCard").addEventListener("keydown", (event) => {
