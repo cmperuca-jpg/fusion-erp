@@ -12,6 +12,153 @@ import {
 
 const COLECAO = "fusion_billing";
 const STATUS_VALIDOS = new Set(["trial", "ativa", "inadimplente", "suspensa", "cancelada"]);
+const PLANO_PADRAO = "free";
+
+function planoValorEnv(nome, fallback = 0) {
+  return numero(process.env[nome], fallback);
+}
+
+function codigoPlano(valor = "") {
+  return String(valor || "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function catalogoPlanosFusion() {
+  const valorMensal = planoValorEnv("FUSION_PLANO_MENSAL_VALOR", 0);
+  const valorAnual = planoValorEnv("FUSION_PLANO_ANUAL_VALOR", valorMensal > 0 ? valorMensal * 12 : 0);
+  const valorMensalAnual = planoValorEnv(
+    "FUSION_PLANO_ANUAL_VALOR_MENSAL",
+    valorAnual > 0 ? valorAnual / 12 : 0
+  );
+
+  return [
+    {
+      codigo: "free",
+      nome: "Free",
+      descricao: "Entrada controlada para validacao inicial da academia.",
+      ciclo: "free",
+      periodoMeses: 0,
+      valorMensal: 0,
+      valorCiclo: 0,
+      trialDias: 0,
+      fidelidade: false,
+      statusInicial: "ativa",
+      destaque: "Sem cobranca",
+      recursos: [
+        "Cadastro inicial da academia",
+        "Acesso administrativo essencial",
+        "Base pronta para evoluir para plano pago"
+      ],
+      limites: {
+        alunos: 30,
+        usuarios: 2
+      }
+    },
+    {
+      codigo: "mensal-sem-fidelidade",
+      nome: "Mensal sem fidelidade",
+      descricao: "Assinatura mensal do Fusion, sem contrato minimo.",
+      ciclo: "mensal",
+      periodoMeses: 1,
+      valorMensal,
+      valorCiclo: valorMensal,
+      trialDias: 0,
+      fidelidade: false,
+      statusInicial: "ativa",
+      destaque: valorMensal > 0 ? "Cobranca mensal" : "Valor a definir",
+      recursos: [
+        "Uso completo do Fusion ERP",
+        "Mensalidade recorrente",
+        "Cancelamento sem fidelidade"
+      ],
+      limites: {
+        alunos: null,
+        usuarios: null
+      }
+    },
+    {
+      codigo: "anual",
+      nome: "Anual",
+      descricao: "Assinatura anual do Fusion para academias em operacao continua.",
+      ciclo: "anual",
+      periodoMeses: 12,
+      valorMensal: valorMensalAnual,
+      valorCiclo: valorAnual,
+      trialDias: 0,
+      fidelidade: true,
+      statusInicial: "ativa",
+      destaque: valorAnual > 0 ? "Cobranca anual" : "Valor a definir",
+      recursos: [
+        "Uso completo do Fusion ERP",
+        "Contrato anual",
+        "Previsibilidade para expansao da academia"
+      ],
+      limites: {
+        alunos: null,
+        usuarios: null
+      }
+    }
+  ];
+}
+
+function clonarPlano(plano = {}) {
+  return {
+    ...plano,
+    recursos: Array.isArray(plano.recursos) ? [...plano.recursos] : [],
+    limites: plano.limites && typeof plano.limites === "object" ? { ...plano.limites } : {}
+  };
+}
+
+function aliasPlano(codigo = "") {
+  const chave = codigoPlano(codigo);
+  if (!chave) return PLANO_PADRAO;
+  if (["gratis", "gratuito", "trial", "piloto", "fusion-piloto"].includes(chave)) return "free";
+  if (["mensal", "mensal-sem-fidelizacao", "mensal-sem-fidelidade", "fusion-pro"].includes(chave)) {
+    return "mensal-sem-fidelidade";
+  }
+  if (["ano", "anual", "annual"].includes(chave)) return "anual";
+  return chave;
+}
+
+function statusInicialPlano(plano = {}, trialAte = "", trialDias = 0) {
+  if (trialAte || trialDias > 0) return "trial";
+  return texto(plano.statusInicial || "ativa", 40).toLowerCase();
+}
+
+export function listarPlanosFusion() {
+  return catalogoPlanosFusion().map(clonarPlano);
+}
+
+export function resolverPlanoFusion(codigo = "", opcoes = {}) {
+  const normalizado = aliasPlano(codigo);
+  const plano = catalogoPlanosFusion().find(item => item.codigo === normalizado);
+  if (plano) return clonarPlano(plano);
+
+  if (opcoes.permitirCustom) {
+    return {
+      codigo: codigoPlano(codigo) || PLANO_PADRAO,
+      nome: texto(codigo || "Plano customizado", 160),
+      descricao: "",
+      ciclo: "mensal",
+      periodoMeses: 1,
+      valorMensal: 0,
+      valorCiclo: 0,
+      trialDias: 0,
+      fidelidade: false,
+      statusInicial: "ativa",
+      destaque: "Plano customizado",
+      recursos: [],
+      limites: {}
+    };
+  }
+
+  throw Object.assign(new Error("Plano Fusion invalido."), { status: 400 });
+}
 
 function texto(valor = "", limite = 500) {
   return String(valor ?? "").trim().slice(0, limite);
@@ -87,29 +234,64 @@ function evento(tipo, detalhes = {}, usuario = {}) {
 
 function assinaturaBase(payload = {}, existente = null) {
   const tenantId = tenantAtual();
-  const valorMensal = numero(payload.valorMensal ?? payload.valor ?? existente?.valorMensal ?? 0, 0);
+  const plano = resolverPlanoFusion(
+    payload.planoCodigo || payload.plano || existente?.planoCodigo || PLANO_PADRAO,
+    { permitirCustom: true }
+  );
   const contratadoEm = dataISO(payload.contratadoEm || payload.inicioEm) || existente?.contratadoEm || hojeISO();
-  const trialDias = Math.max(0, Math.min(90, Number(payload.trialDias ?? existente?.trialDias ?? 14)));
-  const trialAte = dataISO(payload.trialAte) || (trialDias ? adicionarDias(contratadoEm, trialDias) : "");
-  const status = texto(payload.status || existente?.status || (trialDias ? "trial" : "ativa"), 40).toLowerCase();
+  const trialAteInformado = dataISO(payload.trialAte);
+  const trialDias = Math.max(0, Math.min(90, Number(
+    payload.trialDias ?? existente?.trialDias ?? plano.trialDias ?? (trialAteInformado ? 14 : 0)
+  )));
+  const trialAte = trialAteInformado || (trialDias ? adicionarDias(contratadoEm, trialDias) : "");
+  const periodoMeses = Math.max(0, Math.min(36, Number(
+    payload.periodoMeses ?? payload.meses ?? existente?.periodoMeses ?? plano.periodoMeses ?? 1
+  )));
+  const valorMensal = numero(payload.valorMensal ?? payload.valor ?? existente?.valorMensal ?? plano.valorMensal ?? 0, 0);
+  const valorCicloPadrao = periodoMeses > 1 ? valorMensal * periodoMeses : valorMensal;
+  const valorCiclo = numero(
+    payload.valorCiclo ?? payload.valorTotal ?? existente?.valorCiclo ?? plano.valorCiclo ?? valorCicloPadrao,
+    valorCicloPadrao
+  );
+  const status = texto(
+    payload.status || existente?.status || statusInicialPlano(plano, trialAte, trialDias),
+    40
+  ).toLowerCase();
 
   if (!STATUS_VALIDOS.has(status)) {
     throw Object.assign(new Error("Status de assinatura invalido."), { status: 400 });
   }
 
+  const proximaCobrancaPadrao = trialAte || (periodoMeses > 0 ? adicionarMeses(contratadoEm, periodoMeses) : "");
+
   return {
     id: existente?.id || `bill_sub_${crypto.randomUUID()}`,
     tenantId,
-    planoCodigo: texto(payload.planoCodigo || payload.plano || existente?.planoCodigo || "fusion-piloto", 80),
-    planoNome: texto(payload.planoNome || existente?.planoNome || "Fusion Piloto", 160),
-    ciclo: texto(payload.ciclo || existente?.ciclo || "mensal", 40),
+    planoCodigo: texto(plano.codigo || payload.planoCodigo || payload.plano || existente?.planoCodigo || PLANO_PADRAO, 80),
+    planoNome: texto(payload.planoNome || existente?.planoNome || plano.nome || "Plano Fusion", 160),
+    planoDescricao: texto(payload.planoDescricao || existente?.planoDescricao || plano.descricao || "", 300),
+    ciclo: texto(payload.ciclo || existente?.ciclo || plano.ciclo || "mensal", 40),
+    periodoMeses,
+    fidelidade: payload.fidelidade ?? existente?.fidelidade ?? Boolean(plano.fidelidade),
     moeda: texto(payload.moeda || existente?.moeda || "BRL", 12),
     valorMensal,
+    valorCiclo,
     status,
     trialDias,
     trialAte,
+    destaque: texto(payload.destaque || existente?.destaque || plano.destaque || "", 120),
+    recursos: Array.isArray(payload.recursos)
+      ? payload.recursos.map(item => texto(item, 120)).filter(Boolean)
+      : Array.isArray(existente?.recursos)
+        ? existente.recursos
+        : plano.recursos,
+    limites: payload.limites && typeof payload.limites === "object"
+      ? { ...payload.limites }
+      : existente?.limites && typeof existente.limites === "object"
+        ? { ...existente.limites }
+        : plano.limites,
     contratadoEm,
-    proximaCobrancaEm: dataISO(payload.proximaCobrancaEm) || existente?.proximaCobrancaEm || trialAte || adicionarMeses(contratadoEm, 1),
+    proximaCobrancaEm: dataISO(payload.proximaCobrancaEm) || existente?.proximaCobrancaEm || proximaCobrancaPadrao,
     pagoAte: dataISO(payload.pagoAte) || existente?.pagoAte || "",
     inadimplenteDesde: existente?.inadimplenteDesde || "",
     suspensoEm: existente?.suspensoEm || "",
@@ -171,7 +353,12 @@ export async function formalizarContratacaoFusion(payload = {}, usuario = {}) {
     estado.eventos.unshift(evento(novoContrato ? "contratacao_formalizada" : "contratacao_atualizada", {
       status: estado.assinatura.status,
       planoCodigo: estado.assinatura.planoCodigo,
+      planoNome: estado.assinatura.planoNome,
+      ciclo: estado.assinatura.ciclo,
+      periodoMeses: estado.assinatura.periodoMeses,
+      fidelidade: estado.assinatura.fidelidade,
       valorMensal: estado.assinatura.valorMensal,
+      valorCiclo: estado.assinatura.valorCiclo,
       proximaCobrancaEm: estado.assinatura.proximaCobrancaEm
     }, usuario));
 
@@ -189,13 +376,13 @@ export async function registrarPagamentoFusion(payload = {}, usuario = {}) {
     const estado = await carregarEstado();
     const assinatura = exigirAssinatura(estado);
     const recebidoEm = dataISO(payload.recebidoEm || payload.data) || hojeISO();
-    const meses = Math.max(1, Math.min(36, Number(payload.periodoMeses || payload.meses || 1)));
+    const meses = Math.max(1, Math.min(36, Number(payload.periodoMeses || payload.meses || assinatura.periodoMeses || 1)));
     const baseCiclo = assinatura.pagoAte && assinatura.pagoAte > recebidoEm ? assinatura.pagoAte : recebidoEm;
     const coberturaAte = dataISO(payload.coberturaAte || payload.pagoAte) || adicionarMeses(baseCiclo, meses);
     const pagamento = {
       id: `bill_pay_${crypto.randomUUID()}`,
       tenantId: tenantAtual(),
-      valor: numero(payload.valor ?? assinatura.valorMensal, 0),
+      valor: numero(payload.valor ?? assinatura.valorCiclo ?? assinatura.valorMensal, 0),
       moeda: texto(payload.moeda || assinatura.moeda || "BRL", 12),
       forma: texto(payload.forma || payload.formaPagamento || "manual", 80),
       referencia: texto(payload.referencia || payload.comprovante || "", 160),
@@ -244,7 +431,7 @@ export async function renovarAssinaturaFusion(payload = {}, usuario = {}) {
     const estado = await carregarEstado();
     const assinatura = exigirAssinatura(estado);
     const inicio = dataISO(payload.inicioEm) || assinatura.pagoAte || hojeISO();
-    const meses = Math.max(1, Math.min(36, Number(payload.periodoMeses || payload.meses || 1)));
+    const meses = Math.max(1, Math.min(36, Number(payload.periodoMeses || payload.meses || assinatura.periodoMeses || 1)));
     const renovadoAte = dataISO(payload.renovadoAte || payload.pagoAte) || adicionarMeses(inicio, meses);
     const status = texto(payload.status || "ativa", 40).toLowerCase();
     if (!STATUS_VALIDOS.has(status)) {

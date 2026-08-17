@@ -17,6 +17,7 @@ const PUBLIC_RULES = [
   ["POST", "/api/auth/recuperacao/confirmar"],
   ["POST", "/api/auth/recuperacao/redefinir-senha"],
   ["GET", "/api/saas/publico", "prefix"],
+  ["GET", "/api/saas/planos"],
   ["POST", "/api/saas/empresas"],
   ["POST", "/api/professores/login"],
   ["POST", "/api/treinos/aluno-login"],

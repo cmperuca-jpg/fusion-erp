@@ -4,6 +4,16 @@ import {
   avaliarAcessoBilling,
   calcularTransicoesBilling
 } from "../modules/saas/billing-policy.mjs";
+import {
+  listarPlanosFusion,
+  resolverPlanoFusion
+} from "../modules/saas/billing.service.mjs";
+
+const planosFusion = listarPlanosFusion();
+assert.deepEqual(planosFusion.map(plano => plano.codigo), ["free", "mensal-sem-fidelidade", "anual"]);
+assert.equal(resolverPlanoFusion("mensal").codigo, "mensal-sem-fidelidade");
+assert.equal(resolverPlanoFusion("fusion-pro").codigo, "mensal-sem-fidelidade");
+assert.equal(resolverPlanoFusion("trial").codigo, "free");
 
 assert.equal(adicionarMesesBilling("2026-01-31", 1), "2026-02-28");
 assert.equal(adicionarMesesBilling("2028-01-31", 1), "2028-02-29");
@@ -51,5 +61,6 @@ console.log(JSON.stringify({
   suspenderEm: "2026-10-04",
   idempotenciaPolitica: true,
   acessoSuspensaBloqueado: true,
-  dia31Clamped: true
+  dia31Clamped: true,
+  planosFusion: planosFusion.map(plano => plano.codigo)
 }, null, 2));

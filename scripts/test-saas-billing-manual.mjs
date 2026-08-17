@@ -111,11 +111,23 @@ try {
   let resultado = await getJson('/api/saas/billing/fusion');
   assert.equal(resultado.resposta.status, 401);
 
+  resultado = await getJson('/api/saas/planos');
+  assert.equal(resultado.resposta.status, 200, JSON.stringify(resultado.json));
+  assert.deepEqual(resultado.json.planos.map(plano => plano.codigo), [
+    'free',
+    'mensal-sem-fidelidade',
+    'anual'
+  ]);
+
   const recepcaoHeaders = { authorization: `Bearer ${token('usr_recepcao_billing')}` };
   resultado = await getJson('/api/saas/billing/fusion', recepcaoHeaders);
   assert.equal(resultado.resposta.status, 403, JSON.stringify(resultado.json));
 
   const adminHeaders = { authorization: `Bearer ${token('usr_admin_billing')}` };
+  resultado = await getJson('/api/saas/billing/fusion/planos', adminHeaders);
+  assert.equal(resultado.resposta.status, 200, JSON.stringify(resultado.json));
+  assert.equal(resultado.json.planos.length, 3);
+
   resultado = await postJson('/api/saas/billing/fusion/contratacao', adminHeaders, {
     planoCodigo: 'fusion-pro',
     planoNome: 'Fusion Pro',

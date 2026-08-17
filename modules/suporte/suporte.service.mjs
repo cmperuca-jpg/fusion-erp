@@ -1,11 +1,21 @@
 import crypto from "node:crypto";
 import { obterSupabaseAdmin } from "../../config/supabase.mjs";
 import { gerarTokenSuporte } from "../auth/auth.service.mjs";
-import { normalizarTenantId } from "../core/persistence/tenant-context.mjs";
+import { executarComTenant, normalizarTenantId } from "../core/persistence/tenant-context.mjs";
+import {
+  formalizarContratacaoFusion,
+  listarPlanosFusion,
+  obterBillingFusion,
+  reativarAssinaturaFusion,
+  resolverPlanoFusion,
+  suspenderAssinaturaFusion
+} from "../saas/billing.service.mjs";
 
 function texto(v = "") { return String(v ?? "").trim(); }
 function email(v = "") { return texto(v).toLowerCase(); }
 function erro(message, status = 400) { return Object.assign(new Error(message), { status }); }
+function agoraISO() { return new Date().toISOString(); }
+function hojeISO() { return new Date().toISOString().slice(0, 10); }
 
 function minutosSessao() {
   const bruto = Number(process.env.FUSION_SUPPORT_SESSION_MINUTES || 30);
@@ -38,10 +48,226 @@ export async function listarClientesSuporte(usuario = {}) {
   const supabase = obterSupabaseAdmin({ obrigatorio: true });
   const { data, error } = await supabase
     .from("fusion_tenants")
-    .select("tenant_id,slug,name,status,plan_code,trial_ends_at,created_at")
+    .select("tenant_id,slug,name,status,plan_code,trial_ends_at,created_at,updated_at")
     .order("name", { ascending: true });
   if (error) throw erro(`Falha ao listar academias: ${error.message}`, 500);
-  return Array.isArray(data) ? data : [];
+
+  const clientes = [];
+  for (const tenant of Array.isArray(data) ? data : []) {
+    const billing = await obterResumoBillingTenant(tenant.tenant_id);
+    clientes.push({
+      ...tenant,
+      billing: billing.assinatura,
+      billingPolitica: billing.politica,
+      billingErro: billing.erro
+    });
+  }
+  return clientes;
+}
+
+function tenantStatusPorAssinatura(assinatura = {}) {
+  const status = texto(assinatura.status).toLowerCase();
+  if (status === "trial") return "trial";
+  if (status === "suspensa") return "suspended";
+  if (status === "cancelada") return "cancelled";
+  return "active";
+}
+
+function usuarioAuditoria(usuario = {}, operador = {}) {
+  return {
+    id: texto(usuario.id || usuario.sub || operador.email_normalized, 120),
+    nome: texto(operador.name || usuario.nome || usuario.email || operador.email_normalized, 160),
+    email: texto(operador.email_normalized || usuario.email, 160),
+    perfil: texto(`suporte:${operador.role || usuario.perfil || "operador"}`, 80)
+  };
+}
+
+function planoSeguro(codigo = "") {
+  try {
+    return resolverPlanoFusion(codigo || "free");
+  } catch {
+    return resolverPlanoFusion("free");
+  }
+}
+
+function resumoAssinatura(assinatura = null) {
+  if (!assinatura?.id) return null;
+  return {
+    id: assinatura.id,
+    tenantId: assinatura.tenantId,
+    planoCodigo: assinatura.planoCodigo,
+    planoNome: assinatura.planoNome,
+    ciclo: assinatura.ciclo,
+    periodoMeses: assinatura.periodoMeses,
+    fidelidade: Boolean(assinatura.fidelidade),
+    valorMensal: assinatura.valorMensal,
+    valorCiclo: assinatura.valorCiclo,
+    moeda: assinatura.moeda,
+    status: assinatura.status,
+    trialAte: assinatura.trialAte,
+    proximaCobrancaEm: assinatura.proximaCobrancaEm,
+    pagoAte: assinatura.pagoAte,
+    inadimplenteDesde: assinatura.inadimplenteDesde,
+    suspensoEm: assinatura.suspensoEm,
+    motivoStatus: assinatura.motivoStatus,
+    atualizadoEm: assinatura.atualizadoEm
+  };
+}
+
+async function obterResumoBillingTenant(tenantId = "") {
+  const tenant = normalizarTenantId(tenantId);
+  if (!tenant) return { assinatura: null, politica: null, erro: "Tenant invalido." };
+
+  try {
+    const billing = await executarComTenant(tenant, () => obterBillingFusion());
+    return {
+      assinatura: resumoAssinatura(billing.assinatura),
+      politica: billing.politica || null,
+      erro: ""
+    };
+  } catch (error) {
+    return {
+      assinatura: null,
+      politica: null,
+      erro: texto(error.message || "Falha ao consultar billing.", 300)
+    };
+  }
+}
+
+async function localizarTenantManutencao(supabase, tenantId = "") {
+  const targetTenantId = normalizarTenantId(tenantId);
+  if (!targetTenantId) throw erro("Selecione a academia.");
+
+  const { data, error } = await supabase
+    .from("fusion_tenants")
+    .select("tenant_id,slug,name,status,plan_code,trial_ends_at,created_at,updated_at")
+    .eq("tenant_id", targetTenantId)
+    .maybeSingle();
+  if (error) throw erro(`Falha ao localizar academia: ${error.message}`, 500);
+  if (!data) throw erro("Academia não encontrada.", 404);
+  return data;
+}
+
+async function atualizarTenantPorAssinatura(supabase, tenantId = "", assinatura = {}, opcoes = {}) {
+  const tenant = normalizarTenantId(tenantId);
+  const status = opcoes.status || tenantStatusPorAssinatura(assinatura);
+  const { error } = await supabase
+    .from("fusion_tenants")
+    .update({
+      status,
+      plan_code: assinatura.planoCodigo || opcoes.planCode || "free",
+      trial_ends_at: assinatura.trialAte || null,
+      updated_at: agoraISO()
+    })
+    .eq("tenant_id", tenant);
+  if (error) throw erro(`Falha ao atualizar status da academia: ${error.message}`, 500);
+}
+
+async function garantirAssinaturaTenant(tenant = {}, usuario = {}) {
+  const atual = await obterBillingFusion();
+  if (atual.assinatura?.id) return atual;
+
+  const plano = planoSeguro(tenant.plan_code || "free");
+  return formalizarContratacaoFusion({
+    planoCodigo: plano.codigo,
+    contratadoEm: hojeISO(),
+    trialDias: 0,
+    status: "ativa",
+    periodoMeses: plano.periodoMeses,
+    valorMensal: plano.valorMensal,
+    valorCiclo: plano.valorCiclo
+  }, usuario);
+}
+
+export async function listarPlanosManutencao(usuario = {}) {
+  await exigirOperadorSuporte(usuario);
+  return listarPlanosFusion();
+}
+
+export async function aplicarPlanoManutencao(usuario = {}, payload = {}) {
+  const operador = await exigirOperadorSuporte(usuario);
+  const plano = resolverPlanoFusion(payload.planoCodigo || payload.plano);
+  const supabase = obterSupabaseAdmin({ obrigatorio: true });
+  const tenant = await localizarTenantManutencao(supabase, payload.tenantId || payload.tenant);
+  const usuarioOp = usuarioAuditoria(usuario, operador);
+
+  const resultado = await executarComTenant(tenant.tenant_id, () => formalizarContratacaoFusion({
+    planoCodigo: plano.codigo,
+    contratadoEm: payload.contratadoEm || hojeISO(),
+    trialDias: payload.trialDias ?? plano.trialDias,
+    status: payload.status || plano.statusInicial || "ativa",
+    periodoMeses: payload.periodoMeses ?? plano.periodoMeses,
+    valorMensal: payload.valorMensal ?? plano.valorMensal,
+    valorCiclo: payload.valorCiclo ?? plano.valorCiclo,
+    motivo: payload.motivo || "Plano alterado pela manutenção Fusion."
+  }, usuarioOp));
+
+  await atualizarTenantPorAssinatura(supabase, tenant.tenant_id, resultado.assinatura);
+
+  return {
+    ok: true,
+    acao: "plano_aplicado",
+    tenantId: tenant.tenant_id,
+    academia: { nome: tenant.name, slug: tenant.slug },
+    assinatura: resumoAssinatura(resultado.assinatura),
+    politica: resultado.politica
+  };
+}
+
+export async function bloquearAcademiaManutencao(usuario = {}, payload = {}) {
+  const operador = await exigirOperadorSuporte(usuario);
+  const supabase = obterSupabaseAdmin({ obrigatorio: true });
+  const tenant = await localizarTenantManutencao(supabase, payload.tenantId || payload.tenant);
+  const motivo = texto(payload.motivo || "Bloqueio manual pela manutenção Fusion.", 300);
+  const usuarioOp = usuarioAuditoria(usuario, operador);
+
+  const resultado = await executarComTenant(tenant.tenant_id, async () => {
+    await garantirAssinaturaTenant(tenant, usuarioOp);
+    return suspenderAssinaturaFusion({
+      data: payload.data || hojeISO(),
+      motivo,
+      proximaCobrancaEm: payload.proximaCobrancaEm
+    }, usuarioOp);
+  });
+
+  await atualizarTenantPorAssinatura(supabase, tenant.tenant_id, resultado.assinatura, { status: "suspended" });
+
+  return {
+    ok: true,
+    acao: "academia_bloqueada",
+    tenantId: tenant.tenant_id,
+    academia: { nome: tenant.name, slug: tenant.slug },
+    assinatura: resumoAssinatura(resultado.assinatura),
+    politica: resultado.politica
+  };
+}
+
+export async function desbloquearAcademiaManutencao(usuario = {}, payload = {}) {
+  const operador = await exigirOperadorSuporte(usuario);
+  const supabase = obterSupabaseAdmin({ obrigatorio: true });
+  const tenant = await localizarTenantManutencao(supabase, payload.tenantId || payload.tenant);
+  const motivo = texto(payload.motivo || "Desbloqueio manual pela manutenção Fusion.", 300);
+  const usuarioOp = usuarioAuditoria(usuario, operador);
+
+  const resultado = await executarComTenant(tenant.tenant_id, async () => {
+    await garantirAssinaturaTenant(tenant, usuarioOp);
+    return reativarAssinaturaFusion({
+      data: payload.data || hojeISO(),
+      motivo,
+      proximaCobrancaEm: payload.proximaCobrancaEm
+    }, usuarioOp);
+  });
+
+  await atualizarTenantPorAssinatura(supabase, tenant.tenant_id, resultado.assinatura, { status: "active" });
+
+  return {
+    ok: true,
+    acao: "academia_desbloqueada",
+    tenantId: tenant.tenant_id,
+    academia: { nome: tenant.name, slug: tenant.slug },
+    assinatura: resumoAssinatura(resultado.assinatura),
+    politica: resultado.politica
+  };
 }
 
 export async function iniciarSessaoSuporte(usuario = {}, payload = {}, contexto = {}) {

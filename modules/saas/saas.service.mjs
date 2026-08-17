@@ -7,6 +7,10 @@ import {
   enviarCodigoAtivacaoAcademia,
   enviarAcademiaAtivada
 } from "./signup-mail.service.mjs";
+import {
+  formalizarContratacaoFusion,
+  resolverPlanoFusion
+} from "./billing.service.mjs";
 
 const BCRYPT_ROUNDS = Math.min(Math.max(Number(process.env.FUSION_BCRYPT_ROUNDS || 12), 10), 14);
 const OTP_TTL_MIN = Math.min(Math.max(Number(process.env.FUSION_SIGNUP_OTP_MINUTES || 10), 5), 30);
@@ -70,6 +74,7 @@ function validar(payload={}) {
   const email = emailNormalizado(payload.email);
   const telefone = texto(payload.telefone || payload.whatsapp);
   const senha = String(payload.senha || "");
+  const plano = resolverPlanoFusion(payload.planoCodigo || payload.planoFusion || payload.planoSistema || "free");
 
   if (nomeEmpresa.length < 2) throw erro("Informe o nome da academia/empresa.");
   if (![11,14].includes(documento.length)) throw erro("Informe um CPF ou CNPJ válido.");
@@ -82,7 +87,7 @@ function validar(payload={}) {
   if (!email.includes("@") || email.length < 5) throw erro("Informe um e-mail válido.");
   if (senha.length < 10) throw erro("A senha deve ter pelo menos 10 caracteres.");
 
-  return { nomeEmpresa, razaoSocial, documento, responsavel, email, telefone, senha };
+  return { nomeEmpresa, razaoSocial, documento, responsavel, email, telefone, senha, planoCodigo:plano.codigo };
 }
 
 function mascararEmail(v = "") {
@@ -252,6 +257,7 @@ export async function iniciarCadastroEmpresa(payload={},contexto={}) {
     responsavel:d.responsavel,
     email:d.email,
     telefone:d.telefone,
+    planoCodigo:d.planoCodigo,
     senhaHash,
     userId
   };
@@ -370,6 +376,7 @@ async function criarEmpresaConfirmada(d,contexto={}) {
   const base = slugBase(d.nomeEmpresa) || `empresa-${Date.now()}`;
   const tenantId = await tenantDisponivel(base);
   const agora = new Date().toISOString();
+  const plano = resolverPlanoFusion(d.planoCodigo || "free");
 
   const adminPayload = {
     id:d.userId,
@@ -408,6 +415,33 @@ async function criarEmpresaConfirmada(d,contexto={}) {
   const codigoAcesso = texto(data?.access_code || data?.codigo_acesso).toUpperCase();
   if (!codigoAcesso) throw erro("O banco não retornou o código interno da academia.",500);
 
+  const billing = await executarComTenant(tenantId,async()=>formalizarContratacaoFusion({
+    planoCodigo:plano.codigo,
+    contratadoEm:agora.slice(0,10),
+    trialDias:plano.trialDias,
+    status:plano.statusInicial,
+    periodoMeses:plano.periodoMeses,
+    valorMensal:plano.valorMensal,
+    valorCiclo:plano.valorCiclo
+  },{
+    id:d.userId,
+    nome:d.responsavel,
+    perfil:"Administrador"
+  }));
+
+  const assinatura = billing.assinatura || {};
+  const tenantStatus = assinatura.status === "trial" ? "trial" : "active";
+  const { error:updateError } = await supabase
+    .from("fusion_tenants")
+    .update({
+      status:tenantStatus,
+      plan_code:assinatura.planoCodigo || plano.codigo,
+      trial_ends_at:assinatura.trialAte || null,
+      updated_at:new Date().toISOString()
+    })
+    .eq("tenant_id",tenantId);
+  if (updateError) throw erro(`Empresa criada, mas o plano não foi vinculado: ${updateError.message}`,500);
+
   const selecao = await selecionarAcademia({academia:tenantId,codigoAcesso},contexto);
 
   enviarAcademiaAtivada({
@@ -424,7 +458,21 @@ async function criarEmpresaConfirmada(d,contexto={}) {
     tenantId,
     slug:tenantId,
     usuarioId:d.userId,
-    empresa:{nome:d.nomeEmpresa,status:"trial",trialDias:14},
+    empresa:{
+      nome:d.nomeEmpresa,
+      status:tenantStatus,
+      trialDias:assinatura.trialDias || 0,
+      plano:{
+        codigo:assinatura.planoCodigo || plano.codigo,
+        nome:assinatura.planoNome || plano.nome,
+        ciclo:assinatura.ciclo || plano.ciclo,
+        fidelidade:Boolean(assinatura.fidelidade)
+      }
+    },
+    billing:{
+      assinatura,
+      politica:billing.politica
+    },
     selectionToken:selecao.selectionToken,
     selectionExpiraMinutos:selecao.expiraMinutos,
     deviceBindingToken:selecao.deviceBindingToken,

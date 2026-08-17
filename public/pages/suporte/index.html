@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#7c2d12">
-  <title>Central de Suporte | Fusion Sistema</title>
+  <meta name="theme-color" content="#124559">
+  <title>Manutenção Fusion | Fusion Sistema</title>
   <link rel="stylesheet" href="/assets/css/fusion-app.css">
   <link rel="stylesheet" href="/assets/css/fusion-menu-global.css">
-  <link rel="stylesheet" href="./style.css?v=20260807-1">
+  <link rel="stylesheet" href="./style.css?v=20260817-manutencao-1">
   <script src="/assets/js/fusion-auth.js"></script>
 </head>
 <body>
@@ -15,21 +15,23 @@
     <header class="support-head">
       <div>
         <span class="eyebrow">Uso interno Fusion</span>
-        <h1>Central de Suporte</h1>
-        <p>Acesse uma academia sem usar a senha do cliente. Todo acesso é temporário e auditado.</p>
+        <h1>Manutenção Fusion</h1>
+        <p>Controle planos do sistema, bloqueio, desbloqueio e acesso temporário de suporte às academias.</p>
       </div>
       <a href="/pages/dashboard/index.html" class="voltar">Voltar ao Fusion</a>
     </header>
 
     <section class="notice">
-      <strong>Regra de segurança</strong>
-      <span>Informe o motivo real do atendimento. A sessão expira automaticamente.</span>
+      <strong>Área administrativa</strong>
+      <span>Estas ações afetam o uso do Fusion pela academia. O acesso de suporte continua temporário e auditado.</span>
     </section>
+
+    <section id="planos" class="planos" aria-label="Planos Fusion"></section>
 
     <section class="filtros">
       <label>
-        Buscar academia
-        <input id="busca" type="search" placeholder="Nome ou código interno">
+        Buscar academia, plano ou status
+        <input id="busca" type="search" placeholder="Nome, código interno, plano ou status">
       </label>
     </section>
 
@@ -55,6 +57,6 @@
     </form>
   </dialog>
 
-  <script src="./index.js?v=20260807-1"></script>
+  <script src="./index.js?v=20260817-manutencao-1"></script>
 </body>
 </html>

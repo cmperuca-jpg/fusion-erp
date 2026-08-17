@@ -6,6 +6,7 @@ import {
 } from "./saas.service.mjs";
 import {
   formalizarContratacaoFusion,
+  listarPlanosFusion,
   marcarInadimplenciaFusion,
   obterBillingFusion,
   processarBillingFusion,
@@ -100,6 +101,13 @@ router.get("/publico/:slug", async (req, res) => {
   }
 });
 
+router.get("/planos", (req, res) => {
+  res.json({
+    ok:true,
+    planos:listarPlanosFusion()
+  });
+});
+
 router.post("/empresas", async (req,res) => {
   try {
     const acao = String(req.body?.acao || "iniciar").trim().toLowerCase();
@@ -134,6 +142,13 @@ router.get("/billing/fusion", exigirAdmin, async (req, res) => {
   } catch (error) {
     tratarErro(res, error, "Nao foi possivel consultar o billing Fusion.");
   }
+});
+
+router.get("/billing/fusion/planos", exigirAdmin, async (req, res) => {
+  res.json({
+    ok:true,
+    planos:listarPlanosFusion()
+  });
 });
 
 router.get("/billing/fusion/agendador", exigirAdmin, async (req, res) => {

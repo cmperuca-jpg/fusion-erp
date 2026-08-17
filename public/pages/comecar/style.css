@@ -231,6 +231,69 @@ input:focus{
   line-height:1.45;
   color:#4a676d;
 }
+.planos-sistema{
+  display:grid;
+  gap:10px;
+  margin:2px 0 0;
+  padding:0;
+  border:0;
+}
+.planos-sistema legend{
+  margin-bottom:8px;
+  color:#183f4c;
+  font-size:13px;
+  font-weight:900;
+}
+.planos-fusion{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:10px;
+}
+.plano-fusion-card{
+  position:relative;
+  display:grid;
+  gap:8px;
+  min-height:152px;
+  padding:13px;
+  border:1px solid #bfd1d8;
+  border-radius:12px;
+  background:#fff;
+  color:#183f4c;
+  cursor:pointer;
+}
+.plano-fusion-card input{
+  position:absolute;
+  inset:12px 12px auto auto;
+  width:18px;
+  min-height:18px;
+  accent-color:#096171;
+}
+.plano-fusion-card strong{
+  max-width:calc(100% - 28px);
+  color:#102f3a;
+  font-size:15px;
+}
+.plano-fusion-card .preco{
+  color:#075968;
+  font-size:18px;
+  font-weight:950;
+}
+.plano-fusion-card .preco small{
+  color:#5c737c;
+  font-size:11px;
+  font-weight:850;
+}
+.plano-fusion-card span{
+  color:#526b75;
+  font-size:12px;
+  line-height:1.35;
+  font-weight:650;
+}
+.plano-fusion-card:has(input:checked){
+  border-color:#087485;
+  background:#eef9fb;
+  box-shadow:0 0 0 3px rgba(34,184,210,.18);
+}
 .ativacao{padding:8px 0 2px}
 .email-destino{
   display:grid;
@@ -325,6 +388,7 @@ button:focus-visible,a:focus-visible,input:focus-visible{
   .apresentacao h1{font-size:36px}
   .painel{padding:18px}
   .form-acesso,.form-criacao{grid-template-columns:1fr}
+  .planos-fusion{grid-template-columns:1fr}
   .full{grid-column:auto}
 }
 @media(max-width:480px){

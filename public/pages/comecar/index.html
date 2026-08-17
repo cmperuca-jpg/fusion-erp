@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#0b6574">
   <title>Acesso às academias | Fusion Sistema</title>
-  <link rel="stylesheet" href="/pages/comecar/style.css?v=20260811-tenant-1">
+  <link rel="stylesheet" href="/pages/comecar/style.css?v=20260817-planos-fusion-1">
 </head>
 <body>
   <main class="acesso-shell">
@@ -85,6 +85,12 @@
             <input id="confirmarSenha" type="password" autocomplete="new-password" required minlength="10">
           </label>
 
+          <fieldset class="planos-sistema full">
+            <legend>Plano do Fusion Sistema</legend>
+            <div id="planosFusion" class="planos-fusion" aria-live="polite">Carregando planos...</div>
+            <input id="planoCodigo" type="hidden" value="free">
+          </fieldset>
+
           <button id="btnCriar" class="btn-primary full" type="submit">Validar dados e enviar código</button>
           <div id="mensagemCriacao" class="mensagem full" role="status" aria-live="polite"></div>
         </form>
@@ -131,7 +137,7 @@
     </section>
   </main>
 
-  <script src="/assets/js/fusion-auth.js?v=20260811-tenant-1"></script>
-  <script src="/pages/comecar/index.js?v=20260811-tenant-1"></script>
+  <script src="/assets/js/fusion-auth.js?v=20260817-planos-fusion-1"></script>
+  <script src="/pages/comecar/index.js?v=20260817-planos-fusion-1"></script>
 </body>
 </html>

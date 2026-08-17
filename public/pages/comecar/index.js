@@ -5,6 +5,7 @@
   const tabs = Array.from(document.querySelectorAll("[data-tab]"));
   const panels = Array.from(document.querySelectorAll("[data-panel]"));
   let cadastroPendente = null;
+  let planosFusion = [];
   const DEVICE_BINDING_KEY = "fusionTenantDeviceBinding";
 
   function status(el,texto="",tipo="") {
@@ -116,6 +117,73 @@
     }
   });
 
+  function esc(v = "") {
+    return String(v ?? "").replace(/[&<>"']/g,c=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;" }[c]));
+  }
+
+  function dinheiro(valor = 0) {
+    const n = Number(valor || 0);
+    if (!Number.isFinite(n) || n <= 0) return "Valor a definir";
+    return new Intl.NumberFormat("pt-BR",{
+      style:"currency",
+      currency:"BRL"
+    }).format(n);
+  }
+
+  function precoPlano(plano = {}) {
+    if (plano.codigo === "free") return "Sem cobrança";
+    if (plano.ciclo === "anual") return `${dinheiro(plano.valorCiclo)} <small>/ ano</small>`;
+    return `${dinheiro(plano.valorMensal)} <small>/ mês</small>`;
+  }
+
+  function renderPlanosFusion(lista = []) {
+    const area = $("planosFusion");
+    if (!area) return;
+    planosFusion = Array.isArray(lista) && lista.length ? lista : [{
+      codigo:"free",
+      nome:"Free",
+      descricao:"Entrada controlada para validação inicial.",
+      ciclo:"free",
+      valorMensal:0,
+      valorCiclo:0
+    }];
+
+    const selecionado = $("planoCodigo").value || "free";
+    area.innerHTML = planosFusion.map((plano,index)=>{
+      const codigo = String(plano.codigo || "").trim();
+      const checked = codigo === selecionado || (!selecionado && index === 0);
+      return `
+        <label class="plano-fusion-card">
+          <input type="radio" name="planoFusion" value="${esc(codigo)}" ${checked ? "checked" : ""}>
+          <strong>${esc(plano.nome || codigo)}</strong>
+          <span class="preco">${precoPlano(plano)}</span>
+          <span>${esc(plano.descricao || "")}</span>
+        </label>
+      `;
+    }).join("");
+
+    const atual = area.querySelector('input[name="planoFusion"]:checked');
+    $("planoCodigo").value = atual?.value || "free";
+  }
+
+  async function carregarPlanosFusion() {
+    try {
+      const resp = await fetch("/api/saas/planos",{cache:"no-store"});
+      const json = await resp.json().catch(()=>({}));
+      if (!resp.ok || !json.ok) throw new Error(json.mensagem || "Planos indisponíveis.");
+      renderPlanosFusion(json.planos);
+    } catch(error) {
+      console.warn("[Cadastro] Catálogo de planos indisponível:",error.message);
+      renderPlanosFusion([]);
+    }
+  }
+
+  $("planosFusion").addEventListener("change",event=>{
+    if (event.target?.name === "planoFusion") {
+      $("planoCodigo").value = event.target.value || "free";
+    }
+  });
+
   function payloadEmpresa() {
     return {
       nomeEmpresa:$("nomeEmpresa").value.trim(),
@@ -124,6 +192,7 @@
       responsavel:$("responsavel").value.trim(),
       email:$("email").value.trim(),
       telefone:$("telefone").value.trim(),
+      planoCodigo:$("planoCodigo").value || "free",
       senha:$("senha").value
     };
   }
@@ -184,6 +253,7 @@
         requestId:String(json.requestId || ""),
         academia:dados.nomeEmpresa,
         emailAdmin:dados.email,
+        planoCodigo:dados.planoCodigo,
         senhaAdmin:dados.senha
       };
 
@@ -375,4 +445,5 @@
 
   if (params.get("academia")) $("academiaAcesso").value = params.get("academia");
   if (params.get("codigo")) $("codigoAcesso").value = params.get("codigo").toUpperCase();
+  carregarPlanosFusion();
 })();
