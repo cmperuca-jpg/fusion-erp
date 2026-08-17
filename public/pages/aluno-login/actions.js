@@ -3,7 +3,7 @@
 
   const DEVICE_KEY = "fusion_aluno_device_token_v2";
   const API = "/api/treinos/aluno-app";
-  const MAX_RAW_FILE = 8 * 1024 * 1024;
+  const MAX_RAW_FILE = 12 * 1024 * 1024;
   const MAX_SIDE = 720;
 
   const $ = (id) => document.getElementById(id);
@@ -107,8 +107,8 @@
     area.setAttribute("aria-label", "Ações rápidas do aluno");
     area.innerHTML = `
       <button id="liberarCatracaApp" class="btn primary" type="button">Liberar catraca</button>
-      <button id="trocarFotoApp" class="btn secondary" type="button">Trocar foto</button>
-      <input id="fotoAlunoInputApp" type="file" accept="image/jpeg,image/png,image/webp" hidden>
+      <button id="trocarFotoApp" class="btn secondary" type="button">Tirar foto</button>
+      <input id="fotoAlunoInputApp" type="file" accept="image/*" capture="user" hidden>
       <small id="alunoAppActionsStatus" class="student-app-actions-status" aria-live="polite"></small>
     `;
     hero.insertAdjacentElement("afterend", area);
@@ -117,10 +117,11 @@
     if (foto) {
       foto.setAttribute("role", "button");
       foto.setAttribute("tabindex", "0");
-      foto.setAttribute("aria-label", "Trocar minha foto");
+      foto.setAttribute("aria-label", "Tirar ou trocar minha foto");
+      foto.title = "Tirar foto";
       const hint = document.createElement("span");
       hint.className = "student-photo-change-hint";
-      hint.textContent = "✎";
+      hint.textContent = "+";
       hint.setAttribute("aria-hidden", "true");
       foto.appendChild(hint);
     }
@@ -160,11 +161,11 @@
   }
 
   async function reduzirFoto(file) {
-    if (!file?.type?.match(/^image\/(jpeg|jpg|png|webp)$/i)) {
-      throw new Error("Escolha uma foto JPG, PNG ou WEBP.");
+    if (!file?.type?.match(/^image\//i)) {
+      throw new Error("Tire ou escolha uma foto válida.");
     }
     if (file.size > MAX_RAW_FILE) {
-      throw new Error("A foto original deve ter no máximo 8 MB.");
+      throw new Error("A foto original deve ter no máximo 12 MB.");
     }
 
     const img = await carregarImagem(file);

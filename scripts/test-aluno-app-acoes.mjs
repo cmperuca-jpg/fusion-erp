@@ -19,6 +19,9 @@ for (const marcador of [
   'id="liberarCatracaApp"',
   'id="trocarFotoApp"',
   'id="fotoAlunoInputApp"',
+  'accept="image/*"',
+  'capture="user"',
+  '>Tirar foto<',
   'request("/catraca"',
   'request("/foto"',
   'request("/catraca-contador"'
@@ -61,7 +64,7 @@ console.log(JSON.stringify({
   ok: true,
   app: "Fusion Aluno",
   liberarCatracaVisivel: true,
-  trocarFotoVisivel: true,
+  tirarFotoCelularVisivel: true,
   sessaoPropriaReutilizada: true,
   tenantResolvidoSemAproximacao: true,
   fluxoAccessEngineReutilizado: true,
