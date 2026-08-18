@@ -1,6 +1,6 @@
 /* Fusion ERP - emissão de código de ativação do Fusion Aluno */
 (() => {
-  if (!window.location.pathname.includes('/pages/alunos/')) return;
+  if (!window.location.pathname.includes('/pages/alunos/') && !/\/app\/alunos\/?$/.test(window.location.pathname)) return;
   if (window.__fusionAlunoAppAccessLoaded) return;
   window.__fusionAlunoAppAccessLoaded = true;
 
