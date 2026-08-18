@@ -7,10 +7,14 @@ const arquivos = {
   security: "modules/security/api-security.middleware.mjs",
   routes: "modules/pagamentos-online/pagamentos-online.routes.mjs",
   service: "modules/pagamentos-online/pagamentos-online.service.mjs",
+  config: "modules/pagamentos-online/pagamentos-online.config.mjs",
   asaas: "modules/pagamentos-online/asaas.client.mjs",
   pagbank: "modules/pagamentos-online/pagbank.client.mjs",
   treinosRoutes: "modules/treinos/treinos.routes.mjs",
   alunoActions: "modules/treinos/aluno-app-actions.service.mjs",
+  configuracoesHtml: "public/pages/configuracoes/index.html",
+  pagamentosConfigHtml: "public/pages/configuracoes/pagamentos-online.html",
+  pagamentosConfigJs: "public/pages/configuracoes/pagamentos-online.js",
   alunoHtml: "public/pages/aluno-login/index.html",
   alunoJs: "public/pages/aluno-login/index.js",
   alunoCss: "public/pages/aluno-login/style.css"
@@ -38,6 +42,9 @@ assert.match(conteudo.routes, /receberWebhookAsaas/);
 assert.match(conteudo.routes, /router\.post\("\/webhooks\/pagbank"/);
 assert.match(conteudo.routes, /receberWebhookPagbank/);
 assert.match(conteudo.routes, /rawBody: req\.rawBody/);
+assert.match(conteudo.routes, /router\.get\("\/configuracao"/);
+assert.match(conteudo.routes, /router\.put\("\/configuracao"/);
+assert.match(conteudo.routes, /salvarConfiguracaoPagamentos/);
 
 assert.match(conteudo.asaas, /"access_token": cfg\.apiKey/);
 assert.doesNotMatch(conteudo.asaas, /Authorization/i);
@@ -50,6 +57,22 @@ assert.match(conteudo.pagbank, /https:\/\/sandbox\.api\.pagseguro\.com/);
 assert.match(conteudo.pagbank, /https:\/\/api\.pagseguro\.com/);
 assert.match(conteudo.pagbank, /\/checkouts/);
 assert.match(conteudo.pagbank, /rel\)\.toUpperCase\(\) === "PAY"/);
+
+assert.match(conteudo.config, /pagamentos_online_config\.json/);
+assert.match(conteudo.config, /obterConfiguracaoPagamentosRuntime/);
+assert.match(conteudo.config, /obterConfiguracaoPagamentosPublica/);
+assert.match(conteudo.config, /salvarConfiguracaoPagamentos/);
+assert.match(conteudo.config, /tokenConfigurado/);
+assert.match(conteudo.config, /webhookTokenConfigurado/);
+assert.match(conteudo.config, /mascararSegredo/);
+assert.match(conteudo.config, /createCipheriv\("aes-256-gcm"/);
+assert.doesNotMatch(conteudo.pagamentosConfigJs, /tokenResumo\s*=|webhookTokenResumo\s*=/);
+assert.match(conteudo.configuracoesHtml, /pagamentos-online\.html/);
+assert.match(conteudo.pagamentosConfigHtml, /formPagamentosOnline/);
+assert.match(conteudo.pagamentosConfigHtml, /Token da API/);
+assert.match(conteudo.pagamentosConfigHtml, /autocomplete="new-password"/);
+assert.doesNotMatch(conteudo.pagamentosConfigHtml, /SEU_TOKEN/);
+assert.match(conteudo.pagamentosConfigJs, /\/api\/pagamentos-online\/configuracao/);
 
 for (const marcador of [
   "garantirLancamentoFinanceiroMensalidade",
@@ -64,6 +87,7 @@ for (const marcador of [
   "externalReference({ escopo",
   "pagamentoQuitadoAsaas",
   "FUSION_PAYMENTS_PROVIDER",
+  "obterConfiguracaoPagamentosRuntime",
   "criarCheckoutPagbank",
   "payment_notification_urls",
   "notification_urls",

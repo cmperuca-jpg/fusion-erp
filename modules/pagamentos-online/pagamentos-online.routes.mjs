@@ -1,5 +1,9 @@
 import express from "express";
 import {
+  obterConfiguracaoPagamentosPublica,
+  salvarConfiguracaoPagamentos
+} from "./pagamentos-online.config.mjs";
+import {
   consultarPagamentoOnline,
   iniciarPagamentoContratacaoFusion,
   receberWebhookAsaas,
@@ -11,7 +15,9 @@ const router = express.Router();
 function podeGerenciarPagamentos(usuario = {}) {
   const perfil = String(usuario.perfil || "").toLowerCase();
   const permissoes = Array.isArray(usuario.permissoes) ? usuario.permissoes : [];
-  return ["administrador", "admin"].includes(perfil) || permissoes.includes("*") || permissoes.includes("financeiro");
+  return ["administrador", "admin", "gerente", "responsavel_tecnico", "tecnico", "dono", "master"].includes(perfil) ||
+    permissoes.includes("*") ||
+    permissoes.some((permissao) => ["financeiro", "pagamentos_online", "configuracoes"].includes(String(permissao).toLowerCase()));
 }
 
 function exigirGestor(req, res, next) {
@@ -35,6 +41,22 @@ router.post("/fusion/contratacao", exigirGestor, async (req, res) => {
     res.status(201).json(await iniciarPagamentoContratacaoFusion(req.body || {}, req.usuario || {}));
   } catch (erro) {
     tratarErro(res, erro, "Não foi possível criar a cobrança da assinatura Fusion.");
+  }
+});
+
+router.get("/configuracao", exigirGestor, async (_req, res) => {
+  try {
+    res.json(await obterConfiguracaoPagamentosPublica());
+  } catch (erro) {
+    tratarErro(res, erro, "Não foi possível carregar a configuração de pagamentos online.");
+  }
+});
+
+router.put("/configuracao", exigirGestor, async (req, res) => {
+  try {
+    res.json(await salvarConfiguracaoPagamentos(req.body || {}, req.usuario || {}));
+  } catch (erro) {
+    tratarErro(res, erro, "Não foi possível salvar a configuração de pagamentos online.");
   }
 });
 

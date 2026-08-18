@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pagamentos online | Fusion Sistema</title>
+  <link rel="stylesheet" href="/assets/css/fusion-app.css">
+  <link rel="stylesheet" href="/assets/css/fusion-menu-global.css">
+  <link rel="stylesheet" href="/assets/css/fusion-mobile-final.css">
+  <link rel="stylesheet" href="/assets/css/fusion-premium-final.css">
+  <link rel="stylesheet" href="/pages/_shared/fusion-area-clara.css?v=20260729-contraste-global-2">
+  <link rel="stylesheet" href="/pages/configuracoes/style.css">
+  <script src="/assets/js/fusion-auth.js"></script>
+  <script>FusionAuth.proteger(["admin","administrador","gerente","financeiro","responsavel_tecnico","tecnico","dono","master"]);</script>
+</head>
+<body>
+  <div class="fusion-shell">
+    <main class="fusion-main">
+      <section class="fusion-content configuracoes-page pagamentos-online-page">
+        <div class="fusion-card configuracoes-hero pagamentos-hero">
+          <span class="configuracoes-eyebrow">Sistema</span>
+          <h2>Pagamentos online</h2>
+          <p>Configuração do gateway usado no app do aluno e nas contratações do Fusion.</p>
+          <div class="pagamentos-status" aria-live="polite">
+            <span id="statusProvider" class="status-pill aguardando">Carregando</span>
+            <span id="statusToken" class="status-pill aguardando">Token</span>
+            <span id="statusWebhook" class="status-pill aguardando">Webhook</span>
+          </div>
+        </div>
+
+        <form id="formPagamentosOnline" class="pagamentos-form">
+          <section class="fusion-card pagamentos-panel">
+            <div class="panel-head">
+              <h3>Gateway</h3>
+              <button type="submit" class="primary-action">Salvar</button>
+            </div>
+
+            <div class="form-grid">
+              <label>
+                Provedor
+                <select id="provider">
+                  <option value="pagbank">PagBank</option>
+                  <option value="asaas">Asaas</option>
+                </select>
+              </label>
+
+              <label>
+                Ambiente
+                <select id="ambiente">
+                  <option value="production">Produção</option>
+                  <option value="sandbox">Sandbox</option>
+                </select>
+              </label>
+
+              <label>
+                URL pública
+                <input id="publicUrl" type="url" autocomplete="off" placeholder="https://fusionsistema.com.br">
+              </label>
+
+              <label>
+                Expiração do checkout em horas
+                <input id="checkoutExpirationHours" type="number" min="1" max="720" step="1">
+              </label>
+            </div>
+          </section>
+
+          <section class="fusion-card pagamentos-panel">
+            <div class="panel-head">
+              <h3>PagBank</h3>
+              <span id="origemToken" class="config-origin"></span>
+            </div>
+
+            <div class="form-grid">
+              <label class="wide">
+                Token da API
+                <input id="token" type="password" autocomplete="new-password" placeholder="Manter token atual">
+              </label>
+
+              <label class="wide">
+                Token do webhook
+                <input id="webhookToken" type="password" autocomplete="new-password" placeholder="Manter token atual">
+              </label>
+
+              <label>
+                Parcelas no cartão
+                <input id="installmentsLimit" type="number" min="1" max="18" step="1">
+              </label>
+
+              <label>
+                Parcelas sem juros
+                <input id="interestFreeInstallments" type="number" min="1" max="18" step="1">
+              </label>
+            </div>
+
+            <fieldset class="payment-methods">
+              <legend>Métodos de pagamento</legend>
+              <label><input id="metodoPix" type="checkbox" value="PIX"> Pix</label>
+              <label><input id="metodoCartao" type="checkbox" value="CREDIT_CARD"> Cartão de crédito</label>
+              <label><input id="metodoDebito" type="checkbox" value="DEBIT_CARD"> Cartão de débito</label>
+              <label><input id="metodoBoleto" type="checkbox" value="BOLETO"> Boleto</label>
+            </fieldset>
+          </section>
+
+          <section class="fusion-card pagamentos-panel">
+            <div class="panel-head">
+              <h3>Webhook</h3>
+              <button id="copiarWebhook" type="button" class="secondary-action">Copiar</button>
+            </div>
+
+            <label>
+              URL de notificação
+              <input id="webhookUrl" type="url" autocomplete="off">
+            </label>
+
+            <label>
+              URL de retorno do aluno
+              <input id="alunoRedirectUrl" type="url" autocomplete="off" placeholder="Automática">
+            </label>
+          </section>
+
+          <p id="mensagemPagamentos" class="form-message" role="status"></p>
+        </form>
+      </section>
+    </main>
+  </div>
+
+  <script src="/assets/js/fusion-menu-global.js"></script>
+  <script src="/assets/js/fusion-layout.js"></script>
+  <script src="/pages/configuracoes/pagamentos-online.js"></script>
+</body>
+</html>

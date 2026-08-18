@@ -13,7 +13,16 @@ const dataDir = path.join(temporario, "data");
 await fs.mkdir(dataDir, { recursive: true });
 
 function hojeISO() {
-  return new Date().toISOString().slice(0, 10);
+  const partes = new Intl.DateTimeFormat("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).formatToParts(new Date()).reduce((acc, parte) => {
+    if (parte.type !== "literal") acc[parte.type] = parte.value;
+    return acc;
+  }, {});
+  return `${partes.year}-${partes.month}-${partes.day}`;
 }
 
 function deslocarDias(dataISO, dias) {

@@ -22,9 +22,9 @@ import {
 } from "./asaas.client.mjs";
 import {
   criarCheckoutPagbank,
-  linkPagamentoPagbank,
-  pagbankConfigurado
+  linkPagamentoPagbank
 } from "./pagbank.client.mjs";
+import { obterConfiguracaoPagamentosRuntime } from "./pagamentos-online.config.mjs";
 
 const COL_PAGAMENTOS = "pagamentos_online";
 const COL_CLIENTES = "pagamentos_online_clientes";
@@ -68,8 +68,8 @@ function nomeProvider(provider = "") {
   return provider === "pagbank" ? "PagBank" : "Asaas";
 }
 
-function providerConfigurado(provider = providerAtual()) {
-  return provider === "pagbank" ? pagbankConfigurado() : asaasConfigurado();
+function providerConfigurado(provider = providerAtual(), config = {}) {
+  return provider === "pagbank" ? Boolean(config?.pagbank?.token) : asaasConfigurado();
 }
 
 function erro(mensagem, status = 400, code = "") {
@@ -233,8 +233,9 @@ function valorDeCentavos(valor = 0) {
   return Number.isFinite(n) ? Number((n / 100).toFixed(2)) : 0;
 }
 
-function basePublicaFusion() {
+function basePublicaFusion(pagbankConfig = {}) {
   return texto(
+    pagbankConfig.publicUrl ||
     process.env.FUSION_PUBLIC_URL ||
     process.env.FUSION_APP_URL ||
     process.env.PUBLIC_URL ||
@@ -242,31 +243,31 @@ function basePublicaFusion() {
   ).replace(/\/+$/, "");
 }
 
-function urlWebhookPagbank() {
-  const custom = texto(process.env.FUSION_PAGBANK_WEBHOOK_URL);
-  return custom || `${basePublicaFusion()}/api/pagamentos-online/webhooks/pagbank`;
+function urlWebhookPagbank(pagbankConfig = {}) {
+  const custom = texto(pagbankConfig.webhookUrl || process.env.FUSION_PAGBANK_WEBHOOK_URL);
+  return custom || `${basePublicaFusion(pagbankConfig)}/api/pagamentos-online/webhooks/pagbank`;
 }
 
-function urlRetornoPagbank({ escopo = "", tenantId = "" } = {}) {
-  const customAluno = texto(process.env.FUSION_PAGBANK_ALUNO_REDIRECT_URL);
-  const customFusion = texto(process.env.FUSION_PAGBANK_FUSION_REDIRECT_URL);
-  const customGeral = texto(process.env.FUSION_PAGBANK_REDIRECT_URL);
+function urlRetornoPagbank({ escopo = "", tenantId = "" } = {}, pagbankConfig = {}) {
+  const customAluno = texto(pagbankConfig.alunoRedirectUrl || process.env.FUSION_PAGBANK_ALUNO_REDIRECT_URL);
+  const customFusion = texto(pagbankConfig.fusionRedirectUrl || process.env.FUSION_PAGBANK_FUSION_REDIRECT_URL);
+  const customGeral = texto(pagbankConfig.redirectUrl || process.env.FUSION_PAGBANK_REDIRECT_URL);
   if (escopo === "aluno_mensalidade" && customAluno) return customAluno;
   if (escopo === "fusion_assinatura" && customFusion) return customFusion;
   if (customGeral) return customGeral;
   const tenant = normalizarTenantId(tenantId) || "academia-piloto";
   const caminho = escopo === "aluno_mensalidade" ? `/${tenant}/apps/aluno` : `/${tenant}/app/dashboard`;
-  return `${basePublicaFusion()}${caminho}`;
+  return `${basePublicaFusion(pagbankConfig)}${caminho}`;
 }
 
-function expiracaoCheckoutPagbank() {
-  const horas = Number(process.env.FUSION_PAGBANK_CHECKOUT_EXPIRATION_HOURS || 72);
+function expiracaoCheckoutPagbank(pagbankConfig = {}) {
+  const horas = Number(pagbankConfig.checkoutExpirationHours || process.env.FUSION_PAGBANK_CHECKOUT_EXPIRATION_HOURS || 72);
   const ms = Number.isFinite(horas) && horas > 0 ? horas * 60 * 60 * 1000 : 72 * 60 * 60 * 1000;
   return new Date(Date.now() + ms).toISOString();
 }
 
-function metodosPagamentoPagbank(payload = {}) {
-  const fonte = texto(payload.pagbankPaymentMethods || payload.paymentMethods || process.env.FUSION_PAGBANK_PAYMENT_METHODS || "PIX,CREDIT_CARD");
+function metodosPagamentoPagbank(payload = {}, pagbankConfig = {}) {
+  const fonte = texto(payload.pagbankPaymentMethods || payload.paymentMethods || pagbankConfig.paymentMethods || process.env.FUSION_PAGBANK_PAYMENT_METHODS || "PIX,CREDIT_CARD");
   const permitidos = new Set(["PIX", "CREDIT_CARD", "DEBIT_CARD", "BOLETO"]);
   const tipos = fonte
     .split(/[,\s;]+/)
@@ -276,9 +277,9 @@ function metodosPagamentoPagbank(payload = {}) {
   return finais.map(type => ({ type }));
 }
 
-function configsPagamentoPagbank() {
-  const limiteParcelas = Number(process.env.FUSION_PAGBANK_INSTALLMENTS_LIMIT || 1);
-  const parcelasSemJuros = Number(process.env.FUSION_PAGBANK_INTEREST_FREE_INSTALLMENTS || 1);
+function configsPagamentoPagbank(pagbankConfig = {}) {
+  const limiteParcelas = Number(pagbankConfig.installmentsLimit || process.env.FUSION_PAGBANK_INSTALLMENTS_LIMIT || 1);
+  const parcelasSemJuros = Number(pagbankConfig.interestFreeInstallments || process.env.FUSION_PAGBANK_INTEREST_FREE_INSTALLMENTS || 1);
   const config_options = [];
   if (Number.isFinite(limiteParcelas) && limiteParcelas > 0) {
     config_options.push({ option: "INSTALLMENTS_LIMIT", value: String(Math.floor(limiteParcelas)) });
@@ -427,21 +428,21 @@ async function criarRegistroCobrancaAsaas({ escopo, target, valor, descricao, ve
   return registro;
 }
 
-async function criarRegistroCobrancaPagbank({ escopo, target, valor, descricao, vencimento, pagador: _pagador, payload = {} }) {
-  if (!pagbankConfigurado()) {
-    throw erro("PagBank ainda não configurado no servidor. Configure FUSION_PAGBANK_TOKEN antes de criar checkouts.", 503, "PAGBANK_NOT_CONFIGURED");
+async function criarRegistroCobrancaPagbank({ escopo, target, valor, descricao, vencimento, pagador: _pagador, payload = {} }, pagbankConfig = {}) {
+  if (!pagbankConfig?.token) {
+    throw erro("PagBank ainda não configurado. Acesse Sistema > Configurações > Pagamentos online e informe os tokens.", 503, "PAGBANK_NOT_CONFIGURED");
   }
 
   const tenantId = tenantAtual();
   const alvoId = target.mensalidadeId || target.assinaturaId || target.planoCodigo || target.tituloId || uid("alvo");
   const ref = externalReference({ escopo, tenantId, alvoId });
-  const webhookUrl = urlWebhookPagbank();
-  const paymentMethods = metodosPagamentoPagbank(payload);
-  const paymentMethodsConfigs = paymentMethods.some(item => item.type === "CREDIT_CARD") ? configsPagamentoPagbank() : [];
+  const webhookUrl = urlWebhookPagbank(pagbankConfig);
+  const paymentMethods = metodosPagamentoPagbank(payload, pagbankConfig);
+  const paymentMethodsConfigs = paymentMethods.some(item => item.type === "CREDIT_CARD") ? configsPagamentoPagbank(pagbankConfig) : [];
 
   const checkoutPayload = {
     reference_id: ref,
-    expiration_date: expiracaoCheckoutPagbank(),
+    expiration_date: expiracaoCheckoutPagbank(pagbankConfig),
     customer_modifiable: true,
     items: [
       {
@@ -452,13 +453,13 @@ async function criarRegistroCobrancaPagbank({ escopo, target, valor, descricao, 
       }
     ],
     payment_methods: paymentMethods,
-    redirect_url: urlRetornoPagbank({ escopo, tenantId }),
+    redirect_url: urlRetornoPagbank({ escopo, tenantId }, pagbankConfig),
     notification_urls: [webhookUrl],
     payment_notification_urls: [webhookUrl]
   };
   if (paymentMethodsConfigs.length) checkoutPayload.payment_methods_configs = paymentMethodsConfigs;
 
-  const checkout = await criarCheckoutPagbank(checkoutPayload);
+  const checkout = await criarCheckoutPagbank(checkoutPayload, pagbankConfig);
   const resumo = resumoCheckoutPagbank(checkout, valor);
 
   if (!resumo.invoiceUrl) {
@@ -494,12 +495,13 @@ async function criarRegistroCobrancaPagbank({ escopo, target, valor, descricao, 
   return registro;
 }
 
-async function criarRegistroCobranca(dados = {}) {
-  const provider = providerAtual();
-  if (!providerConfigurado(provider)) {
-    throw erro(`${nomeProvider(provider)} ainda não configurado no servidor. Configure as variáveis seguras antes de criar cobranças.`, 503, `${provider.toUpperCase()}_NOT_CONFIGURED`);
+async function criarRegistroCobranca(dados = {}, configPagamentos = null) {
+  const config = configPagamentos || await obterConfiguracaoPagamentosRuntime();
+  const provider = config.provider || providerAtual();
+  if (!providerConfigurado(provider, config)) {
+    throw erro(`${nomeProvider(provider)} ainda não configurado. Acesse Sistema > Configurações > Pagamentos online antes de criar cobranças.`, 503, `${provider.toUpperCase()}_NOT_CONFIGURED`);
   }
-  return provider === "pagbank" ? criarRegistroCobrancaPagbank(dados) : criarRegistroCobrancaAsaas(dados);
+  return provider === "pagbank" ? criarRegistroCobrancaPagbank(dados, config.pagbank || {}) : criarRegistroCobrancaAsaas(dados);
 }
 
 function pagamentoAbertoExistente(lista = [], filtro = {}) {
@@ -542,6 +544,7 @@ function ordenarPorVencimento(a = {}, b = {}) {
 async function iniciarPagamentoAlunoTenant(identidade = {}, payload = {}) {
   const alunoId = texto(identidade.legacyId);
   if (!alunoId) throw erro("Aluno não identificado para pagamento.", 401, "STUDENT_NOT_IDENTIFIED");
+  const configPagamentos = await obterConfiguracaoPagamentosRuntime();
 
   const mensalidades = await listarMensalidades({ alunoId });
   const candidatas = (Array.isArray(mensalidades) ? mensalidades : [])
@@ -558,7 +561,7 @@ async function iniciarPagamentoAlunoTenant(identidade = {}, payload = {}) {
   }
 
   const pagamentos = await lerLista(COL_PAGAMENTOS);
-  const aberta = pagamentoAbertoExistente(pagamentos, { escopo: "aluno_mensalidade", mensalidadeId: mensalidade.id });
+  const aberta = pagamentoAbertoExistente(pagamentos, { provider: configPagamentos.provider, escopo: "aluno_mensalidade", mensalidadeId: mensalidade.id });
   if (aberta) return respostaCheckout(aberta);
 
   const vinculo = await garantirLancamentoFinanceiroMensalidade(mensalidade.id);
@@ -599,7 +602,7 @@ async function iniciarPagamentoAlunoTenant(identidade = {}, payload = {}) {
     descricao: `Mensalidade ${mensalidade.competencia || ""} - ${pagador.nome || "Aluno"}`.trim(),
     pagador,
     payload
-  });
+  }, configPagamentos);
 
   return respostaCheckout(registro);
 }
@@ -636,6 +639,7 @@ export async function iniciarPagamentoContratacaoFusion(payload = {}, usuario = 
     };
   }
 
+  const configPagamentos = await obterConfiguracaoPagamentosRuntime();
   let billing = await obterBillingFusion();
   if (!billing.assinatura?.id || billing.assinatura.planoCodigo !== plano.codigo) {
     billing = await formalizarContratacaoFusion({
@@ -649,7 +653,7 @@ export async function iniciarPagamentoContratacaoFusion(payload = {}, usuario = 
   }
 
   const pagamentos = await lerLista(COL_PAGAMENTOS);
-  const aberta = pagamentoAbertoExistente(pagamentos, { escopo: "fusion_assinatura", planoCodigo: plano.codigo });
+  const aberta = pagamentoAbertoExistente(pagamentos, { provider: configPagamentos.provider, escopo: "fusion_assinatura", planoCodigo: plano.codigo });
   if (aberta) return respostaCheckout(aberta);
 
   const tenantId = tenantAtual();
@@ -675,7 +679,7 @@ export async function iniciarPagamentoContratacaoFusion(payload = {}, usuario = 
     descricao: `Assinatura Fusion - ${plano.nome}`,
     pagador,
     payload
-  });
+  }, configPagamentos);
 
   return respostaCheckout(registro);
 }
@@ -877,8 +881,8 @@ function headerValor(headers = {}, nome = "") {
   return texto(entrada?.[1]);
 }
 
-function validarWebhookPagbank({ headers = {}, rawBody = "" } = {}) {
-  const esperado = texto(
+function validarWebhookPagbank({ headers = {}, rawBody = "", webhookToken = "" } = {}) {
+  const esperado = texto(webhookToken ||
     process.env.FUSION_PAGBANK_WEBHOOK_TOKEN ||
     process.env.PAGBANK_WEBHOOK_TOKEN ||
     process.env.FUSION_PAGBANK_NOTIFICATION_TOKEN
@@ -962,18 +966,20 @@ export async function receberWebhookAsaas({ headers = {}, body = {} } = {}) {
 }
 
 export async function receberWebhookPagbank({ headers = {}, body = {}, rawBody = "" } = {}) {
-  validarWebhookPagbank({ headers, rawBody });
-
   const pagamento = pagamentoDoWebhookPagbank(body);
   if (!pagamento.id && !pagamento.externalReference) return { ok: true, ignorado: true, motivo: "sem_identificador_pagbank" };
 
   const parsed = parseExternalReference(pagamento.externalReference);
   if (!parsed?.tenantId) return { ok: true, ignorado: true, motivo: "external_reference_fora_do_fusion" };
 
-  return processarPagamentoConfirmado({
-    tenantId: parsed.tenantId,
-    evento: "PAGBANK_WEBHOOK",
-    pagamento
+  return executarComTenant(parsed.tenantId, async () => {
+    const configPagamentos = await obterConfiguracaoPagamentosRuntime();
+    validarWebhookPagbank({ headers, rawBody, webhookToken: configPagamentos.pagbank?.webhookToken });
+    return processarPagamentoConfirmado({
+      tenantId: parsed.tenantId,
+      evento: "PAGBANK_WEBHOOK",
+      pagamento
+    });
   });
 }
 

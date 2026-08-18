@@ -96,10 +96,11 @@
   font-weight: 900;
 }
 
-.configuracoes-page .configuracoes-grid > .fusion-card:nth-child(1)::before { content: "DB"; }
-.configuracoes-page .configuracoes-grid > .fusion-card:nth-child(2)::before { content: "AL"; }
-.configuracoes-page .configuracoes-grid > .fusion-card:nth-child(3)::before { content: "FT"; }
-.configuracoes-page .configuracoes-grid > .fusion-card:nth-child(4)::before { content: "AV"; }
+.configuracoes-page .configuracoes-grid > .fusion-card:nth-child(1)::before { content: "PG"; }
+.configuracoes-page .configuracoes-grid > .fusion-card:nth-child(2)::before { content: "DB"; }
+.configuracoes-page .configuracoes-grid > .fusion-card:nth-child(3)::before { content: "AL"; }
+.configuracoes-page .configuracoes-grid > .fusion-card:nth-child(4)::before { content: "FT"; }
+.configuracoes-page .configuracoes-grid > .fusion-card:nth-child(5)::before { content: "AV"; }
 
 .configuracoes-page .configuracoes-grid > .fusion-card::after {
   content: "→";
@@ -158,5 +159,200 @@
 
   .configuracoes-page .configuracoes-grid > .fusion-card {
     min-height: 0;
+  }
+}
+
+.pagamentos-online-page {
+  max-width: 1040px;
+}
+
+.pagamentos-hero {
+  display: grid;
+  gap: 12px;
+}
+
+.pagamentos-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 5px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.status-pill.ok {
+  border-color: #8bd6ad;
+  background: #eafaf1;
+  color: #166534;
+}
+
+.status-pill.erro {
+  border-color: #f6a3a3;
+  background: #fff1f2;
+  color: #9f1239;
+}
+
+.status-pill.aguardando {
+  border-color: #d7dee8;
+  background: #f8fafc;
+  color: #64748b;
+}
+
+.pagamentos-form {
+  display: grid;
+  gap: 16px;
+}
+
+.pagamentos-panel {
+  margin: 0;
+  padding: 20px !important;
+  border: 1px solid #d9e2ec !important;
+  border-radius: 12px !important;
+  background: #ffffff !important;
+  color: #172033 !important;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, .06) !important;
+}
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.panel-head h3 {
+  margin: 0;
+  color: #132238 !important;
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+.config-origin {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.form-grid .wide {
+  grid-column: 1 / -1;
+}
+
+.pagamentos-panel label,
+.payment-methods legend {
+  display: grid;
+  gap: 7px;
+  color: #334155 !important;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.pagamentos-panel input,
+.pagamentos-panel select {
+  width: 100%;
+  min-height: 42px;
+  padding: 9px 11px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #0f172a;
+  font: inherit;
+  font-weight: 600;
+}
+
+.pagamentos-panel input:focus,
+.pagamentos-panel select:focus {
+  outline: 3px solid rgba(34, 184, 210, .22);
+  border-color: #22b8d2;
+}
+
+.payment-methods {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+  margin: 16px 0 0;
+  padding: 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+}
+
+.payment-methods legend {
+  padding: 0 6px;
+}
+
+.payment-methods label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 30px;
+}
+
+.payment-methods input {
+  width: 18px;
+  min-height: 18px;
+  accent-color: #087f8f;
+}
+
+.primary-action,
+.secondary-action {
+  min-height: 42px;
+  border: 0;
+  border-radius: 8px;
+  padding: 0 16px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.primary-action {
+  background: #087f8f;
+  color: #ffffff;
+}
+
+.secondary-action {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #0f172a;
+}
+
+.form-message {
+  min-height: 24px;
+  margin: 0;
+  color: #166534;
+  font-weight: 800;
+}
+
+.form-message.erro {
+  color: #b91c1c;
+}
+
+@media (max-width: 760px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .panel-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .primary-action,
+  .secondary-action {
+    width: 100%;
   }
 }

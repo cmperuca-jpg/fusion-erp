@@ -7,20 +7,20 @@ function ambientePagbank() {
   return ["prod", "production", "producao", "produção"].includes(valor) ? "production" : "sandbox";
 }
 
-export function configPagbank() {
-  const ambiente = ambientePagbank();
-  const baseUrl = texto(process.env.FUSION_PAGBANK_BASE_URL) ||
+export function configPagbank(overrides = {}) {
+  const ambiente = overrides.ambiente || ambientePagbank();
+  const baseUrl = texto(overrides.baseUrl || process.env.FUSION_PAGBANK_BASE_URL) ||
     (ambiente === "production" ? "https://api.pagseguro.com" : "https://sandbox.api.pagseguro.com");
   return {
     ambiente,
     baseUrl,
-    token: texto(process.env.FUSION_PAGBANK_TOKEN || process.env.PAGBANK_TOKEN),
-    userAgent: texto(process.env.FUSION_PAGBANK_USER_AGENT) || "FusionERP/2.8 pagamentos-online"
+    token: texto(overrides.token || process.env.FUSION_PAGBANK_TOKEN || process.env.PAGBANK_TOKEN),
+    userAgent: texto(overrides.userAgent || process.env.FUSION_PAGBANK_USER_AGENT) || "FusionERP/2.8 pagamentos-online"
   };
 }
 
-export function pagbankConfigurado() {
-  return Boolean(configPagbank().token);
+export function pagbankConfigurado(overrides = {}) {
+  return Boolean(configPagbank(overrides).token);
 }
 
 function erroPagbank(mensagem, status = 502, detalhes = {}) {
@@ -37,13 +37,13 @@ function descricaoErroPagbank(json = {}, fallback = "Falha ao comunicar com o Pa
   return texto(primeiro.description || primeiro.message || json.error_description || json.message || fallback);
 }
 
-function endpoint(pathname = "") {
-  const cfg = configPagbank();
+function endpoint(pathname = "", overrides = {}) {
+  const cfg = configPagbank(overrides);
   return `${cfg.baseUrl.replace(/\/+$/, "")}/${String(pathname || "").replace(/^\/+/, "")}`;
 }
 
-async function requestPagbank(pathname, { method = "GET", body } = {}) {
-  const cfg = configPagbank();
+async function requestPagbank(pathname, { method = "GET", body, config = {} } = {}) {
+  const cfg = configPagbank(config);
   if (!cfg.token) {
     throw erroPagbank("PagBank ainda não configurado. Informe FUSION_PAGBANK_TOKEN no ambiente seguro do servidor.", 503, {
       code: "PAGBANK_NOT_CONFIGURED"
@@ -62,7 +62,7 @@ async function requestPagbank(pathname, { method = "GET", body } = {}) {
 
   if (method !== "GET" && body !== undefined) init.body = JSON.stringify(body);
 
-  const response = await fetch(endpoint(pathname), init);
+  const response = await fetch(endpoint(pathname, config), init);
   const json = await response.json().catch(() => ({}));
   if (!response.ok) {
     throw erroPagbank(descricaoErroPagbank(json), response.status || 502, {
@@ -74,14 +74,14 @@ async function requestPagbank(pathname, { method = "GET", body } = {}) {
   return json;
 }
 
-export async function criarCheckoutPagbank(payload = {}) {
-  return requestPagbank("/checkouts", { method: "POST", body: payload });
+export async function criarCheckoutPagbank(payload = {}, config = {}) {
+  return requestPagbank("/checkouts", { method: "POST", body: payload, config });
 }
 
-export async function consultarCheckoutPagbank(id) {
+export async function consultarCheckoutPagbank(id, config = {}) {
   const checkoutId = texto(id);
   if (!checkoutId) throw erroPagbank("Checkout PagBank não informado.", 400, { code: "PAGBANK_CHECKOUT_ID_REQUIRED" });
-  return requestPagbank(`/checkouts/${encodeURIComponent(checkoutId)}`);
+  return requestPagbank(`/checkouts/${encodeURIComponent(checkoutId)}`, { config });
 }
 
 export function linkPagamentoPagbank(checkout = {}) {
