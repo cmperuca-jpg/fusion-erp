@@ -2583,6 +2583,154 @@ function requisitosEquipamentosExercicioAssistente(ex = {}) {
     if (grupo.length) algum.push(grupo);
   };
 
+  /* fusion-exercisedb-equipamentos-estruturados-v1 */
+  const catalogoTeste664 =
+    String(ex.origem || "").trim() === "exercisedb_free_test_664";
+
+  const equipamentoCatalogo =
+    normalizarTexto(
+      ex.equipamento ||
+      ex.equipamentos ||
+      ""
+    );
+
+  const nomeOriginal =
+    normalizarTexto(
+      ex.nomeOriginal ||
+      ex.nome ||
+      ""
+    );
+
+  if (catalogoTeste664 && equipamentoCatalogo) {
+    if (/dumbbell/.test(equipamentoCatalogo)) {
+      exigir("halteres");
+    }
+
+    if (/trap bar/.test(equipamentoCatalogo)) {
+      exigir("barra_hexagonal", "anilhas");
+    } else if (/ez barbell|ez-bar|ez bar/.test(equipamentoCatalogo)) {
+      exigir("barra_w", "anilhas");
+    } else if (/olympic barbell/.test(equipamentoCatalogo)) {
+      exigir("barra_olimpica", "anilhas");
+    } else if (/\bbarbell\b/.test(equipamentoCatalogo)) {
+      exigir("barra_reta", "anilhas");
+    }
+
+    if (/\bcable\b/.test(equipamentoCatalogo)) {
+      exigirAlgum(
+        "polia_alta",
+        "polia_baixa",
+        "crossover",
+        "torre_cabos_dupla",
+        "estacao_multifuncional"
+      );
+    }
+
+    if (/smith machine|\bsmith\b/.test(equipamentoCatalogo)) {
+      exigir("smith");
+    }
+
+    if (/kettlebell/.test(equipamentoCatalogo)) {
+      exigir("kettlebells");
+    }
+
+    if (/resistance band|\bband\b/.test(equipamentoCatalogo)) {
+      exigir("faixa_elastica");
+    }
+
+    if (/medicine ball/.test(equipamentoCatalogo)) {
+      exigir("medicine_ball");
+    }
+
+    if (/stability ball|swiss ball/.test(equipamentoCatalogo)) {
+      exigir("bola_suica");
+    }
+
+    if (/bosu/.test(equipamentoCatalogo)) {
+      exigir("bosu");
+    }
+
+    if (/stationary bike/.test(equipamentoCatalogo)) {
+      exigirAlgum(
+        "bike_horizontal",
+        "bike_spinning"
+      );
+    }
+
+    if (/elliptical/.test(equipamentoCatalogo)) {
+      exigir("eliptico");
+    }
+
+    if (/stepmill/.test(equipamentoCatalogo)) {
+      exigir("stepmill");
+    }
+
+    if (
+      /assisted/.test(equipamentoCatalogo) &&
+      /pull.?up|chin.?up|dip|mergulho/.test(nomeOriginal)
+    ) {
+      exigir("graviton");
+    }
+
+    if (/body weight/.test(equipamentoCatalogo)) {
+      if (/pull.?up|chin.?up|muscle.?up|toes to bar/.test(nomeOriginal)) {
+        exigir("barra_fixa");
+      }
+
+      if (/\bdip\b|parallel bar/.test(nomeOriginal)) {
+        exigir("paralelas");
+      }
+    }
+
+    if (/leverage machine/.test(equipamentoCatalogo)) {
+      let maquinaMapeada = false;
+
+      const usar = (...ids) => {
+        maquinaMapeada = true;
+        exigir(...ids);
+      };
+
+      const usarAlgum = (...ids) => {
+        maquinaMapeada = true;
+        exigirAlgum(...ids);
+      };
+
+      if (/leg extension/.test(nomeOriginal)) {
+        usarAlgum("cadeira_extensora", "banco_extensor");
+      } else if (/seated.*leg curl|leg curl.*seated/.test(nomeOriginal)) {
+        usar("cadeira_flexora");
+      } else if (/leg curl|lying.*curl|prone.*curl/.test(nomeOriginal)) {
+        usarAlgum("mesa_flexora", "banco_flexor");
+      } else if (/hip abductor|abduction/.test(nomeOriginal)) {
+        usarAlgum("cadeira_abdutora", "banco_abdutor");
+      } else if (/hip adductor|adduction/.test(nomeOriginal)) {
+        usarAlgum("cadeira_adutora", "banco_adutor");
+      } else if (/leg press/.test(nomeOriginal)) {
+        usar("leg_press_45");
+      } else if (/seated.*calf|calf.*seated/.test(nomeOriginal)) {
+        usar("panturrilha_sentada_maquina");
+      } else if (/calf raise|calf press/.test(nomeOriginal)) {
+        usar("panturrilha_em_pe_maquina");
+      } else if (/pec deck|chest fly|butterfly/.test(nomeOriginal)) {
+        usar("peck_deck_voador");
+      } else if (/preacher.*curl/.test(nomeOriginal)) {
+        usar("rosca_scott_maquina");
+      } else if (/biceps|bicep.*curl/.test(nomeOriginal)) {
+        usar("biceps_maquina");
+      } else if (/lat pulldown|pull.?down/.test(nomeOriginal)) {
+        usar("puxada_alta_maquina");
+      } else if (/row/.test(nomeOriginal)) {
+        usar("remada_articulada");
+      } else if (/glute|hip extension/.test(nomeOriginal)) {
+        usar("gluteo_em_pe_maquina");
+      }
+
+      if (!maquinaMapeada) {
+        exigir("__fusion_maquina_nao_mapeada__");
+      }
+    }
+  }
+
   // ----------------------------------------------------------
   // PERNAS / GLÚTEOS
   // ----------------------------------------------------------
@@ -3069,6 +3217,57 @@ function prioridadeEquipamentoAssistente(ex = {}, nivel = "iniciante") {
   ].filter(Boolean).join(" "));
 
   const grupoId = String(ex.grupoId || "").trim();
+
+  /* fusion-exercisedb-prioridade-equipamento-v1 */
+  const equipamentoCatalogo =
+    normalizarTexto(
+      ex.equipamento ||
+      ex.equipamentos ||
+      ""
+    );
+
+  if (/leverage machine|assisted/.test(equipamentoCatalogo)) {
+    return { tipo: "MAQUINA", prioridade: 100 };
+  }
+
+  if (/\bcable\b/.test(equipamentoCatalogo)) {
+    return { tipo: "CABO_POLIA", prioridade: 95 };
+  }
+
+  if (/smith machine|\bsmith\b/.test(equipamentoCatalogo)) {
+    return { tipo: "BARRA_GUIADA", prioridade: 90 };
+  }
+
+  if (
+    /dumbbell|barbell|kettlebell|trap bar|ez bar/.test(
+      equipamentoCatalogo
+    )
+  ) {
+    return {
+      tipo: "PESO_LIVRE",
+      prioridade: nivel === "avancado" ? 84 : 74
+    };
+  }
+
+  if (
+    /resistance band|\bband\b|medicine ball|stability ball|bosu/.test(
+      equipamentoCatalogo
+    )
+  ) {
+    return { tipo: "FUNCIONAL", prioridade: 25 };
+  }
+
+  if (/body weight/.test(equipamentoCatalogo)) {
+    return { tipo: "PESO_CORPORAL", prioridade: 5 };
+  }
+
+  if (
+    /stationary bike|elliptical|stepmill/.test(
+      equipamentoCatalogo
+    )
+  ) {
+    return { tipo: "MAQUINA", prioridade: 80 };
+  }
 
   // Grupo CORPO não entra automaticamente no treino de musculação.
   if (grupoId === "10") {
