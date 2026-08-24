@@ -58,7 +58,7 @@ export const CANONICAL_TRAINING = Object.freeze({
     aluno: "/pages/aluno-treinos/index.html"
   },
   compatibilityModules: [
-    "biblioteca-inteligente", "exercicios", "exercicios-biblioteca",
+
     "modelos-treino", "treinos-ciclo", "treinos-consolidacao",
     "treinos-editor", "treinos-integrado", "treinos-montador",
     "treinos-operacional"

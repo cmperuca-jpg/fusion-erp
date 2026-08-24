@@ -26,7 +26,6 @@ function renderizarExercicios(lista) {
 
         <div class="exercicio-actions">
           <button type="button" onclick="adicionarExercicioModelo('${exercicio.id}')">Adicionar</button>
-          <button type="button" onclick="window.open('/pages/exercicios/ficha.html?id=${exercicio.id}', '_blank')">Ficha</button>
         </div>
       </div>
     `;

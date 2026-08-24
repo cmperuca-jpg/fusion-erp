@@ -7,7 +7,14 @@ let exerciciosDoModelo = [];
 
 async function carregarTudo() {
   alunos = await buscarJSON(API_ALUNOS);
-  exercicios = await buscarJSON(API_EXERCICIOS);
+  const respostaExercicios = await buscarJSON(API_EXERCICIOS);
+  exercicios = Array.isArray(respostaExercicios)
+    ? respostaExercicios
+    : Array.isArray(respostaExercicios?.dados?.exercicios)
+      ? respostaExercicios.dados.exercicios
+      : Array.isArray(respostaExercicios?.exercicios)
+        ? respostaExercicios.exercicios
+        : [];
   modelos = await buscarJSON(API_MODELOS);
 
   carregarSelectAlunos();

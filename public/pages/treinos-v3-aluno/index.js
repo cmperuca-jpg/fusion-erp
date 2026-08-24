@@ -20,7 +20,7 @@
   window.addEventListener('load', emitirAlturaEmbed);
   window.addEventListener('resize', emitirAlturaEmbed);
   setInterval(emitirAlturaEmbed, 800);
-  const API_BIBLIOTECA = '/api/exercicios-biblioteca';
+  const API_BIBLIOTECA = '/api/treinos/biblioteca';
   const API_INTEGRADO = '/api/treinos-integrado';
   const API_OPERACIONAL = '/api/treinos-operacional';
 

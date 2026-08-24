@@ -61,7 +61,6 @@ function renderizarModeloAtual() {
           <button type="button" onclick="subirExercicioModelo(${index})">Subir</button>
           <button type="button" onclick="descerExercicioModelo(${index})">Descer</button>
           <button type="button" onclick="duplicarExercicioModelo(${index})">Duplicar</button>
-          <button type="button" onclick="window.open('/pages/exercicios/ficha.html?id=${item.exercicio_id}', '_blank')">Ficha</button>
           <button type="button" onclick="removerExercicioModelo(${index})">Remover</button>
         </div>
       </div>

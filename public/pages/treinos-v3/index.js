@@ -1,5 +1,5 @@
 (function(){
-  const API_BIBLIOTECA = '/api/exercicios-biblioteca';
+  const API_BIBLIOTECA = '/api/treinos/biblioteca';
   const API_TREINOS_INTEGRADO = '/api/treinos-integrado';
   const API_ALUNOS = '/api/alunos';
   const API_PROFESSORES = '/api/professores';
@@ -293,15 +293,16 @@
       const resp = await fetch(API_BIBLIOTECA, {cache:'no-store'});
       const json = await safeJson(resp);
       if(!resp.ok || json.ok === false) throw new Error(json.mensagem || `HTTP ${resp.status}`);
-      biblioteca = Array.isArray(json.exercicios) ? json.exercicios : extrairLista(json, 'exercicios');
-      grupos = Array.isArray(json.grupos) ? json.grupos : [...new Set(biblioteca.map(e=>e.grupo || e.grupoMuscular).filter(Boolean))].sort();
+      const dadosBiblioteca = json?.dados || json;
+      biblioteca = Array.isArray(dadosBiblioteca.exercicios) ? dadosBiblioteca.exercicios : extrairLista(dadosBiblioteca, 'exercicios');
+      grupos = Array.isArray(dadosBiblioteca.grupos) ? dadosBiblioteca.grupos : [...new Set(biblioteca.map(e=>e.grupo || e.grupoMuscular).filter(Boolean))].sort();
       if (!grupoFiltro && grupos.length) grupoFiltro = grupos[0];
       $('#bibliotecaStatus').textContent = `${biblioteca.length} exercício(s)`;
     }catch(erro){
       biblioteca = [];
       grupos = [];
       $('#bibliotecaStatus').textContent = 'API indisponível';
-      $('#listaExercicios').innerHTML = `<div class="empty">${esc(erro.message)}. Verifique se a rota /api/exercicios-biblioteca está ativa no server.mjs.</div>`;
+      $('#listaExercicios').innerHTML = `<div class="empty">${esc(erro.message)}. Verifique se a rota /api/treinos/biblioteca está ativa no server.mjs.</div>`;
     }
     renderGrupos();
     renderBiblioteca();

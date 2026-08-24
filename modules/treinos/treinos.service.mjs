@@ -9,7 +9,18 @@ import { gerarTokenPortal, validarTokenPortal } from "../auth/auth.service.mjs";
 import fs from "node:fs";
 import path from "node:path";
 
-const LIMITE_ACESSOS_PORTAL_DIA = Math.max(0, Number(process.env.FUSION_PORTAL_ALUNO_LIMITE_CATRACA_DIA || 3));
+const LIMITE_ACESSOS_PORTAL_DIA = (() => {
+  const valor = Number(process.env.FUSION_PORTAL_ALUNO_LIMITE_CATRACA_DIA || 1);
+  return Number.isInteger(valor) && valor >= 1 && valor <= 10 ? valor : 1;
+})();
+
+function limiteAcessosDiariosAluno(aluno = {}) {
+  const individual = Number(aluno?.limiteAcessosDiarios);
+  return Number.isInteger(individual) && individual >= 1 && individual <= 10
+    ? individual
+    : LIMITE_ACESSOS_PORTAL_DIA;
+}
+
 const TIMEZONE_SISTEMA = process.env.FUSION_TIMEZONE || "America/Sao_Paulo";
 
 function listaDePessoas(dados, chave) {
@@ -117,7 +128,12 @@ async function acessosBiometriaEdgeHoje(alunoId, dataAlvo) {
   return Number.isFinite(quantidade) ? Math.max(0, Math.trunc(quantidade)) : 0;
 }
 
-async function contadorAcessosPortal(alunoId) {
+async function contadorAcessosPortal(alunoOuId) {
+  const aluno = alunoOuId && typeof alunoOuId === "object"
+    ? alunoOuId
+    : await buscarAlunoPorId(alunoOuId);
+
+  const alunoId = idPessoa(aluno) || String(alunoOuId || "");
   const data = dataLocalISO();
   const [logs, biometricos] = await Promise.all([
     listarLogsAcesso(),
@@ -133,7 +149,7 @@ async function contadorAcessosPortal(alunoId) {
     ...combinarContadorAcessos({
       central: centrais,
       biometria: biometricos,
-      limite: LIMITE_ACESSOS_PORTAL_DIA
+      limite: limiteAcessosDiariosAluno(aluno)
     }),
     acessosCentralHoje: centrais,
     acessosBiometriaHoje: biometricos
@@ -237,7 +253,7 @@ export async function liberarCatracaPortalAluno({ alunoId, token, direcao = "ent
   if (!aluno) throw erroHttp("Aluno não encontrado para liberar a catraca.", 404);
 
   const direcaoNormalizada = direcao === "saida" ? "saida" : "entrada";
-  const controleAntes = await contadorAcessosPortal(idPessoa(aluno));
+  const controleAntes = await contadorAcessosPortal(aluno);
 
   // Saída nunca consome nem é bloqueada pelo limite diário de entradas.
   if (direcaoNormalizada !== "saida" && controleAntes.limiteAtingido) {
@@ -264,7 +280,7 @@ export async function liberarCatracaPortalAluno({ alunoId, token, direcao = "ent
   });
 
   const controleDepois = resultado.autorizado
-    ? await contadorAcessosPortal(idPessoa(aluno))
+    ? await contadorAcessosPortal(aluno)
     : controleAntes;
 
   return {
@@ -288,7 +304,7 @@ export async function obterContadorCatracaPortalAluno({ alunoId, token } = {}) {
   const aluno = await buscarAlunoPorId(alunoId);
   if (!aluno) throw erroHttp("Aluno nao encontrado para consultar acessos.", 404);
 
-  const controle = await contadorAcessosPortal(idPessoa(aluno));
+  const controle = await contadorAcessosPortal(aluno);
   return {
     alunoId: idPessoa(aluno),
     alunoNome: nomePessoa(aluno),
@@ -301,12 +317,13 @@ export async function obterBiblioteca() {
   const biblioteca = await listarBiblioteca();
   biblioteca.grupos = Array.isArray(biblioteca.grupos) ? biblioteca.grupos : [];
   biblioteca.objetivos = Array.isArray(biblioteca.objetivos) ? biblioteca.objetivos : [];
-  biblioteca.exercicios = Array.isArray(biblioteca.exercicios) ? biblioteca.exercicios
-    .map((ex) => {
-      const codigo = String(ex.codigo || ex.id || "").padStart(3, "0");
-      return { ...ex, codigo, foto: `/assets/exercicios/flash/${codigo}.gif` };
-    })
-    .filter((ex) => fs.existsSync(path.resolve("public/assets/exercicios/flash", `${ex.codigo}.gif`))) : [];
+  biblioteca.exercicios = Array.isArray(biblioteca.exercicios)
+    ? biblioteca.exercicios.map((ex) => ({
+        ...ex,
+        foto: ex.foto || ex.gif || ex.imagemUrl || "",
+        gif: ex.gif || ex.foto || ex.imagemUrl || ""
+      }))
+    : [];
   return biblioteca;
 }
 
@@ -316,110 +333,20 @@ function textoDivisao(valor = "") {
   return encontrado ? encontrado[1].toUpperCase() : "";
 }
 
-function normalizarBuscaExercicio(valor = "") {
-  return String(valor || "")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/\b\d+(?:x\d+)?\b/g, " ")
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim()
-    .replace(/\s+/g, " ");
-}
-
-const ALIASES_EXERCICIOS = new Map(Object.entries({
-  "crucifixo na maquina": "crucifixo no voador",
-  "triceps na polia com corda": "triceps corda no cross over",
-  "puxada frontal pegada aberta": "pulley frente",
-  "remada baixa": "remada baixa neutra",
-  "remada unilateral com halter": "remada unilateral",
-  "pulldown com corda": "pull down com corda",
-  "rosca direta com barra": "rosca direta",
-  "rosca martelo": "rosca martelo com halteres",
-  "cadeira extensora": "extensao de joelhos",
-  "stiff com barra": "stiff",
-  "panturrilha em pe": "elevacao de panturrilha em pe"
-}));
-
-function midiaExercicio(item = {}) {
-  return item.midia || item.imagemUrl || item.foto || item.gif || item.videoUrl || "";
-}
-
-function criarCatalogoMidias(...fontes) {
-  const itens = fontes.flatMap((fonte) => {
-    if (Array.isArray(fonte)) return fonte;
-    if (Array.isArray(fonte?.exercicios)) return fonte.exercicios;
-    return [];
-  }).filter((item) => item && midiaExercicio(item));
-
-  const porId = new Map();
-  const porNome = new Map();
-  for (const item of itens) {
-    for (const id of [item.id, item.codigo, item.exercicioId, item.bibliotecaId].filter(Boolean)) {
-      if (!porId.has(String(id))) porId.set(String(id), item);
-    }
-    const nome = normalizarBuscaExercicio(item.nome || item.exercicio);
-    if (nome && !porNome.has(nome)) porNome.set(nome, item);
-  }
-  return { itens, porId, porNome };
-}
-
-function resolverExercicioNaBiblioteca(item = {}, catalogo) {
-  if (!catalogo?.itens?.length) return null;
-
-  for (const id of [item.bibliotecaId, item.exercicioId, item.codigo, item.id].filter(Boolean)) {
-    const encontrado = catalogo.porId.get(String(id));
-    if (encontrado) return encontrado;
-  }
-
-  const nomeOriginal = normalizarBuscaExercicio(item.nome || item.exercicio);
-  if (!nomeOriginal) return null;
-  const nomeAlvo = ALIASES_EXERCICIOS.get(nomeOriginal) || nomeOriginal;
-  const exato = catalogo.porNome.get(nomeAlvo) || catalogo.porNome.get(nomeOriginal);
-  if (exato) return exato;
-
-  const tokensAlvo = nomeAlvo.split(" ").filter((token) => token.length > 2);
-  const grupo = normalizarBuscaExercicio(item.grupoMuscular || item.grupo);
-  let melhor = null;
-  let melhorNota = 0;
-
-  for (const candidato of catalogo.itens) {
-    const nome = normalizarBuscaExercicio(candidato.nome || candidato.exercicio);
-    if (!nome) continue;
-    const tokensNome = new Set(nome.split(" "));
-    const acertos = tokensAlvo.filter((token) => tokensNome.has(token)).length;
-    if (!acertos) continue;
-
-    let nota = acertos / Math.max(tokensAlvo.length, 1);
-    if (nome.startsWith(nomeAlvo) || nomeAlvo.startsWith(nome)) nota += 0.35;
-    const grupoCandidato = normalizarBuscaExercicio(candidato.grupoMuscular || candidato.grupo);
-    if (grupo && grupoCandidato && (grupo.includes(grupoCandidato) || grupoCandidato.includes(grupo))) nota += 0.1;
-
-    if (nota > melhorNota) {
-      melhor = candidato;
-      melhorNota = nota;
-    }
-  }
-
-  return melhorNota >= 0.72 ? melhor : null;
-}
-
 function treinoEstaAtivo(treino = {}) {
   const status = String(treino.status || "ativo").trim().toLowerCase();
   return treino.ativo !== false && !["cancelado", "inativo", "arquivado"].includes(status);
 }
 
-function exercicioParaPortal(item = {}, catalogo = null) {
-  const referencia = resolverExercicioNaBiblioteca(item, catalogo);
-  const midia = midiaExercicio(item) || midiaExercicio(referencia);
+function exercicioParaPortal(item = {}) {
   return {
     ...item,
     nome: item.nome || item.exercicio || "Exercício",
     descricao: item.descricao || item.observacoes || item.observacao || "",
-    exercicioId: item.exercicioId || referencia?.id || referencia?.codigo || "",
-    bibliotecaId: item.bibliotecaId || referencia?.bibliotecaId || referencia?.id || "",
-    foto: midia,
-    gif: midia,
+    exercicioId: item.exercicioId || "",
+    bibliotecaId: item.bibliotecaId || "",
+    foto: "",
+    gif: "",
     series: item.series ?? "",
     repeticoes: item.repeticoes ?? item.reps ?? "",
     carga: item.carga ?? "",
@@ -430,7 +357,7 @@ function exercicioParaPortal(item = {}, catalogo = null) {
   };
 }
 
-function divisoesDoTreinoPlano(treino = {}, indice = 0, catalogo = null) {
+function divisoesDoTreinoPlano(treino = {}, indice = 0) {
   const exercicios = Array.isArray(treino.exercicios) ? treino.exercicios : [];
   const nomePadrao = textoDivisao(treino.nome || treino.tipoDivisao) || String.fromCharCode(65 + indice);
   const grupos = new Map();
@@ -438,13 +365,13 @@ function divisoesDoTreinoPlano(treino = {}, indice = 0, catalogo = null) {
   exercicios.forEach((item) => {
     const nome = textoDivisao(item.divisao || item.nomeDivisao || item.treino || item.observacao || item.obs) || nomePadrao;
     if (!grupos.has(nome)) grupos.set(nome, []);
-    grupos.get(nome).push(exercicioParaPortal(item, catalogo));
+    grupos.get(nome).push(exercicioParaPortal(item));
   });
 
   return [...grupos.entries()].map(([nome, itens]) => ({ nome, itens }));
 }
 
-function normalizarTreinosParaPortal(lista = [], catalogo = null) {
+function normalizarTreinosParaPortal(lista = []) {
   const estruturados = lista
     .filter((treino) => Array.isArray(treino.divisoes) && treino.divisoes.some((divisao) => Array.isArray(divisao.itens) && divisao.itens.length))
     .map((treino) => ({
@@ -456,7 +383,7 @@ function normalizarTreinosParaPortal(lista = [], catalogo = null) {
       divisoes: treino.divisoes.map((divisao) => ({
         ...divisao,
         nome: textoDivisao(divisao.nome) || divisao.nome || "A",
-        itens: (divisao.itens || []).map((item) => exercicioParaPortal(item, catalogo))
+        itens: (divisao.itens || []).map((item) => exercicioParaPortal(item))
       }))
     }));
 
@@ -465,7 +392,7 @@ function normalizarTreinosParaPortal(lista = [], catalogo = null) {
 
   const primeiro = planos[0];
   const divisoes = planos
-    .flatMap((treino, indice) => divisoesDoTreinoPlano(treino, indice, catalogo))
+    .flatMap((treino, indice) => divisoesDoTreinoPlano(treino, indice))
     .filter((divisao) => divisao.itens.length)
     .sort((a, b) => String(a.nome).localeCompare(String(b.nome), "pt-BR", { numeric: true }));
 
@@ -504,14 +431,7 @@ function treinoDoProfessor(treino = {}, professorId = "", professorNome = "") {
 }
 
 export async function obterTreinos(filtros = {}) {
-  const [treinos, bibliotecaTreinos, bibliotecaAtual] = await Promise.all([
-    listarTreinos(),
-    listarBiblioteca(),
-    lerJsonDuravel("exercicios_biblioteca.json", [])
-  ]);
-  // A biblioteca atual vem primeiro. O catálogo legado complementa nomes e
-  // mantém compatibilidade com treinos antigos sem gravar caminhos duplicados.
-  const catalogo = criarCatalogoMidias(bibliotecaAtual, bibliotecaTreinos);
+  const treinos = await listarTreinos();
   const alunoId = filtros.alunoId ? String(filtros.alunoId) : "";
   const professorId = filtros.professorId ? String(filtros.professorId) : "";
   const professorNome = filtros.professorNome ? String(filtros.professorNome) : "";
@@ -522,64 +442,323 @@ export async function obterTreinos(filtros = {}) {
     filtrados = filtrados.filter((t) => treinoDoProfessor(t, professorId, professorNome));
   }
   const ativos = filtrados.filter(treinoEstaAtivo);
-  return normalizarTreinosParaPortal(ativos.length ? ativos : filtrados, catalogo);
+  return normalizarTreinosParaPortal(ativos.length ? ativos : filtrados);
 }
+
+/* treinos-versionamento-seguro-v1 */
 
 export async function criarTreino(payload) {
   if (!payload?.alunoId || !payload?.alunoNome) {
-    const erro = new Error("Selecione um aluno antes de salvar o treino.");
+    const erro = new Error(
+      "Selecione um aluno antes de salvar o treino."
+    );
     erro.statusCode = 400;
     throw erro;
   }
+
   if (!payload?.professorId || !payload?.professorNome) {
-    const erro = new Error("Selecione o professor responsável antes de salvar o treino.");
+    const erro = new Error(
+      "Selecione o professor responsável antes de salvar o treino."
+    );
     erro.statusCode = 400;
     throw erro;
   }
 
-  const divisoes = Array.isArray(payload.divisoes) ? payload.divisoes.map((divisao) => ({
-    nome: divisao.nome || "A",
-    itens: Array.isArray(divisao.itens) ? divisao.itens.map((item) => ({
-      id: item.id,
-      codigo: item.codigo,
-      nome: item.nome,
-      descricao: item.descricao || "",
-      musculos: item.musculos || "",
-      grupoId: item.grupoId || "",
-      grupo: item.grupo || "",
-      foto: item.foto || item.gif || "",
-      gif: item.gif || item.foto || "",
-      series: item.series || "",
-      repeticoes: item.repeticoes || "",
-      carga: item.carga || "",
-      descanso: item.descanso || "",
-      metodo: item.metodo || "Convencional",
-      cadencia: item.cadencia || "",
-      obs: item.obs || ""
-    })) : []
-  })) : [];
+  const origem =
+    String(payload.origem || "manual")
+      .trim();
 
-  const treinos = await listarTreinos();
-  const agora = new Date().toISOString();
+  const assistenteExecucaoId =
+    String(
+      payload.assistenteExecucaoId ||
+      ""
+    ).trim();
+
+  const assistenteSugestaoId =
+    String(
+      payload.assistenteSugestaoId ||
+      ""
+    ).trim();
+
+  const origemAssistente =
+    origem.startsWith("assistente") ||
+    Boolean(
+      assistenteExecucaoId ||
+      assistenteSugestaoId
+    );
+
+  /*
+   * Sugestões automáticas somente podem virar uma nova
+   * prescrição depois de confirmação explícita do professor.
+   */
+  if (
+    origemAssistente &&
+    payload.revisaoProfessorConfirmada !== true
+  ) {
+    const erro = new Error(
+      "A sugestão assistida precisa ser revisada e confirmada pelo professor antes de virar um treino ativo."
+    );
+    erro.statusCode = 409;
+    erro.code = "REVISAO_PROFESSOR_OBRIGATORIA";
+    throw erro;
+  }
+
+  if (
+    origemAssistente &&
+    (
+      !assistenteExecucaoId ||
+      !assistenteSugestaoId
+    )
+  ) {
+    const erro = new Error(
+      "Execução e sugestão do assistente são obrigatórias para salvar uma versão assistida."
+    );
+    erro.statusCode = 400;
+    erro.code = "RASTREABILIDADE_ASSISTENTE_OBRIGATORIA";
+    throw erro;
+  }
+
+  const divisoes =
+    Array.isArray(payload.divisoes)
+      ? payload.divisoes.map((divisao) => ({
+          nome: divisao.nome || "A",
+
+          itens:
+            Array.isArray(divisao.itens)
+              ? divisao.itens.map((item) => ({
+                  id: item.id,
+                  codigo: item.codigo,
+                  nome: item.nome,
+                  descricao:
+                    item.descricao || "",
+                  musculos:
+                    item.musculos || "",
+                  grupoId:
+                    item.grupoId || "",
+                  grupo:
+                    item.grupo || "",
+                  foto:
+                    item.foto ||
+                    item.gif ||
+                    "",
+                  gif:
+                    item.gif ||
+                    item.foto ||
+                    "",
+                  series:
+                    item.series || "",
+                  repeticoes:
+                    item.repeticoes || "",
+                  carga:
+                    item.carga || "",
+                  descanso:
+                    item.descanso || "",
+                  metodo:
+                    item.metodo ||
+                    "Convencional",
+                  cadencia:
+                    item.cadencia || "",
+                  obs:
+                    item.obs || ""
+                }))
+              : []
+        }))
+      : [];
+
+  const treinos =
+    await listarTreinos();
+
+  const alunoId =
+    String(payload.alunoId);
+
+  const agora =
+    new Date().toISOString();
+
+  const treinosAluno =
+    treinos.filter(
+      item =>
+        String(
+          item.alunoId ||
+          item.aluno_id ||
+          ""
+        ) === alunoId
+    );
+
+  const ativosAnteriores =
+    treinosAluno.filter(
+      treinoEstaAtivo
+    );
+
+  /*
+   * Registros legados podem não possuir versao.
+   * Se já existe treino, ele é tratado no mínimo como V1.
+   */
+  const maiorVersaoInformada =
+    treinosAluno.reduce(
+      (maior, item) => {
+        const numero =
+          Number(
+            item.versao ??
+            item.versaoNumero ??
+            0
+          );
+
+        return Number.isFinite(numero)
+          ? Math.max(maior, numero)
+          : maior;
+      },
+      0
+    );
+
+  const baseVersao =
+    maiorVersaoInformada > 0
+      ? maiorVersaoInformada
+      : treinosAluno.length
+        ? 1
+        : 0;
+
+  const versao =
+    baseVersao + 1;
+
+  const versaoOrigemId =
+    String(
+      payload.versaoOrigemId ||
+      ativosAnteriores[0]?.id ||
+      ""
+    ).trim();
+
+  const treinoId =
+    payload.id ||
+    `treino_${Date.now()}`;
+
   const treino = {
-    id: payload.id || `treino_${Date.now()}`,
-    alunoId: String(payload.alunoId),
-    alunoNome: payload.alunoNome,
-    professorId: String(payload.professorId),
-    professorNome: payload.professorNome,
-    objetivo: payload.objetivo || "",
-    validade: payload.validade || "",
-    observacoes: payload.observacoes || "",
+    id: treinoId,
+
+    alunoId,
+    alunoNome:
+      payload.alunoNome,
+
+    professorId:
+      String(payload.professorId),
+
+    professorNome:
+      payload.professorNome,
+
+    objetivo:
+      payload.objetivo || "",
+
+    validade:
+      payload.validade || "",
+
+    observacoes:
+      payload.observacoes || "",
+
     divisoes,
-    criadoEm: payload.criadoEm || agora,
-    dataPrescricao: payload.dataPrescricao || agora.slice(0, 10),
-    atualizadoEm: agora,
-    ativo: payload.ativo !== false
+
+    criadoEm:
+      payload.criadoEm || agora,
+
+    dataPrescricao:
+      payload.dataPrescricao ||
+      agora.slice(0, 10),
+
+    atualizadoEm:
+      agora,
+
+    ativo: true,
+    status: "ativo",
+
+    versao,
+    versaoAnteriorId:
+      versaoOrigemId || null,
+
+    origem,
+
+    assistenteExecucaoId:
+      assistenteExecucaoId || null,
+
+    assistenteSugestaoId:
+      assistenteSugestaoId || null,
+
+    revisaoProfessorConfirmada:
+      origemAssistente
+        ? true
+        : Boolean(
+            payload.revisaoProfessorConfirmada
+          ),
+
+    revisadoEm:
+      origemAssistente
+        ? agora
+        : null,
+
+    revisadoPor:
+      origemAssistente
+        ? {
+            professorId:
+              String(payload.professorId),
+            professorNome:
+              payload.professorNome
+          }
+        : null
   };
 
-  const restantes = treinos.filter((t) => String(t.alunoId || "") !== String(treino.alunoId) || t.ativo === false);
-  restantes.unshift(treino);
-  await salvarTreinos(restantes);
+  /*
+   * Nenhum treino anterior é removido.
+   * Os ativos anteriores do mesmo aluno são preservados,
+   * apenas arquivados.
+   */
+  const historico =
+    treinos.map(item => {
+      const mesmoAluno =
+        String(
+          item.alunoId ||
+          item.aluno_id ||
+          ""
+        ) === alunoId;
+
+      if (
+        !mesmoAluno ||
+        !treinoEstaAtivo(item)
+      ) {
+        return item;
+      }
+
+      const versaoLegada =
+        Number(
+          item.versao ??
+          item.versaoNumero ??
+          0
+        );
+
+      return {
+        ...item,
+
+        versao:
+          Number.isFinite(versaoLegada) &&
+          versaoLegada > 0
+            ? versaoLegada
+            : Math.max(1, versao - 1),
+
+        ativo: false,
+        status: "arquivado",
+
+        arquivadoEm:
+          agora,
+
+        substituidoPor:
+          treinoId,
+
+        atualizadoEm:
+          item.atualizadoEm || agora
+      };
+    });
+
+  await salvarTreinos([
+    treino,
+    ...historico
+  ]);
+
   return treino;
 }
 

@@ -29,7 +29,6 @@ function carregarLayout(tituloPagina = "Fusion ERP") {
         <a href="/pages/checkin/">✅ Check-in</a>
         <a href="/pages/avaliacoes/">📊 Avaliações</a>
         <a href="/pages/treinos/">💪 Treinos</a>
-        <a href="/pages/exercicios/">🏋️ Exercícios</a>
       </div>
 
       <div class="menu-grupo">

@@ -1,6 +1,6 @@
 const API_MODELOS = "/api/modelos-treino";
 const API_ALUNOS = "/api/alunos";
-const API_EXERCICIOS = "/api/exercicios";
+const API_EXERCICIOS = "/api/treinos/biblioteca";
 const API_TREINOS = "/api/treinos";
 
 async function buscarJSON(url) {

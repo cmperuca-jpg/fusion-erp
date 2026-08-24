@@ -428,7 +428,6 @@ const legacyPageRedirects = new Map([
   ["/pages/bi-comercial/", "/pages/bi-academia/index.html"],
   ["/pages/bi-operacional/", "/pages/bi-academia-operacional/index.html"],
   ["/pages/relatorios/", "/pages/relatorios-caixa/index.html"],
-  ["/pages/exercicios/", "/pages/treinos/index.html"],
   ["/pages/aluno-treino/", "/pages/aluno-treinos/index.html"],
   ["/pages/portal-aluno/", "/pages/aluno-login/index.html"],
   ["/pages/treinos-v3-aluno/", "/pages/aluno-treinos/index.html"],

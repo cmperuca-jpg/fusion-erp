@@ -1,5 +1,5 @@
 (function(){
-  const API_BIBLIOTECA = '/api/exercicios-biblioteca';
+  const API_BIBLIOTECA = '/api/treinos/biblioteca';
   const API_TREINOS_INTEGRADO = '/api/treinos-integrado';
   const API_ALUNOS = '/api/alunos';
   const API_PROFESSORES = '/api/professores';
@@ -316,7 +316,7 @@
       const resp = await fetch(API_BIBLIOTECA, {cache:'no-store'});
       const json = await safeJson(resp);
       if(!resp.ok) throw new Error(json.mensagem || json.erro || `HTTP ${resp.status}`);
-      biblioteca = extrairLista(json, 'exercicios').filter(e => normalizar(e.status || 'Ativo') !== 'inativo');
+      biblioteca = extrairLista(json?.dados || json, 'exercicios').filter(e => normalizar(e.status || 'Ativo') !== 'inativo');
     }catch(erro){
       console.warn('Treinos V4: API biblioteca indisponível', erro);
       biblioteca = [];
