@@ -44,7 +44,10 @@ import {
   frequenciaAlunoApp,
   liberarCatracaAlunoApp
 } from "./aluno-app-actions.service.mjs";
-import { iniciarPagamentoAlunoApp } from "../pagamentos-online/pagamentos-online.service.mjs";
+import {
+  consultarPagamentoAlunoApp,
+  iniciarPagamentoAlunoApp
+} from "../pagamentos-online/pagamentos-online.service.mjs";
 
 const router = Router();
 
@@ -714,6 +717,15 @@ router.post("/aluno-app/pagamentos", somenteMesmoSistema, async (req, res) => {
     res.status(201).json({ ok: true, dados: await iniciarPagamentoAlunoApp(req, res, deviceToken, req.body || {}) });
   } catch (erro) {
     responderErroAlunoApp(res, erro, "Não foi possível criar o pagamento.");
+  }
+});
+
+router.get("/aluno-app/pagamentos/:id", somenteMesmoSistema, async (req, res) => {
+  try {
+    const deviceToken = req.headers["x-fusion-device-token"];
+    res.json({ ok: true, dados: await consultarPagamentoAlunoApp(req, res, deviceToken, req.params.id) });
+  } catch (erro) {
+    responderErroAlunoApp(res, erro, "Não foi possível consultar o pagamento.");
   }
 });
 

@@ -35,6 +35,7 @@ assert.match(conteudo.server, /verify: capturarRawBodyPagbank/);
 assert.match(conteudo.security, /\["POST", "\/api\/pagamentos-online\/webhooks\/asaas"\]/);
 assert.match(conteudo.security, /\["POST", "\/api\/pagamentos-online\/webhooks\/pagbank"\]/);
 assert.match(conteudo.security, /\["POST", "\/api\/treinos\/aluno-app\/pagamentos"\]/);
+assert.match(conteudo.security, /\["GET", "\/api\/treinos\/aluno-app\/pagamentos", "prefix"\]/);
 
 assert.match(conteudo.routes, /router\.post\("\/fusion\/contratacao"/);
 assert.match(conteudo.routes, /router\.post\("\/webhooks\/asaas"/);
@@ -102,11 +103,16 @@ for (const marcador of [
 }
 
 assert.match(conteudo.treinosRoutes, /router\.post\("\/aluno-app\/pagamentos"/);
+assert.match(conteudo.treinosRoutes, /router\.get\("\/aluno-app\/pagamentos\/:id"/);
 assert.match(conteudo.treinosRoutes, /iniciarPagamentoAlunoApp/);
+assert.match(conteudo.treinosRoutes, /consultarPagamentoAlunoApp/);
 assert.match(conteudo.alunoActions, /export async function identidadeAlunoApp/);
 
 assert.match(conteudo.alunoHtml, /id="pagarMensalidadeAluno"/);
 assert.match(conteudo.alunoJs, /request\("\/pagamentos"/);
+assert.match(conteudo.alunoJs, /fusion_aluno_pagamento_pendente_v1/);
+assert.match(conteudo.alunoJs, /Verificar pagamento/);
+assert.match(conteudo.alunoJs, /gateway confirmar/);
 assert.match(conteudo.alunoJs, /X-Fusion-Device-Token/);
 assert.match(conteudo.alunoJs, /window\.open/);
 assert.match(conteudo.alunoCss, /\.section-action/);

@@ -2,7 +2,8 @@ const API = "/api/treinos/aluno-app";
 const KEYS = {
   installationId: "fusion_aluno_installation_id_v2",
   deviceToken: "fusion_aluno_device_token_v2",
-  academiaNome: "fusion_aluno_academia_nome_v2"
+  academiaNome: "fusion_aluno_academia_nome_v2",
+  pagamentoPendente: "fusion_aluno_pagamento_pendente_v1"
 };
 
 const $ = (id) => document.getElementById(id);
@@ -35,6 +36,32 @@ function installationId() {
 
 function deviceToken() { return localStorage.getItem(KEYS.deviceToken) || ""; }
 function academiaNome() { return localStorage.getItem(KEYS.academiaNome) || ""; }
+
+function pagamentoPendente() {
+  try {
+    const dados = JSON.parse(localStorage.getItem(KEYS.pagamentoPendente) || "null");
+    return dados && typeof dados === "object" ? dados : null;
+  } catch {
+    return null;
+  }
+}
+
+function salvarPagamentoPendente(resposta = {}) {
+  const pagamento = resposta.pagamento || {};
+  const checkout = resposta.checkout || {};
+  if (!pagamento.id) return;
+  localStorage.setItem(KEYS.pagamentoPendente, JSON.stringify({
+    id: pagamento.id,
+    mensalidadeId: pagamento.target?.mensalidadeId || pagamento.mensalidadeId || "",
+    url: checkout.url || "",
+    status: pagamento.status || "",
+    criadoEm: new Date().toISOString()
+  }));
+}
+
+function limparPagamentoPendente() {
+  localStorage.removeItem(KEYS.pagamentoPendente);
+}
 
 function setAcademia(nome) {
   const valor = String(nome || "").trim();
@@ -97,6 +124,12 @@ function buttonBusy(button, busy, busyText = "Aguarde...") {
   if (!button.dataset.label) button.dataset.label = button.textContent;
   button.disabled = busy;
   button.textContent = busy ? busyText : button.dataset.label;
+}
+
+function setButtonLabel(button, label = "") {
+  if (!button) return;
+  button.dataset.label = label;
+  button.textContent = label;
 }
 
 function dispositivoInvalido(error) {
@@ -242,6 +275,16 @@ async function entrar() {
 
 function textoSeguro(value) {
   return String(value ?? "").trim();
+}
+
+function htmlSeguro(value) {
+  return textoSeguro(value).replace(/[&<>"']/g, (char) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    "\"": "&quot;",
+    "'": "&#39;"
+  }[char]));
 }
 
 function moedaBR(value) {
@@ -751,12 +794,21 @@ function renderFinanceiro(financeiro = {}) {
   const lista = limparLista("financeiroLista");
   const mensalidades = Array.isArray(financeiro.mensalidades) ? financeiro.mensalidades : [];
   mensalidadePagamentoAtual = escolherMensalidadeParaPagamento(mensalidades);
+  const pendente = pagamentoPendente();
+  const pendenteDaMensalidade = pendente?.id && (
+    !mensalidadePagamentoAtual?.id ||
+    !pendente.mensalidadeId ||
+    pendente.mensalidadeId === mensalidadePagamentoAtual.id
+  );
   const btnPagamento = $("pagarMensalidadeAluno");
   if (btnPagamento) {
-    btnPagamento.classList.toggle("hidden", !mensalidadePagamentoAtual);
-    btnPagamento.textContent = mensalidadePagamentoAtual
+    btnPagamento.dataset.acaoPagamento = pendenteDaMensalidade ? "verificar" : "pagar";
+    btnPagamento.classList.toggle("hidden", !mensalidadePagamentoAtual && !pendenteDaMensalidade);
+    setButtonLabel(btnPagamento, pendenteDaMensalidade
+      ? "Verificar pagamento"
+      : mensalidadePagamentoAtual
       ? `Pagar ${moedaBR(saldoMensalidade(mensalidadePagamentoAtual))}`
-      : "Pagar agora";
+      : "Pagar agora");
   }
 
   if (!mensalidades.length) {
@@ -771,14 +823,100 @@ function renderFinanceiro(financeiro = {}) {
   });
 }
 
+async function consultarPagamentoAluno(pagamentoId) {
+  return request(`/pagamentos/${encodeURIComponent(pagamentoId)}`, {
+    method: "GET",
+    headers: { "X-Fusion-Device-Token": deviceToken() }
+  });
+}
+
+function abrirJanelaPagamento(url = "", janela = null) {
+  if (!url) return false;
+  if (janela) {
+    try { janela.opener = null; } catch {}
+    janela.location.href = url;
+  } else {
+    const nova = window.open(url, "_blank", "noopener");
+    if (!nova) location.href = url;
+  }
+  return true;
+}
+
+function htmlAbaPagamento(titulo = "", mensagem = "", erro = false) {
+  const tituloSeguro = htmlSeguro(titulo || "Preparando pagamento");
+  const mensagemSegura = htmlSeguro(mensagem || "Gerando link seguro de pagamento...");
+  return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${tituloSeguro || "Pagamento Fusion"}</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;font-family:Arial,Helvetica,sans-serif;background:#f3f7f6;color:#10201e}.box{width:min(420px,100%);background:#fff;border:1px solid #dce7e5;border-radius:18px;padding:24px;box-shadow:0 14px 40px rgba(16,32,30,.08)}h1{margin:0 0 10px;font-size:24px}p{margin:0;color:#61716f;line-height:1.45}.status{display:inline-block;margin-bottom:14px;padding:6px 10px;border-radius:999px;background:${erro ? "#fee2e2" : "#e8f5f2"};color:${erro ? "#991b1b" : "#0b5f59"};font-size:12px;font-weight:800;text-transform:uppercase}button{margin-top:18px;border:0;border-radius:12px;background:#0f766e;color:#fff;padding:12px 16px;font-weight:800;cursor:pointer}</style></head><body><main class="box"><span class="status">${erro ? "Erro" : "Pagamento"}</span><h1>${tituloSeguro}</h1><p>${mensagemSegura}</p>${erro ? "<button onclick=\"window.close();history.back();\">Voltar</button>" : ""}</main></body></html>`;
+}
+
+function escreverAbaPagamento(janela = null, titulo = "", mensagem = "", erro = false) {
+  if (!janela) return;
+  try {
+    janela.document.open();
+    janela.document.write(htmlAbaPagamento(titulo, mensagem, erro));
+    janela.document.close();
+  } catch {}
+}
+
+function abrirAbaPagamentoPreparando() {
+  const janela = window.open("about:blank", "_blank");
+  escreverAbaPagamento(janela, "Preparando pagamento", "Gerando link seguro de pagamento...");
+  return janela;
+}
+
+function mostrarErroAbaPagamento(janela = null, mensagem = "") {
+  escreverAbaPagamento(
+    janela,
+    "Pagamento não aberto",
+    mensagem || "Não foi possível gerar o link do PagBank. Volte ao app do aluno e tente novamente.",
+    true
+  );
+}
+
+async function verificarPagamentoPendente({ abrirCheckout = false, janela = null, silencioso = false } = {}) {
+  const pendente = pagamentoPendente();
+  if (!pendente?.id) return false;
+
+  const resposta = await consultarPagamentoAluno(pendente.id);
+  const recebido = resposta.pagamento?.recebido === true || resposta.recebimento?.baixado === true;
+  if (recebido) {
+    limparPagamentoPendente();
+    if (janela) janela.close();
+    await carregarHome();
+    setMessage("homeMessage", resposta.mensagem || "Pagamento recebido e baixa automática concluída.", "success");
+    return true;
+  }
+
+  const url = resposta.checkout?.url || pendente.url || "";
+  salvarPagamentoPendente(resposta);
+  if (abrirCheckout && url) {
+    abrirJanelaPagamento(url, janela);
+    setMessage("homeMessage", "Pagamento ainda não confirmado. O link foi reaberto para concluir.", "success");
+  } else {
+    if (janela && abrirCheckout) mostrarErroAbaPagamento(janela, "O pagamento ainda não tem link de checkout disponível.");
+    else if (janela) janela.close();
+    if (!silencioso) setMessage("homeMessage", resposta.mensagem || "Pagamento ainda aguardando confirmação.", "success");
+  }
+  return false;
+}
+
 async function pagarMensalidadeAluno() {
   const btn = $("pagarMensalidadeAluno");
-  if (!mensalidadePagamentoAtual?.id || !btn) return;
+  if (!btn) return;
 
   setMessage("homeMessage");
-  const janela = window.open("", "_blank", "noopener");
+  const janela = abrirAbaPagamentoPreparando();
   buttonBusy(btn, true, "Gerando...");
   try {
+    if (btn.dataset.acaoPagamento === "verificar") {
+      await verificarPagamentoPendente({ abrirCheckout: true, janela });
+      return;
+    }
+
+    if (!mensalidadePagamentoAtual?.id) {
+      if (janela) janela.close();
+      return;
+    }
+
     const resposta = await request("/pagamentos", {
       method: "POST",
       headers: { "X-Fusion-Device-Token": deviceToken() },
@@ -790,12 +928,15 @@ async function pagarMensalidadeAluno() {
 
     const url = resposta.checkout?.url || resposta.invoiceUrl || "";
     if (!url) throw new Error("A cobrança foi criada, mas o link de pagamento não foi retornado.");
-    if (janela) janela.location.href = url;
-    else location.href = url;
-    setMessage("homeMessage", "Pagamento aberto. Assim que o Asaas confirmar, a baixa será automática.", "success");
+    salvarPagamentoPendente(resposta);
+    abrirJanelaPagamento(url, janela);
+    btn.dataset.acaoPagamento = "verificar";
+    setButtonLabel(btn, "Verificar pagamento");
+    setMessage("homeMessage", "Pagamento aberto. Assim que o gateway confirmar, a baixa será automática.", "success");
   } catch (error) {
-    if (janela) janela.close();
-    setMessage("homeMessage", error.message || "Não foi possível iniciar o pagamento.");
+    const mensagem = error.message || "Não foi possível iniciar o pagamento.";
+    mostrarErroAbaPagamento(janela, mensagem);
+    setMessage("homeMessage", mensagem);
   } finally {
     buttonBusy(btn, false);
   }
@@ -845,6 +986,9 @@ async function carregarHome() {
 
   setMessage("homeMessage");
   show("homeScreen");
+  if (pagamentoPendente()?.id) {
+    verificarPagamentoPendente({ silencioso: true }).catch(() => {});
+  }
 }
 
 async function tentarHomeOuLogin() {

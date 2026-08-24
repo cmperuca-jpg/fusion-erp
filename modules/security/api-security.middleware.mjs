@@ -30,6 +30,7 @@ const PUBLIC_RULES = [
   ["POST", "/api/treinos/aluno-app/catraca"],
   ["GET", "/api/treinos/aluno-app/catraca-contador"],
   ["POST", "/api/treinos/aluno-app/pagamentos"],
+  ["GET", "/api/treinos/aluno-app/pagamentos", "prefix"],
   ["POST", "/api/treinos/aluno-app/logout"],
   ["POST", "/api/pagamentos-online/webhooks/asaas"],
   ["POST", "/api/pagamentos-online/webhooks/pagbank"],

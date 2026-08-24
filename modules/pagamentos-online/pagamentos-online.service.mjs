@@ -537,6 +537,30 @@ function respostaCheckout(registro = {}) {
   };
 }
 
+function respostaPagamentoAluno(registro = {}) {
+  const base = respostaCheckout(registro);
+  const status = statusNormalizado(registro.status);
+  const recebido = ["baixada", "baixado", "paga", "pago", "recebida", "recebido"].includes(status);
+  return {
+    ...base,
+    pagamento: {
+      ...base.pagamento,
+      statusGateway: registro.statusGateway || "",
+      confirmadoEm: registro.confirmadoEm || "",
+      recebido,
+      mensalidadeId: registro.target?.mensalidadeId || "",
+      tituloId: registro.target?.tituloId || ""
+    },
+    recebimento: {
+      baixado: recebido,
+      baixa: registro.baixa || null
+    },
+    mensagem: recebido
+      ? "Pagamento recebido e mensalidade baixada automaticamente."
+      : "Pagamento ainda aguardando confirmação do gateway."
+  };
+}
+
 function ordenarPorVencimento(a = {}, b = {}) {
   return texto(a.vencimento).localeCompare(texto(b.vencimento));
 }
@@ -610,6 +634,34 @@ async function iniciarPagamentoAlunoTenant(identidade = {}, payload = {}) {
 export async function iniciarPagamentoAlunoApp(req, res, deviceToken, payload = {}) {
   const identidade = await identidadeAlunoApp(req, res, deviceToken);
   return executarComTenant(identidade.tenantId, () => iniciarPagamentoAlunoTenant(identidade, payload));
+}
+
+export async function consultarPagamentoAlunoApp(req, res, deviceToken, pagamentoId = "") {
+  const identidade = await identidadeAlunoApp(req, res, deviceToken);
+  return executarComTenant(identidade.tenantId, async () => {
+    const alunoId = texto(identidade.legacyId);
+    if (!alunoId) throw erro("Aluno não identificado para consultar pagamento.", 401, "STUDENT_NOT_IDENTIFIED");
+
+    const id = texto(pagamentoId);
+    if (!id) throw erro("Pagamento não informado.", 400, "PAYMENT_ID_REQUIRED");
+
+    const lista = await lerLista(COL_PAGAMENTOS);
+    const registro = lista.find(item =>
+      texto(item.id) === id ||
+      texto(item.providerPaymentId) === id ||
+      texto(item.providerCheckoutId) === id
+    );
+
+    if (
+      !registro ||
+      registro.escopo !== "aluno_mensalidade" ||
+      texto(registro.target?.alunoId) !== alunoId
+    ) {
+      throw erro("Pagamento online não encontrado para este aluno.", 404, "PAYMENT_NOT_FOUND");
+    }
+
+    return respostaPagamentoAluno(registro);
+  });
 }
 
 async function dadosTenantSaas(tenantId = tenantAtual()) {
