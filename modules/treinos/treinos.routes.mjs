@@ -11,6 +11,7 @@ import {
   obterContadorCatracaPortalAluno
 } from "./treinos.service.mjs";
 import { obterBibliotecaTeste } from "./exercisedb-free-test.service.mjs";
+import { lerColecao, salvarColecao } from "../core/persistence/collection-store.mjs";
 import {
   obterConfiguracaoEquipamentosAcademia,
   atualizarConfiguracaoEquipamentosAcademia
@@ -468,6 +469,74 @@ router.get("/biblioteca", async (req, res) => {
     res.json({ ok: true, dados });
   } catch (erro) {
     res.status(500).json({ ok: false, mensagem: "Erro ao carregar biblioteca de exercicios", erro: erro.message });
+  }
+});
+
+
+
+/* curadoria-exercisedb-v1 */
+const CURADORIA_EXERCISEDB = "treinos_exercisedb_curadoria";
+
+function curadoriaExerciseDbPadrao() {
+  return { schemaVersion: 1, itens: {}, atualizadoEm: "" };
+}
+
+router.get("/curadoria-exercisedb", async (req, res) => {
+  if (!usuarioPortalProfessor(req) && !responsavelTecnico(req)) {
+    return res.status(403).json({ ok: false, mensagem: "Acesso restrito ao professor." });
+  }
+  try {
+    const dados = await lerColecao(CURADORIA_EXERCISEDB, curadoriaExerciseDbPadrao());
+    return res.json({ ok: true, dados: dados && typeof dados === "object" ? dados : curadoriaExerciseDbPadrao() });
+  } catch (erro) {
+    return res.status(500).json({ ok: false, mensagem: erro?.message || "Erro ao carregar curadoria." });
+  }
+});
+
+router.put("/curadoria-exercisedb/:id", somenteMesmoSistema, async (req, res) => {
+  if (!responsavelTecnico(req)) {
+    return res.status(403).json({ ok: false, mensagem: "Somente o responsável técnico pode alterar a curadoria." });
+  }
+  try {
+    const id = texto(req.params.id);
+    const body = req.body || {};
+    const nomePtBr = texto(body.nomePtBr);
+    const grupo = texto(body.grupo).toUpperCase();
+    const status = ["aprovado", "descartado", "revisar"].includes(texto(body.status).toLowerCase())
+      ? texto(body.status).toLowerCase()
+      : "revisar";
+    if (!id || !nomePtBr || !grupo) {
+      return res.status(400).json({ ok: false, mensagem: "ID, nome em português e grupo são obrigatórios." });
+    }
+    const atual = await lerColecao(CURADORIA_EXERCISEDB, curadoriaExerciseDbPadrao());
+    const base = atual && typeof atual === "object" && !Array.isArray(atual) ? atual : curadoriaExerciseDbPadrao();
+    const agora = new Date().toISOString();
+    const item = {
+      id,
+      nomeOriginal: texto(body.nomeOriginal),
+      nomePtBr,
+      grupo,
+      equipamento: texto(body.equipamento),
+      prioridade: ["essencial", "variacao", "opcional"].includes(texto(body.prioridade).toLowerCase())
+        ? texto(body.prioridade).toLowerCase()
+        : "essencial",
+      status,
+      observacao: texto(body.observacao),
+      atualizadoEm: agora,
+      atualizadoPor: {
+        id: texto(req.usuario?.id),
+        nome: texto(req.usuario?.nome)
+      }
+    };
+    const dados = {
+      schemaVersion: 1,
+      itens: { ...(base.itens || {}), [id]: item },
+      atualizadoEm: agora
+    };
+    await salvarColecao(CURADORIA_EXERCISEDB, dados);
+    return res.json({ ok: true, dados: item });
+  } catch (erro) {
+    return res.status(500).json({ ok: false, mensagem: erro?.message || "Erro ao salvar curadoria." });
   }
 });
 
