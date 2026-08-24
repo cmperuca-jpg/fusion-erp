@@ -345,7 +345,7 @@ function renderExercicio() {
   setTexto("descricaoExercicio", ex.descricao, "Sem descrição cadastrada.");
   setTexto("obsExercicio", ex.obs, "Sem observação.");
 
-  const foto = ex.foto || ex.gif || "";
+  const foto = ex.imagemUrl || ex.midia || ex.foto || ex.gif || "";
   $("fotoExercicio").src = foto || fotoFallback;
   $("fotoExercicio").onerror = () => { $("fotoExercicio").src = fotoFallback; };
 

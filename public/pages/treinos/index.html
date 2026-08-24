@@ -7,8 +7,9 @@
   <link rel="stylesheet" href="/assets/css/fusion-app.css">
   <script src="/assets/js/fusion-portal-guard.js" data-fusion-guard="professor"></script>
   <link rel="stylesheet" href="/assets/css/fusion-premium-final.css">
-  <link rel="stylesheet" href="./style.css?v=20260729-contraste-abas-2">
+  <link rel="stylesheet" href="./style.css?v=20260821-assistente-regras-1">
   <link rel="stylesheet" href="/pages/_shared/fusion-area-clara.css?v=20260729-contraste-global-2">
+  <link rel="stylesheet" href="./professor-navegacao.css?v=20260818-1">
 </head>
 <body>
   <main class="wrap">
@@ -17,6 +18,9 @@
         <h1>Montador de Treinos</h1>
         <p>Prescrição interna com aluno, professor, foto do exercício e divisões A/B/C.</p>
       </div>
+      <a class="btn voltar-prof-area" href="/pages/professor-area/index.html">
+        ← Voltar para Área do Professor
+      </a>
     </header>
 
     <section class="card dados dados-compactos">
@@ -45,6 +49,167 @@
       </div>
     </section>
 
+    <!-- assistente-treino-regras-v1 -->
+    <section class="card assistente-treino" id="assistenteTreinoRegras">
+      <div class="assistente-treino-head">
+        <div>
+          <span class="assistente-etiqueta">Assistente de prescrição</span>
+          <h2>Gerar sugestão de treino</h2>
+          <p>
+            Motor local por regras. Não usa API paga e não salva nada
+            automaticamente.
+          </p>
+        </div>
+        <span class="assistente-gratis">Sem custo de IA</span>
+      </div>
+
+      <div id="assistenteAlunoResumo" class="assistente-aluno-resumo">
+        Selecione um aluno para preparar a sugestão.
+      </div>
+
+      <div class="assistente-campos">
+        <label>
+          Nível
+          <select id="assistenteNivel">
+            <option value="iniciante">Iniciante</option>
+            <option value="intermediario">Intermediário</option>
+            <option value="avancado">Avançado</option>
+          </select>
+        </label>
+
+        <label>
+          Frequência semanal
+          <select id="assistenteFrequencia">
+            <option value="2">2 dias/semana</option>
+            <option value="3" selected>3 dias/semana</option>
+            <option value="4">4 dias/semana</option>
+            <option value="5">5 dias/semana</option>
+            <option value="6">6 dias/semana</option>
+          </select>
+        </label>
+
+        <label>
+          Duração aproximada
+          <select id="assistenteDuracao">
+            <option value="30">30 minutos</option>
+            <option value="45">45 minutos</option>
+            <option value="60" selected>60 minutos</option>
+            <option value="75">75 minutos</option>
+            <option value="90">90 minutos</option>
+          </select>
+        </label>
+      </div>
+
+      <!-- assistente-briefing-professor-v1 -->
+      <div class="assistente-briefing">
+        <div class="assistente-briefing-head">
+          <div>
+            <strong>Briefing do professor</strong>
+            <span>
+              Defina como o agente deve organizar o treino antes de gerar.
+            </span>
+          </div>
+        </div>
+
+        <div class="assistente-briefing-grid">
+          <label>
+            Divisão
+            <select id="assistenteModoDivisao">
+              <option value="automatico" selected>Automática</option>
+              <option value="personalizado">Definida pelo professor</option>
+            </select>
+          </label>
+
+          <label>
+            Ênfase extra
+            <select id="assistenteFoco">
+              <option value="">Sem ênfase extra</option>
+              <option value="gluteo">Glúteos</option>
+              <option value="peito">Peito</option>
+              <option value="costas">Costas</option>
+              <option value="quadriceps">Quadríceps</option>
+              <option value="posterior">Posterior de coxa</option>
+              <option value="ombro">Ombros</option>
+              <option value="biceps">Bíceps</option>
+              <option value="triceps">Tríceps</option>
+              <option value="antebraco">Antebraço</option>
+            </select>
+          </label>
+
+          <label>
+            Ênfase semanal
+            <select id="assistenteFocoVezes">
+              <option value="1" selected>1 treino/semana</option>
+              <option value="2">2 treinos/semana</option>
+              <option value="3">3 treinos/semana</option>
+            </select>
+          </label>
+
+          <label>
+            Abdômen / core
+            <select id="assistenteCorePadrao">
+              <option value="conforme" selected>Conforme divisão</option>
+              <option value="1">Adicionar em 1 treino</option>
+              <option value="2">Adicionar em 2 treinos</option>
+              <option value="todos">Adicionar em todos</option>
+            </select>
+          </label>
+
+          <label>
+            Cardio
+            <select id="assistenteCardioPadrao">
+              <option value="conforme" selected>Conforme divisão</option>
+              <option value="1">Final de 1 treino</option>
+              <option value="2">Final de 2 treinos</option>
+              <option value="todos">Final de todos</option>
+            </select>
+          </label>
+
+          <label>
+            Aquecimento / mobilidade
+            <select id="assistenteAquecimentoPadrao">
+              <option value="conforme" selected>Conforme divisão</option>
+              <option value="todos">Início de todos os treinos</option>
+            </select>
+          </label>
+        </div>
+
+        <label class="assistente-briefing-texto">
+          Instruções do professor
+          <textarea
+            id="assistenteBriefingLivre"
+            rows="4"
+            placeholder="Ex.: A: peito e tríceps com abdômen e cardio no final; B: costas, bíceps e antebraço; C: pernas e ombros; foco glúteo 1x na semana"
+          ></textarea>
+          <small>
+            No modo “Definida pelo professor”, use A:, B:, C: até F:.
+            O agente continua respeitando avaliação, restrições, biblioteca e
+            equipamentos cadastrados.
+          </small>
+        </label>
+      </div>
+
+      <div id="assistenteAtencao" class="assistente-atencao" hidden></div>
+
+      <div class="assistente-acoes">
+        <button id="gerarTreinoAssistido" class="btn primary" type="button">
+          Gerar sugestão
+        </button>
+
+        <button
+          id="gerarOutraOpcaoAssistido"
+          class="btn"
+          type="button"
+          disabled
+        >
+          Gerar outra opção
+        </button>
+        <span id="assistenteStatus">
+          A sugestão ficará no montador para revisão do professor.
+        </span>
+      </div>
+    </section>
+
     <section class="layout">
       <aside class="card biblioteca">
         <h2>Biblioteca</h2>
@@ -68,8 +233,8 @@
       </section>
     </section>
   </main>
-  <script src="./exercicios-flash.js"></script>
-  <script src="./index.js?v=20260729-contraste-abas-2"></script>
+  <script src="./index.js?v=20260822-assistente-preferencias-aprendidas-1"></script>
   <script src="/assets/js/fusion-layout.js"></script>
+<p class="repdb-credit" style="margin:16px auto;padding:8px;text-align:center;font-size:12px;color:#64748b">Exercise data by <a href="https://repdb.co" target="_blank" rel="noopener">RepDB</a>.</p>
 </body>
 </html>

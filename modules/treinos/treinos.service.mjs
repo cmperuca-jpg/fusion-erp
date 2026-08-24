@@ -345,7 +345,7 @@ function exercicioParaPortal(item = {}) {
     descricao: item.descricao || item.observacoes || item.observacao || "",
     exercicioId: item.exercicioId || "",
     bibliotecaId: item.bibliotecaId || "",
-    foto: "",
+    foto: item.imagemUrl || item.midia || item.foto || item.gif || "",
     gif: "",
     series: item.series ?? "",
     repeticoes: item.repeticoes ?? item.reps ?? "",

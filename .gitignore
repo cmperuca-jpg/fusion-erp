@@ -14,3 +14,6 @@ tools/fusion-access-native/legacy/logs/
 scripts/biometria/*.dll
 scripts/biometria/*.exe
 scripts/biometria/templates-dpapi/
+
+# RepDB Free Tier: uso in-app; nao redistribuir como dataset
+public/assets/treinos/exercicios/

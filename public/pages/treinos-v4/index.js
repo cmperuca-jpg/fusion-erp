@@ -53,7 +53,7 @@
   function nomeProfessor(p={}){return p.nome || p.professorNome || p.professor || p.name || 'Professor';}
   function professorIdAluno(a={}){return String(a.professorId || a.professor_id || a.professorResponsavelId || a.professor_responsavel_id || '');}
   function professorNomeAluno(a={}){return a.professorNome || a.professor || a.professor_responsavel || a.professorResponsavel || '';}
-  function arquivoMidia(ex={}){return ex.midia || ex.media || ex.imagem || ex.image || ex.imagemUrl || ex.videoUrl || '';}
+  function arquivoMidia(ex={}){return ex.imagemUrl || ex.midia || ex.media || ex.foto || ex.gif || ex.imagem || ex.image || ex.videoUrl || '';}
   function exercicioKey(ex={}){return String(ex.bibliotecaId || ex.id || ex.exercicioId || chaveBiblioteca(ex) || ex.nome || ex.name || '');}
   function lerListaStorage(key){try{const v=JSON.parse(localStorage.getItem(key)||'[]'); return Array.isArray(v)?v:[];}catch{return [];} }
   function salvarListaStorage(key, lista){localStorage.setItem(key, JSON.stringify(Array.from(new Set(lista)).slice(0,80)));}
