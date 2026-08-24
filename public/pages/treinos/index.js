@@ -21,7 +21,10 @@ function sessaoProfessorLogado() {
     if (professor?.id || professor?.professorId) {
       return {
         professorId: String(professor.id || professor.professorId),
-        professorNome: professor.nome || professor.professorNome || professor.name || "Professor"
+        professorNome: professor.nome || professor.professorNome || professor.name || "Professor",
+        token: professor.token || professor.accessToken || professor.jwt || "",
+        perfil: professor.perfil || professor.tipoPerfil || professor.funcao || "",
+        acessoTodosAlunos: professor.acessoTodosAlunos === true || professor.acessoTodosAlunos === 1
       };
     }
   } catch {}
@@ -3686,6 +3689,10 @@ async function gerarSugestaoAssistenteRegras(
       "A sugestão automática está bloqueada pela Avaliação Física:\n\n• " +
       motivos
     );
+  }
+
+  if (!equipamentosAcademiaAssistenteCarregados) {
+    await carregarEquipamentosAcademiaAssistente();
   }
 
   if (!equipamentosAcademiaAssistenteCarregados) {

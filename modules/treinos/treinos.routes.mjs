@@ -471,7 +471,7 @@ router.get("/biblioteca", async (req, res) => {
 
 /* equipamentos-academia-v1 */
 router.get("/equipamentos-academia", async (req, res) => {
-  if (!usuarioPortalProfessor(req)) {
+  if (!usuarioPortalProfessor(req) && !responsavelTecnico(req)) {
     return res.status(403).json({
       ok: false,
       mensagem: "Acesso restrito ao portal do professor."
@@ -493,7 +493,7 @@ router.put(
   "/equipamentos-academia",
   somenteMesmoSistema,
   async (req, res) => {
-    if (!usuarioPortalProfessor(req) || !responsavelTecnico(req)) {
+    if (!responsavelTecnico(req)) {
       return res.status(403).json({
         ok: false,
         mensagem: "Somente o responsável técnico pode alterar os equipamentos."
