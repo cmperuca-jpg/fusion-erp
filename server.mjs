@@ -163,9 +163,7 @@ await verificarPersistenciaTransacional();
 const sincronizarDadosNesteAmbiente = isRender || ["1", "true", "sim", "yes"].includes(
   String(process.env.FUSION_SYNC_DATA_ON_LOCAL || "false").toLowerCase()
 );
-if (sincronizarDadosNesteAmbiente) {
-  await inicializarPersistenciaSupabase();
-} else {
+if (!sincronizarDadosNesteAmbiente) {
   console.log("[Persistência] Sincronização Supabase desativada no localhost (FUSION_SYNC_DATA_ON_LOCAL=false).");
 }
 if (["1", "true", "sim", "yes"].includes(String(process.env.FUSION_MIGRATE_JSON_ON_START || "false").toLowerCase())) {
@@ -1072,6 +1070,12 @@ app.listen(PORT, HOST, async () => {
   console.log("====================================");
   console.log(`Servidor iniciado na porta ${PORT}`);
   console.log(`Ambiente: ${process.env.NODE_ENV || "development"}`);
+
+  if (sincronizarDadosNesteAmbiente) {
+    setImmediate(() => {
+      inicializarPersistenciaSupabase().catch((erro) => console.error(`[Persistência] Falha na inicialização em segundo plano: ${erro.message}`));
+    });
+  }
 
   if (process.env.RENDER_EXTERNAL_URL) {
     console.log(`URL: ${process.env.RENDER_EXTERNAL_URL}`);

@@ -189,12 +189,18 @@ async function restaurarEstadoRemoto(manifesto) {
   await garantirDiretoriosBase();
   const nomesRemotos = new Set(manifesto.arquivos.map(item => caminhoSeguro(item.relativo)));
   const locais = await inventarioLocal();
+  const locaisPorRelativo = new Map(locais.map(item => [item.relativo, item]));
   for (const item of locais) {
     if (!nomesRemotos.has(item.relativo)) await fs.rm(item.abs, { force: true });
   }
   let restaurados = 0;
   for (const item of manifesto.arquivos) {
     const relativo = caminhoSeguro(item.relativo);
+    const local = locaisPorRelativo.get(relativo);
+    if (local && Number(local.bytes) === Number(item.bytes) && item.hash) {
+      const hashLocal = await hashArquivo(local.abs);
+      if (hashLocal === item.hash) continue;
+    }
     const dados = await baixarObjeto(`${prefixo()}/${relativo}`);
     const destino = absoluto(relativo);
     await fs.mkdir(path.dirname(destino), { recursive: true });
