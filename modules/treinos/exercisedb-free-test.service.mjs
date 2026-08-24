@@ -27,23 +27,59 @@ async function traduzirNomePtBr(nome) {
   }
   return original;
 }
+
 async function traduzirCatalogoPtBr(lista = []) {
-  const saida = new Array(lista.length);
-  let cursor = 0;
-  async function worker() {
-    while (true) {
-      const i = cursor++;
-      if (i >= lista.length) return;
-      const item = lista[i];
-      const nomeOriginal = texto(item.name);
-      const nomePtBr = await traduzirNomePtBr(nomeOriginal);
-      saida[i] = { ...item, nameOriginal: nomeOriginal, name: nomePtBr, nomePtBr };
-      await pausa(120);
-    }
+  const saida = [];
+  const TAMANHO_LOTE = 45;
+
+  for (let inicio = 0; inicio < lista.length; inicio += TAMANHO_LOTE) {
+    const bloco = lista.slice(inicio, inicio + TAMANHO_LOTE);
+    const originais = bloco.map(item => texto(item.name));
+    let traduzidos = [];
+
+    try {
+      const separador = " ||| ";
+      const url = FUSION_TRANSLATE_URL + encodeURIComponent(originais.join(separador));
+      const resposta = await fetch(url, {
+        headers: { "User-Agent": USER_AGENT },
+        signal: AbortSignal.timeout(7000)
+      });
+
+      if (resposta.ok) {
+        const json = await resposta.json();
+        const pt = Array.isArray(json?.[0])
+          ? json[0].map(x => texto(x?.[0])).join("").trim()
+          : "";
+
+        const partes = pt
+          .split(/\s*\|\|\|\s*/)
+          .map(texto);
+
+        if (partes.length === originais.length && partes.every(Boolean)) {
+          traduzidos = partes;
+        }
+      }
+    } catch {}
+
+    bloco.forEach((item, indice) => {
+      const original = originais[indice];
+      const traduzido = traduzidos[indice] || traduzirNomeLocalPtBr(original) || original;
+      const nomePtBr = traduzido
+        ? traduzido.charAt(0).toLocaleUpperCase("pt-BR") + traduzido.slice(1)
+        : original;
+
+      saida.push({
+        ...item,
+        nameOriginal: original,
+        name: nomePtBr,
+        nomePtBr
+      });
+    });
+
+    console.log(`PT-BR: ${Math.min(inicio + bloco.length, lista.length)}/${lista.length}`);
+    await pausa(300);
   }
-  await Promise.all([worker(), worker()]);
-  const pt = saida.filter(x => x?.nomePtBr && x.nomePtBr !== x.nameOriginal).length;
-  console.log(`PT-BR: ${pt}/${saida.length} nomes traduzidos`);
+
   return saida;
 }
 
@@ -243,7 +279,7 @@ function montarBiblioteca(lista = []) {
       bibliotecaId: `edb_${item.exerciseId || indice + 1}`,
       exercicioId: `edb_${item.exerciseId || indice + 1}`,
       codigo: `EDB${String(indice + 1).padStart(4, "0")}`,
-      nome: traduzirNomeLocalPtBr(item.name) || `Exercício ${indice + 1}`,
+      nome: texto(item.nomePtBr || item.name) || `Exercício ${indice + 1}`,
       nomeOriginal: texto(item.nameOriginal || item.name),
       grupo,
       grupoMuscular: grupo,
@@ -375,7 +411,7 @@ async function baixarCatalogo() {
   }
 
   console.log(`ExerciseDB: ${itens.length} exercícios em ${paginas} página(s)`);
-  return itens.slice(0, TOTAL_TESTE);
+  return await traduzirCatalogoPtBr(itens.slice(0, TOTAL_TESTE));
 }
 
 async function carregarBiblioteca() {

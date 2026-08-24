@@ -1522,6 +1522,9 @@ function categoriaExercicioAssistente(ex = {}) {
   const nome = normalizarTexto(ex.nome || "");
   const musculos = normalizarTexto(ex.musculos || "");
   const grupoId = String(ex.grupoId || "").trim();
+  /* fusion-catalogo-teste-grupo-v1 */
+  const grupoCatalogo = normalizarTexto(ex.grupo || ex.grupoMuscular || "");
+  if (grupoCatalogo === "cardio") return "cardio";
 
   // Movimento principal primeiro.
   if (/abdominal|abdome|crunch|prancha|pallof|core/.test(nome)) {
