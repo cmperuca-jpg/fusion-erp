@@ -236,11 +236,11 @@ function renderExercicios() {
   const grupo = $("grupoFiltro").value;
   const lista = (biblioteca.exercicios || [])
     .filter(e => (!grupo || String(e.grupoId) === String(grupo)) && (!busca || [e.nome, e.musculos, e.grupo].join(" ").toLowerCase().includes(busca)))
-    .slice(0, 250);
+    .slice(0, 700);
 
   $("listaExercicios").innerHTML = lista.map(e => `
     <div class="ex" draggable="true" data-id="${e.id}">
-      <img src="${e.foto}" onerror="this.src='${fotoFallback}'">
+      <img src="${e.foto}" loading="lazy" decoding="async" onerror="this.src='${fotoFallback}'">
       <div>
         <strong>${e.nome}</strong>
         <small>${e.grupo || ""}${e.musculos ? ` · ${e.musculos}` : ""}</small>
