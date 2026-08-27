@@ -1,4 +1,5 @@
 const API_ALUNOS = "/api/alunos";
+const API_INDICADORES_ALUNOS = "/api/alunos/indicadores";
 const API_PROFESSORES = "/api/professores";
 const API_MATRICULAS_INTEGRAR = "/api/matriculas/integrar";
 const API_MATRICULAS = "/api/matriculas";
@@ -6,6 +7,7 @@ let matriculasAlunoAtual = [];
 const API_PLANOS_CANDIDATAS = ["/api/planos", "/api/financeiro/planos", "/api/cadastros/planos"];
 
 let alunos = [];
+let indicadoresAlunos = {};
 let professoresCadastrados = [];
 let planosCadastrados = [];
 let pagina = 1;
@@ -463,12 +465,14 @@ async function carregarAlunos() {
       throw new Error(payload.erro || payload.mensagem || `Erro HTTP ${resp.status}`);
     }
 
-    alunos = extrairLista(payload);
+    alunos = extrairLista(payload).sort((a, b) => alunoNome(a).localeCompare(alunoNome(b), "pt-BR", { sensitivity: "base" }));
+    indicadoresAlunos = {};
     pagina = 1;
     limparMenu();
     preencherFiltroPlanos();
     atualizarKpis();
     renderizarTabela();
+    void carregarIndicadoresAlunos();
   } catch (erro) {
     $("#tabelaAlunos").innerHTML = `<tr><td colspan="6">Erro ao carregar alunos: ${escapeHtml(erro.message)}</td></tr>`;
     mostrarAlerta(erro.message, "erro");
@@ -503,6 +507,40 @@ function alunosFiltrados() {
   });
 }
 
+function indicadorAlunoHtml(id, tipo, rotulo) {
+  const valor = indicadoresAlunos?.[String(id)]?.[tipo];
+  const estado = valor === true ? "sim" : valor === false ? "nao" : "indefinido";
+  const titulo = valor === true
+    ? `${rotulo}: cadastrado`
+    : valor === false ? `${rotulo}: nao cadastrado` : `${rotulo}: verificando`;
+  return `<span class="aluno-indicador ${estado}" title="${escapeAttr(titulo)}">
+    <i class="aluno-indicador-dot" aria-hidden="true"></i><span>${escapeHtml(rotulo)}</span>
+  </span>`;
+}
+
+function indicadoresAlunoHtml(id) {
+  return `<div class="aluno-indicadores">
+    ${indicadorAlunoHtml(id, "treino", "Treino")}
+    ${indicadorAlunoHtml(id, "avaliacao", "Avaliação")}
+    ${indicadorAlunoHtml(id, "aplicativo", "App")}
+    ${indicadorAlunoHtml(id, "biometria", "Biometria")}
+  </div>`;
+}
+
+async function carregarIndicadoresAlunos() {
+  try {
+    const resp = await fetch(API_INDICADORES_ALUNOS, { cache: "no-store" });
+    const payload = await safeJson(resp);
+    if (!resp.ok) throw new Error(payload.mensagem || payload.erro || `HTTP ${resp.status}`);
+    indicadoresAlunos = payload?.indicadores && typeof payload.indicadores === "object"
+      ? payload.indicadores : {};
+  } catch (erro) {
+    console.warn("Indicadores dos alunos indisponiveis:", erro.message);
+    indicadoresAlunos = {};
+  }
+  renderizarTabela();
+}
+
 function renderizarTabela() {
   const lista = alunosFiltrados();
   const totalPaginas = 1;
@@ -533,7 +571,7 @@ function renderizarTabela() {
       <td>
         <div class="aluno-lista-identidade">
           ${alunoFotoListaHtml(a)}
-          <div class="aluno-lista-texto"><strong>${escapeHtml(alunoNome(a))}</strong><small>${escapeHtml(alunoEmail(a))}</small></div>
+          <div class="aluno-lista-texto"><strong>${escapeHtml(alunoNome(a))}</strong><small>${escapeHtml(alunoEmail(a))}</small>${indicadoresAlunoHtml(id)}</div>
         </div>
       </td>
       <td>${escapeHtml(formatarCpfVisual(alunoCpf(a)))}</td>
@@ -543,7 +581,6 @@ function renderizarTabela() {
       <td class="text-right">
         <div class="aluno-actions-inline">
           <button class="btn-row" type="button" onclick="abrirProntuarioAluno('${escapeAttr(id)}')">Abrir</button>
-          <button class="btn-row" type="button" onclick="abrirEdicao('${escapeAttr(id)}')">Editar</button>
           ${botaoStatusAluno(id, st)}
           <button class="btn-row danger" type="button" onclick="excluirAluno('${escapeAttr(id)}')">Excluir</button>
         </div>
@@ -608,6 +645,7 @@ function renderizarCardsMobileAlunos(itens = [], total = 0) {
           <div>
             <strong>${escapeHtml(alunoNome(a))}</strong>
             <small>${escapeHtml(alunoEmail(a) || formatarCpfVisual(alunoCpf(a)) || '-')}</small>
+            ${indicadoresAlunoHtml(id)}
           </div>
         </div>
         ${statusAlunoHtml(id, st)}
@@ -618,7 +656,6 @@ function renderizarCardsMobileAlunos(itens = [], total = 0) {
       </div>
       <div class="aluno-mobile-actions">
         <button type="button" onclick="abrirProntuarioAluno('${escapeAttr(id)}')">Abrir</button>
-        <button type="button" onclick="abrirEdicao('${escapeAttr(id)}')">Editar</button>
         ${botaoStatusAlunoMobile(id, st)}
         <button type="button" class="danger" onclick="excluirAluno('${escapeAttr(id)}')">Excluir</button>
       </div>

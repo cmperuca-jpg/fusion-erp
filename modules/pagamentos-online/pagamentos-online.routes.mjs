@@ -7,6 +7,7 @@ import {
   consultarPagamentoOnline,
   iniciarPagamentoContratacaoFusion,
   receberWebhookAsaas,
+  receberWebhookInfinitePay,
   receberWebhookPagbank
 } from "./pagamentos-online.service.mjs";
 
@@ -81,6 +82,14 @@ router.post("/webhooks/pagbank", async (req, res) => {
     res.json(await receberWebhookPagbank({ headers: req.headers, body: req.body || {}, rawBody: req.rawBody || "" }));
   } catch (erro) {
     tratarErro(res, erro, "Não foi possível processar o webhook PagBank.");
+  }
+});
+
+router.post("/webhooks/infinitepay", async (req, res) => {
+  try {
+    res.json(await receberWebhookInfinitePay({ body: req.body || {} }));
+  } catch (erro) {
+    tratarErro(res, erro, "Não foi possível processar o webhook InfinitePay.");
   }
 });
 

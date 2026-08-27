@@ -1,0 +1,22 @@
+/* LIMITE INDIVIDUAL DE ENTRADAS - FICHA DO ALUNO 20260826 */
+.aluno-limite-entradas-card{display:grid;gap:12px}
+.aluno-limite-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.aluno-limite-head small{display:block;color:#0ea5b7;font-size:10px;font-weight:900;letter-spacing:.05em}
+.aluno-limite-head h3{margin:4px 0 0}
+#alunoLimiteEntradasBadge{display:inline-flex;align-items:center;border-radius:999px;padding:5px 9px;background:#dcfce7;color:#166534;font-size:10px;font-weight:900;white-space:nowrap}
+#alunoLimiteEntradasBadge[data-status="bloqueado"]{background:#fee2e2;color:#991b1b}
+.aluno-limite-explicacao{margin:0;color:#64748b;font-size:12px;line-height:1.45}
+.aluno-limite-form{display:grid;grid-template-columns:minmax(150px,220px) auto;gap:10px;align-items:end}
+.aluno-limite-form label{display:grid;gap:5px;color:#475569;font-size:11px;font-weight:800}
+.aluno-limite-form input{box-sizing:border-box;width:100%;border:1px solid #cbd5e1;border-radius:9px;padding:10px;background:#fff;color:#0f172a}
+.aluno-limite-form button{border:0;border-radius:9px;padding:10px 14px;background:#21b3cf;color:#fff;font-weight:800;cursor:pointer}
+.aluno-limite-form button:disabled{opacity:.65;cursor:wait}
+.aluno-limite-resumo{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.aluno-limite-resumo>div{padding:10px;border-radius:10px;background:#f8fafc;border:1px solid #e2e8f0}
+.aluno-limite-resumo span{display:block;color:#64748b;font-size:10px;font-weight:800}
+.aluno-limite-resumo strong{display:block;margin-top:4px;color:#0f172a;font-size:15px}
+.aluno-limite-msg{min-height:16px;color:#475569}
+.aluno-limite-msg[data-tipo="ok"]{color:#166534}
+.aluno-limite-msg[data-tipo="aviso"]{color:#92400e}
+.aluno-limite-msg[data-tipo="erro"]{color:#991b1b}
+@media(max-width:560px){.aluno-limite-form{grid-template-columns:1fr}.aluno-limite-form button{width:100%}}

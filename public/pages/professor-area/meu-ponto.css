@@ -1,0 +1,44 @@
+/* PROFESSOR APP - MEU PONTO / MEUS GANHOS 20260826 */
+.prof-meu-ponto{display:grid;gap:14px;margin:18px;padding:18px;border:1px solid #dbe3ef;border-radius:18px;background:#f8fafc}.pmp-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}.pmp-head small{font-size:10px;font-weight:900;color:#ff6600}.pmp-head h2{margin:4px 0 5px}.pmp-head p{margin:0;color:#64748b;font-size:12px}.pmp-head button{border:0;border-radius:9px;padding:9px 13px;background:#ff6600;color:white;font-weight:800;cursor:pointer}.pmp-msg{padding:9px 11px;border-radius:9px;background:#ecfdf5;color:#166534;font-size:12px;font-weight:700}.pmp-msg.erro{background:#fef2f2;color:#991b1b}.pmp-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.pmp-kpis article,.pmp-card{border:1px solid #dbe3ef;border-radius:14px;background:white;padding:14px}.pmp-kpis span,.pmp-money span{display:block;color:#64748b;font-size:10px;font-weight:800}.pmp-kpis strong{display:block;margin-top:5px;font-size:17px}.pmp-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.pmp-title{display:flex;justify-content:space-between;gap:10px;align-items:center}.pmp-title h3{margin:0;font-size:16px}.pmp-title span{color:#64748b;font-size:10px}.pmp-list{display:grid;margin-top:10px;border-top:1px solid #eef2f7}.pmp-row{display:grid;grid-template-columns:70px minmax(0,1fr);gap:3px 9px;padding:10px 0;border-bottom:1px solid #eef2f7}.pmp-row span{grid-row:1/3;color:#64748b;font-size:11px}.pmp-row strong{font-size:12px}.pmp-row small{color:#64748b;font-size:10px}.pmp-money{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}.pmp-money>div{padding:9px;border-radius:10px;background:#f8fafc}.pmp-money strong{display:block;margin-top:4px;font-size:13px}.pmp-empty{padding:14px 0;color:#64748b;font-size:11px}
+@media(max-width:860px){.prof-meu-ponto{margin:12px}.pmp-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.pmp-grid{grid-template-columns:1fr}}@media(max-width:520px){.pmp-head{flex-direction:column}.pmp-head button{width:100%}.pmp-kpis,.pmp-money{grid-template-columns:1fr 1fr}}
+
+/* PROFESSOR PONTO CONTRASTE FORTE 20260826 */
+#profMeuPonto,
+#profMeuPonto h2,
+#profMeuPonto h3,
+#profMeuPonto strong {
+  color:#12323d !important;
+}
+
+#profMeuPonto .pmp-kpis span,
+#profMeuPonto .pmp-money span {
+  color:#475569 !important;
+}
+
+#profMeuPonto .pmp-head p,
+#profMeuPonto .pmp-title span,
+#profMeuPonto .pmp-row span,
+#profMeuPonto .pmp-row small,
+#profMeuPonto .pmp-empty {
+  color:#526b75 !important;
+}
+
+#profMeuPonto .pmp-msg {
+  color:#166534 !important;
+}
+
+#profMeuPonto .pmp-msg.erro {
+  color:#991b1b !important;
+}
+
+#profMeuPonto .pmp-kpis article,
+#profMeuPonto .pmp-card {
+  color:#12323d !important;
+}
+
+#profMeuPonto .pmp-row strong,
+#profMeuPonto .pmp-money strong,
+#profMeuPonto .pmp-kpis strong {
+  opacity:1 !important;
+  visibility:visible !important;
+}

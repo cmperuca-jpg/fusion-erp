@@ -21,6 +21,9 @@
   <link rel="stylesheet" href="/assets/css/fusion-mobile-final.css">
   <link rel="stylesheet" href="/assets/css/fusion-premium-final.css">
   <link rel="stylesheet" href="/pages/_shared/fusion-area-clara.css?v=20260729-contraste-global-2">
+  <link rel="stylesheet" href="/pages/professores/acessos-professor.css?v=20260826-v2-dentro-cadastro" />
+  <!-- PROFESSOR PONTO ADMIN ASSETS 20260826 -->
+  <link rel="stylesheet" href="/pages/professores/ponto-professor.css?v=20260826-1">
 </head>
 <body>
 <div class="fusion-shell">
@@ -76,7 +79,7 @@
       <button class="tab" data-tab="profissional" type="button">Profissional</button>
       <button class="tab" data-tab="agenda" type="button">Agenda</button>
       <button class="tab" data-tab="financeiro" type="button">Financeiro</button>
-      <button class="tab" data-tab="documentos" type="button">Documentos</button>
+<button class="tab" data-tab="documentos" type="button">Documentos</button>
       <button class="tab" data-tab="prontuario" type="button">Prontuário</button>
     </div>
 
@@ -112,7 +115,99 @@
         </div>
         <div class="grid-3"><div class="field"><label for="cep">CEP</label><input id="cep"></div><div class="field"><label for="cidade">Cidade</label><input id="cidade"></div><div class="field"><label for="estado">Estado</label><input id="estado" maxlength="2"></div></div>
         <div class="field"><label for="endereco">Endereço</label><input id="endereco"></div>
-      </section>
+      
+        <!-- PROFESSOR ACESSOS DENTRO CADASTRO V2 20260826 -->
+        <div class="prof-acessos-inline-cadastro">
+          <div class="prof-acessos-shell">
+            <div class="prof-acessos-intro">
+              <div>
+                <strong>Biometria / App</strong>
+                <span>App e acesso da catraca vinculados ao próprio cadastro do professor.</span>
+              </div>
+              <span id="profAcessosIdentidade" class="prof-acessos-identidade">Identificando professor...</span>
+            </div>
+
+            <div id="profAcessosMensagem" class="prof-acessos-mensagem" hidden></div>
+
+            <div class="prof-acessos-grid">
+              <article class="prof-acessos-card">
+                <div class="prof-acessos-card-head">
+                  <div>
+                    <small>APP DO PROFESSOR</small>
+                    <h3>Acesso ao Fusion Professor</h3>
+                  </div>
+                  <span id="profAppStatus" class="prof-acessos-badge neutro">Verificando</span>
+                </div>
+
+                <div class="prof-acessos-dados">
+                  <div>
+                    <span>Professor</span>
+                    <strong id="profAppNome">-</strong>
+                  </div>
+                  <div>
+                    <span>Login do App</span>
+                    <strong id="profAppIdentificador">CPF / e-mail / login</strong>
+                  </div>
+                </div>
+
+                <p>
+                  A senha é definida nos campos do próprio cadastro acima.
+                  O professor usa essa credencial no Fusion Professor.
+                </p>
+
+                <div class="prof-acessos-acoes">
+                  <button id="btnProfDefinirSenha" type="button" class="prof-acessos-btn secundario">
+                    Ir para senha
+                  </button>
+                  <button id="btnProfAbrirApp" type="button" class="prof-acessos-btn">
+                    Abrir App do Professor
+                  </button>
+                </div>
+              </article>
+
+              <article class="prof-acessos-card">
+                <div class="prof-acessos-card-head">
+                  <div>
+                    <small>CATRACA / BIOMETRIA</small>
+                    <h3>Digital do professor</h3>
+                  </div>
+                  <span id="profBioStatus" class="prof-acessos-badge neutro">Verificando</span>
+                </div>
+
+                <div class="prof-acessos-dados">
+                  <div>
+                    <span>Tipo</span>
+                    <strong>Professor</strong>
+                  </div>
+                  <div>
+                    <span>Professor ID</span>
+                    <strong id="profBioId">-</strong>
+                  </div>
+                </div>
+
+                <p>
+                  A catraca usa o mesmo professorId deste cadastro.
+                  Nenhum funcionário duplicado é criado.
+                </p>
+
+                <div class="prof-acessos-acoes">
+                  <button id="btnProfBioAtualizar" type="button" class="prof-acessos-btn secundario">
+                    Verificar digital
+                  </button>
+                  <button id="btnProfBioCadastrar" type="button" class="prof-acessos-btn">
+                    Cadastrar / atualizar digital
+                  </button>
+                </div>
+              </article>
+            </div>
+
+            <div class="prof-acessos-fluxo">
+              <strong>Identidade única</strong>
+              <span>Professor cadastrado → App → Biometria/Catraca → Check-in.</span>
+            </div>
+          </div>
+        </div>
+</section>
 
       <section class="tab-panel" id="tab-profissional">
         <div class="grid-3"><div class="field"><label for="cref">CREF</label><input id="cref"></div><div class="field"><label for="tipoContrato">Tipo de contrato</label><select id="tipoContrato"><option value="">Não informado</option><option>CLT</option><option>Prestador</option><option>Autônomo</option><option>Parceria</option></select></div><div class="field"><label for="valorHora">Valor hora</label><input id="valorHora" inputmode="decimal"></div></div>
@@ -125,6 +220,9 @@
         <div class="grid-3"><div class="field"><label for="diasTrabalho">Dias de trabalho</label><input id="diasTrabalho" placeholder="Segunda, Quarta, Sexta"></div><div class="field"><label for="horarioInicio">Início</label><input id="horarioInicio" type="time"></div><div class="field"><label for="horarioFim">Fim</label><input id="horarioFim" type="time"></div></div>
         <div id="agendaResumo" class="mini-panel">Salve ou selecione um professor para carregar agenda e turmas.</div>
       </section>
+
+      <!-- PROFESSOR ACESSOS APP CATRACA 20260826 -->
+      
 
       <section class="tab-panel" id="tab-financeiro">
         <div class="grid-3"><div class="field"><label for="banco">Banco</label><input id="banco"></div><div class="field"><label for="agencia">Agência</label><input id="agencia"></div><div class="field"><label for="conta">Conta</label><input id="conta"></div></div>
@@ -157,5 +255,7 @@
 
 <script src="/assets/pwa/fusion-pwa-install.js" defer></script>
   <script src="/assets/js/fusion-mobile-final.js" defer></script>
+  <script src="/pages/professores/acessos-professor.js?v=20260826-v2-dentro-cadastro" defer></script>
+  <script src="/pages/professores/ponto-professor.js?v=20260826-2-preservar-edicao" defer></script>
 </body>
 </html>

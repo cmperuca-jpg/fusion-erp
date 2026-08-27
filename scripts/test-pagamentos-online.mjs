@@ -10,6 +10,7 @@ const arquivos = {
   config: "modules/pagamentos-online/pagamentos-online.config.mjs",
   asaas: "modules/pagamentos-online/asaas.client.mjs",
   pagbank: "modules/pagamentos-online/pagbank.client.mjs",
+  infinitepay: "modules/pagamentos-online/infinitepay.client.mjs",
   treinosRoutes: "modules/treinos/treinos.routes.mjs",
   alunoActions: "modules/treinos/aluno-app-actions.service.mjs",
   configuracoesHtml: "public/pages/configuracoes/index.html",
@@ -34,6 +35,7 @@ assert.match(conteudo.server, /verify: capturarRawBodyPagbank/);
 
 assert.match(conteudo.security, /\["POST", "\/api\/pagamentos-online\/webhooks\/asaas"\]/);
 assert.match(conteudo.security, /\["POST", "\/api\/pagamentos-online\/webhooks\/pagbank"\]/);
+assert.match(conteudo.security, /\["POST", "\/api\/pagamentos-online\/webhooks\/infinitepay"\]/);
 assert.match(conteudo.security, /\["POST", "\/api\/treinos\/aluno-app\/pagamentos"\]/);
 assert.match(conteudo.security, /\["GET", "\/api\/treinos\/aluno-app\/pagamentos", "prefix"\]/);
 
@@ -43,6 +45,8 @@ assert.match(conteudo.routes, /receberWebhookAsaas/);
 assert.match(conteudo.routes, /router\.post\("\/webhooks\/pagbank"/);
 assert.match(conteudo.routes, /receberWebhookPagbank/);
 assert.match(conteudo.routes, /rawBody: req\.rawBody/);
+assert.match(conteudo.routes, /router\.post\("\/webhooks\/infinitepay"/);
+assert.match(conteudo.routes, /receberWebhookInfinitePay/);
 assert.match(conteudo.routes, /router\.get\("\/configuracao"/);
 assert.match(conteudo.routes, /router\.put\("\/configuracao"/);
 assert.match(conteudo.routes, /salvarConfiguracaoPagamentos/);
@@ -59,6 +63,11 @@ assert.match(conteudo.pagbank, /https:\/\/api\.pagseguro\.com/);
 assert.match(conteudo.pagbank, /\/checkouts/);
 assert.match(conteudo.pagbank, /rel\)\.toUpperCase\(\) === "PAY"/);
 
+assert.match(conteudo.infinitepay, /https:\/\/api\.checkout\.infinitepay\.io/);
+assert.match(conteudo.infinitepay, /\/links/);
+assert.match(conteudo.infinitepay, /\/payment_check/);
+assert.match(conteudo.infinitepay, /handle/);
+
 assert.match(conteudo.config, /pagamentos_online_config\.json/);
 assert.match(conteudo.config, /obterConfiguracaoPagamentosRuntime/);
 assert.match(conteudo.config, /obterConfiguracaoPagamentosPublica/);
@@ -67,13 +76,21 @@ assert.match(conteudo.config, /tokenConfigurado/);
 assert.match(conteudo.config, /webhookTokenConfigurado/);
 assert.match(conteudo.config, /mascararSegredo/);
 assert.match(conteudo.config, /createCipheriv\("aes-256-gcm"/);
+assert.match(conteudo.config, /infinitepay/);
+assert.match(conteudo.config, /handleInfinitePay/);
 assert.doesNotMatch(conteudo.pagamentosConfigJs, /tokenResumo\s*=|webhookTokenResumo\s*=/);
 assert.match(conteudo.configuracoesHtml, /pagamentos-online\.html/);
 assert.match(conteudo.pagamentosConfigHtml, /formPagamentosOnline/);
 assert.match(conteudo.pagamentosConfigHtml, /Token da API/);
+assert.match(conteudo.pagamentosConfigHtml, /InfinitePay/);
+assert.match(conteudo.pagamentosConfigHtml, /infinitepayHandle/);
+assert.match(conteudo.pagamentosConfigHtml, /recebedorAtivo/);
 assert.match(conteudo.pagamentosConfigHtml, /autocomplete="new-password"/);
 assert.doesNotMatch(conteudo.pagamentosConfigHtml, /SEU_TOKEN/);
 assert.match(conteudo.pagamentosConfigJs, /\/api\/pagamentos-online\/configuracao/);
+assert.match(conteudo.pagamentosConfigJs, /webhookPadrao/);
+assert.match(conteudo.pagamentosConfigJs, /infinitepay/);
+assert.match(conteudo.pagamentosConfigJs, /nomeGateway/);
 
 for (const marcador of [
   "garantirLancamentoFinanceiroMensalidade",
@@ -97,7 +114,12 @@ for (const marcador of [
   "createHash(\"sha256\")",
   "payment_methods",
   "PAID",
-  "formaPagamentoPagbank"
+  "formaPagamentoPagbank",
+  "criarLinkInfinitePay",
+  "verificarPagamentoInfinitePay",
+  "INFINITEPAY_PAYMENT_NOT_CONFIRMED",
+  "formaPagamentoInfinitePay",
+  "providerName: nomeProvider"
 ]) {
   assert.ok(conteudo.service.includes(marcador), `Marcador obrigatório ausente no serviço: ${marcador}`);
 }
@@ -113,6 +135,8 @@ assert.match(conteudo.alunoJs, /request\("\/pagamentos"/);
 assert.match(conteudo.alunoJs, /fusion_aluno_pagamento_pendente_v1/);
 assert.match(conteudo.alunoJs, /Verificar pagamento/);
 assert.match(conteudo.alunoJs, /gateway confirmar/);
+assert.match(conteudo.alunoJs, /Pagamento aberto pela/);
+assert.match(conteudo.alunoJs, /nomeGatewayPagamento/);
 assert.match(conteudo.alunoJs, /X-Fusion-Device-Token/);
 assert.match(conteudo.alunoJs, /window\.open/);
 assert.match(conteudo.alunoCss, /\.section-action/);
@@ -120,7 +144,7 @@ assert.match(conteudo.alunoCss, /\.section-action/);
 console.log(JSON.stringify({
   ok: true,
   modulo: "pagamentos-online",
-  gateways: ["asaas", "pagbank"],
+  gateways: ["asaas", "pagbank", "infinitepay"],
   baixaAutomatica: true,
   appAluno: true,
   webhookProtegido: true

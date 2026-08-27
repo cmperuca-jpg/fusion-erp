@@ -1,11 +1,16 @@
-import { listarBiblioteca, listarTreinos, salvarTreinos } from "./treinos.repository.mjs";
+import { listarTreinos, salvarTreinos } from "./treinos.repository.mjs";
 import { avaliarAcessoAluno } from "../access-engine/access-engine.service.mjs";
 import { listarLogs as listarLogsAcesso, registrarLog as registrarLogAcesso } from "../access-engine/access-engine.repository.mjs";
 import { lerJsonDuravel } from "../core/persistence/durable-json.mjs";
+import { lerColecao } from "../core/persistence/collection-store.mjs";
 import { tenantAtual } from "../core/persistence/tenant-context.mjs";
 import { obterSupabaseAdmin } from "../../config/supabase.mjs";
 import { combinarContadorAcessos } from "./aluno-app-access-counter.mjs";
 import { gerarTokenPortal, validarTokenPortal } from "../auth/auth.service.mjs";
+import {
+  montarBibliotecaGifsComMetadados,
+  resolverAliasMidia
+} from "./biblioteca-gifs.service.mjs";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -22,6 +27,7 @@ function limiteAcessosDiariosAluno(aluno = {}) {
 }
 
 const TIMEZONE_SISTEMA = process.env.FUSION_TIMEZONE || "America/Sao_Paulo";
+const BIBLIOTECA_EXERCICIOS_COLECAO = "treinos_exercicios";
 
 function listaDePessoas(dados, chave) {
   if (Array.isArray(dados)) return dados;
@@ -314,16 +320,30 @@ export async function obterContadorCatracaPortalAluno({ alunoId, token } = {}) {
 
 
 export async function obterBiblioteca() {
-  const biblioteca = await listarBiblioteca();
+  let metadados = { grupos: [], objetivos: [], exercicios: [] };
+  try {
+    metadados = await lerColecao(BIBLIOTECA_EXERCICIOS_COLECAO, metadados);
+  } catch (erro) {
+    console.warn(`Biblioteca de exercicios: metadados indisponiveis (${erro.message}).`);
+  }
+
+  const biblioteca = await montarBibliotecaGifsComMetadados(metadados);
   biblioteca.grupos = Array.isArray(biblioteca.grupos) ? biblioteca.grupos : [];
   biblioteca.objetivos = Array.isArray(biblioteca.objetivos) ? biblioteca.objetivos : [];
   biblioteca.exercicios = Array.isArray(biblioteca.exercicios)
-    ? biblioteca.exercicios.map((ex) => ({
-        ...ex,
-        foto: ex.foto || ex.gif || ex.imagemUrl || "",
-        gif: ex.gif || ex.foto || ex.imagemUrl || ""
-      }))
+    ? biblioteca.exercicios.map((ex) => {
+        const midia = resolverAliasMidia(ex.gif || ex.midia || ex.imagemUrl || ex.foto || "");
+        return {
+          ...ex,
+          foto: midia,
+          gif: midia,
+          midia,
+          imagemUrl: midia,
+          tipoMidia: "gif"
+        };
+      })
     : [];
+
   return biblioteca;
 }
 
@@ -339,14 +359,16 @@ function treinoEstaAtivo(treino = {}) {
 }
 
 function exercicioParaPortal(item = {}) {
+  const midia = resolverAliasMidia(item.gif || item.imagemUrl || item.midia || item.foto || "");
+
   return {
     ...item,
     nome: item.nome || item.exercicio || "Exercício",
     descricao: item.descricao || item.observacoes || item.observacao || "",
     exercicioId: item.exercicioId || "",
     bibliotecaId: item.bibliotecaId || "",
-    foto: item.imagemUrl || item.midia || item.foto || item.gif || "",
-    gif: "",
+    foto: midia,
+    gif: midia,
     series: item.series ?? "",
     repeticoes: item.repeticoes ?? item.reps ?? "",
     carga: item.carga ?? "",
@@ -525,42 +547,39 @@ export async function criarTreino(payload) {
 
           itens:
             Array.isArray(divisao.itens)
-              ? divisao.itens.map((item) => ({
-                  id: item.id,
-                  codigo: item.codigo,
-                  nome: item.nome,
-                  descricao:
-                    item.descricao || "",
-                  musculos:
-                    item.musculos || "",
-                  grupoId:
-                    item.grupoId || "",
-                  grupo:
-                    item.grupo || "",
-                  foto:
-                    item.foto ||
-                    item.gif ||
-                    "",
-                  gif:
-                    item.gif ||
-                    item.foto ||
-                    "",
-                  series:
-                    item.series || "",
-                  repeticoes:
-                    item.repeticoes || "",
-                  carga:
-                    item.carga || "",
-                  descanso:
-                    item.descanso || "",
-                  metodo:
-                    item.metodo ||
-                    "Convencional",
-                  cadencia:
-                    item.cadencia || "",
-                  obs:
-                    item.obs || ""
-                }))
+              ? divisao.itens.map((item) => {
+                  const midia = resolverAliasMidia(item.gif || item.foto || item.imagemUrl || item.midia || "");
+                  return {
+                    id: item.id,
+                    codigo: item.codigo,
+                    nome: item.nome,
+                    descricao:
+                      item.descricao || "",
+                    musculos:
+                      item.musculos || "",
+                    grupoId:
+                      item.grupoId || "",
+                    grupo:
+                      item.grupo || "",
+                    foto: midia,
+                    gif: midia,
+                    series:
+                      item.series || "",
+                    repeticoes:
+                      item.repeticoes || "",
+                    carga:
+                      item.carga || "",
+                    descanso:
+                      item.descanso || "",
+                    metodo:
+                      item.metodo ||
+                      "Convencional",
+                    cadencia:
+                      item.cadencia || "",
+                    obs:
+                      item.obs || ""
+                  };
+                })
               : []
         }))
       : [];

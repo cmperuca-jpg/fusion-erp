@@ -18,18 +18,18 @@
   }
   function garantirEstrutura(){
     const tabs = document.querySelector('.prontuario-tabs');
-    if(tabs && !tabs.querySelector('[data-tab="contrato-comercial"]')){
+    if(tabs && !tabs.classList.contains("ficha-unica-tabs") && !tabs.querySelector('[data-tab="contrato-comercial"]')){
       const b1 = document.createElement('button'); b1.className='tab'; b1.dataset.tab='contrato-comercial'; b1.textContent='Contrato Comercial';
       const b2 = document.createElement('button'); b2.className='tab'; b2.dataset.tab='servicos-contratados'; b2.textContent='Serviços Contratados';
       tabs.appendChild(b1); tabs.appendChild(b2);
     }
     const content = document.querySelector('.prontuario-page') || document.querySelector('.fusion-content') || document.querySelector('main');
-    if(content && !$('#tab-contrato-comercial')){
+    if(content && !document.querySelector('.ficha-unica-tabs') && !$('#tab-contrato-comercial')){
       const sec = document.createElement('div'); sec.className='tab-panel'; sec.id='tab-contrato-comercial';
       sec.innerHTML = `<div class="fusion-card comercial-card"><h3>Contrato Comercial</h3><div id="contratoComercialResumo" class="info-grid"></div></div>`;
       content.appendChild(sec);
     }
-    if(content && !$('#tab-servicos-contratados')){
+    if(content && !document.querySelector('.ficha-unica-tabs') && !$('#tab-servicos-contratados')){
       const sec = document.createElement('div'); sec.className='tab-panel'; sec.id='tab-servicos-contratados';
       sec.innerHTML = `<div class="fusion-card comercial-card"><div class="comercial-head"><h3>Serviços Contratados</h3><button class="fusion-button" id="btnSalvarChecklistComercial" type="button">Salvar contrato</button></div><div id="servicosChecklist" class="servicos-checklist">Carregando...</div><div id="contratoTotalBox" class="contrato-total-box"></div></div>`;
       content.appendChild(sec);

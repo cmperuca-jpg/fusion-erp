@@ -288,6 +288,8 @@ async function executarAvaliacao({ aluno, identificador = '', dispositivoId = ''
     direcao,
     origem,
     identificador,
+    pessoaTipo: 'aluno',
+    pessoaId: aluno?.id || null,
     alunoId: aluno?.id || null,
     alunoNome: aluno?.nome || '',
     numeroMatricula: aluno?.numeroMatricula || '',
@@ -421,15 +423,44 @@ export async function statusAgenteAcesso() {
 
 export async function liberarRemoto(payload = {}) {
   const dispositivo = await obterDispositivoOuPadrao(payload.dispositivoId || process.env.ACCESS_EQUIPMENT_ID || 'disp_henry7x_01');
+  const pessoaTipo = String(payload.pessoaTipo || payload.tipoPessoa || 'aluno').trim().toLowerCase() || 'aluno';
+  const pessoaId = payload.pessoaId || payload.funcionarioId || payload.professorId || payload.usuarioId || payload.alunoId || null;
+  const pessoaNome = payload.pessoaNome || payload.funcionarioNome || payload.professorNome || payload.usuarioNome || payload.alunoNome || 'Liberação manual';
+  const direcao = payload.direcao || 'entrada';
+  const origem = payload.origem || 'painel-access-engine';
+  const motivo = payload.motivo || 'liberacao-manual';
+
   const catraca = await enfileirarLiberacaoRemota({
-    aluno: { id: payload.alunoId || null, nome: payload.alunoNome || 'Liberação manual' },
+    aluno: { id: pessoaId, nome: pessoaNome },
     dispositivo,
-    direcao: payload.direcao || 'entrada',
-    origem: payload.origem || 'painel-access-engine',
+    direcao,
+    origem,
     operadorId: payload.operadorId || null,
-    motivo: payload.motivo || 'liberacao-manual'
+    motivo
   });
-  return { ok: true, mensagem: 'Comando enviado ao agente local.', catraca };
+
+  let log = null;
+  if (pessoaId) {
+    log = await repo.registrarLog({
+      autorizado: true,
+      motivo,
+      direcao,
+      origem,
+      identificador: pessoaId,
+      pessoaTipo,
+      pessoaId,
+      alunoId: pessoaId,
+      alunoNome: pessoaNome,
+      dispositivoId: dispositivo?.id || '',
+      dispositivoNome: dispositivo?.nome || '',
+      driver: dispositivo?.driver || 'henry7x',
+      fabricante: dispositivo?.fabricante || 'Henry',
+      protocolo: 'access-bridge',
+      catraca
+    });
+  }
+
+  return { ok: true, mensagem: 'Comando enviado ao agente local.', catraca, log };
 }
 
 export async function consultarComandoRemoto(id) {

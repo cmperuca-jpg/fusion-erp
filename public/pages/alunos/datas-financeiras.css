@@ -1,0 +1,33 @@
+/* AJUSTE DE DATAS FINANCEIRAS - FICHA DO ALUNO 20260826 */
+.aluno-datas-financeiras-card{margin-bottom:16px}
+.adf-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.adf-head small{color:#0ea5b7;font-size:10px;font-weight:900;letter-spacing:.05em}
+.adf-head h3{margin:4px 0}
+.adf-head p{margin:0;color:#64748b;font-size:12px;max-width:780px}
+.adf-head button,.adf-table button{border:0;border-radius:9px;background:#21b3cf;color:#fff;font-weight:800;padding:9px 12px;cursor:pointer}
+.adf-table button:disabled{opacity:.6;cursor:wait}
+.adf-msg{min-height:20px;margin:8px 0;font-size:12px;font-weight:700}
+.adf-msg[data-tipo="ok"]{color:#166534}
+.adf-msg[data-tipo="erro"]{color:#991b1b}
+.adf-table-wrap{overflow:auto}
+.adf-table{width:100%;border-collapse:collapse;min-width:920px}
+.adf-table th,.adf-table td{padding:9px;border-bottom:1px solid #e2e8f0;text-align:left;vertical-align:top}
+.adf-table th{font-size:11px;color:#475569}
+.adf-table td{font-size:12px}
+.adf-table td>strong{display:block}
+.adf-table td>small{display:block;margin-top:4px;color:#64748b}
+.adf-table input[type="date"],.adf-table input[type="text"]{box-sizing:border-box;width:100%;min-width:145px;border:1px solid #cbd5e1;border-radius:8px;padding:7px;background:#fff;color:#0f172a}
+.adf-table input[type="text"]{margin-top:5px;min-width:220px}
+.adf-table input:disabled{background:#f1f5f9;color:#94a3b8}
+.adf-status{display:inline-flex;border-radius:999px;background:#f1f5f9;padding:4px 7px;font-size:10px;font-weight:800}
+.adf-foot{margin:10px 0 0;color:#64748b;font-size:11px}
+
+/* DIA VENCIMENTO MENSAL ALUNO UI 20260826 */
+.adf-regra-mensal{display:flex;align-items:end;gap:12px;flex-wrap:wrap;margin:12px 0;padding:12px;border:1px solid #bae6fd;border-radius:10px;background:#f0f9ff}
+.adf-regra-texto{display:flex;flex-direction:column;gap:3px;min-width:280px;flex:1}
+.adf-regra-texto strong{font-size:14px;color:#0f172a}
+.adf-regra-texto small{color:#475569;font-size:11px}
+.adf-regra-mensal label{display:flex;flex-direction:column;gap:4px;font-size:11px;font-weight:800;color:#475569}
+.adf-regra-mensal select{min-width:90px;border:1px solid #cbd5e1;border-radius:8px;padding:8px;background:#fff;color:#0f172a}
+.adf-regra-mensal button{border:0;border-radius:9px;background:#0ea5b7;color:#fff;font-weight:800;padding:9px 13px;cursor:pointer}
+.adf-regra-mensal button:disabled{opacity:.6;cursor:wait}

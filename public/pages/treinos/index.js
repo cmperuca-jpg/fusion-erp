@@ -5,10 +5,41 @@ let divisoes = [{ nome: "A", itens: [] }, { nome: "B", itens: [] }, { nome: "C",
 let divisaoAtiva = 0;
 let treinoAtualId = "";
 let carregandoTreinoAluno = false;
+let exercicioBibliotecaEditando = null;
+let contextoEditorBiblioteca = [];
+const GRUPO_ARQUIVADOS = "ARQUIVADOS";
+const GRUPOS_BIBLIOTECA_PADRAO = [
+  "ABDOME",
+  "ANTEBRAÇO",
+  "BÍCEPS",
+  "CARDIO",
+  "CORE",
+  "COSTAS",
+  "GLÚTEOS",
+  "OMBROS",
+  "PANTURRILHAS",
+  "PEITO",
+  "POSTERIOR",
+  "QUADRÍCEPS",
+  "STEP",
+  "TRAPÉZIO",
+  "TRÍCEPS",
+  GRUPO_ARQUIVADOS
+];
 
 const $ = (id) => document.getElementById(id);
 const metodos = ["Convencional", "Bi-set", "Tri-set", "Drop-set", "Rest-pause", "FST-7", "Pirâmide", "Pirâmide inversa", "Circuito", "Super-série", "Pré-exaustão", "Pós-exaustão"];
 const fotoFallback = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><rect width='100%' height='100%' fill='#edf2f7'/><text x='50%' y='52%' text-anchor='middle' font-size='14' fill='#64748b'>Exercício</text></svg>`);
+
+function escHtml(valor = "") {
+  return String(valor ?? "").replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  }[c]));
+}
 
 function sessaoProfessorLogado() {
   try {
@@ -52,6 +83,62 @@ function normalizarTexto(valor) {
     .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "");
+}
+
+function grupoCanonico(valor = "") {
+  const chave = normalizarTexto(valor)
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  const grupos = {
+    abdome: "ABDOME",
+    abdomen: "ABDOME",
+    abdomem: "ABDOME",
+    antebraco: "ANTEBRAÇO",
+    antebracos: "ANTEBRAÇO",
+    biceps: "BÍCEPS",
+    cardio: "CARDIO",
+    core: "CORE",
+    costa: "COSTAS",
+    costas: "COSTAS",
+    gluteo: "GLÚTEOS",
+    gluteos: "GLÚTEOS",
+    arquivado: GRUPO_ARQUIVADOS,
+    arquivados: GRUPO_ARQUIVADOS,
+    importados_flash: GRUPO_ARQUIVADOS,
+    "importados flash": GRUPO_ARQUIVADOS,
+    ombro: "OMBROS",
+    ombros: "OMBROS",
+    panturilha: "PANTURRILHAS",
+    panturrilha: "PANTURRILHAS",
+    panturilhas: "PANTURRILHAS",
+    panturrilhas: "PANTURRILHAS",
+    peito: "PEITO",
+    posterior: "POSTERIOR",
+    quadriceps: "QUADRÍCEPS",
+    step: "STEP",
+    steep: "STEP",
+    trapezio: "TRAPÉZIO",
+    triceps: "TRÍCEPS"
+  };
+
+  if (grupos[chave]) return grupos[chave];
+  return String(valor || "")
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toUpperCase();
+}
+
+function limparNomeExercicio(valor = "") {
+  return String(valor || "").trim();
+}
+
+function exercicioArquivadoBiblioteca(ex = {}) {
+  return ex.arquivado === true ||
+    normalizarTexto(ex.status) === "arquivado" ||
+    grupoCanonico(ex.grupo || ex.grupoMuscular || ex.grupoId) === GRUPO_ARQUIVADOS;
 }
 
 function statusAlunoAtivo(aluno = {}) {
@@ -167,15 +254,64 @@ function textoBuscaAluno(a) {
   return [nomePessoa(a), a.cpf, a.telefone, a.celular, a.email, a.matricula, a.codigo, a.id].filter(Boolean).join(" ").toLowerCase();
 }
 
+function codigoFlash(valor) {
+  const texto = String(valor || "").trim();
+  if (!texto) return "";
+  const direto = texto.match(/(?:^|\/)0*(\d{1,5})\.gif(?:$|\?)/i);
+  if (direto) return direto[1].padStart(3, "0");
+  const flash = texto.match(/(?:^|[^a-z0-9])flash[_:\s-]*0*(\d{1,5})(?=\D|$)/i);
+  if (flash) return String(Number(flash[1]) || 0).padStart(3, "0");
+  if (!/^0*\d{1,5}$/.test(texto)) return "";
+  const numero = Number(texto);
+  if (!Number.isFinite(numero) || numero <= 0) return "";
+  return String(numero).padStart(3, "0");
+}
+
+function gifCatalogoExercicio(ex = {}) {
+  const midias = [ex.gif, ex.midia, ex.imagemUrl, ex.foto].filter(Boolean);
+  const codigo = [
+    ex.codigoImagem,
+    ex.codigoFlash,
+    ex.codigo,
+    ex.exercicioCodigo,
+    ex.bibliotecaCodigo,
+    ex.id,
+    ex.bibliotecaId,
+    ex.exercicioId,
+    ex.bibliotecaKey,
+    ...midias
+  ].map(codigoFlash).filter(Boolean);
+
+  if (codigo[0]) return `/assets/exercicios/flash/${codigo[0]}.gif`;
+  return midias.find((src) => /\.gif($|\?)/i.test(String(src || ""))) || "";
+}
+
+function midiaPreferencialExercicio(ex = {}) {
+  const midias = [ex.gif, ex.midia, ex.imagemUrl, ex.foto].filter(Boolean);
+  return gifCatalogoExercicio(ex) || midias.find(src => /\.gif($|\?)/i.test(String(src || ""))) || midias[0] || "";
+}
+
 function normalizarExercicio(ex = {}) {
-  const midia = ex.imagemUrl || ex.midia || ex.foto || ex.gif || "";
+  const midia = midiaPreferencialExercicio(ex);
+  const gif = /\.gif($|\?)/i.test(midia) ? midia : "";
+  const grupo = grupoCanonico(ex.grupo || ex.grupoMuscular || ex.grupoId || "");
+  const arquivado = exercicioArquivadoBiblioteca({ ...ex, grupo });
+  const nome = limparNomeExercicio(ex.nome || ex.exercicio || ex.titulo || "");
   return {
     ...ex,
     id: Number(ex.id) || ex.id,
-    imagemUrl: ex.imagemUrl || midia,
-    midia: ex.midia || midia,
+    codigoImagem: ex.codigoImagem || ex.codigoFlash || codigoFlash(ex.codigo || ex.id || ex.bibliotecaId || ex.exercicioId || ex.bibliotecaKey || midia),
+    codigoFlash: ex.codigoFlash || ex.codigoImagem || codigoFlash(ex.codigo || ex.id || ex.bibliotecaId || ex.exercicioId || ex.bibliotecaKey || midia),
+    nome: nome || ex.nome || ex.exercicio || "",
+    imagemUrl: midia,
+    midia,
     foto: midia || fotoFallback,
-    gif: ""
+    gif: gif || midia || "",
+    grupo: arquivado ? GRUPO_ARQUIVADOS : (grupo || ex.grupo || ""),
+    grupoMuscular: arquivado ? GRUPO_ARQUIVADOS : (grupo || ex.grupoMuscular || ""),
+    grupoId: arquivado ? GRUPO_ARQUIVADOS : (grupo || ex.grupoId || ""),
+    status: arquivado ? "Arquivado" : (ex.status || "Ativo"),
+    arquivado
   };
 }
 
@@ -184,8 +320,23 @@ function bibliotecaValida(valor) {
   return Boolean(valor && Array.isArray(valor.exercicios) && valor.exercicios.length);
 }
 
-function popularFiltros() {
-  $("grupoFiltro").innerHTML = `<option value="">Todos os grupos</option>` + (biblioteca.grupos || []).map(g => `<option value="${g.id}">${g.nome}</option>`).join("");
+function popularFiltros(grupoSelecionado = $("grupoFiltro")?.value || "") {
+  const grupos = new Map();
+  for (const grupo of biblioteca.grupos || []) {
+    const nome = grupoCanonico(grupo.nome || grupo.id || "");
+    if (nome && !grupos.has(nome)) grupos.set(nome, { id: nome, nome });
+  }
+  for (const ex of biblioteca.exercicios || []) {
+    const nome = grupoCanonico(ex.grupo || ex.grupoMuscular || ex.grupoId || "");
+    if (nome && !grupos.has(nome)) grupos.set(nome, { id: nome, nome });
+  }
+  const filtro = $("grupoFiltro");
+  filtro.innerHTML = `<option value="">Todos os grupos</option>` + [...grupos.values()]
+    .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"))
+    .map(g => `<option value="${g.id}">${g.nome}</option>`).join("");
+  if (grupoSelecionado && [...filtro.options].some((opcao) => opcao.value === grupoSelecionado)) {
+    filtro.value = grupoSelecionado;
+  }
   $("objetivo").innerHTML = `<option value="">Selecione</option>` + (biblioteca.objetivos || []).map(o => `<option value="${o.nome}">${o.nome}</option>`).join("");
 }
 
@@ -234,35 +385,306 @@ function renderProfessores() {
   }
 }
 
-function renderExercicios() {
+function listaExerciciosFiltrada() {
   const busca = ($("busca").value || "").toLowerCase();
   const grupo = $("grupoFiltro").value;
-  const lista = (biblioteca.exercicios || [])
-    .filter(e => (!grupo || String(e.grupoId) === String(grupo)) && (!busca || [e.nome, e.musculos, e.grupo].join(" ").toLowerCase().includes(busca)))
-    .slice(0, 700);
+  const filtroArquivados = grupoCanonico(grupo) === GRUPO_ARQUIVADOS;
+
+  return (biblioteca.exercicios || []).filter((e) => {
+    const arquivado = exercicioArquivadoBiblioteca(e);
+    if (!grupo && arquivado) return false;
+    if (grupo && (filtroArquivados ? !arquivado : String(e.grupoId) !== String(grupo))) return false;
+    return !busca || [e.nome, e.musculos, e.grupo, e.codigoImagem].join(" ").toLowerCase().includes(busca);
+  });
+}
+
+function renderExercicios() {
+  const podeEditarBiblioteca = ehResponsavelTecnico();
+  const lista = listaExerciciosFiltrada().slice(0, 700);
 
   $("listaExercicios").innerHTML = lista.map(e => `
-    <div class="ex" draggable="true" data-id="${e.id}">
-      <img src="${e.foto}" loading="lazy" decoding="async" onerror="this.src='${fotoFallback}'">
+    <div class="ex ${exercicioArquivadoBiblioteca(e) ? "ex-arquivado" : ""}" draggable="${exercicioArquivadoBiblioteca(e) ? "false" : "true"}" data-id="${e.id}">
+      <img src="${escHtml(e.gif || e.foto || e.midia || e.imagemUrl || fotoFallback)}" loading="lazy" decoding="async" onerror="this.src='${fotoFallback}'">
       <div>
-        <strong>${e.nome}</strong>
-        <small>${e.grupo || ""}${e.musculos ? ` · ${e.musculos}` : ""}</small>
+        <strong>${escHtml(e.nome)}</strong>
+        <small>${escHtml(e.grupo || "")}${e.codigoImagem ? ` · ${escHtml(e.codigoImagem)}` : ""}${e.musculos ? ` · ${escHtml(e.musculos)}` : ""}</small>
         <div class="ex-actions">
-          <button class="btn" data-add="${e.id}">Adicionar</button>
-          <button class="btn ghost" data-view="${e.id}">Visualizar</button>
+          ${exercicioArquivadoBiblioteca(e) ? `<span class="badge-arquivado">Arquivado</span>` : `<button class="btn" data-add="${escHtml(e.id)}">Adicionar</button>`}
+          <button class="btn ghost" data-view="${escHtml(e.id)}">Visualizar</button>
+          ${podeEditarBiblioteca ? `<button class="btn ghost" data-edit-bib="${escHtml(e.id)}">Editar</button>` : ""}
         </div>
       </div>
     </div>`).join("") || `<div class="empty">Nenhum exercício encontrado.</div>`;
 
   document.querySelectorAll("[data-add]").forEach(b => b.onclick = () => adicionarExercicio(b.dataset.add, divisaoAtiva));
   document.querySelectorAll("[data-view]").forEach(b => b.onclick = () => visualizarExercicio(b.dataset.view));
-  document.querySelectorAll(".ex").forEach(el => el.ondragstart = (ev) => ev.dataTransfer.setData("text/plain", el.dataset.id));
+  document.querySelectorAll("[data-edit-bib]").forEach(b => b.onclick = () => abrirEditorBiblioteca(b.dataset.editBib));
+  document.querySelectorAll(".ex:not(.ex-arquivado)").forEach(el => el.ondragstart = (ev) => ev.dataTransfer.setData("text/plain", el.dataset.id));
 }
 
 function visualizarExercicio(id) {
   const e = biblioteca.exercicios.find(x => String(x.id) === String(id));
   if (!e) return;
-  alert(`${e.nome}\n\nGrupo: ${e.grupo || "-"}\nMúsculos: ${e.musculos || "-"}\n\n${e.descricao || ""}`);
+  alert(`${e.nome}\n\nCódigo: ${e.codigoImagem || e.codigoFlash || "-"}\nGrupo: ${e.grupo || "-"}\nMúsculos: ${e.musculos || "-"}\n\n${e.descricao || ""}`);
+}
+
+function caminhoMidiaExercicio(ex = {}) {
+  return gifCatalogoExercicio(ex) || ex.gif || ex.midia || ex.imagemUrl || ex.foto || "";
+}
+
+function gruposEditorBiblioteca(grupoAtual = "") {
+  const grupos = new Set(GRUPOS_BIBLIOTECA_PADRAO);
+  for (const grupo of biblioteca.grupos || []) {
+    const nome = grupoCanonico(grupo.nome || grupo.id || "");
+    if (nome) grupos.add(nome);
+  }
+  for (const ex of biblioteca.exercicios || []) {
+    const nome = grupoCanonico(ex.grupo || ex.grupoMuscular || ex.grupoId || "");
+    if (nome) grupos.add(nome);
+  }
+  const atual = grupoCanonico(grupoAtual);
+  if (atual) grupos.add(atual);
+
+  const padrao = GRUPOS_BIBLIOTECA_PADRAO.filter((grupo) => grupos.has(grupo));
+  const extras = [...grupos]
+    .filter((grupo) => !GRUPOS_BIBLIOTECA_PADRAO.includes(grupo))
+    .sort((a, b) => a.localeCompare(b, "pt-BR"));
+  return [...padrao, ...extras];
+}
+
+function preencherGruposEditorBiblioteca(grupoAtual = "") {
+  const select = $("editBibGrupo");
+  if (!select) return;
+  const grupos = gruposEditorBiblioteca(grupoAtual);
+  const atual = grupoCanonico(grupoAtual);
+  select.innerHTML = grupos.map((grupo) => `<option value="${escHtml(grupo)}">${escHtml(grupo)}</option>`).join("");
+  select.value = grupos.includes(atual) ? atual : (grupos[0] || "");
+}
+
+function idsGrupoEditorBiblioteca(ex = {}) {
+  const grupo = grupoCanonico(ex.grupo || ex.grupoMuscular || ex.grupoId || "");
+  return (biblioteca.exercicios || [])
+    .filter((item) => grupoCanonico(item.grupo || item.grupoMuscular || item.grupoId || "") === grupo)
+    .slice(0, 700)
+    .map((item) => String(item.id));
+}
+
+function atualizarNavegacaoEditorBiblioteca() {
+  const ids = contextoEditorBiblioteca.filter(Boolean);
+  const atualId = String(exercicioBibliotecaEditando?.id || "");
+  const indice = ids.indexOf(atualId);
+  const total = ids.length;
+  const posicao = indice >= 0 ? indice + 1 : 0;
+  const texto = $("editBibPosicao");
+  const anterior = $("btnEditorAnterior");
+  const proximo = $("btnEditorProximo");
+
+  if (texto) texto.textContent = total && posicao ? `${posicao} de ${total}` : "";
+  if (anterior) anterior.disabled = total <= 1;
+  if (proximo) proximo.disabled = total <= 1;
+}
+
+function abrirEditorBiblioteca(id, opcoes = {}) {
+  if (!ehResponsavelTecnico()) return;
+  const ex = biblioteca.exercicios.find((item) => String(item.id) === String(id));
+  if (!ex) return;
+  const arquivado = exercicioArquivadoBiblioteca(ex);
+
+  if (!opcoes.manterContexto) {
+    contextoEditorBiblioteca = listaExerciciosFiltrada().slice(0, 700).map((item) => String(item.id));
+  }
+  if (!contextoEditorBiblioteca.includes(String(id))) {
+    contextoEditorBiblioteca = idsGrupoEditorBiblioteca(ex);
+  }
+
+  exercicioBibliotecaEditando = ex;
+  preencherGruposEditorBiblioteca(ex.grupo || ex.grupoMuscular || ex.grupoId || "");
+
+  $("editBibId").value = ex.id || "";
+  $("editBibCodigo").value = ex.codigoImagem || ex.codigoFlash || codigoFlash(ex.codigo || ex.id || ex.bibliotecaId || caminhoMidiaExercicio(ex)) || "";
+  $("editBibNome").value = ex.nome || "";
+  $("editBibGrupo").value = grupoCanonico(ex.grupo || ex.grupoMuscular || ex.grupoId || "");
+  $("editBibCaminho").value = caminhoMidiaExercicio(ex);
+  $("editBibArquivo").value = "";
+  $("editBibStatus").textContent = arquivado
+    ? "Este exercício está em ARQUIVADOS e não aparece em Todos os grupos. Informe um grupo normal para enviar de volta."
+    : "";
+  $("editBibPreview").innerHTML = `<img src="${escHtml(caminhoMidiaExercicio(ex) || fotoFallback)}" alt="">`;
+  $("btnArquivarEditorBiblioteca")?.classList.toggle("hidden", arquivado);
+  $("btnRestaurarEditorBiblioteca")?.classList.toggle("hidden", !arquivado);
+  $("btnExcluirEditorBiblioteca")?.classList.toggle("hidden", !arquivado);
+  atualizarNavegacaoEditorBiblioteca();
+  $("modalBibliotecaEditor").classList.remove("hidden");
+}
+
+function fecharEditorBiblioteca() {
+  exercicioBibliotecaEditando = null;
+  contextoEditorBiblioteca = [];
+  $("modalBibliotecaEditor")?.classList.add("hidden");
+}
+
+function navegarEditorBiblioteca(delta) {
+  if (!exercicioBibliotecaEditando) return;
+  let ids = contextoEditorBiblioteca.filter(Boolean);
+  if (!ids.length) {
+    ids = listaExerciciosFiltrada().slice(0, 700).map((item) => String(item.id));
+    contextoEditorBiblioteca = ids;
+  }
+  if (!ids.length) return;
+
+  const atual = ids.indexOf(String(exercicioBibliotecaEditando.id));
+  const proximo = atual < 0 ? 0 : (atual + delta + ids.length) % ids.length;
+  abrirEditorBiblioteca(ids[proximo], { manterContexto: true });
+}
+
+function proximoIdAposRemoverEditorBiblioteca(idAtual = "") {
+  const atual = String(idAtual || "");
+  const idsOriginais = contextoEditorBiblioteca.map((id) => String(id)).filter(Boolean);
+  const indiceAtual = idsOriginais.indexOf(atual);
+  const restantes = idsOriginais.filter((id) => id !== atual);
+  if (!restantes.length) return "";
+  if (indiceAtual < 0) return restantes[0];
+  return restantes[indiceAtual >= restantes.length ? 0 : indiceAtual];
+}
+
+async function carregarProximoAposRemoverEditorBiblioteca(idAtual = "") {
+  const alvoPreferido = proximoIdAposRemoverEditorBiblioteca(idAtual);
+  await carregarBiblioteca();
+
+  const idsAtualizados = listaExerciciosFiltrada()
+    .slice(0, 700)
+    .map((item) => String(item.id))
+    .filter((id) => id !== String(idAtual));
+  contextoEditorBiblioteca = idsAtualizados;
+
+  const alvo = (alvoPreferido && idsAtualizados.includes(alvoPreferido))
+    ? alvoPreferido
+    : idsAtualizados[0];
+
+  if (alvo) {
+    abrirEditorBiblioteca(alvo, { manterContexto: true });
+    return;
+  }
+
+  fecharEditorBiblioteca();
+}
+
+function arquivoParaDataUrl(arquivo) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(reader.error || new Error("Erro ao ler arquivo."));
+    reader.readAsDataURL(arquivo);
+  });
+}
+
+async function carregarBiblioteca() {
+  const grupoSelecionado = $("grupoFiltro")?.value || "";
+  const r = await api("/api/treinos/biblioteca");
+  const bibliotecaApi = r?.dados || null;
+  biblioteca = bibliotecaValida(bibliotecaApi)
+    ? bibliotecaApi
+    : { grupos: [], objetivos: [], exercicios: [] };
+  biblioteca.grupos = Array.isArray(biblioteca.grupos) ? biblioteca.grupos : [];
+  biblioteca.objetivos = Array.isArray(biblioteca.objetivos) ? biblioteca.objetivos : [];
+  biblioteca.exercicios = (biblioteca.exercicios || []).map(normalizarExercicio);
+  popularFiltros(grupoSelecionado);
+  renderExercicios();
+}
+
+async function salvarEditorBiblioteca() {
+  const ex = exercicioBibliotecaEditando;
+  if (!ex) return;
+
+  const status = $("editBibStatus");
+  status.textContent = "Salvando...";
+
+  const grupo = grupoCanonico($("editBibGrupo").value);
+  const arquivado = grupo === GRUPO_ARQUIVADOS;
+  const payload = {
+    nome: $("editBibNome").value.trim(),
+    grupo,
+    grupoMuscular: grupo,
+    grupoId: grupo,
+    status: arquivado ? "Arquivado" : "Ativo",
+    arquivado
+  };
+
+  const resposta = await api(`/api/treinos/biblioteca/${encodeURIComponent(ex.id)}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+  if (resposta.ok === false) throw new Error(resposta.mensagem || "Erro ao salvar exercício.");
+
+  const arquivo = $("editBibArquivo").files?.[0] || null;
+  if (arquivo) {
+    if (!/\.gif$/i.test(arquivo.name) && arquivo.type !== "image/gif") {
+      throw new Error("Selecione um arquivo GIF.");
+    }
+
+    const dataUrl = await arquivoParaDataUrl(arquivo);
+    const midia = await api(`/api/treinos/biblioteca/${encodeURIComponent(ex.id)}/midia`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ arquivoNome: arquivo.name, arquivoBase64: dataUrl })
+    });
+    if (midia.ok === false) throw new Error(midia.mensagem || "Erro ao trocar GIF.");
+  }
+
+  await carregarBiblioteca();
+  fecharEditorBiblioteca();
+}
+
+async function arquivarEditorBiblioteca() {
+  const ex = exercicioBibliotecaEditando;
+  if (!ex) return;
+  const idAtual = String(ex.id);
+  $("editBibStatus").textContent = "Arquivando...";
+  const resposta = await api(`/api/treinos/biblioteca/${encodeURIComponent(ex.id)}/arquivar`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({})
+  });
+  if (resposta.ok === false) throw new Error(resposta.mensagem || "Erro ao arquivar exercício.");
+  await carregarProximoAposRemoverEditorBiblioteca(idAtual);
+}
+
+async function restaurarEditorBiblioteca() {
+  const ex = exercicioBibliotecaEditando;
+  if (!ex) return;
+  const idAtual = String(ex.id);
+  const grupo = grupoCanonico($("editBibGrupo").value);
+  if (!grupo || grupo === GRUPO_ARQUIVADOS) {
+    alert("Informe um grupo normal antes de enviar de volta.");
+    return;
+  }
+
+  $("editBibStatus").textContent = "Enviando de volta...";
+  const resposta = await api(`/api/treinos/biblioteca/${encodeURIComponent(ex.id)}/restaurar`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ grupo, grupoMuscular: grupo, grupoId: grupo })
+  });
+  if (resposta.ok === false) throw new Error(resposta.mensagem || "Erro ao devolver exercício.");
+  await carregarProximoAposRemoverEditorBiblioteca(idAtual);
+}
+
+async function excluirEditorBiblioteca() {
+  const ex = exercicioBibliotecaEditando;
+  if (!ex || !exercicioArquivadoBiblioteca(ex)) return;
+  const idAtual = String(ex.id);
+  const codigo = ex.codigoImagem || ex.codigoFlash || ex.id || "";
+  if (!confirm(`Excluir o GIF arquivado ${codigo} da biblioteca?\n\nUma copia sera guardada no backup do servidor.`)) return;
+
+  $("editBibStatus").textContent = "Excluindo...";
+  const resposta = await api(`/api/treinos/biblioteca/${encodeURIComponent(ex.id)}`, {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({})
+  });
+  if (resposta.ok === false) throw new Error(resposta.mensagem || "Erro ao excluir exercício arquivado.");
+  await carregarProximoAposRemoverEditorBiblioteca(idAtual);
 }
 
 function proximaLetra() {
@@ -302,6 +724,35 @@ function adicionarExercicio(id, idx) {
   agendarRegistroRevisaoAssistente();
 }
 
+function moverExercicioTreino(divisaoIdx, itemIdx, delta) {
+  const lista = divisoes[divisaoIdx]?.itens || [];
+  const destino = itemIdx + delta;
+  if (destino < 0 || destino >= lista.length) return;
+  [lista[itemIdx], lista[destino]] = [lista[destino], lista[itemIdx]];
+  renderDivisoes();
+  agendarRegistroRevisaoAssistente();
+}
+
+function moverExercicioPara(divisaoOrigem, itemOrigem, divisaoDestino, posicaoDestino) {
+  const listaOrigem = divisoes[divisaoOrigem]?.itens;
+  const listaDestino = divisoes[divisaoDestino]?.itens;
+  if (!listaOrigem || !listaDestino || !listaOrigem[itemOrigem]) return;
+
+  let destino = Math.max(0, Number(posicaoDestino) || 0);
+  if (divisaoOrigem === divisaoDestino && itemOrigem < destino) destino -= 1;
+
+  const [item] = listaOrigem.splice(itemOrigem, 1);
+  destino = Math.min(destino, listaDestino.length);
+  listaDestino.splice(destino, 0, item);
+  divisaoAtiva = divisaoDestino;
+  renderDivisoes();
+  agendarRegistroRevisaoAssistente();
+}
+
+function dragTreinoAtivo(evento) {
+  return Array.from(evento.dataTransfer?.types || []).includes("application/x-fusion-treino-item");
+}
+
 function renderAbasDivisoes() {
   const alvo = $("abasDivisoes");
   if (!alvo) return;
@@ -334,8 +785,16 @@ function renderDivisoes() {
       </div>
       <div class="drop" data-drop="${idx}">
         ${(d.itens || []).map((it, i) => `
-          <div class="item">
-            <img src="${it.foto || it.gif || fotoFallback}" onerror="this.src='${fotoFallback}'">
+          <div class="item" data-treino-item="${idx}:${i}">
+            <div class="item-ordem">
+              <span class="item-numero">${i + 1}</span>
+              <button class="ordem-drag" type="button" draggable="true" data-drag-item="${idx}:${i}" title="Arrastar para ordenar" aria-label="Arrastar exercício">↕</button>
+              <div class="item-move-controls">
+                <button class="ordem-btn" type="button" data-move-item="${idx}:${i}:-1" title="Subir" aria-label="Subir exercício" ${i === 0 ? "disabled" : ""}>↑</button>
+                <button class="ordem-btn" type="button" data-move-item="${idx}:${i}:1" title="Descer" aria-label="Descer exercício" ${i === ((d.itens || []).length - 1) ? "disabled" : ""}>↓</button>
+              </div>
+            </div>
+            <img src="${it.gif || it.foto || it.midia || it.imagemUrl || fotoFallback}" onerror="this.src='${fotoFallback}'">
             <div>
               <strong>${it.nome}</strong>
               <small>${it.grupo || ""}${it.musculos ? ` · ${it.musculos}` : ""}</small>
@@ -356,7 +815,52 @@ function renderDivisoes() {
 
   document.querySelectorAll("[data-drop]").forEach(z => {
     z.ondragover = e => e.preventDefault();
-    z.ondrop = e => { e.preventDefault(); adicionarExercicio(e.dataTransfer.getData("text/plain"), Number(z.dataset.drop)); };
+    z.ondrop = e => {
+      e.preventDefault();
+      const mover = e.dataTransfer.getData("application/x-fusion-treino-item");
+      if (mover) {
+        const [divisaoOrigem, itemOrigem] = mover.split(":").map(Number);
+        const divisaoDestino = Number(z.dataset.drop);
+        moverExercicioPara(divisaoOrigem, itemOrigem, divisaoDestino, divisoes[divisaoDestino]?.itens?.length || 0);
+        return;
+      }
+      adicionarExercicio(e.dataTransfer.getData("text/plain"), Number(z.dataset.drop));
+    };
+  });
+  document.querySelectorAll("[data-move-item]").forEach(b => b.onclick = () => {
+    const [d, i, delta] = b.dataset.moveItem.split(":").map(Number);
+    moverExercicioTreino(d, i, delta);
+  });
+  document.querySelectorAll("[data-drag-item]").forEach(alca => {
+    alca.ondragstart = e => {
+      e.stopPropagation();
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("application/x-fusion-treino-item", alca.dataset.dragItem);
+      alca.closest(".item")?.classList.add("item-arrastando");
+    };
+    alca.ondragend = () => {
+      document.querySelectorAll(".item-arrastando,.item-drop-alvo").forEach(el => el.classList.remove("item-arrastando", "item-drop-alvo"));
+    };
+  });
+  document.querySelectorAll("[data-treino-item]").forEach(item => {
+    item.ondragover = e => {
+      if (!dragTreinoAtivo(e)) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      item.classList.add("item-drop-alvo");
+    };
+    item.ondragleave = () => item.classList.remove("item-drop-alvo");
+    item.ondrop = e => {
+      const mover = e.dataTransfer.getData("application/x-fusion-treino-item");
+      if (!mover) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const [divisaoOrigem, itemOrigem] = mover.split(":").map(Number);
+      const [divisaoDestino, itemDestino] = item.dataset.treinoItem.split(":").map(Number);
+      const caixa = item.getBoundingClientRect();
+      const depois = e.clientY > caixa.top + (caixa.height / 2);
+      moverExercicioPara(divisaoOrigem, itemOrigem, divisaoDestino, itemDestino + (depois ? 1 : 0));
+    };
   });
   document.querySelectorAll("[data-f]").forEach(inp => inp.oninput = inp.onchange = () => {
     const d = Number(inp.dataset.d), i = Number(inp.dataset.i);
@@ -4843,20 +5347,11 @@ async function carregarProfessores() {
 
 async function init() {
   $("dataPrescricao").value = new Date().toISOString().slice(0, 10);
-  const r = await api("/api/treinos/biblioteca");
-  const bibliotecaApi = r?.dados || null;
-  biblioteca = bibliotecaValida(bibliotecaApi)
-    ? bibliotecaApi
-    : { grupos: [], objetivos: [], exercicios: [] };
-  biblioteca.grupos = Array.isArray(biblioteca.grupos) ? biblioteca.grupos : [];
-  biblioteca.objetivos = Array.isArray(biblioteca.objetivos) ? biblioteca.objetivos : [];
-  biblioteca.exercicios = (biblioteca.exercicios || []).map(normalizarExercicio);
+  await carregarBiblioteca();
 
   if (!biblioteca.exercicios.length) {
     console.error("Biblioteca de exercícios vazia: API e catálogo local indisponíveis.");
   }
-  popularFiltros();
-  renderExercicios();
   renderDivisoes();
   atualizarEstadoPrescricao();
   await carregarProfessores();
@@ -4873,6 +5368,52 @@ $("alunoSelect").onchange = async () => {
 };
 $("professorSelect").onchange = atualizarEstadoPrescricao;
 $("objetivo")?.addEventListener("change", renderAssistenteAluno);
+$("btnFecharEditorBiblioteca")?.addEventListener("click", fecharEditorBiblioteca);
+$("btnCancelarEditorBiblioteca")?.addEventListener("click", fecharEditorBiblioteca);
+$("btnEditorAnterior")?.addEventListener("click", () => navegarEditorBiblioteca(-1));
+$("btnEditorProximo")?.addEventListener("click", () => navegarEditorBiblioteca(1));
+$("btnSalvarEditorBiblioteca")?.addEventListener("click", async () => {
+  try {
+    await salvarEditorBiblioteca();
+  } catch (erro) {
+    const status = $("editBibStatus");
+    if (status) status.textContent = erro?.message || "Erro ao salvar.";
+    alert(erro?.message || "Erro ao salvar exercício.");
+  }
+});
+$("btnArquivarEditorBiblioteca")?.addEventListener("click", async () => {
+  try {
+    await arquivarEditorBiblioteca();
+  } catch (erro) {
+    const status = $("editBibStatus");
+    if (status) status.textContent = erro?.message || "Erro ao arquivar.";
+    alert(erro?.message || "Erro ao arquivar exercício.");
+  }
+});
+$("btnRestaurarEditorBiblioteca")?.addEventListener("click", async () => {
+  try {
+    await restaurarEditorBiblioteca();
+  } catch (erro) {
+    const status = $("editBibStatus");
+    if (status) status.textContent = erro?.message || "Erro ao enviar de volta.";
+    alert(erro?.message || "Erro ao enviar exercício de volta.");
+  }
+});
+$("btnExcluirEditorBiblioteca")?.addEventListener("click", async () => {
+  try {
+    await excluirEditorBiblioteca();
+  } catch (erro) {
+    const status = $("editBibStatus");
+    if (status) status.textContent = erro?.message || "Erro ao excluir.";
+    alert(erro?.message || "Erro ao excluir exercício arquivado.");
+  }
+});
+$("editBibArquivo")?.addEventListener("change", () => {
+  const arquivo = $("editBibArquivo").files?.[0] || null;
+  if (!arquivo) return;
+  const preview = $("editBibPreview");
+  if (preview) preview.innerHTML = `<img src="${URL.createObjectURL(arquivo)}" alt="">`;
+});
 async function executarGeracaoAssistente(proximaOpcao = false) {
   try {
     await gerarSugestaoAssistenteRegras({ proximaOpcao });

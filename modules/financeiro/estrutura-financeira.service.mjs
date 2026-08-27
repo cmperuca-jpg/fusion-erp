@@ -1,3 +1,4 @@
+import { dataLocalISO } from "../core/time/fusion-time.mjs";
 import crypto from "node:crypto";
 import { executarTransacaoJson, lerJsonDuravel, salvarJsonDuravel } from "../core/persistence/durable-json.mjs";
 import { baixarLancamento } from "./financeiro.service.mjs";
@@ -75,7 +76,7 @@ export async function obterExtratoAluno(idAluno) {
   const titulos = filtrar(financeiro).filter((x) => texto(x.tipo).toLowerCase() === "receber");
   const totais = titulos.filter(ativo).reduce((r, x) => {
     const total = valorTitulo(x); const recebido = valorPago(x); const saldo = pago(x) ? 0 : Math.max(0, numero(total - recebido));
-    r.cobrado += total; r.recebido += recebido; r.aberto += saldo; if (saldo > 0 && vencimento(x) && vencimento(x) < new Date().toISOString().slice(0, 10)) r.vencido += saldo;
+    r.cobrado += total; r.recebido += recebido; r.aberto += saldo; if (saldo > 0 && vencimento(x) && vencimento(x) < dataLocalISO(new Date())) r.vencido += saldo;
     return r;
   }, { cobrado: 0, recebido: 0, aberto: 0, vencido: 0 });
   Object.keys(totais).forEach((k) => { totais[k] = numero(totais[k]); });
@@ -128,7 +129,7 @@ async function receberTitulosInterno(payload = {}) {
   const recibos = await lerJsonDuravel("recibos.json", []);
   const numeroRecibo = String((recibos.reduce((m, x) => Math.max(m, Number(x.numero) || 0), 0) + 1)).padStart(8, "0");
   const recibo = {
-    id: id("rec"), numero: numeroRecibo, data: texto(payload.dataPagamento || payload.dataRecebimento) || new Date().toISOString().slice(0, 10),
+    id: id("rec"), numero: numeroRecibo, data: texto(payload.dataPagamento || payload.dataRecebimento) || dataLocalISO(new Date()),
     hora: new Date().toTimeString().slice(0, 8), alunoId: alunoId(selecionados[0]), aluno: texto(selecionados[0].alunoFornecedor || selecionados[0].pessoa),
     formaPagamento: texto(payload.formaPagamento) || "Dinheiro", valorCobrado: numero(selecionados.reduce((s, x) => s + valorTitulo(x), 0)),
     valorPago: numero(resultados.reduce((s, x) => s + numero(x.valorBrutoRecebido ?? x.valorPago), 0)), desconto: numero(payload.desconto), acrescimo: numero(payload.acrescimo || payload.juros),

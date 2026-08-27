@@ -8,6 +8,10 @@ let professores = [];
 let avaliacaoAtual = null;
 const $ = (s) => document.querySelector(s);
 const PARAMS_INICIAIS = new URLSearchParams(location.search);
+// AVALIACAO AGENDADA PREFILL 20260826
+const AGENDAMENTO_ID_URL = PARAMS_INICIAIS.get("agendamentoId") || PARAMS_INICIAIS.get("agendamento_id") || "";
+const AGENDAMENTO_DATA_URL = PARAMS_INICIAIS.get("agendamentoData") || "";
+const AGENDAMENTO_HORA_URL = PARAMS_INICIAIS.get("agendamentoHora") || "";
 const MODO_EMBED = PARAMS_INICIAIS.get('embed') === '1';
 let professorIdUrl = PARAMS_INICIAIS.get('professorId') || PARAMS_INICIAIS.get('professor_id') || '';
 let professorNomeUrl = '';
@@ -442,7 +446,7 @@ function fecharModal() {
   trocarTab("anamnese");
   setText("professorNomeDisplay", "Definido pelo professor responsável do aluno");
 }
-function novaAvaliacao() { $("#form")?.reset(); avaliacaoAtual = null; setCampo("id", ""); setCampo("data", dataHoje()); setCampo("hora", new Date().toTimeString().slice(0,5)); const alunoFiltro = valorCampo("filtroAluno") || PARAMS_INICIAIS.get('alunoId') || PARAMS_INICIAIS.get('aluno_id'); if (alunoFiltro) setCampo("aluno_id", alunoFiltro); sincronizarAlunoProfessor(); setCampo("avaliacaoNumero", "nova"); setModoAvaliacao("nova"); if (!valorCampo('professor_id') && professorIdUrl) { const p = professorPorId(professorIdUrl); setCampo('professor_id', professorIdUrl); setCampo('professorNome', nomeProfessor(p || {}) || professorNomeUrl); setText('professorNomeDisplay', nomeProfessor(p || {}) || professorNomeUrl || 'Professor informado pela tela anterior'); } abrirModal("Nova avaliação"); trocarTab("anamnese"); }
+function novaAvaliacao() { $("#form")?.reset(); avaliacaoAtual = null; setCampo("id", ""); setCampo("data", AGENDAMENTO_DATA_URL || dataHoje()); setCampo("hora", AGENDAMENTO_HORA_URL || new Date().toTimeString().slice(0,5)); const alunoFiltro = valorCampo("filtroAluno") || PARAMS_INICIAIS.get('alunoId') || PARAMS_INICIAIS.get('aluno_id'); if (alunoFiltro) setCampo("aluno_id", alunoFiltro); sincronizarAlunoProfessor(); setCampo("avaliacaoNumero", "nova"); setModoAvaliacao("nova"); if (!valorCampo('professor_id') && professorIdUrl) { const p = professorPorId(professorIdUrl); setCampo('professor_id', professorIdUrl); setCampo('professorNome', nomeProfessor(p || {}) || professorNomeUrl); setText('professorNomeDisplay', nomeProfessor(p || {}) || professorNomeUrl || 'Professor informado pela tela anterior'); } abrirModal("Nova avaliação"); trocarTab("anamnese"); }
 
 
 function atualizarFiguraSexo() {
@@ -524,6 +528,7 @@ function camposTexto() { return ["data","hora","objetivo","pratica_atividade","m
 function coletar() {
   const alunoId = valorCampo("aluno_id"); const aluno = alunoPorId(alunoId); const profId = valorCampo("professor_id");
   const dados = { aluno_id: alunoId, alunoId, alunoNome: nomeAluno(aluno || {}), professor_id: profId, professorId: profId, professorNome: valorCampo("professorNome") };
+  if (AGENDAMENTO_ID_URL) dados.agendamentoId = AGENDAMENTO_ID_URL;
   camposTexto().forEach(c => { const v = valorCampo(c); if (v !== "") dados[c] = v; });
   dados.rcq = texto($("#rcq")?.textContent).replace(',', '.'); dados.soma_perimetros = texto($("#soma_perimetros")?.textContent).replace(',', '.'); dados.rcq_classificacao = texto($("#rcq_classificacao")?.textContent); dados.risco_pontuacao = texto($("#risco_pontuacao")?.textContent); dados.risco_classificacao = texto($("#risco_classificacao")?.textContent);
   dados.condicao_fisica = radioValor("condicao_fisica"); dados.protocolo_cardio = radioValor("protocolo_cardio");

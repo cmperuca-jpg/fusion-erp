@@ -845,3 +845,13 @@ html, body { max-width:100%; overflow-x:hidden !important; }
 .biometria-progresso-barra i{display:block;width:0;height:100%;background:#06b6d4;border-radius:999px;transition:width .22s ease}
 .biometria-progresso small{color:#475569}
 .biometria-capturas>div:not(.aceita):not(.rejeitada) strong{color:#0f172a}
+
+/* Fusion ERP 2026-08-25 - indicadores operacionais do aluno */
+.aluno-indicadores{display:flex;flex-wrap:wrap;align-items:center;gap:5px 9px;margin-top:6px}
+.aluno-indicador{display:inline-flex;align-items:center;gap:4px;color:#475569;font-size:10px;font-weight:800;line-height:1.1;white-space:nowrap}
+.aluno-indicador-dot{display:inline-block;width:8px;height:8px;flex:0 0 8px;border-radius:999px;background:#94a3b8;box-shadow:0 0 0 2px #fff,0 0 0 3px #cbd5e1}
+.aluno-indicador.sim .aluno-indicador-dot{background:#16a34a;box-shadow:0 0 0 2px #fff,0 0 0 3px #86efac}
+.aluno-indicador.nao .aluno-indicador-dot{background:#dc2626;box-shadow:0 0 0 2px #fff,0 0 0 3px #fecaca}
+.aluno-indicador.indefinido .aluno-indicador-dot{background:#94a3b8}
+@media(max-width:900px){.aluno-indicadores{gap:6px 10px;margin-top:7px}.aluno-indicador{font-size:11px}.aluno-indicador-dot{width:9px;height:9px;flex-basis:9px}}
+

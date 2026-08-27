@@ -1,5 +1,7 @@
+import { FUSION_TIMEZONE } from "../core/time/fusion-time.mjs";
 import path from 'node:path';
 import { lerJsonDuravel } from '../core/persistence/durable-json.mjs';
+import { listarPagamentosRaw } from './pagamentos.repository.mjs';
 
 const ROOT = process.cwd();
 const DATA_DIR = path.join(ROOT, 'data');
@@ -10,7 +12,7 @@ const RECIBOS_FILE = path.join(DATA_DIR, 'recibos.json');
 const RECIBOS_ITENS_FILE = path.join(DATA_DIR, 'recibos_itens.json');
 const PAGAMENTOS_FILE = path.join(DATA_DIR, 'financeiro', 'pagamentos.json');
 const PAGAMENTOS_FILE_LEGADO = path.join(DATA_DIR, 'pagamentos.json');
-const TIMEZONE_OPERACAO = 'America/Sao_Paulo';
+const TIMEZONE_OPERACAO = FUSION_TIMEZONE;
 
 async function lerJson(arquivo, padrao) {
   try { return await lerJsonDuravel(arquivo, padrao); } catch { return padrao; }
@@ -172,7 +174,7 @@ function dataPagamento(item = {}) { return dataISO(item.dataPagamento || item.pa
 function dataVencimento(item = {}) { return dataISO(item.vencimento || item.dataVencimento || item.data || item.criadoEm); }
 function categoria(item = {}, padrao = 'Sem categoria') { return item.categoria || item.centroCusto || item.origem || padrao; }
 function descricao(item = {}, padrao = 'Lançamento') { return item.descricao || item.titulo || item.observacao || padrao; }
-function pessoa(item = {}) { return item.alunoFornecedor || item.pessoa || item.pessoaFornecedor || item.cliente || item.fornecedor || item.alunoNome || ''; }
+function pessoa(item = {}) { return item.alunoFornecedor || item.pessoa || item.pessoaFornecedor || item.cliente || item.fornecedor || item.alunoNome || item.aluno || ''; }
 function horaItem(item = {}) {
   if (item.hora) return String(item.hora).slice(0, 5);
   const fonte = item.criadoEm || item.atualizadoEm || item.dataPagamento || item.data || '';
@@ -297,7 +299,7 @@ export async function movimentoDiarioCaixa(filtros = {}) {
   const recebimentosRaw = await lerJson(RECEBIMENTOS_FILE, []);
   const recibosRaw = await lerJson(RECIBOS_FILE, []);
   const recibosItensRaw = await lerJson(RECIBOS_ITENS_FILE, []);
-  const pagamentosRaw = await lerJsonOpcional([PAGAMENTOS_FILE, PAGAMENTOS_FILE_LEGADO], []);
+  const pagamentosRaw = await listarPagamentosRaw();
 
   const caixas = Array.isArray(caixaRaw.caixas) ? caixaRaw.caixas : [];
   const movimentos = Array.isArray(caixaRaw.movimentos) ? caixaRaw.movimentos : [];
@@ -603,14 +605,14 @@ export async function biFinanceiro(filtros = {}) {
   const financeiroRaw = await lerJson(FINANCEIRO_FILE, []);
   const recebimentosRaw = await lerJsonOpcional([RECEBIMENTOS_FILE], []);
   const recibosRaw = await lerJson(RECIBOS_FILE, []);
-  const pagamentosRaw = await lerJsonOpcional([PAGAMENTOS_FILE, PAGAMENTOS_FILE_LEGADO], []);
+  const pagamentosRaw = await listarPagamentosRaw();
   const caixaRaw = await lerJson(CAIXA_FILE, { caixas: [], movimentos: [] });
 
   const financeiro = ocultarProgramadosDuplicadosFinanceiro(arrayDe(financeiroRaw, 'lancamentos').filter(statusAtivo));
   const recebimentosTodos = arrayDe(recebimentosRaw, 'recebimentos');
   const recibosTodos = arrayDe(recibosRaw, 'recibos');
   const recebimentos = recebimentosTodos.filter(statusAtivo).filter(statusPago);
-  const pagamentos = arrayDe(pagamentosRaw, 'pagamentos').filter(statusAtivo).filter(statusPago);
+  const pagamentos = arrayDe(pagamentosRaw, 'pagamentos').filter(statusAtivo).filter((p) => statusPago(p) || valorPago(p) > 0);
   const movimentosHistoricos = arrayDe(caixaRaw.movimentos || [], 'movimentos').filter(statusAtivo);
 
   // Um estorno deve permanecer no histórico físico do caixa como entrada +
@@ -668,14 +670,65 @@ export async function biFinanceiro(filtros = {}) {
     }
   }
 
+  // Recebimentos historicos podem ter sido gravados apenas com IDs de vinculo,
+  // sem pessoa/descricao. O financeiro vinculado conserva a identificacao.
+  const financeiroPorReferencia = new Map();
+  for (const f of financeiro) {
+    for (const ref of referencias(f)) {
+      if (!financeiroPorReferencia.has(ref)) financeiroPorReferencia.set(ref, f);
+    }
+  }
+
   for (const r of recebimentos) {
     const data = dataPagamento(r) || dataVencimento(r);
-    linhas.push({ origem: 'recebimentos', id: r.id, tipo: 'receita', status: r.status || 'Recebido', data, vencimento: dataVencimento(r), realizado: true, valor: valorOriginal(r), valorPendente: 0, valorRealizado: valorLiquido(r), taxa: calcularTaxa(r), categoria: categoria(r, 'Recebimentos'), descricao: descricao(r, 'Recebimento'), pessoa: pessoa(r), referencias: referencias(r) });
+    const refsRecebimento = referencias(r);
+    const financeiroVinculado = refsRecebimento
+      .map((ref) => financeiroPorReferencia.get(ref))
+      .find(Boolean);
+    const pessoaRecebimento = pessoa(r) || pessoa(financeiroVinculado || {});
+    const descricaoRecebimento = descricao(r, '') || descricao(financeiroVinculado || {}, 'Recebimento');
+    const categoriaRecebimento = categoria(r, '') || categoria(financeiroVinculado || {}, 'Recebimentos');
+
+    linhas.push({
+      origem: 'recebimentos',
+      id: r.id,
+      tipo: 'receita',
+      status: r.status || 'Recebido',
+      data,
+      vencimento: dataVencimento(r),
+      realizado: true,
+      valor: valorOriginal(r),
+      valorPendente: 0,
+      valorRealizado: valorLiquido(r),
+      taxa: calcularTaxa(r),
+      categoria: categoriaRecebimento,
+      descricao: descricaoRecebimento,
+      pessoa: pessoaRecebimento,
+      referencias: refsRecebimento
+    });
   }
 
   for (const p of pagamentos) {
     const data = dataPagamento(p) || dataVencimento(p);
-    linhas.push({ origem: 'pagamentos', id: p.id, tipo: 'despesa', status: p.status || 'Pago', data, vencimento: dataVencimento(p), realizado: statusPago(p), valor: valorOriginal(p), valorPendente: 0, valorRealizado: statusPago(p) ? valorBruto(p) : valorPago(p), taxa: 0, categoria: categoria(p, 'Pagamentos'), descricao: descricao(p, 'Pagamento'), pessoa: pessoa(p), referencias: referencias(p) });
+    const pagoParcialOuTotal = valorPago(p);
+    const realizado = statusPago(p) || pagoParcialOuTotal > 0;
+    linhas.push({
+      origem: 'pagamentos',
+      id: p.id,
+      tipo: 'despesa',
+      status: p.status || (realizado ? 'Pago' : 'Aberto'),
+      data,
+      vencimento: dataVencimento(p),
+      realizado,
+      valor: valorOriginal(p),
+      valorPendente: 0,
+      valorRealizado: statusPago(p) ? valorBruto(p) : pagoParcialOuTotal,
+      taxa: 0,
+      categoria: categoria(p, 'Pagamentos'),
+      descricao: descricao(p, 'Pagamento'),
+      pessoa: pessoa(p),
+      referencias: referencias(p)
+    });
   }
 
   // Usa também o caixa como fonte de segurança para valores já movimentados,

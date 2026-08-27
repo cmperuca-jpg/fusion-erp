@@ -39,10 +39,16 @@
               <label>
                 Provedor
                 <select id="provider">
+                  <option value="infinitepay">InfinitePay</option>
                   <option value="pagbank">PagBank</option>
                   <option value="asaas">Asaas</option>
                 </select>
               </label>
+
+              <div class="config-origin">
+                Recebedor ativo
+                <strong id="recebedorAtivo">Carregando</strong>
+              </div>
 
               <label>
                 Ambiente
@@ -99,6 +105,25 @@
               <label><input id="metodoDebito" type="checkbox" value="DEBIT_CARD"> Cartão de débito</label>
               <label><input id="metodoBoleto" type="checkbox" value="BOLETO"> Boleto</label>
             </fieldset>
+          </section>
+
+          <section class="fusion-card pagamentos-panel">
+            <div class="panel-head">
+              <h3>InfinitePay</h3>
+              <span id="origemInfinitePay" class="config-origin"></span>
+            </div>
+
+            <div class="form-grid">
+              <label>
+                InfiniteTag sem $
+                <input id="infinitepayHandle" type="text" autocomplete="off" placeholder="capoeiratrainer">
+              </label>
+
+              <label>
+                URL da API
+                <input id="infinitepayBaseUrl" type="url" autocomplete="off" placeholder="https://api.checkout.infinitepay.io">
+              </label>
+            </div>
           </section>
 
           <section class="fusion-card pagamentos-panel">

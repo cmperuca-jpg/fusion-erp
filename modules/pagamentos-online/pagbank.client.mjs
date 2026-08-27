@@ -32,9 +32,14 @@ function erroPagbank(mensagem, status = 502, detalhes = {}) {
 }
 
 function descricaoErroPagbank(json = {}, fallback = "Falha ao comunicar com o PagBank.") {
+  const mensagens = Array.isArray(json.error_messages) ? json.error_messages : [];
+  const mensagem = mensagens[0] || {};
+  if (texto(mensagem.error) === "allowlist_access_required") {
+    return "Conta PagBank sem liberação para a API de Checkout. Solicite ao PagBank a liberação de allowlist para este token.";
+  }
   const erros = Array.isArray(json.errors) ? json.errors : [];
   const primeiro = erros[0] || {};
-  return texto(primeiro.description || primeiro.message || json.error_description || json.message || fallback);
+  return texto(mensagem.description || mensagem.message || primeiro.description || primeiro.message || json.error_description || json.message || fallback);
 }
 
 function endpoint(pathname = "", overrides = {}) {

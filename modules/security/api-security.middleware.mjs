@@ -34,6 +34,7 @@ const PUBLIC_RULES = [
   ["POST", "/api/treinos/aluno-app/logout"],
   ["POST", "/api/pagamentos-online/webhooks/asaas"],
   ["POST", "/api/pagamentos-online/webhooks/pagbank"],
+  ["POST", "/api/pagamentos-online/webhooks/infinitepay"],
   ["POST", "/api/matricula-online"],
   ["GET", "/api/matricula-online/validar-cpf"],
   ["GET", "/api/planos"],
@@ -200,11 +201,29 @@ function portalAlunoPermitido(req, user = {}) {
 }
 
 function portalProfessorPermitido(req, user = {}) {
-  if (!isPortal(user, "professor")) return false;
+  const tipo = String(user.portalTipo || user.perfil || "").toLowerCase();
+  const portalProfessor = isPortal(user, "professor") ||
+    (user.portal === true && [
+      "responsavel_tecnico",
+      "responsavel-tecnico",
+      "responsavel tecnico"
+    ].includes(tipo));
+  if (!portalProfessor) return false;
   const tecnico = isResponsavelTecnico(user);
 
   if (req.method === "GET" && req.path === "/api/professores/sessao") return true;
-  if (req.method === "GET" && req.path === "/api/treinos/biblioteca") return true;
+  // PROFESSOR AGENDA PORTAL SECURITY 20260826
+  if (req.method === "GET" && req.path === "/api/agenda-avaliacoes") return true;
+
+  // PROFESSOR PONTO PORTAL SECURITY 20260826
+  const pontoProfessorMatch = String(req.path || "").match(/^\/api\/professores\/([^/]+)\/ponto(?:\/|$)/i);
+  if (req.method === "GET" && pontoProfessorMatch) return mesmoId(pontoProfessorMatch[1], user.id);
+
+  if (pathMatches(req.path, "/api/treinos/biblioteca")) {
+    if (req.method === "GET" && req.path === "/api/treinos/biblioteca") return true;
+    if (["PUT", "PATCH", "DELETE"].includes(req.method)) return tecnico;
+    return false;
+  }
 
   if (pathMatches(req.path, "/api/professores")) {
     if (req.method === "GET" && req.path === "/api/professores") return tecnico;
@@ -212,6 +231,12 @@ function portalProfessorPermitido(req, user = {}) {
     if (req.method === "PUT" && professorIdFotoNoPath(req)) return mesmoId(professorIdFotoNoPath(req), user.id);
     return false;
   }
+
+  // PROFESSOR PORTAL GET AGENDA AVALIACOES 20260826
+  // O portal do professor pode apenas CONSULTAR a agenda de avaliacoes.
+  // A rota /api/agenda-avaliacoes aplica o professorId da sessao do portal,
+  // portanto o professor recebe somente os agendamentos vinculados a ele.
+  if (req.method === "GET" && pathMatches(req.path, "/api/agenda-avaliacoes")) return true;
 
   if (pathMatches(req.path, "/api/alunos")) return req.method === "GET";
   if (pathMatches(req.path, "/api/avaliacoes")) return ["GET", "POST", "PUT", "DELETE"].includes(req.method);

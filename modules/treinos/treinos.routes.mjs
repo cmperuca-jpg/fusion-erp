@@ -11,13 +11,13 @@ import {
   obterContadorCatracaPortalAluno
 } from "./treinos.service.mjs";
 import { obterBibliotecaTeste } from "./exercisedb-free-test.service.mjs";
-import { lerColecao, salvarColecao } from "../core/persistence/collection-store.mjs";
 import {
   obterConfiguracaoEquipamentosAcademia,
   atualizarConfiguracaoEquipamentosAcademia
 } from "./equipamentos-academia.service.mjs";
 import {
   ativarAlunoApp,
+  gerarAtivacaoAlunoAutoatendimentoERP,
   ativarAlunoAppPorLink,
   statusAlunoApp,
   loginAlunoApp,
@@ -39,6 +39,13 @@ import {
 import {
   obterStatusProvedoresAssistente
 } from "./assistente-provider.service.mjs";
+import {
+  arquivarExercicio as arquivarExercicioBiblioteca,
+  atualizarExercicio as atualizarExercicioBiblioteca,
+  excluirExercicioArquivado as excluirExercicioArquivadoBiblioteca,
+  restaurarExercicio as restaurarExercicioBiblioteca,
+  substituirMidiaExercicio as substituirMidiaBiblioteca
+} from "../biblioteca-inteligente/biblioteca-inteligente.service.mjs";
 import {
   atualizarFotoAlunoApp,
   contadorCatracaAlunoApp,
@@ -472,71 +479,113 @@ router.get("/biblioteca", async (req, res) => {
   }
 });
 
-
-
-/* curadoria-exercisedb-v1 */
-const CURADORIA_EXERCISEDB = "treinos_exercisedb_curadoria";
-
-function curadoriaExerciseDbPadrao() {
-  return { schemaVersion: 1, itens: {}, atualizadoEm: "" };
-}
-
-router.get("/curadoria-exercisedb", async (req, res) => {
-  if (!usuarioPortalProfessor(req) && !responsavelTecnico(req)) {
-    return res.status(403).json({ ok: false, mensagem: "Acesso restrito ao professor." });
+router.put("/biblioteca/:id", somenteMesmoSistema, async (req, res) => {
+  if (!responsavelTecnico(req)) {
+    return res.status(403).json({
+      ok: false,
+      mensagem: "Somente o responsavel tecnico pode editar a biblioteca."
+    });
   }
+
   try {
-    const dados = await lerColecao(CURADORIA_EXERCISEDB, curadoriaExerciseDbPadrao());
-    return res.json({ ok: true, dados: dados && typeof dados === "object" ? dados : curadoriaExerciseDbPadrao() });
+    const dados = await atualizarExercicioBiblioteca(req.params.id, {
+      ...req.body,
+      usuario: req.usuario?.nome || req.usuario?.email || "Responsavel tecnico"
+    });
+    return res.json(dados);
   } catch (erro) {
-    return res.status(500).json({ ok: false, mensagem: erro?.message || "Erro ao carregar curadoria." });
+    return res.status(Number(erro?.status || 500)).json({
+      ok: false,
+      mensagem: erro?.message || "Erro ao atualizar exercicio da biblioteca."
+    });
   }
 });
 
-router.put("/curadoria-exercisedb/:id", somenteMesmoSistema, async (req, res) => {
+router.put("/biblioteca/:id/midia", somenteMesmoSistema, async (req, res) => {
   if (!responsavelTecnico(req)) {
-    return res.status(403).json({ ok: false, mensagem: "Somente o responsável técnico pode alterar a curadoria." });
+    return res.status(403).json({
+      ok: false,
+      mensagem: "Somente o responsavel tecnico pode trocar GIFs da biblioteca."
+    });
   }
+
   try {
-    const id = texto(req.params.id);
-    const body = req.body || {};
-    const nomePtBr = texto(body.nomePtBr);
-    const grupo = texto(body.grupo).toUpperCase();
-    const status = ["aprovado", "descartado", "revisar"].includes(texto(body.status).toLowerCase())
-      ? texto(body.status).toLowerCase()
-      : "revisar";
-    if (!id || !nomePtBr || !grupo) {
-      return res.status(400).json({ ok: false, mensagem: "ID, nome em português e grupo são obrigatórios." });
-    }
-    const atual = await lerColecao(CURADORIA_EXERCISEDB, curadoriaExerciseDbPadrao());
-    const base = atual && typeof atual === "object" && !Array.isArray(atual) ? atual : curadoriaExerciseDbPadrao();
-    const agora = new Date().toISOString();
-    const item = {
-      id,
-      nomeOriginal: texto(body.nomeOriginal),
-      nomePtBr,
-      grupo,
-      equipamento: texto(body.equipamento),
-      prioridade: ["essencial", "variacao", "opcional"].includes(texto(body.prioridade).toLowerCase())
-        ? texto(body.prioridade).toLowerCase()
-        : "essencial",
-      status,
-      observacao: texto(body.observacao),
-      atualizadoEm: agora,
-      atualizadoPor: {
-        id: texto(req.usuario?.id),
-        nome: texto(req.usuario?.nome)
-      }
-    };
-    const dados = {
-      schemaVersion: 1,
-      itens: { ...(base.itens || {}), [id]: item },
-      atualizadoEm: agora
-    };
-    await salvarColecao(CURADORIA_EXERCISEDB, dados);
-    return res.json({ ok: true, dados: item });
+    const dados = await substituirMidiaBiblioteca(req.params.id, {
+      ...req.body,
+      usuario: req.usuario?.nome || req.usuario?.email || "Responsavel tecnico"
+    });
+    return res.json(dados);
   } catch (erro) {
-    return res.status(500).json({ ok: false, mensagem: erro?.message || "Erro ao salvar curadoria." });
+    return res.status(Number(erro?.status || 500)).json({
+      ok: false,
+      mensagem: erro?.message || "Erro ao trocar GIF do exercicio."
+    });
+  }
+});
+
+router.patch("/biblioteca/:id/arquivar", somenteMesmoSistema, async (req, res) => {
+  if (!responsavelTecnico(req)) {
+    return res.status(403).json({
+      ok: false,
+      mensagem: "Somente o responsavel tecnico pode arquivar exercicios."
+    });
+  }
+
+  try {
+    const dados = await arquivarExercicioBiblioteca(req.params.id, {
+      ...req.body,
+      usuario: req.usuario?.nome || req.usuario?.email || "Responsavel tecnico"
+    });
+    return res.json(dados);
+  } catch (erro) {
+    return res.status(Number(erro?.status || 500)).json({
+      ok: false,
+      mensagem: erro?.message || "Erro ao arquivar exercicio."
+    });
+  }
+});
+
+router.patch("/biblioteca/:id/restaurar", somenteMesmoSistema, async (req, res) => {
+  if (!responsavelTecnico(req)) {
+    return res.status(403).json({
+      ok: false,
+      mensagem: "Somente o responsavel tecnico pode devolver exercicios."
+    });
+  }
+
+  try {
+    const dados = await restaurarExercicioBiblioteca(req.params.id, {
+      ...req.body,
+      usuario: req.usuario?.nome || req.usuario?.email || "Responsavel tecnico"
+    });
+    return res.json(dados);
+  } catch (erro) {
+    return res.status(Number(erro?.status || 500)).json({
+      ok: false,
+      mensagem: erro?.message || "Erro ao devolver exercicio."
+    });
+  }
+});
+
+router.delete("/biblioteca/:id", somenteMesmoSistema, async (req, res) => {
+  if (!responsavelTecnico(req)) {
+    return res.status(403).json({
+      ok: false,
+      mensagem: "Somente o responsavel tecnico pode excluir exercicios arquivados."
+    });
+  }
+
+  try {
+    const dados = await excluirExercicioArquivadoBiblioteca(req.params.id, {
+      ...req.body,
+      usuario: req.usuario?.nome || req.usuario?.email || "Responsavel tecnico"
+    });
+    return res.json(dados);
+  } catch (erro) {
+    return res.status(Number(erro?.status || 500)).json({
+      ok: false,
+      mensagem: erro?.message || "Erro ao excluir exercicio arquivado."
+    });
   }
 });
 
@@ -678,6 +727,27 @@ router.post("/aluno-login", async (req, res) => {
     res.json({ ok: true, dados: await autenticarAlunoTreino(req.body || {}) });
   } catch (erro) {
     res.status(erro.statusCode || 500).json({ ok: false, mensagem: erro.message || "Erro ao autenticar aluno" });
+  }
+});
+
+
+router.post("/aluno-app/auto-codigo", somenteMesmoSistema, limitarAlunoApp, async (req, res) => {
+  try {
+    const dados = await gerarAtivacaoAlunoAutoatendimentoERP({
+      tenantId: req.body?.tenant || req.body?.tenantId || req.body?.erp_tenant_id,
+      cpf: req.body?.cpf,
+      dataNascimento: req.body?.data_nascimento || req.body?.dataNascimento,
+      telefoneFinal: req.body?.telefone_final || req.body?.telefoneFinal,
+      validadeMinutos: 30
+    });
+    res.json({ ok: true, dados: {
+      codigo: dados.codigo,
+      expira_em: dados.expira_em,
+      academia_nome: dados.academia_nome,
+      aluno_nome: dados.aluno_nome
+    }});
+  } catch (erro) {
+    responderErroAlunoApp(res, erro, "Não foi possível gerar o código. Confira os dados informados.");
   }
 });
 

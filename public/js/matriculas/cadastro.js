@@ -128,6 +128,66 @@
   function turmaNome(turma) {
     return turma?.nome || turma?.turma || turma?.descricao || turma?.modalidade || "";
   }
+  function turmaModalidadeId(turma) {
+    const valor = turma?.modalidadeId ?? turma?.modalidade_id ?? turma?.modalidade?.id ?? "";
+    return String(valor || "").trim();
+  }
+  function turmaModalidadeNome(turma) {
+    const modalidade = turma?.modalidade;
+    const valor = turma?.modalidadeNome
+      ?? turma?.modalidade_nome
+      ?? (modalidade && typeof modalidade === "object" ? modalidade.nome : modalidade)
+      ?? turma?.servico
+      ?? "";
+    return String(valor || "").trim();
+  }
+  function modalidadeSelecionadaId() {
+    const nome = modalidadeSelecionadaNome();
+    if (!nome) return "";
+    const item = modalidades.find((m) => norm(modalidadeValor(m)) === norm(nome));
+    return String(item?.id ?? item?.modalidadeId ?? item?.modalidade_id ?? "").trim();
+  }
+  function turmasDaModalidadeSelecionada() {
+    const modalidadeId = modalidadeSelecionadaId();
+    const modalidadeNome = modalidadeSelecionadaNome();
+
+    if (!modalidadeId && !modalidadeNome) return [...turmas];
+
+    return turmas.filter((turma) => {
+      const turmaId = turmaModalidadeId(turma);
+      const turmaNomeModalidade = turmaModalidadeNome(turma);
+
+      if (modalidadeId && turmaId) {
+        return String(turmaId) === String(modalidadeId);
+      }
+
+      return Boolean(
+        modalidadeNome &&
+        turmaNomeModalidade &&
+        norm(turmaNomeModalidade) === norm(modalidadeNome)
+      );
+    });
+  }
+  function renderizarSelectTurmas(selecionada = "") {
+    const select = $("turma_id");
+    if (!select) return;
+
+    const atual = String(selecionada || select.value || "");
+    const compativeis = turmasDaModalidadeSelecionada();
+
+    select.innerHTML = `<option value="">Sem turma vinculada</option>` + compativeis
+      .map((t) => {
+        const partes = [t.nome, turmaModalidadeNome(t), t.professor, t.horario].filter(Boolean);
+        return `<option value="${attr(turmaValor(t))}">${esc(partes.join(" - "))}</option>`;
+      })
+      .join("");
+
+    if (atual && compativeis.some((t) => String(turmaValor(t)) === atual)) {
+      select.value = atual;
+    } else {
+      select.value = "";
+    }
+  }
   function modalidadeValor(modalidade) {
     return modalidade?.nome || modalidade?.modalidade || modalidade?.descricao || modalidade?.id || "";
   }
@@ -246,10 +306,7 @@
     preencherSelect("aluno_id", alunos, "Selecione o aluno", (a) => a.id, alunoNome);
     preencherSelect("plano_id", planos, "Selecione o plano", (p) => p.id, (p) => `${p.nome || p.id} - ${br(valorPlano(p))}`);
     renderizarSelectModalidades();
-    preencherSelect("turma_id", turmas, "Sem turma vinculada", turmaValor, (t) => {
-      const partes = [t.nome, t.modalidade, t.professor, t.horario].filter(Boolean);
-      return partes.join(" - ");
-    });
+    renderizarSelectTurmas();
   }
 
   function recalcular() {
@@ -342,8 +399,10 @@
     $("data_inicio").value = String(m.dataInicio || m.data_inicio || m.dataMatricula || hoje()).slice(0, 10);
     $("data_fim").value = String(m.dataFim || m.data_fim || "").slice(0, 10);
     $("plano_id").value = m.planoId || m.plano_id || "";
-    $("turma_id").value = Array.isArray(m.turmaIds) ? (m.turmaIds[0] || "") : (m.turmaId || m.turma_id || "");
-    renderizarSelectModalidades(m.modalidade || turmaSelecionada()?.modalidade || "");
+    const turmaIdAtual = Array.isArray(m.turmaIds) ? (m.turmaIds[0] || "") : (m.turmaId || m.turma_id || "");
+    const turmaAtual = turmas.find((t) => String(turmaValor(t)) === String(turmaIdAtual)) || null;
+    renderizarSelectModalidades(m.modalidade || turmaModalidadeNome(turmaAtual) || "");
+    renderizarSelectTurmas(turmaIdAtual);
     $("taxa_matricula").value = dinheiro(m.valorMatricula ?? m.taxaMatricula).toFixed(2);
     $("taxa_matricula").dataset.manual = dinheiro(m.valorMatricula ?? m.taxaMatricula) > 0 ? "true" : "";
     $("desconto_matricula").value = dinheiro(m.descontoMatricula).toFixed(2);
@@ -610,13 +669,17 @@
         setAlerta("Plano alterado: salvar agora passa a ser troca comercial com financeiro.", "erro");
       }
       renderizarSelectModalidades();
+      renderizarSelectTurmas();
       recalcular();
     });
     $("turma_id")?.addEventListener("change", () => {
+      const turmaIdSelecionada = turmaSelecionadaId();
       sincronizarModalidadeDaTurma();
+      renderizarSelectTurmas(turmaIdSelecionada);
       if (matriculaAtual) ativarModoSomenteTurma({ mostrarMensagem: false });
     });
     $("modalidade")?.addEventListener("change", () => {
+      renderizarSelectTurmas();
       if (matriculaAtual) ativarModoSomenteTurma({ mostrarMensagem: false });
     });
     $("cobrar_taxa_matricula")?.addEventListener("change", () => {

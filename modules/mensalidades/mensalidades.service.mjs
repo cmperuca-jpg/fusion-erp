@@ -1,3 +1,4 @@
+import { dataLocalISO, FUSION_TIMEZONE } from "../core/time/fusion-time.mjs";
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { programarProximaCobrancaAposPagamento } from '../cobranca/cobranca.service.mjs';
@@ -32,9 +33,7 @@ async function salvarJson(arquivo, dados) {
   await fs.writeFile(arquivo, JSON.stringify(dados, null, 2), 'utf8');
 }
 
-function hojeISO() {
-  return new Date().toISOString().slice(0, 10);
-}
+function hojeISO() { return dataLocalISO(new Date()); }
 
 function agoraISO() {
   return new Date().toISOString();

@@ -581,10 +581,36 @@ export async function receberTitulos(dados = {}) {
         };
       }
       const r = recebimentos.findIndex((x) => mesmo(x.lancamentoFinanceiroId || x.financeiroId, item.tituloId) || mesmo(x.mensalidadeId, item.mensalidadeId));
+      const recebimentoAnterior = r >= 0 ? recebimentos[r] : {};
+      const nomeRecebimento = txt(
+        recibo.aluno ||
+        a.titulo.alunoFornecedor ||
+        a.titulo.pessoa ||
+        a.titulo.pessoaFornecedor ||
+        a.titulo.cliente ||
+        a.titulo.alunoNome ||
+        a.titulo.aluno ||
+        recebimentoAnterior.alunoFornecedor ||
+        recebimentoAnterior.pessoa ||
+        recebimentoAnterior.cliente ||
+        recebimentoAnterior.alunoNome ||
+        recebimentoAnterior.aluno
+      );
+      const descricaoRecebimento = txt(
+        recebimentoAnterior.descricao ||
+        a.titulo.descricao ||
+        (nomeRecebimento ? `Recebimento - ${nomeRecebimento}` : "Recebimento")
+      );
       const receb = {
-        ...(r >= 0 ? recebimentos[r] : {}),
+        ...recebimentoAnterior,
         id: r >= 0 ? recebimentos[r].id : uid("recv"),
         alunoId: alunoUnico,
+        alunoFornecedor: nomeRecebimento || recebimentoAnterior.alunoFornecedor || "",
+        pessoa: nomeRecebimento || recebimentoAnterior.pessoa || "",
+        aluno: nomeRecebimento || recebimentoAnterior.aluno || "",
+        alunoNome: nomeRecebimento || recebimentoAnterior.alunoNome || "",
+        descricao: descricaoRecebimento,
+        categoria: txt(recebimentoAnterior.categoria || a.titulo.categoria) || "Recebimentos",
         matriculaId: item.matriculaId,
         mensalidadeId: item.mensalidadeId,
         lancamentoFinanceiroId: item.tituloId,

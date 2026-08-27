@@ -198,3 +198,34 @@
     gap: 12px;
   }
 }
+
+
+/* FUSION AGENDA AVALIACOES RESTAURADA 20260825 */
+.agenda-acoes-topo{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.agenda-avaliacoes-card{margin-top:18px}
+.agenda-avaliacoes-cabecalho{display:flex;justify-content:space-between;gap:18px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.agenda-avaliacoes-cabecalho h2{margin:0 0 5px}
+.agenda-avaliacoes-cabecalho p{margin:0;color:#64748b}
+.agenda-avaliacoes-kpis{display:flex;gap:20px;align-items:center}
+.agenda-avaliacoes-kpis>div{text-align:center}
+.agenda-avaliacoes-kpis small{display:block;color:#64748b}
+.agenda-avaliacoes-kpis strong{font-size:22px}
+.agenda-avaliacoes-filtro{display:flex;gap:8px;align-items:center;margin:0 0 14px}
+.agenda-avaliacoes-filtro label{font-weight:700}
+.agenda-avaliacoes-filtro select{min-width:180px}
+.agenda-avaliacao-item{display:grid;grid-template-columns:130px minmax(180px,1fr) minmax(180px,1fr) 190px;gap:14px;align-items:center;padding:12px 4px;border-bottom:1px solid #e2e8f0}
+.agenda-avaliacao-data strong,.agenda-avaliacao-pessoa strong,.agenda-avaliacao-professor strong{display:block}
+.agenda-avaliacao-pessoa small,.agenda-avaliacao-professor small{display:block;color:#64748b}
+.status-avaliacao-agenda{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:800}
+.status-avaliacao-agenda.pendente{background:#fff7ed;color:#c2410c}
+.status-avaliacao-agenda.realizada{background:#ecfdf5;color:#047857}
+.status-avaliacao-agenda.cancelada{background:#fef2f2;color:#b91c1c}
+.agenda-avaliacao-form{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.agenda-avaliacao-form label{display:grid;gap:6px;font-weight:700}
+.agenda-avaliacao-form input,.agenda-avaliacao-form select,.agenda-avaliacao-form textarea{width:100%;box-sizing:border-box}
+.agenda-avaliacao-observacao{grid-column:1/-1}
+@media(max-width:800px){
+  .agenda-avaliacao-item{grid-template-columns:1fr}
+  .agenda-avaliacao-form{grid-template-columns:1fr}
+  .agenda-avaliacao-observacao{grid-column:auto}
+}

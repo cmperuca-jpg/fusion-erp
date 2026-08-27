@@ -17,3 +17,6 @@ scripts/biometria/templates-dpapi/
 
 # RepDB Free Tier: uso in-app; nao redistribuir como dataset
 public/assets/treinos/exercicios/
+
+# Assets locais da biblioteca de exercicios - mantidos na VPS
+public/assets/exercicios/

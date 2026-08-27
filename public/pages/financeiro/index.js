@@ -70,7 +70,17 @@ function moeda(valor) {
   return Number(valor || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
-function hojeISO() { return new Date().toISOString().slice(0, 10); }
+function hojeISO() {
+  // FUSION TIMEZONE OPERACIONAL 20260826
+  const partes = new Intl.DateTimeFormat("pt-BR", {
+    timeZone: "America/Maceio",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).formatToParts(new Date());
+  const mapa = Object.fromEntries(partes.map((p) => [p.type, p.value]));
+  return `${mapa.year}-${mapa.month}-${mapa.day}`;
+}
 function numero(valor) { const n = Number(String(valor ?? "").replace(",", ".")); return Number.isFinite(n) ? n : 0; }
 function valor(id) { return document.getElementById(id).value; }
 function setValor(id, value) { const el = document.getElementById(id); if (el) el.value = value ?? ""; }

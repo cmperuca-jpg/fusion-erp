@@ -27,7 +27,9 @@ function bool(valor) {
 
 function providerSeguro(valor = "") {
   const normalizado = statusNormalizado(valor);
-  return ["pagbank", "pagseguro"].includes(normalizado) ? "pagbank" : "asaas";
+  if (["pagbank", "pagseguro"].includes(normalizado)) return "pagbank";
+  if (["infinitepay", "infinite-pay", "infinite_pay", "infinite", "infinyt"].includes(normalizado)) return "infinitepay";
+  return "asaas";
 }
 
 function ambienteSeguro(valor = "") {
@@ -92,6 +94,10 @@ function urlBasePublica(valor = "") {
     .replace(/\/+$/, "");
 }
 
+function handleInfinitePay(valor = "") {
+  return texto(valor).replace(/^\$+/, "");
+}
+
 function configEnvPagbank() {
   return {
     ambiente: ambienteSeguro(process.env.FUSION_PAGBANK_ENV || process.env.PAGBANK_ENV || "sandbox"),
@@ -106,6 +112,18 @@ function configEnvPagbank() {
     alunoRedirectUrl: texto(process.env.FUSION_PAGBANK_ALUNO_REDIRECT_URL),
     fusionRedirectUrl: texto(process.env.FUSION_PAGBANK_FUSION_REDIRECT_URL),
     webhookUrl: texto(process.env.FUSION_PAGBANK_WEBHOOK_URL)
+  };
+}
+
+function configEnvInfinitePay() {
+  return {
+    publicUrl: urlBasePublica(),
+    handle: handleInfinitePay(process.env.FUSION_INFINITEPAY_HANDLE || process.env.INFINITEPAY_HANDLE || process.env.FUSION_INFINITEPAY_TAG || process.env.INFINITEPAY_TAG),
+    baseUrl: texto(process.env.FUSION_INFINITEPAY_BASE_URL || process.env.INFINITEPAY_BASE_URL || "https://api.checkout.infinitepay.io").replace(/\/+$/, ""),
+    redirectUrl: texto(process.env.FUSION_INFINITEPAY_REDIRECT_URL || process.env.INFINITEPAY_REDIRECT_URL),
+    alunoRedirectUrl: texto(process.env.FUSION_INFINITEPAY_ALUNO_REDIRECT_URL || process.env.INFINITEPAY_ALUNO_REDIRECT_URL),
+    fusionRedirectUrl: texto(process.env.FUSION_INFINITEPAY_FUSION_REDIRECT_URL || process.env.INFINITEPAY_FUSION_REDIRECT_URL),
+    webhookUrl: texto(process.env.FUSION_INFINITEPAY_WEBHOOK_URL || process.env.INFINITEPAY_WEBHOOK_URL)
   };
 }
 
@@ -139,24 +157,46 @@ function configPagbankComFallback(atual = {}) {
   };
 }
 
+function configInfinitePayComFallback(atual = {}) {
+  const env = configEnvInfinitePay();
+  const infinitepay = atual.infinitepay && typeof atual.infinitepay === "object" ? atual.infinitepay : {};
+  const handleTela = handleInfinitePay(infinitepay.handle);
+  const publicUrl = urlBasePublica(infinitepay.publicUrl || env.publicUrl);
+
+  return {
+    publicUrl,
+    handle: handleTela || env.handle,
+    baseUrl: texto(infinitepay.baseUrl || env.baseUrl || "https://api.checkout.infinitepay.io").replace(/\/+$/, ""),
+    redirectUrl: texto(infinitepay.redirectUrl || env.redirectUrl),
+    alunoRedirectUrl: texto(infinitepay.alunoRedirectUrl || env.alunoRedirectUrl),
+    fusionRedirectUrl: texto(infinitepay.fusionRedirectUrl || env.fusionRedirectUrl),
+    webhookUrl: texto(infinitepay.webhookUrl || env.webhookUrl || `${publicUrl}/api/pagamentos-online/webhooks/infinitepay`),
+    origemHandle: handleTela ? "tela" : (env.handle ? "env" : "")
+  };
+}
+
 export async function obterConfiguracaoPagamentosRuntime() {
   const atual = await configArquivo();
   const provider = providerSeguro(atual.provider || process.env.FUSION_PAYMENTS_PROVIDER || process.env.FUSION_GATEWAY_PAGAMENTOS || "asaas");
   return {
     provider,
-    pagbank: configPagbankComFallback(atual)
+    pagbank: configPagbankComFallback(atual),
+    infinitepay: configInfinitePayComFallback(atual)
   };
 }
 
 export async function obterConfiguracaoPagamentosPublica() {
   const runtime = await obterConfiguracaoPagamentosRuntime();
+  const providerConfigurado = runtime.provider === "pagbank"
+    ? Boolean(runtime.pagbank.token && runtime.pagbank.webhookToken)
+    : runtime.provider === "infinitepay"
+      ? Boolean(runtime.infinitepay.handle)
+      : Boolean(process.env.FUSION_ASAAS_API_KEY || process.env.ASAAS_API_KEY);
   return {
     ok: true,
     configuracao: {
       provider: runtime.provider,
-      providerConfigurado: runtime.provider === "pagbank"
-        ? Boolean(runtime.pagbank.token && runtime.pagbank.webhookToken)
-        : Boolean(process.env.FUSION_ASAAS_API_KEY || process.env.ASAAS_API_KEY),
+      providerConfigurado,
       pagbank: {
         ambiente: runtime.pagbank.ambiente,
         publicUrl: runtime.pagbank.publicUrl,
@@ -174,6 +214,18 @@ export async function obterConfiguracaoPagamentosPublica() {
         webhookTokenResumo: mascararSegredo(runtime.pagbank.webhookToken),
         origemToken: runtime.pagbank.origemToken,
         origemWebhookToken: runtime.pagbank.origemWebhookToken
+      },
+      infinitepay: {
+        publicUrl: runtime.infinitepay.publicUrl,
+        handle: runtime.infinitepay.handle,
+        baseUrl: runtime.infinitepay.baseUrl,
+        redirectUrl: runtime.infinitepay.redirectUrl,
+        alunoRedirectUrl: runtime.infinitepay.alunoRedirectUrl,
+        fusionRedirectUrl: runtime.infinitepay.fusionRedirectUrl,
+        webhookUrl: runtime.infinitepay.webhookUrl,
+        handleConfigurado: Boolean(runtime.infinitepay.handle),
+        handleResumo: runtime.infinitepay.handle ? `$${runtime.infinitepay.handle}` : "",
+        origemHandle: runtime.infinitepay.origemHandle
       }
     }
   };
@@ -183,6 +235,8 @@ export async function salvarConfiguracaoPagamentos(dados = {}, usuario = {}) {
   const atual = await configArquivo();
   const entradaPagbank = dados.pagbank && typeof dados.pagbank === "object" ? dados.pagbank : {};
   const existentePagbank = atual.pagbank && typeof atual.pagbank === "object" ? atual.pagbank : {};
+  const entradaInfinitePay = dados.infinitepay && typeof dados.infinitepay === "object" ? dados.infinitepay : {};
+  const existenteInfinitePay = atual.infinitepay && typeof atual.infinitepay === "object" ? atual.infinitepay : {};
 
   const novoPagbank = {
     ...existentePagbank,
@@ -204,10 +258,22 @@ export async function salvarConfiguracaoPagamentos(dados = {}, usuario = {}) {
   if (entradaPagbank.limparWebhookToken === true) novoPagbank.webhookToken = "";
   else if (texto(entradaPagbank.webhookToken)) novoPagbank.webhookToken = criptografarSegredo(entradaPagbank.webhookToken);
 
+  const novoInfinitePay = {
+    ...existenteInfinitePay,
+    publicUrl: urlBasePublica(entradaInfinitePay.publicUrl || existenteInfinitePay.publicUrl),
+    handle: handleInfinitePay(entradaInfinitePay.handle ?? existenteInfinitePay.handle),
+    baseUrl: texto(entradaInfinitePay.baseUrl ?? existenteInfinitePay.baseUrl ?? "https://api.checkout.infinitepay.io").replace(/\/+$/, ""),
+    redirectUrl: texto(entradaInfinitePay.redirectUrl ?? existenteInfinitePay.redirectUrl),
+    alunoRedirectUrl: texto(entradaInfinitePay.alunoRedirectUrl ?? existenteInfinitePay.alunoRedirectUrl),
+    fusionRedirectUrl: texto(entradaInfinitePay.fusionRedirectUrl ?? existenteInfinitePay.fusionRedirectUrl),
+    webhookUrl: texto(entradaInfinitePay.webhookUrl ?? existenteInfinitePay.webhookUrl)
+  };
+
   const novo = {
     ...atual,
     provider: providerSeguro(dados.provider || atual.provider || "pagbank"),
     pagbank: novoPagbank,
+    infinitepay: novoInfinitePay,
     atualizadoEm: new Date().toISOString(),
     atualizadoPor: texto(usuario.email || usuario.nome || usuario.id || "sistema")
   };

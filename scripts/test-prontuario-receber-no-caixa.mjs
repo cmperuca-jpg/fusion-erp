@@ -18,7 +18,7 @@ assert.doesNotMatch(bloco, /\/baixar/);
 assert.doesNotMatch(bloco, /Confirmar recebimento/);
 assert.match(bloco, /\/pages\/caixa\/index\.html/);
 assert.match(prontuario, /Receber no caixa/);
-assert.match(prontuarioHtml, /20260813-receber-caixa-1/);
+assert.match(prontuarioHtml, /20260825-prontuario-cache-1/);
 
 assert.match(caixaHtml, /id="recebimentoPendente"/);
 assert.match(caixa, /Caixa fechado\. Abra o caixa antes de continuar/);

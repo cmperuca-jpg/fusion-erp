@@ -12,6 +12,9 @@
   <link rel="stylesheet" href="/assets/css/fusion-premium-final.css">
   <link rel="stylesheet" href="./style.css?v=20260729-professor-layout-1">
   <link rel="stylesheet" href="/pages/_shared/fusion-area-clara.css?v=20260729-contraste-global-2">
+  <!-- PROFESSOR PONTO APP ASSETS 20260826 -->
+  <link rel="stylesheet" href="/pages/professor-area/meu-ponto.css?v=20260826-contraste-2">
+  <link rel="stylesheet" href="/pages/professor-area/agenda-avaliacoes.css?v=20260826-1">
 </head>
 <body class="portal-professor-page fusion-no-sidebar">
   <main class="prof-area">
@@ -63,12 +66,28 @@
       <div id="mensagemProfessores" class="gestao-mensagem" aria-live="polite"></div>
       <div id="listaProfessores" class="lista-professores"></div>
     </section>
-  </main>
+        <!-- PROFESSOR AGENDA AVALIACOES UI 20260826 -->
+      <section id="agendaAvaliacoesProfessor" class="prof-agenda-avaliacoes" aria-label="Avaliações agendadas">
+        <div class="prof-agenda-cabecalho">
+          <div>
+            <span class="prof-agenda-eyebrow">Agenda</span>
+            <h2>Minhas avaliações agendadas</h2>
+            <p>Alunos programados para avaliação física com este professor.</p>
+          </div>
+          <button id="atualizarAgendaAvaliacoesProfessor" class="btn" type="button">Atualizar agenda</button>
+        </div>
+        <div id="mensagemAgendaAvaliacoesProfessor" class="prof-agenda-mensagem" aria-live="polite"></div>
+        <div id="listaAgendaAvaliacoesProfessor" class="prof-agenda-lista"></div>
+      </section>
+
+</main>
 
   <script src="./index.js?v=20260729-professor-layout-1"></script>
   <script src="/assets/js/fusion-foto-perfil.js?v=20260729-professor-layout-1"></script>
   <script src="/assets/js/fusion-professor-foto-perfil.js?v=20260729-professor-layout-1"></script>
   <script src="/assets/js/fusion-no-sidebar.js" defer></script>
   <script src="/assets/pwa/fusion-pwa-install.js" defer></script>
+  <script src="/pages/professor-area/meu-ponto.js?v=20260826-1" defer></script>
+  <script src="/pages/professor-area/agenda-avaliacoes.js?v=20260826-1" defer></script>
 </body>
 </html>

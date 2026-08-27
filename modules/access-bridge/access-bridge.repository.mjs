@@ -171,6 +171,49 @@ export async function updateCommandProgress(id, agentId, progress = {}) {
   return row;
 }
 
+export async function getBiometricStudentStatesForTenant(tenantId) {
+  const tenant = String(tenantId || "").trim();
+  if (!tenant) return {};
+  const actions = ["biometria_exists", "biometria_enroll", "biometria_delete"];
+  let rows = [];
+  const supabase = await supabaseClient();
+
+  if (supabase) {
+    const { data, error } = await supabase
+      .from("access_bridge_commands")
+      .select("action,payload,result,status,created_at,finished_at")
+      .eq("tenant_id", tenant)
+      .eq("status", "completed")
+      .in("action", actions)
+      .limit(5000);
+    if (error) throw error;
+    rows = Array.isArray(data) ? data : [];
+  } else {
+    rows = (await readJson(FILE, [])).filter((row) =>
+      String(row.tenantId || row.tenant_id || "") === tenant &&
+      String(row.status || "") === "completed" &&
+      actions.includes(String(row.action || ""))
+    );
+  }
+
+  const when = (row = {}) =>
+    String(row.finished_at || row.finishedAt || row.created_at || row.createdAt || "");
+  rows.sort((a, b) => when(b).localeCompare(when(a)));
+
+  const out = {};
+  for (const row of rows) {
+    const payload = row?.payload && typeof row.payload === "object" ? row.payload : {};
+    const result = row?.result && typeof row.result === "object" ? row.result : {};
+    const alunoId = String(payload.alunoId || payload.aluno_id || result.alunoId || "").trim();
+    if (!alunoId || Object.prototype.hasOwnProperty.call(out, alunoId)) continue;
+
+    if (row.action === "biometria_enroll") out[alunoId] = true;
+    else if (row.action === "biometria_delete") out[alunoId] = false;
+    else out[alunoId] = result.existe === true || String(result.existe || "").toLowerCase() === "true";
+  }
+  return out;
+}
+
 export async function getCommand(id) {
   const supabase = await supabaseClient();
   if (supabase) {

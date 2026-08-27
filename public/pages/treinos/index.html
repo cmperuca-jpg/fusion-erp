@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="/assets/css/fusion-app.css">
   <script src="/assets/js/fusion-portal-guard.js" data-fusion-guard="professor"></script>
   <link rel="stylesheet" href="/assets/css/fusion-premium-final.css">
-  <link rel="stylesheet" href="./style.css?v=20260821-assistente-regras-1">
+  <link rel="stylesheet" href="./style.css?v=20260825-treino-sequencia-4">
   <link rel="stylesheet" href="/pages/_shared/fusion-area-clara.css?v=20260729-contraste-global-2">
   <link rel="stylesheet" href="./professor-navegacao.css?v=20260818-1">
 </head>
@@ -18,7 +18,6 @@
         <h1>Montador de Treinos</h1>
         <p>Prescrição interna com aluno, professor, foto do exercício e divisões A/B/C.</p>
       </div>
-      <a class="btn" href="/pages/treinos-curadoria/index.html">Curadoria 664</a>
       <a class="btn voltar-prof-area" href="/pages/professor-area/index.html">
         ← Voltar para Área do Professor
       </a>
@@ -234,9 +233,54 @@
       </section>
     </section>
   </main>
-  <script src="/assets/js/fusion-exercisedb-catalogo-teste.js?v=20260824-1"></script>
-  <script src="./index.js?v=20260824-equipamentos-664-4"></script>
+
+  <div class="modal-biblioteca hidden" id="modalBibliotecaEditor">
+    <div class="modal-biblioteca-card">
+      <header>
+        <h2>Editar exercício</h2>
+        <div class="editor-nav-biblioteca" aria-label="Navegar no grupo">
+          <button class="btn ghost nav-seta" id="btnEditorAnterior" type="button" title="Anterior" aria-label="Exercício anterior">&lsaquo;</button>
+          <span class="editor-posicao-biblioteca" id="editBibPosicao"></span>
+          <button class="btn ghost nav-seta" id="btnEditorProximo" type="button" title="Próximo" aria-label="Próximo exercício">&rsaquo;</button>
+        </div>
+        <button class="btn ghost" id="btnFecharEditorBiblioteca" type="button">Fechar</button>
+      </header>
+      <div class="modal-biblioteca-body">
+        <div class="preview-biblioteca" id="editBibPreview"></div>
+        <div class="form-biblioteca">
+          <label>ID
+            <input id="editBibId" disabled>
+          </label>
+          <label>Código
+            <input id="editBibCodigo" disabled>
+          </label>
+          <label>Nome
+            <input id="editBibNome">
+          </label>
+          <label>Grupo
+            <select id="editBibGrupo"></select>
+          </label>
+          <label class="span2">Caminho
+            <input id="editBibCaminho" disabled>
+          </label>
+          <label class="span2">Novo GIF
+            <input id="editBibArquivo" type="file" accept="image/gif,.gif">
+          </label>
+          <div class="span2 status-biblioteca" id="editBibStatus"></div>
+        </div>
+      </div>
+      <footer>
+        <button class="btn ghost danger" id="btnExcluirEditorBiblioteca" type="button">Excluir</button>
+        <button class="btn ghost" id="btnArquivarEditorBiblioteca" type="button">Arquivar</button>
+        <button class="btn ghost" id="btnRestaurarEditorBiblioteca" type="button">Enviar de volta</button>
+        <button class="btn ghost" id="btnCancelarEditorBiblioteca" type="button">Cancelar</button>
+        <button class="btn primary" id="btnSalvarEditorBiblioteca" type="button">Salvar</button>
+      </footer>
+    </div>
+  </div>
+
+  <script src="./exercicios-flash.js?v=20260821-musculacao-catalogo-1"></script>
+  <script src="./index.js?v=20260825-treino-sequencia-4"></script>
   <script src="/assets/js/fusion-layout.js"></script>
-<p class="repdb-credit" style="margin:16px auto;padding:8px;text-align:center;font-size:12px;color:#64748b">Exercise data by <a href="https://repdb.co" target="_blank" rel="noopener">RepDB</a>.</p>
 </body>
 </html>

@@ -19,10 +19,18 @@
       filtroStatus: document.getElementById("filtroStatus"),
       filtroData: document.getElementById("filtroData"),
       entradaCodigo: document.getElementById("entradaCodigo"),
-      kpiTotal: document.getElementById("kpiTotal"),
-      kpiHoje: document.getElementById("kpiHoje"),
-      kpiLiberados: document.getElementById("kpiLiberados"),
-      kpiBloqueados: document.getElementById("kpiBloqueados")
+      kpiEntradasHoje: document.getElementById("kpiEntradasHoje"),
+      kpiAlunosPresentes: document.getElementById("kpiAlunosPresentes"),
+      kpiFuncionariosPresentes: document.getElementById("kpiFuncionariosPresentes"),
+      kpiSaidasHoje: document.getElementById("kpiSaidasHoje"),
+      kpiBloqueadosHoje: document.getElementById("kpiBloqueadosHoje"),
+      kpiPessoasMes: document.getElementById("kpiPessoasMes"),
+      listaEntradasHoje: document.getElementById("listaEntradasHoje"),
+      listaAlunosPresentes: document.getElementById("listaAlunosPresentes"),
+      listaFuncionariosPresentes: document.getElementById("listaFuncionariosPresentes"),
+      listaSaidasHoje: document.getElementById("listaSaidasHoje"),
+      listaBloqueadosHoje: document.getElementById("listaBloqueadosHoje"),
+      listaPessoasMes: document.getElementById("listaPessoasMes")
     };
 
     if (!els.modal || !els.form || !els.tabela) {
@@ -297,15 +305,51 @@
       `).join("");
     }
 
+    // PAINEL OPERACIONAL CHECKIN 6 COLUNAS 20260826
+    function renderizarListaPessoas(container, lista = []) {
+      if (!container) return;
+      container.replaceChildren();
+
+      const itens = Array.isArray(lista) ? lista : [];
+
+      if (!itens.length) {
+        const vazio = document.createElement("div");
+        vazio.className = "checkin-kpi-vazio";
+        vazio.textContent = "Nenhuma pessoa";
+        container.appendChild(vazio);
+        return;
+      }
+
+      itens.forEach((item) => {
+        const linha = document.createElement("div");
+        linha.className = "checkin-kpi-pessoa";
+
+        const nome = document.createElement("span");
+        nome.textContent = String(item?.nome || item?.aluno || item?.pessoa || "Pessoa");
+
+        linha.appendChild(nome);
+        container.appendChild(linha);
+      });
+    }
+
     async function carregarResumo() {
       try {
-        const resp = await fetch(`${API}/resumo`);
+        const resp = await fetch(`${API}/resumo`, { cache: "no-store" });
         const json = await resp.json();
         if (!json.ok) return;
-        els.kpiTotal.textContent = json.resumo.total ?? 0;
-        els.kpiHoje.textContent = json.resumo.hoje ?? 0;
-        els.kpiLiberados.textContent = json.resumo.liberados ?? 0;
-        els.kpiBloqueados.textContent = json.resumo.bloqueados ?? 0;
+        els.kpiEntradasHoje.textContent = json.resumo.entradasHoje ?? 0;
+        els.kpiAlunosPresentes.textContent = json.resumo.alunosPresentesAgora ?? 0;
+        els.kpiFuncionariosPresentes.textContent = json.resumo.funcionariosPresentesAgora ?? 0;
+        els.kpiSaidasHoje.textContent = json.resumo.saidasHoje ?? 0;
+        els.kpiBloqueadosHoje.textContent = json.resumo.bloqueadosHoje ?? 0;
+        els.kpiPessoasMes.textContent = json.resumo.pessoasMes ?? 0;
+        const listas = json.resumo.listas || {};
+        renderizarListaPessoas(els.listaEntradasHoje, listas.entradasHoje);
+        renderizarListaPessoas(els.listaAlunosPresentes, listas.alunosPresentes);
+        renderizarListaPessoas(els.listaFuncionariosPresentes, listas.funcionariosPresentes);
+        renderizarListaPessoas(els.listaSaidasHoje, listas.saidasHoje);
+        renderizarListaPessoas(els.listaBloqueadosHoje, listas.bloqueadosHoje);
+        renderizarListaPessoas(els.listaPessoasMes, listas.pessoasMes);
       } catch (err) {
         console.error("Erro ao carregar resumo de check-in:", err);
       }
@@ -316,14 +360,96 @@
         const params = new URLSearchParams();
         if (alunoIdUrl) params.set("alunoId", alunoIdUrl);
         if (els.busca.value) params.set("busca", els.busca.value);
-        if (els.filtroStatus.value) params.set("status", els.filtroStatus.value);
-        if (els.filtroData.value) params.set("data", els.filtroData.value);
+        // CHECKIN FILTRO DENTRO AGORA JS 20260826
+        const filtroDentroAgora = els.filtroStatus.value === "dentro_agora";
 
-        const resp = await fetch(`${API}?${params.toString()}`);
+        if (!filtroDentroAgora && els.filtroStatus.value) {
+          params.set("status", els.filtroStatus.value);
+        }
+
+        if (filtroDentroAgora) {
+          // CHECKIN TIMEZONE MACEIO 20260826
+          const TIMEZONE_FUSION = "America/Maceio";
+          const agora = new Date();
+          const partesHoje = new Intl.DateTimeFormat("en-CA", {
+            timeZone: TIMEZONE_FUSION,
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit"
+          }).formatToParts(agora);
+          const mapaHoje = Object.fromEntries(partesHoje.map((p) => [p.type, p.value]));
+          const hojeLocal = `${mapaHoje.year}-${mapaHoje.month}-${mapaHoje.day}`;
+          els.filtroData.value = hojeLocal;
+          params.set("data", hojeLocal);
+        } else if (els.filtroData.value) {
+          params.set("data", els.filtroData.value);
+        }
+
+        const resumoPromise = carregarResumo();
+        const resp = await fetch(`${API}?${params.toString()}`, { cache: "no-store" });
         const json = await resp.json();
         registros = json.registros || [];
+
+        if (filtroDentroAgora) {
+          try {
+            const rr = await fetch(`${API}/resumo`, { cache: "no-store" });
+            const rj = await rr.json();
+            const listas = rj?.resumo?.listas || {};
+            const presentes = [
+              ...(Array.isArray(listas.alunosPresentes) ? listas.alunosPresentes : []),
+              ...(Array.isArray(listas.funcionariosPresentes) ? listas.funcionariosPresentes : [])
+            ];
+
+            const norm = (v="") => String(v??"").normalize("NFD").replace(/[̀-ͯ]/g,"").trim().toLowerCase();
+            const ids = new Set(presentes.map(p=>String(p?.id||"").trim()).filter(Boolean));
+            const nomes = new Set(presentes.map(p=>norm(p?.nome)).filter(Boolean));
+
+            const idReg = (r={}) => String(
+              r.pessoaId||r.pessoa_id||r.alunoId||r.aluno_id||
+              r.funcionarioId||r.funcionario_id||r.professorId||r.professor_id||
+              r.usuarioId||r.usuario_id||""
+            ).trim();
+
+            const nomeReg = (r={}) => norm(
+              r.aluno||r.pessoaNome||r.pessoa_nome||r.alunoNome||r.aluno_nome||r.nome||r.pessoa||""
+            );
+
+            const horaLocalFusion = (v="") => {
+              const data = new Date(v);
+              if (Number.isNaN(data.getTime())) return "";
+              return new Intl.DateTimeFormat("pt-BR", {
+                timeZone: "America/Maceio",
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: false
+              }).format(data);
+            };
+
+            const mapa = new Map();
+            registros
+              .filter(r => (idReg(r) && ids.has(idReg(r))) || (nomeReg(r) && nomes.has(nomeReg(r))))
+              .forEach((r,i)=>{
+                const chave=idReg(r)||nomeReg(r)||`linha:${i}`;
+                const ordem=String(r.ultimaMovimentacaoEm||r.ultimaEntradaEm||`${r.data||""}T${r.horaEntrada||""}`);
+                const atual=mapa.get(chave);
+                if(!atual||ordem>=atual.ordem) mapa.set(chave,{ordem,item:r});
+              });
+
+            registros=[...mapa.values()].map(x=>({
+              ...x.item,
+              horaEntrada: horaLocalFusion(x.item.ultimaEntradaEm)||x.item.horaEntrada||"",
+              horaSaida:"",
+              status:"Dentro agora",
+              _dentroAgora:true
+            }));
+          } catch (e) {
+            console.error("Erro ao filtrar quem esta dentro agora:", e);
+            registros=[];
+          }
+        }
+
         renderizarTabela();
-        await carregarResumo();
+        await resumoPromise;
       } catch (err) {
         console.error("Erro ao carregar registros de check-in:", err);
         registros = [];

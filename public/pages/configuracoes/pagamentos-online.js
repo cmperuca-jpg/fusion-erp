@@ -16,6 +16,38 @@
     return Number.isFinite(n) ? n : padrao;
   }
 
+  function semBarraFinal(valor, padrao = "https://fusionsistema.com.br") {
+    return texto(valor, padrao).replace(/\/+$/, "");
+  }
+
+  function handleInfinitePay(valor) {
+    return texto(valor).replace(/^\$+/, "");
+  }
+
+  function nomeGateway(provider = "") {
+    const p = texto(provider).toLowerCase();
+    if (p === "infinitepay") return "InfinitePay";
+    if (p === "pagbank" || p === "pagseguro") return "PagBank";
+    if (p === "asaas") return "Asaas";
+    return "Não definido";
+  }
+
+  function webhookPadrao(provider, publicUrl) {
+    const gateway = provider === "infinitepay" ? "infinitepay" : provider === "asaas" ? "asaas" : "pagbank";
+    return `${semBarraFinal(publicUrl)}/api/pagamentos-online/webhooks/${gateway}`;
+  }
+
+  function webhookAutomatico(valor) {
+    return !texto(valor) || /\/api\/pagamentos-online\/webhooks\/(asaas|pagbank|infinitepay)$/i.test(texto(valor));
+  }
+
+  function atualizarWebhookPadraoSeAutomatico() {
+    const atual = texto($("#webhookUrl").value);
+    if (webhookAutomatico(atual)) {
+      $("#webhookUrl").value = webhookPadrao($("#provider").value, $("#publicUrl").value);
+    }
+  }
+
   function mensagem(valor, erro = false) {
     const el = $("#mensagemPagamentos");
     el.textContent = valor || "";
@@ -43,27 +75,42 @@
   function preencher(dados = {}) {
     const cfg = dados.configuracao || {};
     const pagbank = cfg.pagbank || {};
-    $("#provider").value = texto(cfg.provider, "pagbank");
+    const infinitepay = cfg.infinitepay || {};
+    const provider = texto(cfg.provider, "pagbank");
+    const ativo = provider === "infinitepay" ? infinitepay : pagbank;
+    $("#provider").value = provider;
+    $("#recebedorAtivo").textContent = nomeGateway(provider);
     $("#ambiente").value = texto(pagbank.ambiente, "production");
-    $("#publicUrl").value = texto(pagbank.publicUrl, "https://fusionsistema.com.br");
+    $("#publicUrl").value = texto(ativo.publicUrl || pagbank.publicUrl || infinitepay.publicUrl, "https://fusionsistema.com.br");
     $("#checkoutExpirationHours").value = numero(pagbank.checkoutExpirationHours, 72);
     $("#installmentsLimit").value = numero(pagbank.installmentsLimit, 1);
     $("#interestFreeInstallments").value = numero(pagbank.interestFreeInstallments, 1);
-    $("#webhookUrl").value = texto(pagbank.webhookUrl, "https://fusionsistema.com.br/api/pagamentos-online/webhooks/pagbank");
-    $("#alunoRedirectUrl").value = texto(pagbank.alunoRedirectUrl);
+    $("#webhookUrl").value = texto(ativo.webhookUrl, webhookPadrao(provider, $("#publicUrl").value));
+    $("#alunoRedirectUrl").value = texto(ativo.alunoRedirectUrl);
     $("#token").value = "";
     $("#webhookToken").value = "";
+    $("#infinitepayHandle").value = handleInfinitePay(infinitepay.handle || infinitepay.handleResumo);
+    $("#infinitepayBaseUrl").value = texto(infinitepay.baseUrl, "https://api.checkout.infinitepay.io");
 
     const selecionados = new Set(Array.isArray(pagbank.paymentMethods) ? pagbank.paymentMethods : ["PIX", "CREDIT_CARD"]);
     Object.entries(metodos).forEach(([codigo, input]) => {
       input.checked = selecionados.has(codigo);
     });
 
-    chip("#statusProvider", cfg.providerConfigurado, "Gateway configurado", "Gateway pendente");
-    chip("#statusToken", pagbank.tokenConfigurado, "API token salvo", "API token pendente");
-    chip("#statusWebhook", pagbank.webhookTokenConfigurado, "Webhook token salvo", "Webhook token pendente");
+    if (provider === "infinitepay") {
+      chip("#statusProvider", cfg.providerConfigurado, "InfinitePay configurada", "InfinitePay pendente");
+      chip("#statusToken", infinitepay.handleConfigurado, "Handle salvo", "Handle pendente");
+      chip("#statusWebhook", Boolean($("#webhookUrl").value), "Webhook pronto", "Webhook pendente");
+    } else {
+      chip("#statusProvider", cfg.providerConfigurado, "Gateway configurado", "Gateway pendente");
+      chip("#statusToken", pagbank.tokenConfigurado, "API token salvo", "API token pendente");
+      chip("#statusWebhook", pagbank.webhookTokenConfigurado, "Webhook token salvo", "Webhook token pendente");
+    }
     $("#origemToken").textContent = pagbank.tokenConfigurado
       ? `Token: ${pagbank.tokenResumo || "salvo"} · Webhook: ${pagbank.webhookTokenResumo || "salvo"}`
+      : "";
+    $("#origemInfinitePay").textContent = infinitepay.handleConfigurado
+      ? `Handle: ${infinitepay.handleResumo || `$${handleInfinitePay(infinitepay.handle)}`}`
       : "";
   }
 
@@ -71,20 +118,31 @@
     const paymentMethods = Object.entries(metodos)
       .filter(([, input]) => input.checked)
       .map(([codigo]) => codigo);
+    const provider = $("#provider").value;
+    const publicUrl = semBarraFinal($("#publicUrl").value);
+    const webhookUrl = texto($("#webhookUrl").value);
+    const alunoRedirectUrl = texto($("#alunoRedirectUrl").value);
 
     return {
-      provider: $("#provider").value,
+      provider,
       pagbank: {
         ambiente: $("#ambiente").value,
-        publicUrl: texto($("#publicUrl").value),
+        publicUrl,
         token: texto($("#token").value),
         webhookToken: texto($("#webhookToken").value),
         paymentMethods,
         installmentsLimit: numero($("#installmentsLimit").value, 1),
         interestFreeInstallments: numero($("#interestFreeInstallments").value, 1),
         checkoutExpirationHours: numero($("#checkoutExpirationHours").value, 72),
-        webhookUrl: texto($("#webhookUrl").value),
-        alunoRedirectUrl: texto($("#alunoRedirectUrl").value)
+        webhookUrl: provider === "pagbank" ? webhookUrl : undefined,
+        alunoRedirectUrl: provider === "pagbank" ? alunoRedirectUrl : undefined
+      },
+      infinitepay: {
+        publicUrl,
+        handle: handleInfinitePay($("#infinitepayHandle").value),
+        baseUrl: texto($("#infinitepayBaseUrl").value, "https://api.checkout.infinitepay.io"),
+        webhookUrl: provider === "infinitepay" ? webhookUrl : undefined,
+        alunoRedirectUrl: provider === "infinitepay" ? alunoRedirectUrl : undefined
       }
     };
   }
@@ -120,6 +178,11 @@
   $("#copiarWebhook").addEventListener("click", () => {
     copiarWebhook().catch((erro) => mensagem(erro.message, true));
   });
+  $("#provider").addEventListener("change", () => {
+    $("#recebedorAtivo").textContent = nomeGateway($("#provider").value);
+    atualizarWebhookPadraoSeAutomatico();
+  });
+  $("#publicUrl").addEventListener("change", atualizarWebhookPadraoSeAutomatico);
 
   carregar().catch((erro) => mensagem(erro.message, true));
 })();

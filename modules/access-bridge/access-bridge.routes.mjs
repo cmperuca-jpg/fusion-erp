@@ -109,6 +109,8 @@ router.post('/agent/commands/:id/result', wrap(async (req, res) => {
   res.json({ ok: true, command });
 }));
 
+import { obterControleAcessosAluno } from "../alunos/aluno-limite-acessos.service.mjs";
+
 router.post('/agent/biometria/acesso', wrap(async (req, res) => {
   const agent = await validateAgent(req);
 
@@ -127,6 +129,31 @@ router.post('/agent/biometria/acesso', wrap(async (req, res) => {
 
   const direcao = texto(req.body?.direcao, 20) === 'saida' ? 'saida' : 'entrada';
   const dispositivoId = agent.equipmentId || '';
+
+  // LIMITE ENTRADAS ALUNO CATRACA FISICA 20260826
+  // Saida ignora este limite. Demais regras do Access Engine continuam intactas.
+  if (direcao !== 'saida') {
+    const controle = await executarComTenant(agent.tenantId, () =>
+      obterControleAcessosAluno(alunoId)
+    );
+
+    if (controle?.limiteAtingido) {
+      return res.json({
+        ok: true,
+        autorizado: false,
+        motivo: `Limite diario de ${controle.limite} entradas atingido. Procure a recepcao.`,
+        alunoId,
+        direcao,
+        limiteAtingido: true,
+        limiteDiario: controle.limite,
+        acessosUsadosHoje: controle.usados,
+        acessosRestantesHoje: controle.restantes,
+        controleAcessos: controle,
+        commandId: null,
+        logId: null
+      });
+    }
+  }
 
   const resultado = await executarComTenant(agent.tenantId, () =>
     accessEngine.avaliarAcesso({

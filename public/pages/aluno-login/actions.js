@@ -31,7 +31,7 @@
       ...options,
       headers: {
         "Content-Type": "application/json",
-        "X-Fusion-Device-Token": deviceToken(),
+        ...(deviceToken() ? { "X-Fusion-Device-Token": deviceToken() } : {}),
         ...(options.headers || {})
       }
     });

@@ -33,7 +33,7 @@ router.get("/", async (req, res) => {
 router.get("/resumo", async (req, res) => {
   try {
     const resumo = await obterResumoCheckin();
-    res.json({ ok: true, resumo });
+    res.json({ ok: true, resumo, ...resumo });
   } catch (erro) {
     tratarErro(res, erro);
   }

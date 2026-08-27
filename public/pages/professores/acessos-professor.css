@@ -1,0 +1,213 @@
+/* PROFESSOR ACESSOS DENTRO CADASTRO V2 20260826 */
+
+.prof-acessos-inline-cadastro {
+  grid-column: 1 / -1;
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid #dbe3ef;
+}
+
+.prof-acessos-shell { display: grid; gap: 14px; }
+
+.prof-acessos-intro {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px;
+  border: 1px solid #dbe3ef;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+.prof-acessos-intro strong {
+  display: block;
+  color: #0f172a;
+  font-size: 16px;
+}
+
+.prof-acessos-intro span {
+  display: block;
+  margin-top: 3px;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.prof-acessos-identidade {
+  margin: 0 !important;
+  max-width: 360px;
+  color: #0f6170 !important;
+  font-weight: 800;
+  text-align: right;
+}
+
+.prof-acessos-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.prof-acessos-card {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid #dbe3ef;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.prof-acessos-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.prof-acessos-card-head small {
+  display: block;
+  color: #0891b2;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .05em;
+}
+
+.prof-acessos-card-head h3 {
+  margin: 4px 0 0;
+  color: #0f172a;
+  font-size: 17px;
+}
+
+.prof-acessos-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.prof-acessos-badge.neutro { background: #f1f5f9; color: #475569; }
+.prof-acessos-badge.ok { background: #dcfce7; color: #166534; }
+.prof-acessos-badge.warn { background: #fef3c7; color: #92400e; }
+.prof-acessos-badge.erro { background: #fee2e2; color: #991b1b; }
+
+.prof-acessos-dados {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 15px 0 12px;
+}
+
+.prof-acessos-dados > div {
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.prof-acessos-dados span {
+  display: block;
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.prof-acessos-dados strong {
+  display: block;
+  margin-top: 4px;
+  overflow-wrap: anywhere;
+  color: #0f172a;
+  font-size: 12px;
+}
+
+.prof-acessos-card p {
+  margin: 0 0 14px;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.prof-acessos-acoes {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.prof-acessos-btn {
+  min-height: 38px;
+  border: 0;
+  border-radius: 9px;
+  padding: 9px 13px;
+  background: #21b3cf;
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.prof-acessos-btn.secundario {
+  border: 1px solid #b8c7d8;
+  background: #fff;
+  color: #17324d;
+}
+
+.prof-acessos-btn:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+
+.prof-acessos-mensagem {
+  padding: 10px 12px;
+  border: 1px solid #bae6fd;
+  border-radius: 10px;
+  background: #f0f9ff;
+  color: #075985;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.prof-acessos-mensagem.erro {
+  border-color: #fecaca;
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+.prof-acessos-fluxo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-left: 4px solid #21b3cf;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 11px;
+}
+
+.prof-acessos-fluxo strong { color: #0f172a; }
+
+@media (max-width: 760px) {
+  .prof-acessos-grid,
+  .prof-acessos-dados {
+    grid-template-columns: 1fr;
+  }
+
+  .prof-acessos-intro {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .prof-acessos-identidade {
+    text-align: left;
+  }
+
+  .prof-acessos-acoes {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .prof-acessos-btn {
+    width: 100%;
+  }
+}

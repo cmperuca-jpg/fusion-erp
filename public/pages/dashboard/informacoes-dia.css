@@ -1,0 +1,1246 @@
+
+.dashboard-faixa-card{
+  margin-top:18px!important;
+  padding:18px!important;
+}
+
+.dashboard-faixa-topo{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  margin-bottom:14px;
+}
+
+.dashboard-faixa-topo h2{
+  margin:0 0 4px;
+  font-size:20px;
+}
+
+.dashboard-faixa-topo p{
+  margin:0;
+  color:#64748b;
+  font-size:13px;
+}
+
+.infos-dia-atualizado{
+  color:#64748b;
+  font-size:12px;
+  white-space:nowrap;
+}
+
+.dashboard-kpi-grid,
+.infos-dia-grid{
+  display:grid!important;
+  grid-template-columns:repeat(6,minmax(0,1fr))!important;
+  gap:12px!important;
+}
+
+.dashboard-kpi-card,
+.infos-dia-item{
+  position:relative;
+  min-width:0;
+  min-height:112px;
+  padding:15px 16px!important;
+  margin:0!important;
+  box-sizing:border-box;
+
+  display:flex!important;
+  flex-direction:column;
+  align-items:flex-start;
+  justify-content:center;
+
+  border:1px solid #dce6ec;
+  border-radius:12px;
+  background:#fff;
+  box-shadow:0 2px 8px rgba(15,35,50,.06);
+}
+
+.dashboard-kpi-card > span,
+.infos-dia-label{
+  display:block;
+  color:#516a7a;
+  font-size:12px;
+  font-weight:800;
+  line-height:1.25;
+}
+
+.dashboard-kpi-card > strong,
+.infos-dia-numero{
+  display:block!important;
+  min-width:0!important;
+  min-height:0!important;
+  padding:0!important;
+  margin:7px 0 5px!important;
+
+  background:transparent!important;
+  color:#112f42;
+  font-size:30px!important;
+  font-weight:800!important;
+  line-height:1!important;
+  letter-spacing:-.03em;
+}
+
+.dashboard-kpi-card > small,
+.infos-dia-item > small{
+  display:block;
+  margin:0;
+  color:#64748b;
+  font-size:11px;
+  line-height:1.3;
+}
+
+.infos-dia-item{
+  color:#0f172a;
+  text-decoration:none;
+  transition:
+    border-color .15s ease,
+    transform .15s ease,
+    box-shadow .15s ease;
+}
+
+.infos-dia-item:hover{
+  border-color:var(--fusion-primary,#ff6600);
+  transform:translateY(-1px);
+  box-shadow:0 5px 14px rgba(15,35,50,.09);
+}
+
+.infos-dia-item:focus-visible{
+  outline:3px solid rgba(255,102,0,.20);
+  outline-offset:2px;
+}
+
+.infos-dia-seta{
+  position:absolute;
+  top:11px;
+  right:13px;
+  color:#94a3b8;
+  font-size:18px;
+  font-weight:900;
+  line-height:1;
+}
+
+.infos-dia-item[data-alerta="1"]{
+  border-color:#fed7aa;
+}
+
+.infos-dia-item[data-alerta="1"] .infos-dia-numero{
+  color:#c2410c;
+}
+
+@media(max-width:1200px){
+  .dashboard-kpi-grid,
+  .infos-dia-grid{
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  }
+}
+
+@media(max-width:700px){
+  .dashboard-kpi-grid,
+  .infos-dia-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+
+  .dashboard-faixa-topo{
+    align-items:flex-start;
+    flex-direction:column;
+    gap:6px;
+  }
+}
+
+@media(max-width:440px){
+  .dashboard-kpi-grid,
+  .infos-dia-grid{
+    grid-template-columns:1fr!important;
+  }
+}
+
+
+/* Entrada identificada pelo Dashboard */
+
+.entrada-rapida-dashboard{
+  margin-top:18px!important;
+  padding:18px 20px!important;
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) minmax(420px,540px);
+  align-items:center;
+  gap:24px;
+}
+
+.entrada-rapida-dashboard-texto{
+  min-width:0;
+}
+
+.entrada-rapida-dashboard-texto h2{
+  margin:0 0 5px;
+  font-size:20px;
+  color:#112f42;
+}
+
+.entrada-rapida-dashboard-texto p{
+  margin:0;
+  color:#64748b;
+  font-size:13px;
+  line-height:1.45;
+}
+
+.entrada-rapida-dashboard-texto small{
+  display:block;
+  margin-top:7px;
+  color:#516a7a;
+  font-size:12px;
+  font-weight:600;
+}
+
+.entrada-rapida-dashboard-acao{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:10px;
+  align-items:stretch;
+}
+
+.entrada-rapida-dashboard-acao input{
+  width:100%;
+  min-width:0;
+  height:46px;
+  box-sizing:border-box;
+  padding:0 14px;
+  border:1px solid #cbd5e1;
+  border-radius:10px;
+  background:#fff;
+  color:#0f172a;
+  font:inherit;
+}
+
+.entrada-rapida-dashboard-acao input:focus{
+  outline:none;
+  border-color:var(--fusion-primary,#ff6600);
+  box-shadow:0 0 0 3px rgba(255,102,0,.12);
+}
+
+.entrada-rapida-dashboard-acao button{
+  min-width:150px;
+  min-height:46px;
+}
+
+@media(max-width:900px){
+  .entrada-rapida-dashboard{
+    grid-template-columns:1fr!important;
+  }
+}
+
+@media(max-width:600px){
+  .entrada-rapida-dashboard-acao{
+    grid-template-columns:1fr;
+  }
+
+  .entrada-rapida-dashboard-acao button{
+    width:100%;
+  }
+}
+
+
+/* =========================================================
+   Relacionamento de aniversários
+   ========================================================= */
+
+.aniversarios-relacionamento{
+  margin-top:18px!important;
+  padding:18px 20px!important;
+}
+
+.aniversarios-relacionamento-topo{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:16px;
+  margin-bottom:16px;
+}
+
+.aniversarios-relacionamento-topo h2{
+  margin:0 0 4px;
+  color:#112f42;
+  font-size:20px;
+}
+
+.aniversarios-relacionamento-topo p{
+  margin:0;
+  color:#64748b;
+  font-size:13px;
+  line-height:1.45;
+}
+
+.aniversarios-relacionamento-janela{
+  flex:0 0 auto;
+  padding:6px 10px;
+  border:1px solid #dce6ec;
+  border-radius:999px;
+  background:#f8fafc;
+  color:#516a7a;
+  font-size:11px;
+  font-weight:800;
+}
+
+.aniversarios-relacionamento-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:14px;
+}
+
+.aniversarios-grupo{
+  min-width:0;
+  border:1px solid #dce6ec;
+  border-radius:12px;
+  background:#fff;
+  overflow:hidden;
+}
+
+.aniversarios-grupo-inativos{
+  border-color:#fed7aa;
+}
+
+.aniversarios-grupo-topo{
+  padding:13px 15px;
+  border-bottom:1px solid #e8eef2;
+  background:#f8fafc;
+}
+
+.aniversarios-grupo-inativos .aniversarios-grupo-topo{
+  background:#fff7ed;
+}
+
+.aniversarios-grupo-topo h3{
+  margin:0 0 3px;
+  color:#112f42;
+  font-size:15px;
+}
+
+.aniversarios-grupo-topo small{
+  color:#64748b;
+  font-size:11px;
+}
+
+.aniversarios-lista{
+  display:flex;
+  flex-direction:column;
+}
+
+.aniversario-pessoa{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  padding:12px 14px;
+  border-bottom:1px solid #edf2f5;
+}
+
+.aniversario-pessoa:last-child{
+  border-bottom:0;
+}
+
+.aniversario-pessoa-principal{
+  min-width:0;
+}
+
+.aniversario-pessoa-nome{
+  overflow:hidden;
+  color:#172b3a;
+  font-size:13px;
+  font-weight:800;
+  line-height:1.3;
+  text-overflow:ellipsis;
+}
+
+.aniversario-pessoa-meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:5px 10px;
+  margin-top:4px;
+  color:#64748b;
+  font-size:11px;
+}
+
+.aniversario-pessoa-acoes{
+  flex:0 0 auto;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.aniversario-quando{
+  padding:4px 8px;
+  border-radius:999px;
+  background:#f1f5f9;
+  color:#475569;
+  font-size:10px;
+  font-weight:800;
+  white-space:nowrap;
+}
+
+.aniversario-pessoa[data-situacao="inativo"] .aniversario-quando{
+  background:#fff7ed;
+  color:#c2410c;
+}
+
+.aniversario-whatsapp{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:30px;
+  padding:5px 9px;
+  border:1px solid #bbf7d0;
+  border-radius:8px;
+  background:#f0fdf4;
+  color:#166534;
+  font-size:11px;
+  font-weight:800;
+  text-decoration:none;
+}
+
+.aniversario-whatsapp:hover{
+  border-color:#86efac;
+  background:#dcfce7;
+}
+
+.aniversario-whatsapp:focus-visible{
+  outline:3px solid rgba(22,101,52,.18);
+  outline-offset:2px;
+}
+
+.aniversario-sem-contato{
+  color:#94a3b8;
+  font-size:10px;
+  white-space:nowrap;
+}
+
+.aniversarios-vazio{
+  margin:0;
+  padding:16px 14px;
+  color:#64748b;
+  font-size:12px;
+}
+
+@media(max-width:900px){
+  .aniversarios-relacionamento-grid{
+    grid-template-columns:1fr;
+  }
+}
+
+@media(max-width:600px){
+  .aniversarios-relacionamento{
+    padding:15px!important;
+  }
+
+  .aniversarios-relacionamento-topo{
+    flex-direction:column;
+    gap:8px;
+  }
+
+  .aniversario-pessoa{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+
+  .aniversario-pessoa-acoes{
+    width:100%;
+    justify-content:space-between;
+  }
+}
+
+
+/* DASHBOARD COMPACTO MODERNO 20260820 */
+
+/* Ritmo geral */
+.fusion-content{
+  padding-top:14px!important;
+  padding-bottom:18px!important;
+}
+
+.fusion-content > *{
+  box-sizing:border-box;
+}
+
+.fusion-content > * + *{
+  margin-top:14px!important;
+}
+
+/* =========================================================
+   KPIs superiores
+   ========================================================= */
+
+.fusion-content > .fusion-grid:first-child{
+  gap:12px!important;
+  margin:0!important;
+}
+
+.fusion-content > .fusion-grid:first-child .fusion-card{
+  min-height:88px!important;
+  padding:13px 16px!important;
+  border:1px solid #dde6ec!important;
+  border-radius:12px!important;
+  box-shadow:0 2px 7px rgba(15,35,50,.045)!important;
+}
+
+.fusion-content > .fusion-grid:first-child .fusion-kpi-label{
+  margin:0!important;
+  color:#526b7b!important;
+  font-size:11px!important;
+  font-weight:800!important;
+  line-height:1.2!important;
+}
+
+.fusion-content > .fusion-grid:first-child .fusion-kpi-value{
+  margin:6px 0 3px!important;
+  color:#102f42!important;
+  font-size:27px!important;
+  font-weight:850!important;
+  line-height:1!important;
+  letter-spacing:-.025em!important;
+}
+
+.fusion-content > .fusion-grid:first-child .fusion-card small{
+  color:#6b7f8d!important;
+  font-size:10.5px!important;
+  line-height:1.25!important;
+}
+
+/* =========================================================
+   Seções principais
+   ========================================================= */
+
+.dashboard-faixa-card,
+.infos-dia-card{
+  padding:13px 14px 14px!important;
+  border:1px solid #dce5eb!important;
+  border-radius:12px!important;
+  box-shadow:0 2px 8px rgba(15,35,50,.035)!important;
+}
+
+.dashboard-faixa-topo,
+.infos-dia-topo{
+  margin-bottom:10px!important;
+  gap:12px!important;
+}
+
+.dashboard-faixa-topo h2,
+.infos-dia-topo h2{
+  margin:0 0 2px!important;
+  color:#102f42!important;
+  font-size:18px!important;
+  font-weight:850!important;
+  line-height:1.15!important;
+}
+
+.dashboard-faixa-topo p,
+.infos-dia-topo p{
+  margin:0!important;
+  color:#647987!important;
+  font-size:11px!important;
+  line-height:1.35!important;
+}
+
+.infos-dia-atualizado{
+  font-size:10px!important;
+}
+
+/* =========================================================
+   Movimento hoje + Informações do Dia
+   ========================================================= */
+
+.dashboard-kpi-grid,
+.infos-dia-grid{
+  gap:9px!important;
+}
+
+.dashboard-kpi-card,
+.infos-dia-item{
+  min-height:82px!important;
+  padding:11px 13px!important;
+  border-radius:10px!important;
+  box-shadow:none!important;
+}
+
+.dashboard-kpi-card > span,
+.infos-dia-label{
+  font-size:10.5px!important;
+  line-height:1.2!important;
+}
+
+.dashboard-kpi-card > strong,
+.infos-dia-numero{
+  margin:5px 0 3px!important;
+  font-size:25px!important;
+  line-height:.95!important;
+}
+
+.dashboard-kpi-card > small,
+.infos-dia-item > small{
+  font-size:9.5px!important;
+  line-height:1.2!important;
+}
+
+.infos-dia-seta{
+  top:8px!important;
+  right:10px!important;
+  font-size:15px!important;
+}
+
+/* Alertas mais discretos e consistentes */
+.infos-dia-item[data-alerta="1"]{
+  background:#fffdfa!important;
+  border-color:#f7c99d!important;
+}
+
+.infos-dia-item[data-alerta="1"] .infos-dia-numero{
+  color:#c65011!important;
+}
+
+/* =========================================================
+   Relacionamento de aniversários
+   ========================================================= */
+
+.aniversarios-relacionamento{
+  margin-top:14px!important;
+  padding:13px 14px!important;
+  border-radius:12px!important;
+}
+
+.aniversarios-relacionamento-topo{
+  margin-bottom:10px!important;
+}
+
+.aniversarios-relacionamento-topo h2{
+  font-size:18px!important;
+  margin-bottom:2px!important;
+}
+
+.aniversarios-relacionamento-topo p{
+  font-size:11px!important;
+}
+
+.aniversarios-relacionamento-janela{
+  padding:4px 8px!important;
+  font-size:10px!important;
+}
+
+.aniversarios-relacionamento-grid{
+  gap:10px!important;
+}
+
+.aniversarios-grupo{
+  border-radius:10px!important;
+}
+
+.aniversarios-grupo-topo{
+  padding:9px 12px!important;
+}
+
+.aniversarios-grupo-topo h3{
+  margin-bottom:2px!important;
+  font-size:13px!important;
+}
+
+.aniversarios-grupo-topo small{
+  font-size:10px!important;
+}
+
+.aniversario-pessoa{
+  gap:10px!important;
+  padding:9px 11px!important;
+}
+
+.aniversario-pessoa-nome{
+  font-size:11.5px!important;
+}
+
+.aniversario-pessoa-meta{
+  margin-top:3px!important;
+  font-size:9.5px!important;
+}
+
+.aniversario-quando{
+  padding:3px 7px!important;
+  font-size:9px!important;
+}
+
+.aniversario-whatsapp{
+  min-height:27px!important;
+  padding:4px 8px!important;
+  border-radius:7px!important;
+  font-size:10px!important;
+}
+
+/* =========================================================
+   Entrada rápida
+   ========================================================= */
+
+.entrada-rapida-dashboard{
+  margin-top:14px!important;
+  padding:13px 16px!important;
+  gap:18px!important;
+  border-radius:12px!important;
+}
+
+.entrada-rapida-dashboard-texto h2{
+  margin-bottom:2px!important;
+  font-size:18px!important;
+}
+
+.entrada-rapida-dashboard-texto p{
+  font-size:11px!important;
+  line-height:1.35!important;
+}
+
+.entrada-rapida-dashboard-texto small{
+  margin-top:4px!important;
+  font-size:10px!important;
+}
+
+.entrada-rapida-dashboard-acao input,
+.entrada-rapida-dashboard-acao button{
+  min-height:38px!important;
+}
+
+/* =========================================================
+   Programação de avaliações
+   ========================================================= */
+
+#agendaAvaliacoesDashboard{
+  margin-top:14px!important;
+  padding:13px 16px!important;
+  border:1px solid #dce5eb!important;
+  border-radius:12px!important;
+  box-shadow:0 2px 8px rgba(15,35,50,.035)!important;
+}
+
+#agendaAvaliacoesDashboard h2{
+  font-size:18px!important;
+}
+
+#agendaAvaliacoesDashboard p{
+  font-size:11px!important;
+}
+
+/* =========================================================
+   Responsividade
+   ========================================================= */
+
+@media(max-width:1200px){
+  .dashboard-kpi-card,
+  .infos-dia-item{
+    min-height:78px!important;
+  }
+}
+
+@media(max-width:700px){
+  .fusion-content{
+    padding-top:10px!important;
+  }
+
+  .fusion-content > * + *{
+    margin-top:10px!important;
+  }
+
+  .dashboard-faixa-card,
+  .infos-dia-card,
+  .aniversarios-relacionamento,
+  #agendaAvaliacoesDashboard{
+    padding:11px!important;
+  }
+
+  .fusion-content > .fusion-grid:first-child .fusion-card{
+    min-height:82px!important;
+    padding:11px 13px!important;
+  }
+}
+
+
+/* DASHBOARD DENSO V2 20260820 */
+
+/* ==========================================================
+   Densidade geral
+   ========================================================== */
+
+.fusion-content{
+  padding-top:10px!important;
+  padding-bottom:14px!important;
+}
+
+.fusion-content > * + *{
+  margin-top:10px!important;
+}
+
+/* ==========================================================
+   TOPO — 4 KPIs + ENTRADA RÁPIDA
+   ========================================================== */
+
+.dashboard-top-grid{
+  display:grid!important;
+  grid-template-columns:
+    minmax(125px,.8fr)
+    minmax(190px,1.15fr)
+    minmax(145px,.9fr)
+    minmax(120px,.75fr)
+    minmax(300px,1.45fr);
+  gap:9px!important;
+  align-items:stretch;
+  margin:0!important;
+}
+
+.dashboard-top-kpi,
+.dashboard-entrada-topo{
+  min-height:70px!important;
+  margin:0!important;
+  padding:10px 13px!important;
+  border:1px solid #dce5eb!important;
+  border-radius:10px!important;
+  background:#fff!important;
+  box-shadow:0 2px 6px rgba(15,35,50,.035)!important;
+  box-sizing:border-box;
+}
+
+.dashboard-top-kpi{
+  display:flex!important;
+  flex-direction:column;
+  justify-content:center;
+}
+
+.dashboard-top-kpi .fusion-kpi-label{
+  margin:0!important;
+  color:#536b7a!important;
+  font-size:10px!important;
+  font-weight:800!important;
+  line-height:1.15!important;
+}
+
+.dashboard-top-kpi .fusion-kpi-value{
+  margin:5px 0 0!important;
+  color:#102f42!important;
+  font-size:25px!important;
+  font-weight:850!important;
+  line-height:1!important;
+  letter-spacing:-.025em!important;
+}
+
+/* Entrada rápida integrada ao topo */
+
+.dashboard-entrada-topo{
+  display:flex!important;
+  flex-direction:column;
+  justify-content:center;
+  gap:5px;
+}
+
+.dashboard-entrada-topo-titulo{
+  color:#536b7a;
+  font-size:10px;
+  font-weight:800;
+  line-height:1.15;
+}
+
+.dashboard-entrada-topo-form{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:6px;
+  align-items:center;
+}
+
+.dashboard-entrada-topo-form input{
+  width:100%;
+  min-width:0;
+  height:32px!important;
+  min-height:32px!important;
+  padding:5px 9px!important;
+  box-sizing:border-box;
+  border-radius:7px!important;
+  font-size:11px!important;
+}
+
+.dashboard-entrada-topo-form button{
+  height:32px!important;
+  min-height:32px!important;
+  padding:5px 11px!important;
+  border-radius:7px!important;
+  font-size:10.5px!important;
+  white-space:nowrap;
+}
+
+.dashboard-entrada-topo-status{
+  display:block;
+  overflow:hidden;
+  margin:0!important;
+  color:#718491!important;
+  font-size:8.5px!important;
+  line-height:1.1!important;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+/* ==========================================================
+   SEÇÕES
+   ========================================================== */
+
+.dashboard-faixa-card,
+.infos-dia-card{
+  padding:10px 11px!important;
+}
+
+.dashboard-faixa-topo,
+.infos-dia-topo{
+  margin-bottom:7px!important;
+}
+
+.dashboard-faixa-topo h2,
+.infos-dia-topo h2{
+  margin:0!important;
+  font-size:16px!important;
+  line-height:1.1!important;
+}
+
+/* As explicações abaixo do título já não são necessárias
+   em um dashboard operacional compacto */
+.dashboard-faixa-topo p,
+.infos-dia-topo p{
+  display:none!important;
+}
+
+.infos-dia-atualizado{
+  font-size:8.5px!important;
+}
+
+/* ==========================================================
+   MINI KPIs
+   ========================================================== */
+
+.dashboard-kpi-grid,
+.infos-dia-grid{
+  gap:7px!important;
+}
+
+.dashboard-kpi-card,
+.infos-dia-item{
+  min-height:61px!important;
+  padding:8px 10px!important;
+  border-radius:8px!important;
+}
+
+/* Remove as descrições inferiores dos cards */
+.dashboard-kpi-card > small,
+.infos-dia-item > small{
+  display:none!important;
+}
+
+.dashboard-kpi-card > span,
+.infos-dia-label{
+  overflow:hidden;
+  margin:0!important;
+  color:#536b7a!important;
+  font-size:9px!important;
+  font-weight:800!important;
+  line-height:1.1!important;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.dashboard-kpi-card > strong,
+.infos-dia-numero{
+  margin:5px 0 0!important;
+  font-size:23px!important;
+  line-height:.95!important;
+}
+
+.infos-dia-seta{
+  top:7px!important;
+  right:8px!important;
+  font-size:12px!important;
+}
+
+/* ==========================================================
+   ANIVERSÁRIOS
+   ========================================================== */
+
+.aniversarios-relacionamento{
+  margin-top:10px!important;
+  padding:10px 11px!important;
+}
+
+.aniversarios-relacionamento-topo{
+  margin-bottom:7px!important;
+}
+
+.aniversarios-relacionamento-topo h2{
+  font-size:16px!important;
+}
+
+.aniversarios-relacionamento-topo p{
+  font-size:9.5px!important;
+}
+
+.aniversarios-grupo-topo{
+  padding:7px 10px!important;
+}
+
+.aniversario-pessoa{
+  padding:7px 9px!important;
+}
+
+/* ==========================================================
+   AVALIAÇÕES
+   ========================================================== */
+
+#agendaAvaliacoesDashboard{
+  margin-top:10px!important;
+  padding:10px 12px!important;
+}
+
+/* ==========================================================
+   RESPONSIVO
+   ========================================================== */
+
+@media(max-width:1180px){
+  .dashboard-top-grid{
+    grid-template-columns:repeat(4,minmax(0,1fr));
+  }
+
+  .dashboard-entrada-topo{
+    grid-column:span 2;
+  }
+}
+
+@media(max-width:850px){
+  .dashboard-top-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+
+  .dashboard-entrada-topo{
+    grid-column:1 / -1;
+  }
+}
+
+@media(max-width:520px){
+  .dashboard-top-grid{
+    grid-template-columns:1fr 1fr;
+  }
+
+  .dashboard-top-kpi .fusion-kpi-value{
+    font-size:21px!important;
+  }
+
+  .dashboard-entrada-topo{
+    grid-column:1 / -1;
+  }
+}
+
+
+/* DASHBOARD OPERACIONAL LADO A LADO 20260820 */
+
+.dashboard-operacional-linha{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  gap:10px;
+  align-items:start;
+  margin-top:10px !important;
+}
+
+.dashboard-operacional-linha > .dashboard-faixa-card,
+.dashboard-operacional-linha > .infos-dia-card{
+  margin:0 !important;
+  height:100%;
+}
+
+.dashboard-operacional-linha .dashboard-faixa-card,
+.dashboard-operacional-linha .infos-dia-card{
+  min-height:100%;
+}
+
+.dashboard-operacional-linha .dashboard-faixa-topo,
+.dashboard-operacional-linha .infos-dia-topo{
+  margin-bottom:6px !important;
+}
+
+.dashboard-operacional-linha .dashboard-faixa-topo h2,
+.dashboard-operacional-linha .infos-dia-topo h2{
+  font-size:15px !important;
+}
+
+.dashboard-operacional-linha .dashboard-kpi-grid,
+.dashboard-operacional-linha .infos-dia-grid{
+  gap:6px !important;
+}
+
+.dashboard-operacional-linha .dashboard-kpi-card,
+.dashboard-operacional-linha .infos-dia-item{
+  min-height:58px !important;
+  padding:8px 9px !important;
+}
+
+.dashboard-operacional-linha .dashboard-kpi-card > span,
+.dashboard-operacional-linha .infos-dia-label{
+  font-size:8.8px !important;
+  line-height:1.05 !important;
+}
+
+.dashboard-operacional-linha .dashboard-kpi-card > strong,
+.dashboard-operacional-linha .infos-dia-numero{
+  margin:4px 0 0 !important;
+  font-size:21px !important;
+  line-height:.95 !important;
+}
+
+.dashboard-operacional-linha .dashboard-kpi-card > small,
+.dashboard-operacional-linha .infos-dia-item > small{
+  display:none !important;
+}
+
+.dashboard-operacional-linha .infos-dia-atualizado{
+  font-size:8px !important;
+}
+
+@media(max-width:1100px){
+  .dashboard-operacional-linha{
+    grid-template-columns:1fr;
+  }
+}
+
+
+/* LAYOUT RELACIONAMENTO + AVALIACOES 20260820 */
+
+.dashboard-rel-av-layout{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  gap:12px;
+  align-items:start;
+  margin-top:10px;
+}
+
+.dashboard-rel-av-col{
+  min-width:0;
+  display:grid;
+  gap:12px;
+}
+
+.dashboard-rel-av-col .aniversarios-grupo{
+  margin:0 !important;
+}
+
+.dashboard-rel-av-col-dir #agendaAvaliacoesDashboard{
+  margin:0 !important;
+  height:auto;
+}
+
+.dashboard-rel-av-col-dir #agendaAvaliacoesDashboard .fusion-card,
+.dashboard-rel-av-col-dir #agendaAvaliacoesDashboard{
+  min-height:100%;
+}
+
+.dashboard-rel-av-col-dir #agendaAvaliacoesDashboard h2{
+  margin:0 0 4px !important;
+}
+
+.dashboard-rel-av-col-dir #agendaAvaliacoesDashboard p{
+  margin:0 0 10px !important;
+}
+
+@media(max-width:1100px){
+  .dashboard-rel-av-layout{
+    grid-template-columns:1fr;
+  }
+}
+
+
+/* ==========================================================
+   DASHBOARD FINANCEIRO KPIS 20260826
+   6 KPIs + Entrada rápida
+   ========================================================== */
+
+@media (min-width:1501px){
+  .dashboard-top-grid{
+    grid-template-columns:
+      repeat(6,minmax(118px,1fr))
+      minmax(250px,1.75fr) !important;
+  }
+
+  .dashboard-entrada-topo{
+    grid-column:auto !important;
+  }
+}
+
+@media (min-width:1101px) and (max-width:1500px){
+  .dashboard-top-grid{
+    grid-template-columns:repeat(6,minmax(0,1fr)) !important;
+  }
+
+  .dashboard-entrada-topo{
+    grid-column:1 / -1 !important;
+  }
+}
+
+@media (min-width:701px) and (max-width:1100px){
+  .dashboard-top-grid{
+    grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+  }
+
+  .dashboard-entrada-topo{
+    grid-column:1 / -1 !important;
+  }
+}
+
+@media (max-width:700px){
+  .dashboard-top-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  }
+
+  .dashboard-entrada-topo{
+    grid-column:1 / -1 !important;
+  }
+}
+
+.dashboard-top-kpi .fusion-kpi-value{
+  white-space:nowrap;
+}
+
+
+/* ==========================================================
+   DASHBOARD FECHAMENTO FINANCEIRO 20260826
+   8 KPIs + Entrada rápida
+   ========================================================== */
+
+@media (min-width:1501px){
+  .dashboard-top-grid{
+    grid-template-columns:repeat(8,minmax(0,1fr)) !important;
+  }
+
+  .dashboard-entrada-topo{
+    grid-column:1 / -1 !important;
+  }
+}
+
+@media (min-width:1101px) and (max-width:1500px){
+  .dashboard-top-grid{
+    grid-template-columns:repeat(4,minmax(0,1fr)) !important;
+  }
+
+  .dashboard-entrada-topo{
+    grid-column:1 / -1 !important;
+  }
+}
+
+@media (min-width:701px) and (max-width:1100px){
+  .dashboard-top-grid{
+    grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+  }
+
+  .dashboard-entrada-topo{
+    grid-column:1 / -1 !important;
+  }
+}
+
+@media (max-width:700px){
+  .dashboard-top-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  }
+
+  .dashboard-entrada-topo{
+    grid-column:1 / -1 !important;
+  }
+}

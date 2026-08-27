@@ -1,0 +1,157 @@
+/* DASHBOARD CHECKIN OPERACIONAL 6 COLUNAS 20260826 */
+
+.dashboard-checkin-operacional {
+  margin: 0 0 18px !important;
+  padding: 16px !important;
+  min-width: 0;
+}
+
+.dashboard-checkin-cabecalho {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.dashboard-checkin-cabecalho h2 {
+  margin: 0 0 4px;
+  color: #0f172a;
+  font-size: 17px;
+}
+
+.dashboard-checkin-cabecalho p {
+  margin: 0;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.dashboard-checkin-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex: 0 0 auto;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.dashboard-checkin-status-ponto {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #16a34a;
+}
+
+.dashboard-checkin-grid {
+  display: grid !important;
+  grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+  min-width: 0;
+}
+
+.dashboard-checkin-kpi {
+  min-width: 0;
+  min-height: 275px;
+  padding: 13px 12px;
+  border: 1px solid #d7e0ea;
+  border-radius: 9px;
+  background: #fff;
+}
+
+.dashboard-checkin-kpi > span {
+  display: block;
+  min-height: 30px;
+  color: #52677a;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.dashboard-checkin-kpi > strong {
+  display: block;
+  margin: 3px 0 3px;
+  color: #082f49;
+  font-size: 30px;
+  line-height: 1;
+}
+
+.dashboard-checkin-kpi > small {
+  display: block;
+  min-height: 32px;
+  color: #64748b;
+  font-size: 10px;
+  line-height: 1.25;
+}
+
+.dashboard-checkin-divisor {
+  height: 1px;
+  margin: 10px 0 9px;
+  background: #dbe4ee;
+}
+
+.dashboard-checkin-kpi > b {
+  display: block;
+  margin-bottom: 7px;
+  color: #475569;
+  font-size: 10px;
+  letter-spacing: .02em;
+}
+
+.dashboard-checkin-lista {
+  max-height: 145px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+
+.dashboard-checkin-lista > div {
+  padding: 6px 0;
+  border-bottom: 1px solid #e8edf3;
+  color: #0f172a;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.dashboard-checkin-lista > div:last-child {
+  border-bottom: 0;
+}
+
+.dashboard-checkin-lista em {
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.dashboard-operacional-linha:has(#movimentoHojeDashboard.dashboard-checkin-operacional) {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+.dashboard-operacional-linha:has(#movimentoHojeDashboard.dashboard-checkin-operacional)
+  > #movimentoHojeDashboard {
+  width: 100% !important;
+}
+
+@media (max-width: 1180px) {
+  .dashboard-checkin-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 720px) {
+  .dashboard-checkin-cabecalho {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .dashboard-checkin-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 460px) {
+  .dashboard-checkin-grid {
+    grid-template-columns: 1fr !important;
+  }
+}

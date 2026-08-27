@@ -24,6 +24,11 @@ import {
   criarCheckoutPagbank,
   linkPagamentoPagbank
 } from "./pagbank.client.mjs";
+import {
+  criarLinkInfinitePay,
+  infinitePayConfigurado,
+  verificarPagamentoInfinitePay
+} from "./infinitepay.client.mjs";
 import { obterConfiguracaoPagamentosRuntime } from "./pagamentos-online.config.mjs";
 
 const COL_PAGAMENTOS = "pagamentos_online";
@@ -32,6 +37,7 @@ const STATUS_ABERTOS = new Set(["criada", "pendente", "aguardando_pagamento"]);
 const STATUS_PAGOS_ASAAS = new Set(["RECEIVED", "CONFIRMED", "RECEIVED_IN_CASH", "APPROVED", "PAID"]);
 const EVENTOS_PAGOS_ASAAS = new Set(["PAYMENT_RECEIVED", "PAYMENT_CONFIRMED"]);
 const STATUS_PAGOS_PAGBANK = new Set(["PAID"]);
+const STATUS_PAGOS_INFINITEPAY = new Set(["PAID", "APPROVED"]);
 
 function texto(valor = "") {
   return String(valor ?? "").trim();
@@ -61,15 +67,21 @@ function providerAtual() {
     process.env.FUSION_GATEWAY_PAGAMENTOS ||
     "asaas"
   );
-  return ["pagbank", "pagseguro"].includes(bruto) ? "pagbank" : "asaas";
+  if (["pagbank", "pagseguro"].includes(bruto)) return "pagbank";
+  if (["infinitepay", "infinite-pay", "infinite_pay", "infinite", "infinyt"].includes(bruto)) return "infinitepay";
+  return "asaas";
 }
 
 function nomeProvider(provider = "") {
-  return provider === "pagbank" ? "PagBank" : "Asaas";
+  if (provider === "pagbank") return "PagBank";
+  if (provider === "infinitepay") return "InfinitePay";
+  return "Asaas";
 }
 
 function providerConfigurado(provider = providerAtual(), config = {}) {
-  return provider === "pagbank" ? Boolean(config?.pagbank?.token) : asaasConfigurado();
+  if (provider === "pagbank") return Boolean(config?.pagbank?.token);
+  if (provider === "infinitepay") return infinitePayConfigurado(config?.infinitepay || {});
+  return asaasConfigurado();
 }
 
 function erro(mensagem, status = 400, code = "") {
@@ -120,8 +132,16 @@ function pagamentoQuitadoPagbank(_evento = "", pagamento = {}) {
   return STATUS_PAGOS_PAGBANK.has(texto(pagamento.status).toUpperCase());
 }
 
+function pagamentoQuitadoInfinitePay(_evento = "", pagamento = {}) {
+  return pagamento.paid === true ||
+    texto(pagamento.paid).toLowerCase() === "true" ||
+    STATUS_PAGOS_INFINITEPAY.has(texto(pagamento.status).toUpperCase());
+}
+
 function pagamentoQuitadoProvider(provider = "", evento = "", pagamento = {}) {
-  return provider === "pagbank" ? pagamentoQuitadoPagbank(evento, pagamento) : pagamentoQuitadoAsaas(evento, pagamento);
+  if (provider === "pagbank") return pagamentoQuitadoPagbank(evento, pagamento);
+  if (provider === "infinitepay") return pagamentoQuitadoInfinitePay(evento, pagamento);
+  return pagamentoQuitadoAsaas(evento, pagamento);
 }
 
 function formaPagamentoAsaas(pagamento = {}) {
@@ -142,8 +162,19 @@ function formaPagamentoPagbank(pagamento = {}) {
   return "Pagamento online";
 }
 
+function formaPagamentoInfinitePay(pagamento = {}) {
+  const metodo = texto(pagamento.capture_method || pagamento.captureMethod || pagamento.billingType || pagamento.billing_type).toLowerCase();
+  if (metodo === "pix") return "PIX";
+  if (metodo.includes("credit")) return "Cartão de crédito";
+  if (metodo.includes("debit")) return "Cartão de débito";
+  if (metodo.includes("boleto")) return "Boleto online";
+  return "Pagamento online";
+}
+
 function formaPagamentoOnline(provider = "", pagamento = {}) {
-  return provider === "pagbank" ? formaPagamentoPagbank(pagamento) : formaPagamentoAsaas(pagamento);
+  if (provider === "pagbank") return formaPagamentoPagbank(pagamento);
+  if (provider === "infinitepay") return formaPagamentoInfinitePay(pagamento);
+  return formaPagamentoAsaas(pagamento);
 }
 
 function billingType(payload = {}) {
@@ -260,6 +291,23 @@ function urlRetornoPagbank({ escopo = "", tenantId = "" } = {}, pagbankConfig = 
   return `${basePublicaFusion(pagbankConfig)}${caminho}`;
 }
 
+function urlWebhookInfinitePay(infinitepayConfig = {}) {
+  const custom = texto(infinitepayConfig.webhookUrl || process.env.FUSION_INFINITEPAY_WEBHOOK_URL || process.env.INFINITEPAY_WEBHOOK_URL);
+  return custom || `${basePublicaFusion(infinitepayConfig)}/api/pagamentos-online/webhooks/infinitepay`;
+}
+
+function urlRetornoInfinitePay({ escopo = "", tenantId = "" } = {}, infinitepayConfig = {}) {
+  const customAluno = texto(infinitepayConfig.alunoRedirectUrl || process.env.FUSION_INFINITEPAY_ALUNO_REDIRECT_URL || process.env.INFINITEPAY_ALUNO_REDIRECT_URL);
+  const customFusion = texto(infinitepayConfig.fusionRedirectUrl || process.env.FUSION_INFINITEPAY_FUSION_REDIRECT_URL || process.env.INFINITEPAY_FUSION_REDIRECT_URL);
+  const customGeral = texto(infinitepayConfig.redirectUrl || process.env.FUSION_INFINITEPAY_REDIRECT_URL || process.env.INFINITEPAY_REDIRECT_URL);
+  if (escopo === "aluno_mensalidade" && customAluno) return customAluno;
+  if (escopo === "fusion_assinatura" && customFusion) return customFusion;
+  if (customGeral) return customGeral;
+  const tenant = normalizarTenantId(tenantId) || "academia-piloto";
+  const caminho = escopo === "aluno_mensalidade" ? `/${tenant}/apps/aluno` : `/${tenant}/app/dashboard`;
+  return `${basePublicaFusion(infinitepayConfig)}${caminho}`;
+}
+
 function expiracaoCheckoutPagbank(pagbankConfig = {}) {
   const horas = Number(pagbankConfig.checkoutExpirationHours || process.env.FUSION_PAGBANK_CHECKOUT_EXPIRATION_HOURS || 72);
   const ms = Number.isFinite(horas) && horas > 0 ? horas * 60 * 60 * 1000 : 72 * 60 * 60 * 1000;
@@ -298,6 +346,18 @@ function resumoCheckoutPagbank(checkout = {}, valor = 0) {
     invoiceUrl: url,
     value: numero(valor, 0),
     netValue: 0,
+    dueDate: hojeISO(),
+    billingType: "CHECKOUT"
+  };
+}
+
+function resumoCheckoutInfinitePay(checkout = {}, valor = 0) {
+  return {
+    providerPaymentId: texto(checkout.invoice_slug || checkout.slug || checkout.id),
+    statusGateway: texto(checkout.status || "CREATED"),
+    invoiceUrl: texto(checkout.url || checkout.checkout_url || checkout.checkoutUrl),
+    value: numero(valor, 0),
+    netValue: numero(valor, 0),
     dueDate: hojeISO(),
     billingType: "CHECKOUT"
   };
@@ -495,13 +555,84 @@ async function criarRegistroCobrancaPagbank({ escopo, target, valor, descricao, 
   return registro;
 }
 
+async function criarRegistroCobrancaInfinitePay({ escopo, target, valor, descricao, vencimento, pagador = {} }, infinitepayConfig = {}) {
+  if (!infinitePayConfigurado(infinitepayConfig)) {
+    throw erro("InfinitePay ainda não configurada. Acesse Sistema > Configurações > Pagamentos online e informe a InfiniteTag sem o $.", 503, "INFINITEPAY_NOT_CONFIGURED");
+  }
+
+  const tenantId = tenantAtual();
+  const alvoId = target.mensalidadeId || target.assinaturaId || target.planoCodigo || target.tituloId || uid("alvo");
+  const ref = externalReference({ escopo, tenantId, alvoId });
+  const customer = {
+    name: texto(pagador.nome),
+    email: texto(pagador.email),
+    phone_number: telefone(pagador.telefone)
+  };
+  Object.keys(customer).forEach((chave) => {
+    if (!texto(customer[chave])) delete customer[chave];
+  });
+
+  const checkoutPayload = {
+    handle: infinitepayConfig.handle,
+    redirect_url: urlRetornoInfinitePay({ escopo, tenantId }, infinitepayConfig),
+    webhook_url: urlWebhookInfinitePay(infinitepayConfig),
+    order_nsu: ref,
+    items: [
+      {
+        quantity: 1,
+        price: valorEmCentavos(valor),
+        description: (texto(descricao) || "Pagamento Fusion").slice(0, 120)
+      }
+    ]
+  };
+  if (Object.keys(customer).length) checkoutPayload.customer = customer;
+
+  const checkout = await criarLinkInfinitePay(checkoutPayload, infinitepayConfig);
+  const resumo = resumoCheckoutInfinitePay(checkout, valor);
+
+  if (!resumo.invoiceUrl) {
+    throw erro("InfinitePay criou o checkout, mas não retornou o link de pagamento.", 502, "INFINITEPAY_PAY_LINK_MISSING");
+  }
+
+  const registro = {
+    id: uid("payon"),
+    tenantId,
+    escopo,
+    provider: "infinitepay",
+    providerPaymentId: resumo.providerPaymentId || ref,
+    providerCheckoutId: resumo.providerPaymentId,
+    externalReference: ref,
+    infinitePayOrderNsu: ref,
+    status: "criada",
+    statusGateway: resumo.statusGateway,
+    valor: numero(valor, 0),
+    moeda: "BRL",
+    vencimento: vencimentoSeguro(vencimento),
+    descricao,
+    invoiceUrl: resumo.invoiceUrl,
+    checkoutUrl: resumo.invoiceUrl,
+    billingType: resumo.billingType,
+    target,
+    eventos: [],
+    criadoEm: agoraISO(),
+    atualizadoEm: agoraISO()
+  };
+
+  const pagamentos = await lerLista(COL_PAGAMENTOS);
+  pagamentos.unshift(registro);
+  await salvarLista(COL_PAGAMENTOS, pagamentos);
+  return registro;
+}
+
 async function criarRegistroCobranca(dados = {}, configPagamentos = null) {
   const config = configPagamentos || await obterConfiguracaoPagamentosRuntime();
   const provider = config.provider || providerAtual();
   if (!providerConfigurado(provider, config)) {
     throw erro(`${nomeProvider(provider)} ainda não configurado. Acesse Sistema > Configurações > Pagamentos online antes de criar cobranças.`, 503, `${provider.toUpperCase()}_NOT_CONFIGURED`);
   }
-  return provider === "pagbank" ? criarRegistroCobrancaPagbank(dados, config.pagbank || {}) : criarRegistroCobrancaAsaas(dados);
+  if (provider === "pagbank") return criarRegistroCobrancaPagbank(dados, config.pagbank || {});
+  if (provider === "infinitepay") return criarRegistroCobrancaInfinitePay(dados, config.infinitepay || {});
+  return criarRegistroCobrancaAsaas(dados);
 }
 
 function pagamentoAbertoExistente(lista = [], filtro = {}) {
@@ -530,6 +661,8 @@ function respostaCheckout(registro = {}) {
     },
     checkout: {
       url: registro.invoiceUrl,
+      provider: registro.provider,
+      providerName: nomeProvider(registro.provider),
       providerPaymentId: registro.providerPaymentId,
       billingType: registro.billingType,
       mensagem: registro.invoiceUrl ? "Cobrança criada. Abra o link para concluir o pagamento." : "Cobrança criada."
@@ -986,6 +1119,35 @@ function pagamentoDoWebhookPagbank(body = {}) {
   };
 }
 
+function pagamentoDoWebhookInfinitePay(body = {}, check = {}) {
+  const orderNsu = texto(body.order_nsu || body.orderNsu || check.order_nsu || check.orderNsu);
+  const transactionNsu = texto(body.transaction_nsu || body.transactionNsu || check.transaction_nsu || check.transactionNsu);
+  const slug = texto(body.invoice_slug || body.invoiceSlug || body.slug || check.invoice_slug || check.invoiceSlug || check.slug);
+  const pagoConfirmado = check.paid === true || texto(check.paid).toLowerCase() === "true";
+  const status = pagoConfirmado ? "PAID" : texto(check.status || body.status || "PENDING");
+  const valorCentavos = Number(check.amount ?? body.amount ?? 0);
+  const valorPagoCentavos = Number(check.paid_amount ?? check.paidAmount ?? body.paid_amount ?? body.paidAmount ?? valorCentavos);
+  const metodo = texto(check.capture_method || check.captureMethod || body.capture_method || body.captureMethod);
+
+  return {
+    id: transactionNsu || slug || orderNsu,
+    providerPaymentId: transactionNsu || orderNsu,
+    providerCheckoutId: slug,
+    webhookEventId: texto(body.event_id || body.eventId || body.id || `${orderNsu}:${transactionNsu}:${slug}:${status}`),
+    externalReference: orderNsu,
+    status,
+    paid: pagoConfirmado,
+    value: valorDeCentavos(valorCentavos),
+    netValue: valorDeCentavos(valorCentavos),
+    paidAmount: valorDeCentavos(valorPagoCentavos),
+    billingType: metodo,
+    capture_method: metodo,
+    installments: Number(check.installments ?? body.installments ?? 1) || 1,
+    receiptUrl: texto(body.receipt_url || body.receiptUrl || check.receipt_url || check.receiptUrl),
+    paymentDate: texto(body.paid_at || body.paidAt || body.payment_date || body.paymentDate || check.payment_date || check.paymentDate).slice(0, 10) || hojeISO()
+  };
+}
+
 export async function receberWebhookAsaas({ headers = {}, body = {} } = {}) {
   validarWebhookToken(headers);
 
@@ -1030,6 +1192,50 @@ export async function receberWebhookPagbank({ headers = {}, body = {}, rawBody =
     return processarPagamentoConfirmado({
       tenantId: parsed.tenantId,
       evento: "PAGBANK_WEBHOOK",
+      pagamento
+    });
+  });
+}
+
+export async function receberWebhookInfinitePay({ body = {} } = {}) {
+  const orderNsu = texto(body.order_nsu || body.orderNsu);
+  const transactionNsu = texto(body.transaction_nsu || body.transactionNsu);
+  const slug = texto(body.invoice_slug || body.invoiceSlug || body.slug);
+
+  if (!orderNsu) throw erro("Pedido InfinitePay sem order_nsu.", 400, "INFINITEPAY_ORDER_NSU_REQUIRED");
+  if (!transactionNsu) throw erro("Transação InfinitePay sem transaction_nsu.", 400, "INFINITEPAY_TRANSACTION_NSU_REQUIRED");
+  if (!slug) throw erro("Fatura InfinitePay sem slug.", 400, "INFINITEPAY_SLUG_REQUIRED");
+
+  const parsed = parseExternalReference(orderNsu);
+  if (!parsed?.tenantId) return { ok: true, ignorado: true, motivo: "external_reference_fora_do_fusion" };
+
+  return executarComTenant(parsed.tenantId, async () => {
+    const configPagamentos = await obterConfiguracaoPagamentosRuntime();
+    const infinitepayConfig = configPagamentos.infinitepay || {};
+    if (!infinitePayConfigurado(infinitepayConfig)) {
+      throw erro("InfinitePay ainda não configurada para validar o webhook.", 503, "INFINITEPAY_NOT_CONFIGURED");
+    }
+
+    const check = await verificarPagamentoInfinitePay({
+      handle: infinitepayConfig.handle,
+      order_nsu: orderNsu,
+      transaction_nsu: transactionNsu,
+      slug
+    }, infinitepayConfig);
+
+    const pagamento = pagamentoDoWebhookInfinitePay(body, check);
+    const registro = await obterRegistroPorPagamento({ externalReference: orderNsu });
+    if (!registro) throw erro("Pedido InfinitePay não encontrado.", 400, "INFINITEPAY_ORDER_NOT_FOUND");
+
+    const valorEsperadoCentavos = valorEmCentavos(registro.valor);
+    const valorConfirmadoCentavos = Number(check.amount ?? body.amount ?? 0);
+    if (!pagamento.paid || valorConfirmadoCentavos !== valorEsperadoCentavos) {
+      throw erro("Pagamento InfinitePay não confirmado.", 400, "INFINITEPAY_PAYMENT_NOT_CONFIRMED");
+    }
+
+    return processarPagamentoConfirmado({
+      tenantId: parsed.tenantId,
+      evento: "INFINITEPAY_WEBHOOK",
       pagamento
     });
   });

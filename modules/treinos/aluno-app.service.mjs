@@ -1,7 +1,11 @@
+import { executarComTenant } from "../core/persistence/tenant-context.mjs";
+import { listarAgendaAvaliacoes } from "../agenda-avaliacoes/agenda-avaliacoes.repository.mjs";
+import { dataLocalISO, horaLocalHHMMSS } from "../core/time/fusion-time.mjs";
 import { obterSupabaseAdmin } from "../../config/supabase.mjs";
 
 const COOKIE_ACCESS = "fusion_aluno_access";
 const COOKIE_REFRESH = "fusion_aluno_refresh";
+const COOKIE_SESSION = "fusion_aluno_session";
 
 class AlunoAppError extends Error {
   constructor(message, statusCode = 500, code = "") {
@@ -201,7 +205,7 @@ async function alunoERPPorCpf(tenant, cpfNormalizado) {
   };
 }
 
-async function sincronizarAlunoNoApp({ tenant, cpfNormalizado }) {
+export async function sincronizarAlunoNoApp({ tenant, cpfNormalizado }) {
   const alunoERP = await alunoERPPorCpf(tenant, cpfNormalizado);
 
   const data = await chamarSupabase("/rest/v1/rpc/fusion_sincronizar_aluno_backend", {
@@ -228,6 +232,89 @@ async function sincronizarAlunoNoApp({ tenant, cpfNormalizado }) {
   }
 
   return row;
+}
+
+export async function statusAplicativoAlunosERP({ tenantId, alunoIds = [] } = {}) {
+  const tenant = normalizarTenant(tenantId);
+  const alvos = [...new Set((Array.isArray(alunoIds) ? alunoIds : [])
+    .map((id) => String(id || "").trim()).filter(Boolean))];
+  if (!alvos.length) return {};
+
+  const marcados = await chamarSupabase(
+    `/rest/v1/alunos?select=academia_id&dados->>erp_tenant_id=eq.${encodeURIComponent(tenant)}&limit=5000`
+  );
+  const academiaIds = [...new Set((Array.isArray(marcados) ? marcados : [])
+    .map((row) => String(row?.academia_id || "").trim()).filter(Boolean))];
+
+  if (academiaIds.length !== 1) {
+    throw new AlunoAppError(
+      academiaIds.length
+        ? "Tenant vinculado a mais de uma academia no Fusion Aluno."
+        : "Academia do tenant nao localizada no Fusion Aluno.",
+      503,
+      "APP_TENANT_ACADEMY_NOT_RESOLVED"
+    );
+  }
+
+  const academiaId = academiaIds[0];
+  const alunosApp = await chamarSupabase(
+    `/rest/v1/alunos?select=id,legacy_id&academia_id=eq.${encodeURIComponent(academiaId)}&limit=5000`
+  );
+  const appPorLegacy = new Map();
+  for (const row of Array.isArray(alunosApp) ? alunosApp : []) {
+    const legacyId = String(row?.legacy_id || "").trim();
+    const appId = String(row?.id || "").trim();
+    if (legacyId && appId) appPorLegacy.set(legacyId, appId);
+  }
+
+  const dispositivos = await chamarSupabase(
+    `/rest/v1/app_dispositivos?select=aluno_id&academia_id=eq.${encodeURIComponent(academiaId)}&tipo_app=eq.aluno&status=eq.ativo&revogado_em=is.null&limit=5000`
+  );
+  const ativos = new Set((Array.isArray(dispositivos) ? dispositivos : [])
+    .map((row) => String(row?.aluno_id || "").trim()).filter(Boolean));
+
+  return Object.fromEntries(alvos.map((legacyId) => {
+    const appId = appPorLegacy.get(legacyId) || "";
+    return [legacyId, Boolean(appId && ativos.has(appId))];
+  }));
+}
+
+
+export async function gerarAtivacaoAlunoAutoatendimentoERP({
+  tenantId,
+  cpf,
+  dataNascimento,
+  telefoneFinal,
+  validadeMinutos = 30
+} = {}) {
+  const tenant = normalizarTenant(tenantId);
+  const cpfNormalizado = apenasDigitos(cpf);
+  const nascimento = dataIsoOuNula(dataNascimento);
+  const finalTelefone = apenasDigitos(telefoneFinal).slice(-4);
+
+  if (cpfNormalizado.length !== 11 || !nascimento || finalTelefone.length !== 4) {
+    throw new AlunoAppError(
+      "Confira CPF, data de nascimento e os 4 últimos dígitos do telefone.",
+      400,
+      "SELF_SERVICE_INVALID_DATA"
+    );
+  }
+
+  const alunoERP = await alunoERPPorCpf(tenant, cpfNormalizado);
+  const telefone = apenasDigitos(alunoERP.telefone).slice(-4);
+  if (alunoERP.dataNascimento !== nascimento || !telefone || telefone !== finalTelefone) {
+    throw new AlunoAppError(
+      "Os dados informados não conferem com o cadastro da academia.",
+      401,
+      "SELF_SERVICE_DATA_MISMATCH"
+    );
+  }
+
+  return gerarAtivacaoAlunoERP({
+    tenantId: tenant,
+    cpf: cpfNormalizado,
+    validadeMinutos
+  });
 }
 
 export async function gerarAtivacaoAlunoERP({ tenantId, cpf, validadeMinutos = 30 } = {}) {
@@ -341,8 +428,29 @@ function validarCpfSenha(payload = {}, confirmar = false) {
 }
 
 export async function loginAlunoApp(payload = {}) {
-  const deviceToken = normalizarDeviceToken(payload.device_token || payload.deviceToken);
   const { cpf, senha } = validarCpfSenha(payload);
+  const tenantBruto = String(
+    payload.erp_tenant_id ||
+    payload.tenant_id ||
+    payload.tenant ||
+    ""
+  ).trim();
+
+  if (tenantBruto) {
+    const tenant = normalizarTenant(tenantBruto);
+    return chamarSupabase("/functions/v1/fusion-app-auth", {
+      method: "POST",
+      body: {
+        action: "login",
+        tipo_app: "aluno",
+        erp_tenant_id: tenant,
+        cpf,
+        senha
+      }
+    });
+  }
+
+  const deviceToken = normalizarDeviceToken(payload.device_token || payload.deviceToken);
   return chamarSupabase("/functions/v1/fusion-app-auth", {
     method: "POST",
     body: { action: "login", tipo_app: "aluno", device_token: deviceToken, cpf, senha }
@@ -358,8 +466,28 @@ export async function primeiroAcessoAlunoApp(payload = {}) {
   });
 }
 
+export async function ativarAlunoAppPorLink(payload = {}) {
+  return ativarAlunoApp(payload);
+}
+
+export async function primeiroAcessoAlunoAppPorLink(payload = {}) {
+  return primeiroAcessoAlunoApp(payload);
+}
+
 function tokenSessao(data, nome) {
   return String(data?.session?.[nome] || data?.[nome] || "").trim();
+}
+
+
+async function validarSessaoUnicaAluno(usuarioId, sessionId) {
+  const usuario = String(usuarioId || "").trim();
+  const sessao = String(sessionId || "").trim().toLowerCase();
+  if (!usuario || !/^[0-9a-f]{64}$/.test(sessao)) return false;
+  const data = await chamarSupabase("/rest/v1/rpc/fusion_app_validar_sessao_unica", {
+    method: "POST",
+    body: { p_tipo_app: "aluno", p_usuario_id: usuario, p_session_id: sessao }
+  });
+  return data === true;
 }
 
 export function gravarSessaoAluno(res, data = {}) {
@@ -372,6 +500,10 @@ export function gravarSessaoAluno(res, data = {}) {
   const base = { httpOnly: true, secure, sameSite: "lax", path: "/" };
   res.cookie(COOKIE_ACCESS, accessToken, { ...base, maxAge: 60 * 60 * 1000 });
   res.cookie(COOKIE_REFRESH, refreshToken, { ...base, maxAge: 30 * 24 * 60 * 60 * 1000 });
+  const sessionId = String(data?.session?.fusion_session_id || data?.fusion_session_id || "").trim().toLowerCase();
+  if (/^[0-9a-f]{64}$/.test(sessionId)) {
+    res.cookie(COOKIE_SESSION, sessionId, { ...base, maxAge: 30 * 24 * 60 * 60 * 1000 });
+  }
 }
 
 export function limparSessaoAluno(res) {
@@ -379,6 +511,7 @@ export function limparSessaoAluno(res) {
   const base = { httpOnly: true, secure, sameSite: "lax", path: "/" };
   res.clearCookie(COOKIE_ACCESS, base);
   res.clearCookie(COOKIE_REFRESH, base);
+  res.clearCookie(COOKIE_SESSION, base);
 }
 
 function cookies(req) {
@@ -420,7 +553,18 @@ async function sessaoValida(req, res) {
   const jar = cookies(req);
   let accessToken = jar[COOKIE_ACCESS] || "";
   let usuario = await usuarioPorAccessToken(accessToken);
-  if (usuario?.id) return { accessToken, usuario };
+  if (usuario?.id) {
+    const sessionId = jar[COOKIE_SESSION] || "";
+    if (sessionId && !(await validarSessaoUnicaAluno(usuario.id, sessionId))) {
+      limparSessaoAluno(res);
+      throw new AlunoAppError(
+        "Sua conta foi acessada em outro aparelho. Entre novamente para continuar.",
+        401,
+        "SESSION_REPLACED"
+      );
+    }
+    return { accessToken, usuario };
+  }
 
   const renovada = await renovarSessao(jar[COOKIE_REFRESH] || "");
   if (!renovada) {
@@ -431,6 +575,15 @@ async function sessaoValida(req, res) {
   accessToken = tokenSessao(renovada, "access_token");
   usuario = renovada.user || await usuarioPorAccessToken(accessToken);
   if (!usuario?.id) throw new AlunoAppError("Sessão inválida.", 401, "INVALID_SESSION");
+  const sessionId = jar[COOKIE_SESSION] || "";
+  if (sessionId && !(await validarSessaoUnicaAluno(usuario.id, sessionId))) {
+    limparSessaoAluno(res);
+    throw new AlunoAppError(
+      "Sua conta foi acessada em outro aparelho. Entre novamente para continuar.",
+      401,
+      "SESSION_REPLACED"
+    );
+  }
   return { accessToken, usuario };
 }
 
@@ -750,7 +903,64 @@ async function registrosAvaliacoesERP(supabase, tabela, tenant, alunoId, limite 
     .slice(0, limite);
 }
 
-function resumoAvaliacoes(rows = []) {
+// APP ALUNO AGENDA AVALIACAO BRIDGE 20260826
+async function proximoAgendamentoAvaliacaoAluno(tenant = "", alunoId = "") {
+  const tenantId = normalizarTenant(tenant);
+  const id = textoSeguro(alunoId);
+  if (!tenantId || !id) return null;
+
+  try {
+    return await executarComTenant(tenantId, async () => {
+      const lista = await listarAgendaAvaliacoes();
+      const hoje = dataLocalISO(new Date());
+      const agoraHora = horaLocalHHMMSS(new Date()).slice(0, 5);
+      const agoraChave = `${hoje}T${agoraHora}`;
+
+      const normalizarStatusAgenda = (valor = "") =>
+        normalizarTexto(valor || "pendente");
+
+      const candidatos = (Array.isArray(lista) ? lista : [])
+        .filter((item = {}) => {
+          const itemAlunoId = textoSeguro(item.alunoId || item.aluno_id);
+          if (itemAlunoId !== id) return false;
+
+          const status = normalizarStatusAgenda(item.status);
+          if (status.includes("cancel") || status.includes("realiz") || status.includes("conclu")) {
+            return false;
+          }
+
+          const data = textoSeguro(item.data).slice(0, 10);
+          const hora = textoSeguro(item.hora || item.horario).slice(0, 5) || "00:00";
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(data)) return false;
+          return `${data}T${hora}` >= agoraChave;
+        })
+        .sort((a, b) => {
+          const ca = `${textoSeguro(a.data).slice(0, 10)}T${textoSeguro(a.hora || a.horario).slice(0, 5)}`;
+          const cb = `${textoSeguro(b.data).slice(0, 10)}T${textoSeguro(b.hora || b.horario).slice(0, 5)}`;
+          return ca.localeCompare(cb);
+        });
+
+      const item = candidatos[0];
+      if (!item) return null;
+
+      return {
+        id: textoSeguro(item.id),
+        aluno_id: id,
+        data: textoSeguro(item.data).slice(0, 10),
+        hora: textoSeguro(item.hora || item.horario).slice(0, 5),
+        professor_id: textoSeguro(item.professorId || item.professor_id),
+        professor: textoSeguro(item.professorNome || item.professor_nome || item.professor),
+        observacao: textoSeguro(item.observacao || item.observacoes),
+        status: "agendada"
+      };
+    });
+  } catch (erro) {
+    console.warn("[APP ALUNO/AGENDA AVALIACAO] Falha ao carregar agenda:", erro?.message || erro);
+    return null;
+  }
+}
+
+function resumoAvaliacoes(rows = [], agendamento = null) {
   const avaliacoes = rows
     .map(avaliacaoSeguraParaAluno)
     .filter(item => item.id || item.data || item.criado_em);
@@ -758,6 +968,25 @@ function resumoAvaliacoes(rows = []) {
   const ultima = avaliacoes[0] || null;
 
   if (!ultima) {
+    if (agendamento?.data) {
+      const complementoHora = agendamento.hora ? ` às ${agendamento.hora}` : "";
+      return {
+        total: 0,
+        status: "Agendada",
+        codigo_status: "agendada",
+        ultima_data: "",
+        validade: "",
+        proxima_data: agendamento.data,
+        proxima_hora: agendamento.hora || "",
+        professor: agendamento.professor || "",
+        professor_id: agendamento.professor_id || "",
+        agendamento_id: agendamento.id || "",
+        objetivo: "",
+        mensagem: `Sua avaliação está agendada para ${dataCurtaBR(agendamento.data)}${complementoHora}.`,
+        itens: []
+      };
+    }
+
     return {
       total: 0,
       status: "Pendente",
@@ -765,6 +994,7 @@ function resumoAvaliacoes(rows = []) {
       ultima_data: "",
       validade: "",
       proxima_data: "",
+      proxima_hora: "",
       professor: "",
       objetivo: "",
       mensagem: "Nenhuma avaliação física foi registrada para você até o momento.",
@@ -828,14 +1058,24 @@ function resumoAvaliacoes(rows = []) {
     mensagem = `Sua próxima avaliação está prevista para ${dataCurtaBR(proxima.toISOString())}.`;
   }
 
+  if (agendamento?.data) {
+    const complementoHora = agendamento.hora ? ` às ${agendamento.hora}` : "";
+    status = "Agendada";
+    codigo = "agendada";
+    mensagem = `Sua avaliação está agendada para ${dataCurtaBR(agendamento.data)}${complementoHora}.`;
+  }
+
   return {
     total: avaliacoes.length,
     status,
     codigo_status: codigo,
     ultima_data: ultimaData?.toISOString() || "",
     validade: validade?.toISOString() || "",
-    proxima_data: proxima?.toISOString() || "",
-    professor: textoSeguro(ultima.professorNome || ultima.professor_nome || ultima.professor),
+    proxima_data: agendamento?.data || proxima?.toISOString() || "",
+    proxima_hora: agendamento?.hora || "",
+    professor: agendamento?.professor || textoSeguro(ultima.professorNome || ultima.professor_nome || ultima.professor),
+    professor_id: agendamento?.professor_id || "",
+    agendamento_id: agendamento?.id || "",
     objetivo: textoSeguro(ultima.objetivo),
     mensagem,
     itens: avaliacoes
@@ -1028,7 +1268,7 @@ async function carregarHomeERP(alunoApp = {}) {
   const supabase = obterSupabaseAdmin({ obrigatorio: true });
   const tabela = process.env.FUSION_SUPABASE_RECORDS_TABLE || "fusion_v3_records";
 
-  const [alunoERP, matriculasRows, treinosRows, checkinRows, checkinsRows, mensalidadesRows, financeiroRows, avaliacoesRows] = await Promise.all([
+  const [alunoERP, matriculasRows, treinosRows, checkinRows, checkinsRows, mensalidadesRows, financeiroRows, avaliacoesRows, agendamentoAvaliacao] = await Promise.all([
     cadastroAlunoERP(supabase, tabela, tenant, legacyId),
     registrosAlunoERP(supabase, tabela, tenant, "matriculas", legacyId, 12),
     registrosAlunoERP(supabase, tabela, tenant, "treinos_prescritos", legacyId, 12),
@@ -1036,7 +1276,8 @@ async function carregarHomeERP(alunoApp = {}) {
     registrosAlunoERP(supabase, tabela, tenant, "checkins", legacyId, 80),
     registrosAlunoERP(supabase, tabela, tenant, "mensalidades", legacyId, 40),
     registrosAlunoERP(supabase, tabela, tenant, "financeiro", legacyId, 40),
-    registrosAvaliacoesERP(supabase, tabela, tenant, legacyId, 40)
+    registrosAvaliacoesERP(supabase, tabela, tenant, legacyId, 40),
+    proximoAgendamentoAvaliacaoAluno(tenant, legacyId)
   ]);
 
   const matricula = escolherMatricula(matriculasRows);
@@ -1044,7 +1285,7 @@ async function carregarHomeERP(alunoApp = {}) {
   const treinos = resumoTreinos(treinosRows);
   const frequencia = resumoFrequencia([...checkinRows, ...checkinsRows]);
   const financeiro = resumoFinanceiro(mensalidadesRows, financeiroRows);
-  const avaliacao = resumoAvaliacoes(avaliacoesRows);
+  const avaliacao = resumoAvaliacoes(avaliacoesRows, agendamentoAvaliacao);
 
   const aluno = {
     id: textoSeguro(alunoApp.id),
@@ -1069,11 +1310,15 @@ async function carregarHomeERP(alunoApp = {}) {
 }
 
 export async function obterHomeAlunoApp(req, res, deviceToken) {
-  const status = await statusAlunoApp(deviceToken);
   const { accessToken, usuario } = await sessaoValida(req, res);
+  let status = { academia_nome: "" };
+  const token = String(deviceToken || "").trim();
+  if (token) {
+    try { status = await statusAlunoApp(token); } catch { status = { academia_nome: "" }; }
+  }
   const filtro = encodeURIComponent(`eq.${usuario.id}`);
   const alunos = await chamarSupabase(
-    `/rest/v1/alunos?select=id,nome,status,matricula,legacy_id,dados&usuario_id=${filtro}&limit=1`,
+    `/rest/v1/alunos?select=id,nome,status,matricula,legacy_id,dados,academia_id&usuario_id=${filtro}&limit=1`,
     { accessToken }
   );
   const alunoApp = Array.isArray(alunos) ? alunos[0] : null;
@@ -1081,8 +1326,14 @@ export async function obterHomeAlunoApp(req, res, deviceToken) {
     throw new AlunoAppError("Cadastro do aluno não encontrado para esta sessão.", 404, "STUDENT_NOT_FOUND");
   }
 
+  let academiaNomeSessao = status.academia_nome || "";
+  if (!academiaNomeSessao && alunoApp?.academia_id) {
+    const academiaId = encodeURIComponent(`eq.${alunoApp.academia_id}`);
+    const academias = await chamarSupabase(`/rest/v1/academias?select=nome&id=${academiaId}&limit=1`, { accessToken });
+    academiaNomeSessao = String(Array.isArray(academias) ? academias[0]?.nome || "" : "");
+  }
   const home = await carregarHomeERP(alunoApp);
-  return { ...home, academia_nome: status.academia_nome };
+  return { ...home, academia_nome: academiaNomeSessao };
 }
 
 export { AlunoAppError };

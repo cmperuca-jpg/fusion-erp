@@ -1,3 +1,4 @@
+import { FUSION_TIMEZONE } from "../core/time/fusion-time.mjs";
 import path from 'node:path';
 import { programarProximaCobrancaAposPagamento } from '../cobranca/cobranca.service.mjs';
 import { aplicarPremioNaMensalidade, vincularMensalidadePremio } from '../fidelidade/fidelidade.service.mjs';
@@ -24,7 +25,7 @@ async function salvarJson(arquivo, dados) {
 
 function hojeISO() {
   const partes = new Intl.DateTimeFormat('pt-BR', {
-    timeZone: 'America/Sao_Paulo',
+    timeZone: FUSION_TIMEZONE, // FUSION TIMEZONE FINANCEIRO MENSALIDADES 20260826,
     year: 'numeric',
     month: '2-digit',
     day: '2-digit'

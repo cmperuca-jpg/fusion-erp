@@ -1,0 +1,248 @@
+/* DASHBOARD FINANCEIRO OPERACIONAL 20260826 */
+
+.dashboard-fin-op {
+  margin: 0 0 18px !important;
+  padding: 16px !important;
+  min-width: 0;
+}
+
+.dashboard-fin-op-cabecalho {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.dashboard-fin-op-cabecalho h2 {
+  margin: 0 0 4px;
+  color: #0f172a;
+  font-size: 17px;
+}
+
+.dashboard-fin-op-cabecalho p {
+  margin: 0;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.dashboard-fin-op-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.dashboard-fin-op-status-ponto {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #16a34a;
+}
+
+.dashboard-fin-op-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+  min-width: 0;
+}
+
+.dashboard-fin-op-card {
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid #d7e0ea;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.dashboard-fin-op-card-topo {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.dashboard-fin-op-titulo {
+  display: block;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.dashboard-fin-op-card-topo strong {
+  display: block;
+  margin: 3px 0 1px;
+  color: #0f172a;
+  font-size: 30px;
+  line-height: 1;
+}
+
+.dashboard-fin-op-card-topo small {
+  color: #64748b;
+  font-size: 10px;
+}
+
+.dashboard-fin-op-total {
+  text-align: right;
+}
+
+.dashboard-fin-op-total span {
+  display: block;
+  color: #64748b;
+  font-size: 10px;
+}
+
+.dashboard-fin-op-total b {
+  display: block;
+  margin-top: 3px;
+  color: #0f172a;
+  font-size: 18px;
+  white-space: nowrap;
+}
+
+.dashboard-fin-op-debito .dashboard-fin-op-total b {
+  color: #b45309;
+}
+
+.dashboard-fin-op-receber .dashboard-fin-op-total b {
+  color: #0369a1;
+}
+
+.dashboard-fin-op-colunas,
+.dashboard-fin-op-linha {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(88px, .65fr) minmax(90px, .65fr);
+  gap: 10px;
+  align-items: center;
+}
+
+.dashboard-fin-op-colunas {
+  padding: 7px 8px;
+  border-top: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
+  color: #64748b;
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.dashboard-fin-op-colunas span:nth-child(2),
+.dashboard-fin-op-colunas span:nth-child(3) {
+  text-align: right;
+}
+
+.dashboard-fin-op-lista {
+  max-height: 225px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+
+.dashboard-fin-op-lista > em {
+  display: block;
+  padding: 15px 8px;
+  color: #94a3b8;
+  font-size: 11px;
+}
+
+.dashboard-fin-op-linha {
+  min-height: 42px;
+  padding: 7px 8px;
+  border-bottom: 1px solid #edf1f5;
+}
+
+.dashboard-fin-op-linha:last-child {
+  border-bottom: 0;
+}
+
+.dashboard-fin-op-nome {
+  min-width: 0;
+}
+
+.dashboard-fin-op-nome strong {
+  display: block;
+  overflow: hidden;
+  color: #0f172a;
+  font-size: 11px;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboard-fin-op-nome small {
+  display: block;
+  margin-top: 2px;
+  overflow: hidden;
+  color: #64748b;
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboard-fin-op-data,
+.dashboard-fin-op-valor {
+  color: #334155;
+  font-size: 10px;
+  font-weight: 700;
+  text-align: right;
+}
+
+.dashboard-fin-op-valor {
+  color: #0f172a;
+}
+
+.dashboard-fin-op-atrasado {
+  color: #b45309;
+}
+
+.dashboard-fin-op-rodape {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 10px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.dashboard-fin-op-rodape a {
+  color: #0891b2;
+  font-size: 10px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.dashboard-fin-op-rodape a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 900px) {
+  .dashboard-fin-op-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 620px) {
+  .dashboard-fin-op-cabecalho,
+  .dashboard-fin-op-card-topo {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .dashboard-fin-op-total {
+    text-align: left;
+  }
+
+  .dashboard-fin-op-colunas,
+  .dashboard-fin-op-linha {
+    grid-template-columns: minmax(0, 1fr) 84px 90px;
+  }
+}
+
+/* REMOVER INFORMACOES DIA LEGADO DEFINITIVO 20260826 */
+#informacoesDiaDashboard,
+.infos-dia-card {
+  display: none !important;
+}
+

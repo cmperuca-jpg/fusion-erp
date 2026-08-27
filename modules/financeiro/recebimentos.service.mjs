@@ -1,3 +1,4 @@
+import { dataLocalISO } from "../core/time/fusion-time.mjs";
 import path from 'node:path';
 import { desbloquearAlunoAposPagamento } from './desbloqueio.service.mjs';
 import { lerJsonDuravel, salvarJsonDuravel, executarTransacaoJson } from '../core/persistence/durable-json.mjs';
@@ -22,9 +23,7 @@ async function salvarJson(arquivo, dados) {
   return salvarJsonDuravel(arquivo, dados);
 }
 
-function hojeISO() {
-  return new Date().toISOString().slice(0, 10);
-}
+function hojeISO() { return dataLocalISO(new Date()); }
 
 function agoraISO() {
   return new Date().toISOString();

@@ -1,3 +1,4 @@
+import { dataLocalISO } from "../core/time/fusion-time.mjs";
 import path from "path";
 import {
   listarLancamentos,
@@ -250,9 +251,7 @@ function gerarId() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 }
 
-function hojeISO() {
-  return new Date().toISOString().slice(0, 10);
-}
+function hojeISO() { return dataLocalISO(new Date()); }
 
 function normalizarValor(valor) {
   return Number(valor || 0);
@@ -517,7 +516,7 @@ export async function baixarLancamento(id, dados = {}) {
   }
 
   const atual = lancamentos[index];
-  const dataPagamento = dados.dataPagamento || dados.pagamento || new Date().toISOString().slice(0, 10);
+  const dataPagamento = dados.dataPagamento || dados.pagamento || dataLocalISO(new Date());
   const formaPagamento = dados.formaPagamento || atual.formaPagamento || "Dinheiro";
   const desconto = normalizarValor(dados.desconto ?? 0);
   const acrescimo = normalizarValor(dados.acrescimo ?? dados.juros ?? 0);

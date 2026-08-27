@@ -72,6 +72,7 @@ function escaparHtml(valor) {
 }
 
 function headersPortal(sessao, headers = {}) {
+  window.__FUSION_PROFESSOR_PONTO_SESSAO__ = sessao; // PROFESSOR PONTO APP SESSION CAPTURE 20260826
   return sessao?.token ? { ...headers, Authorization: `Bearer ${sessao.token}` } : { ...headers };
 }
 

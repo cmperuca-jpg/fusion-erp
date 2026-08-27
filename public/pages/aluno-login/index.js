@@ -3,7 +3,8 @@ const KEYS = {
   installationId: "fusion_aluno_installation_id_v2",
   deviceToken: "fusion_aluno_device_token_v2",
   academiaNome: "fusion_aluno_academia_nome_v2",
-  pagamentoPendente: "fusion_aluno_pagamento_pendente_v1"
+  pagamentoPendente: "fusion_aluno_pagamento_pendente_v1",
+  tenant: "fusion_aluno_tenant_v1"
 };
 
 const $ = (id) => document.getElementById(id);
@@ -34,6 +35,16 @@ function installationId() {
   return value;
 }
 
+function tenantAtual() {
+  const params = new URLSearchParams(location.search);
+  const urlTenant = String(params.get("academia") || params.get("tenant") || "").trim().toLowerCase();
+  if (/^[a-z0-9][a-z0-9_-]{1,79}$/.test(urlTenant)) {
+    localStorage.setItem(KEYS.tenant, urlTenant);
+    return urlTenant;
+  }
+  return String(localStorage.getItem(KEYS.tenant) || "").trim().toLowerCase();
+}
+
 function deviceToken() { return localStorage.getItem(KEYS.deviceToken) || ""; }
 function academiaNome() { return localStorage.getItem(KEYS.academiaNome) || ""; }
 
@@ -46,6 +57,14 @@ function pagamentoPendente() {
   }
 }
 
+function nomeGatewayPagamento(provider = "") {
+  const p = String(provider || "").toLowerCase();
+  if (p === "infinitepay") return "InfinitePay";
+  if (p === "pagbank" || p === "pagseguro") return "PagBank";
+  if (p === "asaas") return "Asaas";
+  return "gateway";
+}
+
 function salvarPagamentoPendente(resposta = {}) {
   const pagamento = resposta.pagamento || {};
   const checkout = resposta.checkout || {};
@@ -54,6 +73,8 @@ function salvarPagamentoPendente(resposta = {}) {
     id: pagamento.id,
     mensalidadeId: pagamento.target?.mensalidadeId || pagamento.mensalidadeId || "",
     url: checkout.url || "",
+    provider: pagamento.provider || checkout.provider || "",
+    providerName: checkout.providerName || nomeGatewayPagamento(pagamento.provider || checkout.provider),
     status: pagamento.status || "",
     criadoEm: new Date().toISOString()
   }));
@@ -81,7 +102,7 @@ function atualizarAcademiaNaTela(nome = academiaNome()) {
   const topo = $("academiaTopo");
   topo.textContent = nome || "";
   topo.classList.toggle("hidden", !nome);
-  $("loginAcademia").textContent = nome ? `Aparelho ativado para ${nome}.` : "Aparelho ativado para sua academia.";
+  $("loginAcademia").textContent = nome ? `Acesso a ${nome}.` : "Entre com CPF e senha.";
 }
 
 function show(screenId) {
@@ -141,6 +162,40 @@ async function consultarStatus() {
     method: "POST",
     body: JSON.stringify({ device_token: deviceToken() })
   });
+}
+
+
+async function gerarMeuCodigo() {
+  const btn = $("gerarMeuCodigo");
+  const tenant = tenantAtual();
+  const cpf = digits($("autoCpf")?.value);
+  const dataNascimento = String($("autoNascimento")?.value || "").trim();
+  const telefoneFinal = digits($("autoTelefoneFinal")?.value).slice(-4);
+  setMessage("selfServiceMessage");
+  if (!tenant) return setMessage("selfServiceMessage", "Abra o link fornecido pela sua academia.");
+  if (cpf.length !== 11 || !dataNascimento || telefoneFinal.length !== 4) {
+    return setMessage("selfServiceMessage", "Preencha CPF, nascimento e os 4 últimos dígitos do telefone.");
+  }
+  buttonBusy(btn, true, "Gerando...");
+  try {
+    const data = await request("/auto-codigo", {
+      method: "POST",
+      body: JSON.stringify({ tenant, cpf, data_nascimento: dataNascimento, telefone_final: telefoneFinal })
+    });
+    if (!data.codigo) throw new Error("Código não retornado.");
+    $("codigo").value = codigoFormat(data.codigo);
+    if (data.academia_nome) setAcademia(data.academia_nome);
+    setMessage("selfServiceMessage", `Código gerado: ${data.codigo}. Clique em Ativar aplicativo.`, "success");
+  } catch (error) {
+    setMessage("selfServiceMessage", error.message || "Não foi possível gerar seu código.");
+  } finally {
+    buttonBusy(btn, false);
+  }
+}
+
+function abrirLoginDireto() {
+  if (!tenantAtual()) return setMessage("activationMessage", "Abra o link fornecido pela sua academia.");
+  show("loginScreen");
 }
 
 async function ativar() {
@@ -246,7 +301,7 @@ async function entrar() {
   try {
     await request("/login", {
       method: "POST",
-      body: JSON.stringify({ device_token: deviceToken(), cpf, senha })
+      body: JSON.stringify(tenantAtual() ? { tenant: tenantAtual(), cpf, senha } : { device_token: deviceToken(), cpf, senha })
     });
     $("senhaLogin").value = "";
     await carregarHome();
@@ -262,9 +317,14 @@ async function entrar() {
       return;
     }
     if (dispositivoInvalido(error)) {
-      clearTenant();
-      show("activationScreen");
-      setMessage("activationMessage", "Este aparelho precisa ser ativado novamente.");
+      if (tenantAtual()) {
+        show("loginScreen");
+        setMessage("loginMessage", "Entre com CPF e senha.");
+      } else {
+        clearTenant();
+        show("activationScreen");
+        setMessage("activationMessage", "Abra novamente o link fornecido pela sua academia.");
+      }
       return;
     }
     setMessage("loginMessage", error.message || "CPF ou senha inválidos.");
@@ -867,7 +927,7 @@ function mostrarErroAbaPagamento(janela = null, mensagem = "") {
   escreverAbaPagamento(
     janela,
     "Pagamento não aberto",
-    mensagem || "Não foi possível gerar o link do PagBank. Volte ao app do aluno e tente novamente.",
+    mensagem || "Não foi possível gerar o link de pagamento. Volte ao app do aluno e tente novamente.",
     true
   );
 }
@@ -890,7 +950,8 @@ async function verificarPagamentoPendente({ abrirCheckout = false, janela = null
   salvarPagamentoPendente(resposta);
   if (abrirCheckout && url) {
     abrirJanelaPagamento(url, janela);
-    setMessage("homeMessage", "Pagamento ainda não confirmado. O link foi reaberto para concluir.", "success");
+    const gateway = resposta.checkout?.providerName || pendente.providerName || nomeGatewayPagamento(resposta.pagamento?.provider || pendente.provider);
+    setMessage("homeMessage", `Pagamento ainda não confirmado pela ${gateway}. O link foi reaberto para concluir.`, "success");
   } else {
     if (janela && abrirCheckout) mostrarErroAbaPagamento(janela, "O pagamento ainda não tem link de checkout disponível.");
     else if (janela) janela.close();
@@ -932,7 +993,8 @@ async function pagarMensalidadeAluno() {
     abrirJanelaPagamento(url, janela);
     btn.dataset.acaoPagamento = "verificar";
     setButtonLabel(btn, "Verificar pagamento");
-    setMessage("homeMessage", "Pagamento aberto. Assim que o gateway confirmar, a baixa será automática.", "success");
+    const gateway = resposta.checkout?.providerName || nomeGatewayPagamento(resposta.pagamento?.provider);
+    setMessage("homeMessage", `Pagamento aberto pela ${gateway}. Assim que o gateway confirmar, a baixa será automática.`, "success");
   } catch (error) {
     const mensagem = error.message || "Não foi possível iniciar o pagamento.";
     mostrarErroAbaPagamento(janela, mensagem);
@@ -965,7 +1027,7 @@ function renderAvisos(avisos = []) {
 async function carregarHome() {
   const data = await request("/me", {
     method: "GET",
-    headers: { "X-Fusion-Device-Token": deviceToken() }
+    headers: deviceToken() ? { "X-Fusion-Device-Token": deviceToken() } : {}
   });
   if (data.academia_nome) setAcademia(data.academia_nome);
 
@@ -1000,8 +1062,8 @@ async function tentarHomeOuLogin() {
       return;
     }
     if (dispositivoInvalido(error)) {
-      clearTenant();
-      show("activationScreen");
+      if (tenantAtual()) show("loginScreen");
+      else { clearTenant(); show("activationScreen"); }
       return;
     }
     show("loginScreen");
@@ -1020,10 +1082,11 @@ async function sair() {
 }
 
 async function trocarAcademia() {
-  const confirmar = window.confirm("Trocar a academia deste aparelho? Você precisará de um novo código de ativação.");
+  const confirmar = window.confirm("Trocar de academia neste acesso?");
   if (!confirmar) return;
   try { await request("/logout", { method: "POST", body: "{}" }); } catch {}
   clearTenant();
+  localStorage.removeItem(KEYS.tenant);
   $("codigo").value = "";
   show("activationScreen");
 }
@@ -1031,21 +1094,29 @@ async function trocarAcademia() {
 async function boot() {
   installationId();
   atualizarAcademiaNaTela();
-  if (!deviceToken()) {
-    show("activationScreen");
-    return;
+  const tenant = tenantAtual();
+  if (tenant && !deviceToken()) {
+    try { await carregarHome(); return; }
+    catch (error) {
+      if (error.status !== 401) setMessage("loginMessage", error.message || "Não foi possível restaurar sua sessão.");
+      show("loginScreen");
+      return;
+    }
   }
-  try {
-    await decidirAposStatus();
-  } catch (error) {
+  if (!deviceToken()) { show("activationScreen"); return; }
+  try { await decidirAposStatus(); }
+  catch (error) {
     show("loginScreen");
     setMessage("loginMessage", error.message || "Não foi possível verificar o acesso agora.");
   }
 }
 
 $("codigo").addEventListener("input", (event) => { event.target.value = codigoFormat(event.target.value); });
-["cpfPrimeiro", "cpfLogin"].forEach((id) => {
-  $(id).addEventListener("input", (event) => { event.target.value = cpfFormat(event.target.value); });
+["cpfPrimeiro", "cpfLogin", "autoCpf"].forEach((id) => {
+  $(id)?.addEventListener("input", (event) => { event.target.value = cpfFormat(event.target.value); });
+});
+$("autoTelefoneFinal")?.addEventListener("input", (event) => {
+  event.target.value = digits(event.target.value).slice(0, 4);
 });
 
 document.querySelectorAll(".show-password").forEach((button) => {
@@ -1058,6 +1129,8 @@ document.querySelectorAll(".show-password").forEach((button) => {
 });
 
 $("ativar").addEventListener("click", ativar);
+$("gerarMeuCodigo")?.addEventListener("click", gerarMeuCodigo);
+$("jaTenhoSenha")?.addEventListener("click", abrirLoginDireto);
 $("criarSenha").addEventListener("click", criarSenha);
 $("voltarLogin").addEventListener("click", () => show("loginScreen"));
 $("entrar").addEventListener("click", entrar);
@@ -1109,5 +1182,13 @@ document.addEventListener("keydown", (event) => {
 [["codigo", ativar], ["senhaConfirmar", criarSenha], ["senhaLogin", entrar]].forEach(([id, action]) => {
   $(id).addEventListener("keydown", (event) => { if (event.key === "Enter") action(); });
 });
+
+
+function prepararAutoacessoDoLink() {
+  const tenant = tenantAtual();
+  $("selfServiceBox")?.classList.toggle("hidden", !tenant);
+  $("jaTenhoSenha")?.classList.toggle("hidden", !tenant);
+}
+prepararAutoacessoDoLink();
 
 boot();

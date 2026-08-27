@@ -85,3 +85,47 @@ select.campo-bloqueado-professor:disabled{
   color:#0b3039!important;
   font-size:22px!important;
 }
+
+.hidden{display:none!important}
+.ex-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.ex-actions .btn{padding:8px 10px;min-height:34px}
+.ex-arquivado{opacity:.82;border-style:dashed!important}
+.badge-arquivado{display:inline-flex;align-items:center;min-height:34px;border:1px solid #f3c46b;background:#fff7df;color:#6c4600;border-radius:10px;padding:7px 10px;font-weight:900}
+.btn.danger{border-color:#f2a6a6!important;color:#8f1d1d!important;background:#fff5f5!important}
+.modal-biblioteca{position:fixed;inset:0;background:rgba(4,18,24,.62);display:grid;place-items:center;padding:18px;z-index:120}
+.modal-biblioteca-card{width:min(760px,96vw);max-height:92vh;overflow:auto;background:#fff;border:1px solid #d5e1e7;border-radius:12px;box-shadow:0 24px 80px rgba(0,0,0,.28)}
+.modal-biblioteca-card header,.modal-biblioteca-card footer{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid #e2e8f0;flex-wrap:wrap}
+.modal-biblioteca-card footer{border-top:1px solid #e2e8f0;border-bottom:0;justify-content:flex-end}
+.modal-biblioteca-card h2{margin:0;font-size:20px;color:#162036!important}
+.editor-nav-biblioteca{display:flex;align-items:center;gap:8px;margin-left:auto}
+.editor-nav-biblioteca .nav-seta{width:38px;min-width:38px;height:38px;padding:0!important;font-size:25px;line-height:1}
+.editor-posicao-biblioteca{min-width:72px;text-align:center;color:#46616b;font-weight:900}
+.modal-biblioteca-body{display:grid;grid-template-columns:180px 1fr;gap:16px;padding:16px}
+.preview-biblioteca{width:180px;height:180px;border:1px solid #dbe5eb;border-radius:10px;background:#f8fafc;display:grid;place-items:center;overflow:hidden}
+.preview-biblioteca img{width:100%;height:100%;object-fit:contain}
+.form-biblioteca{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-biblioteca label{font-size:13px;color:#24313a;font-weight:800}
+.form-biblioteca input,.form-biblioteca select{height:40px}
+.form-biblioteca .span2,.status-biblioteca{grid-column:1/-1}
+.status-biblioteca{min-height:20px;color:#46616b;font-weight:800}
+.item{grid-template-columns:46px 70px minmax(0,1fr) auto}
+.item-ordem{display:flex;flex-direction:column;align-items:center;gap:5px;align-self:stretch;justify-content:center}
+.item-numero{width:30px;height:30px;border-radius:999px;background:#e8f7fb;color:#08333d;display:grid;place-items:center;font-weight:900;border:1px solid #88c5d0}
+.ordem-drag,.ordem-btn{width:30px;height:28px;border:1px solid #88c5d0;border-radius:8px;background:#f8fcfd;color:#08333d;font-weight:900;cursor:pointer;padding:0;line-height:1}
+.ordem-drag{cursor:grab}
+.ordem-drag:active{cursor:grabbing}
+.item-move-controls{display:flex;gap:4px}
+.ordem-btn:disabled{opacity:.35;cursor:not-allowed}
+.item-arrastando{opacity:.58}
+.item-drop-alvo{outline:2px solid #1fc4d6;outline-offset:2px}
+@media(max-width:720px){
+  .modal-biblioteca-body,.form-biblioteca{grid-template-columns:1fr}
+  .preview-biblioteca{width:100%;height:220px}
+  .modal-biblioteca-card header{align-items:flex-start;flex-direction:column}
+  .modal-biblioteca-card header>.btn{width:100%}
+  .editor-nav-biblioteca{width:100%;margin-left:0;justify-content:space-between}
+  .editor-nav-biblioteca .nav-seta{width:44px;min-width:44px}
+  .item{grid-template-columns:42px 64px minmax(0,1fr) auto}
+  .item-ordem{gap:4px}
+  .item-numero,.ordem-drag,.ordem-btn{width:28px}
+}

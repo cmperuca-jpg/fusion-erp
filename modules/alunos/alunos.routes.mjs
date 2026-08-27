@@ -1,6 +1,12 @@
+import { listarAgendaAvaliacoes } from "../agenda-avaliacoes/agenda-avaliacoes.repository.mjs";
 import { Router } from "express";
 import * as alunosService from "./alunos.service.mjs";
-import { gerarAtivacaoAlunoERP } from "../treinos/aluno-app.service.mjs";
+import { gerarAtivacaoAlunoERP, statusAplicativoAlunosERP, sincronizarAlunoNoApp } from "../treinos/aluno-app.service.mjs";
+import { getBiometricStudentStatesForTenant } from "../access-bridge/access-bridge.repository.mjs";
+
+import * as limiteAcessosService from "./aluno-limite-acessos.service.mjs";
+
+import * as alunoDatasFinanceirasService from "./aluno-datas-financeiras.service.mjs";
 
 const router = Router();
 
@@ -80,9 +86,32 @@ function alunoPertenceAoProfessor(aluno = {}, usuario = {}) {
   return Boolean(professorNome && nomes.some(nome => nome === professorNome || nome.includes(professorNome) || professorNome.includes(nome)));
 }
 
-function filtrarAlunosPorPortal(req, alunos = []) {
+// PROFESSOR AGENDA ACESSO ALUNO 20260826
+async function idsAlunosDaAgendaProfessor(req) {
+  if (!usuarioPortalProfessor(req) || responsavelTecnico(req)) return new Set();
+  try {
+    const agenda = await listarAgendaAvaliacoes();
+    const pid = texto(req.usuario?.id);
+    return new Set(
+      (Array.isArray(agenda) ? agenda : [])
+        .filter((item = {}) => mesmo(item.professorId || item.professor_id, pid))
+        .filter((item = {}) => !normalizar(item.status).includes("cancel"))
+        .map((item = {}) => texto(item.alunoId || item.aluno_id))
+        .filter(Boolean)
+    );
+  } catch (erro) {
+    console.warn("[ALUNOS/PORTAL PROFESSOR] Falha ao consultar agenda de avaliações:", erro?.message || erro);
+    return new Set();
+  }
+}
+
+async function filtrarAlunosPorPortal(req, alunos = []) {
   if (!usuarioPortalProfessor(req) || responsavelTecnico(req)) return alunos;
-  return alunos.filter(aluno => alunoPertenceAoProfessor(aluno, req.usuario));
+  const idsAgenda = await idsAlunosDaAgendaProfessor(req);
+  return alunos.filter(aluno =>
+    alunoPertenceAoProfessor(aluno, req.usuario) ||
+    idsAgenda.has(texto(aluno.id || aluno._id || aluno.codigo))
+  );
 }
 
 function semSenhaAdministrativaAluno(aluno = {}) {
@@ -104,9 +133,145 @@ function exigirAcessoPortalProfessor(req, res, aluno) {
 router.get("/", async (req, res) => {
   try {
     const alunos = await alunosService.listar();
-    res.json(filtrarAlunosPorPortal(req, alunos).map(aluno => ocultarSenhaParaPortal(req, aluno)));
+    const filtrados = await filtrarAlunosPorPortal(req, alunos);
+    res.json(filtrados.map(aluno => ocultarSenhaParaPortal(req, aluno)));
   } catch (error) {
     erro(res, error);
+  }
+});
+
+router.get("/indicadores", async (req, res) => {
+  try {
+    const alunos = await filtrarAlunosPorPortal(req, await alunosService.listar());
+    const tenantId = texto(req.usuario?.tenantId);
+    const ids = alunos.map((a) => texto(a?.id || a?._id || a?.codigo)).filter(Boolean);
+
+    const [base, app, bio] = await Promise.all([
+      alunosService.indicadoresCadastro(alunos),
+      tenantId
+        ? statusAplicativoAlunosERP({ tenantId, alunoIds: ids })
+            .then((dados) => ({ ok: true, dados }))
+            .catch((error) => ({ ok: false, error }))
+        : Promise.resolve({ ok: false }),
+      tenantId
+        ? getBiometricStudentStatesForTenant(tenantId)
+            .then((dados) => ({ ok: true, dados }))
+            .catch((error) => ({ ok: false, error }))
+        : Promise.resolve({ ok: false })
+    ]);
+
+    if (!app.ok) console.warn("[ALUNOS INDICADORES] App indisponivel:", app.error?.message || "tenant ausente");
+    if (!bio.ok) console.warn("[ALUNOS INDICADORES] Biometria indisponivel:", bio.error?.message || "tenant ausente");
+
+    const indicadores = {};
+    for (const id of ids) {
+      indicadores[id] = {
+        treino: base?.[id]?.treino === true,
+        avaliacao: base?.[id]?.avaliacao === true,
+        aplicativo: app.ok ? app.dados?.[id] === true : null,
+        biometria: bio.ok ? bio.dados?.[id] === true : null
+      };
+    }
+
+    res.json({
+      ok: true,
+      indicadores,
+      fontes: { treino: true, avaliacao: true, aplicativo: app.ok, biometria: bio.ok }
+    });
+  } catch (error) {
+    erro(res, error);
+  }
+});
+
+
+// LIMITE ENTRADAS ALUNO ROTAS 20260826
+router.get("/:id/limite-acessos", async (req, res) => {
+  try {
+    if (req.usuario?.portal === true) {
+      return res.status(403).json({ ok: false, mensagem: "Apenas a administração pode consultar esta configuração." });
+    }
+    res.json(await limiteAcessosService.obterControleAcessosAluno(req.params.id));
+  } catch (error) {
+    erro(res, error, 400);
+  }
+});
+
+router.put("/:id/limite-acessos", async (req, res) => {
+  try {
+    if (req.usuario?.portal === true) {
+      return res.status(403).json({ ok: false, mensagem: "Apenas a administração pode alterar o limite de entradas." });
+    }
+    res.json(await limiteAcessosService.salvarLimiteAcessosAluno(req.params.id, req.body || {}));
+  } catch (error) {
+    erro(res, error, 400);
+  }
+});
+
+// AJUSTE DATAS FINANCEIRAS ALUNO ROTAS 20260826
+function podeAjustarDatasFinanceirasAluno20260826(req) {
+  if (req.usuario?.portal === true) return false;
+  const perfil = normalizar(req.usuario?.perfil || "");
+  const permissoes = Array.isArray(req.usuario?.permissoes) ? req.usuario.permissoes : [];
+  return [
+    "admin", "administrador", "gerente", "recepcao",
+    "responsavel_tecnico", "responsavel-tecnico", "responsavel tecnico"
+  ].includes(perfil) || permissoes.includes("financeiro") || permissoes.includes("*");
+}
+
+router.get("/:id/datas-financeiras", async (req, res) => {
+  try {
+    if (!podeAjustarDatasFinanceirasAluno20260826(req)) {
+      return res.status(403).json({ ok:false, mensagem:"Sem permissão para consultar ajustes financeiros do aluno." });
+    }
+    res.json(await alunoDatasFinanceirasService.listarDatasFinanceirasAluno(req.params.id));
+  } catch (error) {
+    erro(res, error, 400);
+  }
+});
+
+router.put("/:id/datas-financeiras", async (req, res) => {
+  try {
+    if (!podeAjustarDatasFinanceirasAluno20260826(req)) {
+      return res.status(403).json({ ok:false, mensagem:"Sem permissão para alterar datas financeiras do aluno." });
+    }
+    const usuario = texto(
+      req.usuario?.nome || req.usuario?.email || req.usuario?.id || "Administrador"
+    );
+    res.json(await alunoDatasFinanceirasService.alterarDatasFinanceirasAluno(
+      req.params.id,
+      { ...(req.body || {}), usuario }
+    ));
+  } catch (error) {
+    erro(res, error, 400);
+  }
+});
+
+// DIA VENCIMENTO MENSAL ALUNO ROTAS 20260826
+router.get("/:id/dia-vencimento-mensal", async (req, res) => {
+  try {
+    if (!podeAjustarDatasFinanceirasAluno20260826(req)) {
+      return res.status(403).json({ ok:false, mensagem:"Sem permissão para consultar o vencimento mensal do aluno." });
+    }
+    res.json(await alunoDatasFinanceirasService.obterDiaVencimentoMensalAluno(req.params.id));
+  } catch (error) {
+    erro(res, error, 400);
+  }
+});
+
+router.put("/:id/dia-vencimento-mensal", async (req, res) => {
+  try {
+    if (!podeAjustarDatasFinanceirasAluno20260826(req)) {
+      return res.status(403).json({ ok:false, mensagem:"Sem permissão para alterar o vencimento mensal do aluno." });
+    }
+    const usuario = texto(
+      req.usuario?.nome || req.usuario?.email || req.usuario?.id || "Administrador"
+    );
+    res.json(await alunoDatasFinanceirasService.alterarDiaVencimentoMensalAluno(
+      req.params.id,
+      { ...(req.body || {}), usuario }
+    ));
+  } catch (error) {
+    erro(res, error, 400);
   }
 });
 
@@ -311,6 +476,39 @@ router.put("/:id", async (req, res) => {
 
     if (!aluno) {
       return res.status(404).json({ ok: false, erro: "Aluno não encontrado", mensagem: "Aluno não encontrado" });
+    }
+
+    // FONTE MESTRA NOME ALUNO - APP 20260826
+    // Se o aluno ja usa o aplicativo, propaga o cadastro atual do ERP.
+    // Falha na integracao nao desfaz nem bloqueia a edicao do ERP.
+    try {
+      const tenantId = texto(req.usuario?.tenantId);
+      const cpfAtual = String(aluno.cpf || "").replace(/\D/g, "");
+      const alunoId = texto(aluno.id || aluno._id || aluno.codigo || req.params.id);
+
+      if (tenantId && cpfAtual.length === 11 && alunoId) {
+        let deveSincronizar = true;
+
+        if (typeof statusAplicativoAlunosERP === "function") {
+          const statusApp = await statusAplicativoAlunosERP({
+            tenantId,
+            alunoIds: [alunoId]
+          });
+          deveSincronizar = statusApp?.[alunoId] === true;
+        }
+
+        if (deveSincronizar) {
+          await sincronizarAlunoNoApp({
+            tenant: tenantId,
+            cpfNormalizado: cpfAtual
+          });
+        }
+      }
+    } catch (errorSyncApp) {
+      console.warn(
+        "[ALUNOS] Cadastro ERP salvo; sincronizacao com App nao concluida:",
+        errorSyncApp?.message || errorSyncApp
+      );
     }
 
     res.json({ ok: true, aluno, mensagem: "Aluno atualizado com sucesso" });

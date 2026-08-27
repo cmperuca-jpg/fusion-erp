@@ -1,0 +1,14 @@
+.prontuario-page .prontuario-header{background:#fff!important;color:#0f172a!important;border:1px solid #cbd5e1!important;box-shadow:0 3px 12px rgba(15,23,42,.08)!important}
+.prontuario-page .prontuario-header h2{color:#0f172a!important}
+.prontuario-page .prontuario-header p{color:#475569!important}
+.prontuario-page .prontuario-header .foto-grande{background:#f8fafc!important;color:#334155!important;border-color:#94a3b8!important}
+.prontuario-page .prontuario-actions{display:flex!important;gap:10px!important;flex-wrap:wrap!important}
+.prontuario-page .prontuario-actions button{display:inline-flex!important;align-items:center!important;justify-content:center!important;min-width:112px!important;min-height:42px!important;font-weight:800!important;opacity:1!important;visibility:visible!important;text-indent:0!important}
+.prontuario-page .prontuario-actions button[onclick*="history.back"]{background:#fff!important;color:#0891b2!important;border:1px solid #0891b2!important}
+.prontuario-page #btnSalvarFichaUnica{background:#06b6d4!important;color:#fff!important;border:1px solid #0891b2!important}
+.prontuario-page #btnImprimir{background:#0e7490!important;color:#fff!important;border:1px solid #0e7490!important}
+.prontuario-page #btnSalvarFichaUnica::before{content:none!important}
+.prontuario-page #btnSalvarFichaUnica::after{content:none!important}
+.prontuario-page .prontuario-header.fusion-card{background:#fff!important;color:#0f172a!important;border:1px solid #cbd5e1!important;box-shadow:0 3px 12px rgba(15,23,42,.08)!important}
+.prontuario-page .prontuario-header.fusion-card :is(h1,h2,h3,strong){color:#0f172a!important}
+.prontuario-page .prontuario-header.fusion-card :is(p,small){color:#475569!important}

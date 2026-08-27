@@ -1,3 +1,4 @@
+import { FUSION_TIMEZONE } from "../core/time/fusion-time.mjs";
 import path from 'node:path';
 import { lerJsonDuravel, salvarJsonDuravel } from '../core/persistence/durable-json.mjs';
 
@@ -38,7 +39,7 @@ async function salvarFinanceiro(dados) {
 
 function hojeISO() {
   const partes = new Intl.DateTimeFormat('pt-BR', {
-    timeZone: 'America/Sao_Paulo',
+    timeZone: FUSION_TIMEZONE,
     year: 'numeric',
     month: '2-digit',
     day: '2-digit'

@@ -1,3 +1,4 @@
+import { nomesAtuaisAlunoMiddleware } from "./modules/core/aluno-nome-atual.middleware.mjs";
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
@@ -26,7 +27,9 @@ import recebimentosRoutes from "./modules/financeiro/recebimentos.routes.mjs";
 import pagamentosRoutes from "./modules/financeiro/pagamentos.routes.mjs";
 import financeiroLedgerRoutes from "./modules/financeiro/financeiro-ledger.routes.mjs";
 import avaliacoesRoutes from "./modules/avaliacoes/avaliacoes.routes.mjs";
+import agendaAvaliacoesRoutes from "./modules/agenda-avaliacoes/agenda-avaliacoes.routes.mjs";
 import treinosRoutes from "./modules/treinos/treinos.routes.mjs";
+import bibliotecaInteligenteRoutes from "./modules/biblioteca-inteligente/biblioteca-inteligente.routes.mjs";
 import cobrancaRoutes from "./modules/cobranca/cobranca.routes.mjs";
 import { executarMotorCobranca } from "./modules/cobranca/cobranca.service.mjs";
 import authRoutes from "./modules/auth/auth.routes.mjs";
@@ -65,6 +68,7 @@ import { apiSecurity, loginRateLimit, securityHeaders } from "./modules/security
 import { executarLembretesVencimento } from "./modules/whatsapp/whatsapp.service.mjs";
 import { inicializarPersistenciaSupabase, encerrarPersistenciaSupabase } from "./modules/backup/supabase-data.service.mjs";
 import { iniciarBackupAutomatico } from "./modules/backup/backup.service.mjs";
+import { exerciseAssetCompatibility } from "./modules/core/assets/exercise-assets.middleware.mjs";
 import { assertDatabaseConfiguration } from "./config/database.config.mjs";
 import { verificarPersistenciaTransacional, migrarTodosJsonParaSupabase } from "./modules/core/persistence/collection-store.mjs";
 
@@ -484,6 +488,8 @@ function cabecalhosEstaticos(res, filePath) {
   res.setHeader("X-Content-Type-Options", "nosniff");
   if (nome.endsWith(".html") || nome.startsWith("fusion-sw") || arquivoCriticoTenant) {
     res.setHeader("Cache-Control", "no-store");
+  } else if (caminho.includes("/assets/exercicios/flash/")) {
+    res.setHeader("Cache-Control", "no-cache, must-revalidate");
   }
 }
 
@@ -498,6 +504,7 @@ function protegerUploads(req, res, next) {
 }
 
 app.use(bloquearDownloadPublico);
+app.use(exerciseAssetCompatibility);
 app.use(express.static(path.join(__dirname, "public"), {
   dotfiles: "deny",
   setHeaders: cabecalhosEstaticos
@@ -755,7 +762,16 @@ app.use("/api/planos", planosRoutes);
 app.use("/api/turmas", turmasRoutes);
 app.use("/api/agenda", agendaRoutes);
 app.use("/api/agenda-operacional", agendaOperacionalRoutes);
+app.use("/api/agenda-avaliacoes", agendaAvaliacoesRoutes);
 app.use("/api/checkin", checkinRoutes);
+// FONTE MESTRA NOME ALUNO - ROTAS FINANCEIRAS 20260826
+// Nomes exibidos em telas financeiras usam o cadastro atual do aluno pelo alunoId.
+// Nenhum registro financeiro/historico e reescrito.
+app.use("/api/financeiro", nomesAtuaisAlunoMiddleware);
+app.use("/api/mensalidades", nomesAtuaisAlunoMiddleware);
+app.use("/api/recebimentos", nomesAtuaisAlunoMiddleware);
+app.use("/api/caixa", nomesAtuaisAlunoMiddleware);
+
 app.use("/api/financeiro/relatorios", relatoriosFinanceirosRoutes);
 app.use("/api/financeiro/ledger", financeiroLedgerRoutes);
 app.use("/api/financeiro", financeiroRoutes);
@@ -767,6 +783,7 @@ app.use("/api/pagamentos", pagamentosRoutes);
 app.use("/api/recebimentos", recebimentosRoutes);
 app.use("/api/avaliacoes", avaliacoesRoutes);
 app.use("/api/treinos", treinosRoutes);
+app.use("/api/biblioteca-inteligente", bibliotecaInteligenteRoutes);
 app.use("/api/cobranca", cobrancaRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/saas", saasRoutes);

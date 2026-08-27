@@ -43,24 +43,74 @@
     </div>
   </section>
 
-  <section class="bi-kpis">
-    <div class="card"><span>Recebido liquido</span><strong id="kpiRecebido">R$ 0,00</strong><small>Entradas liquidas realizadas</small></div>
-    <div class="card"><span>A receber</span><strong id="kpiReceber">R$ 0,00</strong><small>Receitas exigíveis em aberto</small></div>
-    <div class="card"><span>Programado a receber</span><strong id="kpiProgramadoReceber">R$ 0,00</strong><small>Receitas futuras já previstas</small></div>
-    <div class="card"><span>Pago</span><strong id="kpiPago">R$ 0,00</strong><small>Saídas realizadas</small></div>
-    <div class="card"><span>A pagar</span><strong id="kpiPagar">R$ 0,00</strong><small>Despesas exigíveis em aberto</small></div>
-    <div class="card"><span>Programado a pagar</span><strong id="kpiProgramadoPagar">R$ 0,00</strong><small>Despesas futuras já previstas</small></div>
-    <div class="card"><span>Vencido a receber</span><strong id="kpiVencidoReceber">R$ 0,00</strong><small>Inadimplência</small></div>
-    <div class="card"><span>Vencido a pagar</span><strong id="kpiVencidoPagar">R$ 0,00</strong><small>Compromissos vencidos</small></div>
-    <div class="card"><span>Saldo realizado</span><strong id="kpiSaldoRealizado">R$ 0,00</strong><small>Recebido liquido menos pago</small></div>
-    <div class="card"><span>Saldo líquido previsto</span><strong id="kpiSaldoPrevisto" style="white-space:nowrap">R$ 0,00</strong><small>Realizado + aberto + programado</small></div>
+  <section class="bi-bloco bi-bloco-caixa">
+    <div class="bi-bloco-titulo">
+      <div>
+        <h2>Caixa atual</h2>
+        <p>Valores que já entraram e saíram de verdade.</p>
+      </div>
+    </div>
+    <div class="bi-caixa-resumo">
+      <div class="card bi-card-disponivel">
+        <span>Disponível agora</span>
+        <strong id="kpiSaldoRealizado">R$ 0,00</strong>
+        <small>Total recebido menos total pago no período.</small>
+      </div>
+      <div class="card">
+        <span>Entrou no caixa</span>
+        <strong id="kpiRecebido">R$ 0,00</strong>
+        <small>Valor efetivamente recebido.</small>
+      </div>
+      <div class="card">
+        <span>Saiu do caixa</span>
+        <strong id="kpiPago">R$ 0,00</strong>
+        <small>Valor efetivamente pago.</small>
+      </div>
+    </div>
   </section>
 
-  <section class="bi-kpis bi-kpis-secundarios">
-    <div class="card"><span>Ticket médio recebido</span><strong id="kpiTicketMedio">R$ 0,00</strong><small>Média dos recebimentos</small></div>
-    <div class="card"><span>Taxas financeiras</span><strong id="kpiTaxas">R$ 0,00</strong><small>Cartão, PIX e boleto</small></div>
-    <div class="card"><span>Qtd. receitas</span><strong id="kpiQtdReceitas">0</strong><small>Lançamentos de entrada</small></div>
-    <div class="card"><span>Qtd. despesas</span><strong id="kpiQtdDespesas">0</strong><small>Lançamentos de saída</small></div>
+  <section class="bi-bloco">
+    <div class="bi-bloco-titulo">
+      <div>
+        <h2>Próximos valores</h2>
+        <p>Valores em aberto ou programados que ainda podem alterar o caixa.</p>
+      </div>
+    </div>
+    <div class="bi-kpis bi-kpis-grupo">
+      <div class="card"><span>A receber</span><strong id="kpiReceber">R$ 0,00</strong><small>Valores em aberto para receber.</small></div>
+      <div class="card"><span>Recebimentos futuros</span><strong id="kpiProgramadoReceber">R$ 0,00</strong><small>Receitas futuras já programadas.</small></div>
+      <div class="card"><span>A pagar</span><strong id="kpiPagar">R$ 0,00</strong><small>Contas em aberto para pagar.</small></div>
+      <div class="card"><span>Pagamentos futuros</span><strong id="kpiProgramadoPagar">R$ 0,00</strong><small>Despesas futuras já programadas.</small></div>
+      <div class="card bi-card-previsto"><span>Saldo previsto</span><strong id="kpiSaldoPrevisto" style="white-space:nowrap">R$ 0,00</strong><small>Estimativa considerando realizado, aberto e programado.</small></div>
+    </div>
+  </section>
+
+  <section class="bi-bloco">
+    <div class="bi-bloco-titulo">
+      <div>
+        <h2>Pendências</h2>
+        <p>Valores vencidos que precisam de atenção.</p>
+      </div>
+    </div>
+    <div class="bi-kpis bi-kpis-pendencias">
+      <div class="card"><span>Clientes em atraso</span><strong id="kpiVencidoReceber">R$ 0,00</strong><small>Valores vencidos ainda não recebidos.</small></div>
+      <div class="card"><span>Contas vencidas</span><strong id="kpiVencidoPagar">R$ 0,00</strong><small>Compromissos vencidos ainda não pagos.</small></div>
+    </div>
+  </section>
+
+  <section class="bi-bloco bi-bloco-secundario">
+    <div class="bi-bloco-titulo">
+      <div>
+        <h2>Outros indicadores</h2>
+        <p>Informações complementares para análise financeira.</p>
+      </div>
+    </div>
+    <div class="bi-kpis bi-kpis-secundarios">
+      <div class="card"><span>Ticket médio recebido</span><strong id="kpiTicketMedio">R$ 0,00</strong><small>Média por recebimento realizado.</small></div>
+      <div class="card"><span>Taxas financeiras</span><strong id="kpiTaxas">R$ 0,00</strong><small>Custos de cartão, PIX e boleto.</small></div>
+      <div class="card"><span>Quantidade de receitas</span><strong id="kpiQtdReceitas">0</strong><small>Lançamentos de entrada.</small></div>
+      <div class="card"><span>Quantidade de despesas</span><strong id="kpiQtdDespesas">0</strong><small>Lançamentos de saída.</small></div>
+    </div>
   </section>
 
   <section class="bi-grid-2">

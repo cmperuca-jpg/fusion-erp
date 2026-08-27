@@ -1,3 +1,4 @@
+import { dataLocalISO } from "../core/time/fusion-time.mjs";
 import { lerJsonDuravel, salvarJsonDuravel, salvarJsonMultiplosAtomico } from "../core/persistence/durable-json.mjs";
 
 const ARQUIVOS = {
@@ -87,9 +88,7 @@ function numero(valor, padrao = 0) {
   return Number.isFinite(n) ? n : padrao;
 }
 
-function hojeISO() {
-  return new Date().toISOString().slice(0, 10);
-}
+function hojeISO() { return dataLocalISO(new Date()); }
 
 function dataISO(valor) {
   if (!valor) return "";

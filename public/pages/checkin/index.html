@@ -7,6 +7,7 @@
   <title>Check-in - Fusion ERP</title>
   <link rel="stylesheet" href="/css/components.css" />
   <link rel="stylesheet" href="/pages/checkin/checkin.css" />
+    <link rel="stylesheet" href="/pages/checkin/checkin-operacional.css?v=20260826-painel-equipe-v3" />
   <link rel="stylesheet" href="/assets/css/fusion-app.css">
   <script src="/assets/js/fusion-auth.js"></script>
   <script>FusionAuth.proteger();</script>
@@ -41,31 +42,56 @@
       <span></span>
     </section>
 
-    <section class="dashboard-grid">
-      <div class="card kpi">
-        <span>Total</span>
-        <strong id="kpiTotal">0</strong>
-        <small>Registros cadastrados</small>
-      </div>
+      <!-- PAINEL OPERACIONAL CHECKIN 6 COLUNAS 20260826 -->
+      <section class="dashboard-grid checkin-kpi-grid" aria-label="Painel operacional de acesso">
+        <div class="card kpi checkin-kpi-card">
+          <span>Entradas hoje</span>
+          <strong id="kpiEntradasHoje">0</strong>
+          <small>Alunos distintos que entraram hoje</small>
+          <div class="checkin-kpi-lista-titulo">Quem entrou</div>
+          <div id="listaEntradasHoje" class="checkin-kpi-pessoas"></div>
+        </div>
 
-      <div class="card kpi">
-        <span>Hoje</span>
-        <strong id="kpiHoje">0</strong>
-        <small>Entradas do dia</small>
-      </div>
+        <div class="card kpi checkin-kpi-card">
+          <span>Alunos presentes</span>
+          <strong id="kpiAlunosPresentes">0</strong>
+          <small>Alunos dentro da academia agora</small>
+          <div class="checkin-kpi-lista-titulo">Dentro agora</div>
+          <div id="listaAlunosPresentes" class="checkin-kpi-pessoas"></div>
+        </div>
 
-      <div class="card kpi">
-        <span>Liberados</span>
-        <strong id="kpiLiberados">0</strong>
-        <small>Acessos permitidos</small>
-      </div>
+        <div class="card kpi checkin-kpi-card">
+          <span>Funcionários presentes</span>
+          <strong id="kpiFuncionariosPresentes">0</strong>
+          <small>Equipe e professores presentes agora</small>
+          <div class="checkin-kpi-lista-titulo">Equipe dentro agora</div>
+          <div id="listaFuncionariosPresentes" class="checkin-kpi-pessoas"></div>
+        </div>
 
-      <div class="card kpi">
-        <span>Bloqueados</span>
-        <strong id="kpiBloqueados">0</strong>
-        <small>Acessos negados</small>
-      </div>
-    </section>
+        <div class="card kpi checkin-kpi-card">
+          <span>Saídas hoje</span>
+          <strong id="kpiSaidasHoje">0</strong>
+          <small>Alunos distintos que saíram hoje</small>
+          <div class="checkin-kpi-lista-titulo">Quem saiu</div>
+          <div id="listaSaidasHoje" class="checkin-kpi-pessoas"></div>
+        </div>
+
+        <div class="card kpi checkin-kpi-card">
+          <span>Bloqueados hoje</span>
+          <strong id="kpiBloqueadosHoje">0</strong>
+          <small>Pessoas com acesso negado no dia</small>
+          <div class="checkin-kpi-lista-titulo">Acesso negado</div>
+          <div id="listaBloqueadosHoje" class="checkin-kpi-pessoas"></div>
+        </div>
+
+        <div class="card kpi checkin-kpi-card">
+          <span>Pessoas no mês</span>
+          <strong id="kpiPessoasMes">0</strong>
+          <small>Pessoas distintas com acesso no mês</small>
+          <div class="checkin-kpi-lista-titulo">Quem acessou no mês</div>
+          <div id="listaPessoasMes" class="checkin-kpi-pessoas"></div>
+        </div>
+      </section>
 
     <section class="card painel-checkin">
       <div>
@@ -86,7 +112,10 @@
         <option value="">Todos os status</option>
         <option value="Liberado">Liberado</option>
         <option value="Bloqueado">Bloqueado</option>
-      </select>
+      
+            <!-- CHECKIN FILTRO DENTRO AGORA 20260826 -->
+            <option value="dentro_agora">Dentro da academia agora</option>
+          </select>
 
       <input id="filtroData" type="date" />
 
@@ -218,7 +247,7 @@
     </div>
   </div>
   <script src="/assets/js/fusion-layout.js"></script>
-  <script src="/pages/checkin/checkin.js?v=20260729-contexto-aluno-1"></script>
+  <script src="/pages/checkin/checkin.js?v=20260826-timezone-maceio-1"></script>
 
 <script src="/assets/pwa/fusion-pwa-install.js" defer></script>
   <script src="/assets/js/fusion-mobile-final.js" defer></script>

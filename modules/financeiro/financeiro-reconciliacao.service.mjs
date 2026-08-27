@@ -1,3 +1,4 @@
+import { dataLocalISO } from "../core/time/fusion-time.mjs";
 import { lerJsonDuravel, salvarJsonMultiplosAtomico } from "../core/persistence/durable-json.mjs";
 import { persistenciaAtiva, verificarPersistenciaTransacional } from "../core/persistence/collection-store.mjs";
 
@@ -59,13 +60,13 @@ function garantirCaixaHistorico(caixa, caixaId, data, resumo) {
 
   registro = {
     id,
-    dataAbertura: data || new Date().toISOString().slice(0, 10),
+    dataAbertura: data || dataLocalISO(new Date()),
     valorAbertura: 0,
     valorAberturaCentavos: 0,
     responsavel: "Reconciliacao financeira",
     observacaoAbertura: "Caixa historico reconstruido pela reconciliacao financeira.",
     status: "fechado",
-    abertoEm: `${data || new Date().toISOString().slice(0, 10)}T00:00:00.000Z`,
+    abertoEm: `${data || dataLocalISO(new Date())}T00:00:00.000Z`,
     fechadoEm: agora(),
     valorFechamentoInformado: null,
     valorFechamentoInformadoCentavos: null,
@@ -266,7 +267,7 @@ function movimentoDeRecebimento(recebimento, caixaId, titulo = {}) {
     taxaCentavos: centavos(taxa),
     valorLiquido: liquido,
     valorLiquidoCentavos: centavos(liquido),
-    data: dataRecebimento(recebimento) || new Date().toISOString().slice(0, 10),
+    data: dataRecebimento(recebimento) || dataLocalISO(new Date()),
     status: "ativo",
     origem: "recebimento",
     reconciliado: true,
@@ -332,7 +333,7 @@ export async function reconciliarFinanceiroCaixa({ aplicar = false, usuario = "s
 
   for (const recibo of listaRecibos.filter((item) => !statusCancelado(item))) {
     if (existeMovimentoRecibo(caixa, recibo.id)) continue;
-    const data = dataISO(recibo.data || recibo.criadoEm) || new Date().toISOString().slice(0, 10);
+    const data = dataISO(recibo.data || recibo.criadoEm) || dataLocalISO(new Date());
     const caixaRegistro = garantirCaixaHistorico(caixa, recibo.caixaId, data, resumo);
     const titulo = tituloUnicoDoRecibo(recibo, listaItens, listaFinanceiro);
     const categoria = categoriaDoRecibo(recibo, listaItens, listaFinanceiro);
@@ -352,7 +353,7 @@ export async function reconciliarFinanceiroCaixa({ aplicar = false, usuario = "s
 
   for (const recebimento of listaRecebimentos.filter((item) => statusPago(item) && !statusCancelado(item))) {
     if (existeMovimentoRecebimento(caixa, recebimento)) continue;
-    const data = dataRecebimento(recebimento) || new Date().toISOString().slice(0, 10);
+    const data = dataRecebimento(recebimento) || dataLocalISO(new Date());
     const titulo = tituloDoRecebimento(recebimento, listaFinanceiro);
     const caixaRegistro = garantirCaixaHistorico(caixa, recebimento.caixaId || titulo.caixaId, data, resumo);
     const movimento = movimentoDeRecebimento(recebimento, caixaRegistro.id, titulo);
@@ -366,7 +367,7 @@ export async function reconciliarFinanceiroCaixa({ aplicar = false, usuario = "s
 
   for (const lancamento of listaFinanceiro.filter((item) => tipoPagar(item) && statusPago(item) && !statusCancelado(item))) {
     if (existeMovimentoPagamento(caixa, lancamento.id)) continue;
-    const data = dataISO(lancamento.dataPagamento || lancamento.pagamento || lancamento.vencimento || lancamento.atualizadoEm) || new Date().toISOString().slice(0, 10);
+    const data = dataISO(lancamento.dataPagamento || lancamento.pagamento || lancamento.vencimento || lancamento.atualizadoEm) || dataLocalISO(new Date());
     const caixaRegistro = garantirCaixaHistorico(caixa, lancamento.caixaId, data, resumo);
     const movimento = movimentoDePagamento(lancamento, caixaRegistro.id);
     caixa.movimentos.push(movimento);

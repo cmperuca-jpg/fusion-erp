@@ -1,3 +1,4 @@
+import * as accessRepo from '../access-engine/access-engine.repository.mjs';
 import {
   listarCheckins,
   salvarCheckins,
@@ -5,6 +6,8 @@ import {
 } from "./checkin.repository.mjs";
 import { listarFrequencias, salvarFrequencias } from "../frequencia/frequencia.repository.mjs";
 import { lerJsonDuravel } from "../core/persistence/durable-json.mjs";
+import { tenantAtual } from "../core/persistence/tenant-context.mjs";
+import { obterSupabaseAdmin } from "../../config/supabase.mjs";
 
 const ARQUIVOS = {
   contratos: [
@@ -24,6 +27,12 @@ const ARQUIVOS = {
 
 const TIMEZONE_SISTEMA = process.env.FUSION_TIMEZONE || "America/Maceio";
 let filaSincronizacaoAcessos = Promise.resolve();
+let sincronizacaoCheckinEmSegundoPlano = null;
+let ultimaSincronizacaoCheckinEm = 0;
+const INTERVALO_SINCRONIZACAO_CHECKIN_MS = Math.max(
+  Number(process.env.FUSION_CHECKIN_SYNC_INTERVAL_MS || 5000),
+  5000
+);
 
 async function lerPrimeiroJson(candidatos, padrao = []) {
   for (const colecao of candidatos) {
@@ -215,34 +224,190 @@ function localizarMatriculaAtiva(matriculas = [], dados = {}, alunoId = "") {
   return lista.find((m) => statusMatriculaAtiva(m.status)) || lista[0] || null;
 }
 
+function tipoPessoaCheckin(log = {}) {
+  const tipo = normalizar(log.pessoaTipo || log.pessoa_tipo || log.tipoPessoa || log.tipo_pessoa || "");
+  const role = normalizar(log.role || log.perfil || "");
+
+  if (
+    tipo === "professor" ||
+    tipo === "funcionario" ||
+    tipo === "usuario" ||
+    tipo === "equipe" ||
+    tipo === "colaborador" ||
+    ["admin", "professor", "recepcao", "gerente"].includes(role)
+  ) return "funcionario";
+
+  return "aluno";
+}
+
+function idPessoaCheckin(log = {}) {
+  return texto(
+    log.pessoaId || log.pessoa_id ||
+    log.funcionarioId || log.funcionario_id ||
+    log.professorId || log.professor_id ||
+    log.usuarioId || log.usuario_id ||
+    log.alunoId || log.aluno_id ||
+    log.studentId || log.student_id || ""
+  );
+}
+
 function acessoElegivelParaCheckin(log = {}) {
-  const alunoId = texto(log.alunoId || log.aluno_id);
+  const pessoaId = idPessoaCheckin(log);
   const origem = normalizar(log.origem);
+  const movimento = normalizar(log.movimento || log.direcao || "entrada") === "saida" ? "saida" : "entrada";
+  const fechamentoAdministrativo = movimento === "saida" && origem.includes("checkin-fechamento-administrativo");
   const acessoReal = Boolean(
     log.catraca ||
     origem.includes("portal-aluno") ||
     origem.includes("henry") ||
     origem.includes("biometr") ||
-    origem.includes("checkin")
+    origem.includes("checkin") ||
+    origem.includes("access-engine")
   );
   const diagnostico = origem.includes("teste") || origem.includes("diagnostico") || origem.includes("simulador");
+  const fisicoConfirmado = log.physicalConfirmed !== false && log.physical_confirmed !== false;
 
-  return log.autorizado === true && Boolean(alunoId) && acessoReal && !diagnostico;
+  // Fechamento administrativo pode encerrar uma sessão aberta no histórico,
+  // mas continua não sendo contado como saída física nos KPIs.
+  return (
+    log.autorizado === true &&
+    Boolean(pessoaId) &&
+    acessoReal &&
+    !diagnostico &&
+    (fisicoConfirmado || fechamentoAdministrativo)
+  );
+}
+
+function localizarPessoaEquipe(usuarios = [], professores = [], pessoaId = "", tipo = "") {
+  const alvo = String(pessoaId || "");
+  const listaPreferida = normalizar(tipo) === "professor"
+    ? [...professores, ...usuarios]
+    : [...usuarios, ...professores];
+
+  return listaPreferida.find((p = {}) =>
+    String(p.id || p._id || p.usuarioId || p.professorId || p.recordId || "") === alvo
+  ) || {};
+}
+
+function registroAutomaticoEdge(item = {}) {
+  const origem = normalizar(item.origem || "");
+  const accessLogId = texto(item.accessLogId || "");
+  return (
+    origem.includes("fusion-biometria-local") ||
+    origem.includes("fusion-edge") ||
+    accessLogId.startsWith("edge:")
+  );
+}
+
+function consolidarRegistrosEdgeDoDia(registros = [], dataAlvo = "") {
+  const grupos = new Map();
+
+  registros.forEach((item, indice) => {
+    if (!registroAutomaticoEdge(item)) return;
+    if (String(item.data || "").slice(0, 10) !== dataAlvo) return;
+
+    const pessoaId = texto(item.pessoaId || item.alunoId || item.aluno_id || "");
+    if (!pessoaId) return;
+
+    const chave = `${tipoPessoaCheckin(item)}:${pessoaId}:${dataAlvo}`;
+    if (!grupos.has(chave)) grupos.set(chave, []);
+    grupos.get(chave).push({ item, indice });
+  });
+
+  const remover = new Set();
+  let consolidados = 0;
+
+  for (const grupo of grupos.values()) {
+    if (!grupo.length) continue;
+
+    grupo.sort((a, b) => {
+      const aa = `${a.item.data || ""}T${a.item.horaEntrada || ""}|${a.item.criadoEm || ""}`;
+      const bb = `${b.item.data || ""}T${b.item.horaEntrada || ""}|${b.item.criadoEm || ""}`;
+      return aa.localeCompare(bb);
+    });
+
+    const principal = grupo[0].item;
+    const eventos = new Set(
+      grupo.flatMap(({ item }) => [
+        ...(Array.isArray(item.accessEventIds) ? item.accessEventIds : []),
+        item.accessLogId,
+        item.accessExitLogId
+      ]).map(String).filter(Boolean)
+    );
+
+    const entradas = grupo.map(({ item }) => texto(item.horaEntrada)).filter(Boolean).sort();
+    const saidas = grupo.map(({ item }) => texto(item.horaSaida)).filter(Boolean).sort();
+
+    const movimentos = [];
+    grupo.forEach(({ item }) => {
+      if (texto(item.horaEntrada)) movimentos.push({ ordem: `${item.data || ""}T${item.horaEntrada}`, tipo: "entrada" });
+      if (texto(item.horaSaida)) movimentos.push({ ordem: `${item.data || ""}T${item.horaSaida}`, tipo: "saida" });
+    });
+    movimentos.sort((a, b) => a.ordem.localeCompare(b.ordem));
+
+    principal.horaEntrada = entradas[0] || principal.horaEntrada || "";
+    principal.horaSaida = saidas.at(-1) || "";
+    principal.ultimoMovimento = movimentos.at(-1)?.tipo || principal.ultimoMovimento || "entrada";
+    principal.accessEventIds = [...eventos];
+    principal.atualizadoEm = new Date().toISOString();
+
+    grupo.slice(1).forEach(({ indice }) => remover.add(indice));
+    if (grupo.length > 1) consolidados += grupo.length - 1;
+  }
+
+  if (remover.size) {
+    for (let i = registros.length - 1; i >= 0; i -= 1) {
+      if (remover.has(i)) registros.splice(i, 1);
+    }
+  }
+
+  return consolidados;
 }
 
 async function executarSincronizacaoCheckinsComAcessos() {
-  const [logs, alunos, matriculas, registros] = await Promise.all([
+  const agora = new Date();
+  const hoje = dataHoraLocal(agora).data;
+  const inicioEdge = new Date(agora.getTime() - (36 * 60 * 60 * 1000)).toISOString();
+  const fimEdge = new Date(agora.getTime() + (2 * 60 * 60 * 1000)).toISOString();
+
+  const [logsLegados, alunos, matriculas, usuarios, professores, registros, eventosEdge] = await Promise.all([
     lerPrimeiroJson(ARQUIVOS.acessos, []),
     lerPrimeiroJson(ARQUIVOS.alunos, []),
     lerPrimeiroJson(ARQUIVOS.matriculas, []),
-    listarCheckins()
+    lerPrimeiroJson(["usuarios.json"], []),
+    lerPrimeiroJson(["professores.json"], []),
+    listarCheckins(),
+    listarEventosEdgeCheckin(inicioEdge, fimEdge).catch((erro) => {
+      console.warn(`[Checkin/Historico] ${String(erro?.message || erro).slice(0, 260)}`);
+      return null;
+    })
   ]);
 
-  if (!Array.isArray(logs) || !logs.length) return { importados: 0, saidas: 0 };
+  const eventosEdgeHoje = (Array.isArray(eventosEdge) ? eventosEdge : [])
+    .filter((log) => {
+      const momento = log.criadoEm || log.at || log.timestamp || "";
+      return momento && dataHoraLocal(momento).data === hoje;
+    });
 
-  const idsImportados = new Set(
-    registros.flatMap((item) => [item.accessLogId, item.accessExitLogId]).filter(Boolean).map(String)
+  const logs = eventosEdgeHoje.length
+    ? eventosEdgeHoje
+    : (Array.isArray(logsLegados) ? logsLegados : []);
+
+  let alterados = consolidarRegistrosEdgeDoDia(registros, hoje);
+
+  if (!logs.length) {
+    if (alterados) await salvarCheckins(registros);
+    return { importados: 0, saidas: 0, consolidados: alterados };
+  }
+
+  const eventosJaProcessados = new Set(
+    registros.flatMap((item) => [
+      ...(Array.isArray(item.accessEventIds) ? item.accessEventIds : []),
+      item.accessLogId,
+      item.accessExitLogId
+    ]).map(String).filter(Boolean)
   );
+
   let importados = 0;
   let saidas = 0;
 
@@ -251,71 +416,160 @@ async function executarSincronizacaoCheckinsComAcessos() {
     .sort((a, b) => String(a.criadoEm || a.at || "").localeCompare(String(b.criadoEm || b.at || "")));
 
   for (const log of ordenados) {
-    const accessLogId = texto(log.id);
-    if (!accessLogId || idsImportados.has(accessLogId)) continue;
+    const accessLogId = texto(log.id || log.eventId || log.event_id);
+    if (!accessLogId || eventosJaProcessados.has(accessLogId)) continue;
 
-    const alunoId = texto(log.alunoId || log.aluno_id);
+    const pessoaId = idPessoaCheckin(log);
+    const pessoaTipo = tipoPessoaCheckin(log);
     const movimento = normalizar(log.movimento || log.direcao || "entrada") === "saida" ? "saida" : "entrada";
     const momento = log.criadoEm || log.at || log.timestamp || new Date().toISOString();
     const horario = dataHoraLocal(momento);
 
+    let registroDia = registros.find((item) =>
+      String(item.data || "").slice(0, 10) === horario.data &&
+      String(item.pessoaId || item.alunoId || "") === String(pessoaId) &&
+      tipoPessoaCheckin(item) === pessoaTipo &&
+      registroAutomaticoEdge(item)
+    );
+
     if (movimento === "saida") {
-      const registroAberto = [...registros]
-        .reverse()
-        .find((item) => String(item.alunoId || "") === alunoId && !item.horaSaida && item.status === "Liberado");
-      if (registroAberto) {
-        registroAberto.horaSaida = horario.hora;
-        registroAberto.accessExitLogId = accessLogId;
-        registroAberto.atualizadoEm = new Date().toISOString();
-        idsImportados.add(accessLogId);
+      if (registroDia) {
+        registroDia.horaSaida = horario.hora;
+        registroDia.accessExitLogId = registroDia.accessExitLogId || accessLogId;
+        registroDia.ultimaSaidaEm = momento;
+        registroDia.ultimaMovimentacaoEm = momento;
+        registroDia.ultimoMovimento = "saida";
+        registroDia.accessEventIds = [...new Set([...(registroDia.accessEventIds || []), accessLogId])];
+        registroDia.atualizadoEm = new Date().toISOString();
         saidas += 1;
+        alterados += 1;
       }
+      eventosJaProcessados.add(accessLogId);
       continue;
     }
 
-    const aluno = localizarAluno(alunos, alunoId) || {};
-    const matricula = localizarMatriculaAtiva(matriculas, {}, alunoId) || {};
+    if (registroDia) {
+      registroDia.ultimaEntradaEm = momento;
+      registroDia.ultimaMovimentacaoEm = momento;
+      registroDia.ultimoMovimento = "entrada";
+      registroDia.accessEventIds = [...new Set([...(registroDia.accessEventIds || []), accessLogId])];
+      registroDia.atualizadoEm = new Date().toISOString();
+      eventosJaProcessados.add(accessLogId);
+      alterados += 1;
+      continue;
+    }
+
+    const aluno = pessoaTipo === "aluno" ? (localizarAluno(alunos, pessoaId) || {}) : {};
+    const matricula = pessoaTipo === "aluno" ? (localizarMatriculaAtiva(matriculas, {}, pessoaId) || {}) : {};
+    const equipe = pessoaTipo === "funcionario" ? localizarPessoaEquipe(usuarios, professores, pessoaId, log.pessoaTipo) : {};
+
     const origem = texto(log.origem || "catraca");
     const peloPortal = normalizar(origem).includes("portal-aluno");
+    const nomePessoa = texto(
+      log.pessoaNome || log.alunoNome ||
+      aluno.nome || matricula.aluno ||
+      equipe.nome || equipe.nomeCompleto || equipe.nome_completo ||
+      equipe.usuario || equipe.email ||
+      (pessoaTipo === "funcionario" ? "Funcionário" : "")
+    );
 
-    registros.push({
+    const role = normalizar(log.role || equipe.perfil || equipe.role || "");
+    const funcaoEquipe = role === "professor"
+      ? "Professor"
+      : role === "recepcao"
+        ? "Recepção"
+        : role === "gerente"
+          ? "Gerente"
+          : "Funcionário";
+
+    registroDia = {
       id: gerarId(),
-      alunoId,
-      aluno: log.alunoNome || aluno.nome || matricula.aluno || "",
-      matricula: log.numeroMatricula || matricula.numero || matricula.numeroMatricula || aluno.numeroMatricula || "",
-      matriculaId: matricula.id || aluno.matriculaId || "",
-      plano: matricula.plano || matricula.nomePlano || aluno.plano || "",
-      planoId: matricula.planoId || aluno.planoId || "",
-      modalidade: "Musculação",
-      turma: "Musculação livre",
-      professor: aluno.professorNome || aluno.professor_responsavel || "",
+      pessoaId,
+      pessoaTipo,
+      role,
+      alunoId: pessoaTipo === "aluno" ? pessoaId : "",
+      aluno: nomePessoa,
+      matricula: pessoaTipo === "aluno"
+        ? (log.numeroMatricula || matricula.numero || matricula.numeroMatricula || aluno.numeroMatricula || "")
+        : "-",
+      matriculaId: pessoaTipo === "aluno" ? (matricula.id || aluno.matriculaId || "") : "",
+      plano: pessoaTipo === "aluno" ? (matricula.plano || matricula.nomePlano || aluno.plano || "") : funcaoEquipe,
+      planoId: pessoaTipo === "aluno" ? (matricula.planoId || aluno.planoId || "") : "",
+      modalidade: pessoaTipo === "aluno" ? "Musculação" : "Equipe",
+      turma: pessoaTipo === "aluno" ? "Musculação livre" : "Equipe",
+      professor: pessoaTipo === "aluno" ? (aluno.professorNome || aluno.professor_responsavel || "") : "",
       data: horario.data,
       horaEntrada: horario.hora,
       horaSaida: "",
+      ultimaEntradaEm: momento,
+      ultimaMovimentacaoEm: momento,
+      ultimoMovimento: "entrada",
       tipo: peloPortal ? "Catraca pelo App de Treino" : "Catraca",
       status: "Liberado",
       observacoes: `Entrada sincronizada automaticamente do controle de acesso (${origem}).`,
       origem,
       accessLogId,
+      accessExitLogId: "",
+      accessEventIds: [accessLogId],
       comandoCatracaId: log.catraca?.commandId || log.catraca?.command?.id || "",
       criadoEm: momento,
       sincronizadoEm: new Date().toISOString()
-    });
-    idsImportados.add(accessLogId);
+    };
+
+    registros.push(registroDia);
+    eventosJaProcessados.add(accessLogId);
     importados += 1;
+    alterados += 1;
   }
 
-  if (importados || saidas) await salvarCheckins(registros);
-  return { importados, saidas };
+  if (alterados) await salvarCheckins(registros);
+  return { importados, saidas, consolidados: alterados };
 }
 
+let sincronizacaoCheckinAtiva = null;
+let ultimaSincronizacaoCheckinConcluidaEm = 0;
+const JANELA_REUSO_SINCRONIZACAO_CHECKIN_MS = 1000;
+
 async function sincronizarCheckinsComAcessos() {
+  if (sincronizacaoCheckinAtiva) return sincronizacaoCheckinAtiva;
+
+  const agora = Date.now();
+  if (
+    ultimaSincronizacaoCheckinConcluidaEm &&
+    agora - ultimaSincronizacaoCheckinConcluidaEm < JANELA_REUSO_SINCRONIZACAO_CHECKIN_MS
+  ) {
+    return { importados: 0, saidas: 0, reutilizada: true };
+  }
+
   const tarefa = filaSincronizacaoAcessos.then(
     executarSincronizacaoCheckinsComAcessos,
     executarSincronizacaoCheckinsComAcessos
   );
+
+  sincronizacaoCheckinAtiva = tarefa;
   filaSincronizacaoAcessos = tarefa.catch(() => undefined);
-  return tarefa;
+
+  try {
+    return await tarefa;
+  } finally {
+    ultimaSincronizacaoCheckinConcluidaEm = Date.now();
+    sincronizacaoCheckinAtiva = null;
+  }
+}
+
+function dispararSincronizacaoCheckinsEmSegundoPlano() {
+  const agora = Date.now();
+  if (sincronizacaoCheckinEmSegundoPlano) return;
+  if (agora - ultimaSincronizacaoCheckinEm < INTERVALO_SINCRONIZACAO_CHECKIN_MS) return;
+
+  ultimaSincronizacaoCheckinEm = agora;
+  sincronizacaoCheckinEmSegundoPlano = sincronizarCheckinsComAcessos()
+    .catch((erro) => {
+      console.warn(`[Checkin/SyncBackground] ${String(erro?.message || erro).slice(0, 260)}`);
+    })
+    .finally(() => {
+      sincronizacaoCheckinEmSegundoPlano = null;
+    });
 }
 
 function matriculaPermiteMusculacao(matricula = {}, servicos = []) {
@@ -602,6 +856,8 @@ export async function registrarCheckinMusculacaoInteligente(dados = {}) {
 }
 
 export async function listarRegistros(filtros = {}) {
+  // CHECKIN SYNC AGUARDADA PARA HISTORICO E KPIS 20260826
+  // O Historico so e lido depois que os eventos fisicos da catraca foram sincronizados.
   await sincronizarCheckinsComAcessos();
   let registros = await listarCheckins();
 
@@ -638,16 +894,429 @@ export async function listarRegistros(filtros = {}) {
   });
 }
 
+
+async function listarEventosEdgeCheckin(inicioIso, fimIso) {
+  const supabase = obterSupabaseAdmin();
+  if (!supabase) return null;
+
+  const tenantId = tenantAtual();
+  const todos = [];
+  const tamanhoPagina = 1000;
+
+  for (let pagina = 0; pagina < 100; pagina += 1) {
+    const inicio = pagina * tamanhoPagina;
+    const fim = inicio + tamanhoPagina - 1;
+
+    const { data, error } = await supabase
+      .from("fusion_edge_access_events")
+      .select("event_id,student_id,direction,authorized,physical_confirmed,occurred_at,source,payload")
+      .eq("tenant_id", tenantId)
+      .gte("occurred_at", inicioIso)
+      .lt("occurred_at", fimIso)
+      .order("occurred_at", { ascending: true })
+      .range(inicio, fim);
+
+    if (error) {
+      throw new Error(`Falha ao consultar eventos reais da catraca: ${error.message}`);
+    }
+
+    const paginaDados = Array.isArray(data) ? data : [];
+    todos.push(...paginaDados);
+    if (paginaDados.length < tamanhoPagina) break;
+  }
+
+  return todos.map((row = {}) => {
+    const payload = row.payload && typeof row.payload === "object" && !Array.isArray(row.payload)
+      ? row.payload
+      : {};
+    const tipoInformado = String(payload.personType || payload.person_type || "").trim().toLowerCase();
+    const role = String(payload.role || "").trim().toLowerCase();
+    const pessoaTipo = tipoInformado || (role && role !== "aluno" ? "usuario" : "aluno");
+
+    return {
+      id: `edge:${row.event_id || ""}`,
+      criadoEm: row.occurred_at || "",
+      origem: row.source || "fusion-biometria-local",
+      direcao: row.direction || "entrada",
+      autorizado: row.authorized === true,
+      physicalConfirmed: row.physical_confirmed === true,
+      pessoaId: row.student_id || "",
+      alunoId: pessoaTipo === "aluno" ? (row.student_id || "") : "",
+      pessoaTipo,
+      role,
+      motivo: payload.reason || "",
+      edge: true
+    };
+  });
+}
+
 export async function obterResumoCheckin() {
+  // O resumo operacional precisa usar exatamente o mesmo estado ja sincronizado do Historico.
   await sincronizarCheckinsComAcessos();
-  const registros = await listarCheckins();
-  const hoje = hojeISO();
+
+  const hoje = dataHoraLocal(new Date()).data;
+  const mes = hoje.slice(0, 7);
+  const [anoMes, numeroMes] = mes.split("-").map(Number);
+
+  const inicioConsulta = new Date(Date.UTC(anoMes, numeroMes - 1, 1) - (36 * 60 * 60 * 1000)).toISOString();
+  const fimConsulta = new Date(Date.UTC(anoMes, numeroMes, 1) + (36 * 60 * 60 * 1000)).toISOString();
+
+  const [registros, eventosEdge, alunosCadastro, usuariosCadastro, professoresCadastro] = await Promise.all([
+    listarCheckins(),
+    listarEventosEdgeCheckin(inicioConsulta, fimConsulta).catch((erro) => {
+      console.warn(`[Checkin/Resumo] ${String(erro?.message || erro).slice(0, 260)}`);
+      return null;
+    }),
+    lerPrimeiroJson(ARQUIVOS.alunos, []),
+    lerPrimeiroJson(["usuarios.json"], []),
+    lerPrimeiroJson(["professores.json"], [])
+  ]);
+
+  const logsAcesso = Array.isArray(eventosEdge) && eventosEdge.length
+    ? eventosEdge
+    : await accessRepo.listarLogs().catch(() => []);
+
+  const dataDoLog = (log = {}) => {
+    const bruto = String(log.criadoEm || log.createdAt || log.created_at || log.dataHora || log.timestamp || log.data || "").trim();
+    if (!bruto) return "";
+    if (/^\d{4}-\d{2}-\d{2}$/.test(bruto)) return bruto;
+    const data = new Date(bruto);
+    return Number.isNaN(data.getTime()) ? bruto.slice(0, 10) : dataHoraLocal(data).data;
+  };
+
+  const ehAcessoReal = (log = {}) => {
+    const origem = normalizar(log.origem || "");
+    const diagnostico = origem.includes("teste") || origem.includes("diagnostico") || origem.includes("simulador");
+    const real = Boolean(
+      log.catraca ||
+      origem.includes("portal-aluno") ||
+      origem.includes("henry") ||
+      origem.includes("biometr") ||
+      origem.includes("reconhecimento-facial") ||
+      origem.includes("checkin") ||
+      origem.includes("access-engine")
+    );
+    return real && !diagnostico;
+  };
+
+  const tipoPessoa = (log = {}) => {
+    const tipo = normalizar(log.pessoaTipo || log.pessoa_tipo || log.tipoPessoa || log.tipo_pessoa || "");
+    const motivo = normalizar(log.motivo || "");
+    if (
+      tipo === "professor" ||
+      tipo === "funcionario" ||
+      tipo === "usuario" ||
+      tipo === "equipe" ||
+      tipo === "colaborador" ||
+      motivo.includes("acesso-professor") ||
+      motivo.includes("acesso-funcionario")
+    ) return "funcionario";
+    return "aluno";
+  };
+
+  const pessoaId = (log = {}) => texto(
+    log.pessoaId || log.pessoa_id ||
+    log.funcionarioId || log.funcionario_id ||
+    log.professorId || log.professor_id ||
+    log.usuarioId || log.usuario_id ||
+    log.alunoId || log.aluno_id || log.identificador || ""
+  );
+
+  const direcao = (log = {}) => {
+    const valor = normalizar(log.direcao || log.sentido || log.movimento || "");
+    return valor.includes("saida") ? "saida" : "entrada";
+  };
+
+  const instante = (log = {}, indice = 0) => {
+    const bruto = log.criadoEm || log.createdAt || log.created_at || log.dataHora || log.timestamp || "";
+    const ms = Date.parse(bruto);
+    return Number.isFinite(ms) ? ms : indice;
+  };
+
+  const logsHoje = (Array.isArray(logsAcesso) ? logsAcesso : [])
+    .filter((log) => dataDoLog(log) === hoje)
+    .filter(ehAcessoReal);
+
+  const negados = logsHoje.filter((log) => log.autorizado === false);
+
+  const tipoRegistro = (item = {}) => {
+    const tipo = normalizar(item.pessoaTipo || item.pessoa_tipo || item.tipoPessoa || item.tipo_pessoa || "");
+    const role = normalizar(item.role || item.perfil || "");
+    const plano = normalizar(item.plano || "");
+    const modalidade = normalizar(item.modalidade || "");
+
+    if (
+      tipo === "professor" ||
+      tipo === "funcionario" ||
+      tipo === "usuario" ||
+      tipo === "equipe" ||
+      tipo === "colaborador" ||
+      ["admin", "professor", "recepcao", "gerente"].includes(role) ||
+      plano.includes("funcionario") ||
+      modalidade === "equipe"
+    ) return "funcionario";
+
+    return "aluno";
+  };
+
+  const idRegistro = (item = {}) => texto(
+    item.pessoaId || item.pessoa_id ||
+    item.alunoId || item.aluno_id ||
+    item.matriculaId || item.matricula_id ||
+    item.matricula || item.aluno || item.id || ""
+  );
+
+  // PAINEL OPERACIONAL CHECKIN 6 COLUNAS 20260826
+  const nomeDoCadastro = (id = "", tipo = "aluno") => {
+    const alvo = texto(id);
+    if (!alvo) return "";
+
+    const localizar = (lista = []) => (Array.isArray(lista) ? lista : []).find((p = {}) =>
+      texto(p.id || p._id || p.recordId || p.alunoId || p.usuarioId || p.professorId) === alvo
+    ) || {};
+
+    if (tipo === "funcionario") {
+      const usuario = localizar(usuariosCadastro);
+      const professor = localizar(professoresCadastro);
+      const base = Object.keys(usuario).length ? usuario : professor;
+      return texto(base.nome || base.nomeCompleto || base.nome_completo || base.usuario || base.email || "");
+    }
+
+    const aluno = localizar(alunosCadastro);
+    return texto(aluno.nome || aluno.nomeCompleto || aluno.nome_completo || aluno.alunoNome || aluno.aluno || "");
+  };
+
+  const nomeRegistro = (item = {}, tipo = tipoRegistro(item)) => {
+    const id = idRegistro(item);
+    return texto(
+      nomeDoCadastro(id, tipo) ||
+      item.pessoaNome || item.pessoa_nome ||
+      item.alunoNome || item.aluno_nome ||
+      item.aluno || item.pessoa || item.nome || ""
+    ) || (tipo === "funcionario" ? "Funcionário" : "Aluno");
+  };
+
+  const listaUnicaRegistros = (lista = [], tipoDesejado = "") => {
+    const mapa = new Map();
+
+    (Array.isArray(lista) ? lista : []).forEach((item) => {
+      const tipo = tipoRegistro(item);
+      if (tipoDesejado && tipo !== tipoDesejado) return;
+
+      const id = idRegistro(item);
+      if (!id) return;
+
+      const chave = `${tipo}:${id}`;
+      if (!mapa.has(chave)) mapa.set(chave, { id, tipo, nome: nomeRegistro(item, tipo) });
+    });
+
+    return [...mapa.values()].sort((a, b) =>
+      String(a.nome || "").localeCompare(String(b.nome || ""), "pt-BR")
+    );
+  };
+
+  const registrosHoje = registros.filter(
+    (item) => String(item.data || "").slice(0, 10) === hoje
+  );
+
+  const entradasRegistros = registrosHoje.filter(
+    (item) => item.status === "Liberado" && texto(item.horaEntrada)
+  );
+
+  const saidasRegistros = entradasRegistros.filter(
+    (item) => texto(item.horaSaida)
+  );
+
+  const alunosEntraramHoje = new Set(
+    entradasRegistros
+      .filter((item) => tipoRegistro(item) === "aluno")
+      .map(idRegistro)
+      .filter(Boolean)
+  ).size;
+
+  const alunosSairamHoje = new Set(
+    saidasRegistros
+      .filter((item) => tipoRegistro(item) === "aluno")
+      .map(idRegistro)
+      .filter(Boolean)
+  ).size;
+
+  const entradasHoje = alunosEntraramHoje;
+  const saidasHoje = alunosSairamHoje;
+
+  const funcionariosEntraramHoje = new Set(
+    entradasRegistros
+      .filter((item) => tipoRegistro(item) === "funcionario")
+      .map(idRegistro)
+      .filter(Boolean)
+  ).size;
+
+  // PRESENCA COERENTE COM HISTORICO CHECKIN 20260826
+  // Usa entrada/saida visiveis no Historico como base e os timestamps de
+  // ultima movimentacao apenas para distinguir uma reentrada posterior.
+  const instanteMovimentoRegistro = (item = {}, tipo = "") => {
+    const candidatos = tipo === "entrada"
+      ? [
+          item.ultimaEntradaEm,
+          texto(item.data) && texto(item.horaEntrada)
+            ? `${texto(item.data).slice(0, 10)}T${texto(item.horaEntrada)}`
+            : ""
+        ]
+      : [
+          item.ultimaSaidaEm,
+          texto(item.data) && texto(item.horaSaida)
+            ? `${texto(item.data).slice(0, 10)}T${texto(item.horaSaida)}`
+            : ""
+        ];
+
+    let maior = Number.NEGATIVE_INFINITY;
+
+    candidatos.filter(Boolean).forEach((valor) => {
+      const ms = Date.parse(valor);
+      if (Number.isFinite(ms) && ms > maior) maior = ms;
+    });
+
+    return maior;
+  };
+
+  const ordemEfetivaRegistro = (item = {}) => {
+    const candidatos = [
+      instanteMovimentoRegistro(item, "entrada"),
+      instanteMovimentoRegistro(item, "saida"),
+      Date.parse(item.ultimaMovimentacaoEm || "")
+    ].filter(Number.isFinite);
+
+    return candidatos.length ? Math.max(...candidatos) : 0;
+  };
+
+  const presentePeloHistorico = (item = {}) => {
+    const temEntrada = Boolean(texto(item.horaEntrada));
+    const temSaida = Boolean(texto(item.horaSaida));
+
+    if (!temEntrada) return false;
+    if (!temSaida) return true;
+
+    const entradaMs = instanteMovimentoRegistro(item, "entrada");
+    const saidaMs = instanteMovimentoRegistro(item, "saida");
+
+    if (Number.isFinite(entradaMs) && Number.isFinite(saidaMs)) {
+      return entradaMs > saidaMs;
+    }
+
+    return false;
+  };
+
+  const ultimoRegistroPessoa = new Map();
+
+  entradasRegistros.forEach((item, indice) => {
+    const id = idRegistro(item);
+    if (!id) return;
+
+    const tipo = tipoRegistro(item);
+    const chave = `${tipo}:${id}`;
+    const ordem = ordemEfetivaRegistro(item);
+    const atual = ultimoRegistroPessoa.get(chave);
+
+    if (!atual || ordem >= atual.ordem) {
+      ultimoRegistroPessoa.set(chave, {
+        id,
+        tipo,
+        nome: nomeRegistro(item, tipo),
+        ordem,
+        presente: presentePeloHistorico(item)
+      });
+    }
+  });
+
+  const presentes = [...ultimoRegistroPessoa.values()].filter((item) => item.presente);
+  const alunosPresentesAgora = presentes.filter((item) => item.tipo === "aluno").length;
+  const funcionariosPresentesAgora = presentes.filter((item) => item.tipo === "funcionario").length;
+
+  const idsBloqueados = new Set();
+  const pessoasBloqueadas = new Map();
+
+  negados.forEach((log) => {
+    const id = pessoaId(log) || texto(log.identificador || log.id || "");
+    if (!id) return;
+
+    idsBloqueados.add(id);
+    const tipo = tipoPessoa(log);
+    const nome = texto(
+      nomeDoCadastro(id, tipo) ||
+      log.pessoaNome || log.pessoa_nome ||
+      log.alunoNome || log.aluno_nome || log.nome || ""
+    ) || (tipo === "funcionario" ? "Funcionário" : "Aluno");
+
+    if (!pessoasBloqueadas.has(id)) pessoasBloqueadas.set(id, { id, tipo, nome });
+  });
+
+  registrosHoje
+    .filter((item) => item.status === "Bloqueado")
+    .forEach((item) => {
+      const id = idRegistro(item);
+      if (!id) return;
+
+      idsBloqueados.add(id);
+      const tipo = tipoRegistro(item);
+      if (!pessoasBloqueadas.has(id)) {
+        pessoasBloqueadas.set(id, { id, tipo, nome: nomeRegistro(item, tipo) });
+      }
+    });
+
+  const bloqueadosHoje = idsBloqueados.size;
+
+  const registrosMesLiberados = registros.filter((item) =>
+    String(item.data || "").slice(0, 7) === mes &&
+    item.status === "Liberado" &&
+    texto(item.horaEntrada)
+  );
+
+  const pessoasMesMapa = new Map();
+
+  registrosMesLiberados.forEach((item) => {
+    const id = idRegistro(item);
+    if (!id) return;
+
+    const tipo = tipoRegistro(item);
+    const chave = `${tipo}:${id}`;
+
+    if (!pessoasMesMapa.has(chave)) {
+      pessoasMesMapa.set(chave, { id, tipo, nome: nomeRegistro(item, tipo) });
+    }
+  });
+
+  const pessoasMes = pessoasMesMapa.size;
 
   return {
     total: registros.length,
-    hoje: registros.filter((item) => item.data === hoje).length,
+    hoje: registrosHoje.length,
     liberados: registros.filter((item) => item.status === "Liberado").length,
-    bloqueados: registros.filter((item) => item.status === "Bloqueado").length
+    bloqueados: registros.filter((item) => item.status === "Bloqueado").length,
+    entradasHoje,
+    alunosEntraramHoje,
+    funcionariosEntraramHoje,
+    alunosPresentesAgora,
+    funcionariosPresentesAgora,
+    pessoasPresentesAgora: alunosPresentesAgora + funcionariosPresentesAgora,
+    saidasHoje,
+    bloqueadosHoje,
+    pessoasMes,
+    listas: {
+      entradasHoje: listaUnicaRegistros(entradasRegistros, "aluno"),
+      alunosPresentes: presentes
+        .filter((item) => item.tipo === "aluno")
+        .map((item) => ({ id: item.id, tipo: item.tipo, nome: item.nome }))
+        .sort((a, b) => String(a.nome || "").localeCompare(String(b.nome || ""), "pt-BR")),
+      funcionariosPresentes: presentes
+        .filter((item) => item.tipo === "funcionario")
+        .map((item) => ({ id: item.id, tipo: item.tipo, nome: item.nome }))
+        .sort((a, b) => String(a.nome || "").localeCompare(String(b.nome || ""), "pt-BR")),
+      saidasHoje: listaUnicaRegistros(saidasRegistros, "aluno"),
+      bloqueadosHoje: [...pessoasBloqueadas.values()]
+        .sort((a, b) => String(a.nome || "").localeCompare(String(b.nome || ""), "pt-BR")),
+      pessoasMes: [...pessoasMesMapa.values()]
+        .sort((a, b) => String(a.nome || "").localeCompare(String(b.nome || ""), "pt-BR"))
+    }
   };
 }
 
@@ -802,7 +1471,12 @@ export async function registrarSaida(id) {
     return null;
   }
 
+  const instanteSaida = new Date().toISOString();
   registros[index].horaSaida = horaAtual();
+  registros[index].ultimaSaidaEm = instanteSaida;
+  registros[index].ultimaMovimentacaoEm = instanteSaida;
+  registros[index].ultimoMovimento = "saida";
+  registros[index].atualizadoEm = instanteSaida;
   registros[index].atualizadoEm = new Date().toISOString();
 
   await salvarCheckins(registros);

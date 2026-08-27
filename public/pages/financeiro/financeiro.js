@@ -502,6 +502,59 @@ function abrirIndicadorFinanceiro(tipo = '', status = '', indicador = '') {
   carregarLancamentos().then(() => document.querySelector('.tabela-container')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
 }
 
+// NOME ATUAL DO ALUNO NA DESCRICAO - 20260826
+// A tela ja carrega /api/alunos antes dos lancamentos.
+// Para exibicao, usa o cadastro atual pelo alunoId sem reescrever o historico.
+function alunoAtualDoLancamentoFinanceiro(item = {}) {
+  const id = String(
+    item.alunoId ||
+    (String(item.pessoaTipo || "").toLowerCase() === "aluno" ? item.pessoaId : "") ||
+    item?.referencias?.alunoId ||
+    ""
+  ).trim();
+
+  if (!id) return null;
+
+  return alunosFinanceiro.find((aluno) =>
+    String(aluno.id || aluno.alunoId || "").trim() === id
+  ) || null;
+}
+
+function nomeAtualDoLancamentoFinanceiro(item = {}) {
+  const aluno = alunoAtualDoLancamentoFinanceiro(item);
+  return aluno ? String(nomeAlunoFinanceiro(aluno) || "").trim() : "";
+}
+
+function escaparRegexFinanceiro(valor = "") {
+  return String(valor).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function descricaoComNomeAtualFinanceiro(item = {}) {
+  let descricao = String(item.descricao || "");
+  const nomeAtual = nomeAtualDoLancamentoFinanceiro(item);
+  if (!descricao || !nomeAtual) return descricao;
+
+  const candidatos = [
+    item.alunoFornecedor,
+    item.pessoa,
+    item.pessoaFornecedor,
+    item.alunoNome,
+    item.nomeAluno,
+    nomeAtual
+  ]
+    .map((v) => String(v || "").trim())
+    .filter(Boolean);
+
+  for (const nome of [...new Set(candidatos)]) {
+    const re = new RegExp(escaparRegexFinanceiro(nome), "gi");
+    if (re.test(descricao)) {
+      descricao = descricao.replace(re, nomeAtual);
+    }
+  }
+
+  return descricao;
+}
+
 function renderizarTabela() {
   const listaExibida = filtroIndicador === 'taxas'
     ? lancamentos.filter((item) => lancamentoPago(item) && taxaOperadoraLancamento(item) > 0)
@@ -516,7 +569,7 @@ function renderizarTabela() {
     const programado = ["programado", "programada", "agendado", "agendada", "previsto", "prevista"].includes(st) || item.programado === true || item.previsto === true;
     return `<tr>
       <td><span class="tipo ${escapeHtml(item.tipo)}">${item.tipo === "receber" ? "Receber" : "Pagar"}</span></td>
-      <td>${escapeHtml(item.descricao)}</td>
+      <td>${escapeHtml(descricaoComNomeAtualFinanceiro(item))}</td>
       <td>${escapeHtml(item.categoria || "-")}</td>
       <td>${escapeHtml(item.alunoFornecedor || item.pessoa || item.pessoaFornecedor || "-")}</td>
       <td>${escapeHtml(item.vencimento || "-")}</td>

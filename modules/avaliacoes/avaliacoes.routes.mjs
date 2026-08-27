@@ -1,3 +1,5 @@
+import { marcarRealizadaPorAvaliacao } from "../agenda-avaliacoes/agenda-avaliacoes.service.mjs";
+import { listarAgendaAvaliacoes } from "../agenda-avaliacoes/agenda-avaliacoes.repository.mjs";
 import { Router } from "express";
 import * as avaliacoesService from "./avaliacoes.service.mjs";
 import * as alunosService from "../alunos/alunos.service.mjs";
@@ -88,11 +90,33 @@ function alunoPertenceAoProfessor(aluno = {}, usuario = {}) {
   return Boolean(professorNome && nomes.some(nome => nome === professorNome || nome.includes(professorNome) || professorNome.includes(nome)));
 }
 
+// PROFESSOR AGENDA FINALIZAR AVALIACAO 20260826
+async function alunoAgendadoPendenteParaProfessor(req, alunoId = "") {
+  if (!usuarioPortalProfessor(req) || responsavelTecnico(req)) return false;
+  const aid = texto(alunoId);
+  const pid = texto(req.usuario?.id);
+  if (!aid || !pid) return false;
+  try {
+    const agenda = await listarAgendaAvaliacoes();
+    return (Array.isArray(agenda) ? agenda : []).some((item = {}) => {
+      const status = normalizar(item.status);
+      const pendente = !status.includes("realiz") && !status.includes("conclu") && !status.includes("cancel");
+      return pendente &&
+        mesmo(item.alunoId || item.aluno_id, aid) &&
+        mesmo(item.professorId || item.professor_id, pid);
+    });
+  } catch (erro) {
+    console.warn("[AVALIACOES/AGENDA] Falha ao validar agendamento:", erro?.message || erro);
+    return false;
+  }
+}
+
 async function alunoPermitidoParaProfessor(req, alunoId = "") {
   if (!usuarioPortalProfessor(req) || responsavelTecnico(req)) return true;
   if (!alunoId) return false;
   const aluno = await alunosService.buscar(alunoId);
-  return alunoPertenceAoProfessor(aluno, req.usuario);
+  if (alunoPertenceAoProfessor(aluno, req.usuario)) return true;
+  return await alunoAgendadoPendenteParaProfessor(req, alunoId);
 }
 
 async function filtrarAvaliacoesPorPortal(req, avaliacoes = []) {
@@ -172,6 +196,11 @@ router.post("/", async (req, res) => {
       return res.status(403).json({ ok: false, mensagem: "Professor sem acesso a este aluno." });
     }
     const avaliacao = await avaliacoesService.criar(dados);
+    try {
+      await marcarRealizadaPorAvaliacao({ ...avaliacao, agendamentoId: req.body?.agendamentoId || req.body?.agendamento_id || "" });
+    } catch (erroAgenda) {
+      console.warn("[AVALIACOES/AGENDA] Avaliacao salva, mas agenda nao foi finalizada:", erroAgenda?.message || erroAgenda);
+    }
     res.status(201).json({ ok: true, avaliacao, mensagem: "Avaliacao cadastrada com sucesso" });
   } catch (error) {
     erro(res, error, 400);

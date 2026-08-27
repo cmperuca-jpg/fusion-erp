@@ -1,3 +1,4 @@
+import { dataLocalISO } from "../core/time/fusion-time.mjs";
 import {
   atualizarPagamentoRaw,
   atualizarPagamentoComMovimentoCaixa,
@@ -28,7 +29,7 @@ function texto(item, campos = []) {
 function dataItem(item) { return somenteData(texto(item, ["vencimento", "dataVencimento", "data", "competencia"])); }
 function valorTotal(item) { return numeroMoeda(item.valor ?? item.valorBruto ?? item.total ?? item.valorOriginal); }
 function valorPago(item) { return numeroMoeda(item.valorPago ?? item.pago ?? item.valorLiquido ?? item.valorBaixado); }
-function hojeIso() { return new Date().toISOString().slice(0, 10); }
+function hojeIso() { return dataLocalISO(new Date()); }
 function idItem(item = {}) { return String(item.id || item._id || item.codigo || item.uuid || item.chave || ""); }
 
 function aplicarFiltros(lista, filtros = {}) {

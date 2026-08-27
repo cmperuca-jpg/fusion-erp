@@ -278,7 +278,7 @@ export async function identificarRosto({ imagens, desafio, terminalId } = {}) {
     } else {
     const acesso = pessoaTipo === "aluno"
       ? await avaliarAcessoAluno({ aluno, dispositivoId: "disp_henry7x_01", direcao: "entrada", origem: "reconhecimento-facial" })
-      : await liberarRemoto({ dispositivoId: "disp_henry7x_01", direcao: "entrada", origem: "reconhecimento-facial", alunoId: pessoa.id, alunoNome: pessoa.nome, motivo: `acesso-${pessoaTipo}` });
+      : await liberarRemoto({ dispositivoId: "disp_henry7x_01", direcao: "entrada", origem: "reconhecimento-facial", pessoaTipo, pessoaId: pessoa.id, pessoaNome: pessoa.nome, alunoId: pessoa.id, alunoNome: pessoa.nome, motivo: `acesso-${pessoaTipo}` });
     resposta = { reconhecido: true, autorizado: pessoaTipo === "aluno" ? acesso.autorizado === true : acesso.ok === true, motivo: pessoaTipo === "aluno" ? acesso.motivo : "Acesso liberado", similaridade, movimentoValido, aluno: { id: pessoa.id, nome: pessoa.nome }, pessoaTipo, comandoId: acesso.catraca?.commandId || null };
       if (resposta.autorizado) ultimasLiberacoes.set(chaveLiberacao, Date.now());
     }

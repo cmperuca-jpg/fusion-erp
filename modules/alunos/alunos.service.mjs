@@ -1,3 +1,4 @@
+import { dataLocalISO } from "../core/time/fusion-time.mjs";
 import { lerJsonDuravel, salvarJsonDuravel } from "../core/persistence/durable-json.mjs";
 import { alunoSchema, alunoUpdateSchema } from "./alunos.schema.mjs";
 import { obterTreinos } from "../treinos/treinos.service.mjs";
@@ -14,7 +15,7 @@ function mensagemValidacao(resultado) {
 }
 
 function agoraISO() { return new Date().toISOString(); }
-function hojeISO() { return new Date().toISOString().slice(0, 10); }
+function hojeISO() { return dataLocalISO(new Date()); }
 function texto(v) { return String(v || "").trim(); }
 function normalizar(v) { return texto(v).toLowerCase(); }
 function mesmoId(a, b) { return String(a || "") === String(b || ""); }
@@ -1257,6 +1258,53 @@ function calcularResumoFinanceiroAluno(mensalidades = [], financeiro = []) {
 
   for (const k of ["valorAberto", "valorPago", "valorCancelado"]) resumo[k] = numeroAluno(resumo[k], 0);
   return resumo;
+}
+
+export async function indicadoresCadastro(alunosBase = []) {
+  const alunos = Array.isArray(alunosBase) ? alunosBase : [];
+  if (!alunos.length) return {};
+
+  const [avaliacoesRaw, treinosLegadosRaw, treinosPrescritosRaw] = await Promise.all([
+    lerJson("avaliacoes.json", []),
+    lerJson("treinos.json", []),
+    obterTreinos({})
+  ]);
+  const avaliacoes = Array.isArray(avaliacoesRaw) ? avaliacoesRaw : [];
+  const treinos = [
+    ...(Array.isArray(treinosPrescritosRaw) ? treinosPrescritosRaw : []),
+    ...(Array.isArray(treinosLegadosRaw) ? treinosLegadosRaw : [])
+  ];
+  const out = {};
+
+  for (const aluno of alunos) {
+    const id = texto(aluno?.id || aluno?._id || aluno?.codigo || "");
+    if (!id) continue;
+
+    const avaliacao = avaliacoes.some((a) =>
+      mesmoId(a?.alunoId, id) || mesmoId(a?.aluno_id, id)
+    );
+
+    const idsAluno = new Set([
+      id, aluno?.id, aluno?._id, aluno?.codigo, aluno?.alunoId, aluno?.aluno_id,
+      aluno?.matriculaId, aluno?.matricula_id, aluno?.numeroMatricula, aluno?.cpf,
+      String(aluno?.cpf || "").replace(/\D/g, ""),
+      String(aluno?.telefone || "").replace(/\D/g, "")
+    ].filter(Boolean).map((v) => String(v)));
+    const nomeAlunoNormalizado = normalizar(nomeAluno(aluno));
+
+    const treino = treinos.some((t = {}) => {
+      const idsTreino = [
+        t.alunoId, t.aluno_id, t.idAluno, t.alunoCodigo, t.matriculaId,
+        t.matricula_id, t.cpf, String(t.cpf || "").replace(/\D/g, "")
+      ].filter(Boolean).map((v) => String(v));
+      if (idsTreino.some((v) => idsAluno.has(v))) return true;
+      const nomeTreino = normalizar(t.alunoNome || t.aluno || t.nomeAluno || "");
+      return Boolean(nomeAlunoNormalizado && nomeTreino && nomeTreino === nomeAlunoNormalizado);
+    });
+
+    out[id] = { treino, avaliacao };
+  }
+  return out;
 }
 
 export async function prontuario(id) {

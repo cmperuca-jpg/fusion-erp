@@ -14,36 +14,301 @@
   <link rel="apple-touch-icon" href="/assets/pwa/icons/fusion-icon-180.png">
   <link rel="stylesheet" href="/assets/css/fusion-premium-final.css">
   <link rel="stylesheet" href="/pages/_shared/fusion-area-clara.css?v=20260729-contraste-global-2">
+  <link rel="stylesheet" href="./informacoes-dia.css?v=20260820-rel-av-1">
+  <link rel="stylesheet" href="/pages/dashboard/checkin-operacional-dashboard.css?v=20260826-1" />
+  <link rel="stylesheet" href="/pages/dashboard/financeiro-operacional-dashboard.css?v=20260826-2-remover-info-dia" />
 </head>
 <body>
   <div class="fusion-shell">
     <main class="fusion-main">
       <section class="fusion-content">
-        <div class="fusion-grid">
-          <div class="fusion-card"><div class="fusion-kpi-label">Alunos ativos</div><div class="fusion-kpi-value" id="kpiAlunos">0</div><small>Base ativa atual</small></div>
-          <div class="fusion-card"><div class="fusion-kpi-label">Receita liquida do mês</div><div class="fusion-kpi-value" id="kpiReceita">R$ 0,00</div><small>Recebimentos liquidos confirmados</small></div>
-          <div class="fusion-card"><div class="fusion-kpi-label">Mensalidades em aberto</div><div class="fusion-kpi-value" id="kpiAbertas">0</div><small>Abertas, atrasadas e parciais</small></div>
-          <div class="fusion-card"><div class="fusion-kpi-label">Avaliações</div><div class="fusion-kpi-value" id="kpiAvaliacoes">0</div><small>No período</small></div>
-        </div>
+        <div class="dashboard-top-grid">
+          <div class="fusion-card dashboard-top-kpi">
+            <div class="fusion-kpi-label">Alunos ativos</div>
+            <div class="fusion-kpi-value" id="kpiAlunos">0</div>
+          </div>
 
-        <div id="controleCatracaDashboard" class="fusion-card" style="margin-top:18px; display:none; border-left:4px solid #ff6600;">
-          <div style="display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;">
-            <div>
-              <h2 style="margin:0 0 6px;">Controle de acesso</h2>
-              <p style="margin:0;">Liberação manual da catraca para visitante, aluno sem biometria ou necessidade operacional.</p>
-              <small id="statusLiberacaoCatraca" style="display:block; margin-top:8px;">Pronta para liberação manual.</small>
+          <div class="fusion-card dashboard-top-kpi">
+            <div class="fusion-kpi-label">Recebido no mês</div>
+            <div class="fusion-kpi-value" id="kpiReceita">R$ 0,00</div>
+          </div>
+
+          <div class="fusion-card dashboard-top-kpi">
+            <div class="fusion-kpi-label">Saído no mês</div>
+            <div class="fusion-kpi-value" id="kpiSaidoMes">R$ 0,00</div>
+          </div>
+
+          <div class="fusion-card dashboard-top-kpi">
+            <div class="fusion-kpi-label">Resultado do mês</div>
+            <div class="fusion-kpi-value" id="kpiResultadoMes">R$ 0,00</div>
+          </div>
+
+          <div class="fusion-card dashboard-top-kpi">
+            <div class="fusion-kpi-label">Disponível agora</div>
+            <div class="fusion-kpi-value" id="kpiDisponivelAgora">R$ 0,00</div>
+          </div>
+
+          <div class="fusion-card dashboard-top-kpi">
+            <div class="fusion-kpi-label">Fechamento mês anterior</div>
+            <div class="fusion-kpi-value" id="kpiFechamentoAnterior">R$ 0,00</div>
+          </div>
+
+          <div class="fusion-card dashboard-top-kpi">
+            <div class="fusion-kpi-label">Mensalidades abertas</div>
+            <div class="fusion-kpi-value" id="kpiAbertas">0</div>
+          </div>
+
+          <div class="fusion-card dashboard-top-kpi">
+            <div class="fusion-kpi-label">Avaliações</div>
+            <div class="fusion-kpi-value" id="kpiAvaliacoes">0</div>
+          </div>
+
+          <div id="entradaRapidaDashboard" class="fusion-card dashboard-entrada-topo">
+            <div class="dashboard-entrada-topo-titulo">Entrada rápida</div>
+
+            <div class="dashboard-entrada-topo-form">
+              <input
+                id="dashboardEntradaCodigo"
+                type="text"
+                autocomplete="off"
+                placeholder="Matrícula, CPF ou QR"
+              >
+              <button
+                id="dashboardBtnEntradaRapida"
+                type="button"
+                class="fusion-btn fusion-btn-primary"
+              >
+                Registrar
+              </button>
             </div>
-            <button id="btnLiberarCatracaDashboard" type="button" class="fusion-btn fusion-btn-primary" style="min-width:210px; min-height:48px; font-weight:700;">
-              Liberar catraca
-            </button>
+
+            <small id="dashboardEntradaStatus" class="dashboard-entrada-topo-status">
+              Aguardando identificação.
+            </small>
           </div>
         </div>
 
-        <div class="fusion-grid" style="margin-top:18px">
-          <div class="fusion-card"><h2>Academia</h2><p>Alunos, professores, turmas, avaliação física, treinos, agenda e check-in.</p></div>
-          <div class="fusion-card"><h2>Financeiro</h2><p>Recebimentos, mensalidades, contas a pagar, caixa, contratos e relatórios.</p></div>
-          <div class="fusion-card"><h2>BI</h2><p>Indicadores de academia, operação e financeiro para análise gerencial.</p></div>
+
+
+        <!-- DASHBOARD CHECKIN OPERACIONAL 6 COLUNAS 20260826 -->
+        <section id="movimentoHojeDashboard" class="fusion-card dashboard-checkin-operacional" aria-label="Movimento e presença em tempo real">
+          <div class="dashboard-checkin-cabecalho">
+            <div>
+              <h2>Movimento e presença agora</h2>
+              <p>Entradas, saídas, presença e bloqueios sincronizados com o Check-in.</p>
+            </div>
+            <div class="dashboard-checkin-status">
+              <span class="dashboard-checkin-status-ponto" aria-hidden="true"></span>
+              <span id="dashboardCheckinAtualizado">Atualização automática</span>
+            </div>
+          </div>
+
+          <div class="dashboard-checkin-grid">
+            <article class="dashboard-checkin-kpi">
+              <span>Entradas hoje</span>
+              <strong id="dashboardCheckinEntradasHoje">0</strong>
+              <small>Alunos distintos que entraram hoje</small>
+              <div class="dashboard-checkin-divisor"></div>
+              <b>QUEM ENTROU</b>
+              <div id="dashboardCheckinListaEntradas" class="dashboard-checkin-lista"><em>Nenhuma pessoa</em></div>
+            </article>
+
+            <article class="dashboard-checkin-kpi">
+              <span>Alunos presentes</span>
+              <strong id="dashboardCheckinAlunosPresentes">0</strong>
+              <small>Alunos dentro da academia agora</small>
+              <div class="dashboard-checkin-divisor"></div>
+              <b>DENTRO AGORA</b>
+              <div id="dashboardCheckinListaAlunosPresentes" class="dashboard-checkin-lista"><em>Nenhuma pessoa</em></div>
+            </article>
+
+            <article class="dashboard-checkin-kpi">
+              <span>Funcionários presentes</span>
+              <strong id="dashboardCheckinFuncionariosPresentes">0</strong>
+              <small>Equipe e professores presentes agora</small>
+              <div class="dashboard-checkin-divisor"></div>
+              <b>EQUIPE DENTRO AGORA</b>
+              <div id="dashboardCheckinListaFuncionariosPresentes" class="dashboard-checkin-lista"><em>Nenhuma pessoa</em></div>
+            </article>
+
+            <article class="dashboard-checkin-kpi">
+              <span>Saídas hoje</span>
+              <strong id="dashboardCheckinSaidasHoje">0</strong>
+              <small>Alunos distintos que saíram hoje</small>
+              <div class="dashboard-checkin-divisor"></div>
+              <b>QUEM SAIU</b>
+              <div id="dashboardCheckinListaSaidas" class="dashboard-checkin-lista"><em>Nenhuma pessoa</em></div>
+            </article>
+
+            <article class="dashboard-checkin-kpi">
+              <span>Bloqueados hoje</span>
+              <strong id="dashboardCheckinBloqueadosHoje">0</strong>
+              <small>Pessoas com acesso negado no dia</small>
+              <div class="dashboard-checkin-divisor"></div>
+              <b>ACESSO NEGADO</b>
+              <div id="dashboardCheckinListaBloqueados" class="dashboard-checkin-lista"><em>Nenhuma pessoa</em></div>
+            </article>
+
+            <article class="dashboard-checkin-kpi">
+              <span>Pessoas no mês</span>
+              <strong id="dashboardCheckinPessoasMes">0</strong>
+              <small>Pessoas distintas com acesso no mês</small>
+              <div class="dashboard-checkin-divisor"></div>
+              <b>QUEM ACESSOU NO MÊS</b>
+              <div id="dashboardCheckinListaPessoasMes" class="dashboard-checkin-lista"><em>Nenhuma pessoa</em></div>
+            </article>
+          </div>
+        </section>
+
+        <!-- DASHBOARD FINANCEIRO OPERACIONAL 20260826 -->
+        <section id="financeiroOperacionalDashboard" class="fusion-card dashboard-fin-op" aria-label="Financeiro operacional">
+          <div class="dashboard-fin-op-cabecalho">
+            <div>
+              <h2>Financeiro operacional</h2>
+              <p>Inadimplência vencida e contas que ainda precisam ser recebidas.</p>
+            </div>
+            <div class="dashboard-fin-op-status">
+              <span class="dashboard-fin-op-status-ponto" aria-hidden="true"></span>
+              <span id="dashboardFinAtualizado">Atualização automática</span>
+            </div>
+          </div>
+
+          <div class="dashboard-fin-op-grid">
+            <article class="dashboard-fin-op-card dashboard-fin-op-debito">
+              <div class="dashboard-fin-op-card-topo">
+                <div>
+                  <span class="dashboard-fin-op-titulo">Alunos em débito</span>
+                  <strong id="dashboardFinDebitoQtd">0</strong>
+                  <small>alunos com cobrança vencida</small>
+                </div>
+                <div class="dashboard-fin-op-total">
+                  <span>Total vencido</span>
+                  <b id="dashboardFinDebitoValor">R$ 0,00</b>
+                </div>
+              </div>
+
+              <div class="dashboard-fin-op-colunas">
+                <span>Aluno</span>
+                <span>Vencimento</span>
+                <span>Em débito</span>
+              </div>
+              <div id="dashboardFinListaDebitos" class="dashboard-fin-op-lista">
+                <em>Nenhum aluno em débito.</em>
+              </div>
+
+              <div class="dashboard-fin-op-rodape">
+                <a href="/pages/mensalidades/index.html">Abrir Mensalidades</a>
+              </div>
+            </article>
+
+            <article class="dashboard-fin-op-card dashboard-fin-op-receber">
+              <div class="dashboard-fin-op-card-topo">
+                <div>
+                  <span class="dashboard-fin-op-titulo">Contas a receber</span>
+                  <strong id="dashboardFinReceberQtd">0</strong>
+                  <small>títulos ainda em aberto</small>
+                </div>
+                <div class="dashboard-fin-op-total">
+                  <span>Total a receber</span>
+                  <b id="dashboardFinReceberValor">R$ 0,00</b>
+                </div>
+              </div>
+
+              <div class="dashboard-fin-op-colunas">
+                <span>Pessoa / título</span>
+                <span>Vencimento</span>
+                <span>Saldo</span>
+              </div>
+              <div id="dashboardFinListaReceber" class="dashboard-fin-op-lista">
+                <em>Nenhuma conta a receber.</em>
+              </div>
+
+              <div class="dashboard-fin-op-rodape">
+                <a href="/pages/recebimentos/index.html">Abrir Recebimentos</a>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        
+
+        <div id="aniversariosRelacionamentoDashboard" class="fusion-card aniversarios-relacionamento">
+          <div class="aniversarios-relacionamento-topo">
+            <div>
+              <h2>Relacionamento de aniversários</h2>
+              <p>
+                Lembretes de hoje e dos próximos 7 dias.
+                Ativos para fidelização e inativos para campanha de retorno.
+              </p>
+            </div>
+            <span class="aniversarios-relacionamento-janela">Hoje + 7 dias</span>
+          </div>
+
+          <div class="aniversarios-relacionamento-grid">
+            <section class="aniversarios-grupo">
+              <div class="aniversarios-grupo-topo">
+                <div>
+                  <h3>Alunos ativos</h3>
+                  <small>Relacionamento e fidelização</small>
+                </div>
+              </div>
+              <div id="aniversariosListaAtivos" class="aniversarios-lista">
+                <p class="aniversarios-vazio">Carregando aniversários...</p>
+              </div>
+            </section>
+
+            <section class="aniversarios-grupo aniversarios-grupo-inativos">
+              <div class="aniversarios-grupo-topo">
+                <div>
+                  <h3>Alunos inativos</h3>
+                  <small>Aniversário como oportunidade de reativação</small>
+                </div>
+              </div>
+              <div id="aniversariosListaInativos" class="aniversarios-lista">
+                <p class="aniversarios-vazio">Carregando oportunidades...</p>
+              </div>
+            </section>
+          </div>
         </div>
+
+
+
+        <div id="agendaAvaliacoesDashboard" class="fusion-card" style="margin-top:18px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; margin-bottom:14px;">
+            <div>
+              <h2 style="margin:0 0 5px;">Programação de Avaliações</h2>
+              <p style="margin:0; color:#64748b;">
+                Agenda dos alunos e professores selecionados.
+              </p>
+            </div>
+
+            <a
+              id="dashboardBtnAgendarAvaliacao"
+              href="/pages/agenda/index.html?agendarAvaliacao=1"
+              class="fusion-btn fusion-btn-primary"
+              style="text-decoration:none; white-space:nowrap;"
+            >
+              Agendar avaliação
+            </a>
+
+            <div style="display:flex; gap:18px; align-items:center;">
+              <div style="text-align:center;">
+                <small style="display:block; color:#64748b;">Pendentes</small>
+                <strong id="dashboardAgendaPendentes" style="font-size:22px;">0</strong>
+              </div>
+
+              <div style="text-align:center;">
+                <small style="display:block; color:#64748b;">Realizadas</small>
+                <strong id="dashboardAgendaRealizadas" style="font-size:22px;">0</strong>
+              </div>
+            </div>
+          </div>
+
+          <div id="dashboardListaAgendaAvaliacoes">
+            <p style="margin:0; color:#64748b;">Carregando programação...</p>
+          </div>
+        </div>
+
       </section>
     </main>
   </div>
@@ -52,6 +317,9 @@
   <script>carregarLayout("Dashboard Executivo");</script>
   <script src="/assets/js/fusion-date.js" defer></script>
   <script src="/assets/pwa/fusion-pwa-install.js" defer></script>
-  <script src="index.js" defer></script>
+  <script src="index.js?v=20260826-dashboard-fechamento-financeiro" defer></script>
+  <script src="./informacoes-dia.js?v=20260820-rel-av-1" defer></script>
+  <script src="/pages/dashboard/checkin-operacional-dashboard.js?v=20260826-1" defer></script>
+  <script src="/pages/dashboard/financeiro-operacional-dashboard.js?v=20260826-2-remover-info-dia" defer></script>
 </body>
 </html>
