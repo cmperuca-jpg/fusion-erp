@@ -1021,6 +1021,61 @@ export async function estornarBaixaMensalidade(id, dados = {}) {
 }
 
 export async function cancelarMensalidade(id, dados = {}) {
+  const mensalidades = await lerJson(MENSALIDADES_FILE, []);
+  const atual = mensalidades.find((m) => String(m.id) === String(id));
+
+  if (!atual) {
+    const erro = new Error('Mensalidade não encontrada.');
+    erro.status = 404;
+    throw erro;
+  }
+
+  const situacao = statusInterno(atual.status);
+  if (situacao === 'cancelado') return atual;
+
+  const financeiro = await lerJson(FINANCEIRO_FILE, []);
+  const financeiroId = String(
+    atual.lancamentoFinanceiroId ||
+    atual.financeiroId ||
+    ''
+  );
+
+  const titulo = financeiro.find((l) =>
+    (financeiroId && String(l.id || '') === financeiroId) ||
+    String(l.mensalidadeId || '') === String(atual.id)
+  );
+
+  const pagoMensalidade = numero(
+    atual.valorPago ??
+    atual.valorQuitado ??
+    atual.valorRecebido ??
+    0,
+    0
+  );
+
+  const pagoTitulo = numero(
+    titulo?.valorPago ??
+    titulo?.valorRecebido ??
+    0,
+    0
+  );
+
+  const statusTitulo = String(titulo?.status || '').trim().toLowerCase();
+
+  if (
+    situacao === 'pago' ||
+    situacao === 'parcial' ||
+    pagoMensalidade > 0 ||
+    pagoTitulo > 0 ||
+    ['pago', 'paga', 'parcial', 'recebido', 'recebida', 'quitado', 'quitada'].includes(statusTitulo)
+  ) {
+    const erro = new Error(
+      'Mensalidade com pagamento não pode ser cancelada. Estorne a operação primeiro.'
+    );
+    erro.status = 409;
+    throw erro;
+  }
+
   return atualizarMensalidade(id, {
     status: 'cancelado',
     observacao: dados.observacao || 'Mensalidade cancelada.'

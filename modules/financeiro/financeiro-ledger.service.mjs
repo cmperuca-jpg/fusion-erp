@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import { executarTransacaoJson, lerJsonDuravel, salvarJsonDuravel, salvarJsonMultiplosAtomico } from "../core/persistence/durable-json.mjs";
+import { lerColecao } from "../core/persistence/collection-store.mjs";
 import { biFinanceiro } from "./relatorios.service.mjs";
 
 const COL = Object.freeze({
@@ -366,10 +367,88 @@ export async function alterarVencimento(id, dados = {}) {
 
 export async function cancelarTitulo(id, dados = {}) {
   return executarTransacaoJson(async () => {
-    const lista = await ler(COL.titulos, []); const i = lista.findIndex((x) => String(x.id) === String(id)); if (i < 0) return null;
-    const atual = tituloNormalizado(lista[i]); if (valorPagoC(atual) > 0) throw erro("Título com recebimento não pode ser cancelado. Estorne o recibo primeiro.", 409);
-    lista[i] = { ...atual, status: "Cancelado", excluido: true, motivoCancelamento: txt(dados.motivo) || "Cancelado pelo financeiro", canceladoEm: agora(), atualizadoEm: agora() };
-    await salvar(COL.titulos, lista); await auditar("cancelar_titulo", "titulo", id, { motivo: lista[i].motivoCancelamento }, dados.usuario); return lista[i];
+    const lista = await ler(COL.titulos, []);
+    const i = lista.findIndex((x) => String(x.id) === String(id));
+    if (i < 0) return null;
+
+    const atual = tituloNormalizado(lista[i]);
+    if (valorPagoC(atual) > 0) {
+      throw erro("Título com recebimento não pode ser cancelado. Estorne o recibo primeiro.", 409);
+    }
+
+    const mensalidades = await ler(COL.mensalidades, []);
+    const vinculadas = mensalidades
+      .map((mensalidade, indice) => ({ mensalidade, indice }))
+      .filter(({ mensalidade }) =>
+        mesmo(mensalidade.id, atual.mensalidadeId) ||
+        mesmo(mensalidade.lancamentoFinanceiroId || mensalidade.financeiroId, id)
+      );
+
+    for (const { mensalidade } of vinculadas) {
+      const pagoC = centavos(
+        mensalidade.valorPago ??
+        mensalidade.valorQuitado ??
+        mensalidade.valorBrutoRecebido ??
+        mensalidade.valorRecebido ??
+        0
+      );
+
+      if (quitado(mensalidade) || status(mensalidade) === "parcial" || pagoC > 0) {
+        throw erro(
+          "A mensalidade vinculada possui pagamento. Estorne a operação antes de cancelar o título.",
+          409
+        );
+      }
+    }
+
+    const quando = agora();
+    const motivo = txt(dados.motivo) || "Cancelado pelo financeiro";
+
+    lista[i] = {
+      ...atual,
+      status: "Cancelado",
+      excluido: true,
+      motivoCancelamento: motivo,
+      canceladoEm: quando,
+      atualizadoEm: quando
+    };
+
+    const mensalidadesCanceladas = [];
+
+    for (const { mensalidade, indice } of vinculadas) {
+      if (finalizado(mensalidade)) continue;
+
+      mensalidades[indice] = {
+        ...mensalidade,
+        status: "cancelado",
+        programada: false,
+        previsto: false,
+        motivoCancelamento: motivo,
+        canceladoEm: mensalidade.canceladoEm || quando,
+        canceladoPor: txt(dados.usuario) || "financeiro",
+        canceladaPorTitulo: true,
+        tituloCanceladoId: atual.id,
+        atualizadoEm: quando
+      };
+
+      mensalidadesCanceladas.push(txt(mensalidade.id));
+    }
+
+    await salvar(COL.titulos, lista);
+
+    if (mensalidadesCanceladas.length) {
+      await salvar(COL.mensalidades, mensalidades);
+    }
+
+    await auditar(
+      "cancelar_titulo",
+      "titulo",
+      id,
+      { motivo, mensalidadesCanceladas },
+      dados.usuario
+    );
+
+    return lista[i];
   });
 }
 
@@ -843,7 +922,15 @@ export async function extratoAluno(alunoId) {
 export async function auditoriaFinanceira(filtros = {}) { const lista = await ler(COL.auditoria, []); return lista.filter((x) => !filtros.entidadeId || String(x.entidadeId) === String(filtros.entidadeId)).slice(0, Math.min(2000, Number(filtros.limite) || 300)); }
 
 export async function verificarIntegridadeFinanceira() {
-  const [alunos, matriculas, titulosBrutos, recibos, itens, caixa] = await Promise.all([ler(COL.alunos, []), ler(COL.matriculas, []), ler(COL.titulos, []), ler(COL.recibos, []), ler(COL.itens, []), ler(COL.caixa, caixaVazio())]);
+  const [alunos, matriculas, titulosBrutos, recibos, itens, caixa, mensalidades] = await Promise.all([
+    ler(COL.alunos, []),
+    ler(COL.matriculas, []),
+    ler(COL.titulos, []),
+    ler(COL.recibos, []),
+    ler(COL.itens, []),
+    ler(COL.caixa, caixaVazio()),
+    lerColecao(COL.mensalidades, [])
+  ]);
   const falhas = []; const alunoIds = new Set(alunos.map((x) => String(x.id))); const matriculaIds = new Set(matriculas.map((x) => String(x.id))); const tituloIds = new Set(titulosBrutos.map((x) => String(x.id))); const reciboIds = new Set(recibos.map((x) => String(x.id)));
   const cpfs = new Map(); for (const a of alunos) { const cpf = txt(a.cpf).replace(/\D/g, ""); if (cpf) cpfs.set(cpf, [...(cpfs.get(cpf) || []), a]); }
   for (const [cpf, registrosCpf] of cpfs) if (registrosCpf.length > 1) {
@@ -852,9 +939,41 @@ export async function verificarIntegridadeFinanceira() {
   }
   for (const m of matriculas) if (!alunoIds.has(String(m.alunoId || m.aluno_id))) falhas.push({ nivel: "erro", codigo: "MATRICULA_SEM_ALUNO", registroId: m.id });
   for (const t0 of titulosBrutos) { const t = tituloNormalizado(t0); if (idAluno(t) && !alunoIds.has(idAluno(t))) falhas.push({ nivel: "erro", codigo: "TITULO_SEM_ALUNO", registroId: t.id }); if (idMatricula(t) && !matriculaIds.has(idMatricula(t))) falhas.push({ nivel: "erro", codigo: "TITULO_SEM_MATRICULA", registroId: t.id }); if (valorPagoC(t) > valorTituloC(t)) falhas.push({ nivel: "erro", codigo: "TITULO_PAGO_ACIMA_VALOR", registroId: t.id }); }
+
+  const titulosNormalizados = titulosBrutos.map(tituloNormalizado);
+  const titulosPorId = new Map(titulosNormalizados.map((t) => [String(t.id), t]));
+
+  for (const mensalidade of mensalidades) {
+    if (finalizado(mensalidade)) continue;
+
+    const financeiroId = txt(
+      mensalidade.lancamentoFinanceiroId || mensalidade.financeiroId
+    );
+
+    const titulo =
+      (financeiroId && titulosPorId.get(financeiroId)) ||
+      titulosNormalizados.find((t) => mesmo(t.mensalidadeId, mensalidade.id));
+
+    if (!titulo) continue;
+
+    const tituloCancelado =
+      ["cancelado", "cancelada"].includes(status(titulo)) ||
+      titulo.excluido === true;
+
+    if (tituloCancelado) {
+      falhas.push({
+        nivel: "erro",
+        codigo: "MENSALIDADE_ATIVA_TITULO_CANCELADO",
+        registroId: txt(mensalidade.id),
+        tituloId: txt(titulo.id),
+        statusMensalidade: status(mensalidade),
+        statusTitulo: status(titulo)
+      });
+    }
+  }
   for (const i of itens.filter((item) => !finalizado(item))) { if (!reciboIds.has(String(i.reciboId))) falhas.push({ nivel: "erro", codigo: "ITEM_SEM_RECIBO", registroId: i.id }); if (!tituloIds.has(String(i.tituloId))) falhas.push({ nivel: "erro", codigo: "ITEM_SEM_TITULO", registroId: i.id }); }
   const nums = new Map(); for (const r of recibos) if (!r.cancelado) { if (nums.has(String(r.numero))) falhas.push({ nivel: "erro", codigo: "RECIBO_NUMERO_DUPLICADO", registros: [nums.get(String(r.numero)), r.id] }); else nums.set(String(r.numero), r.id); }
   if ((caixa.caixas || []).filter((x) => status(x) === "aberto").length > 1) falhas.push({ nivel: "erro", codigo: "MULTIPLOS_CAIXAS_ABERTOS" });
   for (const r of recibos.filter((x) => !x.cancelado)) if (!(caixa.movimentos || []).some((m) => String(m.reciboId) === String(r.id) && norm(m.origem) === "recibo")) falhas.push({ nivel: "erro", codigo: "RECIBO_SEM_MOVIMENTO_CAIXA", registroId: r.id });
-  return { ok: !falhas.some((x) => x.nivel === "erro"), verificadoEm: agora(), contagens: { alunos: alunos.length, matriculas: matriculas.length, titulos: titulosBrutos.length, recibos: recibos.length, itensRecibo: itens.length, caixas: (caixa.caixas || []).length, movimentosCaixa: (caixa.movimentos || []).length }, falhas };
+  return { ok: !falhas.some((x) => x.nivel === "erro"), verificadoEm: agora(), contagens: { alunos: alunos.length, matriculas: matriculas.length, mensalidades: mensalidades.length, titulos: titulosBrutos.length, recibos: recibos.length, itensRecibo: itens.length, caixas: (caixa.caixas || []).length, movimentosCaixa: (caixa.movimentos || []).length }, falhas };
 }
