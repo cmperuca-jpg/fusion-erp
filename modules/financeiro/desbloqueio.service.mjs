@@ -1,5 +1,6 @@
 import { dataLocalISO } from "../core/time/fusion-time.mjs";
 import { lerJsonDuravel, salvarJsonDuravel, salvarJsonMultiplosAtomico } from "../core/persistence/durable-json.mjs";
+import { reconciliarTurmasMatriculaComAluno, recalcularOcupacaoTurmas } from "./turmas-financeiro.service.mjs";
 
 const ARQUIVOS = {
   alunos: "alunos.json",
@@ -7,7 +8,8 @@ const ARQUIVOS = {
   mensalidades: "mensalidades.json",
   financeiro: "financeiro.json",
   recebimentos: "recebimentos.json",
-  checkins: "checkins.json"
+  checkins: "checkins.json",
+  turmas: "turmas.json"
 };
 
 const STATUS_PAGOS = new Set([
@@ -60,7 +62,8 @@ async function carregarBases() {
     mensalidades: await lerJson(ARQUIVOS.mensalidades, []),
     financeiro: await lerJson(ARQUIVOS.financeiro, []),
     recebimentos: await lerJson(ARQUIVOS.recebimentos, []),
-    checkins: await lerJson(ARQUIVOS.checkins, [])
+    checkins: await lerJson(ARQUIVOS.checkins, []),
+    turmas: await lerJson(ARQUIVOS.turmas, [])
   };
 }
 
@@ -71,7 +74,8 @@ async function salvarBases(bases) {
     [ARQUIVOS.mensalidades]: bases.mensalidades,
     [ARQUIVOS.financeiro]: bases.financeiro,
     [ARQUIVOS.recebimentos]: bases.recebimentos,
-    [ARQUIVOS.checkins]: bases.checkins
+    [ARQUIVOS.checkins]: bases.checkins,
+    [ARQUIVOS.turmas]: bases.turmas
   });
 }
 
@@ -397,6 +401,8 @@ function aplicarDesbloqueio({ aluno, matricula, checkins, item, contexto, origem
     item.id ||
     "";
 
+  const reconciliacaoTurmas = reconciliarTurmasMatriculaComAluno(aluno, matricula);
+
   if (matricula) {
     matricula.status = "Ativa";
     matricula.statusPagamento = "Pago";
@@ -463,6 +469,8 @@ function aplicarDesbloqueio({ aluno, matricula, checkins, item, contexto, origem
     checkin.cacheAcessoLimpoEm = agora;
     checkin.atualizadoEm = agora;
   }
+
+  return { reconciliacaoTurmas };
 }
 
 function sincronizarRegistrosPagos(bases, contexto, item) {
@@ -523,7 +531,7 @@ export async function desbloquearAlunoAposPagamento(item = {}, opcoes = {}) {
   }
 
   sincronizarRegistrosPagos(bases, contexto, item);
-  aplicarDesbloqueio({
+  const desbloqueio = aplicarDesbloqueio({
     aluno,
     matricula,
     checkins: bases.checkins,
@@ -532,6 +540,7 @@ export async function desbloquearAlunoAposPagamento(item = {}, opcoes = {}) {
     origem: opcoes.origem || "financeiro"
   });
 
+  const ocupacaoTurmas = recalcularOcupacaoTurmas(bases.turmas, bases.matriculas);
   await salvarBases(bases);
 
   return {
@@ -539,6 +548,8 @@ export async function desbloquearAlunoAposPagamento(item = {}, opcoes = {}) {
     desbloqueado: true,
     alunoId: aluno.id || "",
     matriculaId: matricula?.id || aluno.matriculaId || "",
+    turmasReconciliadas: desbloqueio?.reconciliacaoTurmas?.adicionadas || 0,
+    ocupacaoTurmasAtualizada: ocupacaoTurmas.alteradas,
     mensagem: "Aluno liberado automaticamente apos quitacao financeira."
   };
 }
