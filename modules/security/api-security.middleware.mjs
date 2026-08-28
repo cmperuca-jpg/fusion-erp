@@ -197,6 +197,13 @@ function operacaoFinanceiraCritica(req) {
     return true;
   }
 
+  if (
+    metodo === "POST" &&
+    /^\/api\/financeiro\/mensalidades\/[^/]+\/garantir-lancamento$/.test(rota)
+  ) {
+    return true;
+  }
+
   return metodo === "POST" &&
     /^\/api\/(?:financeiro\/pagamentos|pagamentos)\/[^/]+\/(baixar|estornar)$/.test(rota);
 }

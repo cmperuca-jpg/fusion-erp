@@ -27,52 +27,27 @@ function tratarErro(res, erro) {
   });
 }
 
-function mensalidadeSolicitadaPelaTela(req) {
-  const direta = String(req.query?.mensalidadeId || req.query?.mensalidadeid || "").trim();
-  const financeiroDireto = String(req.query?.financeiroId || req.query?.financeiroid || "").trim();
-  if (direta) return direta;
-  if (financeiroDireto.startsWith("fin_")) return financeiroDireto.slice(4);
-
-  const referer = String(req.get("referer") || "").trim();
-  if (!referer) return "";
-
-  try {
-    const url = new URL(referer);
-    const mensalidadeId = String(
-      url.searchParams.get("mensalidadeId") ||
-      url.searchParams.get("mensalidadeid") ||
-      ""
-    ).trim();
-    if (mensalidadeId) return mensalidadeId;
-
-    const financeiroId = String(
-      url.searchParams.get("financeiroId") ||
-      url.searchParams.get("financeiroid") ||
-      ""
-    ).trim();
-
-    // Os espelhos automáticos de mensalidade usam fin_<mensalidadeId>.
-    // Se o link financeiro foi perdido, o próprio ID contém a origem.
-    return financeiroId.startsWith("fin_") ? financeiroId.slice(4) : "";
-  } catch {
-    return "";
-  }
-}
-
 router.get("/", async (req, res) => {
   try {
-    // Compatibilidade com o fluxo Prontuário -> Caixa -> Financeiro:
-    // se uma mensalidade futura ainda não possuía espelho financeiro,
-    // cria/reutiliza exatamente um título antes de montar a lista.
-    const mensalidadeId = mensalidadeSolicitadaPelaTela(req);
-    if (mensalidadeId && !req.usuario?.portal) {
-      await garantirLancamentoFinanceiroMensalidade(mensalidadeId);
-    }
-
+    // GET e somente leitura: nunca cria, corrige ou vincula lancamentos.
     const lancamentos = await listarTitulos(req.query);
     res.json({ ok: true, lancamentos });
   } catch (erro) {
     tratarErro(res, erro);
+  }
+});
+
+router.post("/mensalidades/:mensalidadeId/garantir-lancamento", async (req, res) => {
+  try {
+    // Materializacao intencional e explicita. O service usa operacao
+    // deterministica por mensalidade e reaproveita o titulo ja existente.
+    const resultado = await garantirLancamentoFinanceiroMensalidade(
+      req.params.mensalidadeId
+    );
+
+    return res.status(resultado.criado ? 201 : 200).json(resultado);
+  } catch (erro) {
+    return tratarErro(res, erro);
   }
 });
 

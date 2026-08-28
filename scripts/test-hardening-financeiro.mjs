@@ -26,7 +26,22 @@ assert.doesNotMatch(
   /app\.post\("\/api\/financeiro\/pagamentos\/:id\/estornar"/
 );
 
-assert.match(financeiroRoutes, /mensalidadeId && !req\.usuario\?\.portal/);
+assert.equal(
+  financeiroRoutes.includes("mensalidadeSolicitadaPelaTela"),
+  false
+);
+assert.equal(
+  financeiroRoutes.includes('router.post("/mensalidades/:mensalidadeId/garantir-lancamento"'),
+  true
+);
+assert.equal(
+  financeiroRoutes.includes("garantirLancamentoFinanceiroMensalidade(\n      req.params.mensalidadeId"),
+  true
+);
+assert.equal(
+  security.includes("garantir-lancamento$/.test(rota)"),
+  true
+);
 assert.match(financeiroRoutes, /executarTransacaoJson/);
 assert.match(recebimentosRoutes, /req\.body\?\.idempotencyKey/);
 
@@ -43,7 +58,8 @@ console.log(JSON.stringify({
   rbac: true,
   writerLegadoRemovido: true,
   loteAtomico: true,
-  portalGetProtegido: true,
+  getFinanceiroPuro: true,
+  materializacaoExplicita: true,
   idempotenciaPropagada: true,
   timezoneOperacional: true
 }, null, 2));
