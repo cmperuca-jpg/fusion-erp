@@ -124,6 +124,13 @@ for (const marcador of [
   assert.ok(conteudo.service.includes(marcador), `Marcador obrigatório ausente no serviço: ${marcador}`);
 }
 
+assert.ok(!conteudo.service.includes("parteReferencia(normalizarTenantId(tenantId), 20)"));
+assert.ok(conteudo.service.includes("const tenantCompleto = normalizarTenantId(tenantId);"));
+assert.ok(conteudo.service.includes("async function resolverExternalReference"));
+assert.ok(conteudo.service.includes('.contains("payload", { externalReference: referencia })'));
+assert.ok(conteudo.service.includes("await resolverExternalReference(referencia)"));
+assert.ok(conteudo.service.includes("await resolverExternalReference(pagamento.externalReference)"));
+assert.ok(conteudo.service.includes("await resolverExternalReference(orderNsu)"));
 assert.match(conteudo.treinosRoutes, /router\.post\("\/aluno-app\/pagamentos"/);
 assert.match(conteudo.treinosRoutes, /router\.get\("\/aluno-app\/pagamentos\/:id"/);
 assert.match(conteudo.treinosRoutes, /iniciarPagamentoAlunoApp/);

@@ -213,10 +213,18 @@ function escopoPorCodigo(codigo = "") {
 }
 
 function externalReference({ escopo, tenantId, alvoId }) {
-  const tenantCompacto = parteReferencia(normalizarTenantId(tenantId), 20);
+  const tenantCompleto = normalizarTenantId(tenantId);
+  if (!tenantCompleto) {
+    throw erro("Tenant inválido para referência de pagamento.", 400, "PAYMENT_TENANT_INVALID");
+  }
+
   const alvoCompacto = parteReferencia(alvoId, 16);
   const nonce = crypto.randomBytes(6).toString("hex");
-  return ["fp", codigoEscopo(escopo), tenantCompacto, alvoCompacto, nonce].join("|");
+
+  // O tenant não pode ser truncado: o webhook usa esta referência para
+  // reconstruir o contexto multitenant. Referências antigas continuam sendo
+  // aceitas pelo parser e podem ser reconciliadas pelo registro persistido.
+  return ["fp", codigoEscopo(escopo), tenantCompleto, alvoCompacto, nonce].join("|");
 }
 
 function parseExternalReference(ref = "") {
@@ -236,6 +244,57 @@ function parseExternalReference(ref = "") {
     alvoId: texto(partes[3]),
     nonce: texto(partes.slice(4).join("|"))
   };
+}
+
+async function resolverExternalReference(ref = "") {
+  const referencia = texto(ref);
+  const parsed = parseExternalReference(referencia);
+  if (!parsed?.tenantId) return parsed;
+
+  if (!supabaseConfigurado()) return parsed;
+
+  const tabela = texto(
+    process.env.FUSION_SUPABASE_RECORDS_TABLE || "fusion_v3_records"
+  ) || "fusion_v3_records";
+
+  const supabase = obterSupabaseAdmin();
+  const { data, error } = await supabase
+    .from(tabela)
+    .select("tenant_id,record_id")
+    .eq("collection", COL_PAGAMENTOS)
+    .contains("payload", { externalReference: referencia })
+    .limit(2);
+
+  if (error) {
+    throw erro(
+      "Não foi possível resolver o tenant da referência de pagamento.",
+      503,
+      "PAYMENT_EXTERNAL_REFERENCE_LOOKUP_FAILED"
+    );
+  }
+
+  const tenants = [...new Set(
+    (data || [])
+      .map((item) => normalizarTenantId(item.tenant_id))
+      .filter(Boolean)
+  )];
+
+  if (tenants.length > 1) {
+    throw erro(
+      "Referência de pagamento associada a mais de um tenant.",
+      409,
+      "PAYMENT_EXTERNAL_REFERENCE_AMBIGUOUS"
+    );
+  }
+
+  if (tenants.length === 1) {
+    return {
+      ...parsed,
+      tenantId: tenants[0]
+    };
+  }
+
+  return parsed;
 }
 
 function checkoutUrl(cobranca = {}) {
@@ -1168,7 +1227,7 @@ export async function receberWebhookAsaas({ headers = {}, body = {} } = {}) {
   }
 
   const referencia = texto(pagamento.externalReference || payloadPagamento.externalReference);
-  const parsed = parseExternalReference(referencia);
+  const parsed = await resolverExternalReference(referencia);
   if (!parsed?.tenantId) return { ok: true, ignorado: true, motivo: "external_reference_fora_do_fusion" };
 
   pagamento.externalReference = referencia;
@@ -1183,7 +1242,7 @@ export async function receberWebhookPagbank({ headers = {}, body = {}, rawBody =
   const pagamento = pagamentoDoWebhookPagbank(body);
   if (!pagamento.id && !pagamento.externalReference) return { ok: true, ignorado: true, motivo: "sem_identificador_pagbank" };
 
-  const parsed = parseExternalReference(pagamento.externalReference);
+  const parsed = await resolverExternalReference(pagamento.externalReference);
   if (!parsed?.tenantId) return { ok: true, ignorado: true, motivo: "external_reference_fora_do_fusion" };
 
   return executarComTenant(parsed.tenantId, async () => {
@@ -1206,7 +1265,7 @@ export async function receberWebhookInfinitePay({ body = {} } = {}) {
   if (!transactionNsu) throw erro("Transação InfinitePay sem transaction_nsu.", 400, "INFINITEPAY_TRANSACTION_NSU_REQUIRED");
   if (!slug) throw erro("Fatura InfinitePay sem slug.", 400, "INFINITEPAY_SLUG_REQUIRED");
 
-  const parsed = parseExternalReference(orderNsu);
+  const parsed = await resolverExternalReference(orderNsu);
   if (!parsed?.tenantId) return { ok: true, ignorado: true, motivo: "external_reference_fora_do_fusion" };
 
   return executarComTenant(parsed.tenantId, async () => {
