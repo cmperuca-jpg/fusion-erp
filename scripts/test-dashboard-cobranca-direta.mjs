@@ -41,7 +41,7 @@ assert.match(recebimentos, /destino\.set\("receberAgora","1"\)/);
 
 assert.match(dashboardCss, /\.dashboard-fin-op-linha-clicavel/);
 assert.match(dashboardHtml, /20260828-popup-pagamento-1/);
-assert.match(recebimentosHtml, /20260828-estorno-payload-1/);
+assert.match(recebimentosHtml, /20260828-estorno-real-1/);
 
 console.log(JSON.stringify({
   ok: true,

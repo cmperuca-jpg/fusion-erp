@@ -8,14 +8,17 @@ import {
   cancelarRecebimento,
   excluirRecebimento
 } from './recebimentos.service.mjs';
-import { listarTitulos, receberTitulos, estornarRecibo } from './financeiro-ledger.service.mjs';
+import { listarTitulos, receberTitulos } from './financeiro-ledger.service.mjs';
+import { estornarReciboIntegrado } from './estorno-integrado.service.mjs';
 import { programarProximaCobrancaAposPagamento } from '../cobranca/cobranca.service.mjs';
 
 const router = express.Router();
 
 function tratarErro(res, erro) {
   res.status(erro.status || 500).json({
+    ok: false,
     erro: true,
+    code: erro.code || '',
     mensagem: erro.message || 'Erro interno.'
   });
 }
@@ -83,9 +86,12 @@ router.post('/:id/confirmar', confirmarPeloLedger);
 router.post('/:id/estornar', async (req, res) => {
   try {
     const recebimento = await obterRecebimento(req.params.id);
-    if (!recebimento) return res.status(404).json({ erro: true, mensagem: 'Recebimento não encontrado.' });
-    if (!recebimento.reciboId) return res.status(409).json({ erro: true, mensagem: 'Recebimento legado sem recibo. Não é seguro estornar por esta tela: reconcilie-o antes.' });
-    res.json(await estornarRecibo(recebimento.reciboId, req.body || {}));
+    if (!recebimento) return res.status(404).json({ ok: false, erro: true, mensagem: 'Recebimento não encontrado.' });
+    if (!recebimento.reciboId) return res.status(409).json({ ok: false, erro: true, mensagem: 'Recebimento legado sem recibo. Não é seguro estornar por esta tela: reconcilie-o antes.' });
+    res.json(await estornarReciboIntegrado(recebimento.reciboId, req.body || {}, {
+      recebimento,
+      operacaoId: req.idempotencyKey
+    }));
   } catch (erro) {
     tratarErro(res, erro);
   }

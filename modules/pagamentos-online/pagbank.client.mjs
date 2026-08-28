@@ -94,3 +94,25 @@ export function linkPagamentoPagbank(checkout = {}) {
   const pay = links.find(item => texto(item.rel).toUpperCase() === "PAY" && texto(item.href));
   return texto(pay?.href);
 }
+
+export async function cancelarCobrancaPagbank(chargeId, payload = {}, config = {}) {
+  const id = texto(chargeId);
+  if (!id) {
+    throw erroPagbank("Cobrança PagBank não informada para estorno.", 400, {
+      code: "PAGBANK_CHARGE_ID_REQUIRED"
+    });
+  }
+
+  const valorCentavos = Math.round(Number(payload.valorCentavos || payload.value || 0));
+  if (!(valorCentavos > 0)) {
+    throw erroPagbank("Valor do estorno PagBank deve ser maior que zero.", 400, {
+      code: "PAGBANK_REFUND_VALUE_REQUIRED"
+    });
+  }
+
+  return requestPagbank(`/charges/${encodeURIComponent(id)}/cancel`, {
+    method: "POST",
+    body: { amount: { value: valorCentavos } },
+    config
+  });
+}

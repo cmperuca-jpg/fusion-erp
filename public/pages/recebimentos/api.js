@@ -50,10 +50,15 @@ function normalizarPayloadMotivo(payload = {}) {
 }
 
 export async function estornarRecebimento(id, payload = {}) {
+  const dados = normalizarPayloadMotivo(payload);
+  const headers = { "Content-Type": "application/json" };
+  if (dados.operacaoId || dados.idempotencyKey) {
+    headers["Idempotency-Key"] = String(dados.operacaoId || dados.idempotencyKey);
+  }
   return tentar(`/${encodeURIComponent(id)}/estornar`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(normalizarPayloadMotivo(payload))
+    headers,
+    body: JSON.stringify(dados)
   });
 }
 

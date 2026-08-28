@@ -1098,6 +1098,9 @@ async function processarPagamentoConfirmado({ tenantId, evento, pagamento }) {
       statusGateway: texto(pagamento.status),
       valorConfirmado: valorPositivo(pagamento.value, registro.valor),
       confirmadoEm: statusFinal === "baixada" ? agoraISO() : registro.confirmadoEm || "",
+      providerTransactionId: texto(pagamento.id || registro.providerTransactionId || registro.providerPaymentId),
+      reciboId: texto(baixa?.resultado?.recibo?.id || registro.reciboId),
+      reciboNumero: texto(baixa?.resultado?.recibo?.numero || registro.reciboNumero),
       baixa,
       eventos: [...(Array.isArray(registro.eventos) ? registro.eventos : []), baseEvento]
     });

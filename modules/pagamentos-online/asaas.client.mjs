@@ -144,3 +144,32 @@ export async function recuperarStatusCobrancaAsaas(id) {
   if (!paymentId) throw erroAsaas("Cobrança Asaas não informada.", 400, { code: "ASAAS_PAYMENT_ID_REQUIRED" });
   return requestAsaas(`/payments/${encodeURIComponent(paymentId)}/status`);
 }
+
+export async function reembolsarCobrancaAsaas(id, payload = {}) {
+  const paymentId = texto(id);
+  if (!paymentId) {
+    throw erroAsaas("Cobrança Asaas não informada para estorno.", 400, {
+      code: "ASAAS_PAYMENT_ID_REQUIRED"
+    });
+  }
+
+  const body = {};
+  const motivo = texto(payload.description || payload.motivo).slice(0, 500);
+  if (motivo) body.description = motivo;
+
+  // Sem "value", o endpoint oficial usa o valor integral da cobrança.
+  return requestAsaas(`/payments/${encodeURIComponent(paymentId)}/refund`, {
+    method: "POST",
+    body
+  });
+}
+
+export async function listarEstornosCobrancaAsaas(id) {
+  const paymentId = texto(id);
+  if (!paymentId) {
+    throw erroAsaas("Cobrança Asaas não informada para consultar estornos.", 400, {
+      code: "ASAAS_PAYMENT_ID_REQUIRED"
+    });
+  }
+  return requestAsaas(`/payments/${encodeURIComponent(paymentId)}/refunds`);
+}
