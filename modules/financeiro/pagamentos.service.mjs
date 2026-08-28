@@ -196,11 +196,20 @@ export async function baixarPagamento(id, payload = {}) {
     observacao: payload.observacao || "Baixa de conta a pagar"
   }), operacaoId);
 
-  return { ...resultado.pagamento, movimentoCaixa: resultado.movimento };
+  return { ...resultado.pagamento, movimentoCaixa: resultado.movimento, idempotente: resultado.idempotente === true };
 }
 
-export async function estornarPagamento(id, motivo = "") {
-  const operacaoId = `estorno-pagamento-${id}-${Date.now()}`;
+export async function estornarPagamento(id, motivoOuPayload = "") {
+  const payload = motivoOuPayload && typeof motivoOuPayload === "object"
+    ? motivoOuPayload
+    : { motivo: motivoOuPayload };
+  const motivo = String(payload.motivo || payload.observacao || "").trim();
+  const operacaoId = String(
+    payload.operacaoId ||
+    payload.idempotencyKey ||
+    `estorno-pagamento-${id}-${Date.now()}`
+  );
+
   let valorEstornado = 0;
   const resultado = await atualizarPagamentoComMovimentoCaixa(id, (item) => {
     const atual = montarPagamento(item);
@@ -224,7 +233,12 @@ export async function estornarPagamento(id, motivo = "") {
     data: new Date().toISOString(),
     observacao: motivo || "Estorno de conta a pagar"
   }), operacaoId);
-  return { ...resultado.pagamento, movimentoCaixa: resultado.movimento };
+
+  return {
+    ...resultado.pagamento,
+    movimentoCaixa: resultado.movimento,
+    idempotente: resultado.idempotente === true
+  };
 }
 
 export async function cancelarPagamento(id, motivo = "") {
@@ -297,6 +311,7 @@ export async function obterHistoricoPagamento(id) {
 
 export async function baixarPagamentosEmLote(payload = {}) {
   const ids = Array.isArray(payload.ids) ? payload.ids.filter(Boolean) : [];
+  const operacaoLote = String(payload.operacaoId || payload.idempotencyKey || "").trim();
   if (!ids.length) {
     const erro = new Error("Informe ao menos um pagamento para baixa em lote.");
     erro.status = 400;
@@ -311,7 +326,8 @@ export async function baixarPagamentosEmLote(payload = {}) {
         valor,
         formaPagamento: payload.formaPagamento || payload.forma || atual.formaPagamento || "pix",
         forma: payload.formaPagamento || payload.forma || atual.forma || "pix",
-        observacao: payload.observacao || "Baixa em lote"
+        observacao: payload.observacao || "Baixa em lote",
+        operacaoId: operacaoLote ? `${operacaoLote}:${id}` : undefined
       });
       resultados.push({ id, ok: true, pagamento });
     } catch (err) {

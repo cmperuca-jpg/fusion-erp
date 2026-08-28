@@ -826,9 +826,17 @@ export async function receberTitulos(dados = {}) {
 }
 
 export async function estornarRecibo(id, dados = {}) {
+  const operacaoId = txt(dados.operacaoId || dados.idempotencyKey) || uid("opest");
   return executarTransacaoJson(async () => {
     const [recibos, itens, titulos, caixa, mensalidades, recebimentos, creditos, matriculas, alunos, checkins, checkinsHistorico] = await Promise.all([ler(COL.recibos, []), ler(COL.itens, []), ler(COL.titulos, []), ler(COL.caixa, caixaVazio()), ler(COL.mensalidades, []), ler(COL.recebimentos, []), ler(COL.creditos, []), ler(COL.matriculas, []), ler(COL.alunos, []), ler(COL.checkins, []), ler(COL.checkinsHistorico, [])]);
-    const ri = recibos.findIndex((x) => String(x.id) === String(id) || String(x.numero) === String(id)); if (ri < 0) throw erro("Recibo não encontrado.", 404); if (recibos[ri].cancelado) throw erro("Recibo já estornado.", 409);
+    const ri = recibos.findIndex((x) => String(x.id) === String(id) || String(x.numero) === String(id));
+    if (ri < 0) throw erro("Recibo não encontrado.", 404);
+    if (recibos[ri].cancelado) {
+      if (txt(recibos[ri].estornoOperacaoId) === operacaoId) {
+        return { ok: true, idempotente: true, recibo: recibos[ri] };
+      }
+      throw erro("Recibo já estornado.", 409);
+    }
     const cx = caixaAberto(caixa); if (!cx) throw erro("Abra o caixa para registrar o estorno.", 409);
     const motivo = txt(dados.motivo); if (motivo.length < 3) throw erro("Informe o motivo do estorno.");
     const relacionados = itens.filter((x) => String(x.reciboId) === String(recibos[ri].id) && !x.cancelado);
@@ -880,7 +888,15 @@ export async function estornarRecibo(id, dados = {}) {
     // A entrada original permanece ativa no histórico do caixa.
     // O estorno é registrado por uma saída ativa de mesmo valor. O BI ignora
     // os dois movimentos quando o recibo relacionado está estornado.
-    recibos[ri] = { ...recibos[ri], cancelado: true, status: "Estornado", motivoEstorno: motivo, estornadoPor: txt(dados.usuario) || "sistema", estornadoEm: agora() };
+    recibos[ri] = {
+      ...recibos[ri],
+      cancelado: true,
+      status: "Estornado",
+      motivoEstorno: motivo,
+      estornadoPor: txt(dados.usuario) || "sistema",
+      estornadoEm: agora(),
+      estornoOperacaoId: operacaoId
+    };
     for (const meio of recibos[ri].formasPagamento || []) caixa.movimentos.push({ id: uid("movest"), caixaId: cx.id, tipo: "saida", descricao: `Estorno recibo ${recibos[ri].numero}`, categoria: "Estorno de recebimento", pessoa: recibos[ri].aluno, alunoId: recibos[ri].alunoId, reciboId: recibos[ri].id, reciboEstornadoId: recibos[ri].id, formaPagamento: meio.formaPagamento, valorCentavos: centavos(meio.valor), valor: moeda(meio.valor), data: hoje(), status: "ativo", origem: "estorno_recibo", criadoEm: agora() });
     if (centavos(recibos[ri].troco) > 0) caixa.movimentos.push({ id: uid("movesttroco"), caixaId: cx.id, tipo: "entrada", descricao: `Reversão do troco do recibo ${recibos[ri].numero}`, categoria: "Estorno de troco", pessoa: recibos[ri].aluno, alunoId: recibos[ri].alunoId, reciboId: recibos[ri].id, formaPagamento: "Dinheiro", valorCentavos: centavos(recibos[ri].troco), valor: moeda(recibos[ri].troco), data: hoje(), status: "ativo", origem: "estorno_troco", criadoEm: agora() });
     for (const credito of creditos) if (String(credito.reciboId) === String(recibos[ri].id) && status(credito) === "ativo") { credito.status = "estornado"; credito.saldoCentavos = 0; credito.saldo = 0; credito.estornadoEm = agora(); credito.motivoEstorno = motivo; }
@@ -905,7 +921,7 @@ export async function estornarRecibo(id, dados = {}) {
     }
     await salvarJsonMultiplosAtomico({ [COL.recibos]: recibos, [COL.itens]: itens, [COL.titulos]: titulos, [COL.caixa]: caixa, [COL.mensalidades]: mensalidades, [COL.recebimentos]: recebimentos, [COL.matriculas]: matriculas, [COL.alunos]: alunos, [COL.checkins]: checkins, [COL.checkinsHistorico]: checkinsHistorico, [COL.creditos]: creditos });
     await auditar("estornar_recibo", "recibo", recibos[ri].id, { numero: recibos[ri].numero, motivo, valor: recibos[ri].valorPago, caixaId: cx.id }, dados.usuario); return { ok: true, recibo: recibos[ri] };
-  });
+  }, { operacaoId });
 }
 
 export async function listarRecibos(filtros = {}) {

@@ -348,15 +348,113 @@
   }
 
   const fetchOriginal = window.fetch.bind(window);
+  const idempotenciaFinanceiraPendente = new Map();
+  const IDEMPOTENCIA_FINANCEIRA_TTL_MS = 2 * 60 * 1000;
 
-  function urlApiInterna(input) {
+  function detalhesApiInterna(input) {
     try {
       const raw = typeof input === "string" ? input : input?.url;
       const url = new URL(raw, location.origin);
-      return url.origin === location.origin && url.pathname.startsWith("/api/");
+      if (url.origin !== location.origin || !url.pathname.startsWith("/api/")) return null;
+      return url;
     } catch {
-      return false;
+      return null;
     }
+  }
+
+  function urlApiInterna(input) {
+    return Boolean(detalhesApiInterna(input));
+  }
+
+  function metodoRequisicao(input, opcoes = {}) {
+    return String(
+      opcoes.method ||
+      (input instanceof Request ? input.method : "GET") ||
+      "GET"
+    ).toUpperCase();
+  }
+
+  function rotaFinanceiraMutavel(input, opcoes = {}) {
+    const url = detalhesApiInterna(input);
+    if (!url) return null;
+
+    const metodo = metodoRequisicao(input, opcoes);
+    if (!["POST", "PUT", "PATCH", "DELETE"].includes(metodo)) return null;
+
+    const prefixos = [
+      "/api/financeiro",
+      "/api/caixa",
+      "/api/recebimentos",
+      "/api/pagamentos"
+    ];
+
+    if (!prefixos.some((prefixo) =>
+      url.pathname === prefixo || url.pathname.startsWith(`${prefixo}/`)
+    )) {
+      return null;
+    }
+
+    return { url, metodo };
+  }
+
+  function chaveIdempotenciaDoPayload(opcoes = {}) {
+    if (typeof opcoes.body !== "string" || !opcoes.body.trim()) return "";
+    try {
+      const payload = JSON.parse(opcoes.body);
+      if (!payload || typeof payload !== "object" || Array.isArray(payload)) return "";
+      return texto(payload.operacaoId || payload.idempotencyKey);
+    } catch {
+      return "";
+    }
+  }
+
+  function novaChaveIdempotenciaFinanceira() {
+    const uuid = globalThis.crypto?.randomUUID?.();
+    if (uuid) return `fin-${uuid}`;
+    return `fin-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  }
+
+  function prepararIdempotenciaFinanceira(input, opcoes, headers) {
+    const rota = rotaFinanceiraMutavel(input, opcoes);
+    if (!rota) return null;
+
+    if (headers.has("Idempotency-Key") || headers.has("X-Idempotency-Key")) {
+      return null;
+    }
+
+    const chavePayload = chaveIdempotenciaDoPayload(opcoes);
+    if (chavePayload) {
+      headers.set("Idempotency-Key", chavePayload);
+      return null;
+    }
+
+    const agora = Date.now();
+    for (const [assinatura, pendente] of idempotenciaFinanceiraPendente.entries()) {
+      if (agora - pendente.criadoEm > IDEMPOTENCIA_FINANCEIRA_TTL_MS) {
+        idempotenciaFinanceiraPendente.delete(assinatura);
+      }
+    }
+
+    const corpo = typeof opcoes.body === "string" ? opcoes.body : "";
+    const assinatura = [
+      tenantAtual(),
+      rota.metodo,
+      rota.url.pathname,
+      rota.url.search,
+      corpo
+    ].join("|");
+
+    let pendente = idempotenciaFinanceiraPendente.get(assinatura);
+    if (!pendente) {
+      pendente = {
+        chave: novaChaveIdempotenciaFinanceira(),
+        criadoEm: agora
+      };
+      idempotenciaFinanceiraPendente.set(assinatura, pendente);
+    }
+
+    headers.set("Idempotency-Key", pendente.chave);
+    return { assinatura };
   }
 
   window.fetch = function fusionFetch(input, opcoes = {}) {
@@ -369,7 +467,17 @@
     if (token && !headers.has("Authorization")) headers.set("Authorization", `Bearer ${token}`);
     if (tenant && !headers.has("X-Fusion-Tenant")) headers.set("X-Fusion-Tenant", tenant);
 
-    return fetchOriginal(input, { ...opcoes, headers });
+    const idempotencia = prepararIdempotenciaFinanceira(input, opcoes, headers);
+    const requisicao = fetchOriginal(input, { ...opcoes, headers });
+
+    if (!idempotencia) return requisicao;
+
+    return requisicao.then((resp) => {
+      if (resp.status < 500) {
+        idempotenciaFinanceiraPendente.delete(idempotencia.assinatura);
+      }
+      return resp;
+    });
   };
 
   window.FusionAuth = { login, salvarSessao, usuarioAtual, tokenAtual, tenantAtual, estaLogado, validarSessao, temPermissao, permissoesAtual, cabecalhoAuth, fetchAuth, filtrarElementosPorPermissao, proteger, sair, limparSessao, destinoPorPerfil, estaEmSuporte, encerrarSuporte, tokenSelecaoTenant, limparSelecaoTenant, urlSelecionarAcademia };

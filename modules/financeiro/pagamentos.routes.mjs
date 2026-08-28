@@ -158,7 +158,7 @@ router.post(["/:id/baixar", "/pagamentos/:id/baixar"], async (req, res) => {
 });
 
 router.post(["/:id/estornar", "/pagamentos/:id/estornar"], async (req, res) => {
-  try { return res.json({ ok: true, pagamento: await estornarPagamento(req.params.id, req.body?.motivo || "") }); }
+  try { return res.json({ ok: true, pagamento: await estornarPagamento(req.params.id, req.body || {}) }); }
   catch (err) { return respostaErro(res, err); }
 });
 

@@ -148,22 +148,99 @@ function podeAcessarRotaFinanceira(req, user = {}) {
   return false;
 }
 
-function propagarIdempotenciaFinanceira(req) {
-  if (!rotaFinanceira(req)) return;
-  if (!["POST", "PUT", "PATCH", "DELETE"].includes(req.method)) return;
+function operacaoFinanceiraCritica(req) {
+  const metodo = String(req.method || "").toUpperCase();
+  const rota = String(req.path || "");
 
-  const chave = String(
+  if (
+    metodo === "PATCH" &&
+    /^\/api\/financeiro\/[^/]+\/baixar$/.test(rota)
+  ) {
+    return true;
+  }
+
+  if (
+    metodo === "POST" &&
+    rota === "/api/financeiro/ledger/receber"
+  ) {
+    return true;
+  }
+
+  if (
+    metodo === "POST" &&
+    /^\/api\/financeiro\/ledger\/recibos\/[^/]+\/estornar$/.test(rota)
+  ) {
+    return true;
+  }
+
+  if (
+    metodo === "POST" &&
+    /^\/api\/recebimentos\/[^/]+\/(baixar|confirmar|estornar)$/.test(rota)
+  ) {
+    return true;
+  }
+
+  if (
+    metodo === "POST" &&
+    /^\/api\/(?:financeiro\/pagamentos|pagamentos)\/lote\/baixar$/.test(rota)
+  ) {
+    return true;
+  }
+
+  return metodo === "POST" &&
+    /^\/api\/(?:financeiro\/pagamentos|pagamentos)\/[^/]+\/(baixar|estornar)$/.test(rota);
+}
+
+function prepararIdempotenciaFinanceira(req, res) {
+  if (!rotaFinanceira(req)) return true;
+  if (!["POST", "PUT", "PATCH", "DELETE"].includes(req.method)) return true;
+
+  const chaveHeader = String(
     req.headers["idempotency-key"] ||
     req.headers["x-idempotency-key"] ||
     ""
   ).trim();
 
-  if (!chave) return;
-  if (!req.body || typeof req.body !== "object" || Array.isArray(req.body)) return;
+  const bodyValido = req.body && typeof req.body === "object" && !Array.isArray(req.body);
+  const chaveBody = bodyValido
+    ? String(req.body.operacaoId || req.body.idempotencyKey || "").trim()
+    : "";
 
-  if (!req.body.operacaoId && !req.body.idempotencyKey) {
+  if (chaveHeader && chaveBody && chaveHeader !== chaveBody) {
+    res.status(409).json({
+      ok: false,
+      codigo: "FINANCIAL_IDEMPOTENCY_CONFLICT",
+      mensagem: "A chave de idempotencia da requisicao nao confere com a operacao informada."
+    });
+    return false;
+  }
+
+  const chave = chaveHeader || chaveBody;
+
+  if (operacaoFinanceiraCritica(req) && !chave) {
+    res.status(428).json({
+      ok: false,
+      codigo: "FINANCIAL_IDEMPOTENCY_REQUIRED",
+      mensagem: "Esta operacao financeira exige Idempotency-Key."
+    });
+    return false;
+  }
+
+  if (chave.length > 200) {
+    res.status(400).json({
+      ok: false,
+      codigo: "FINANCIAL_IDEMPOTENCY_INVALID",
+      mensagem: "A chave de idempotencia excede o tamanho permitido."
+    });
+    return false;
+  }
+
+  if (chave && bodyValido && !req.body.operacaoId && !req.body.idempotencyKey) {
     req.body.idempotencyKey = chave;
   }
+
+  req.idempotencyKey = chave;
+  return true;
 }
 
 const RESERVED_PUBLIC_SLUGS = new Set([
@@ -587,7 +664,7 @@ export async function apiSecurity(req, res, next) {
     return responderConflitoTenant(res);
   }
 
-  propagarIdempotenciaFinanceira(req);
+  if (!prepararIdempotenciaFinanceira(req, res)) return;
 
   if (req.usuario?.supportAccess) {
     try {

@@ -13,7 +13,8 @@ const online = ler("modules/pagamentos-online/pagamentos-online.service.mjs");
 
 assert.match(security, /const FINANCIAL_PREFIXES/);
 assert.match(security, /podeAcessarRotaFinanceira/);
-assert.match(security, /propagarIdempotenciaFinanceira/);
+assert.match(security, /prepararIdempotenciaFinanceira/);
+assert.match(security, /FINANCIAL_IDEMPOTENCY_REQUIRED/);
 assert.match(security, /Esta operacao exige permissao financeira/);
 
 assert.doesNotMatch(

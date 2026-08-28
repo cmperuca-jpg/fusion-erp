@@ -194,6 +194,21 @@ export async function atualizarPagamentoComMovimentoCaixa(id, updater, montarMov
       throw erro;
     }
     const caixa = await lerJsonDuravel(CAIXA_PATH, { caixas: [], movimentos: [] });
+    const movimentoIdempotente = operacaoId ? `cx_${operacaoId}` : "";
+    const movimentoExistente = movimentoIdempotente &&
+      !Array.isArray(caixa) &&
+      Array.isArray(caixa.movimentos)
+      ? caixa.movimentos.find((item) => idItem(item) === movimentoIdempotente)
+      : null;
+
+    if (movimentoExistente) {
+      return {
+        pagamento: lista[indice],
+        movimento: movimentoExistente,
+        idempotente: true
+      };
+    }
+
     const aberto = !Array.isArray(caixa) && Array.isArray(caixa.caixas)
       ? caixa.caixas.find((item) => String(item.status || "").toLowerCase() === "aberto")
       : null;
