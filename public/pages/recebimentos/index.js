@@ -1,4 +1,4 @@
-import { listarRecebimentos, criarRecebimento, estornarRecebimento, cancelarRecebimento, obterBaseAtiva, diagnosticarRecebimentos } from "./api.js";
+import { listarRecebimentos, criarRecebimento, estornarRecebimento, cancelarRecebimento, obterBaseAtiva, diagnosticarRecebimentos } from "./api.js?v=20260828-estorno-payload-1";
 
 const STORAGE_KEY = "fusion.recebimentos.filtros.v10";
 const MODO_PAGAMENTO_EMBUTIDO = new URLSearchParams(location.search).get("embed") === "1";
@@ -212,8 +212,8 @@ async function salvarNovo(){const cliente=$("#novoCliente").value.trim(),descric
 async function confirmarBaixa(){return alert('A baixa agora é realizada pelo motor financeiro oficial. Clique em Baixar novamente para abrir o Financeiro.')}
 function abrirLote(){alert("Baixa em lote desativada. Receba cada titulo individualmente pelo Financeiro e pelo Caixa.");}
 async function confirmarLote(){throw new Error("Baixa em lote desativada.");}
-async function confirmarEstorno(id){const motivo=prompt("Motivo do estorno:","Estorno solicitado pelo usuário");if(motivo===null)return;try{await estornarRecebimento(id,motivo);estado.selecionados.delete(String(id));await carregar()}catch(e){alert(erroAmigavel(e))}}
-async function confirmarCancelamento(id){const motivo=prompt("Motivo do cancelamento:","Cancelamento solicitado pelo usuário");if(motivo===null)return;try{await cancelarRecebimento(id,motivo);estado.selecionados.delete(String(id));await carregar()}catch(e){alert(erroAmigavel(e))}}
+async function confirmarEstorno(id){const motivo=prompt("Motivo do estorno:","Estorno solicitado pelo usuário");if(motivo===null)return;const motivoNormalizado=String(motivo||"").trim();if(motivoNormalizado.length<3){alert("Informe o motivo do estorno com pelo menos 3 caracteres.");return}try{await estornarRecebimento(id,{motivo:motivoNormalizado});estado.selecionados.delete(String(id));await carregar()}catch(e){alert(erroAmigavel(e))}}
+async function confirmarCancelamento(id){const motivo=prompt("Motivo do cancelamento:","Cancelamento solicitado pelo usuário");if(motivo===null)return;const motivoNormalizado=String(motivo||"").trim();if(motivoNormalizado.length<3){alert("Informe o motivo do cancelamento com pelo menos 3 caracteres.");return}try{await cancelarRecebimento(id,{motivo:motivoNormalizado});estado.selecionados.delete(String(id));await carregar()}catch(e){alert(erroAmigavel(e))}}
 function csvCell(v){return`"${String(v??"").replaceAll('"','""')}"`}
 function montarCsv(lista){return[["Vencimento","Cliente","Descricao","Documento","Forma","Valor","Recebido","Saldo","Atraso","Status"],...lista.map(i=>[dataBr(dataItem(i)),campoTexto(i,["cliente","aluno","nomeCliente","responsavel"],""),campoTexto(i,["descricao","observacao","referencia"],""),campoTexto(i,["documento","numeroDocumento","parcela"],""),campoTexto(i,["formaPagamento","forma","meioPagamento","pagamento"],""),valorBruto(i).toFixed(2).replace(".",","),valorRecebido(i).toFixed(2).replace(".",","),saldoExibido(i).toFixed(2).replace(".",","),textoDias(i).texto,statusItem(i)])].map(l=>l.map(csvCell).join(";")).join("\n")}
 function baixarCsv(csv,nome){const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=nome;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url)}

@@ -43,11 +43,17 @@ export async function baixarRecebimento(id, payload) {
   });
 }
 
+function normalizarPayloadMotivo(payload = {}) {
+  if (typeof payload === "string") return { motivo: payload.trim() };
+  if (payload && typeof payload === "object" && !Array.isArray(payload)) return payload;
+  return {};
+}
+
 export async function estornarRecebimento(id, payload = {}) {
   return tentar(`/${encodeURIComponent(id)}/estornar`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
+    body: JSON.stringify(normalizarPayloadMotivo(payload))
   });
 }
 
@@ -55,7 +61,7 @@ export async function cancelarRecebimento(id, payload = {}) {
   return tentar(`/${encodeURIComponent(id)}/cancelar`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
+    body: JSON.stringify(normalizarPayloadMotivo(payload))
   });
 }
 

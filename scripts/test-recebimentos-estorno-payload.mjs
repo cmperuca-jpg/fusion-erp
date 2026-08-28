@@ -1,0 +1,12 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+const tela=fs.readFileSync("public/pages/recebimentos/index.js","utf8");
+const api=fs.readFileSync("public/pages/recebimentos/api.js","utf8");
+const html=fs.readFileSync("public/pages/recebimentos/index.html","utf8");
+assert.match(tela,/estornarRecebimento\(id,\{motivo:motivoNormalizado\}\)/);
+assert.match(tela,/cancelarRecebimento\(id,\{motivo:motivoNormalizado\}\)/);
+assert.doesNotMatch(tela,/estornarRecebimento\(id,motivo\)/);
+assert.match(api,/function normalizarPayloadMotivo/);
+assert.match(api,/JSON\.stringify\(normalizarPayloadMotivo\(payload\)\)/);
+assert.match(html,/index\.js\?v=20260828-estorno-payload-1/);
+console.log(JSON.stringify({ok:true,modulo:"recebimentos-estorno-payload",estornoEnviaObjetoJson:true,cancelamentoEnviaObjetoJson:true,apiNormalizaLegadoString:true,cacheBustAtualizado:true},null,2));
