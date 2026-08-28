@@ -156,16 +156,67 @@
   async function validarSessao() {
     const token = tokenAtual();
     if (!token) return null;
+
+    let resp;
     try {
-      const resp = await fetch("/api/auth/me", { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
-      const json = await resp.json().catch(() => ({}));
-      if (!resp.ok || json.ok === false) throw new Error(json.mensagem || "Sessão inválida.");
-      const usuario = salvarSessao(token, json.usuario, json.usuario?.tenantId || json.tenantId || tenantSalvo());
-      document.documentElement.classList.remove("fusion-auth-pendente");
-      return usuario;
-    } catch {
+      resp = await fetch("/api/auth/me", {
+        headers: {
+          Authorization: `Bearer ${token}`
+        },
+        cache: "no-store"
+      });
+    } catch (erro) {
+      console.warn(
+        "[FusionAuth] Falha transitória ao validar a sessão:",
+        erro?.message || erro
+      );
+      document.documentElement.classList.remove(
+        "fusion-auth-pendente"
+      );
+      return usuarioAtual();
+    }
+
+    const json = await resp.json().catch(() => ({}));
+
+    if (resp.status === 401 || resp.status === 403) {
       limparSessao(true);
       return null;
+    }
+
+    if (!resp.ok || json.ok === false) {
+      console.warn(
+        "[FusionAuth] Servidor indisponível ao validar a sessão:",
+        json.mensagem ||
+          json.erro ||
+          `HTTP ${resp.status}`
+      );
+      document.documentElement.classList.remove(
+        "fusion-auth-pendente"
+      );
+      return usuarioAtual();
+    }
+
+    try {
+      const usuario = salvarSessao(
+        token,
+        json.usuario,
+        json.usuario?.tenantId ||
+          json.tenantId ||
+          tenantSalvo()
+      );
+      document.documentElement.classList.remove(
+        "fusion-auth-pendente"
+      );
+      return usuario;
+    } catch (erro) {
+      console.warn(
+        "[FusionAuth] Resposta de sessão temporariamente inválida:",
+        erro?.message || erro
+      );
+      document.documentElement.classList.remove(
+        "fusion-auth-pendente"
+      );
+      return usuarioAtual();
     }
   }
 
