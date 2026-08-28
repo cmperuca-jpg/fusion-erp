@@ -153,6 +153,16 @@ function operacaoFinanceiraCritica(req) {
   const rota = String(req.path || "");
 
   if (
+    ["POST", "PUT", "PATCH", "DELETE"].includes(metodo) &&
+    (
+      pathMatches(rota, "/api/financeiro/pagamentos") ||
+      pathMatches(rota, "/api/pagamentos")
+    )
+  ) {
+    return true;
+  }
+
+  if (
     metodo === "PATCH" &&
     /^\/api\/financeiro\/[^/]+\/baixar$/.test(rota)
   ) {

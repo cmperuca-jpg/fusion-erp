@@ -1,11 +1,12 @@
+import crypto from "node:crypto";
 import { dataLocalISO } from "../core/time/fusion-time.mjs";
 import {
   atualizarPagamentoRaw,
   atualizarPagamentoComMovimentoCaixa,
   inserirPagamentoRaw,
   listarPagamentosRaw,
-  lerDb,
-  salvarDb
+  listarFechamentosFinanceiros,
+  salvarFechamentosFinanceiros
 } from "./pagamentos.repository.mjs";
 import {
   calcularSaldo,
@@ -31,6 +32,51 @@ function valorTotal(item) { return numeroMoeda(item.valor ?? item.valorBruto ?? 
 function valorPago(item) { return numeroMoeda(item.valorPago ?? item.pago ?? item.valorLiquido ?? item.valorBaixado); }
 function hojeIso() { return dataLocalISO(new Date()); }
 function idItem(item = {}) { return String(item.id || item._id || item.codigo || item.uuid || item.chave || ""); }
+
+
+function uid(prefixo = "pag") {
+  return `${prefixo}_${crypto.randomUUID()}`;
+}
+
+function operacaoDoPayload(payload = {}) {
+  return String(payload?.operacaoId || payload?.idempotencyKey || "").trim();
+}
+
+function idDeterministico(prefixo, operacaoId, sufixo = "") {
+  const hash = crypto
+    .createHash("sha256")
+    .update(`${operacaoId}|${sufixo}`)
+    .digest("hex")
+    .slice(0, 24);
+  return `${prefixo}_${hash}`;
+}
+
+function operacaoRepositorio(prefixo, operacaoId) {
+  return operacaoId
+    ? `${prefixo}:${operacaoId}`
+    : `${prefixo}:${crypto.randomUUID()}`;
+}
+
+function operacaoAplicada(item = {}, acao = "", operacaoId = "") {
+  if (!operacaoId) return false;
+  return String(item?.operacoesIdempotentes?.[acao] || "") === operacaoId;
+}
+
+function marcarOperacao(item = {}, acao = "", operacaoId = "") {
+  if (!operacaoId) return item;
+  return {
+    ...item,
+    operacoesIdempotentes: {
+      ...(item.operacoesIdempotentes || {}),
+      [acao]: operacaoId
+    }
+  };
+}
+
+function payloadObjeto(valor, campo = "motivo") {
+  if (valor && typeof valor === "object" && !Array.isArray(valor)) return valor;
+  return { [campo]: valor };
+}
 
 function aplicarFiltros(lista, filtros = {}) {
   const busca = String(filtros.busca || filtros.q || "").trim().toLowerCase();
@@ -115,29 +161,70 @@ export async function obterPagamento(id) {
 }
 
 export async function criarPagamento(payload = {}) {
-  const validacao = validarCriacao(payload);
+  const operacaoId = operacaoDoPayload(payload);
+
+  if (operacaoId) {
+    const existente = (await listarPagamentosRaw())
+      .find((item) => String(item.criacaoOperacaoId || "") === operacaoId);
+    if (existente) return montarPagamento(existente);
+  }
+
+  const entrada = {
+    ...payload,
+    id:
+      payload.id ||
+      (operacaoId
+        ? idDeterministico("fin_pag", operacaoId, "criar")
+        : gerarIdPagamento())
+  };
+
+  const validacao = validarCriacao(entrada);
   if (!validacao.ok) {
     const erro = new Error(`Campos obrigatórios: ${validacao.erros.join(", ")}.`);
     erro.status = 400;
     throw erro;
   }
-  return inserirPagamentoRaw(validacao.pagamento);
+
+  const pagamento = {
+    ...validacao.pagamento,
+    criacaoOperacaoId: operacaoId
+  };
+
+  return inserirPagamentoRaw(pagamento, {
+    operacaoId: operacaoRepositorio("pagamento-criar", operacaoId)
+  });
 }
 
 export async function editarPagamento(id, payload = {}) {
+  const operacaoId = operacaoDoPayload(payload);
   return atualizarPagamentoRaw(id, (item) => {
+    const atual = montarPagamento(item);
+    if (operacaoAplicada(atual, "editar", operacaoId)) return atual;
+
     const validacao = validarEdicao(payload, item);
     if (!validacao.ok) {
       const erro = new Error(`Campos obrigatórios: ${validacao.erros.join(", ")}.`);
       erro.status = 400;
       throw erro;
     }
-    return { ...validacao.pagamento, id: idItem(item), updatedAt: new Date().toISOString() };
+
+    return marcarOperacao(
+      { ...validacao.pagamento, id: idItem(item), updatedAt: new Date().toISOString() },
+      "editar",
+      operacaoId
+    );
+  }, {
+    operacaoId: operacaoRepositorio(`pagamento-editar-${id}`, operacaoId)
   });
 }
 
-export async function excluirPagamento(id) {
-  const pagamento = await cancelarPagamento(id, "Cancelamento solicitado pela exclusão legada.");
+export async function excluirPagamento(id, payload = {}) {
+  const pagamento = await cancelarPagamento(id, {
+    ...payload,
+    motivo:
+      payload.motivo ||
+      "Cancelamento solicitado pela exclusão legada."
+  });
   return { id: String(id), removido: false, cancelado: true, pagamento };
 }
 
@@ -149,7 +236,7 @@ export async function baixarPagamento(id, payload = {}) {
     throw erro;
   }
 
-  const operacaoId = String(payload.operacaoId || payload.idempotencyKey || `baixa-pagamento-${id}-${Date.now()}`);
+  const operacaoId = String(payload.operacaoId || payload.idempotencyKey || uid(`baixa-pagamento-${id}`));
   const resultado = await atualizarPagamentoComMovimentoCaixa(id, (item) => {
     const atual = montarPagamento(item);
     if (["cancelado", "estornado"].includes(normalizarStatus(atual.status))) {
@@ -166,9 +253,9 @@ export async function baixarPagamento(id, payload = {}) {
     const novoPago = numeroMoeda(valorPago(atual) + valorBaixa);
     const novoSaldo = Math.max(0, numeroMoeda(valorTotal(atual) - novoPago));
     const movimento = {
-      id: `mov_pag_${Date.now()}_${Math.floor(Math.random() * 999999)}`,
+      id: uid("mov_pag"),
       tipo: "baixa_pagamento",
-      data: new Date().toISOString(),
+      data: hojeIso(),
       valor: valorBaixa,
       formaPagamento: payload.formaPagamento || payload.forma || atual.formaPagamento,
       observacao: payload.observacao || "Baixa de pagamento"
@@ -207,7 +294,7 @@ export async function estornarPagamento(id, motivoOuPayload = "") {
   const operacaoId = String(
     payload.operacaoId ||
     payload.idempotencyKey ||
-    `estorno-pagamento-${id}-${Date.now()}`
+    uid(`estorno-pagamento-${id}`)
   );
 
   let valorEstornado = 0;
@@ -220,7 +307,7 @@ export async function estornarPagamento(id, motivoOuPayload = "") {
       throw erro;
     }
     valorEstornado = pago;
-    const movimento = { id: `est_pag_${Date.now()}`, tipo: "estorno", data: new Date().toISOString(), valor: pago, observacao: motivo || "Estorno de pagamento" };
+    const movimento = { id: uid("est_pag"), tipo: "estorno", data: hojeIso(), valor: pago, observacao: motivo || "Estorno de pagamento" };
     return { ...atual, valorPago: 0, valorLiquido: 0, valorRestante: valorTotal(atual), status: "aberto", estornadoEm: movimento.data, motivoEstorno: motivo || "Estorno de pagamento", historico: [...(Array.isArray(atual.historico) ? atual.historico : []), movimento], updatedAt: new Date().toISOString() };
   }, (atualizado) => ({
     id: `cx_${operacaoId}`,
@@ -230,7 +317,7 @@ export async function estornarPagamento(id, motivoOuPayload = "") {
     descricao: `Estorno: ${atualizado.descricao || "Pagamento"}`,
     valor: valorEstornado,
     formaPagamento: atualizado.formaPagamento || atualizado.forma || "",
-    data: new Date().toISOString(),
+    data: hojeIso(),
     observacao: motivo || "Estorno de conta a pagar"
   }), operacaoId);
 
@@ -241,25 +328,65 @@ export async function estornarPagamento(id, motivoOuPayload = "") {
   };
 }
 
-export async function cancelarPagamento(id, motivo = "") {
+export async function cancelarPagamento(id, motivoOuPayload = "") {
+  const payload = payloadObjeto(motivoOuPayload);
+  const motivo = String(payload.motivo || payload.observacao || "").trim();
+  const operacaoId = operacaoDoPayload(payload);
+
   return atualizarPagamentoRaw(id, (item) => {
     const atual = montarPagamento(item);
+
+    if (operacaoAplicada(atual, "cancelar", operacaoId)) return atual;
+
+    if (normalizarStatus(atual.status) === "cancelado") {
+      const erro = new Error("Pagamento já cancelado.");
+      erro.status = 409;
+      throw erro;
+    }
+
     if (valorPago(atual) > 0 || ["pago", "parcial"].includes(normalizarStatus(atual.status))) {
       const erro = new Error("Pagamento com baixa não pode ser cancelado. Faça o estorno primeiro.");
       erro.status = 409;
       throw erro;
     }
-    const movimento = { id: `can_pag_${Date.now()}`, tipo: "cancelamento", data: new Date().toISOString(), valor: 0, observacao: motivo || "Cancelamento de pagamento" };
-    return { ...atual, status: "cancelado", historico: [...(Array.isArray(atual.historico) ? atual.historico : []), movimento], updatedAt: new Date().toISOString() };
+
+    const movimento = {
+      id: uid("can_pag"),
+      tipo: "cancelamento",
+      data: new Date().toISOString(),
+      valor: 0,
+      observacao: motivo || "Cancelamento de pagamento"
+    };
+
+    return marcarOperacao({
+      ...atual,
+      status: "cancelado",
+      historico: [...(Array.isArray(atual.historico) ? atual.historico : []), movimento],
+      updatedAt: new Date().toISOString()
+    }, "cancelar", operacaoId);
+  }, {
+    operacaoId: operacaoRepositorio(`pagamento-cancelar-${id}`, operacaoId)
   });
 }
 
 export async function duplicarPagamento(id, payload = {}) {
+  const operacaoId = operacaoDoPayload(payload);
+
+  if (operacaoId) {
+    const existente = (await listarPagamentosRaw()).find((item) =>
+      String(item.duplicacaoOperacaoId || "") === operacaoId &&
+      String(item.duplicadoDe || "") === String(id)
+    );
+    if (existente) return montarPagamento(existente);
+  }
+
   const original = await obterPagamento(id);
   const novo = montarPagamento({
     ...original,
     ...payload,
-    id: gerarIdPagamento(),
+    id: operacaoId
+      ? idDeterministico("fin_pag", operacaoId, `duplicar:${id}`)
+      : gerarIdPagamento(),
     documento: payload.documento ?? `${original.documento || "DOC"}-COPIA`,
     vencimento: payload.vencimento || original.vencimento,
     dataVencimento: payload.dataVencimento || payload.vencimento || original.dataVencimento,
@@ -267,39 +394,104 @@ export async function duplicarPagamento(id, payload = {}) {
     valorLiquido: 0,
     valorRestante: payload.valor || original.valor,
     status: "aberto",
-    historico: [{ id: `dup_pag_${Date.now()}`, tipo: "duplicacao", origemId: id, data: new Date().toISOString(), observacao: payload.observacao || "Duplicado pelo módulo de pagamentos" }]
+    historico: [{
+      id: uid("dup_pag"),
+      tipo: "duplicacao",
+      origemId: id,
+      data: new Date().toISOString(),
+      observacao: payload.observacao || "Duplicado pelo módulo de pagamentos"
+    }]
   });
-  return inserirPagamentoRaw(novo);
+
+  return inserirPagamentoRaw({
+    ...novo,
+    duplicacaoOperacaoId: operacaoId,
+    duplicadoDe: String(id)
+  }, {
+    operacaoId: operacaoRepositorio(`pagamento-duplicar-${id}`, operacaoId)
+  });
 }
 
 export async function parcelarPagamento(payload = {}) {
   const total = numeroMoeda(payload.valor || payload.valorBruto || payload.total);
   const parcelas = Math.max(1, Math.min(60, Number.parseInt(payload.parcelas || 1, 10)));
   const intervaloDias = Math.max(1, Number.parseInt(payload.intervaloDias || 30, 10));
-  const base = { ...payload, valor: numeroMoeda(total / parcelas), valorBruto: numeroMoeda(total / parcelas), valorPago: 0, valorLiquido: 0, status: "aberto" };
+  const operacaoId = operacaoDoPayload(payload);
+
+  if (operacaoId) {
+    const existentes = (await listarPagamentosRaw())
+      .filter((item) => String(item.parcelamentoOperacaoId || "") === operacaoId)
+      .sort((a, b) => Number(a.parcela || 0) - Number(b.parcela || 0));
+
+    if (existentes.length) {
+      if (existentes.length !== parcelas) {
+        const erro = new Error("Parcelamento idempotente incompleto. Reconcilie antes de repetir a operação.");
+        erro.status = 409;
+        throw erro;
+      }
+      return existentes.map(montarPagamento);
+    }
+  }
+
+  const grupo =
+    payload.grupoParcelamento ||
+    (operacaoId
+      ? idDeterministico("grp_pag", operacaoId, "parcelamento")
+      : uid("grp_pag"));
+
+  const base = {
+    ...payload,
+    valor: numeroMoeda(total / parcelas),
+    valorBruto: numeroMoeda(total / parcelas),
+    valorPago: 0,
+    valorLiquido: 0,
+    status: "aberto"
+  };
+
   const criados = [];
   for (let i = 1; i <= parcelas; i++) {
-    const vencimento = somarDias(payload.vencimento || payload.dataVencimento || hojeIso(), intervaloDias * (i - 1));
+    const vencimento = somarDias(
+      payload.vencimento || payload.dataVencimento || hojeIso(),
+      intervaloDias * (i - 1)
+    );
+
     const validacao = validarCriacao({
       ...base,
-      id: gerarIdPagamento(),
+      id: operacaoId
+        ? idDeterministico("fin_pag", operacaoId, `parcela:${i}`)
+        : gerarIdPagamento(),
       descricao: `${payload.descricao || "Pagamento parcelado"} (${i}/${parcelas})`,
       documento: payload.documento ? `${payload.documento}-${String(i).padStart(2, "0")}` : "",
       vencimento,
       dataVencimento: vencimento,
-      valor: i === parcelas ? numeroMoeda(total - (numeroMoeda(total / parcelas) * (parcelas - 1))) : numeroMoeda(total / parcelas),
-      valorBruto: i === parcelas ? numeroMoeda(total - (numeroMoeda(total / parcelas) * (parcelas - 1))) : numeroMoeda(total / parcelas),
-      grupoParcelamento: payload.grupoParcelamento || `grp_pag_${Date.now()}`,
+      valor: i === parcelas
+        ? numeroMoeda(total - (numeroMoeda(total / parcelas) * (parcelas - 1)))
+        : numeroMoeda(total / parcelas),
+      valorBruto: i === parcelas
+        ? numeroMoeda(total - (numeroMoeda(total / parcelas) * (parcelas - 1)))
+        : numeroMoeda(total / parcelas),
+      grupoParcelamento: grupo,
       parcela: i,
       parcelas
     });
+
     if (!validacao.ok) {
       const erro = new Error(`Campos obrigatórios: ${validacao.erros.join(", ")}.`);
       erro.status = 400;
       throw erro;
     }
-    criados.push(await inserirPagamentoRaw(validacao.pagamento));
+
+    criados.push(await inserirPagamentoRaw({
+      ...validacao.pagamento,
+      grupoParcelamento: grupo,
+      parcela: i,
+      parcelas,
+      parcelamentoOperacaoId: operacaoId
+    }, {
+      operacaoId: operacaoRepositorio(`pagamento-parcela-${i}`, operacaoId)
+    }));
   }
+
   return criados;
 }
 
@@ -385,8 +577,21 @@ export async function fecharPeriodoPagamentos(payload = {}) {
   }
   const lista = aplicarFiltros(await listarPagamentosRaw(), { inicio, fim });
   const resumo = montarResumo(lista);
+  const operacaoId = operacaoDoPayload(payload);
+  const fechamentos = await listarFechamentosFinanceiros();
+
+  if (operacaoId) {
+    const existente = fechamentos.find((item) =>
+      String(item.operacaoId || "") === operacaoId
+    );
+    if (existente) return existente;
+  }
+
   const fechamento = {
-    id: `fec_pag_${Date.now()}_${Math.floor(Math.random() * 999999)}`,
+    id: operacaoId
+      ? idDeterministico("fec_pag", operacaoId, "fechamento")
+      : uid("fec_pag"),
+    operacaoId,
     modulo: "pagamentos",
     inicio,
     fim,
@@ -394,10 +599,11 @@ export async function fecharPeriodoPagamentos(payload = {}) {
     observacao: payload.observacao || "Fechamento de contas a pagar",
     resumo
   };
-  const { db, filePath } = await lerDb();
-  if (!Array.isArray(db.fechamentosFinanceiros)) db.fechamentosFinanceiros = [];
-  db.fechamentosFinanceiros.push(fechamento);
-  await salvarDb(db, filePath);
+
+  fechamentos.push(fechamento);
+  await salvarFechamentosFinanceiros(fechamentos, {
+    operacaoId: operacaoRepositorio("pagamento-fechamento", operacaoId)
+  });
   return fechamento;
 }
 
@@ -408,7 +614,7 @@ function usuarioOperacao(payload = {}) {
 
 function registrarAuditoriaLocal(item = {}, acao, payload = {}) {
   const registro = {
-    id: `aud_pag_${Date.now()}_${Math.floor(Math.random() * 999999)}`,
+    id: uid("aud_pag"),
     acao,
     usuario: usuarioOperacao(payload),
     data: new Date().toISOString(),
@@ -418,29 +624,33 @@ function registrarAuditoriaLocal(item = {}, acao, payload = {}) {
 }
 
 export async function aprovarPagamento(id, payload = {}) {
+  const operacaoId = operacaoDoPayload(payload);
   return atualizarPagamentoRaw(id, (item) => {
     const atual = montarPagamento(item);
+    if (operacaoAplicada(atual, "aprovar", operacaoId)) return atual;
     if (["pago", "cancelado", "estornado"].includes(normalizarStatus(atual.status))) {
       const erro = new Error("Pagamento pago, cancelado ou estornado não pode ser aprovado.");
       erro.status = 400;
       throw erro;
     }
-    const movimento = { id: `apr_pag_${Date.now()}`, tipo: "aprovacao", data: new Date().toISOString(), usuario: usuarioOperacao(payload), observacao: payload.observacao || "Pagamento aprovado" };
-    return { ...atual, status: "aprovado", aprovadoPor: usuarioOperacao(payload), aprovadoEm: movimento.data, historico: [...(Array.isArray(atual.historico) ? atual.historico : []), movimento], auditoria: registrarAuditoriaLocal(atual, "aprovar", payload), updatedAt: new Date().toISOString() };
-  });
+    const movimento = { id: uid("apr_pag"), tipo: "aprovacao", data: new Date().toISOString(), usuario: usuarioOperacao(payload), observacao: payload.observacao || "Pagamento aprovado" };
+    return marcarOperacao({ ...atual, status: "aprovado", aprovadoPor: usuarioOperacao(payload), aprovadoEm: movimento.data, historico: [...(Array.isArray(atual.historico) ? atual.historico : []), movimento], auditoria: registrarAuditoriaLocal(atual, "aprovar", payload), updatedAt: new Date().toISOString() }, "aprovar", operacaoId);
+  }, { operacaoId: operacaoRepositorio(`pagamento-aprovar-${id}`, operacaoId) });
 }
 
 export async function reprovarPagamento(id, payload = {}) {
+  const operacaoId = operacaoDoPayload(payload);
   return atualizarPagamentoRaw(id, (item) => {
     const atual = montarPagamento(item);
+    if (operacaoAplicada(atual, "reprovar", operacaoId)) return atual;
     if (["pago", "cancelado", "estornado"].includes(normalizarStatus(atual.status))) {
       const erro = new Error("Pagamento pago, cancelado ou estornado não pode ser reprovado.");
       erro.status = 400;
       throw erro;
     }
-    const movimento = { id: `rep_pag_${Date.now()}`, tipo: "reprovacao", data: new Date().toISOString(), usuario: usuarioOperacao(payload), observacao: payload.motivo || payload.observacao || "Pagamento reprovado" };
-    return { ...atual, status: "reprovado", historico: [...(Array.isArray(atual.historico) ? atual.historico : []), movimento], auditoria: registrarAuditoriaLocal(atual, "reprovar", payload), updatedAt: new Date().toISOString() };
-  });
+    const movimento = { id: uid("rep_pag"), tipo: "reprovacao", data: new Date().toISOString(), usuario: usuarioOperacao(payload), observacao: payload.motivo || payload.observacao || "Pagamento reprovado" };
+    return marcarOperacao({ ...atual, status: "reprovado", historico: [...(Array.isArray(atual.historico) ? atual.historico : []), movimento], auditoria: registrarAuditoriaLocal(atual, "reprovar", payload), updatedAt: new Date().toISOString() }, "reprovar", operacaoId);
+  }, { operacaoId: operacaoRepositorio(`pagamento-reprovar-${id}`, operacaoId) });
 }
 
 export async function agendarPagamento(id, payload = {}) {
@@ -450,16 +660,18 @@ export async function agendarPagamento(id, payload = {}) {
     erro.status = 400;
     throw erro;
   }
+  const operacaoId = operacaoDoPayload(payload);
   return atualizarPagamentoRaw(id, (item) => {
     const atual = montarPagamento(item);
+    if (operacaoAplicada(atual, "agendar", operacaoId)) return atual;
     if (["pago", "cancelado", "estornado"].includes(normalizarStatus(atual.status))) {
       const erro = new Error("Pagamento pago, cancelado ou estornado não pode ser agendado.");
       erro.status = 400;
       throw erro;
     }
-    const movimento = { id: `age_pag_${Date.now()}`, tipo: "agendamento", data: new Date().toISOString(), agendadoPara: data, usuario: usuarioOperacao(payload), observacao: payload.observacao || "Pagamento agendado" };
-    return { ...atual, status: "agendado", agendadoPara: data, historico: [...(Array.isArray(atual.historico) ? atual.historico : []), movimento], auditoria: registrarAuditoriaLocal(atual, "agendar", payload), updatedAt: new Date().toISOString() };
-  });
+    const movimento = { id: uid("age_pag"), tipo: "agendamento", data: new Date().toISOString(), agendadoPara: data, usuario: usuarioOperacao(payload), observacao: payload.observacao || "Pagamento agendado" };
+    return marcarOperacao({ ...atual, status: "agendado", agendadoPara: data, historico: [...(Array.isArray(atual.historico) ? atual.historico : []), movimento], auditoria: registrarAuditoriaLocal(atual, "agendar", payload), updatedAt: new Date().toISOString() }, "agendar", operacaoId);
+  }, { operacaoId: operacaoRepositorio(`pagamento-agendar-${id}`, operacaoId) });
 }
 
 export async function anexarComprovantePagamento(id, payload = {}) {
@@ -470,39 +682,86 @@ export async function anexarComprovantePagamento(id, payload = {}) {
     erro.status = 400;
     throw erro;
   }
+  const operacaoId = operacaoDoPayload(payload);
   return atualizarPagamentoRaw(id, (item) => {
     const atual = montarPagamento(item);
-    const comprovante = { id: `comp_pag_${Date.now()}_${Math.floor(Math.random()*999999)}`, nome: nome || "comprovante", url, tipo: payload.tipo || "comprovante", criadoEm: new Date().toISOString(), usuario: usuarioOperacao(payload) };
-    const movimento = { id: `his_comp_pag_${Date.now()}`, tipo: "comprovante", data: new Date().toISOString(), comprovanteId: comprovante.id, observacao: payload.observacao || "Comprovante anexado" };
-    return { ...atual, comprovantes: [...(Array.isArray(atual.comprovantes) ? atual.comprovantes : []), comprovante], historico: [...(Array.isArray(atual.historico) ? atual.historico : []), movimento], auditoria: registrarAuditoriaLocal(atual, "anexar_comprovante", payload), updatedAt: new Date().toISOString() };
-  });
+    if (operacaoAplicada(atual, "anexar_comprovante", operacaoId)) return atual;
+    const comprovante = { id: uid("comp_pag"), nome: nome || "comprovante", url, tipo: payload.tipo || "comprovante", criadoEm: new Date().toISOString(), usuario: usuarioOperacao(payload) };
+    const movimento = { id: uid("his_comp_pag"), tipo: "comprovante", data: new Date().toISOString(), comprovanteId: comprovante.id, observacao: payload.observacao || "Comprovante anexado" };
+    return marcarOperacao({ ...atual, comprovantes: [...(Array.isArray(atual.comprovantes) ? atual.comprovantes : []), comprovante], historico: [...(Array.isArray(atual.historico) ? atual.historico : []), movimento], auditoria: registrarAuditoriaLocal(atual, "anexar_comprovante", payload), updatedAt: new Date().toISOString() }, "anexar_comprovante", operacaoId);
+  }, { operacaoId: operacaoRepositorio(`pagamento-comprovante-${id}`, operacaoId) });
 }
 
 function proximoVencimento(dataIso, frequencia) {
-  const d = new Date(`${somenteData(dataIso)}T12:00:00`);
+  const data = somenteData(dataIso);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(data)) return "";
+  const [ano, mes, dia] = data.split("-").map(Number);
+  const d = new Date(Date.UTC(ano, mes - 1, dia));
   const f = String(frequencia || "mensal").toLowerCase();
-  if (f === "semanal") d.setDate(d.getDate() + 7);
-  else if (f === "anual") d.setFullYear(d.getFullYear() + 1);
-  else d.setMonth(d.getMonth() + 1);
-  return d.toISOString().slice(0,10);
+  if (f === "semanal") d.setUTCDate(d.getUTCDate() + 7);
+  else if (f === "anual") d.setUTCFullYear(d.getUTCFullYear() + 1);
+  else d.setUTCMonth(d.getUTCMonth() + 1);
+  return d.toISOString().slice(0, 10);
 }
 
 export async function criarPagamentosRecorrentes(payload = {}) {
   const repeticoes = Math.max(1, Math.min(120, Number.parseInt(payload.repeticoes || payload.quantidade || 12, 10)));
   const frequencia = String(payload.frequencia || payload.recorrencia || "mensal").toLowerCase();
+  const operacaoId = operacaoDoPayload(payload);
   let vencimento = somenteData(payload.vencimento || payload.dataVencimento || hojeIso());
-  const grupo = payload.grupoRecorrencia || `rec_pag_${Date.now()}`;
+
+  if (operacaoId) {
+    const existentes = (await listarPagamentosRaw())
+      .filter((item) => String(item.recorrenciaOperacaoId || "") === operacaoId)
+      .sort((a, b) => Number(a.recorrencia?.parcela || 0) - Number(b.recorrencia?.parcela || 0));
+
+    if (existentes.length) {
+      if (existentes.length !== repeticoes) {
+        const erro = new Error("Recorrência idempotente incompleta. Reconcilie antes de repetir a operação.");
+        erro.status = 409;
+        throw erro;
+      }
+      return existentes.map(montarPagamento);
+    }
+  }
+
+  const grupo =
+    payload.grupoRecorrencia ||
+    (operacaoId
+      ? idDeterministico("rec_pag", operacaoId, "recorrencia")
+      : uid("rec_pag"));
+
   const criados = [];
-  for (let i=1; i<=repeticoes; i++) {
-    const validacao = validarCriacao({ ...payload, id: gerarIdPagamento(), vencimento, dataVencimento: vencimento, descricao: `${payload.descricao || "Pagamento recorrente"} (${i}/${repeticoes})`, status: payload.status || "pendente", recorrencia: { grupo, frequencia, parcela: i, total: repeticoes } });
+  for (let i = 1; i <= repeticoes; i++) {
+    const validacao = validarCriacao({
+      ...payload,
+      id: operacaoId
+        ? idDeterministico("fin_pag", operacaoId, `recorrencia:${i}`)
+        : gerarIdPagamento(),
+      vencimento,
+      dataVencimento: vencimento,
+      descricao: `${payload.descricao || "Pagamento recorrente"} (${i}/${repeticoes})`,
+      status: payload.status || "pendente",
+      recorrencia: { grupo, frequencia, parcela: i, total: repeticoes }
+    });
+
     if (!validacao.ok) {
       const erro = new Error(`Campos obrigatórios: ${validacao.erros.join(", ")}.`);
       erro.status = 400;
       throw erro;
     }
-    criados.push(await inserirPagamentoRaw({ ...validacao.pagamento, auditoria: registrarAuditoriaLocal(validacao.pagamento, "criar_recorrencia", payload) }));
+
+    criados.push(await inserirPagamentoRaw({
+      ...validacao.pagamento,
+      recorrenciaOperacaoId: operacaoId,
+      auditoria: registrarAuditoriaLocal(validacao.pagamento, "criar_recorrencia", payload)
+    }, {
+      operacaoId: operacaoRepositorio(`pagamento-recorrencia-${i}`, operacaoId)
+    }));
+
     vencimento = proximoVencimento(vencimento, frequencia);
   }
+
   return criados;
 }
 

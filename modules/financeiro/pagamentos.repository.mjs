@@ -1,4 +1,6 @@
 import path from "path";
+import crypto from "node:crypto";
+import { dataLocalISO } from "../core/time/fusion-time.mjs";
 import {
   lerJsonDuravel,
   salvarJsonDuravel,
@@ -48,16 +50,33 @@ export async function resolverDbPath() {
 }
 
 // Compatibilidade restrita aos fechamentos. Contas e caixa não são mais espelhados em db.json.
+export async function listarFechamentosFinanceiros() {
+  const lista = await lerJsonDuravel(FECHAMENTOS_PATH, []);
+  return Array.isArray(lista) ? lista : [];
+}
+
+export async function salvarFechamentosFinanceiros(lista, { operacaoId = "" } = {}) {
+  const opcoes = operacaoId ? { operacaoId } : {};
+  return salvarJsonDuravel(
+    FECHAMENTOS_PATH,
+    Array.isArray(lista) ? lista : [],
+    opcoes
+  );
+}
+
+// Compatibilidade temporaria para consumidores antigos. O modulo ativo de
+// pagamentos usa diretamente a colecao dedicada de fechamentos.
 export async function lerDb() {
-  const fechamentosFinanceiros = await lerJsonDuravel(FECHAMENTOS_PATH, []);
   return {
-    db: { fechamentosFinanceiros: Array.isArray(fechamentosFinanceiros) ? fechamentosFinanceiros : [] },
+    db: { fechamentosFinanceiros: await listarFechamentosFinanceiros() },
     filePath: FECHAMENTOS_PATH
   };
 }
 
 export async function salvarDb(db) {
-  return salvarJsonDuravel(FECHAMENTOS_PATH, Array.isArray(db?.fechamentosFinanceiros) ? db.fechamentosFinanceiros : []);
+  return salvarFechamentosFinanceiros(
+    Array.isArray(db?.fechamentosFinanceiros) ? db.fechamentosFinanceiros : []
+  );
 }
 
 export async function listarPagamentosRaw() {
@@ -93,9 +112,11 @@ async function inserirPagamentoRawInterno(pagamento) {
   return item;
 }
 
-export async function inserirPagamentoRaw(pagamento) {
+export async function inserirPagamentoRaw(pagamento, { operacaoId = "" } = {}) {
   return executarTransacaoJson(() => inserirPagamentoRawInterno(pagamento), {
-    operacaoId: `pagamento-inserir-${idItem(pagamento) || Date.now()}`
+    operacaoId:
+      operacaoId ||
+      `pagamento-inserir-${idItem(pagamento) || crypto.randomUUID()}`
   });
 }
 
@@ -122,9 +143,11 @@ async function atualizarPagamentoRawInterno(id, updater) {
   return lista[indice];
 }
 
-export async function atualizarPagamentoRaw(id, updater) {
+export async function atualizarPagamentoRaw(id, updater, { operacaoId = "" } = {}) {
   return executarTransacaoJson(() => atualizarPagamentoRawInterno(id, updater), {
-    operacaoId: `pagamento-atualizar-${id}-${Date.now()}`
+    operacaoId:
+      operacaoId ||
+      `pagamento-atualizar-${id}-${crypto.randomUUID()}`
   });
 }
 
@@ -136,7 +159,7 @@ export async function removerPagamentoRaw(id) {
     canceladoEm: new Date().toISOString(),
     historico: [
       ...(Array.isArray(item.historico) ? item.historico : []),
-      { id: `can_pag_${Date.now()}`, tipo: "cancelamento", data: new Date().toISOString(), observacao: "Cancelamento solicitado pela rota legada." }
+      { id: `can_pag_${crypto.randomUUID()}`, tipo: "cancelamento", data: new Date().toISOString(), observacao: "Cancelamento solicitado pela rota legada." }
     ]
   }));
 }
@@ -163,11 +186,11 @@ async function registrarMovimentoCaixaInterno(movimento) {
   const agora = new Date().toISOString();
   const item = {
     ...movimento,
-    id: id || `mov_pag_${Date.now()}_${Math.random().toString(16).slice(2, 8)}`,
+    id: id || `mov_pag_${crypto.randomUUID()}`,
     caixaId: movimento.caixaId || aberto.id,
     valor: Number((centavos(movimento.valor) / 100).toFixed(2)),
     valorCentavos: centavos(movimento.valor),
-    data: String(movimento.data || agora).slice(0, 10),
+    data: String(movimento.data || dataLocalISO(new Date())).slice(0, 10),
     status: movimento.status || "ativo",
     pessoa: movimento.pessoa || movimento.fornecedor || movimento.credor || "",
     criadoEm: movimento.criadoEm || agora,
@@ -178,9 +201,11 @@ async function registrarMovimentoCaixaInterno(movimento) {
   return item;
 }
 
-export async function registrarMovimentoCaixa(movimento) {
+export async function registrarMovimentoCaixa(movimento, { operacaoId = "" } = {}) {
   return executarTransacaoJson(() => registrarMovimentoCaixaInterno(movimento), {
-    operacaoId: `caixa-movimento-${idItem(movimento) || Date.now()}`
+    operacaoId:
+      operacaoId ||
+      `caixa-movimento-${idItem(movimento) || crypto.randomUUID()}`
   });
 }
 
@@ -233,12 +258,12 @@ export async function atualizarPagamentoComMovimentoCaixa(id, updater, montarMov
     const movimentoBase = montarMovimento(lista[indice]);
     const movimento = {
       ...movimentoBase,
-      id: idItem(movimentoBase) || `mov_pag_${Date.now()}_${Math.random().toString(16).slice(2, 8)}`,
+      id: idItem(movimentoBase) || `mov_pag_${crypto.randomUUID()}`,
       caixaId: movimentoBase.caixaId || aberto.id,
       referenciaId: movimentoBase.referenciaId || String(id),
       valor: Number((centavos(movimentoBase.valor) / 100).toFixed(2)),
       valorCentavos: centavos(movimentoBase.valor),
-      data: String(movimentoBase.data || agora).slice(0, 10),
+      data: String(movimentoBase.data || dataLocalISO(new Date())).slice(0, 10),
       status: movimentoBase.status || "ativo",
       criadoEm: movimentoBase.criadoEm || agora,
       atualizadoEm: agora
@@ -251,5 +276,5 @@ export async function atualizarPagamentoComMovimentoCaixa(id, updater, montarMov
     caixa.movimentos.push(movimento);
     await salvarJsonMultiplosAtomico({ [FINANCEIRO_PATH]: lista, [CAIXA_PATH]: caixa });
     return { pagamento: lista[indice], movimento };
-  }, { operacaoId: operacaoId || `pagamento-caixa-${id}-${Date.now()}` });
+  }, { operacaoId: operacaoId || `pagamento-caixa-${id}-${crypto.randomUUID()}` });
 }

@@ -1,3 +1,5 @@
+import crypto from "node:crypto";
+
 export const STATUS_PAGAMENTO = ["aberto", "pendente", "aprovado", "agendado", "parcial", "pago", "cancelado", "estornado", "reprovado"];
 export const FORMAS_PAGAMENTO = ["dinheiro", "pix", "cartao", "boleto", "transferencia", "debito", "credito", "outros"];
 
@@ -20,7 +22,7 @@ export function numeroMoeda(value) {
 }
 
 export function gerarIdPagamento() {
-  return `fin_pag_${Date.now()}_${Math.floor(Math.random() * 999999)}`;
+  return `fin_pag_${crypto.randomUUID()}`;
 }
 
 export function calcularSaldo(item = {}) {
@@ -62,6 +64,19 @@ export function montarPagamento(payload = {}) {
     aprovadoEm: payload.aprovadoEm || "",
     agendadoPara: somenteData(payload.agendadoPara || payload.dataAgendamento || ""),
     recorrencia: payload.recorrencia || null,
+    grupoParcelamento: String(payload.grupoParcelamento || "").trim(),
+    parcela: payload.parcela ?? null,
+    parcelas: payload.parcelas ?? null,
+    criacaoOperacaoId: String(payload.criacaoOperacaoId || "").trim(),
+    duplicacaoOperacaoId: String(payload.duplicacaoOperacaoId || "").trim(),
+    parcelamentoOperacaoId: String(payload.parcelamentoOperacaoId || "").trim(),
+    recorrenciaOperacaoId: String(payload.recorrenciaOperacaoId || "").trim(),
+    operacoesIdempotentes:
+      payload.operacoesIdempotentes &&
+      typeof payload.operacoesIdempotentes === "object" &&
+      !Array.isArray(payload.operacoesIdempotentes)
+        ? { ...payload.operacoesIdempotentes }
+        : {},
     comprovantes: Array.isArray(payload.comprovantes) ? payload.comprovantes : [],
     auditoria: Array.isArray(payload.auditoria) ? payload.auditoria : [],
     historico: Array.isArray(payload.historico) ? payload.historico : [],
@@ -104,7 +119,10 @@ export function validarEdicao(payload = {}, atual = {}) {
 }
 
 export function somarDias(dataIso, dias) {
-  const d = new Date(`${somenteData(dataIso)}T12:00:00`);
-  d.setDate(d.getDate() + Number(dias || 0));
+  const data = somenteData(dataIso);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(data)) return "";
+  const [ano, mes, dia] = data.split("-").map(Number);
+  const d = new Date(Date.UTC(ano, mes - 1, dia));
+  d.setUTCDate(d.getUTCDate() + Number(dias || 0));
   return d.toISOString().slice(0, 10);
 }

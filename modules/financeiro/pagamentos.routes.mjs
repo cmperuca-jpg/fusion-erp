@@ -40,6 +40,20 @@ function opcoesTransacao(req) {
   return operacaoId ? { operacaoId } : {};
 }
 
+
+function payloadOperacao(req) {
+  const body =
+    req.body && typeof req.body === "object" && !Array.isArray(req.body)
+      ? { ...req.body }
+      : {};
+
+  if (!body.operacaoId && !body.idempotencyKey && req.idempotencyKey) {
+    body.idempotencyKey = req.idempotencyKey;
+  }
+
+  return body;
+}
+
 router.get(["/", "/pagamentos"], async (req, res) => {
   try { return res.json(await listarPagamentos(req.query || {})); }
   catch (err) { return respostaErro(res, err); }
@@ -89,7 +103,7 @@ router.post(["/lote/baixar", "/pagamentos/lote/baixar"], async (req, res) => {
 });
 
 router.post(["/fechamento", "/pagamentos/fechamento"], async (req, res) => {
-  try { return res.status(201).json({ ok: true, fechamento: await fecharPeriodoPagamentos(req.body || {}) }); }
+  try { return res.status(201).json({ ok: true, fechamento: await fecharPeriodoPagamentos(payloadOperacao(req)) }); }
   catch (err) { return respostaErro(res, err); }
 });
 
@@ -99,7 +113,7 @@ router.get(["/:id", "/pagamentos/:id"], async (req, res) => {
 });
 
 router.post(["/", "/pagamentos"], async (req, res) => {
-  try { return res.status(201).json({ ok: true, pagamento: await criarPagamento(req.body || {}) }); }
+  try { return res.status(201).json({ ok: true, pagamento: await criarPagamento(payloadOperacao(req)) }); }
   catch (err) { return respostaErro(res, err); }
 });
 
@@ -116,12 +130,12 @@ router.post(["/parcelar", "/pagamentos/parcelar"], async (req, res) => {
 });
 
 router.put(["/:id", "/pagamentos/:id"], async (req, res) => {
-  try { return res.json({ ok: true, pagamento: await editarPagamento(req.params.id, req.body || {}) }); }
+  try { return res.json({ ok: true, pagamento: await editarPagamento(req.params.id, payloadOperacao(req)) }); }
   catch (err) { return respostaErro(res, err); }
 });
 
 router.delete(["/:id", "/pagamentos/:id"], async (req, res) => {
-  try { return res.json({ ok: true, ...(await excluirPagamento(req.params.id)) }); }
+  try { return res.json({ ok: true, ...(await excluirPagamento(req.params.id, payloadOperacao(req))) }); }
   catch (err) { return respostaErro(res, err); }
 });
 
@@ -163,7 +177,7 @@ router.post(["/:id/estornar", "/pagamentos/:id/estornar"], async (req, res) => {
 });
 
 router.post(["/:id/cancelar", "/pagamentos/:id/cancelar"], async (req, res) => {
-  try { return res.json({ ok: true, pagamento: await cancelarPagamento(req.params.id, req.body?.motivo || "") }); }
+  try { return res.json({ ok: true, pagamento: await cancelarPagamento(req.params.id, payloadOperacao(req)) }); }
   catch (err) { return respostaErro(res, err); }
 });
 
