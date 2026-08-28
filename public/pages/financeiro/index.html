@@ -37,7 +37,6 @@
         <button class="btn-light" id="btnRecibos" type="button">Recibos</button>
         <button class="btn-light" id="btnExtratoAluno" type="button">Extrato do aluno</button>
         <button class="btn-light" id="btnIntegridade" type="button">Verificar integridade</button>
-        <button class="btn-light" id="btnTaxasCartao" type="button">Taxas de recebimento</button>
         <button class="btn-primary" id="btnNovoLancamento" type="button">
           Novo Lançamento
         </button>
@@ -281,7 +280,7 @@
               <strong>Taxas do recebimento</strong>
               <span>Selecione cartão, PIX ou boleto para calcular taxa percentual, taxa fixa e valor líquido.</span>
             </div>
-            <button class="btn-light" id="btnAbrirTaxasNoRecebimento" type="button">Configurar taxas</button>
+            <span class="texto-apoio">Taxas definidas no Painel Administrativo.</span>
           </div>
           <div class="grid-cartao">
             <label>
@@ -302,12 +301,12 @@
               <select id="baixaParcelasCartao"></select>
             </label>
             <label>
-              Taxa %
-              <input id="baixaTaxaPercentual" type="number" step="0.01" min="0" />
+              Taxa % automática
+              <input id="baixaTaxaPercentual" type="number" step="0.01" min="0" readonly />
             </label>
             <label>
-              Taxa fixa R$
-              <input id="baixaTaxaFixa" type="number" step="0.01" min="0" />
+              Taxa fixa R$ automática
+              <input id="baixaTaxaFixa" type="number" step="0.01" min="0" readonly />
             </label>
           </div>
           <div class="resultado-cartao">
@@ -323,7 +322,18 @@
         </label>
 
         <label>
-          Acréscimo/Juros
+          Multa por atraso (automática)
+          <input id="baixaMultaAtraso" type="number" step="0.01" min="0" value="0" readonly />
+        </label>
+
+        <label>
+          Juros por atraso (automáticos)
+          <input id="baixaJurosAtraso" type="number" step="0.01" min="0" value="0" readonly />
+          <small id="baixaAvisoEncargos" class="texto-apoio"></small>
+        </label>
+
+        <label>
+          Acréscimo manual
           <input id="baixaJuros" type="number" step="0.01" min="0" value="0" />
         </label>
 
@@ -342,39 +352,6 @@
 
 
 
-  <div class="modal-overlay" id="modalTaxasCartao">
-    <div class="modal modal-taxas">
-      <header class="modal-header">
-        <h2>Configurar taxas de recebimento</h2>
-        <button id="btnFecharTaxas" type="button">×</button>
-      </header>
-      <p class="texto-apoio">Valores de teste para cartões, PIX recebido e boleto emitido. Ajuste depois para as taxas reais da sua operadora/banco.</p>
-      <div class="taxas-actions">
-        <button type="button" class="btn-light" id="btnAdicionarTaxa">Adicionar taxa</button>
-        <button type="button" class="btn-secondary" id="btnRestaurarTaxas">Restaurar taxas de teste</button>
-      </div>
-      <div class="tabela-container tabela-taxas">
-        <table>
-          <thead>
-            <tr>
-              <th>Bandeira</th>
-              <th>Modalidade</th>
-              <th>Parcelas</th>
-              <th>Taxa %</th>
-              <th>Taxa fixa R$</th>
-              <th>Descrição</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody id="tabelaTaxasCartao"></tbody>
-        </table>
-      </div>
-      <footer class="modal-actions full">
-        <button type="button" class="btn-light" id="btnCancelarTaxas">Cancelar</button>
-        <button type="button" class="btn-primary" id="btnSalvarTaxas">Salvar taxas</button>
-      </footer>
-    </div>
-  </div>
   <div class="modal-overlay" id="modalConsultaFinanceira">
     <div class="modal" style="max-width:920px">
       <header class="modal-header">
@@ -387,7 +364,7 @@
       </footer>
     </div>
   </div>
-  <script src="/pages/financeiro/financeiro.js?v=20260828-popup-pagamento-1"></script>
+  <script src="/pages/financeiro/financeiro.js?v=20260828-config-financeiro-encargos-1"></script>
     <script src="/assets/js/fusion-layout.js"></script>
 
 <script src="/assets/pwa/fusion-pwa-install.js" defer></script>

@@ -55,6 +55,11 @@ let fornecedoresFinanceiro = [];
 let opcoesPessoasFinanceiro = [];
 let baixaAtual = null;
 let baixaAutomaticaUrlProcessada = false;
+let encargosAtrasoPreview = {
+  multa: 0,
+  juros: 0,
+  total: 0
+};
 let filtroIndicador = '';
 
 function limparParametrosBaixaDaUrl() {
@@ -171,11 +176,22 @@ function saldoBaseBaixa() {
   return numero(valor("baixaValorDevido"));
 }
 
+function acrescimoTotalBaixa() {
+  return (
+    numero(valor("baixaMultaAtraso")) +
+    numero(valor("baixaJurosAtraso")) +
+    numero(valor("baixaJuros"))
+  );
+}
+
 function valorDevidoAjustadoBaixa() {
   const base = saldoBaseBaixa();
   const desconto = numero(valor("baixaDesconto"));
-  const acrescimo = numero(valor("baixaJuros"));
-  return Math.max(0, Number((base + acrescimo - desconto).toFixed(2)));
+  const acrescimo = acrescimoTotalBaixa();
+  return Math.max(
+    0,
+    Number((base + acrescimo - desconto).toFixed(2))
+  );
 }
 
 function recalcularValorRecebidoBaixa() {
@@ -668,6 +684,129 @@ window.editarLancamento = function editarLancamento(id) {
   if (lancamento) abrirModal(lancamento);
 };
 
+async function atualizarEncargosAtrasoBaixa(
+  lancamento = baixaAtual
+) {
+  const multa = document.getElementById(
+    "baixaMultaAtraso"
+  );
+  const juros = document.getElementById(
+    "baixaJurosAtraso"
+  );
+  const aviso = document.getElementById(
+    "baixaAvisoEncargos"
+  );
+
+  if (!multa || !juros || !lancamento?.id) return;
+
+  encargosAtrasoPreview = {
+    multa: 0,
+    juros: 0,
+    total: 0
+  };
+
+  setValor("baixaMultaAtraso", "0.00");
+  setValor("baixaJurosAtraso", "0.00");
+
+  if (aviso) {
+    aviso.textContent =
+      "Calculando regra administrativa...";
+  }
+
+  const dataPagamento =
+    valor("baixaDataPagamento") ||
+    hojeISO();
+
+  try {
+    const resp = await fetch(
+      `${API_LEDGER}/titulos/${encodeURIComponent(lancamento.id)}` +
+      `/encargos-atraso?dataPagamento=${encodeURIComponent(dataPagamento)}`,
+      { cache: "no-store" }
+    );
+
+    const json = await resp.json().catch(() => ({}));
+
+    if (!resp.ok || json.ok === false) {
+      throw new Error(
+        json.mensagem ||
+        json.erro ||
+        `Erro HTTP ${resp.status}`
+      );
+    }
+
+    encargosAtrasoPreview = {
+      multa: Math.max(
+        0,
+        numero(json.multaPendente)
+      ),
+      juros: Math.max(
+        0,
+        numero(json.jurosPendente)
+      ),
+      total: Math.max(
+        0,
+        numero(json.encargosPendentes)
+      )
+    };
+
+    setValor(
+      "baixaMultaAtraso",
+      encargosAtrasoPreview.multa.toFixed(2)
+    );
+    setValor(
+      "baixaJurosAtraso",
+      encargosAtrasoPreview.juros.toFixed(2)
+    );
+
+    if (aviso) {
+      if (encargosAtrasoPreview.total > 0) {
+        aviso.textContent =
+          `Regra: multa ${numero(json.multaPercentual)
+            .toFixed(2)
+            .replace(".", ",")}% + ` +
+          `juros ${numero(json.jurosDiaPercentual)
+            .toFixed(3)
+            .replace(".", ",")}% ao dia. ` +
+          `${Number(json.diasComEncargo || 0)} dia(s) com encargo.`;
+      } else if (json.motivo === "dentro_carencia") {
+        aviso.textContent =
+          "Pagamento dentro da carência configurada.";
+      } else if (json.motivo === "nao_atrasado") {
+        aviso.textContent =
+          "Pagamento dentro do vencimento.";
+      } else if (json.motivo === "regra_desativada") {
+        aviso.textContent =
+          "Encargos por atraso estão desativados.";
+      } else if (
+        json.motivo === "encargos_ja_aplicados"
+      ) {
+        aviso.textContent =
+          "Os encargos desta cobrança já foram aplicados anteriormente.";
+      } else {
+        aviso.textContent = "";
+      }
+    }
+
+    recalcularValorRecebidoBaixa();
+  } catch (erro) {
+    encargosAtrasoPreview = {
+      multa: 0,
+      juros: 0,
+      total: 0
+    };
+
+    setValor("baixaMultaAtraso", "0.00");
+    setValor("baixaJurosAtraso", "0.00");
+
+    if (aviso) {
+      aviso.textContent =
+        "Não foi possível pré-calcular. O servidor validará os encargos ao confirmar.";
+    }
+
+    recalcularValorRecebidoBaixa();
+  }
+}
+
 function abrirModalBaixa(lancamento) {
   baixaAtual = {
     ...lancamento,
@@ -683,7 +822,14 @@ function abrirModalBaixa(lancamento) {
   setValor("baixaDataPagamento", hojeISO());
   setValor("baixaFormaPagamento", lancamento.formaPagamento || "Dinheiro");
   setValor("baixaDesconto", "0");
+  setValor("baixaMultaAtraso", "0.00");
+  setValor("baixaJurosAtraso", "0.00");
   setValor("baixaJuros", "0");
+  encargosAtrasoPreview = {
+    multa: 0,
+    juros: 0,
+    total: 0
+  };
   setValor("baixaObservacao", "");
   els.resumoBaixa.innerHTML = `<div><strong>${escapeHtml(lancamento.descricao || "Recebimento")}</strong></div>
     <div>Aluno/cliente: ${escapeHtml(lancamento.alunoFornecedor || lancamento.pessoa || "-")}</div>
@@ -693,7 +839,14 @@ function abrirModalBaixa(lancamento) {
   atualizarPainelCartao();
   recalcularValorRecebidoBaixa();
   els.modalBaixa.classList.add("ativo");
-  setTimeout(() => document.getElementById("baixaValorPago")?.focus(), 80);
+  atualizarEncargosAtrasoBaixa(lancamento);
+  setTimeout(
+    () =>
+      document
+        .getElementById("baixaValorPago")
+        ?.focus(),
+    80
+  );
 }
 
 function fecharModalBaixa() {
@@ -744,8 +897,11 @@ async function confirmarBaixa(event) {
       dataPagamento: valor("baixaDataPagamento"),
       formaPagamento,
       desconto: numero(valor("baixaDesconto")),
-      juros: numero(valor("baixaJuros")),
-      acrescimo: numero(valor("baixaJuros")),
+      multaAtraso: numero(valor("baixaMultaAtraso")),
+      jurosAtraso: numero(valor("baixaJurosAtraso")),
+      acrescimoManual: numero(valor("baixaJuros")),
+      juros: acrescimoTotalBaixa(),
+      acrescimo: acrescimoTotalBaixa(),
       observacao: valor("baixaObservacao"),
       bandeiraCartao: formaTemTaxaOperadora(formaPagamento) ? valor("baixaBandeiraCartao") : "",
       modalidadeCartao: formaTemTaxaOperadora(formaPagamento) ? valor("baixaModalidadeCartao") : "",
@@ -974,13 +1130,6 @@ document.getElementById("kpiAbrirReceitasPagas")?.addEventListener("click", () =
 document.getElementById("kpiAbrirReceitasAbertas")?.addEventListener("click", () => abrirIndicadorFinanceiro("receber", "Aberto"));
 document.getElementById("kpiAbrirTaxas")?.addEventListener("click", () => abrirIndicadorFinanceiro("receber", "Pago", "taxas"));
 document.getElementById("kpiAbrirSaldoPrevisto")?.addEventListener("click", () => abrirIndicadorFinanceiro("", "Aberto"));
-document.getElementById("btnTaxasCartao")?.addEventListener("click", abrirModalTaxas);
-document.getElementById("btnAbrirTaxasNoRecebimento")?.addEventListener("click", abrirModalTaxas);
-document.getElementById("btnFecharTaxas")?.addEventListener("click", fecharModalTaxas);
-document.getElementById("btnCancelarTaxas")?.addEventListener("click", fecharModalTaxas);
-document.getElementById("btnAdicionarTaxa")?.addEventListener("click", () => { taxasCartao.push({ bandeira: "Nova taxa", modalidade: "credito", parcelas: 1, percentual: 0, taxaFixa: 0, descricao: "" }); renderizarTabelaTaxas(); });
-document.getElementById("btnRestaurarTaxas")?.addEventListener("click", () => { taxasCartao = TAXAS_CARTAO_TESTE.map((t) => ({ ...t })); renderizarTabelaTaxas(); });
-document.getElementById("btnSalvarTaxas")?.addEventListener("click", salvarTaxasCartaoTela);
 document.getElementById("baixaFormaPagamento")?.addEventListener("change", atualizarPainelCartao);
 document.getElementById("baixaFormaPagamento")?.addEventListener("change", atualizarDiferencaRecebimento);
 document.getElementById("baixaBandeiraCartao")?.addEventListener("change", preencherParcelasCartao);
@@ -992,6 +1141,7 @@ document.getElementById("baixaValorPago")?.addEventListener("input", calcularPre
 document.getElementById("baixaValorPago")?.addEventListener("input", atualizarDiferencaRecebimento);
 document.getElementById("baixaDesconto")?.addEventListener("input", recalcularValorRecebidoBaixa);
 document.getElementById("baixaJuros")?.addEventListener("input", recalcularValorRecebidoBaixa);
+document.getElementById("baixaDataPagamento")?.addEventListener("change", () => atualizarEncargosAtrasoBaixa(baixaAtual));
 document.getElementById("btnFecharModal")?.addEventListener("click", fecharModal);
 document.getElementById("btnCancelar")?.addEventListener("click", fecharModal);
 document.getElementById("alunoFornecedor")?.addEventListener("change", sincronizarPessoaSelecionada);

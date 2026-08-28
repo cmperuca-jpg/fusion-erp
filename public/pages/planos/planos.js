@@ -168,7 +168,6 @@ function abrirModal() {
   document.getElementById("taxaMatricula").value = 0;
   document.getElementById("fidelidadeMeses").value = 0;
   document.getElementById("descontoPercentual").value = 0;
-  document.getElementById("multaAtrasoPercentual").value = 0;
   document.getElementById("limiteSemanal").value = 0;
   document.getElementById("horariosPermitidos").value = "Livre";
   renderizarOpcoesModalidades();
@@ -192,7 +191,6 @@ window.editarPlano = function (id) {
   document.getElementById("taxaMatricula").value = item.taxaMatricula || 0;
   document.getElementById("fidelidadeMeses").value = item.fidelidadeMeses || 0;
   document.getElementById("descontoPercentual").value = item.descontoPercentual || 0;
-  document.getElementById("multaAtrasoPercentual").value = item.multaAtrasoPercentual || 0;
   document.getElementById("limiteSemanal").value = item.limiteSemanal || 0;
   renderizarOpcoesModalidades(item.modalidadesIncluidas || []);
   document.getElementById("horariosPermitidos").value = item.horariosPermitidos || "Livre";
@@ -221,7 +219,6 @@ elementos.form.addEventListener("submit", async (event) => {
     taxaMatricula: document.getElementById("taxaMatricula").value,
     fidelidadeMeses: document.getElementById("fidelidadeMeses").value,
     descontoPercentual: document.getElementById("descontoPercentual").value,
-    multaAtrasoPercentual: document.getElementById("multaAtrasoPercentual").value,
     limiteSemanal: document.getElementById("limiteSemanal").value,
     modalidadesIncluidas: modalidadesSelecionadas(),
     horariosPermitidos: document.getElementById("horariosPermitidos").value,

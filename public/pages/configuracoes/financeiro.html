@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Configurações Financeiras - Fusion ERP</title>
+  <link rel="stylesheet" href="/assets/css/fusion-app.css">
+  <link rel="stylesheet" href="/assets/css/fusion-menu-global.css">
+  <script src="/assets/js/fusion-auth.js"></script>
+  <script>FusionAuth.proteger();</script>
+  <link rel="stylesheet" href="/assets/pwa/fusion-pwa-mobile.css">
+  <link rel="stylesheet" href="/assets/css/fusion-mobile-final.css">
+  <link rel="stylesheet" href="/assets/css/fusion-premium-final.css">
+  <link rel="stylesheet" href="/pages/_shared/fusion-area-clara.css?v=20260729-contraste-global-2">
+  <link rel="stylesheet" href="/pages/configuracoes/style.css?v=20260828-config-financeiro-1">
+</head>
+<body>
+  <div class="fusion-shell">
+    <main class="fusion-main">
+      <section class="fusion-content configuracoes-page financeiro-config-page">
+        <div class="fusion-card configuracoes-hero">
+          <span class="configuracoes-eyebrow">Sistema · Financeiro</span>
+          <h2>Configurações financeiras</h2>
+          <p>
+            Defina uma vez as regras de atraso e as taxas das formas de
+            recebimento. A equipe do caixa apenas recebe; os cálculos são
+            automáticos.
+          </p>
+        </div>
+
+        <section class="fusion-card pagamentos-panel">
+          <div class="panel-head">
+            <div>
+              <h3>Encargos por atraso</h3>
+              <p class="config-help">
+                Aplicados somente às mensalidades recorrentes vencidas.
+                Matrícula inicial não recebe estes encargos.
+              </p>
+            </div>
+            <span id="fonteAtraso" class="status-pill aguardando">
+              Carregando
+            </span>
+          </div>
+
+          <div class="form-grid">
+            <label>
+              Aplicar encargos
+              <select id="atrasoAtivo">
+                <option value="true">Sim</option>
+                <option value="false">Não</option>
+              </select>
+            </label>
+
+            <label>
+              Multa por atraso (%)
+              <input
+                id="multaPercentual"
+                type="number"
+                min="0"
+                max="100"
+                step="0.01"
+              >
+            </label>
+
+            <label>
+              Juros ao dia (%)
+              <input
+                id="jurosDiaPercentual"
+                type="number"
+                min="0"
+                max="100"
+                step="0.001"
+              >
+            </label>
+
+            <label>
+              Carência após vencimento (dias)
+              <input
+                id="carenciaDias"
+                type="number"
+                min="0"
+                max="365"
+                step="1"
+              >
+            </label>
+
+            <div class="wide config-example" id="exemploAtraso">
+              Exemplo: informe os percentuais para visualizar.
+            </div>
+
+            <div
+              class="wide config-warning"
+              id="avisoAtraso"
+              hidden
+            ></div>
+          </div>
+
+          <div class="config-actions">
+            <button
+              id="salvarAtraso"
+              class="config-primary"
+              type="button"
+            >
+              Salvar encargos
+            </button>
+          </div>
+        </section>
+
+        <section class="fusion-card pagamentos-panel">
+          <div class="panel-head">
+            <div>
+              <h3>Taxas de recebimento</h3>
+              <p class="config-help">
+                Estas taxas ficam fixas no Administrativo. Na baixa o Fusion
+                seleciona a regra pela forma, bandeira, modalidade e parcelas.
+              </p>
+            </div>
+          </div>
+
+          <div class="taxas-actions">
+            <button
+              id="adicionarTaxa"
+              class="config-secondary"
+              type="button"
+            >
+              Adicionar taxa
+            </button>
+          </div>
+
+          <div class="config-table-wrap">
+            <table class="config-table">
+              <thead>
+                <tr>
+                  <th>Bandeira/Meio</th>
+                  <th>Modalidade</th>
+                  <th>Parcelas</th>
+                  <th>Taxa %</th>
+                  <th>Taxa fixa R$</th>
+                  <th>Descrição</th>
+                  <th>Ação</th>
+                </tr>
+              </thead>
+              <tbody id="taxasTabela"></tbody>
+            </table>
+          </div>
+
+          <div class="config-actions">
+            <button
+              id="salvarTaxas"
+              class="config-primary"
+              type="button"
+            >
+              Salvar taxas
+            </button>
+          </div>
+        </section>
+
+        <div
+          id="resultadoConfigFinanceiro"
+          class="config-result"
+          role="status"
+        ></div>
+      </section>
+    </main>
+  </div>
+
+  <script src="/assets/js/fusion-menu-global.js"></script>
+  <script src="/assets/js/fusion-layout.js"></script>
+  <script src="/pages/configuracoes/financeiro.js?v=20260828-config-financeiro-1"></script>
+  <script src="/assets/pwa/fusion-pwa-install.js" defer></script>
+</body>
+</html>

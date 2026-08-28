@@ -101,6 +101,7 @@
 .configuracoes-page .configuracoes-grid > .fusion-card:nth-child(3)::before { content: "AL"; }
 .configuracoes-page .configuracoes-grid > .fusion-card:nth-child(4)::before { content: "FT"; }
 .configuracoes-page .configuracoes-grid > .fusion-card:nth-child(5)::before { content: "AV"; }
+.configuracoes-page .configuracoes-grid > .fusion-card:nth-child(6)::before { content: "FI"; }
 
 .configuracoes-page .configuracoes-grid > .fusion-card::after {
   content: "→";
@@ -354,5 +355,126 @@
   .primary-action,
   .secondary-action {
     width: 100%;
+  }
+}
+
+
+/* Configurações financeiras — 20260828 */
+.financeiro-config-page {
+  max-width: 1180px;
+}
+
+.financeiro-config-page .config-help {
+  margin: 5px 0 0;
+  color: #64748b !important;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.financeiro-config-page input,
+.financeiro-config-page select {
+  width: 100%;
+  min-height: 42px;
+  padding: 9px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 9px;
+  background: #fff;
+  color: #172033;
+}
+
+.config-example,
+.config-warning,
+.config-result {
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.config-example {
+  border: 1px solid #bae6fd;
+  background: #f0f9ff;
+  color: #075985;
+}
+
+.config-warning {
+  border: 1px solid #fde68a;
+  background: #fffbeb;
+  color: #92400e;
+}
+
+.config-result {
+  min-height: 20px;
+  color: #166534;
+  font-weight: 700;
+}
+
+.config-result.erro {
+  color: #b91c1c;
+}
+
+.config-actions,
+.taxas-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 14px;
+}
+
+.config-primary,
+.config-secondary,
+.config-danger {
+  min-height: 40px;
+  padding: 8px 14px;
+  border-radius: 9px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.config-primary {
+  border: 1px solid #0f8fa0;
+  background: #16a4b8;
+  color: #fff;
+}
+
+.config-secondary {
+  border: 1px solid #16a4b8;
+  background: #fff;
+  color: #087f8f;
+}
+
+.config-danger {
+  border: 1px solid #fecaca;
+  background: #fff1f2;
+  color: #b91c1c;
+}
+
+.config-table-wrap {
+  overflow-x: auto;
+  margin-top: 12px;
+}
+
+.config-table {
+  width: 100%;
+  min-width: 900px;
+  border-collapse: collapse;
+}
+
+.config-table th,
+.config-table td {
+  padding: 9px;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.config-table th {
+  background: #f1f5f9;
+  color: #334155;
+  font-size: 12px;
+}
+
+@media (max-width: 760px) {
+  .financeiro-config-page .form-grid {
+    grid-template-columns: 1fr;
   }
 }

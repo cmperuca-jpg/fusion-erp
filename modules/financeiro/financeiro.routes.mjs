@@ -4,6 +4,10 @@ import {
   obterTaxasCartao,
   salvarTaxasCartao
 } from "./financeiro.service.mjs";
+import {
+  obterConfiguracaoAtraso,
+  salvarConfiguracaoAtraso
+} from "./configuracao-financeira.service.mjs";
 import { programarProximaCobrancaAposPagamento } from "../cobranca/cobranca.service.mjs";
 import {
   listarTitulos,
@@ -18,6 +22,31 @@ import { garantirLancamentoFinanceiroMensalidade } from "./mensalidade-financeir
 import { notificarPagamentoConfirmado } from "../notificacoes/notificacao-pagamento.service.mjs";
 
 const router = express.Router();
+
+function perfilFinanceiro(req) {
+  return String(req.usuario?.perfil || "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function podeConfigurarFinanceiro(req) {
+  if (req.usuario?.portal) return false;
+  return ["administrador", "admin", "gerente"].includes(
+    perfilFinanceiro(req)
+  );
+}
+
+function exigirConfiguracaoFinanceira(req, res) {
+  if (podeConfigurarFinanceiro(req)) return true;
+  res.status(403).json({
+    ok: false,
+    mensagem:
+      "Somente administrador ou gerente pode alterar configurações financeiras."
+  });
+  return false;
+}
 
 function tratarErro(res, erro) {
   const status = erro.status || 500;
@@ -72,8 +101,41 @@ router.get("/taxas-cartao", async (req, res) => {
 
 router.put("/taxas-cartao", async (req, res) => {
   try {
-    const taxas = await salvarTaxasCartao(req.body?.taxas || req.body || []);
+    if (!exigirConfiguracaoFinanceira(req, res)) return;
+    const taxas = await salvarTaxasCartao(
+      req.body?.taxas || req.body || []
+    );
     res.json({ ok: true, taxas });
+  } catch (erro) {
+    tratarErro(res, erro);
+  }
+});
+
+router.get("/configuracao-atraso", async (req, res) => {
+  try {
+    if (!exigirConfiguracaoFinanceira(req, res)) return;
+    res.json({
+      ok: true,
+      configuracao: await obterConfiguracaoAtraso()
+    });
+  } catch (erro) {
+    tratarErro(res, erro);
+  }
+});
+
+router.put("/configuracao-atraso", async (req, res) => {
+  try {
+    if (!exigirConfiguracaoFinanceira(req, res)) return;
+    const usuario =
+      req.usuario?.nome ||
+      req.usuario?.email ||
+      req.usuario?.id ||
+      "administrador";
+    const configuracao = await salvarConfiguracaoAtraso(
+      req.body || {},
+      usuario
+    );
+    res.json({ ok: true, configuracao });
   } catch (erro) {
     tratarErro(res, erro);
   }

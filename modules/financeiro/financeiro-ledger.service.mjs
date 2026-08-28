@@ -3,13 +3,18 @@ import { dataLocalISO, horaLocalHHMMSS } from "../core/time/fusion-time.mjs";
 import { executarTransacaoJson, lerJsonDuravel, salvarJsonDuravel, salvarJsonMultiplosAtomico } from "../core/persistence/durable-json.mjs";
 import { lerColecao } from "../core/persistence/collection-store.mjs";
 import { biFinanceiro } from "./relatorios.service.mjs";
+import {
+  calcularEncargosAtraso,
+  obterConfiguracaoAtraso,
+  valoresEncargosReais
+} from "./configuracao-financeira.service.mjs";
 
 const COL = Object.freeze({
   alunos: "alunos.json", matriculas: "matriculas.json", titulos: "financeiro.json",
   mensalidades: "mensalidades.json", recebimentos: "recebimentos.json", caixa: "caixa.json",
   recibos: "recibos.json", itens: "recibos_itens.json", formas: "formas_pagamento.json",
   plano: "plano_contas.json", auditoria: "auditoria_financeira.json", creditos: "creditos.json",
-  taxasCartao: "taxas_cartao.json",
+  taxasCartao: "taxas_cartao.json", planos: "planos.json",
   checkins: "checkin.json", checkinsHistorico: "checkins.json",
   pagamentosLegacy: "pagamentos.json", dbLegacy: "db.json"
 });
@@ -103,26 +108,45 @@ function normalizarMeioComTaxa(meioEntrada = {}, dadosGerais = {}, taxas = {}) {
   const valorTaxaInformado = campoInformado(meio, "taxa") || campoInformado(meio, "taxaOperadoraValor") || campoInformado(meio, "taxaValor") ||
     campoInformado(dadosGerais, "taxaOperadoraValor") || campoInformado(dadosGerais, "taxaValor");
 
-  const percentual = moeda(
-    meio.taxaOperadoraPercentual ?? meio.taxaPercentual ?? dadosGerais.taxaOperadoraPercentual ??
-    dadosGerais.taxaPercentual ?? taxaConfigurada?.percentual ?? 0
+  const percentualInformado = moeda(
+    meio.taxaOperadoraPercentual ??
+    meio.taxaPercentual ??
+    dadosGerais.taxaOperadoraPercentual ??
+    dadosGerais.taxaPercentual ??
+    0
   );
-  const taxaFixa = moeda(
-    meio.taxaOperadoraFixa ?? meio.taxaFixa ?? dadosGerais.taxaOperadoraFixa ??
-    dadosGerais.taxaFixa ?? taxaConfigurada?.taxaFixa ?? 0
+  const fixaInformada = moeda(
+    meio.taxaOperadoraFixa ??
+    meio.taxaFixa ??
+    dadosGerais.taxaOperadoraFixa ??
+    dadosGerais.taxaFixa ??
+    0
   );
 
-  let taxaCentavos = valorTaxaInformado
-    ? centavos(meio.taxa ?? meio.taxaOperadoraValor ?? meio.taxaValor ?? dadosGerais.taxaOperadoraValor ?? dadosGerais.taxaValor)
-    : Math.round((valorCentavos * percentual / 100) + centavos(taxaFixa));
+  const percentual = taxaConfigurada
+    ? moeda(taxaConfigurada.percentual || 0)
+    : percentualInformado;
+  const taxaFixa = taxaConfigurada
+    ? moeda(taxaConfigurada.taxaFixa || 0)
+    : fixaInformada;
 
-  // Uma tela antiga pode enviar taxa zero mesmo havendo configuração válida.
-  // Nesse caso o servidor é a autoridade e refaz o cálculo no momento da baixa.
-  if (taxaCentavos <= 0 && taxaConfigurada) {
-    const percentualConfigurado = moeda(taxaConfigurada.percentual || 0);
-    const fixaConfigurada = moeda(taxaConfigurada.taxaFixa || 0);
-    taxaCentavos = Math.round((valorCentavos * percentualConfigurado / 100) + centavos(fixaConfigurada));
-  }
+  let taxaCentavos = taxaConfigurada
+    ? Math.round(
+        (valorCentavos * percentual / 100) +
+        centavos(taxaFixa)
+      )
+    : valorTaxaInformado
+      ? centavos(
+          meio.taxa ??
+          meio.taxaOperadoraValor ??
+          meio.taxaValor ??
+          dadosGerais.taxaOperadoraValor ??
+          dadosGerais.taxaValor
+        )
+      : Math.round(
+          (valorCentavos * percentual / 100) +
+          centavos(taxaFixa)
+        );
 
   if (pagamentoComCartao(formaPagamento) && taxaCentavos <= 0 && !taxaConfigurada && percentual <= 0 && taxaFixa <= 0) {
     throw erro(`Não foi possível calcular a taxa do cartão ${bandeiraCartao || "sem bandeira"} (${modalidadeCartao || "modalidade não informada"}, ${parcelasCartao}x). Confira as taxas de recebimento antes de confirmar.`);
@@ -453,14 +477,116 @@ export async function cancelarTitulo(id, dados = {}) {
   });
 }
 
+function localizarContextoMensalidadeTitulo(
+  titulo = {},
+  mensalidades = [],
+  matriculas = [],
+  planos = []
+) {
+  const mensalidade = (
+    Array.isArray(mensalidades) ? mensalidades : []
+  ).find((m) =>
+    mesmo(m.id, titulo.mensalidadeId) ||
+    mesmo(
+      m.lancamentoFinanceiroId || m.financeiroId,
+      titulo.id
+    )
+  ) || null;
+
+  const matriculaId =
+    txt(titulo.matriculaId || titulo.matricula_id) ||
+    txt(
+      mensalidade?.matriculaId ||
+      mensalidade?.matricula_id
+    );
+
+  const matricula = matriculaId
+    ? (
+        Array.isArray(matriculas) ? matriculas : []
+      ).find((m) => mesmo(m.id, matriculaId)) || null
+    : null;
+
+  const planoId =
+    txt(titulo.planoId || titulo.plano_id) ||
+    txt(mensalidade?.planoId || mensalidade?.plano_id) ||
+    txt(matricula?.planoId || matricula?.plano_id);
+
+  const plano = planoId
+    ? (
+        Array.isArray(planos) ? planos : []
+      ).find((item) =>
+        mesmo(item.id || item._id, planoId)
+      ) || null
+    : null;
+
+  return { mensalidade, matricula, plano };
+}
+
+export async function calcularEncargosAtrasoTitulo(
+  tituloId,
+  dataPagamento = hoje()
+) {
+  const [
+    titulos,
+    mensalidades,
+    matriculas,
+    planos,
+    config
+  ] = await Promise.all([
+    ler(COL.titulos, []),
+    ler(COL.mensalidades, []),
+    ler(COL.matriculas, []),
+    ler(COL.planos, []),
+    obterConfiguracaoAtraso()
+  ]);
+
+  const bruto = titulos.find(
+    (item) => String(item.id) === String(tituloId)
+  );
+  if (!bruto) throw erro("Título não encontrado.", 404);
+
+  const titulo = tituloNormalizado(bruto);
+  const {
+    mensalidade,
+    plano
+  } = localizarContextoMensalidadeTitulo(
+    titulo,
+    mensalidades,
+    matriculas,
+    planos
+  );
+
+  const calculo = calcularEncargosAtraso({
+    titulo,
+    mensalidade: mensalidade || {},
+    plano: plano || {},
+    config,
+    dataPagamento: txt(dataPagamento) || hoje()
+  });
+
+  return {
+    ok: true,
+    aplicavel: calculo.aplicavel,
+    motivo: calculo.motivo,
+    vencimento: calculo.vencimento,
+    dataPagamento: calculo.dataPagamento,
+    diasAtraso: calculo.diasAtraso,
+    diasComEncargo: calculo.diasComEncargo,
+    multaPercentual: calculo.multaPercentual,
+    jurosDiaPercentual: calculo.jurosDiaPercentual,
+    carenciaDias: calculo.carenciaDias,
+    ...valoresEncargosReais(calculo)
+  };
+}
+
 function proximoRecibo(recibos = []) { return String(recibos.reduce((m, x) => Math.max(m, Number(x.numero) || 0), 0) + 1).padStart(8, "0"); }
 
 export async function receberTitulos(dados = {}) {
   const operacaoId = txt(dados.operacaoId || dados.idempotencyKey) || uid("oprec");
   return executarTransacaoJson(async () => {
     const recibos = await ler(COL.recibos, []); const repetido = recibos.find((x) => x.operacaoId === operacaoId); if (repetido) return { ok: true, idempotente: true, recibo: repetido };
-    const [titulos, itensRecibo, caixa, mensalidades, recebimentos, matriculas, alunos, creditos, checkins, taxasCartao] = await Promise.all([
-      ler(COL.titulos, []), ler(COL.itens, []), ler(COL.caixa, caixaVazio()), ler(COL.mensalidades, []), ler(COL.recebimentos, []), ler(COL.matriculas, []), ler(COL.alunos, []), ler(COL.creditos, []), ler(COL.checkins, []), ler(COL.taxasCartao, [])
+    const [titulos, itensRecibo, caixa, mensalidades, recebimentos, matriculas, alunos, creditos, checkins, taxasCartao, planos, configAtraso] = await Promise.all([
+      ler(COL.titulos, []), ler(COL.itens, []), ler(COL.caixa, caixaVazio()), ler(COL.mensalidades, []), ler(COL.recebimentos, []), ler(COL.matriculas, []), ler(COL.alunos, []), ler(COL.creditos, []), ler(COL.checkins, []), ler(COL.taxasCartao, []), ler(COL.planos, []), obterConfiguracaoAtraso()
     ]);
     const cx = caixaAberto(caixa); if (!cx) throw erro("Abra o caixa antes de registrar recebimentos.", 409);
     const itensEntrada = Array.isArray(dados.itens) && dados.itens.length
@@ -498,8 +624,41 @@ export async function receberTitulos(dados = {}) {
       if (finalizado(titulo) || saldoC(titulo) <= 0) throw erro(`O título ${titulo.descricao} não está disponível para recebimento.`, 409);
       if (alunoUnico && idAluno(titulo) && alunoUnico !== idAluno(titulo)) throw erro("Um recibo não pode misturar títulos de alunos diferentes.");
       alunoUnico = alunoUnico || idAluno(titulo);
-      let descontoC = centavos(entrada.desconto || 0); const acrescimoC = centavos(entrada.acrescimo || entrada.juros || entrada.multa || 0);
-      const baseAntesDescontoC = Math.max(0, saldoC(titulo) + acrescimoC);
+      let descontoC = centavos(entrada.desconto || 0);
+      const contextoAtraso = localizarContextoMensalidadeTitulo(
+        titulo,
+        mensalidades,
+        matriculas,
+        planos
+      );
+      const regraAtraso = calcularEncargosAtraso({
+        titulo,
+        mensalidade: contextoAtraso.mensalidade || {},
+        plano: contextoAtraso.plano || {},
+        config: configAtraso,
+        dataPagamento:
+          dados.dataPagamento ||
+          dados.dataRecebimento ||
+          hoje()
+      });
+      const encargosAutomaticosC = Math.max(
+        0,
+        Number(regraAtraso.encargosPendentesCentavos || 0)
+      );
+      const acrescimoInformadoC = centavos(
+        entrada.acrescimo ||
+        entrada.juros ||
+        entrada.multa ||
+        0
+      );
+      const acrescimoC = Math.max(
+        acrescimoInformadoC,
+        encargosAutomaticosC
+      );
+      const baseAntesDescontoC = Math.max(
+        0,
+        saldoC(titulo) + acrescimoC
+      );
       const devidoC = Math.max(0, baseAntesDescontoC - descontoC);
       const valorEntrada = entrada.valorAplicado ?? entrada.valor;
       const valorAplicadoInformado = entrada.valorAplicadoInformado === true || campoInformado(entrada, "valorAplicado");
@@ -513,7 +672,48 @@ export async function receberTitulos(dados = {}) {
         : 0;
       descontoC += ajusteResiduoCentavos;
       if (aplicadoC <= 0 || aplicadoC > devidoC) throw erro(`Valor inválido para ${titulo.descricao}. Saldo devido: ${reais(devidoC).toFixed(2)}.`);
-      totalAplicadoC += aplicadoC; alocacoes.push({ indice: i, titulo, aplicadoC, descontoC, acrescimoC, devidoC, ajusteFormularioDesconto, ajusteResiduoCentavos, programadoAntesDaBaixa });
+      if (
+        encargosAutomaticosC > 0 &&
+        aplicadoC + descontoC < encargosAutomaticosC
+      ) {
+        throw erro(
+          `O pagamento e o desconto precisam cobrir os encargos por atraso de R$ ${reais(encargosAutomaticosC).toFixed(2)}.`
+        );
+      }
+      totalAplicadoC += aplicadoC;
+      alocacoes.push({
+        indice: i,
+        titulo,
+        aplicadoC,
+        descontoC,
+        acrescimoC,
+        devidoC,
+        multaAtrasoAplicadaC: Math.max(
+          0,
+          Number(regraAtraso.multaPendenteCentavos || 0)
+        ),
+        jurosAtrasoAplicadoC: Math.max(
+          0,
+          Number(regraAtraso.jurosPendenteCentavos || 0)
+        ),
+        multaAtrasoJaAplicadaC: Math.max(
+          0,
+          Number(regraAtraso.multaJaAplicadaCentavos || 0)
+        ),
+        jurosAtrasoJaAplicadoC: Math.max(
+          0,
+          Number(regraAtraso.jurosJaAplicadoCentavos || 0)
+        ),
+        multaAtrasoPercentual:
+          Number(regraAtraso.multaPercentual || 0),
+        jurosAtrasoPercentualDia:
+          Number(regraAtraso.jurosDiaPercentual || 0),
+        diasAtrasoCalculados:
+          Number(regraAtraso.diasAtraso || 0),
+        ajusteFormularioDesconto,
+        ajusteResiduoCentavos,
+        programadoAntesDaBaixa
+      });
     }
     const usarTotalAplicadoComoMeio = alocacoes.length === 1 &&
       alocacoes[0].ajusteFormularioDesconto &&
@@ -593,7 +793,19 @@ export async function receberTitulos(dados = {}) {
         : centavos(a.titulo.valorBrutoRecebido ?? a.titulo.valorRecebidoBruto ?? a.titulo.valorPago ?? 0);
       const valorBrutoRecebidoC = valorBrutoRecebidoAnteriorC + a.aplicadoC;
       const descontoAcumuladoC = centavosCampo(a.titulo, "desconto", 0) + a.descontoC;
-      const acrescimoAcumuladoC = centavosCampo(a.titulo, "acrescimo", 0) + a.acrescimoC;
+      const acrescimoAcumuladoC =
+        centavosCampo(a.titulo, "acrescimo", 0) +
+        a.acrescimoC;
+      const multaAtrasoAcumuladaC = Math.max(
+        0,
+        Number(a.multaAtrasoJaAplicadaC || 0) +
+          Number(a.multaAtrasoAplicadaC || 0)
+      );
+      const jurosAtrasoAcumuladoC = Math.max(
+        0,
+        Number(a.jurosAtrasoJaAplicadoC || 0) +
+          Number(a.jurosAtrasoAplicadoC || 0)
+      );
       const taxaAnteriorC = Number.isInteger(a.titulo.taxaOperadoraValorCentavos)
         ? a.titulo.taxaOperadoraValorCentavos
         : centavos(a.titulo.taxaOperadoraValor || a.titulo.taxaValor || 0);
@@ -608,6 +820,14 @@ export async function receberTitulos(dados = {}) {
         desconto: reais(descontoAcumuladoC),
         acrescimoCentavos: acrescimoAcumuladoC,
         acrescimo: reais(acrescimoAcumuladoC),
+        multaAtrasoAplicadaCentavos: multaAtrasoAcumuladaC,
+        multaAtrasoAplicada: reais(multaAtrasoAcumuladaC),
+        jurosAtrasoAplicadoCentavos: jurosAtrasoAcumuladoC,
+        jurosAtrasoAplicado: reais(jurosAtrasoAcumuladoC),
+        multaAtrasoPercentual: a.multaAtrasoPercentual,
+        jurosAtrasoPercentualDia:
+          a.jurosAtrasoPercentualDia,
+        diasAtrasoCalculados: a.diasAtrasoCalculados,
         taxaOperadoraValorCentavos: taxaAcumuladaC,
         taxaOperadoraValor: reais(taxaAcumuladaC),
         ultimaTaxaOperadoraValor: reais(taxaAtualC),
@@ -623,7 +843,7 @@ export async function receberTitulos(dados = {}) {
         formaPagamento: meioUnico?.formaPagamento || "Múltiplas",
         atualizadoEm: agora()
       });
-      const item = { id: uid("reci"), reciboId: recibo.id, tituloId: a.titulo.id, alunoId: alunoUnico, matriculaId: idMatricula(a.titulo), mensalidadeId: txt(a.titulo.mensalidadeId), valorOriginalCentavos: valorTituloC(a.titulo), saldoAnteriorCentavos: saldoC(a.titulo), descontoCentavos: a.descontoC, acrescimoCentavos: a.acrescimoC, ajusteResiduoCentavos: a.ajusteResiduoCentavos || 0, valorAplicadoCentavos: a.aplicadoC, valorAplicado: reais(a.aplicadoC), taxaOperadoraValorCentavos: taxaAtualC, taxaOperadoraValor: reais(taxaAtualC), valorLiquidoAplicadoCentavos: Math.max(0, a.aplicadoC - taxaAtualC), valorLiquidoAplicado: reais(Math.max(0, a.aplicadoC - taxaAtualC)), cancelado: false, criadoEm: agora() };
+      const item = { id: uid("reci"), reciboId: recibo.id, tituloId: a.titulo.id, alunoId: alunoUnico, matriculaId: idMatricula(a.titulo), mensalidadeId: txt(a.titulo.mensalidadeId), valorOriginalCentavos: valorTituloC(a.titulo), saldoAnteriorCentavos: saldoC(a.titulo), descontoCentavos: a.descontoC, acrescimoCentavos: a.acrescimoC, multaAtrasoAplicadaCentavos: a.multaAtrasoAplicadaC || 0, jurosAtrasoAplicadoCentavos: a.jurosAtrasoAplicadoC || 0, multaAtrasoPercentual: a.multaAtrasoPercentual || 0, jurosAtrasoPercentualDia: a.jurosAtrasoPercentualDia || 0, ajusteResiduoCentavos: a.ajusteResiduoCentavos || 0, valorAplicadoCentavos: a.aplicadoC, valorAplicado: reais(a.aplicadoC), taxaOperadoraValorCentavos: taxaAtualC, taxaOperadoraValor: reais(taxaAtualC), valorLiquidoAplicadoCentavos: Math.max(0, a.aplicadoC - taxaAtualC), valorLiquidoAplicado: reais(Math.max(0, a.aplicadoC - taxaAtualC)), cancelado: false, criadoEm: agora() };
       novosItens.push(item); itensRecibo.push(item);
       for (let m = 0; m < mensalidades.length; m += 1) {
         if (!mesmo(mensalidades[m].id, item.mensalidadeId) && !mesmo(mensalidades[m].lancamentoFinanceiroId || mensalidades[m].financeiroId, item.tituloId)) continue;
@@ -640,6 +860,12 @@ export async function receberTitulos(dados = {}) {
           saldoRestante: titulos[a.indice].valorRestante,
           desconto: titulos[a.indice].desconto,
           acrescimo: titulos[a.indice].acrescimo,
+          multaAtrasoAplicadaCentavos: titulos[a.indice].multaAtrasoAplicadaCentavos || 0,
+          multaAtrasoAplicada: titulos[a.indice].multaAtrasoAplicada || 0,
+          jurosAtrasoAplicadoCentavos: titulos[a.indice].jurosAtrasoAplicadoCentavos || 0,
+          jurosAtrasoAplicado: titulos[a.indice].jurosAtrasoAplicado || 0,
+          multaAtrasoPercentual: titulos[a.indice].multaAtrasoPercentual || 0,
+          jurosAtrasoPercentualDia: titulos[a.indice].jurosAtrasoPercentualDia || 0,
           taxaOperadoraValor: titulos[a.indice].taxaOperadoraValor,
           ultimaTaxaOperadoraValor: titulos[a.indice].ultimaTaxaOperadoraValor,
           taxaOperadoraPercentual: titulos[a.indice].taxaOperadoraPercentual,
@@ -851,6 +1077,28 @@ export async function estornarRecibo(id, dados = {}) {
         const novoRecebidoC = reabertoIntegralmente ? 0 : Math.max(0, recebidoAnteriorC - Number(item.valorAplicadoCentavos || 0));
         const novoDescontoC = reabertoIntegralmente ? 0 : Math.max(0, centavosCampo(t, "desconto", 0) - Number(item.descontoCentavos || 0));
         const novoAcrescimoC = reabertoIntegralmente ? 0 : Math.max(0, centavosCampo(t, "acrescimo", 0) - Number(item.acrescimoCentavos || 0));
+        const multaAtrasoAnteriorC =
+          Number.isInteger(t.multaAtrasoAplicadaCentavos)
+            ? Math.max(0, t.multaAtrasoAplicadaCentavos)
+            : 0;
+        const jurosAtrasoAnteriorC =
+          Number.isInteger(t.jurosAtrasoAplicadoCentavos)
+            ? Math.max(0, t.jurosAtrasoAplicadoCentavos)
+            : 0;
+        const novaMultaAtrasoC = reabertoIntegralmente
+          ? 0
+          : Math.max(
+              0,
+              multaAtrasoAnteriorC -
+                Number(item.multaAtrasoAplicadaCentavos || 0)
+            );
+        const novoJurosAtrasoC = reabertoIntegralmente
+          ? 0
+          : Math.max(
+              0,
+              jurosAtrasoAnteriorC -
+                Number(item.jurosAtrasoAplicadoCentavos || 0)
+            );
         titulos[ti] = tituloNormalizado({
           ...t,
           // O status anterior ainda era "Pago". Sem limpar o status antes da
@@ -866,6 +1114,18 @@ export async function estornarRecibo(id, dados = {}) {
           desconto: reais(novoDescontoC),
           acrescimoCentavos: novoAcrescimoC,
           acrescimo: reais(novoAcrescimoC),
+          multaAtrasoAplicadaCentavos: novaMultaAtrasoC,
+          multaAtrasoAplicada: reais(novaMultaAtrasoC),
+          jurosAtrasoAplicadoCentavos: novoJurosAtrasoC,
+          jurosAtrasoAplicado: reais(novoJurosAtrasoC),
+          multaAtrasoPercentual:
+            novaMultaAtrasoC > 0
+              ? Number(t.multaAtrasoPercentual || 0)
+              : 0,
+          jurosAtrasoPercentualDia:
+            novoJurosAtrasoC > 0
+              ? Number(t.jurosAtrasoPercentualDia || 0)
+              : 0,
           taxaOperadoraValorCentavos: novaTaxaC,
           taxaOperadoraValor: reais(novaTaxaC),
           ultimaTaxaOperadoraValor: 0,
@@ -895,6 +1155,12 @@ export async function estornarRecibo(id, dados = {}) {
             saldo: titulos[ti].valorRestante,
             desconto: titulos[ti].desconto,
             acrescimo: titulos[ti].acrescimo,
+            multaAtrasoAplicadaCentavos: titulos[ti].multaAtrasoAplicadaCentavos || 0,
+            multaAtrasoAplicada: titulos[ti].multaAtrasoAplicada || 0,
+            jurosAtrasoAplicadoCentavos: titulos[ti].jurosAtrasoAplicadoCentavos || 0,
+            jurosAtrasoAplicado: titulos[ti].jurosAtrasoAplicado || 0,
+            multaAtrasoPercentual: titulos[ti].multaAtrasoPercentual || 0,
+            jurosAtrasoPercentualDia: titulos[ti].jurosAtrasoPercentualDia || 0,
             taxaOperadoraValor: titulos[ti].taxaOperadoraValor,
             ultimaTaxaOperadoraValor: 0,
             valorLiquido: titulos[ti].valorLiquido,

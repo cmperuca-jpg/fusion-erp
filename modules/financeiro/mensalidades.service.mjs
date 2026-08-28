@@ -3,6 +3,10 @@ import path from 'node:path';
 import { programarProximaCobrancaAposPagamento } from '../cobranca/cobranca.service.mjs';
 import { aplicarPremioNaMensalidade, vincularMensalidadePremio } from '../fidelidade/fidelidade.service.mjs';
 import { lerJsonDuravel, salvarJsonDuravel } from '../core/persistence/durable-json.mjs';
+import {
+  obterConfiguracaoAtraso,
+  regraAtrasoParaPlano
+} from './configuracao-financeira.service.mjs';
 
 const ROOT = process.cwd();
 const DATA_DIR = path.join(ROOT, 'data');
@@ -135,8 +139,18 @@ function calcularStatus(m) {
 }
 
 function calcularValorAtualizado(m, config = {}) {
-  const multaPercentual = numero(config.multaPercentual, 2);
-  const jurosDiaPercentual = numero(config.jurosDiaPercentual, 0.033);
+  const multaPercentual = ehMatriculaInicial(m)
+    ? 0
+    : numero(config.multaPercentual, 0);
+  const jurosDiaPercentual = ehMatriculaInicial(m)
+    ? 0
+    : numero(config.jurosDiaPercentual, 0);
+  const carenciaDias = ehMatriculaInicial(m)
+    ? 0
+    : Math.max(
+        0,
+        Math.trunc(numero(config.carenciaDias, 0))
+      );
   // A cobrança inicial unificada contém matrícula + primeira mensalidade.
   // `valor` guarda somente a mensalidade do plano, enquanto o total devido
   // está em `total`/`valorTotalInicial`/`valorOriginal`.
@@ -149,16 +163,41 @@ function calcularValorAtualizado(m, config = {}) {
 
   const venc = new Date(`${m.vencimento}T00:00:00`);
   const hoje = new Date(`${hojeISO()}T00:00:00`);
-  const diasAtraso = Math.max(0, Math.floor((hoje - venc) / 86400000));
+  const diasAtraso = Math.max(
+    0,
+    Math.floor((hoje - venc) / 86400000)
+  );
+  const diasComEncargo = Math.max(
+    0,
+    diasAtraso - carenciaDias
+  );
+
+  if (diasComEncargo <= 0) {
+    return {
+      valorBase,
+      multa: 0,
+      juros: 0,
+      valorAtualizado: valorBase,
+      diasAtraso,
+      diasComEncargo: 0
+    };
+  }
+
   const multa = valorBase * (multaPercentual / 100);
-  const juros = valorBase * (jurosDiaPercentual / 100) * diasAtraso;
+  const juros =
+    valorBase *
+    (jurosDiaPercentual / 100) *
+    diasComEncargo;
 
   return {
     valorBase,
     multa: Number(multa.toFixed(2)),
     juros: Number(juros.toFixed(2)),
-    valorAtualizado: Number((valorBase + multa + juros).toFixed(2)),
-    diasAtraso
+    valorAtualizado: Number(
+      (valorBase + multa + juros).toFixed(2)
+    ),
+    diasAtraso,
+    diasComEncargo
   };
 }
 
@@ -619,12 +658,13 @@ function ocultarProgramadasDuplicadas(lista = []) {
 }
 
 export async function listarMensalidades(filtros = {}) {
-  const [mensalidades, alunos, planos, financeiro, matriculas] = await Promise.all([
+  const [mensalidades, alunos, planos, financeiro, matriculas, configAtraso] = await Promise.all([
     lerJson(MENSALIDADES_FILE, []),
     lerJson(ALUNOS_FILE, []),
     lerJson(PLANOS_FILE, []),
     lerJson(FINANCEIRO_FILE, []),
-    lerJson(path.join(DATA_DIR, 'matriculas.json'), [])
+    lerJson(path.join(DATA_DIR, 'matriculas.json'), []),
+    obterConfiguracaoAtraso()
   ]);
 
   const q = normalizarTexto(filtros.q);
@@ -662,7 +702,17 @@ export async function listarMensalidades(filtros = {}) {
         valor: numero(m.valor, 0),
         status: calcularStatus({ ...m, vencimento })
       };
-      return { ...base, ...calcularValorAtualizado(base) };
+      const regraAtraso = regraAtrasoParaPlano(
+        configAtraso,
+        plano || {}
+      );
+      return {
+        ...base,
+        ...calcularValorAtualizado(
+          base,
+          regraAtraso
+        )
+      };
     });
 
   return ocultarProgramadasDuplicadas(normalizadas)
