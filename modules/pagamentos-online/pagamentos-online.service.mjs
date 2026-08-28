@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import { dataLocalISO } from "../core/time/fusion-time.mjs";
 import { obterSupabaseAdmin, supabaseConfigurado } from "../../config/supabase.mjs";
 import { executarComTenant, normalizarTenantId, tenantAtual } from "../core/persistence/tenant-context.mjs";
 import { executarTransacaoJson, lerJsonDuravel, salvarJsonDuravel } from "../core/persistence/durable-json.mjs";
@@ -49,7 +50,7 @@ function numero(valor, fallback = 0) {
 }
 
 function hojeISO() {
-  return new Date().toISOString().slice(0, 10);
+  return dataLocalISO(new Date());
 }
 
 function agoraISO() {

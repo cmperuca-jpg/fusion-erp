@@ -1,4 +1,5 @@
 import express from "express";
+import { executarTransacaoJson } from "../core/persistence/durable-json.mjs";
 import {
   obterTaxasCartao,
   salvarTaxasCartao
@@ -64,7 +65,7 @@ router.get("/", async (req, res) => {
     // se uma mensalidade futura ainda não possuía espelho financeiro,
     // cria/reutiliza exatamente um título antes de montar a lista.
     const mensalidadeId = mensalidadeSolicitadaPelaTela(req);
-    if (mensalidadeId) {
+    if (mensalidadeId && !req.usuario?.portal) {
       await garantirLancamentoFinanceiroMensalidade(mensalidadeId);
     }
 
@@ -104,23 +105,34 @@ router.put("/taxas-cartao", async (req, res) => {
 
 router.post("/", async (req, res) => {
   try {
-    let lancamento = await criarTitulo(req.body);
-    const tipoPagar = String(lancamento.tipo || "").toLowerCase() === "pagar";
-    const baixaConfirmada = req.body?.registrarPagamento === true ||
-      String(req.body?.status || "").toLowerCase() === "pago" ||
-      Boolean(
-        (req.body?.pagamento || req.body?.dataPagamento) &&
-        (req.body?.formaPagamento || req.body?.forma)
-      );
+    const opcoes = req.body?.operacaoId || req.body?.idempotencyKey
+      ? { operacaoId: req.body.operacaoId || req.body.idempotencyKey }
+      : {};
 
-    if (tipoPagar && baixaConfirmada) {
-      lancamento = await baixarPagamento(lancamento.id, {
-        valor: lancamento.valor,
-        formaPagamento: req.body?.formaPagamento || req.body?.forma || "",
-        observacao: req.body?.observacoes || req.body?.observacao || "",
-        operacaoId: req.body?.operacaoId || `baixa-na-criacao-${lancamento.id}`
-      });
-    }
+    const lancamento = await executarTransacaoJson(async () => {
+      let atual = await criarTitulo(req.body);
+      const tipoPagar = String(atual.tipo || "").toLowerCase() === "pagar";
+      const baixaConfirmada = req.body?.registrarPagamento === true ||
+        String(req.body?.status || "").toLowerCase() === "pago" ||
+        Boolean(
+          (req.body?.pagamento || req.body?.dataPagamento) &&
+          (req.body?.formaPagamento || req.body?.forma)
+        );
+
+      if (tipoPagar && baixaConfirmada) {
+        atual = await baixarPagamento(atual.id, {
+          valor: atual.valor,
+          formaPagamento: req.body?.formaPagamento || req.body?.forma || "",
+          observacao: req.body?.observacoes || req.body?.observacao || "",
+          operacaoId:
+            req.body?.operacaoId ||
+            req.body?.idempotencyKey ||
+            `baixa-na-criacao-${atual.id}`
+        });
+      }
+
+      return atual;
+    }, opcoes);
 
     res.status(201).json({ ok: true, lancamento });
   } catch (erro) {

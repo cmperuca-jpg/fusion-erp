@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { executarTransacaoJson } from "../core/persistence/durable-json.mjs";
 import {
   agendarPagamento,
   anexarComprovantePagamento,
@@ -29,6 +30,16 @@ function respostaErro(res, err) {
   return res.status(status).json({ ok: false, erro: err.message || "Erro interno no módulo de pagamentos." });
 }
 
+function opcoesTransacao(req) {
+  const operacaoId = String(
+    req.body?.operacaoId ||
+    req.body?.idempotencyKey ||
+    ""
+  ).trim();
+
+  return operacaoId ? { operacaoId } : {};
+}
+
 router.get(["/", "/pagamentos"], async (req, res) => {
   try { return res.json(await listarPagamentos(req.query || {})); }
   catch (err) { return respostaErro(res, err); }
@@ -46,13 +57,35 @@ router.get(["/dashboard", "/pagamentos/dashboard"], async (req, res) => {
 });
 
 router.post(["/recorrentes", "/pagamentos/recorrentes"], async (req, res) => {
-  try { return res.status(201).json({ ok: true, pagamentos: await criarPagamentosRecorrentes(req.body || {}) }); }
-  catch (err) { return respostaErro(res, err); }
+  try {
+    const pagamentos = await executarTransacaoJson(
+      () => criarPagamentosRecorrentes(req.body || {}),
+      opcoesTransacao(req)
+    );
+    return res.status(201).json({ ok: true, pagamentos });
+  } catch (err) {
+    return respostaErro(res, err);
+  }
 });
 
 router.post(["/lote/baixar", "/pagamentos/lote/baixar"], async (req, res) => {
-  try { return res.json(await baixarPagamentosEmLote(req.body || {})); }
-  catch (err) { return respostaErro(res, err); }
+  try {
+    const resultado = await executarTransacaoJson(async () => {
+      const lote = await baixarPagamentosEmLote(req.body || {});
+      if (!lote.ok) {
+        const erro = new Error(
+          `Baixa em lote cancelada: ${lote.falhas || 0} pagamento(s) apresentaram falha. Nenhuma baixa foi gravada.`
+        );
+        erro.status = 409;
+        throw erro;
+      }
+      return lote;
+    }, opcoesTransacao(req));
+
+    return res.json(resultado);
+  } catch (err) {
+    return respostaErro(res, err);
+  }
 });
 
 router.post(["/fechamento", "/pagamentos/fechamento"], async (req, res) => {
@@ -71,8 +104,15 @@ router.post(["/", "/pagamentos"], async (req, res) => {
 });
 
 router.post(["/parcelar", "/pagamentos/parcelar"], async (req, res) => {
-  try { return res.status(201).json({ ok: true, pagamentos: await parcelarPagamento(req.body || {}) }); }
-  catch (err) { return respostaErro(res, err); }
+  try {
+    const pagamentos = await executarTransacaoJson(
+      () => parcelarPagamento(req.body || {}),
+      opcoesTransacao(req)
+    );
+    return res.status(201).json({ ok: true, pagamentos });
+  } catch (err) {
+    return respostaErro(res, err);
+  }
 });
 
 router.put(["/:id", "/pagamentos/:id"], async (req, res) => {

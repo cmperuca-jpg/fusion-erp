@@ -69,7 +69,7 @@ async function confirmarPeloLedger(req, res) {
     const titulos = await listarTitulos({});
     const titulo = titulos.find((item) => String(item.id) === String(recebimento.lancamentoFinanceiroId || recebimento.financeiroId));
     if (!titulo) return res.status(409).json({ erro: true, mensagem: 'Recebimento sem título financeiro vinculado. Reconcilie o cadastro antes de confirmar.' });
-    const resultado = await receberTitulos({ ...(req.body || {}), tituloId: titulo.id, operacaoId: req.body?.operacaoId || `recebimento-${recebimento.id}-${Date.now()}` });
+    const resultado = await receberTitulos({ ...(req.body || {}), tituloId: titulo.id, operacaoId: req.body?.operacaoId || req.body?.idempotencyKey || `recebimento-${recebimento.id}-${Date.now()}` });
     let cobrancaAutomatica = { ok: true, programada: false };
     if (!resultado.idempotente) try { cobrancaAutomatica = await programarProximaCobrancaAposPagamento({ financeiroId: titulo.id, mensalidadeId: recebimento.mensalidadeId || titulo.mensalidadeId, alunoId: titulo.alunoId || recebimento.alunoId, usuario: req.body?.usuario || 'recebimentos' }); } catch (erroAgenda) { cobrancaAutomatica = { ok: false, aviso: true, programada: false, motivo: erroAgenda.message }; }
     res.json({ ok: true, ...resultado, cobrancaAutomatica });

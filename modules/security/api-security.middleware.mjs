@@ -82,6 +82,90 @@ const ADMIN_PREFIXES = [
   "/api/aparencia"
 ];
 
+
+const FINANCIAL_PREFIXES = [
+  "/api/financeiro",
+  "/api/caixa",
+  "/api/recebimentos",
+  "/api/pagamentos"
+];
+
+function permissoesNormalizadas(user = {}) {
+  return new Set(
+    (Array.isArray(user.permissoes) ? user.permissoes : [])
+      .map((item) => String(item || "").trim().toLowerCase())
+      .filter(Boolean)
+  );
+}
+
+function rotaFinanceira(req) {
+  return FINANCIAL_PREFIXES.some((prefix) => pathMatches(req.path, prefix));
+}
+
+function podeAcessarRotaFinanceira(req, user = {}) {
+  const perfil = String(user.perfil || "").trim().toLowerCase();
+
+  if ([
+    "administrador",
+    "admin",
+    "gerente",
+    "dono",
+    "master",
+    "responsavel_tecnico",
+    "responsavel-tecnico",
+    "responsavel tecnico",
+    "tecnico"
+  ].includes(perfil)) {
+    return true;
+  }
+
+  const permissoes = permissoesNormalizadas(user);
+
+  if (permissoes.has("*") || permissoes.has("financeiro")) return true;
+
+  if (
+    ["GET", "HEAD"].includes(req.method) &&
+    permissoes.has("financeiro_leitura")
+  ) {
+    return true;
+  }
+
+  if (
+    pathMatches(req.path, "/api/financeiro/pagamentos") ||
+    pathMatches(req.path, "/api/pagamentos")
+  ) {
+    return permissoes.has("pagamentos");
+  }
+
+  if (pathMatches(req.path, "/api/caixa")) {
+    return permissoes.has("caixa");
+  }
+
+  if (pathMatches(req.path, "/api/recebimentos")) {
+    return permissoes.has("recebimentos");
+  }
+
+  return false;
+}
+
+function propagarIdempotenciaFinanceira(req) {
+  if (!rotaFinanceira(req)) return;
+  if (!["POST", "PUT", "PATCH", "DELETE"].includes(req.method)) return;
+
+  const chave = String(
+    req.headers["idempotency-key"] ||
+    req.headers["x-idempotency-key"] ||
+    ""
+  ).trim();
+
+  if (!chave) return;
+  if (!req.body || typeof req.body !== "object" || Array.isArray(req.body)) return;
+
+  if (!req.body.operacaoId && !req.body.idempotencyKey) {
+    req.body.idempotencyKey = chave;
+  }
+}
+
 const RESERVED_PUBLIC_SLUGS = new Set([
   "api", "pages", "assets", "uploads", "downloads", "favicon.ico",
   "manifest.json", "robots.txt", "sw.js", "fusion-sw.js"
@@ -503,6 +587,8 @@ export async function apiSecurity(req, res, next) {
     return responderConflitoTenant(res);
   }
 
+  propagarIdempotenciaFinanceira(req);
+
   if (req.usuario?.supportAccess) {
     try {
       await validarSessaoSuporteAtiva(req.usuario);
@@ -524,6 +610,17 @@ export async function apiSecurity(req, res, next) {
     return res.status(403).json({
       ok: false,
       mensagem: "Este portal nao tem acesso a esta operacao."
+    });
+  }
+
+  if (
+    !isPortal(req.usuario) &&
+    rotaFinanceira(req) &&
+    !podeAcessarRotaFinanceira(req, req.usuario)
+  ) {
+    return res.status(403).json({
+      ok: false,
+      mensagem: "Esta operacao exige permissao financeira."
     });
   }
 

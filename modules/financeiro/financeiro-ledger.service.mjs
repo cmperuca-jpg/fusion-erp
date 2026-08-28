@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import { dataLocalISO, horaLocalHHMMSS } from "../core/time/fusion-time.mjs";
 import { executarTransacaoJson, lerJsonDuravel, salvarJsonDuravel, salvarJsonMultiplosAtomico } from "../core/persistence/durable-json.mjs";
 import { lerColecao } from "../core/persistence/collection-store.mjs";
 import { biFinanceiro } from "./relatorios.service.mjs";
@@ -26,7 +27,7 @@ const CONTAS = [
 ];
 
 const agora = () => new Date().toISOString();
-const hoje = () => agora().slice(0, 10);
+const hoje = () => dataLocalISO(new Date());
 const uid = (prefixo) => `${prefixo}_${crypto.randomUUID()}`;
 const txt = (valor) => String(valor ?? "").trim();
 const norm = (valor) => txt(valor).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -547,7 +548,7 @@ export async function receberTitulos(dados = {}) {
       numero: proximoRecibo(recibos),
       operacaoId,
       data: txt(dados.dataPagamento || dados.dataRecebimento) || hoje(),
-      hora: new Date().toTimeString().slice(0, 8),
+      hora: horaLocalHHMMSS(new Date()),
       alunoId: alunoUnico,
       aluno: txt(aluno.nome || alocacoes[0]?.titulo.alunoFornecedor || alocacoes[0]?.titulo.pessoa),
       caixaId: cx.id,
