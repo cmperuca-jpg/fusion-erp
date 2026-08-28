@@ -503,6 +503,17 @@ function protegerUploads(req, res, next) {
   return next();
 }
 
+app.get("/:tenant/apps/aluno", (req, res, next) => {
+  const tenant = String(req.params?.tenant || "").trim().toLowerCase();
+  if (!/^[a-z0-9][a-z0-9_-]{1,79}$/.test(tenant)) return next();
+
+  const params = new URLSearchParams({ academia: tenant });
+  const acesso = String(req.query?.acesso || "").trim().toUpperCase();
+  if (/^[0-9A-F]{8}$/.test(acesso)) params.set("acesso", acesso);
+
+  return res.redirect(302, `/pages/aluno-login/index.html?${params.toString()}`);
+});
+
 app.use(bloquearDownloadPublico);
 app.use(exerciseAssetCompatibility);
 app.use(express.static(path.join(__dirname, "public"), {

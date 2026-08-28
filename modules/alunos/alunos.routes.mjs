@@ -275,8 +275,15 @@ router.put("/:id/dia-vencimento-mensal", async (req, res) => {
   }
 });
 
-router.get("/:id/app-link", async (req, res) => {
+router.post("/:id/app-link", async (req, res) => {
   try {
+    if (!podeGerarCodigoApp(req)) {
+      return res.status(403).json({
+        ok: false,
+        mensagem: "Somente administrador, gerente ou recepção pode enviar o link do aplicativo."
+      });
+    }
+
     const aluno = await alunosService.buscar(req.params.id);
     if (!aluno) {
       return res.status(404).json({ ok: false, mensagem: "Aluno não encontrado." });
@@ -290,8 +297,25 @@ router.get("/:id/app-link", async (req, res) => {
       });
     }
 
+    const cpf = cpfAluno(aluno);
+    if (cpf.length !== 11) {
+      return res.status(400).json({
+        ok: false,
+        mensagem: "O aluno precisa ter CPF válido para receber o acesso ao aplicativo."
+      });
+    }
+
+    // O token de primeiro acesso fica embutido no link e nunca precisa ser digitado.
+    // Depois que a senha é criada, o aluno usa CPF + senha em qualquer aparelho.
+    const acesso = await gerarAtivacaoAlunoERP({
+      tenantId,
+      cpf,
+      validadeMinutos: 1440
+    });
+
     const appUrl =
-      `https://www.fusionsistema.com.br/pages/aluno-login/index.html?academia=${encodeURIComponent(tenantId)}`;
+      `https://www.fusionsistema.com.br/${encodeURIComponent(tenantId)}/apps/aluno` +
+      `?acesso=${encodeURIComponent(acesso.codigo)}`;
 
     const telefoneLocal = String(
       aluno.whatsapp || aluno.telefone || aluno.celular || ""
@@ -305,7 +329,8 @@ router.get("/:id/app-link", async (req, res) => {
     const primeiroNome = nome.split(/\s+/).filter(Boolean)[0] || "";
     const mensagem =
       `Olá${primeiroNome ? `, ${primeiroNome}` : ""}! Acesse o Fusion Aluno pelo link abaixo:\n` +
-      `${appUrl}\n\nEntre com seu CPF e sua senha.`;
+      `${appUrl}\n\n` +
+      `No primeiro acesso, crie sua senha. Depois entre com CPF e senha em qualquer celular.`;
 
     const whatsappUrl = whatsapp
       ? `https://wa.me/${whatsapp}?text=${encodeURIComponent(mensagem)}`
@@ -317,6 +342,7 @@ router.get("/:id/app-link", async (req, res) => {
         app_url: appUrl,
         whatsapp,
         whatsapp_url: whatsappUrl,
+        expira_em: acesso.expira_em || null,
         mensagem
       }
     });

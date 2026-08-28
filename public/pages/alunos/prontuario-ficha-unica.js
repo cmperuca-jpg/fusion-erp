@@ -62,7 +62,7 @@
   async function gerarCodigo() {
     const btn=el("fuGerarCodigoApp"),box=el("fuAppResultado"); try {
       if(btn){btn.disabled=true;btn.textContent="Preparando WhatsApp...";}
-      const resp=await fetch(`/api/alunos/${encodeURIComponent(alunoId)}/app-link`,{cache:"no-store"});
+      const resp=await fetch(`/api/alunos/${encodeURIComponent(alunoId)}/app-link`,{method:"POST",headers:{"Content-Type":"application/json"},body:"{}",cache:"no-store"});
       const json=await resp.json().catch(()=>({})); if(!resp.ok||json.ok===false) throw new Error(json.mensagem||json.erro||`Erro HTTP ${resp.status}`);
       const appUrl=String(json?.dados?.app_url||"").trim();
       const whatsappUrl=String(json?.dados?.whatsapp_url||"").trim();
@@ -70,7 +70,7 @@
       const aberta=window.open(whatsappUrl,"_blank","noopener,noreferrer");
       if(!aberta) window.location.href=whatsappUrl;
       box.classList.remove("hidden");
-      box.innerHTML=`<strong>Link do Fusion Aluno</strong><code>${esc(appUrl)}</code><small>WhatsApp aberto com a mensagem pronta para envio. Não há código de ativação nesta ação.</small>`;
+      box.innerHTML=`<strong>Link do Fusion Aluno</strong><code>${esc(appUrl)}</code><small>WhatsApp aberto com a mensagem pronta. O aluno cria a senha uma vez e depois entra em qualquer celular.</small>`;
     } catch(e){if(box){box.classList.remove("hidden");box.textContent=e.message||"Falha ao preparar o WhatsApp.";}}
     finally{if(btn){btn.disabled=false;btn.textContent="Enviar link pelo WhatsApp";}}
   }

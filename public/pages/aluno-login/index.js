@@ -45,6 +45,19 @@ function tenantAtual() {
   return String(localStorage.getItem(KEYS.tenant) || "").trim().toLowerCase();
 }
 
+function acessoLinkAtual() {
+  const params = new URLSearchParams(location.search);
+  const acesso = String(params.get("acesso") || "").trim().toUpperCase();
+  return /^[0-9A-F]{8}$/.test(acesso) ? acesso : "";
+}
+
+function limparAcessoLink() {
+  const url = new URL(location.href);
+  if (!url.searchParams.has("acesso")) return;
+  url.searchParams.delete("acesso");
+  history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+}
+
 function deviceToken() { return localStorage.getItem(KEYS.deviceToken) || ""; }
 function academiaNome() { return localStorage.getItem(KEYS.academiaNome) || ""; }
 
@@ -263,22 +276,45 @@ async function criarSenha() {
   const senha = $("senhaNova").value;
   const confirmar = $("senhaConfirmar").value;
   const validacao = senhaValida(cpf, senha, confirmar);
+  const tenant = tenantAtual();
+  const acesso = acessoLinkAtual();
   setMessage("firstAccessMessage");
   if (validacao) return setMessage("firstAccessMessage", validacao);
+  if (tenant && !acesso) {
+    return setMessage(
+      "firstAccessMessage",
+      "Este primeiro acesso precisa ser aberto pelo link enviado pela academia no WhatsApp."
+    );
+  }
 
   buttonBusy(btn, true, "Criando acesso...");
   try {
     await request("/primeiro-acesso", {
       method: "POST",
-      body: JSON.stringify({ device_token: deviceToken(), cpf, senha, confirmar_senha: confirmar })
+      body: JSON.stringify(
+        tenant
+          ? { tenant, access_code: acesso, cpf, senha, confirmar_senha: confirmar }
+          : { device_token: deviceToken(), cpf, senha, confirmar_senha: confirmar }
+      )
     });
     $("senhaNova").value = "";
     $("senhaConfirmar").value = "";
+    localStorage.removeItem(KEYS.deviceToken);
+    limparAcessoLink();
     await carregarHome();
   } catch (error) {
     if (error.code === "PASSWORD_ALREADY_CREATED" || error.status === 409) {
+      limparAcessoLink();
       show("loginScreen");
       setMessage("loginMessage", "Sua senha já foi criada. Entre com CPF e senha.");
+      return;
+    }
+    if (error.code === "INVALID_FIRST_ACCESS_LINK") {
+      setMessage("firstAccessMessage", "Este link expirou ou já foi usado. Peça à academia para enviar um novo link.");
+      return;
+    }
+    if (error.status === 429) {
+      setMessage("firstAccessMessage", "Muitas tentativas. Aguarde alguns minutos e tente novamente.");
       return;
     }
     setMessage("firstAccessMessage", error.message || "Não foi possível criar sua senha.");
@@ -307,6 +343,10 @@ async function entrar() {
     await carregarHome();
   } catch (error) {
     if (error.code === "FIRST_ACCESS_REQUIRED" || error.status === 409) {
+      if (tenantAtual() && !acessoLinkAtual()) {
+        setMessage("loginMessage", "Primeiro acesso: peça à academia para enviar seu link pelo WhatsApp.");
+        return;
+      }
       $("cpfPrimeiro").value = cpfFormat(cpf);
       show("firstAccessScreen");
       setMessage("firstAccessMessage", "Este é seu primeiro acesso. Crie sua senha para continuar.", "success");
@@ -1087,7 +1127,7 @@ async function trocarAcademia() {
   try { await request("/logout", { method: "POST", body: "{}" }); } catch {}
   clearTenant();
   localStorage.removeItem(KEYS.tenant);
-  $("codigo").value = "";
+  if ($("codigo")) $("codigo").value = "";
   show("activationScreen");
 }
 
@@ -1095,23 +1135,35 @@ async function boot() {
   installationId();
   atualizarAcademiaNaTela();
   const tenant = tenantAtual();
-  if (tenant && !deviceToken()) {
-    try { await carregarHome(); return; }
-    catch (error) {
-      if (error.status !== 401) setMessage("loginMessage", error.message || "Não foi possível restaurar sua sessão.");
-      show("loginScreen");
+
+  // Com tenant na URL/localStorage, a conta é a identidade.
+  // Token de dispositivo antigo é ignorado e removido.
+  if (tenant) {
+    localStorage.removeItem(KEYS.deviceToken);
+    try {
+      await carregarHome();
+      return;
+    } catch (error) {
+      if (error.status !== 401) {
+        setMessage("loginMessage", error.message || "Não foi possível restaurar sua sessão.");
+      }
+    }
+
+    if (acessoLinkAtual()) {
+      show("firstAccessScreen");
+      setMessage("firstAccessMessage", "Crie sua senha para acessar o Fusion Aluno.", "success");
       return;
     }
-  }
-  if (!deviceToken()) { show("activationScreen"); return; }
-  try { await decidirAposStatus(); }
-  catch (error) {
+
     show("loginScreen");
-    setMessage("loginMessage", error.message || "Não foi possível verificar o acesso agora.");
+    return;
   }
+
+  show("activationScreen");
+  setMessage("activationMessage", "Abra o link enviado pela sua academia no WhatsApp.");
 }
 
-$("codigo").addEventListener("input", (event) => { event.target.value = codigoFormat(event.target.value); });
+$("codigo")?.addEventListener("input", (event) => { event.target.value = codigoFormat(event.target.value); });$("codigo").addEventListener("input", (event) => { event.target.value = codigoFormat(event.target.value); });
 ["cpfPrimeiro", "cpfLogin", "autoCpf"].forEach((id) => {
   $(id)?.addEventListener("input", (event) => { event.target.value = cpfFormat(event.target.value); });
 });
@@ -1128,7 +1180,7 @@ document.querySelectorAll(".show-password").forEach((button) => {
   });
 });
 
-$("ativar").addEventListener("click", ativar);
+$("ativar")?.addEventListener("click", ativar);
 $("gerarMeuCodigo")?.addEventListener("click", gerarMeuCodigo);
 $("jaTenhoSenha")?.addEventListener("click", abrirLoginDireto);
 $("criarSenha").addEventListener("click", criarSenha);
@@ -1180,7 +1232,7 @@ document.addEventListener("keydown", (event) => {
 });
 
 [["codigo", ativar], ["senhaConfirmar", criarSenha], ["senhaLogin", entrar]].forEach(([id, action]) => {
-  $(id).addEventListener("keydown", (event) => { if (event.key === "Enter") action(); });
+  $(id)?.addEventListener("keydown", (event) => { if (event.key === "Enter") action(); });
 });
 
 

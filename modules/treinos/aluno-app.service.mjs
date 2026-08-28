@@ -258,25 +258,18 @@ export async function statusAplicativoAlunosERP({ tenantId, alunoIds = [] } = {}
 
   const academiaId = academiaIds[0];
   const alunosApp = await chamarSupabase(
-    `/rest/v1/alunos?select=id,legacy_id&academia_id=eq.${encodeURIComponent(academiaId)}&limit=5000`
+    `/rest/v1/alunos?select=legacy_id,usuario_id&academia_id=eq.${encodeURIComponent(academiaId)}&limit=5000`
   );
-  const appPorLegacy = new Map();
+  const acessoPorLegacy = new Map();
   for (const row of Array.isArray(alunosApp) ? alunosApp : []) {
     const legacyId = String(row?.legacy_id || "").trim();
-    const appId = String(row?.id || "").trim();
-    if (legacyId && appId) appPorLegacy.set(legacyId, appId);
+    if (legacyId) acessoPorLegacy.set(legacyId, Boolean(row?.usuario_id));
   }
 
-  const dispositivos = await chamarSupabase(
-    `/rest/v1/app_dispositivos?select=aluno_id&academia_id=eq.${encodeURIComponent(academiaId)}&tipo_app=eq.aluno&status=eq.ativo&revogado_em=is.null&limit=5000`
-  );
-  const ativos = new Set((Array.isArray(dispositivos) ? dispositivos : [])
-    .map((row) => String(row?.aluno_id || "").trim()).filter(Boolean));
-
-  return Object.fromEntries(alvos.map((legacyId) => {
-    const appId = appPorLegacy.get(legacyId) || "";
-    return [legacyId, Boolean(appId && ativos.has(appId))];
-  }));
+  return Object.fromEntries(alvos.map((legacyId) => [
+    legacyId,
+    acessoPorLegacy.get(legacyId) === true
+  ]));
 }
 
 
@@ -325,8 +318,8 @@ export async function gerarAtivacaoAlunoERP({ tenantId, cpf, validadeMinutos = 3
   }
 
   const validade = Number(validadeMinutos || 30);
-  if (!Number.isInteger(validade) || validade < 5 || validade > 120) {
-    throw new AlunoAppError("A validade do código deve ficar entre 5 e 120 minutos.", 400, "INVALID_EXPIRATION");
+  if (!Number.isInteger(validade) || validade < 5 || validade > 1440) {
+    throw new AlunoAppError("A validade do acesso deve ficar entre 5 e 1440 minutos.", 400, "INVALID_EXPIRATION");
   }
 
   // O ERP é a fonte operacional do cadastro. Antes de emitir o código,
@@ -458,8 +451,35 @@ export async function loginAlunoApp(payload = {}) {
 }
 
 export async function primeiroAcessoAlunoApp(payload = {}) {
-  const deviceToken = normalizarDeviceToken(payload.device_token || payload.deviceToken);
   const dados = validarCpfSenha(payload, true);
+  const tenantBruto = String(
+    payload.erp_tenant_id ||
+    payload.tenant_id ||
+    payload.tenant ||
+    ""
+  ).trim();
+
+  if (tenantBruto) {
+    const tenant = normalizarTenant(tenantBruto);
+    const codigoAcesso = normalizarCodigo(
+      payload.access_code ||
+      payload.codigo_acesso ||
+      payload.codigoAcesso ||
+      payload.codigo
+    );
+    return chamarSupabase("/functions/v1/fusion-app-first-access", {
+      method: "POST",
+      body: {
+        tipo_app: "aluno",
+        erp_tenant_id: tenant,
+        access_code: codigoAcesso,
+        ...dados
+      }
+    });
+  }
+
+  // Compatibilidade temporária com instalações antigas já ativadas.
+  const deviceToken = normalizarDeviceToken(payload.device_token || payload.deviceToken);
   return chamarSupabase("/functions/v1/fusion-app-first-access", {
     method: "POST",
     body: { tipo_app: "aluno", device_token: deviceToken, ...dados }
