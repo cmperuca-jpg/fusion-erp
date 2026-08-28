@@ -40,8 +40,8 @@ assert.match(recebimentos, /dashboard-materializar-\$\{mensalidadeId\}/);
 assert.match(recebimentos, /destino\.set\("receberAgora","1"\)/);
 
 assert.match(dashboardCss, /\.dashboard-fin-op-linha-clicavel/);
-assert.match(dashboardHtml, /20260828-cobranca-direta-1/);
-assert.match(recebimentosHtml, /20260828-dashboard-cobranca-direta-1/);
+assert.match(dashboardHtml, /20260828-popup-pagamento-1/);
+assert.match(recebimentosHtml, /20260828-popup-pagamento-1/);
 
 console.log(JSON.stringify({
   ok: true,

@@ -15,6 +15,7 @@ import {
 } from "./financeiro-ledger.service.mjs";
 import { baixarPagamento, cancelarPagamento } from "./pagamentos.service.mjs";
 import { garantirLancamentoFinanceiroMensalidade } from "./mensalidade-financeiro-link.service.mjs";
+import { notificarPagamentoConfirmado } from "../notificacoes/notificacao-pagamento.service.mjs";
 
 const router = express.Router();
 
@@ -167,13 +168,27 @@ router.patch("/:id/baixar", async (req, res) => {
     }
 
     if (!lancamento) {
-      return res.status(404).json({
-        ok: false,
-        mensagem: "Lançamento não encontrado"
-      });
+      return res.status(404).json({ ok: false, mensagem: "Lançamento não encontrado" });
     }
 
-    res.json({ ok: true, lancamento, cobrancaAutomatica });
+    let notificacaoPagamento = { ok: true, status: "nao_processada", canais: {} };
+    try {
+      notificacaoPagamento = await notificarPagamentoConfirmado({
+        eventoId: resultado.recibo?.id || resultado.recibo?.numero || req.idempotencyKey || req.body?.operacaoId || req.body?.idempotencyKey,
+        operacaoId: req.idempotencyKey || req.body?.operacaoId || req.body?.idempotencyKey,
+        referenciaId: req.params.id,
+        lancamento,
+        recibo: resultado.recibo,
+        valorPago: req.body?.valorPago || req.body?.valorRecebido || req.body?.valor,
+        dataPagamento: req.body?.dataPagamento || req.body?.pagamento,
+        formaPagamento: req.body?.formaPagamento || req.body?.forma
+      });
+    } catch (erroNotificacao) {
+      notificacaoPagamento = { ok: false, status: "falhou", canais: {}, mensagem: "Pagamento confirmado; comunicação ao cliente será reprocessada." };
+      console.error(`[Financeiro] Falha não bloqueante na notificação de pagamento: ${erroNotificacao.message}`);
+    }
+
+    res.json({ ok: true, lancamento, cobrancaAutomatica, notificacaoPagamento });
   } catch (erro) {
     tratarErro(res, erro);
   }

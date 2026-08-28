@@ -12,3 +12,7 @@
 
 .version-tag{display:inline-block;margin:8px 0 0;padding:4px 8px;border-radius:999px;background:#fff7ed;color:#c2410c;font-size:12px;font-weight:700}
 .qa-finalizado{background:#ecfdf5;border:1px solid #bbf7d0;color:#166534;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:13px;font-weight:700}
+
+
+/* RECEBIMENTOS EMBUTIDO NO DASHBOARD 20260828 */
+html.recebimentos-embed body{background:#fff!important}html.recebimentos-embed .page-header,html.recebimentos-embed .cards-resumo,html.recebimentos-embed #statusIntegracao,html.recebimentos-embed #qaFinalRecebimentos{display:none!important}html.recebimentos-embed .recebimentos-page{max-width:none!important;padding:14px!important}

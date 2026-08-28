@@ -373,3 +373,7 @@ button:disabled {
     font-size: 24px !important;
   }
 }
+
+
+/* FINANCEIRO EMBUTIDO NO DASHBOARD 20260828 */
+html.financeiro-embed,html.financeiro-embed body{background:transparent!important;overflow:hidden!important}html.financeiro-embed .financeiro-page{display:none!important}html.financeiro-embed #modalBaixaFinanceiro.modal-overlay{background:#fff!important;padding:10px!important}html.financeiro-embed #modalBaixaFinanceiro .modal-baixa{width:min(860px,100%)!important;max-height:calc(100vh - 20px)!important;box-shadow:none!important;border:0!important}

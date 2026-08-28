@@ -263,3 +263,7 @@
   display: none !important;
 }
 
+
+
+/* PAGAMENTO EMBUTIDO NO DASHBOARD 20260828 */
+body.dashboard-pagamento-aberto{overflow:hidden!important}.dashboard-pagamento-overlay[hidden]{display:none!important}.dashboard-pagamento-overlay{position:fixed;inset:0;z-index:2147482000;display:grid;place-items:center;padding:18px;background:rgba(15,23,42,.56);backdrop-filter:blur(2px)}.dashboard-pagamento-dialog{width:min(980px,96vw);height:min(790px,94vh);overflow:hidden;border:1px solid #cbd5e1;border-radius:16px;background:#fff;box-shadow:0 24px 70px rgba(15,23,42,.28)}.dashboard-pagamento-barra{height:48px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 14px 0 18px;border-bottom:1px solid #e2e8f0;background:#fff;color:#0f172a}.dashboard-pagamento-barra strong{font-size:14px}.dashboard-pagamento-barra button{width:34px;height:34px;border:0;border-radius:9px;background:#f1f5f9;color:#334155;font-size:24px;line-height:1;cursor:pointer}#dashboardPagamentoFrame{display:block;width:100%;height:calc(100% - 48px);border:0;background:#fff}@media(max-width:620px){.dashboard-pagamento-overlay{padding:0}.dashboard-pagamento-dialog{width:100vw;height:100vh;border:0;border-radius:0}}

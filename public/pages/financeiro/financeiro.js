@@ -5,6 +5,8 @@ const API_LEDGER = "/api/financeiro/ledger";
 const API_TAXAS = "/api/financeiro/taxas-cartao";
 const API_ALUNOS = "/api/alunos";
 const API_FORNECEDORES = "/api/fornecedores";
+const MODO_PAGAMENTO_EMBUTIDO = new URLSearchParams(location.search).get("embed") === "1";
+if (MODO_PAGAMENTO_EMBUTIDO) document.documentElement.classList.add("financeiro-embed");
 
 const TAXAS_CARTAO_TESTE = [
   { bandeira: "Mastercard", modalidade: "debito", parcelas: 1, percentual: 1.09, taxaFixa: 0, descricao: "Débito Mastercard" },
@@ -699,6 +701,11 @@ function fecharModalBaixa() {
   baixaAtual = null;
 }
 
+function fecharModalBaixaComContexto() {
+  fecharModalBaixa();
+  if (MODO_PAGAMENTO_EMBUTIDO && window.parent !== window) window.parent.postMessage({ tipo: "fusion:fechar-pagamento" }, location.origin);
+}
+
 window.baixarLancamento = function baixarLancamento(id) {
   const lancamento = lancamentos.find((item) => String(item.id) === String(id));
   if (!lancamento) return alert("Lançamento não encontrado na listagem atual.");
@@ -766,10 +773,15 @@ async function confirmarBaixa(event) {
     else if (motor.gerada) mensagemMotor = `\n\nPróxima mensalidade gerada automaticamente: ${motor.proximoVencimento || ""}`;
     else if (motor.aviso && motor.motivo) mensagemMotor = `\n\nAtenção na recorrência: ${motor.motivo}`;
 
+    const tipoOperacao = baixaAtual?.tipo === "pagar" ? "Pagamento" : "Recebimento";
     fecharModalBaixa();
     limparParametrosBaixaDaUrl();
     const numeroRecibo = json?.lancamento?.recibo?.numero;
-    alert(`${baixaAtual?.tipo === "pagar" ? "Pagamento" : "Recebimento"} confirmado e registrado.${numeroRecibo ? `\nRecibo nº ${numeroRecibo}` : ""}${mensagemMotor}`);
+    if (MODO_PAGAMENTO_EMBUTIDO && window.parent !== window) {
+      window.parent.postMessage({ tipo: "fusion:pagamento-confirmado", operacao: tipoOperacao, recibo: numeroRecibo || "", notificacao: json?.notificacaoPagamento?.status || "" }, location.origin);
+      return;
+    }
+    alert(`${tipoOperacao} confirmado e registrado.${numeroRecibo ? `\nRecibo nº ${numeroRecibo}` : ""}${mensagemMotor}`);
     await iniciarFinanceiro();
   } catch (erro) {
     alert(erro.message || "Erro ao confirmar pagamento.");
@@ -926,9 +938,10 @@ async function abrirBaixaPorUrlSeExistir() {
   // Reconciliamos com upsert, sem criar outra mensalidade ou duplicar cobrança.
   if (!lancamento && mensalidadeId) {
     try {
-      const resp = await fetch(`/api/mensalidades/${encodeURIComponent(mensalidadeId)}/financeiro`, {
+      const resp = await fetch(`/api/financeiro/mensalidades/${encodeURIComponent(mensalidadeId)}/garantir-lancamento`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" }
+        headers: { "Content-Type": "application/json", "Idempotency-Key": `financeiro-materializar-${mensalidadeId}` },
+        body: JSON.stringify({})
       });
       const json = await resp.json().catch(() => ({}));
       if (!resp.ok || json.ok === false) throw new Error(json.mensagem || json.erro || `Erro HTTP ${resp.status}`);
@@ -990,8 +1003,8 @@ document.getElementById("btnIntegridade")?.addEventListener("click", consultarIn
 document.getElementById("btnFecharConsultaFinanceira")?.addEventListener("click", fecharConsultaFinanceira);
 document.getElementById("btnOkConsultaFinanceira")?.addEventListener("click", fecharConsultaFinanceira);
 document.getElementById("btnLimpar").addEventListener("click", () => { filtroIndicador = ""; els.busca.value = ""; els.filtroTipo.value = ""; els.filtroStatus.value = ""; iniciarFinanceiro(); });
-document.getElementById("btnFecharBaixa")?.addEventListener("click", fecharModalBaixa);
-document.getElementById("btnCancelarBaixa")?.addEventListener("click", fecharModalBaixa);
+document.getElementById("btnFecharBaixa")?.addEventListener("click", fecharModalBaixaComContexto);
+document.getElementById("btnCancelarBaixa")?.addEventListener("click", fecharModalBaixaComContexto);
 els.form.addEventListener("submit", salvarLancamento);
 els.formBaixa.addEventListener("submit", confirmarBaixa);
 

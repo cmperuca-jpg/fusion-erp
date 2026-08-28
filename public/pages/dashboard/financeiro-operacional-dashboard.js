@@ -200,6 +200,51 @@
     if (el) el.textContent = valor;
   }
 
+  function urlPagamentoEmbutido(href) {
+    const url = new URL(href, location.origin);
+    if (url.origin !== location.origin) throw new Error("Destino fora da origem do Fusion.");
+    url.searchParams.set("embed", "1");
+    return `${url.pathname}${url.search}${url.hash}`;
+  }
+
+  function garantirOverlayPagamento() {
+    let overlay = $("dashboardPagamentoOverlay");
+    if (overlay) return overlay;
+    overlay = document.createElement("div");
+    overlay.id = "dashboardPagamentoOverlay";
+    overlay.className = "dashboard-pagamento-overlay";
+    overlay.hidden = true;
+    overlay.innerHTML = `<div class="dashboard-pagamento-dialog" role="dialog" aria-modal="true" aria-label="Recebimento">
+      <div class="dashboard-pagamento-barra"><strong>Receber cobrança</strong><button id="dashboardPagamentoFechar" type="button" aria-label="Fechar recebimento">×</button></div>
+      <iframe id="dashboardPagamentoFrame" title="Recebimento do cliente" loading="eager" referrerpolicy="same-origin"></iframe>
+    </div>`;
+    document.body.appendChild(overlay);
+    $("dashboardPagamentoFechar")?.addEventListener("click", fecharPagamentoNoDashboard);
+    return overlay;
+  }
+
+  function fecharPagamentoNoDashboard() {
+    const overlay = $("dashboardPagamentoOverlay");
+    const frame = $("dashboardPagamentoFrame");
+    if (frame) frame.src = "about:blank";
+    if (overlay) overlay.hidden = true;
+    document.body.classList.remove("dashboard-pagamento-aberto");
+  }
+
+  function abrirPagamentoNoDashboard(href) {
+    try {
+      const overlay = garantirOverlayPagamento();
+      const frame = $("dashboardPagamentoFrame");
+      if (!frame) throw new Error("Janela de recebimento indisponível.");
+      frame.src = urlPagamentoEmbutido(href);
+      overlay.hidden = false;
+      document.body.classList.add("dashboard-pagamento-aberto");
+    } catch (erro) {
+      console.error("Dashboard pagamento embutido:", erro);
+      location.href = href;
+    }
+  }
+
   function criarLinha({
     nome,
     detalhe,
@@ -217,6 +262,11 @@
       linha.style.color = "inherit";
       linha.title = acao || "Abrir para resolver";
       linha.setAttribute("aria-label", acao || `Abrir cobrança de ${nome || "cliente"}`);
+      linha.addEventListener("click", (evento) => {
+        if (evento.defaultPrevented || evento.button !== 0 || evento.ctrlKey || evento.metaKey || evento.shiftKey || evento.altKey) return;
+        evento.preventDefault();
+        abrirPagamentoNoDashboard(href);
+      });
     }
 
     const blocoNome = document.createElement("div");
@@ -461,8 +511,22 @@
       if (!document.hidden) atualizar();
     });
 
+    window.addEventListener("message", (evento) => {
+      if (evento.origin !== location.origin || !evento.data || typeof evento.data !== "object") return;
+      if (evento.data.tipo === "fusion:pagamento-confirmado") {
+        fecharPagamentoNoDashboard();
+        setText("dashboardFinAtualizado", "Recebimento confirmado. Atualizando...");
+        atualizar();
+      } else if (evento.data.tipo === "fusion:fechar-pagamento") {
+        fecharPagamentoNoDashboard();
+      }
+    });
+    document.addEventListener("keydown", (evento) => {
+      if (evento.key === "Escape" && !$("dashboardPagamentoOverlay")?.hidden) fecharPagamentoNoDashboard();
+    });
     window.addEventListener("pagehide", () => {
       if (timer) window.clearInterval(timer);
+      fecharPagamentoNoDashboard();
     }, { once: true });
   }
 

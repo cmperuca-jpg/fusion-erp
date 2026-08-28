@@ -1,0 +1,10 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+const d=fs.readFileSync("public/pages/dashboard/financeiro-operacional-dashboard.js","utf8");
+const c=fs.readFileSync("public/pages/dashboard/financeiro-operacional-dashboard.css","utf8");
+const r=fs.readFileSync("public/pages/recebimentos/index.js","utf8");
+const f=fs.readFileSync("public/pages/financeiro/financeiro.js","utf8");
+assert.match(d,/function abrirPagamentoNoDashboard/);assert.match(d,/searchParams\.set\("embed", "1"\)/);assert.match(d,/fusion:pagamento-confirmado/);assert.match(d,/evento\.origin !== location\.origin/);assert.match(c,/\.dashboard-pagamento-overlay/);
+assert.match(r,/MODO_PAGAMENTO_EMBUTIDO/);assert.match(r,/params\.set\("embed","1"\)/);assert.match(r,/destino\.set\("embed","1"\)/);
+assert.match(f,/MODO_PAGAMENTO_EMBUTIDO/);assert.match(f,/fusion:pagamento-confirmado/);assert.match(f,/fusion:fechar-pagamento/);assert.match(f,/garantir-lancamento/);assert.doesNotMatch(f,/\/api\/mensalidades\/\$\{encodeURIComponent\(mensalidadeId\)\}\/financeiro/);
+console.log(JSON.stringify({ok:true,modulo:"dashboard-popup-pagamento",permaneceNoDashboard:true,motorFinanceiroReutilizado:true,cancelamentoFechaPopup:true,sucessoFechaEAtualiza:true,origemPostMessageValidada:true,materializacaoExplicita:true},null,2));
