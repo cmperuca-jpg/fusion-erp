@@ -200,13 +200,23 @@
     if (el) el.textContent = valor;
   }
 
-  function criarLinha({ nome, detalhe, vencimento, valor, atrasado = false, href = "" }) {
+  function criarLinha({
+    nome,
+    detalhe,
+    vencimento,
+    valor,
+    atrasado = false,
+    href = "",
+    acao = ""
+  }) {
     const linha = document.createElement(href ? "a" : "div");
-    linha.className = "dashboard-fin-op-linha";
+    linha.className = `dashboard-fin-op-linha${href ? " dashboard-fin-op-linha-clicavel" : ""}`;
     if (href) {
       linha.href = href;
       linha.style.textDecoration = "none";
       linha.style.color = "inherit";
+      linha.title = acao || "Abrir para resolver";
+      linha.setAttribute("aria-label", acao || `Abrir cobrança de ${nome || "cliente"}`);
     }
 
     const blocoNome = document.createElement("div");
@@ -254,6 +264,7 @@
 
       const nome = nomePessoa(item);
       const id = alunoId(item);
+      const mensalidadeId = texto(item.mensalidadeId || item.id || "");
       const chave = id || normalizar(nome);
       if (!chave) return;
 
@@ -262,11 +273,15 @@
         nome,
         valor: 0,
         vencimento,
-        titulos: 0
+        titulos: 0,
+        mensalidadeIds: []
       };
 
       atual.valor += saldo;
       atual.titulos += 1;
+      if (mensalidadeId && !atual.mensalidadeIds.includes(mensalidadeId)) {
+        atual.mensalidadeIds.push(mensalidadeId);
+      }
       if (!atual.vencimento || vencimento < atual.vencimento) {
         atual.vencimento = vencimento;
       }
@@ -280,6 +295,26 @@
       b.valor - a.valor ||
       a.nome.localeCompare(b.nome, "pt-BR")
     );
+  }
+
+  function hrefDebitoAluno(item = {}) {
+    const params = new URLSearchParams();
+    params.set("origem", "dashboard-debito");
+
+    const ids = Array.isArray(item.mensalidadeIds)
+      ? item.mensalidadeIds.filter(Boolean)
+      : [];
+
+    if (item.titulos === 1 && ids.length === 1) {
+      params.set("mensalidadeId", ids[0]);
+      params.set("receberAgora", "1");
+    } else {
+      if (item.id) params.set("alunoId", item.id);
+      if (item.nome) params.set("cliente", item.nome);
+      params.set("filtro", "vencidos");
+    }
+
+    return `/pages/recebimentos/index.html?${params.toString()}`;
   }
 
   function calcularRecebiveis(recebimentos) {
@@ -332,7 +367,11 @@
         detalhe,
         vencimento: item.vencimento,
         valor: item.valor,
-        atrasado: true
+        atrasado: true,
+        href: hrefDebitoAluno(item),
+        acao: item.titulos > 1
+          ? `Abrir as ${item.titulos} cobranças vencidas de ${item.nome}`
+          : `Receber agora a cobrança vencida de ${item.nome}`
       }));
     });
   }
@@ -355,8 +394,8 @@
     container.replaceChildren();
     recebiveis.forEach((item) => {
       const href = item.id
-        ? `/pages/recebimentos/index.html?recebimentoId=${encodeURIComponent(item.id)}`
-        : "/pages/recebimentos/index.html";
+        ? `/pages/recebimentos/index.html?recebimentoId=${encodeURIComponent(item.id)}&receberAgora=1&origem=dashboard-receber`
+        : "/pages/recebimentos/index.html?origem=dashboard-receber";
 
       container.appendChild(criarLinha({
         nome: item.nome,
@@ -364,7 +403,8 @@
         vencimento: item.vencimento,
         valor: item.valor,
         atrasado: item.atrasado,
-        href
+        href,
+        acao: `Receber agora: ${item.nome}${item.detalhe ? ` — ${item.detalhe}` : ""}`
       }));
     });
   }

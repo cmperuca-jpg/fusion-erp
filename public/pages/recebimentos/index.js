@@ -169,6 +169,28 @@ async function executarDiagnostico(){
 
 function salvarPreferencias(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify({filtros:getFiltros(),sortCampo:estado.sortCampo,sortDir:estado.sortDir}))}catch{}}
 function restaurarPreferencias(){try{const pref=JSON.parse(localStorage.getItem(STORAGE_KEY)||"null");if(!pref)return;const mapa={busca:"#fBusca",status:"#fStatus",forma:"#fForma",rapido:"#fRapido",inicio:"#fInicio",fim:"#fFim"};Object.entries(pref.filtros||{}).forEach(([k,v])=>{const el=$(mapa[k]);if(el)el.value=v||""});if(pref.sortCampo)estado.sortCampo=pref.sortCampo;if(pref.sortDir)estado.sortDir=pref.sortDir}catch{}}
+function aplicarContextoDashboardDaUrl(){
+  const p=new URLSearchParams(location.search);
+  const origem=String(p.get("origem")||"");
+  if(!origem.startsWith("dashboard"))return;
+
+  const alvo=p.get("recebimentoId")||p.get("rec")||p.get("id")||p.get("financeiroId")||p.get("lancamentoFinanceiroId")||p.get("mensalidadeId");
+  const cliente=String(p.get("cliente")||"").trim();
+
+  // Uma navegação operacional não pode herdar filtros antigos que escondam
+  // justamente o título escolhido no Dashboard.
+  ["#fBusca","#fStatus","#fForma","#fRapido","#fInicio","#fFim"].forEach((id)=>{
+    const el=$(id);
+    if(el)el.value="";
+  });
+
+  if(cliente&&$("#fBusca"))$("#fBusca").value=cliente;
+  if(!alvo&&p.get("filtro")==="vencidos"&&$("#fRapido"))$("#fRapido").value="vencidos";
+
+  estado.pagina=1;
+  estado.sortCampo="vencimento";
+  estado.sortDir="asc";
+}
 function obterPorId(id){return estado.registros.find(r=>String(idRegistro(r))===String(id))}
 function selecionadosValidos(){return[...estado.selecionados].map(obterPorId).filter(Boolean)}
 function selecionadosBaixaveis(){return selecionadosValidos().filter(estaBaixavel)}
@@ -251,14 +273,72 @@ function imprimirResumo(){
 function imprimirComprovante(id){const i=obterPorId(id);if(!i)return;const html=`<html><head><title>Comprovante</title><style>body{font-family:Arial;padding:24px}h1{color:#ff6600}.box{border:1px solid #ddd;padding:14px;margin:10px 0}p{margin:6px 0}</style></head><body><h1>Fusion ERP</h1><h2>Comprovante de Recebimento</h2><p><b>Documento fiscal interno:</b> Recebimento</p><div class="box"><p><b>Cliente:</b> ${esc(campoTexto(i,["cliente","aluno","nomeCliente","responsavel"],"-"))}</p><p><b>Descrição:</b> ${esc(campoTexto(i,["descricao","observacao","referencia"],"-"))}</p><p><b>Documento:</b> ${esc(campoTexto(i,["documento","numeroDocumento","parcela"],"-"))}</p><p><b>Vencimento:</b> ${esc(dataBr(dataItem(i)))}</p><p><b>Valor:</b> ${esc(moeda(valorBruto(i)))}</p><p><b>Recebido:</b> ${esc(moeda(valorRecebido(i)))}</p><p><b>Saldo:</b> ${esc(moeda(saldoExibido(i)))}</p><p><b>Status:</b> ${esc(statusItem(i))}</p></div><p>Emitido em ${new Date().toLocaleString("pt-BR")}</p><hr><p>Assinatura: __________________________________________</p><script>window.print();setTimeout(()=>window.close(),500)</script></body></html>`;const w=window.open("","_blank");if(w){w.document.write(html);w.document.close()}}
 
 
-function abrirBaixaAutomaticaPorUrl(){
+async function abrirBaixaAutomaticaPorUrl(){
   const p=new URLSearchParams(location.search);
-  const alvo=p.get("recebimentoId")||p.get("rec")||p.get("id")||p.get("financeiroId")||p.get("lancamentoFinanceiroId")||p.get("mensalidadeId");
+  const origem=String(p.get("origem")||"");
+  const mensalidadeId=p.get("mensalidadeId")||"";
+  const alvo=p.get("recebimentoId")||p.get("rec")||p.get("id")||p.get("financeiroId")||p.get("lancamentoFinanceiroId")||mensalidadeId;
   if(!alvo)return;
-  const item=estado.registros.find(r=>String(idRegistro(r))===String(alvo)||String(r.lancamentoFinanceiroId||"")===String(alvo)||String(r.mensalidadeId||"")===String(alvo));
-  if(!item){aviso(`Recebimento de origem ${alvo} não encontrado na lista atual. Use a pesquisa ou atualize a página.`);return;}
-  if(!estaBaixavel(item)){aviso("Este recebimento já está quitado ou não está disponível para baixa.");return;}
-  setTimeout(()=>abrirModalBaixa(idRegistro(item)),250);
+
+  const item=estado.registros.find(r=>
+    String(idRegistro(r))===String(alvo)||
+    String(r.lancamentoFinanceiroId||"")===String(alvo)||
+    String(r.financeiroId||"")===String(alvo)||
+    String(r.mensalidadeId||"")===String(alvo)
+  );
+
+  if(item){
+    if(!estaBaixavel(item)){
+      aviso("Este recebimento já está quitado ou não está disponível para baixa.");
+      return;
+    }
+    setTimeout(()=>abrirModalBaixa(idRegistro(item)),120);
+    return;
+  }
+
+  if(mensalidadeId&&origem.startsWith("dashboard")){
+    aviso("Preparando a cobrança selecionada...");
+    try{
+      const resp=await fetch(
+        `/api/financeiro/mensalidades/${encodeURIComponent(mensalidadeId)}/garantir-lancamento`,
+        {
+          method:"POST",
+          headers:{
+            "Content-Type":"application/json",
+            "Idempotency-Key":`dashboard-materializar-${mensalidadeId}`
+          },
+          body:JSON.stringify({})
+        }
+      );
+      const json=await resp.json().catch(()=>({}));
+      if(!resp.ok||json?.ok===false){
+        throw new Error(json?.mensagem||json?.erro||`HTTP ${resp.status}`);
+      }
+
+      const financeiroId=String(
+        json.financeiroId||
+        json.lancamento?.id||
+        ""
+      ).trim();
+
+      if(!financeiroId){
+        throw new Error("O lançamento foi preparado, mas o Financeiro não retornou seu identificador.");
+      }
+
+      const destino=new URLSearchParams();
+      destino.set("financeiroId",financeiroId);
+      destino.set("mensalidadeId",mensalidadeId);
+      destino.set("receberAgora","1");
+      destino.set("origem","dashboard");
+      location.href=`/pages/financeiro/index.html?${destino.toString()}`;
+      return;
+    }catch(e){
+      aviso(`Não foi possível preparar esta cobrança: ${String(e?.message||e)}`);
+      return;
+    }
+  }
+
+  aviso(`Recebimento de origem ${alvo} não encontrado na lista atual. Use a pesquisa ou atualize a página.`);
 }
 
-document.addEventListener("DOMContentLoaded",()=>{restaurarPreferencias();$("#btnAtualizar")?.addEventListener("click",carregar);$("#btnDiagnostico")?.addEventListener("click",executarDiagnostico);$("#btnExportar")?.addEventListener("click",exportarCsv);$("#btnResumo")?.addEventListener("click",abrirResumo);$("#btnExportarSelecionados")?.addEventListener("click",exportarSelecionados);$("#btnImprimir")?.addEventListener("click",()=>window.print());$("#btnSelecionarFiltrados")?.addEventListener("click",selecionarFiltrados);$("#btnBaixaLote")?.addEventListener("click",abrirLote);$("#btnLimparSelecao")?.addEventListener("click",()=>{estado.selecionados.clear();renderTabela()});$("#btnFiltrar")?.addEventListener("click",()=>{estado.pagina=1;carregar().then(abrirBaixaAutomaticaPorUrl)});$("#btnLimpar")?.addEventListener("click",()=>{["#fBusca","#fStatus","#fForma","#fRapido","#fInicio","#fFim"].forEach(id=>{const el=$(id);if(el)el.value=""});estado.sortCampo="vencimento";estado.sortDir="asc";localStorage.removeItem(STORAGE_KEY);estado.pagina=1;carregar()});["#fBusca","#fRapido","#fStatus","#fForma","#fInicio","#fFim"].forEach(id=>{$(id)?.addEventListener("input",()=>{estado.pagina=1;renderTabela()});$(id)?.addEventListener("change",()=>{estado.pagina=1;renderTabela()})});document.querySelectorAll(".sort-btn").forEach(btn=>btn.addEventListener("click",()=>{const c=btn.dataset.sort;if(estado.sortCampo===c)estado.sortDir=estado.sortDir==="asc"?"desc":"asc";else{estado.sortCampo=c;estado.sortDir=c==="vencimento"?"asc":"desc"}estado.pagina=1;renderTabela()}));$("#chkTodos")?.addEventListener("change",ev=>{paginaAtualItens().forEach(i=>{const id=idRegistro(i);if(id){if(ev.target.checked)estado.selecionados.add(String(id));else estado.selecionados.delete(String(id))}});renderTabela()});$("#btnAnterior")?.addEventListener("click",()=>{estado.pagina--;renderTabela()});$("#btnProxima")?.addEventListener("click",()=>{estado.pagina++;renderTabela()});$("#btnFecharModal")?.addEventListener("click",()=>$("#modalBaixa").close());$("#btnCancelarBaixa")?.addEventListener("click",()=>$("#modalBaixa").close());$("#btnConfirmarBaixa")?.addEventListener("click",async(ev)=>{setBusy(ev.currentTarget,true);try{await confirmarBaixa()}finally{setBusy(ev.currentTarget,false)}});$("#btnNovo")?.addEventListener("click",abrirModalNovo);$("#btnFecharNovo")?.addEventListener("click",()=>$("#modalNovo").close());$("#btnCancelarNovo")?.addEventListener("click",()=>$("#modalNovo").close());$("#btnSalvarNovo")?.addEventListener("click",async(ev)=>{setBusy(ev.currentTarget,true);try{await salvarNovo()}finally{setBusy(ev.currentTarget,false)}});$("#btnFecharLote")?.addEventListener("click",()=>$("#modalLote").close());$("#btnCancelarLote")?.addEventListener("click",()=>$("#modalLote").close());$("#btnConfirmarLote")?.addEventListener("click",async(ev)=>{setBusy(ev.currentTarget,true);try{await confirmarLote()}finally{setBusy(ev.currentTarget,false)}});$("#btnFecharResumo")?.addEventListener("click",()=>$("#modalResumo").close());$("#btnImprimirResumo")?.addEventListener("click",imprimirResumo);$("#btnExportarResumo")?.addEventListener("click",exportarResumoCsv);$("#btnFecharDetalhe")?.addEventListener("click",()=>$("#modalDetalhe").close());$("#btnDuplicarDetalhe")?.addEventListener("click",()=>{$("#modalDetalhe").close();duplicarRecebimento(estado.detalheId)});$("#btnBaixarDetalhe")?.addEventListener("click",()=>{$("#modalDetalhe").close();abrirModalBaixa(estado.detalheId)});$("#btnComprovanteDetalhe")?.addEventListener("click",()=>imprimirComprovante(estado.detalheId));$("#tbRecebimentos")?.addEventListener("change",ev=>{const chk=ev.target.closest("[data-select]");if(!chk)return;if(chk.checked)estado.selecionados.add(String(chk.dataset.select));else estado.selecionados.delete(String(chk.dataset.select));renderTabela()});$("#tbRecebimentos")?.addEventListener("click",ev=>{const d=ev.target.closest("[data-detalhe]"),du=ev.target.closest("[data-duplicar]"),co=ev.target.closest("[data-comprovante]"),b=ev.target.closest("[data-baixar]"),e=ev.target.closest("[data-estornar]"),c=ev.target.closest("[data-cancelar]");if(d)abrirDetalhe(d.dataset.detalhe);if(du)duplicarRecebimento(du.dataset.duplicar);if(co)imprimirComprovante(co.dataset.comprovante);if(b&&!b.disabled)abrirModalBaixa(b.dataset.baixar);if(e&&!e.disabled)confirmarEstorno(e.dataset.estornar);if(c&&!c.disabled)confirmarCancelamento(c.dataset.cancelar)});carregar()});
+document.addEventListener("DOMContentLoaded",()=>{restaurarPreferencias();aplicarContextoDashboardDaUrl();$("#btnAtualizar")?.addEventListener("click",carregar);$("#btnDiagnostico")?.addEventListener("click",executarDiagnostico);$("#btnExportar")?.addEventListener("click",exportarCsv);$("#btnResumo")?.addEventListener("click",abrirResumo);$("#btnExportarSelecionados")?.addEventListener("click",exportarSelecionados);$("#btnImprimir")?.addEventListener("click",()=>window.print());$("#btnSelecionarFiltrados")?.addEventListener("click",selecionarFiltrados);$("#btnBaixaLote")?.addEventListener("click",abrirLote);$("#btnLimparSelecao")?.addEventListener("click",()=>{estado.selecionados.clear();renderTabela()});$("#btnFiltrar")?.addEventListener("click",()=>{estado.pagina=1;carregar().then(abrirBaixaAutomaticaPorUrl)});$("#btnLimpar")?.addEventListener("click",()=>{["#fBusca","#fStatus","#fForma","#fRapido","#fInicio","#fFim"].forEach(id=>{const el=$(id);if(el)el.value=""});estado.sortCampo="vencimento";estado.sortDir="asc";localStorage.removeItem(STORAGE_KEY);estado.pagina=1;carregar()});["#fBusca","#fRapido","#fStatus","#fForma","#fInicio","#fFim"].forEach(id=>{$(id)?.addEventListener("input",()=>{estado.pagina=1;renderTabela()});$(id)?.addEventListener("change",()=>{estado.pagina=1;renderTabela()})});document.querySelectorAll(".sort-btn").forEach(btn=>btn.addEventListener("click",()=>{const c=btn.dataset.sort;if(estado.sortCampo===c)estado.sortDir=estado.sortDir==="asc"?"desc":"asc";else{estado.sortCampo=c;estado.sortDir=c==="vencimento"?"asc":"desc"}estado.pagina=1;renderTabela()}));$("#chkTodos")?.addEventListener("change",ev=>{paginaAtualItens().forEach(i=>{const id=idRegistro(i);if(id){if(ev.target.checked)estado.selecionados.add(String(id));else estado.selecionados.delete(String(id))}});renderTabela()});$("#btnAnterior")?.addEventListener("click",()=>{estado.pagina--;renderTabela()});$("#btnProxima")?.addEventListener("click",()=>{estado.pagina++;renderTabela()});$("#btnFecharModal")?.addEventListener("click",()=>$("#modalBaixa").close());$("#btnCancelarBaixa")?.addEventListener("click",()=>$("#modalBaixa").close());$("#btnConfirmarBaixa")?.addEventListener("click",async(ev)=>{setBusy(ev.currentTarget,true);try{await confirmarBaixa()}finally{setBusy(ev.currentTarget,false)}});$("#btnNovo")?.addEventListener("click",abrirModalNovo);$("#btnFecharNovo")?.addEventListener("click",()=>$("#modalNovo").close());$("#btnCancelarNovo")?.addEventListener("click",()=>$("#modalNovo").close());$("#btnSalvarNovo")?.addEventListener("click",async(ev)=>{setBusy(ev.currentTarget,true);try{await salvarNovo()}finally{setBusy(ev.currentTarget,false)}});$("#btnFecharLote")?.addEventListener("click",()=>$("#modalLote").close());$("#btnCancelarLote")?.addEventListener("click",()=>$("#modalLote").close());$("#btnConfirmarLote")?.addEventListener("click",async(ev)=>{setBusy(ev.currentTarget,true);try{await confirmarLote()}finally{setBusy(ev.currentTarget,false)}});$("#btnFecharResumo")?.addEventListener("click",()=>$("#modalResumo").close());$("#btnImprimirResumo")?.addEventListener("click",imprimirResumo);$("#btnExportarResumo")?.addEventListener("click",exportarResumoCsv);$("#btnFecharDetalhe")?.addEventListener("click",()=>$("#modalDetalhe").close());$("#btnDuplicarDetalhe")?.addEventListener("click",()=>{$("#modalDetalhe").close();duplicarRecebimento(estado.detalheId)});$("#btnBaixarDetalhe")?.addEventListener("click",()=>{$("#modalDetalhe").close();abrirModalBaixa(estado.detalheId)});$("#btnComprovanteDetalhe")?.addEventListener("click",()=>imprimirComprovante(estado.detalheId));$("#tbRecebimentos")?.addEventListener("change",ev=>{const chk=ev.target.closest("[data-select]");if(!chk)return;if(chk.checked)estado.selecionados.add(String(chk.dataset.select));else estado.selecionados.delete(String(chk.dataset.select));renderTabela()});$("#tbRecebimentos")?.addEventListener("click",ev=>{const d=ev.target.closest("[data-detalhe]"),du=ev.target.closest("[data-duplicar]"),co=ev.target.closest("[data-comprovante]"),b=ev.target.closest("[data-baixar]"),e=ev.target.closest("[data-estornar]"),c=ev.target.closest("[data-cancelar]");if(d)abrirDetalhe(d.dataset.detalhe);if(du)duplicarRecebimento(du.dataset.duplicar);if(co)imprimirComprovante(co.dataset.comprovante);if(b&&!b.disabled)abrirModalBaixa(b.dataset.baixar);if(e&&!e.disabled)confirmarEstorno(e.dataset.estornar);if(c&&!c.disabled)confirmarCancelamento(c.dataset.cancelar)});carregar().then(abrirBaixaAutomaticaPorUrl)});

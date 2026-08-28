@@ -159,6 +159,23 @@
   border-bottom: 0;
 }
 
+.dashboard-fin-op-linha-clicavel {
+  cursor: pointer;
+  outline: none;
+  transition: background-color .12s ease, box-shadow .12s ease;
+}
+
+.dashboard-fin-op-linha-clicavel:hover,
+.dashboard-fin-op-linha-clicavel:focus-visible {
+  background: #f8fafc;
+  box-shadow: inset 3px 0 0 #0891b2;
+}
+
+.dashboard-fin-op-linha-clicavel:hover .dashboard-fin-op-nome strong,
+.dashboard-fin-op-linha-clicavel:focus-visible .dashboard-fin-op-nome strong {
+  text-decoration: underline;
+}
+
 .dashboard-fin-op-nome {
   min-width: 0;
 }
