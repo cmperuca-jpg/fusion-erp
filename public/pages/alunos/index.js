@@ -479,6 +479,85 @@ async function carregarAlunos() {
   }
 }
 
+
+function formatarCpfDuplicidade(cpf = "") {
+  const n = somenteNumeros(cpf).slice(0, 11);
+  if (n.length !== 11) return cpf || "-";
+  return n.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4");
+}
+
+function fecharDuplicidadesAlunos() {
+  document.getElementById("modalDuplicidadesAlunos")?.classList.add("hidden");
+}
+
+function badgeVinculoDuplicidade(rotulo, quantidade) {
+  const q = Number(quantidade || 0);
+  return q > 0 ? `<span class="dup-badge vinculo">${escapeHtml(rotulo)}: ${q}</span>` : "";
+}
+
+function renderizarDuplicidadesAlunos(payload = {}) {
+  const lista = document.getElementById("duplicidadesLista");
+  const resumo = document.getElementById("duplicidadesResumo");
+  if (!lista || !resumo) return;
+  const grupos = Array.isArray(payload.grupos) ? payload.grupos : [];
+  if (!grupos.length) {
+    resumo.innerHTML = '<strong>Nenhum CPF duplicado encontrado.</strong>';
+    lista.innerHTML = '<div class="duplicidades-vazio">A base de alunos está sem duplicidades de CPF.</div>';
+    return;
+  }
+  const fontes = payload.fontes || {};
+  resumo.innerHTML = `<strong>${grupos.length} CPF(s) com duplicidade.</strong><span>Verificação App: ${fontes.aplicativo ? "OK" : "indisponível"} · Biometria: ${fontes.biometria ? "OK" : "indisponível"}</span>`;
+  lista.innerHTML = grupos.map((grupo) => {
+    const principalId = grupo.principalRecomendadoId;
+    const cadastros = Array.isArray(grupo.cadastros) ? grupo.cadastros : [];
+    return `<section class="duplicidade-grupo"><div class="duplicidade-grupo-head"><div><span>CPF</span><strong>${escapeHtml(formatarCpfDuplicidade(grupo.cpf))}</strong></div><span class="dup-badge alerta">${cadastros.length} cadastros</span></div><div class="duplicidade-cadastros">${cadastros.map((cadastro) => {
+      const principal = cadastro.id === principalId;
+      const vinculos = cadastro.vinculos || {};
+      const c = vinculos.contagens || {};
+      const bloqueios = Array.isArray(cadastro.bloqueios) ? cadastro.bloqueios : [];
+      const podeRemover = !principal && cadastro.podeRemover === true;
+      const treinos = Number(c.treinosLegados || 0) + Number(c.treinosPrescritos || 0) + Number(c.treinosIntegrados || 0) + Number(c.treinosExecucoes || 0);
+      const avaliacoes = Number(c.avaliacoes || 0) + Number(c.agendaAvaliacoes || 0);
+      return `<article class="duplicidade-cadastro ${principal ? "principal" : ""}"><div class="duplicidade-identidade"><div><span class="duplicidade-tipo">${principal ? "CADASTRO PRINCIPAL RECOMENDADO" : "CADASTRO DUPLICADO"}</span><h4>${escapeHtml(cadastro.nome || "Sem nome")}</h4><p>Status: <strong>${escapeHtml(cadastro.status || "-")}</strong>${cadastro.origem ? ` · Origem: ${escapeHtml(cadastro.origem)}` : ""}</p></div>${principal ? '<span class="dup-badge principal">Manter</span>' : cadastro.podeRemover ? '<span class="dup-badge seguro">Remoção segura</span>' : '<span class="dup-badge bloqueado">Revisão necessária</span>'}</div><div class="duplicidade-vinculos"><span class="dup-badge ${Number(vinculos.total || 0) > 0 ? "vinculo" : "zero"}">Vínculos locais: ${Number(vinculos.total || 0)}</span>${badgeVinculoDuplicidade("Matrículas", c.matriculas)}${badgeVinculoDuplicidade("Mensalidades", c.mensalidades)}${badgeVinculoDuplicidade("Financeiro", c.financeiro)}${badgeVinculoDuplicidade("Recebimentos", c.recebimentos)}${badgeVinculoDuplicidade("Check-ins", c.checkins)}${badgeVinculoDuplicidade("Treinos", treinos)}${badgeVinculoDuplicidade("Avaliações", avaliacoes)}<span class="dup-badge ${cadastro.aplicativo === true ? "vinculo" : cadastro.aplicativo === false ? "zero" : "bloqueado"}">App: ${cadastro.aplicativo === true ? "vinculado" : cadastro.aplicativo === false ? "não vinculado" : "não confirmado"}</span><span class="dup-badge ${cadastro.biometria === true ? "vinculo" : cadastro.biometria === false ? "zero" : "bloqueado"}">Biometria: ${cadastro.biometria === true ? "vinculada" : cadastro.biometria === false ? "não vinculada" : "não confirmada"}</span></div>${bloqueios.length && !principal ? `<div class="duplicidade-bloqueios">${bloqueios.map((item) => `<span>${escapeHtml(item)}</span>`).join("")}</div>` : ""}${podeRemover ? `<button type="button" class="fusion-button danger duplicidade-resolver" data-principal-id="${escapeAttr(principalId)}" data-duplicado-id="${escapeAttr(cadastro.id)}" data-duplicado-nome="${escapeAttr(cadastro.nome || "cadastro duplicado")}">Remover duplicado vazio</button>` : ""}</article>`;
+    }).join("")}</div></section>`;
+  }).join("");
+}
+
+async function carregarDuplicidadesAlunos() {
+  const modal = document.getElementById("modalDuplicidadesAlunos");
+  const lista = document.getElementById("duplicidadesLista");
+  const resumo = document.getElementById("duplicidadesResumo");
+  modal?.classList.remove("hidden");
+  if (lista) lista.innerHTML = '<div class="duplicidades-vazio">Auditando vínculos...</div>';
+  if (resumo) resumo.textContent = "Analisando CPFs duplicados com segurança.";
+  try {
+    const resp = await fetch(`${API_ALUNOS}/duplicidades`, { cache: "no-store" });
+    const payload = await safeJson(resp);
+    if (!resp.ok || payload.ok === false) throw new Error(payload.mensagem || payload.erro || `Erro HTTP ${resp.status}`);
+    renderizarDuplicidadesAlunos(payload);
+  } catch (erro) {
+    if (resumo) resumo.textContent = "Não foi possível analisar as duplicidades.";
+    if (lista) lista.innerHTML = `<div class="duplicidades-vazio erro">${escapeHtml(erro.message)}</div>`;
+  }
+}
+
+async function resolverDuplicidadeAlunoSeguro(principalId, duplicadoId, duplicadoNome) {
+  if (!principalId || !duplicadoId) return mostrarAlerta("Seleção de duplicidade inválida.", "erro");
+  const confirmou = confirm(`Remover fisicamente somente o cadastro duplicado "${duplicadoNome}"?\n\nO Fusion fará uma nova auditoria antes de remover. Se existir matrícula, financeiro, App, biometria ou outro vínculo, a operação será bloqueada.`);
+  if (!confirmou) return;
+  try {
+    const resp = await fetch(`${API_ALUNOS}/duplicidades/resolver`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ principalId, duplicadoId }) });
+    const payload = await safeJson(resp);
+    if (!resp.ok || payload.ok === false) throw new Error(payload.mensagem || payload.erro || `Erro HTTP ${resp.status}`);
+    mostrarAlerta(payload.mensagem || "Duplicidade resolvida.", "sucesso");
+    await carregarAlunos();
+    await carregarDuplicidadesAlunos();
+  } catch (erro) {
+    mostrarAlerta(erro.message, "erro");
+    await carregarDuplicidadesAlunos();
+  }
+}
+
 function limparMenu() {
   document.querySelectorAll(".fusion-menu a").forEach(a => {
     a.classList.toggle("active", a.dataset.module === "alunos");
@@ -1683,6 +1762,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     console.warn("Falha ao preparar interface móvel de alunos:", erro);
   }
   atualizarModoCadastroAluno();
+
+  ao("#btnResolverDuplicidades", "click", carregarDuplicidadesAlunos);
+  ao("#btnFecharDuplicidades", "click", fecharDuplicidadesAlunos);
+  ao("#btnConcluirDuplicidades", "click", fecharDuplicidadesAlunos);
+  ao("#btnRecarregarDuplicidades", "click", carregarDuplicidadesAlunos);
+  ao("#modalDuplicidadesAlunos", "click", (event) => { if (event.target.id === "modalDuplicidadesAlunos") fecharDuplicidadesAlunos(); });
+  document.getElementById("duplicidadesLista")?.addEventListener("click", (event) => { const botao = event.target.closest("[data-duplicado-id]"); if (!botao) return; resolverDuplicidadeAlunoSeguro(botao.dataset.principalId, botao.dataset.duplicadoId, botao.dataset.duplicadoNome); });
 
   ao("#btnNovoAluno", "click", abrirNovoAluno);
   ao("#btnAtualizar", "click", async () => {

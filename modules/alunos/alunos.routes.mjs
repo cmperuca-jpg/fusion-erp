@@ -8,6 +8,8 @@ import * as limiteAcessosService from "./aluno-limite-acessos.service.mjs";
 
 import * as alunoDatasFinanceirasService from "./aluno-datas-financeiras.service.mjs";
 
+import * as alunoDuplicidadesService from "./aluno-duplicidades.service.mjs";
+
 const router = Router();
 
 function erro(res, error, status = 500) {
@@ -56,6 +58,28 @@ function podeGerarCodigoApp(req) {
   if (req.usuario?.portal) return false;
   const perfil = normalizar(req.usuario?.perfil);
   return ["administrador", "admin", "gerente", "recepcao"].includes(perfil);
+}
+
+function podeResolverDuplicidades(req) {
+  if (req.usuario?.portal) return false;
+  const perfil = normalizar(req.usuario?.perfil);
+  const permissoes = Array.isArray(req.usuario?.permissoes) ? req.usuario.permissoes : [];
+  return ["administrador", "admin", "gerente", "recepcao"].includes(perfil) || permissoes.includes("*");
+}
+
+async function estadosExternosDuplicidade(tenantId, ids = []) {
+  const alunoIds = [...new Set(ids.map(texto).filter(Boolean))];
+  if (!tenantId || !alunoIds.length) return { app: { ok: false, dados: {} }, biometria: { ok: false, dados: {} } };
+  const [app, biometria] = await Promise.all([
+    statusAplicativoAlunosERP({ tenantId, alunoIds }).then((dados) => ({ ok: true, dados: dados || {} })).catch((error) => ({ ok: false, dados: {}, error })),
+    getBiometricStudentStatesForTenant(tenantId).then((dados) => ({ ok: true, dados: dados || {} })).catch((error) => ({ ok: false, dados: {}, error }))
+  ]);
+  return { app, biometria };
+}
+
+function pontuarPrincipalDuplicidade(cadastro = {}) {
+  const status = normalizar(cadastro.status);
+  return ((cadastro.ativo === true || ["ativo", "ativa", "regular"].includes(status)) ? 1000000 : 0) + (cadastro.aplicativo === true ? 500000 : 0) + (cadastro.biometria === true ? 500000 : 0) + Math.min(400000, Number(cadastro.vinculos?.total || 0) * 1000);
 }
 
 function cpfAluno(aluno = {}) {
@@ -181,6 +205,49 @@ router.get("/indicadores", async (req, res) => {
   } catch (error) {
     erro(res, error);
   }
+});
+
+
+// RESOLUCAO SEGURA DE DUPLICIDADES DE ALUNOS 20260828
+router.get("/duplicidades", async (req, res) => {
+  try {
+    if (!podeResolverDuplicidades(req)) return res.status(403).json({ ok: false, mensagem: "Sem permissão para analisar duplicidades de alunos." });
+    const analise = await alunoDuplicidadesService.listarDuplicidadesAlunos();
+    const ids = analise.grupos.flatMap((grupo) => grupo.cadastros.map((cadastro) => cadastro.id)).filter(Boolean);
+    const tenantId = texto(req.usuario?.tenantId).toLowerCase();
+    const externos = await estadosExternosDuplicidade(tenantId, ids);
+    const grupos = analise.grupos.map((grupo) => {
+      const cadastros = grupo.cadastros.map((cadastro) => {
+        const app = externos.app.ok ? externos.app.dados?.[cadastro.id] === true : null;
+        const biometria = externos.biometria.ok ? externos.biometria.dados?.[cadastro.id] === true : null;
+        const bloqueios = [...(cadastro.bloqueiosLocal || [])];
+        if (!externos.app.ok) bloqueios.push("Não foi possível confirmar o App."); else if (app) bloqueios.push("O cadastro possui App vinculado.");
+        if (!externos.biometria.ok) bloqueios.push("Não foi possível confirmar a biometria."); else if (biometria) bloqueios.push("O cadastro possui biometria vinculada.");
+        return { ...cadastro, aplicativo: app, biometria, podeRemover: cadastro.podeRemoverLocal === true && externos.app.ok && externos.biometria.ok && app === false && biometria === false, bloqueios };
+      });
+      const principal = [...cadastros].sort((a, b) => pontuarPrincipalDuplicidade(b) - pontuarPrincipalDuplicidade(a) || String(a.criadoEm || a.id).localeCompare(String(b.criadoEm || b.id)))[0];
+      return { ...grupo, principalRecomendadoId: principal?.id || grupo.principalRecomendadoId, cadastros };
+    });
+    res.json({ ...analise, grupos, fontes: { local: true, aplicativo: externos.app.ok, biometria: externos.biometria.ok } });
+  } catch (error) { erro(res, error, 400); }
+});
+
+router.post("/duplicidades/resolver", async (req, res) => {
+  try {
+    if (!podeResolverDuplicidades(req)) return res.status(403).json({ ok: false, mensagem: "Sem permissão para resolver duplicidades de alunos." });
+    const principalId = texto(req.body?.principalId);
+    const duplicadoId = texto(req.body?.duplicadoId);
+    if (!principalId || !duplicadoId) return res.status(400).json({ ok: false, mensagem: "Informe o cadastro principal e o duplicado." });
+    const tenantId = texto(req.usuario?.tenantId).toLowerCase();
+    if (!tenantId) return res.status(409).json({ ok: false, mensagem: "Sessão sem academia vinculada. Faça login novamente antes de resolver a duplicidade." });
+    const externos = await estadosExternosDuplicidade(tenantId, [duplicadoId]);
+    if (!externos.app.ok || !externos.biometria.ok) return res.status(503).json({ ok: false, mensagem: "Não foi possível confirmar App e biometria. Nenhum cadastro foi removido." });
+    const aplicativo = externos.app.dados?.[duplicadoId] === true;
+    const biometria = externos.biometria.dados?.[duplicadoId] === true;
+    const usuario = texto(req.usuario?.nome || req.usuario?.email || req.usuario?.id || "operador");
+    const resultado = await alunoDuplicidadesService.resolverDuplicidadeAluno({ principalId, duplicadoId, usuario, confirmacoesExternas: { fontesConfirmadas: true, aplicativo, biometria } });
+    res.json(resultado);
+  } catch (error) { erro(res, error, 400); }
 });
 
 
