@@ -63,6 +63,8 @@ const criarBlock = appJs.slice(criarStart, criarEnd);
 assert.match(criarBlock, /tenant\s*\?\s*\{ tenant, access_code: acesso, cpf, senha, confirmar_senha: confirmar \}/);
 assert.match(criarBlock, /INVALID_FIRST_ACCESS_LINK/);
 assert.match(appJs, /Primeiro acesso: peça à academia para enviar seu link pelo WhatsApp/);
+assert.match(appJs, /\$\("codigo"\)\?\.addEventListener/);
+assert.doesNotMatch(appJs, /\$\("codigo"\)\.addEventListener/);
 
 console.log(JSON.stringify({
   ok: true,

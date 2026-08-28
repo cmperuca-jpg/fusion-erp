@@ -1163,7 +1163,7 @@ async function boot() {
   setMessage("activationMessage", "Abra o link enviado pela sua academia no WhatsApp.");
 }
 
-$("codigo")?.addEventListener("input", (event) => { event.target.value = codigoFormat(event.target.value); });$("codigo").addEventListener("input", (event) => { event.target.value = codigoFormat(event.target.value); });
+$("codigo")?.addEventListener("input", (event) => { event.target.value = codigoFormat(event.target.value); });
 ["cpfPrimeiro", "cpfLogin", "autoCpf"].forEach((id) => {
   $(id)?.addEventListener("input", (event) => { event.target.value = cpfFormat(event.target.value); });
 });
