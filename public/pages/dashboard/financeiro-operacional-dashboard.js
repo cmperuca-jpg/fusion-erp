@@ -367,11 +367,15 @@
     return `/pages/recebimentos/index.html?${params.toString()}`;
   }
 
-  function calcularRecebiveis(recebimentos) {
+  function calcularRecebiveis(lancamentos) {
     const hoje = dataHojeLocal();
 
-    return recebimentos
-      .filter((item) => !statusEncerrado(item) && saldoPendente(item) > 0)
+    return lancamentos
+      .filter((item) => {
+        const tipo = normalizar(item.tipo || "");
+        if (tipo !== "receber") return false;
+        return !statusEncerrado(item) && saldoPendente(item) > 0;
+      })
       .map((item) => ({
         id: idRegistro(item),
         nome: nomePessoa(item),
@@ -444,8 +448,8 @@
     container.replaceChildren();
     recebiveis.forEach((item) => {
       const href = item.id
-        ? `/pages/recebimentos/index.html?recebimentoId=${encodeURIComponent(item.id)}&receberAgora=1&origem=dashboard-receber`
-        : "/pages/recebimentos/index.html?origem=dashboard-receber";
+        ? `/pages/financeiro/index.html?financeiroId=${encodeURIComponent(item.id)}&receberAgora=1&origem=dashboard-receber`
+        : "/pages/financeiro/index.html?origem=dashboard-receber";
 
       container.appendChild(criarLinha({
         nome: item.nome,
@@ -476,21 +480,21 @@
 
     consultaEmAndamento = true;
     try {
-      const [mensalidadesPayload, recebimentosPayload] = await Promise.all([
+      const [mensalidadesPayload, financeiroPayload] = await Promise.all([
         obterJson("/api/mensalidades"),
-        obterJson("/api/recebimentos")
+        obterJson("/api/financeiro")
       ]);
 
       const mensalidades = lista(mensalidadesPayload, [
         "mensalidades", "items", "dados", "data", "resultado"
       ]);
 
-      const recebimentos = lista(recebimentosPayload, [
-        "recebimentos", "lancamentos", "contasReceber", "items", "dados", "data", "resultado"
+      const lancamentos = lista(financeiroPayload, [
+        "lancamentos", "items", "dados", "data", "resultado"
       ]);
 
       renderDebitos(calcularDebitos(mensalidades));
-      renderReceber(calcularRecebiveis(recebimentos));
+      renderReceber(calcularRecebiveis(lancamentos));
 
       setText("dashboardFinAtualizado", `Atualizado ${horarioAtualizacao()}`);
     } catch (erro) {

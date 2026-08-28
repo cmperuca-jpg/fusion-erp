@@ -879,7 +879,30 @@ export async function estornarRecibo(id, dados = {}) {
           matriculasParaRollback.add(String(t.matriculaId || item.matriculaId || ''));
           mensalidadesIniciaisParaManter.add(String(item.mensalidadeId || t.mensalidadeId || ''));
         }
-        for (let m = 0; m < mensalidades.length; m += 1) if (mesmo(mensalidades[m].id, item.mensalidadeId) || mesmo(mensalidades[m].lancamentoFinanceiroId || mensalidades[m].financeiroId, item.tituloId)) mensalidades[m] = { ...mensalidades[m], valorPago: titulos[ti].valorBrutoRecebido, valorQuitado: titulos[ti].valorPago, valorBrutoRecebido: titulos[ti].valorBrutoRecebido, valorRestante: titulos[ti].valorRestante, desconto: titulos[ti].desconto, acrescimo: titulos[ti].acrescimo, taxaOperadoraValor: titulos[ti].taxaOperadoraValor, ultimaTaxaOperadoraValor: 0, valorLiquido: titulos[ti].valorLiquido, status: titulos[ti].status === "Parcial" ? "parcial" : "aberto", estornadoEm: agora(), atualizadoEm: agora() };
+        for (let m = 0; m < mensalidades.length; m += 1) {
+          if (!mesmo(mensalidades[m].id, item.mensalidadeId) && !mesmo(mensalidades[m].lancamentoFinanceiroId || mensalidades[m].financeiroId, item.tituloId)) continue;
+          mensalidades[m] = {
+            ...mensalidades[m],
+            valorPagoCentavos: titulos[ti].valorPagoCentavos,
+            valorPago: titulos[ti].valorPago,
+            valorRecebidoCentavos: titulos[ti].valorBrutoRecebidoCentavos,
+            valorRecebido: titulos[ti].valorBrutoRecebido,
+            valorQuitado: titulos[ti].valorPago,
+            valorBrutoRecebido: titulos[ti].valorBrutoRecebido,
+            valorRestante: titulos[ti].valorRestante,
+            saldoRestante: titulos[ti].valorRestante,
+            saldo: titulos[ti].valorRestante,
+            desconto: titulos[ti].desconto,
+            acrescimo: titulos[ti].acrescimo,
+            taxaOperadoraValor: titulos[ti].taxaOperadoraValor,
+            ultimaTaxaOperadoraValor: 0,
+            valorLiquido: titulos[ti].valorLiquido,
+            valorRecebidoLiquido: titulos[ti].valorRecebidoLiquido,
+            status: titulos[ti].status === "Parcial" ? "parcial" : "aberto",
+            estornadoEm: agora(),
+            atualizadoEm: agora()
+          };
+        }
       }
       item.cancelado = true; item.estornadoEm = agora(); item.motivoEstorno = motivo;
     }

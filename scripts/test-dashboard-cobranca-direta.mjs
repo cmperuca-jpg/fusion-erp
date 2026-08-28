@@ -27,7 +27,7 @@ assert.match(dashboard, /function hrefDebitoAluno/);
 assert.match(dashboard, /params\.set\("mensalidadeId", ids\[0\]\)/);
 assert.match(dashboard, /params\.set\("cliente", item\.nome\)/);
 assert.match(dashboard, /params\.set\("filtro", "vencidos"\)/);
-assert.match(dashboard, /recebimentoId=.*receberAgora=1.*origem=dashboard-receber/);
+assert.match(dashboard, /financeiroId=.*receberAgora=1.*origem=dashboard-receber/);
 assert.match(dashboard, /dashboard-fin-op-linha-clicavel/);
 
 assert.match(recebimentos, /function aplicarContextoDashboardDaUrl/);
@@ -40,7 +40,7 @@ assert.match(recebimentos, /dashboard-materializar-\$\{mensalidadeId\}/);
 assert.match(recebimentos, /destino\.set\("receberAgora","1"\)/);
 
 assert.match(dashboardCss, /\.dashboard-fin-op-linha-clicavel/);
-assert.match(dashboardHtml, /20260828-popup-pagamento-1/);
+assert.match(dashboardHtml, /20260828-estorno-reabre-1/);
 assert.match(recebimentosHtml, /20260828-estorno-real-1/);
 
 console.log(JSON.stringify({
