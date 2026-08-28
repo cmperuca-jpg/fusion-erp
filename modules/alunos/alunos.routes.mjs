@@ -275,6 +275,56 @@ router.put("/:id/dia-vencimento-mensal", async (req, res) => {
   }
 });
 
+router.get("/:id/app-link", async (req, res) => {
+  try {
+    const aluno = await alunosService.buscar(req.params.id);
+    if (!aluno) {
+      return res.status(404).json({ ok: false, mensagem: "Aluno não encontrado." });
+    }
+
+    const tenantId = texto(req.usuario?.tenantId).toLowerCase();
+    if (!tenantId) {
+      return res.status(401).json({
+        ok: false,
+        mensagem: "Sessão sem academia vinculada. Faça login novamente."
+      });
+    }
+
+    const appUrl =
+      `https://www.fusionsistema.com.br/pages/aluno-login/index.html?academia=${encodeURIComponent(tenantId)}`;
+
+    const telefoneLocal = String(
+      aluno.whatsapp || aluno.telefone || aluno.celular || ""
+    ).replace(/\D/g, "");
+
+    let whatsapp = telefoneLocal;
+    if (/^\d{10,11}$/.test(whatsapp)) whatsapp = `55${whatsapp}`;
+    if (whatsapp && !/^\d{12,13}$/.test(whatsapp)) whatsapp = "";
+
+    const nome = texto(aluno.nome || aluno.nomeCompleto || "");
+    const primeiroNome = nome.split(/\s+/).filter(Boolean)[0] || "";
+    const mensagem =
+      `Olá${primeiroNome ? `, ${primeiroNome}` : ""}! Acesse o Fusion Aluno pelo link abaixo:\n` +
+      `${appUrl}\n\nEntre com seu CPF e sua senha.`;
+
+    const whatsappUrl = whatsapp
+      ? `https://wa.me/${whatsapp}?text=${encodeURIComponent(mensagem)}`
+      : `https://wa.me/?text=${encodeURIComponent(mensagem)}`;
+
+    return res.json({
+      ok: true,
+      dados: {
+        app_url: appUrl,
+        whatsapp,
+        whatsapp_url: whatsappUrl,
+        mensagem
+      }
+    });
+  } catch (error) {
+    erro(res, error, 400);
+  }
+});
+
 router.post("/:id/app-ativacao", async (req, res) => {
   try {
     if (!podeGerarCodigoApp(req)) {

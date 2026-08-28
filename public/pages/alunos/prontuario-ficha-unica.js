@@ -55,19 +55,24 @@
     const badge=el("fuAppStatus"); try {
       const resp=await fetch("/api/alunos/indicadores",{cache:"no-store"}); const json=await resp.json().catch(()=>({}));
       if(!resp.ok || json.ok===false) throw new Error(); const ativo=json?.indicadores?.[String(alunoId)]?.aplicativo;
-      badge.textContent=ativo===true?"App ativado":ativo===false?"Não ativado":"Indisponível"; badge.classList.toggle("ok",ativo===true); badge.classList.toggle("bad",ativo===false);
+      badge.textContent=ativo===true?"Acesso criado":ativo===false?"Primeiro acesso":"Indisponível"; badge.classList.toggle("ok",ativo===true); badge.classList.toggle("bad",ativo===false);
     } catch { if(badge) badge.textContent="Indisponível"; }
   }
 
   async function gerarCodigo() {
     const btn=el("fuGerarCodigoApp"),box=el("fuAppResultado"); try {
-      if(btn){btn.disabled=true;btn.textContent="Gerando...";}
-      const resp=await fetch(`/api/alunos/${encodeURIComponent(alunoId)}/app-ativacao`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({validadeMinutos:30})});
+      if(btn){btn.disabled=true;btn.textContent="Preparando WhatsApp...";}
+      const resp=await fetch(`/api/alunos/${encodeURIComponent(alunoId)}/app-link`,{cache:"no-store"});
       const json=await resp.json().catch(()=>({})); if(!resp.ok||json.ok===false) throw new Error(json.mensagem||json.erro||`Erro HTTP ${resp.status}`);
-      const codigo=String(json?.dados?.codigo||"").trim(); if(!codigo) throw new Error("Código não retornado pelo servidor.");
-      box.classList.remove("hidden"); box.innerHTML=`<strong>Código do App</strong><code>${esc(codigo)}</code><small>O marcador fica verde depois que o dispositivo for realmente ativado.</small>`;
-    } catch(e){if(box){box.classList.remove("hidden");box.textContent=e.message||"Falha ao gerar código.";}}
-    finally{if(btn){btn.disabled=false;btn.textContent="Gerar código do App";}}
+      const appUrl=String(json?.dados?.app_url||"").trim();
+      const whatsappUrl=String(json?.dados?.whatsapp_url||"").trim();
+      if(!appUrl||!whatsappUrl) throw new Error("Link do aplicativo não retornado pelo servidor.");
+      const aberta=window.open(whatsappUrl,"_blank","noopener,noreferrer");
+      if(!aberta) window.location.href=whatsappUrl;
+      box.classList.remove("hidden");
+      box.innerHTML=`<strong>Link do Fusion Aluno</strong><code>${esc(appUrl)}</code><small>WhatsApp aberto com a mensagem pronta para envio. Não há código de ativação nesta ação.</small>`;
+    } catch(e){if(box){box.classList.remove("hidden");box.textContent=e.message||"Falha ao preparar o WhatsApp.";}}
+    finally{if(btn){btn.disabled=false;btn.textContent="Enviar link pelo WhatsApp";}}
   }
 
   async function bioApi(path,opts={}){const resp=await fetch(`/api/biometria${path}`,{...opts,headers:{"Content-Type":"application/json",...(opts.headers||{})}});const json=await resp.json().catch(()=>({}));if(!resp.ok||json.ok===false)throw new Error(json.mensagem||json.erro||`Erro HTTP ${resp.status}`);return json;}
