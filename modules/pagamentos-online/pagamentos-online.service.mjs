@@ -4,7 +4,7 @@ import { obterSupabaseAdmin, supabaseConfigurado } from "../../config/supabase.m
 import { executarComTenant, normalizarTenantId, tenantAtual } from "../core/persistence/tenant-context.mjs";
 import { executarTransacaoJson, lerJsonDuravel, salvarJsonDuravel } from "../core/persistence/durable-json.mjs";
 import { listarMensalidades, garantirLancamentoFinanceiroMensalidade } from "../financeiro/mensalidades.service.mjs";
-import { listarTitulos, receberTitulos } from "../financeiro/financeiro-ledger.service.mjs";
+import { calcularEncargosAtrasoTitulo, listarTitulos, receberTitulos } from "../financeiro/financeiro-ledger.service.mjs";
 import { obterCaixaAtual, abrirCaixa, fecharCaixa } from "../financeiro/caixa.service.mjs";
 import { programarProximaCobrancaAposPagamento } from "../cobranca/cobranca.service.mjs";
 import { identidadeAlunoApp } from "../treinos/aluno-app-actions.service.mjs";
@@ -31,6 +31,11 @@ import {
   verificarPagamentoInfinitePay
 } from "./infinitepay.client.mjs";
 import { obterConfiguracaoPagamentosRuntime } from "./pagamentos-online.config.mjs";
+import {
+  checkoutAbertoCompativelComValor,
+  montarCheckoutMensalidadeOnline,
+  validarItensInfinitePay
+} from "./pagamentos-online.valor.service.mjs";
 
 const COL_PAGAMENTOS = "pagamentos_online";
 const COL_CLIENTES = "pagamentos_online_clientes";
@@ -615,7 +620,7 @@ async function criarRegistroCobrancaPagbank({ escopo, target, valor, descricao, 
   return registro;
 }
 
-async function criarRegistroCobrancaInfinitePay({ escopo, target, valor, descricao, vencimento, pagador = {} }, infinitepayConfig = {}) {
+async function criarRegistroCobrancaInfinitePay({ escopo, target, valor, descricao, vencimento, pagador = {}, itens = [] }, infinitepayConfig = {}) {
   if (!infinitePayConfigurado(infinitepayConfig)) {
     throw erro("InfinitePay ainda não configurada. Acesse Sistema > Configurações > Pagamentos online e informe a InfiniteTag sem o $.", 503, "INFINITEPAY_NOT_CONFIGURED");
   }
@@ -632,18 +637,21 @@ async function criarRegistroCobrancaInfinitePay({ escopo, target, valor, descric
     if (!texto(customer[chave])) delete customer[chave];
   });
 
+  const itensCheckout = validarItensInfinitePay({
+    itens,
+    valor,
+    descricaoPadrao: descricao
+  });
+
   const checkoutPayload = {
     handle: infinitepayConfig.handle,
-    redirect_url: urlRetornoInfinitePay({ escopo, tenantId }, infinitepayConfig),
+    redirect_url: urlRetornoInfinitePay(
+      { escopo, tenantId },
+      infinitepayConfig
+    ),
     webhook_url: urlWebhookInfinitePay(infinitepayConfig),
     order_nsu: ref,
-    items: [
-      {
-        quantity: 1,
-        price: valorEmCentavos(valor),
-        description: (texto(descricao) || "Pagamento Fusion").slice(0, 120)
-      }
-    ]
+    items: itensCheckout
   };
   if (Object.keys(customer).length) checkoutPayload.customer = customer;
 
@@ -701,8 +709,23 @@ function pagamentoAbertoExistente(lista = [], filtro = {}) {
     if (item.provider !== provider) return false;
     if (!STATUS_ABERTOS.has(statusNormalizado(item.status))) return false;
     if (filtro.escopo && item.escopo !== filtro.escopo) return false;
-    if (filtro.mensalidadeId && texto(item.target?.mensalidadeId) !== texto(filtro.mensalidadeId)) return false;
-    if (filtro.planoCodigo && texto(item.target?.planoCodigo) !== texto(filtro.planoCodigo)) return false;
+    if (
+      filtro.mensalidadeId &&
+      texto(item.target?.mensalidadeId) !==
+        texto(filtro.mensalidadeId)
+    ) return false;
+    if (
+      filtro.planoCodigo &&
+      texto(item.target?.planoCodigo) !==
+        texto(filtro.planoCodigo)
+    ) return false;
+    if (
+      filtro.valor !== undefined &&
+      !checkoutAbertoCompativelComValor(
+        item,
+        filtro.valor
+      )
+    ) return false;
     return Boolean(item.invoiceUrl);
   });
 }
@@ -778,10 +801,10 @@ async function iniciarPagamentoAlunoTenant(identidade = {}, payload = {}) {
   }
 
   const pagamentos = await lerLista(COL_PAGAMENTOS);
-  const aberta = pagamentoAbertoExistente(pagamentos, { provider: configPagamentos.provider, escopo: "aluno_mensalidade", mensalidadeId: mensalidade.id });
-  if (aberta) return respostaCheckout(aberta);
 
-  const vinculo = await garantirLancamentoFinanceiroMensalidade(mensalidade.id);
+  const vinculo = await garantirLancamentoFinanceiroMensalidade(
+    mensalidade.id
+  );
   const titulo = vinculo.lancamento || (await listarTitulos({}))
     .find(item => texto(item.mensalidadeId) === texto(mensalidade.id) || texto(item.id) === texto(vinculo.financeiroId));
 
@@ -792,17 +815,86 @@ async function iniciarPagamentoAlunoTenant(identidade = {}, payload = {}) {
     throw erro("Esta mensalidade não está disponível para pagamento.", 409, "MONTHLY_NOT_PAYABLE");
   }
 
-  const valor = valorPositivo(titulo.valorRestante, titulo.saldo, mensalidade.valorRestante, mensalidade.valorAtualizado, mensalidade.valor);
-  if (!(valor > 0)) throw erro("Mensalidade sem saldo para pagamento.", 409, "MONTHLY_WITHOUT_BALANCE");
+  const encargos = await calcularEncargosAtrasoTitulo(
+    titulo.id,
+    hojeISO()
+  );
+
+  const saldoPrincipal = valorPositivo(
+    encargos.saldoPrincipal,
+    titulo.valorRestante,
+    titulo.saldo,
+    mensalidade.valorRestante,
+    mensalidade.saldoRestante,
+    mensalidade.valor
+  );
 
   const aluno = identidade.aluno || {};
   const homeAluno = identidade.home?.aluno || {};
   const pagador = {
-    nome: texto(aluno.nome || homeAluno.nome || mensalidade.alunoNome || mensalidade.aluno),
-    documento: documento(aluno.cpf || aluno.documento || aluno.cpfCnpj || aluno.cpf_cnpj),
-    email: texto(aluno.email || aluno.emailResponsavel || aluno.responsavelEmail || ""),
-    telefone: telefone(aluno.telefone || aluno.whatsapp || aluno.celular || "")
+    nome: texto(
+      aluno.nome ||
+      homeAluno.nome ||
+      mensalidade.alunoNome ||
+      mensalidade.aluno
+    ),
+    documento: documento(
+      aluno.cpf ||
+      aluno.documento ||
+      aluno.cpfCnpj ||
+      aluno.cpf_cnpj
+    ),
+    email: texto(
+      aluno.email ||
+      aluno.emailResponsavel ||
+      aluno.responsavelEmail ||
+      ""
+    ),
+    telefone: telefone(
+      aluno.telefone ||
+      aluno.whatsapp ||
+      aluno.celular ||
+      ""
+    )
   };
+
+  const descricaoMensalidade =
+    `Mensalidade ${mensalidade.competencia || ""} - ` +
+    `${pagador.nome || "Aluno"}`;
+
+  const composicaoCheckout = montarCheckoutMensalidadeOnline({
+    descricaoPrincipal: descricaoMensalidade.trim(),
+    saldoPrincipal,
+    multa: encargos.multaPendente,
+    juros: encargos.jurosPendente
+  });
+
+  const valor = valorPositivo(
+    composicaoCheckout.valor,
+    encargos.valorDevido,
+    mensalidade.valorAtualizado,
+    saldoPrincipal
+  );
+
+  if (!(valor > 0)) {
+    throw erro(
+      "Mensalidade sem saldo para pagamento.",
+      409,
+      "MONTHLY_WITHOUT_BALANCE"
+    );
+  }
+
+  const aberta = pagamentoAbertoExistente(
+    pagamentos,
+    {
+      provider: configPagamentos.provider,
+      escopo: "aluno_mensalidade",
+      mensalidadeId: mensalidade.id,
+      valor
+    }
+  );
+
+  if (aberta) return respostaCheckout(aberta);
 
   const registro = await criarRegistroCobranca({
     escopo: "aluno_mensalidade",
@@ -816,8 +908,9 @@ async function iniciarPagamentoAlunoTenant(identidade = {}, payload = {}) {
     },
     valor,
     vencimento: mensalidade.vencimento || hojeISO(),
-    descricao: `Mensalidade ${mensalidade.competencia || ""} - ${pagador.nome || "Aluno"}`.trim(),
+    descricao: descricaoMensalidade.trim(),
     pagador,
+    itens: composicaoCheckout.itens,
     payload
   }, configPagamentos);
 
