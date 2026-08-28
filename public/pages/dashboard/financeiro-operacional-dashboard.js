@@ -358,12 +358,12 @@
     if (item.titulos === 1 && ids.length === 1) {
       params.set("mensalidadeId", ids[0]);
       params.set("receberAgora", "1");
-    } else {
-      if (item.id) params.set("alunoId", item.id);
-      if (item.nome) params.set("cliente", item.nome);
-      params.set("filtro", "vencidos");
+      return `/pages/financeiro/index.html?${params.toString()}`;
     }
 
+    if (item.id) params.set("alunoId", item.id);
+    if (item.nome) params.set("cliente", item.nome);
+    params.set("filtro", "vencidos");
     return `/pages/recebimentos/index.html?${params.toString()}`;
   }
 

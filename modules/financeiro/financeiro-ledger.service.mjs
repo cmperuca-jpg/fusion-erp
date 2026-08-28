@@ -844,12 +844,13 @@ export async function estornarRecibo(id, dados = {}) {
     for (const item of relacionados) {
       const ti = titulos.findIndex((x) => String(x.id) === String(item.tituloId)); if (ti >= 0) {
         const t = tituloNormalizado(titulos[ti]); const novoPagoC = Math.max(0, valorPagoC(t) - Number(item.valorAplicadoCentavos || 0) - Number(item.descontoCentavos || 0) + Number(item.acrescimoCentavos || 0));
+        const reabertoIntegralmente = novoPagoC === 0;
         const taxaAnteriorC = Number.isInteger(t.taxaOperadoraValorCentavos) ? t.taxaOperadoraValorCentavos : centavos(t.taxaOperadoraValor || t.taxaValor || 0);
-        const novaTaxaC = Math.max(0, taxaAnteriorC - Number(item.taxaOperadoraValorCentavos || 0));
+        const novaTaxaC = reabertoIntegralmente ? 0 : Math.max(0, taxaAnteriorC - Number(item.taxaOperadoraValorCentavos || 0));
         const recebidoAnteriorC = Number.isInteger(t.valorBrutoRecebidoCentavos) ? t.valorBrutoRecebidoCentavos : centavos(t.valorBrutoRecebido ?? t.valorRecebidoBruto ?? t.valorPago ?? 0);
-        const novoRecebidoC = Math.max(0, recebidoAnteriorC - Number(item.valorAplicadoCentavos || 0));
-        const novoDescontoC = Math.max(0, centavosCampo(t, "desconto", 0) - Number(item.descontoCentavos || 0));
-        const novoAcrescimoC = Math.max(0, centavosCampo(t, "acrescimo", 0) - Number(item.acrescimoCentavos || 0));
+        const novoRecebidoC = reabertoIntegralmente ? 0 : Math.max(0, recebidoAnteriorC - Number(item.valorAplicadoCentavos || 0));
+        const novoDescontoC = reabertoIntegralmente ? 0 : Math.max(0, centavosCampo(t, "desconto", 0) - Number(item.descontoCentavos || 0));
+        const novoAcrescimoC = reabertoIntegralmente ? 0 : Math.max(0, centavosCampo(t, "acrescimo", 0) - Number(item.acrescimoCentavos || 0));
         titulos[ti] = tituloNormalizado({
           ...t,
           // O status anterior ainda era "Pago". Sem limpar o status antes da

@@ -77,30 +77,51 @@ try {
     lancamentoFinanceiroId: titulo.id
   }], null, 2));
 
+  const financeiroPath = path.join(dataDir, "financeiro.json");
+  const titulosBrutos = JSON.parse(await fs.readFile(financeiroPath, "utf8"));
+  const tituloBruto = titulosBrutos.find(item => item.id === titulo.id);
+  assert.ok(tituloBruto);
+  tituloBruto.valorPago = 0;
+  tituloBruto.valorPagoCentavos = 0;
+  tituloBruto.valorBrutoRecebido = 0.03;
+  tituloBruto.valorBrutoRecebidoCentavos = 3;
+  tituloBruto.valorRecebido = 0.03;
+  tituloBruto.status = "Aberto";
+  await fs.writeFile(financeiroPath, JSON.stringify(titulosBrutos, null, 2));
+
   const baixa = await ledger.receberTitulos({
-    operacaoId: "op-teste-estorno-dashboard-baixa",
+    operacaoId: "op-teste-estorno-dashboard-baixa-desconto",
     tituloId: titulo.id,
-    valor: 65,
-    formaPagamento: "PIX",
+    valorAplicado: 0.01,
+    valorPago: 0.01,
+    valorRecebido: 0.01,
+    valorEntregue: 0.01,
+    desconto: 64.99,
+    formaPagamento: "Dinheiro",
     usuario: "teste"
   });
   assert.equal(baixa.lancamento.status, "Pago");
+  assert.equal(baixa.lancamento.valorBrutoRecebido, 0.04);
+  assert.equal(baixa.lancamento.desconto, 64.99);
 
   await ledger.estornarRecibo(baixa.recibo.id, {
-    operacaoId: "op-teste-estorno-dashboard-estorno",
+    operacaoId: "op-teste-estorno-dashboard-estorno-desconto",
     motivo: "Teste automatizado",
     usuario: "teste"
   });
 
-  const tituloReaberto = (await ledger.listarTitulos()).find(item => item.id === titulo.id);
+  let tituloReaberto = (await ledger.listarTitulos()).find(item => item.id === titulo.id);
   assert.ok(tituloReaberto);
   assert.equal(tituloReaberto.status, "Aberto");
   assert.equal(tituloReaberto.valorPago, 0);
   assert.equal(tituloReaberto.valorBrutoRecebido, 0);
   assert.equal(tituloReaberto.valorRestante, 65);
+  assert.equal(tituloReaberto.desconto, 0);
+  assert.equal(tituloReaberto.acrescimo, 0);
+  assert.equal(tituloReaberto.taxaOperadoraValor, 0);
 
-  const mensalidades = JSON.parse(await fs.readFile(path.join(dataDir, "mensalidades.json"), "utf8"));
-  const mensalidade = mensalidades.find(item => item.id === mensalidadeId);
+  let mensalidades = JSON.parse(await fs.readFile(path.join(dataDir, "mensalidades.json"), "utf8"));
+  let mensalidade = mensalidades.find(item => item.id === mensalidadeId);
   assert.ok(mensalidade);
   assert.equal(mensalidade.status, "aberto");
   assert.equal(mensalidade.valorPago, 0);
@@ -109,9 +130,36 @@ try {
   assert.equal(mensalidade.valorRestante, 65);
   assert.equal(mensalidade.saldoRestante, 65);
   assert.equal(mensalidade.saldo, 65);
+  assert.equal(mensalidade.desconto, 0);
+
+  const baixaReteste = await ledger.receberTitulos({
+    operacaoId: "op-teste-estorno-dashboard-reteste-desconto",
+    tituloId: titulo.id,
+    valorAplicado: 0.01,
+    valorPago: 0.01,
+    valorRecebido: 0.01,
+    valorEntregue: 0.01,
+    desconto: 64.99,
+    formaPagamento: "Dinheiro",
+    usuario: "teste"
+  });
+  assert.equal(baixaReteste.lancamento.status, "Pago");
+  assert.equal(baixaReteste.lancamento.valorBrutoRecebido, 0.01);
+  assert.equal(baixaReteste.lancamento.desconto, 64.99);
+
+  await ledger.estornarRecibo(baixaReteste.recibo.id, {
+    operacaoId: "op-teste-estorno-dashboard-reteste-estorno",
+    motivo: "Teste automatizado",
+    usuario: "teste"
+  });
+
+  tituloReaberto = (await ledger.listarTitulos()).find(item => item.id === titulo.id);
+  assert.equal(tituloReaberto.status, "Aberto");
+  assert.equal(tituloReaberto.valorBrutoRecebido, 0);
+  assert.equal(tituloReaberto.valorRestante, 65);
 
   const recebimentos = JSON.parse(await fs.readFile(path.join(dataDir, "recebimentos.json"), "utf8"));
-  const historico = recebimentos.find(item => item.reciboId === baixa.recibo.id);
+  const historico = recebimentos.find(item => item.lancamentoFinanceiroId === titulo.id);
   assert.ok(historico);
   assert.equal(historico.status, "estornado");
 
@@ -122,6 +170,8 @@ try {
     tituloVoltaAberto: true,
     mensalidadeNormalizadaAposEstorno: true,
     recebimentoEstornadoPreservadoNoHistorico: true,
+    residuoHistoricoZeradoNoEstornoIntegral: true,
+    desconto6499RecebeSomenteUmCentavoAposLimpeza: true,
     dadosPessoaisExibidos: false
   }, null, 2));
 } finally {
