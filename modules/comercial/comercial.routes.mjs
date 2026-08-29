@@ -3,6 +3,8 @@ import path from 'path';
 import fs from 'fs/promises';
 import { fileURLToPath } from 'url';
 import { obterSupabaseAdmin } from '../../config/supabase.mjs';
+import { DATABASE_CONFIG } from '../../config/database.config.mjs';
+import { consultarPostgres } from '../../config/postgres.mjs';
 import { normalizarTenantId } from '../core/persistence/tenant-context.mjs';
 import {
   atualizarServicoContrato,
@@ -101,6 +103,24 @@ function normalizarSlugPublico(valor = '') {
 async function resolverAcademiaPublica(slugInformado = '') {
   const slug = normalizarSlugPublico(slugInformado);
   if (!slug || SLUGS_RESERVADOS.has(slug)) return null;
+
+  if (DATABASE_CONFIG.provider === 'postgres') {
+    const { rows } = await consultarPostgres(
+      `SELECT tenant_id, slug, name, status
+         FROM public.fusion_tenants
+        WHERE tenant_id = $1 OR slug = $1
+        ORDER BY tenant_id
+        LIMIT 2`,
+      [slug]
+    );
+
+    const ativos = (rows || []).filter(item =>
+      ['active', 'trial'].includes(String(item.status || '').toLowerCase())
+    );
+
+    if (ativos.length !== 1) return null;
+    return ativos[0];
+  }
 
   const supabase = obterSupabaseAdmin({ obrigatorio: true });
   const { data, error } = await supabase
