@@ -2,6 +2,14 @@ import { executarComTenant } from "../core/persistence/tenant-context.mjs";
 import { listarAgendaAvaliacoes } from "../agenda-avaliacoes/agenda-avaliacoes.repository.mjs";
 import { dataLocalISO, horaLocalHHMMSS } from "../core/time/fusion-time.mjs";
 import { obterSupabaseAdmin } from "../../config/supabase.mjs";
+import { DATABASE_CONFIG } from "../../config/database.config.mjs";
+import {
+  requestAlunoAppPostgres,
+  buscarAlunoErpPorCpfPostgres,
+  listarRegistrosAlunoErpPostgres,
+  buscarCadastroAlunoErpPostgres,
+  listarAvaliacoesAlunoErpPostgres
+} from "./aluno-app-postgres.repository.mjs";
 
 const COOKIE_ACCESS = "fusion_aluno_access";
 const COOKIE_REFRESH = "fusion_aluno_refresh";
@@ -40,6 +48,10 @@ function mensagemErro(data, fallback) {
 }
 
 async function chamarSupabase(pathname, { method = "GET", body, accessToken } = {}) {
+  if (DATABASE_CONFIG.provider === "postgres") {
+    return requestAlunoAppPostgres(pathname, { method, body, accessToken });
+  }
+
   const { url, serviceKey } = configSupabase();
   const headers = {
     apikey: serviceKey,
@@ -133,26 +145,39 @@ function statusAlunoERP(payload = {}) {
 }
 
 async function alunoERPPorCpf(tenant, cpfNormalizado) {
-  const supabase = obterSupabaseAdmin({ obrigatorio: true });
-  const tabela = process.env.FUSION_SUPABASE_RECORDS_TABLE || "fusion_v3_records";
+  let registros = [];
 
-  const { data, error } = await supabase
-    .from(tabela)
-    .select("record_id,payload")
-    .eq("tenant_id", tenant)
-    .eq("collection", "alunos")
-    .eq("payload->>cpf", cpfNormalizado)
-    .limit(2);
+  if (DATABASE_CONFIG.provider === "postgres") {
+    try {
+      registros = await buscarAlunoErpPorCpfPostgres(tenant, cpfNormalizado);
+    } catch (error) {
+      throw new AlunoAppError(
+        `Falha ao localizar o aluno no Fusion ERP: ${error.message}`,
+        502,
+        "ERP_STUDENT_LOOKUP_FAILED"
+      );
+    }
+  } else {
+    const supabase = obterSupabaseAdmin({ obrigatorio: true });
+    const tabela = process.env.FUSION_SUPABASE_RECORDS_TABLE || "fusion_v3_records";
 
-  if (error) {
-    throw new AlunoAppError(
-      `Falha ao localizar o aluno no Fusion ERP: ${error.message}`,
-      502,
-      "ERP_STUDENT_LOOKUP_FAILED"
-    );
+    const { data, error } = await supabase
+      .from(tabela)
+      .select("record_id,payload")
+      .eq("tenant_id", tenant)
+      .eq("collection", "alunos")
+      .eq("payload->>cpf", cpfNormalizado)
+      .limit(2);
+
+    if (error) {
+      throw new AlunoAppError(
+        `Falha ao localizar o aluno no Fusion ERP: ${error.message}`,
+        502,
+        "ERP_STUDENT_LOOKUP_FAILED"
+      );
+    }
+    registros = Array.isArray(data) ? data : [];
   }
-
-  const registros = Array.isArray(data) ? data : [];
   if (!registros.length) {
     throw new AlunoAppError(
       "Aluno com este CPF não encontrado no banco principal do Fusion ERP.",
@@ -657,6 +682,18 @@ function fotoAlunoSegura(payload = {}) {
 }
 
 async function registrosAlunoERP(supabase, tabela, tenant, colecao, alunoId, limite = 80) {
+  if (DATABASE_CONFIG.provider === "postgres") {
+    try {
+      return await listarRegistrosAlunoErpPostgres(tenant, colecao, alunoId, limite);
+    } catch {
+      throw new AlunoAppError(
+        `Não foi possível carregar ${colecao} do aluno no Fusion ERP.`,
+        502,
+        "ERP_HOME_DATA_FAILED"
+      );
+    }
+  }
+
   let query = supabase
     .from(tabela)
     .select("record_id,payload,updated_at")
@@ -679,6 +716,18 @@ async function registrosAlunoERP(supabase, tabela, tenant, colecao, alunoId, lim
 }
 
 async function cadastroAlunoERP(supabase, tabela, tenant, legacyId) {
+  if (DATABASE_CONFIG.provider === "postgres") {
+    try {
+      return payloadRegistro(await buscarCadastroAlunoErpPostgres(tenant, legacyId));
+    } catch {
+      throw new AlunoAppError(
+        "Não foi possível carregar o cadastro do aluno no Fusion ERP.",
+        502,
+        "ERP_STUDENT_HOME_FAILED"
+      );
+    }
+  }
+
   const { data, error } = await supabase
     .from(tabela)
     .select("record_id,payload,updated_at")
@@ -883,6 +932,18 @@ function avaliacaoSeguraParaAluno(row = {}) {
 }
 
 async function registrosAvaliacoesERP(supabase, tabela, tenant, alunoId, limite = 40) {
+  if (DATABASE_CONFIG.provider === "postgres") {
+    try {
+      return await listarAvaliacoesAlunoErpPostgres(tenant, alunoId, limite);
+    } catch {
+      throw new AlunoAppError(
+        "Não foi possível carregar as avaliações físicas do aluno no Fusion ERP.",
+        502,
+        "ERP_EVALUATION_DATA_FAILED"
+      );
+    }
+  }
+
   async function consultar(campo) {
     const { data, error } = await supabase
       .from(tabela)
@@ -910,20 +971,20 @@ async function registrosAvaliacoesERP(supabase, tabela, tenant, alunoId, limite 
 
   const unicos = new Map();
   for (const row of [...camel, ...snake]) {
-    const chave = textoSeguro(row.record_id) || JSON.stringify(row.payload || {});
-    if (!unicos.has(chave)) unicos.set(chave, row);
+    const chave = textoSeguro(row?.record_id) || JSON.stringify(row?.payload || {});
+    if (!chave || unicos.has(chave)) continue;
+    unicos.set(chave, row);
   }
 
   return [...unicos.values()]
     .sort((a, b) => {
-      const da = dataAvaliacaoERP(payloadRegistro(a))?.getTime() || 0;
-      const db = dataAvaliacaoERP(payloadRegistro(b))?.getTime() || 0;
-      return db - da;
+      const dataA = dataAvaliacaoERP(payloadRegistro(a))?.getTime() || 0;
+      const dataB = dataAvaliacaoERP(payloadRegistro(b))?.getTime() || 0;
+      return dataB - dataA;
     })
     .slice(0, limite);
 }
 
-// APP ALUNO AGENDA AVALIACAO BRIDGE 20260826
 async function proximoAgendamentoAvaliacaoAluno(tenant = "", alunoId = "") {
   const tenantId = normalizarTenant(tenant);
   const id = textoSeguro(alunoId);
@@ -1285,7 +1346,9 @@ async function carregarHomeERP(alunoApp = {}) {
     throw new AlunoAppError("Aluno ainda não está vinculado ao cadastro principal do Fusion ERP.", 409, "ERP_STUDENT_NOT_LINKED");
   }
 
-  const supabase = obterSupabaseAdmin({ obrigatorio: true });
+  const supabase = DATABASE_CONFIG.provider === "postgres"
+    ? null
+    : obterSupabaseAdmin({ obrigatorio: true });
   const tabela = process.env.FUSION_SUPABASE_RECORDS_TABLE || "fusion_v3_records";
 
   const [alunoERP, matriculasRows, treinosRows, checkinRows, checkinsRows, mensalidadesRows, financeiroRows, avaliacoesRows, agendamentoAvaliacao] = await Promise.all([

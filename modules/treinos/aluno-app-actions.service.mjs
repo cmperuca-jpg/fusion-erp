@@ -1,4 +1,10 @@
 import { obterSupabaseAdmin } from "../../config/supabase.mjs";
+import { DATABASE_CONFIG } from "../../config/database.config.mjs";
+import {
+  buscarAlunoErpGlobalPorLegacyPostgres,
+  listarRegistrosAlunoErpPostgres,
+  listarEventosBiometriaAlunoPostgres
+} from "./aluno-app-postgres.repository.mjs";
 import { executarComTenant, normalizarTenantId } from "../core/persistence/tenant-context.mjs";
 import { lerJsonDuravel } from "../core/persistence/durable-json.mjs";
 import { gerarTokenPortal } from "../auth/auth.service.mjs";
@@ -42,24 +48,36 @@ async function localizarRegistroERP(legacyId = "") {
     );
   }
 
-  const supabase = obterSupabaseAdmin({ obrigatorio: true });
-  const tabela = process.env.FUSION_SUPABASE_RECORDS_TABLE || "fusion_v3_records";
-  const { data, error } = await supabase
-    .from(tabela)
-    .select("tenant_id,record_id,payload")
-    .eq("collection", "alunos")
-    .eq("record_id", id)
-    .limit(3);
+  let linhas = [];
+  if (DATABASE_CONFIG.provider === "postgres") {
+    try {
+      linhas = await buscarAlunoErpGlobalPorLegacyPostgres(id, 3);
+    } catch (error) {
+      throw erroHttp(
+        `Falha ao localizar o aluno no Fusion ERP: ${error.message}`,
+        502,
+        "ERP_STUDENT_LOOKUP_FAILED"
+      );
+    }
+  } else {
+    const supabase = obterSupabaseAdmin({ obrigatorio: true });
+    const tabela = process.env.FUSION_SUPABASE_RECORDS_TABLE || "fusion_v3_records";
+    const { data, error } = await supabase
+      .from(tabela)
+      .select("tenant_id,record_id,payload")
+      .eq("collection", "alunos")
+      .eq("record_id", id)
+      .limit(3);
 
-  if (error) {
-    throw erroHttp(
-      `Falha ao localizar o aluno no Fusion ERP: ${error.message}`,
-      502,
-      "ERP_STUDENT_LOOKUP_FAILED"
-    );
+    if (error) {
+      throw erroHttp(
+        `Falha ao localizar o aluno no Fusion ERP: ${error.message}`,
+        502,
+        "ERP_STUDENT_LOOKUP_FAILED"
+      );
+    }
+    linhas = Array.isArray(data) ? data : [];
   }
-
-  const linhas = Array.isArray(data) ? data : [];
   if (!linhas.length) {
     throw erroHttp("Aluno não encontrado no Fusion ERP.", 404, "ERP_STUDENT_NOT_FOUND");
   }
@@ -217,6 +235,18 @@ export async function contadorCatracaAlunoApp(req, res, deviceToken) {
 }
 
 async function registrosFrequenciaAluno(tenantId, alunoId, colecao, limite = 400) {
+  if (DATABASE_CONFIG.provider === "postgres") {
+    try {
+      return await listarRegistrosAlunoErpPostgres(tenantId, colecao, alunoId, limite);
+    } catch {
+      throw erroHttp(
+        `Não foi possível carregar a frequência do aluno (${colecao}).`,
+        502,
+        "ERP_STUDENT_FREQUENCY_FAILED"
+      );
+    }
+  }
+
   const supabase = obterSupabaseAdmin({ obrigatorio: true });
   const tabela = process.env.FUSION_SUPABASE_RECORDS_TABLE || "fusion_v3_records";
   const { data, error } = await supabase
@@ -239,24 +269,38 @@ async function registrosFrequenciaAluno(tenantId, alunoId, colecao, limite = 400
 }
 
 async function registrosBiometriaEdgeAluno(tenantId, alunoId, limite = 400) {
-  const supabase = obterSupabaseAdmin({ obrigatorio: true });
-  const { data, error } = await supabase
-    .from("fusion_edge_access_events")
-    .select("event_id,equipment_id,occurred_at,source,payload")
-    .eq("tenant_id", tenantId)
-    .eq("student_id", alunoId)
-    .eq("authorized", true)
-    .eq("physical_confirmed", true)
-    .eq("direction", "entrada")
-    .order("occurred_at", { ascending: false })
-    .limit(limite);
+  let data = [];
+  if (DATABASE_CONFIG.provider === "postgres") {
+    try {
+      data = await listarEventosBiometriaAlunoPostgres(tenantId, alunoId, limite);
+    } catch (error) {
+      throw erroHttp(
+        `Não foi possível carregar a frequência biométrica do aluno: ${error.message}`,
+        502,
+        "ERP_STUDENT_BIOMETRIC_FREQUENCY_FAILED"
+      );
+    }
+  } else {
+    const supabase = obterSupabaseAdmin({ obrigatorio: true });
+    const resultado = await supabase
+      .from("fusion_edge_access_events")
+      .select("event_id,equipment_id,occurred_at,source,payload")
+      .eq("tenant_id", tenantId)
+      .eq("student_id", alunoId)
+      .eq("authorized", true)
+      .eq("physical_confirmed", true)
+      .eq("direction", "entrada")
+      .order("occurred_at", { ascending: false })
+      .limit(limite);
 
-  if (error) {
-    throw erroHttp(
-      `Não foi possível carregar a frequência biométrica do aluno: ${error.message}`,
-      502,
-      "ERP_STUDENT_BIOMETRIC_FREQUENCY_FAILED"
-    );
+    if (resultado.error) {
+      throw erroHttp(
+        `Não foi possível carregar a frequência biométrica do aluno: ${resultado.error.message}`,
+        502,
+        "ERP_STUDENT_BIOMETRIC_FREQUENCY_FAILED"
+      );
+    }
+    data = Array.isArray(resultado.data) ? resultado.data : [];
   }
 
   const eventosValidos = deduplicarEventosBiometricos(Array.isArray(data) ? data : []);
