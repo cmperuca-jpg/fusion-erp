@@ -2,6 +2,8 @@ import path from "node:path";
 import { validarToken, validarTokenPortal } from "../auth/auth.service.mjs";
 import { executarComTenant, normalizarTenantId } from "../core/persistence/tenant-context.mjs";
 import { validarSessaoSuporteAtiva, registrarAuditoriaSuporte } from "../suporte/suporte.service.mjs";
+import { DATABASE_CONFIG } from "../../config/database.config.mjs";
+import { obterPostgresPool } from "../../config/postgres.mjs";
 import { obterSupabaseAdmin } from "../../config/supabase.mjs";
 import { executarEnforcementBilling } from "./billing-enforcement.middleware.mjs";
 
@@ -492,16 +494,32 @@ async function tenantPublicoPorSlug(slug = "") {
   const cache = cacheSitePublico.get(normalizado);
   if (cache && agora - cache.em < CACHE_SITE_MS) return cache.valor;
 
-  const supabase = obterSupabaseAdmin({ obrigatorio: true });
-  const { data, error } = await supabase
-    .from("fusion_tenants")
-    .select("tenant_id,slug,name,status")
-    .or(`tenant_id.eq.${normalizado},slug.eq.${normalizado}`)
-    .limit(2);
+  let encontrados = [];
 
-  if (error) throw error;
+  if (DATABASE_CONFIG.provider === "postgres") {
+    const postgres = obterPostgresPool({ obrigatorio: true });
+    const { rows } = await postgres.query(
+      `SELECT tenant_id,slug,name,status
+         FROM public.fusion_tenants
+        WHERE tenant_id = $1 OR slug = $1
+        ORDER BY tenant_id
+        LIMIT 2`,
+      [normalizado]
+    );
+    encontrados = rows || [];
+  } else {
+    const supabase = obterSupabaseAdmin({ obrigatorio: true });
+    const { data, error } = await supabase
+      .from("fusion_tenants")
+      .select("tenant_id,slug,name,status")
+      .or(`tenant_id.eq.${normalizado},slug.eq.${normalizado}`)
+      .limit(2);
 
-  const ativos = (data || []).filter(item =>
+    if (error) throw error;
+    encontrados = data || [];
+  }
+
+  const ativos = encontrados.filter(item =>
     ["active", "trial"].includes(String(item.status || "").toLowerCase())
   );
 
@@ -509,7 +527,6 @@ async function tenantPublicoPorSlug(slug = "") {
   cacheSitePublico.set(normalizado, { em: agora, valor });
   return valor;
 }
-
 async function servirRotaPublica(req, res) {
   if (!["GET", "HEAD"].includes(req.method)) return false;
 
