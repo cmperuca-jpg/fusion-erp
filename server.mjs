@@ -69,7 +69,8 @@ import { executarLembretesVencimento } from "./modules/whatsapp/whatsapp.service
 import { inicializarPersistenciaSupabase, encerrarPersistenciaSupabase } from "./modules/backup/supabase-data.service.mjs";
 import { iniciarBackupAutomatico } from "./modules/backup/backup.service.mjs";
 import { exerciseAssetCompatibility } from "./modules/core/assets/exercise-assets.middleware.mjs";
-import { assertDatabaseConfiguration } from "./config/database.config.mjs";
+import { DATABASE_CONFIG, assertDatabaseConfiguration } from "./config/database.config.mjs";
+import { encerrarPostgres } from "./config/postgres.mjs";
 import { verificarPersistenciaTransacional, migrarTodosJsonParaSupabase } from "./modules/core/persistence/collection-store.mjs";
 
 
@@ -164,15 +165,30 @@ function prepararPersistenciaRender() {
 prepararPersistenciaRender();
 assertDatabaseConfiguration();
 await verificarPersistenciaTransacional();
-const sincronizarDadosNesteAmbiente = isRender || ["1", "true", "sim", "yes"].includes(
-  String(process.env.FUSION_SYNC_DATA_ON_LOCAL || "false").toLowerCase()
-);
-if (!sincronizarDadosNesteAmbiente) {
-  console.log("[Persistência] Sincronização Supabase desativada no localhost (FUSION_SYNC_DATA_ON_LOCAL=false).");
+const sincronizarDadosNesteAmbiente =
+  DATABASE_CONFIG.provider === "supabase" &&
+  (
+    isRender ||
+    ["1", "true", "sim", "yes"].includes(
+      String(process.env.FUSION_SYNC_DATA_ON_LOCAL || "false").toLowerCase()
+    )
+  );
+
+if (DATABASE_CONFIG.provider === "postgres") {
+  console.log("[Persistência] PostgreSQL local ativo; sincronização Supabase em segundo plano desativada.");
+} else if (!sincronizarDadosNesteAmbiente) {
+  console.log("[Persistência] Sincronização Supabase desativada neste ambiente.");
 }
-if (["1", "true", "sim", "yes"].includes(String(process.env.FUSION_MIGRATE_JSON_ON_START || "false").toLowerCase())) {
+
+const migrarJsonNoStart = ["1", "true", "sim", "yes"].includes(
+  String(process.env.FUSION_MIGRATE_JSON_ON_START || "false").toLowerCase()
+);
+
+if (migrarJsonNoStart && DATABASE_CONFIG.provider === "supabase") {
   const migracao = await migrarTodosJsonParaSupabase();
   console.log(`[Persistência] Migração inicial concluída: ${migracao.totalColecoes} coleção(ões).`);
+} else if (migrarJsonNoStart && DATABASE_CONFIG.provider !== "supabase") {
+  console.log("[Persistência] FUSION_MIGRATE_JSON_ON_START ignorado porque o provider não é Supabase.");
 }
 
 const backupRoot = isRender ? path.join(persistentRoot, "backups") : path.join(__dirname, "backups");
@@ -938,9 +954,11 @@ app.listen(PORT, HOST, async () => {
   console.log(`Servidor iniciado na porta ${PORT}`);
   console.log(`Ambiente: ${process.env.NODE_ENV || "development"}`);
 
-  if (sincronizarDadosNesteAmbiente) {
+  if (DATABASE_CONFIG.provider === "supabase" && sincronizarDadosNesteAmbiente) {
     setImmediate(() => {
-      inicializarPersistenciaSupabase().catch((erro) => console.error(`[Persistência] Falha na inicialização em segundo plano: ${erro.message}`));
+      inicializarPersistenciaSupabase().catch((erro) =>
+        console.error(`[Persistência] Falha na inicialização em segundo plano: ${erro.message}`)
+      );
     });
   }
 
@@ -949,8 +967,17 @@ app.listen(PORT, HOST, async () => {
   }
 
   console.log("Controle de catraca online: Fusion Access Bridge ativo.");
-  const backupNoAmbiente = isRender || ["1", "true", "sim", "yes"].includes(String(process.env.FUSION_BACKUP_AUTO_ON_LOCAL || "false").toLowerCase());
-  const backupAutomatico = backupNoAmbiente ? iniciarBackupAutomatico() : { ativo: false };
+  const backupNoAmbiente =
+    DATABASE_CONFIG.provider === "supabase" &&
+    (
+      isRender ||
+      ["1", "true", "sim", "yes"].includes(
+        String(process.env.FUSION_BACKUP_AUTO_ON_LOCAL || "false").toLowerCase()
+      )
+    );
+  const backupAutomatico = backupNoAmbiente
+    ? iniciarBackupAutomatico()
+    : { ativo: false };
   const observabilidadeNoAmbiente = isRender || envAtivo(process.env.FUSION_OBSERVABILITY_NOTIFY_AUTO);
   const observabilidadeAgendada = iniciarNotificadorObservabilidade({
     ativo: observabilidadeNoAmbiente,
@@ -983,9 +1010,16 @@ app.listen(PORT, HOST, async () => {
 });
 
 async function encerrarServidor(sinal) {
-  console.log(`[Sistema] ${sinal}: sincronizando dados antes de encerrar.`);
-  try { await encerrarPersistenciaSupabase(); }
-  catch (erro) { console.error(`[Persistência] Falha no encerramento: ${erro.message}`); }
+  console.log(`[Sistema] ${sinal}: encerrando persistência.`);
+  try {
+    if (DATABASE_CONFIG.provider === "supabase") {
+      await encerrarPersistenciaSupabase();
+    } else if (DATABASE_CONFIG.provider === "postgres") {
+      await encerrarPostgres();
+    }
+  } catch (erro) {
+    console.error(`[Persistência] Falha no encerramento: ${erro.message}`);
+  }
   process.exit(0);
 }
 

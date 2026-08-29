@@ -1,5 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import { DATABASE_CONFIG } from "../../config/database.config.mjs";
+import { obterPostgresPool } from "../../config/postgres.mjs";
 import { obterSupabaseAdmin } from "../../config/supabase.mjs";
 import { normalizarTenantId } from "../core/persistence/tenant-context.mjs";
 
@@ -19,18 +21,38 @@ function validarTenant(tenantId = "") {
 
 export async function obterStatusImplantacao(tenantId = "") {
   const tenant = validarTenant(tenantId);
-  const supabase = obterSupabaseAdmin({ obrigatorio: true });
+  let data = null;
 
-  const { data, error } = await supabase
-    .from("fusion_tenants")
-    .select("tenant_id,slug,name,status,settings,created_at,updated_at")
-    .eq("tenant_id", tenant)
-    .maybeSingle();
+  if (DATABASE_CONFIG.provider === "postgres") {
+    const db = obterPostgresPool({ obrigatorio: true });
+    const resultado = await db.query(
+      `SELECT tenant_id,slug,name,status,settings,created_at,updated_at
+         FROM public.fusion_tenants
+        WHERE tenant_id = $1
+        LIMIT 1`,
+      [tenant]
+    );
+    data = resultado.rows[0] || null;
+  } else {
+    const supabase = obterSupabaseAdmin({ obrigatorio: true });
+    const resultado = await supabase
+      .from("fusion_tenants")
+      .select("tenant_id,slug,name,status,settings,created_at,updated_at")
+      .eq("tenant_id", tenant)
+      .maybeSingle();
 
-  if (error) throw erro(`Falha ao consultar implantação: ${error.message}`, 500);
+    if (resultado.error) {
+      throw erro(`Falha ao consultar implantação: ${resultado.error.message}`, 500);
+    }
+    data = resultado.data || null;
+  }
+
   if (!data) throw erro("Academia não encontrada.", 404);
 
-  const settings = data.settings && typeof data.settings === "object" ? data.settings : {};
+  const settings = data.settings && typeof data.settings === "object"
+    ? data.settings
+    : {};
+
   return {
     tenantId: tenant,
     slug: data.slug,
