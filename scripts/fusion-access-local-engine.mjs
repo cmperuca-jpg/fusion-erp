@@ -5,8 +5,7 @@ import fs from 'node:fs';
 import { DatabaseSync } from 'node:sqlite';
 import { deduplicarEventosBiometricos, resolverJanelaReleituraBiometricaMs } from '../modules/treinos/biometric-access-dedupe.mjs';
 
-const SUPABASE_URL = 'https://lsxogdipdagouqddgymd.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxzeG9nZGlwZGFnb3VxZGRneW1kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMxNzc4MjMsImV4cCI6MjA5ODc1MzgyM30.y0D4ynOw_A9ugPQK8KduHgkPknsuWzNAJ6KqfzAliDk';
+const ACCESS_SERVER_URL = String(process.env.ACCESS_SERVER_URL || 'https://fusionsistema.com.br').replace(/\/+$/, '');
 
 const norm = value => String(value ?? '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 const bool = value => value === true || ['1','true','sim','yes','on'].includes(norm(value));
@@ -36,15 +35,23 @@ function latestBy(rows) {
 }
 const randomId = () => `edge_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
 
-async function rpc(name, body, timeoutMs = 12000) {
-  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${name}`, {
-    method:'POST',
-    headers:{ apikey:SUPABASE_ANON_KEY, authorization:`Bearer ${SUPABASE_ANON_KEY}`, 'content-type':'application/json' },
-    body:JSON.stringify(body),
-    signal:AbortSignal.timeout(timeoutMs)
+async function edgeRequest(engine, pathname, body, timeoutMs = 12000) {
+  if (!ACCESS_SERVER_URL) throw new Error('ACCESS_SERVER_URL nao configurado.');
+  const headers = {
+    'content-type': 'application/json',
+    'x-agent-id': engine.agentId,
+    'x-agent-token': engine.token,
+    'x-agent-timestamp': new Date().toISOString(),
+    'x-agent-nonce': crypto.randomUUID(),
+    'x-agent-tenant-id': engine.tenantId,
+    'x-tenant-id': engine.tenantId
+  };
+  if (engine.equipmentId) headers['x-agent-equipment-id'] = engine.equipmentId;
+  const response = await fetch(`${ACCESS_SERVER_URL}${pathname}`, {
+    method: 'POST', headers, body: JSON.stringify(body || {}), signal: AbortSignal.timeout(timeoutMs)
   });
   const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data?.message || data?.hint || data?.details || `HTTP ${response.status}`);
+  if (!response.ok) throw new Error(data?.erro || data?.mensagem || `HTTP ${response.status}`);
   return data;
 }
 
@@ -126,7 +133,7 @@ export class FusionLocalAccessEngine {
     if(this.syncing)return false; this.syncing=true;
     try{
       const cursor=this.state('cursor')||null; const full=forceFull||!cursor||!this.ready();
-      const data=await rpc('fusion_edge_pull',{p_tenant_id:this.tenantId,p_agent_id:this.agentId,p_token:this.token,p_since:full?null:cursor,p_full:full});
+      const data=await edgeRequest(this,'/api/access-bridge/agent/edge/pull',{since:full?null:cursor,full});
       this.timeZone=data.timezone||this.timeZone;
       const records=Array.isArray(data.records)?data.records:[];
       if(full)this.db.exec('DELETE FROM raw_records;');
@@ -225,7 +232,7 @@ export class FusionLocalAccessEngine {
     this.pushing=true;
     try{
       const events=rows.map(r=>({id:r.event_id,personId:r.person_id,personType:r.person_type,role:r.role,membershipId:r.membership_id,direction:r.direction,authorized:Boolean(r.authorized),physicalConfirmed:Boolean(r.physical_confirmed),reason:r.reason,far:r.far,occurredAt:r.occurred_at,localDate:r.local_date,offline:Boolean(r.offline)}));
-      const data=await rpc('fusion_edge_push_events',{p_tenant_id:this.tenantId,p_agent_id:this.agentId,p_token:this.token,p_equipment_id:this.equipmentId,p_events:events});
+      const data=await edgeRequest(this,'/api/access-bridge/agent/edge/events',{events});
       const accepted=new Set(Array.isArray(data.accepted)?data.accepted:[]),mark=this.db.prepare('UPDATE events SET synced=1 WHERE event_id=?');
       this.db.exec('BEGIN IMMEDIATE');try{for(const id of accepted)mark.run(id);this.db.exec('COMMIT');}catch(e){this.db.exec('ROLLBACK');throw e;}
       this.setState('last_event_sync_at',new Date().toISOString());return true;

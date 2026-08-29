@@ -7,6 +7,8 @@ import {
 import { listarFrequencias, salvarFrequencias } from "../frequencia/frequencia.repository.mjs";
 import { lerJsonDuravel } from "../core/persistence/durable-json.mjs";
 import { tenantAtual } from "../core/persistence/tenant-context.mjs";
+import { DATABASE_CONFIG } from "../../config/database.config.mjs";
+import { obterPostgresPool } from "../../config/postgres.mjs";
 import { obterSupabaseAdmin } from "../../config/supabase.mjs";
 
 const ARQUIVOS = {
@@ -896,39 +898,46 @@ export async function listarRegistros(filtros = {}) {
 
 
 async function listarEventosEdgeCheckin(inicioIso, fimIso) {
-  const supabase = obterSupabaseAdmin();
-  if (!supabase) return null;
-
   const tenantId = tenantAtual();
-  const todos = [];
-  const tamanhoPagina = 1000;
+  let todos = [];
 
-  for (let pagina = 0; pagina < 100; pagina += 1) {
-    const inicio = pagina * tamanhoPagina;
-    const fim = inicio + tamanhoPagina - 1;
+  if (DATABASE_CONFIG.provider === "postgres") {
+    const db = obterPostgresPool({ obrigatorio: true });
+    const { rows } = await db.query(
+      `SELECT event_id,student_id,direction,authorized,physical_confirmed,occurred_at,source,payload
+         FROM public.fusion_edge_access_events
+        WHERE tenant_id=$1 AND occurred_at >= $2::timestamptz AND occurred_at < $3::timestamptz
+        ORDER BY occurred_at ASC`,
+      [tenantId, inicioIso, fimIso]
+    );
+    todos = rows;
+  } else {
+    const supabase = obterSupabaseAdmin();
+    if (!supabase) return null;
+    const tamanhoPagina = 1000;
 
-    const { data, error } = await supabase
-      .from("fusion_edge_access_events")
-      .select("event_id,student_id,direction,authorized,physical_confirmed,occurred_at,source,payload")
-      .eq("tenant_id", tenantId)
-      .gte("occurred_at", inicioIso)
-      .lt("occurred_at", fimIso)
-      .order("occurred_at", { ascending: true })
-      .range(inicio, fim);
+    for (let pagina = 0; pagina < 100; pagina += 1) {
+      const inicio = pagina * tamanhoPagina;
+      const fim = inicio + tamanhoPagina - 1;
+      const { data, error } = await supabase
+        .from("fusion_edge_access_events")
+        .select("event_id,student_id,direction,authorized,physical_confirmed,occurred_at,source,payload")
+        .eq("tenant_id", tenantId)
+        .gte("occurred_at", inicioIso)
+        .lt("occurred_at", fimIso)
+        .order("occurred_at", { ascending: true })
+        .range(inicio, fim);
 
-    if (error) {
-      throw new Error(`Falha ao consultar eventos reais da catraca: ${error.message}`);
+      if (error) throw new Error(`Falha ao consultar eventos reais da catraca: ${error.message}`);
+      const paginaDados = Array.isArray(data) ? data : [];
+      todos.push(...paginaDados);
+      if (paginaDados.length < tamanhoPagina) break;
     }
-
-    const paginaDados = Array.isArray(data) ? data : [];
-    todos.push(...paginaDados);
-    if (paginaDados.length < tamanhoPagina) break;
   }
 
   return todos.map((row = {}) => {
     const payload = row.payload && typeof row.payload === "object" && !Array.isArray(row.payload)
-      ? row.payload
-      : {};
+      ? row.payload : {};
     const tipoInformado = String(payload.personType || payload.person_type || "").trim().toLowerCase();
     const role = String(payload.role || "").trim().toLowerCase();
     const pessoaTipo = tipoInformado || (role && role !== "aluno" ? "usuario" : "aluno");

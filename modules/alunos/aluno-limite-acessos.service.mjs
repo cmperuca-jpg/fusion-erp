@@ -2,6 +2,8 @@
 import { buscarAlunoPorId, atualizarAluno } from "./alunos.repository.mjs";
 import { listarLogs as listarLogsAcesso } from "../access-engine/access-engine.repository.mjs";
 import { tenantAtual } from "../core/persistence/tenant-context.mjs";
+import { DATABASE_CONFIG } from "../../config/database.config.mjs";
+import { obterPostgresPool } from "../../config/postgres.mjs";
 import { obterSupabaseAdmin } from "../../config/supabase.mjs";
 import { combinarContadorAcessos } from "../treinos/aluno-app-access-counter.mjs";
 
@@ -63,6 +65,23 @@ function logContaComoEntrada(log = {}, alunoId = "", dataAlvo = dataLocalISO()) 
 }
 
 async function entradasBiometriaEdgeHoje(alunoId, dataAlvo) {
+  if (DATABASE_CONFIG.provider === "postgres") {
+    try {
+      const db = obterPostgresPool({ obrigatorio: true });
+      const { rows } = await db.query(
+        `SELECT entry_count
+           FROM public.fusion_edge_daily_frequency
+          WHERE tenant_id=$1 AND student_id=$2 AND attendance_date=$3::date AND modality='biometria'
+          LIMIT 1`,
+        [tenantAtual(), alunoId, dataAlvo]
+      );
+      const quantidade = inteiro(rows[0]?.entry_count, 0);
+      return { quantidade: Math.max(0, quantidade), disponivel: true, aviso: "" };
+    } catch (error) {
+      return { quantidade: 0, disponivel: false, aviso: `Contador Edge indisponível: ${texto(error.message).slice(0, 180)}` };
+    }
+  }
+
   let supabase;
   try { supabase = obterSupabaseAdmin(); } catch { supabase = null; }
   if (!supabase) return { quantidade: 0, disponivel: false, aviso: "Contador Edge indisponível." };
@@ -76,13 +95,7 @@ async function entradasBiometriaEdgeHoje(alunoId, dataAlvo) {
     .eq("modality", "biometria")
     .maybeSingle();
 
-  if (error) {
-    return {
-      quantidade: 0,
-      disponivel: false,
-      aviso: `Contador Edge indisponível: ${texto(error.message).slice(0, 180)}`
-    };
-  }
+  if (error) return { quantidade: 0, disponivel: false, aviso: `Contador Edge indisponível: ${texto(error.message).slice(0, 180)}` };
   const quantidade = inteiro(data?.entry_count, 0);
   return { quantidade: Math.max(0, quantidade), disponivel: true, aviso: "" };
 }

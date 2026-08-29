@@ -1,9 +1,11 @@
 import crypto from 'node:crypto';
 import express from 'express';
+import { DATABASE_CONFIG } from '../../config/database.config.mjs';
 import { validateAgent, validateCommandApi, queueRelease, claimNext, finishCommand, getCommand, saveHeartbeat, getAgent, updateCommandProgress } from './access-bridge.service.mjs';
 import * as accessEngine from '../access-engine/access-engine.service.mjs';
 import { executarComTenant } from '../core/persistence/tenant-context.mjs';
 import { saveEdgeDeviceCredential } from './access-bridge.repository.mjs';
+import { pullEdgeSnapshot, pushEdgeEvents } from './access-edge-postgres.service.mjs';
 
 const router = express.Router();
 const wrap = fn => async (req, res) => {
@@ -47,7 +49,7 @@ router.get('/health', (req, res) => res.json({
   ok: true,
   modulo: 'access-bridge',
   versao: '1.2.1',
-  storage: process.env.SUPABASE_URL ? 'supabase' : 'json-local',
+  storage: DATABASE_CONFIG.provider === 'postgres' ? 'postgres' : (DATABASE_CONFIG.provider === 'supabase' ? 'supabase' : 'json-local'),
   biometria: biometricEnabled() ? 'enabled' : 'disabled'
 }));
 
@@ -110,6 +112,30 @@ router.post('/agent/commands/:id/result', wrap(async (req, res) => {
 }));
 
 import { obterControleAcessosAluno } from "../alunos/aluno-limite-acessos.service.mjs";
+
+router.post('/agent/edge/pull', wrap(async (req, res) => {
+  const agent = await validateAgent(req);
+  await syncEdgeCredential(req, agent);
+  const result = await pullEdgeSnapshot({
+    tenantId: agent.tenantId,
+    agentId: agent.agentId,
+    since: req.body?.since || null,
+    full: req.body?.full === true
+  });
+  res.json(result);
+}));
+
+router.post('/agent/edge/events', wrap(async (req, res) => {
+  const agent = await validateAgent(req);
+  await syncEdgeCredential(req, agent);
+  const result = await pushEdgeEvents({
+    tenantId: agent.tenantId,
+    agentId: agent.agentId,
+    equipmentId: agent.equipmentId || agent.equipmentIds?.[0] || '',
+    events: Array.isArray(req.body?.events) ? req.body.events : []
+  });
+  res.json(result);
+}));
 
 router.post('/agent/biometria/acesso', wrap(async (req, res) => {
   const agent = await validateAgent(req);
