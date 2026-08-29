@@ -46,6 +46,8 @@ const PUBLIC_RULES = [
   ["POST", "/api/access-onboarding/ativar"],
   ["POST", "/api/access-bridge/agent/heartbeat"],
   ["GET", "/api/access-bridge/agent/next"],
+  ["POST", "/api/access-bridge/agent/edge/pull"],
+  ["POST", "/api/access-bridge/agent/edge/events"],
   ["POST", "/api/access-bridge/agent/commands", "prefix"],
   ["POST", "/api/access-bridge/agent/biometria/acesso"],
   ["GET", "/api/reconhecimento-facial/terminal", "prefix"],
