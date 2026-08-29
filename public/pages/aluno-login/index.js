@@ -976,7 +976,26 @@ async function verificarPagamentoPendente({ abrirCheckout = false, janela = null
   const pendente = pagamentoPendente();
   if (!pendente?.id) return false;
 
-  const resposta = await consultarPagamentoAluno(pendente.id);
+  let resposta;
+  try {
+    resposta = await consultarPagamentoAluno(pendente.id);
+  } catch (error) {
+    if (Number(error?.status) === 404 && String(error?.code || "") === "PAYMENT_NOT_FOUND") {
+      limparPagamentoPendente();
+      if (janela) janela.close();
+      await carregarHome();
+      if (!silencioso) {
+        setMessage(
+          "homeMessage",
+          "O pagamento pendente anterior não existe mais. O financeiro foi atualizado.",
+          "success"
+        );
+      }
+      return false;
+    }
+    throw error;
+  }
+
   const recebido = resposta.pagamento?.recebido === true || resposta.recebimento?.baixado === true;
   if (recebido) {
     limparPagamentoPendente();
