@@ -4,7 +4,7 @@ import fs from 'fs/promises';
 import { fileURLToPath } from 'url';
 import { obterSupabaseAdmin } from '../../config/supabase.mjs';
 import { DATABASE_CONFIG } from '../../config/database.config.mjs';
-import { consultarPostgres } from '../../config/postgres.mjs';
+import { obterPostgresPool } from '../../config/postgres.mjs';
 import { normalizarTenantId } from '../core/persistence/tenant-context.mjs';
 import {
   atualizarServicoContrato,
@@ -105,7 +105,8 @@ async function resolverAcademiaPublica(slugInformado = '') {
   if (!slug || SLUGS_RESERVADOS.has(slug)) return null;
 
   if (DATABASE_CONFIG.provider === 'postgres') {
-    const { rows } = await consultarPostgres(
+    const postgres = obterPostgresPool({ obrigatorio: true });
+    const { rows } = await postgres.query(
       `SELECT tenant_id, slug, name, status
          FROM public.fusion_tenants
         WHERE tenant_id = $1 OR slug = $1
