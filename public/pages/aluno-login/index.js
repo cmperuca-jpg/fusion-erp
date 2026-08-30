@@ -474,10 +474,30 @@ function saldoMensalidade(item = {}) {
   return Number.isFinite(n) ? Math.max(0, n) : 0;
 }
 
+function diasAteVencimentoMensalidade(item = {}) {
+  const vencimento = String(item.vencimento || "").slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(vencimento)) return null;
+
+  const agora = new Date();
+  const hoje = Date.UTC(agora.getFullYear(), agora.getMonth(), agora.getDate());
+  const [ano, mes, dia] = vencimento.split("-").map(Number);
+  return Math.round((Date.UTC(ano, mes - 1, dia) - hoje) / 86400000);
+}
+
+function mensalidadeProgramadaNaJanelaPagamento(item = {}, diasAntecedencia = 5) {
+  const status = statusMensalidadeNormalizado(item);
+  const programada = item.programada === true || ["programada", "programado", "previsto", "prevista"].includes(status);
+  if (!programada) return false;
+
+  const dias = diasAteVencimentoMensalidade(item);
+  return Number.isInteger(dias) && dias >= 0 && dias <= Math.max(0, Number(diasAntecedencia) || 0);
+}
+
 function mensalidadePodePagar(item = {}) {
   const status = statusMensalidadeNormalizado(item);
   if (["pago", "paga", "recebido", "recebida", "quitado", "quitada", "cancelado", "cancelada"].includes(status)) return false;
-  if (item.programada === true || ["programada", "programado", "previsto", "prevista"].includes(status)) return false;
+  const programada = item.programada === true || ["programada", "programado", "previsto", "prevista"].includes(status);
+  if (programada && !mensalidadeProgramadaNaJanelaPagamento(item)) return false;
   return Boolean(item.id && saldoMensalidade(item) > 0);
 }
 

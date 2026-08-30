@@ -781,6 +781,29 @@ function ordenarPorVencimento(a = {}, b = {}) {
   return texto(a.vencimento).localeCompare(texto(b.vencimento));
 }
 
+export function mensalidadeProgramadaNaJanelaPagamento(
+  mensalidade = {},
+  hoje = hojeISO(),
+  diasAntecedencia = 5
+) {
+  if (!programado(mensalidade.status)) return false;
+
+  const vencimento = texto(mensalidade.vencimento).slice(0, 10);
+  const referencia = texto(hoje).slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(vencimento) || !/^\d{4}-\d{2}-\d{2}$/.test(referencia)) {
+    return false;
+  }
+
+  const [anoV, mesV, diaV] = vencimento.split("-").map(Number);
+  const [anoH, mesH, diaH] = referencia.split("-").map(Number);
+  const diff = Math.round(
+    (Date.UTC(anoV, mesV - 1, diaV) - Date.UTC(anoH, mesH - 1, diaH)) / 86400000
+  );
+
+  const limite = Math.max(0, Number(diasAntecedencia) || 0);
+  return diff >= 0 && diff <= limite;
+}
+
 async function iniciarPagamentoAlunoTenant(identidade = {}, payload = {}) {
   const alunoId = texto(identidade.legacyId);
   if (!alunoId) throw erro("Aluno não identificado para pagamento.", 401, "STUDENT_NOT_IDENTIFIED");
@@ -790,7 +813,8 @@ async function iniciarPagamentoAlunoTenant(identidade = {}, payload = {}) {
   const candidatas = (Array.isArray(mensalidades) ? mensalidades : [])
     .filter(item => {
       if (payload.mensalidadeId && texto(item.id) !== texto(payload.mensalidadeId)) return false;
-      if (pago(item.status) || cancelado(item.status) || programado(item.status)) return false;
+      if (pago(item.status) || cancelado(item.status)) return false;
+        if (programado(item.status) && !mensalidadeProgramadaNaJanelaPagamento(item)) return false;
       return valorPositivo(item.valorRestante, item.saldoRestante, item.valorAtualizado, item.valor) > 0;
     })
     .sort(ordenarPorVencimento);
