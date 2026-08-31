@@ -10,6 +10,114 @@ const $ = (s) => document.querySelector(s);
 
 function moeda(v){ return Number(v || 0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
 function data(v){ if(!v) return '-'; const s=String(v).slice(0,10); const [a,m,d]=s.split('-'); return a&&m&&d ? `${d}/${m}/${a}` : s; }
+function somenteNumeros(v){ return String(v || '').replace(/\D/g,''); }
+function formatarCpfVisual(v){
+  const n = somenteNumeros(v).slice(0,11);
+  return n.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2');
+}
+function calcularIdade(valor, hoje = new Date()){
+  const iso = String(valor || '').slice(0,10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return null;
+  const [ano, mes, dia] = iso.split('-').map(Number);
+  if (!ano || !mes || !dia) return null;
+  let idade = hoje.getFullYear() - ano;
+  const mesAtual = hoje.getMonth() + 1;
+  if (mesAtual < mes || (mesAtual === mes && hoje.getDate() < dia)) idade -= 1;
+  return idade >= 0 && idade <= 130 ? idade : null;
+}
+function nascimentoComIdade(valor){
+  const nascimento = data(valor);
+  const idade = calcularIdade(valor);
+  return idade === null ? nascimento : `${nascimento} (${idade} anos)`;
+}
+function atualizarIdadeFicha(valor){
+  const el = $('#fuIdade');
+  if (!el) return;
+  const idade = calcularIdade(valor);
+  el.textContent = idade === null ? '' : `· ${idade} anos`;
+}
+function instalarMascaraCpfFicha(){
+  const el = $('#fuCpf');
+  if (!el) return;
+  const descritor = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+  if (!descritor?.get || !descritor?.set) return;
+
+  if (!Object.prototype.hasOwnProperty.call(el, '__fusionCpfMask')) {
+    Object.defineProperty(el, '__fusionCpfMask', { value: true });
+    Object.defineProperty(el, 'value', {
+      configurable: true,
+      get(){ return descritor.get.call(this); },
+      set(v){ descritor.set.call(this, formatarCpfVisual(v)); }
+    });
+  }
+
+  el.value = el.value;
+  el.addEventListener('input', () => {
+    const atual = descritor.get.call(el);
+    const formatado = formatarCpfVisual(atual);
+    if (atual !== formatado) descritor.set.call(el, formatado);
+  });
+}
+function instalarIdadeFicha(){
+  const el = $('#fuNascimento');
+  if (!el) return;
+  const descritor = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+  if (!descritor?.get || !descritor?.set) return;
+
+  if (!Object.prototype.hasOwnProperty.call(el, '__fusionIdadeWatch')) {
+    Object.defineProperty(el, '__fusionIdadeWatch', { value: true });
+    Object.defineProperty(el, 'value', {
+      configurable: true,
+      get(){ return descritor.get.call(this); },
+      set(v){
+        descritor.set.call(this, v == null ? '' : String(v));
+        atualizarIdadeFicha(v);
+      }
+    });
+  }
+
+  atualizarIdadeFicha(el.value);
+  el.addEventListener('input', () => atualizarIdadeFicha(el.value));
+  el.addEventListener('change', () => atualizarIdadeFicha(el.value));
+}
+function idAlunoLista(a = {}){ return String(a.id || a._id || a.codigo || ''); }
+async function abrirProximoAluno(){
+  const btn = $('#btnProximoAluno');
+  if (!btn) return;
+
+  const original = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Carregando...';
+
+  try {
+    const resp = await fetch('/api/alunos', { cache:'no-store' });
+    const payload = await resp.json().catch(() => []);
+    if (!resp.ok) throw new Error(payload?.mensagem || payload?.erro || `Erro HTTP ${resp.status}`);
+
+    const lista = (Array.isArray(payload) ? payload : (payload?.dados || payload?.alunos || []))
+      .filter(a => idAlunoLista(a))
+      .sort((a,b) => nomeAluno(a).localeCompare(nomeAluno(b), 'pt-BR', { sensitivity:'base' }));
+
+    if (!lista.length) throw new Error('Nenhum aluno disponível para navegação.');
+
+    const atual = lista.findIndex(a => idAlunoLista(a) === String(alunoId || ''));
+    if (atual < 0) throw new Error('Aluno atual não foi encontrado na lista.');
+
+    const proximo = lista[(atual + 1) % lista.length];
+    const proximoId = idAlunoLista(proximo);
+    if (!proximoId || (lista.length === 1 && proximoId === String(alunoId || ''))) {
+      btn.textContent = 'Único aluno';
+      return;
+    }
+
+    location.href = `/pages/alunos/prontuario.html?id=${encodeURIComponent(proximoId)}`;
+  } catch (e) {
+    alerta(e.message || 'Não foi possível abrir o próximo aluno.');
+    btn.disabled = false;
+    btn.textContent = original;
+  }
+}
+
 function esc(v){ return String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c])); }
 function statusClass(st){ const s=String(st||'').toLowerCase(); if(['pago','recebido','ativo','ativa'].includes(s)) return 'ok'; if(['aberto','aberta','pendente','parcial'].includes(s)) return 'warn'; if(['cancelado','inativo','bloqueado'].includes(s)) return 'bad'; return ''; }
 function nomeAluno(a){ return a?.nome || a?.aluno || a?.name || 'Aluno'; }
@@ -54,7 +162,7 @@ async function carregar(){
 function render(){
   const a = prontuario.aluno || {};
   $('#nomeAluno').textContent = nomeAluno(a);
-  $('#subtituloAluno').textContent = `${a.cpf ? 'CPF '+a.cpf+' · ' : ''}${a.telefone || a.whatsapp || ''}`;
+  $('#subtituloAluno').textContent = `${a.cpf ? 'CPF '+formatarCpfVisual(a.cpf)+' · ' : ''}${a.telefone || a.whatsapp || ''}`;
   $('#fotoAluno').innerHTML = (a.foto_base64 || a.foto) ? `<img src="${esc(a.foto_base64 || a.foto)}" alt="Foto do aluno">` : 'Foto';
   $('#chipsAluno').innerHTML = [
     chip(`Status: ${prontuario?.restricaoAcesso?.bloqueadoFinanceiro ? 'Bloqueado financeiro' : (a.status || '-')}`, prontuario?.restricaoAcesso?.bloqueadoFinanceiro ? 'bad' : statusClass(a.status)),
@@ -68,9 +176,10 @@ function render(){
   $('#kpiAberto').textContent = moeda(rf.valorAberto);
   $('#kpiPago').textContent = moeda(rf.valorPago);
   $('#kpiAvaliacao').textContent = data(prontuario.indicadores?.ultimaAvaliacao);
+  atualizarIdadeFicha(a.data_nascimento);
 
   const dadosAlunoEl = $('#dadosAluno');
-  if (dadosAlunoEl) dadosAlunoEl.innerHTML = info({Nome:nomeAluno(a), CPF:a.cpf, RG:a.rg, Nascimento:data(a.data_nascimento), Sexo:a.sexo, Telefone:a.telefone, WhatsApp:a.whatsapp, Email:a.email, Endereço:[a.endereco,a.numero,a.bairro,a.cidade,a.estado].filter(Boolean).join(', '), Objetivo:a.objetivo});
+  if (dadosAlunoEl) dadosAlunoEl.innerHTML = info({Nome:nomeAluno(a), CPF:formatarCpfVisual(a.cpf), RG:a.rg, Nascimento:nascimentoComIdade(a.data_nascimento), Sexo:a.sexo, Telefone:a.telefone, WhatsApp:a.whatsapp, Email:a.email, Endereço:[a.endereco,a.numero,a.bairro,a.cidade,a.estado].filter(Boolean).join(', '), Objetivo:a.objetivo});
   const dadosMedicosEl = $('#dadosMedicos');
   if (dadosMedicosEl) dadosMedicosEl.innerHTML = info({'Tipo sanguíneo':a.tipo_sanguineo, Peso:a.peso, Altura:a.altura, Alergias:a.alergias, Restrições:a.restricoes_medicas, Medicamentos:a.medicamentos, Lesões:a.lesoes, Observações:a.observacoes});
   renderMensalidades(); renderFinanceiro(); renderMatriculas(); renderContratoComercial(); renderServicosContratados(); renderAvaliacoes(); renderTreinos(); renderCheckins(); renderTimeline();
@@ -511,6 +620,9 @@ function renderTimeline(){
 function empty(t){ return `<div class="empty">${esc(t)}</div>`; }
 
 document.addEventListener('DOMContentLoaded',()=>{
+  instalarMascaraCpfFicha();
+  instalarIdadeFicha();
+  $('#btnProximoAluno')?.addEventListener('click', abrirProximoAluno);
   document.querySelectorAll('.tab').forEach(btn=>btn.addEventListener('click',()=>{
     document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active', b===btn));
     document.querySelectorAll('.tab-panel').forEach(p=>p.classList.toggle('active', p.id === `tab-${btn.dataset.tab}`));

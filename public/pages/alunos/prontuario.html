@@ -47,6 +47,7 @@
           </div>
           <div class="prontuario-actions">
             <button class="fusion-button secondary" type="button" onclick="history.back()">Voltar</button>
+              <button class="fusion-button secondary" type="button" id="btnProximoAluno" title="Próximo aluno em ordem alfabética">Próximo aluno</button>
             <button class="fusion-button" type="button" id="btnSalvarFichaUnica">Salvar alterações</button>
             <button class="fusion-button" type="button" id="btnImprimir">Imprimir</button>
           </div>
@@ -77,7 +78,7 @@
               <div class="field"><label for="fuFotoArquivo">Alterar foto</label><input id="fuFotoArquivo" type="file" accept="image/*"><small>A foto é gravada ao clicar em Salvar alterações.</small></div>
             </div>
             <div class="grid-2"><div class="field"><label for="fuNome">Nome completo *</label><input id="fuNome"></div><div class="field"><label for="fuCpf">CPF</label><input id="fuCpf" maxlength="14"></div></div>
-            <div class="grid-3"><div class="field"><label for="fuRg">RG</label><input id="fuRg"></div><div class="field"><label for="fuNascimento">Nascimento</label><input id="fuNascimento" type="date"></div><div class="field"><label for="fuSexo">Sexo</label><select id="fuSexo"><option value="">Não informado</option><option value="feminino">Feminino</option><option value="masculino">Masculino</option><option value="outro">Outro</option></select></div></div>
+            <div class="grid-3"><div class="field"><label for="fuRg">RG</label><input id="fuRg"></div><div class="field"><label for="fuNascimento">Nascimento <small id="fuIdade"></small></label><input id="fuNascimento" type="date"></div><div class="field"><label for="fuSexo">Sexo</label><select id="fuSexo"><option value="">Não informado</option><option value="feminino">Feminino</option><option value="masculino">Masculino</option><option value="outro">Outro</option></select></div></div>
             <div class="grid-2"><div class="field"><label for="fuTelefone">Telefone</label><input id="fuTelefone"></div><div class="field"><label for="fuWhatsapp">WhatsApp</label><input id="fuWhatsapp"></div></div>
             <div class="grid-2"><div class="field"><label for="fuEmail">E-mail</label><input id="fuEmail" type="email"></div><div class="field"><label for="fuProfessor">Professor responsável</label><input id="fuProfessor"></div></div>
             <div class="grid-2"><div class="field"><label for="fuResponsavel">Responsável</label><input id="fuResponsavel"></div><div class="field"><label for="fuEmergencia">Contato de emergência</label><input id="fuEmergencia"></div></div>
@@ -160,7 +161,7 @@
     </main>
   </div>
 
-  <script src="./prontuario.js?v=20260831-v21b2-bloqueio-financeiro"></script>
+  <script src="./prontuario.js?v=20260831-v21d-prontuario-fluxo"></script>
   <script src="/js/alunos/central-comercial.js?v=20260825-prontuario-cache-1"></script>
   <script src="./prontuario-ficha-unica.js?v=20260828-app-link-sem-dispositivo-1"></script>
   <script src="/assets/js/fusion-layout.js"></script>
