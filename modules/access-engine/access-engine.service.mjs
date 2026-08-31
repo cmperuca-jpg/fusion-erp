@@ -1,5 +1,6 @@
 import { dispositivoSchema, simulacaoSchema } from './access-engine.schema.mjs';
 import * as repo from './access-engine.repository.mjs';
+import { obterConfiguracaoAtraso } from "../financeiro/configuracao-financeira.service.mjs";
 import * as simulador from './drivers/simulador.driver.mjs';
 import { listarDrivers, obterDriver } from './drivers/driver-registry.mjs';
 import { mapaLegado } from './drivers/sdk-legacy.adapter.mjs';
@@ -106,10 +107,17 @@ function mensalidadeDoAluno(mensalidade = {}, chaves) {
 
 async function pendenciaFinanceiraAluno(aluno = {}) {
   const chaves = chavesAluno(aluno);
-  const mensalidades = await repo.listarMensalidades();
+  const [mensalidades, configAtraso] = await Promise.all([
+    repo.listarMensalidades(),
+    obterConfiguracaoAtraso().catch(() => ({ carenciaDias: 0 }))
+  ]);
+  const carenciaDias = Math.max(
+    0,
+    Math.min(365, Math.trunc(Number(configAtraso?.carenciaDias || 0)))
+  );
   const pendencias = mensalidades
     .filter((m) => mensalidadeDoAluno(m, chaves))
-    .filter(vencida)
+    .filter((m) => mensalidadeBloqueiaAcesso(m, carenciaDias))
     .sort((a, b) => String(a.vencimento || a.dataVencimento || a.data_vencimento || '').localeCompare(String(b.vencimento || b.dataVencimento || b.data_vencimento || '')));
 
   return pendencias[0] || null;
@@ -129,6 +137,28 @@ export function diasAtrasoAcesso(vencimento = "", referencia = "") {
   dataRef.setHours(0, 0, 0, 0);
   dataVenc.setHours(0, 0, 0, 0);
   return Math.max(0, Math.floor((dataRef.getTime() - dataVenc.getTime()) / 86400000));
+}
+
+export function mensalidadeBloqueiaAcesso(mensalidade = {}, carenciaDias = 0, referencia = "") {
+  if (!vencida(mensalidade)) return false;
+
+  const carencia = Math.max(
+    0,
+    Math.min(365, Math.trunc(Number(carenciaDias || 0)))
+  );
+  const vencimento = String(
+    mensalidade.vencimento ||
+    mensalidade.dataVencimento ||
+    mensalidade.data_vencimento ||
+    ""
+  ).slice(0, 10);
+
+  // Sem uma data confiável, preserva o comportamento conservador anterior:
+  // status explicitamente vencido continua bloqueante.
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(vencimento)) return true;
+
+  const diasAtraso = diasAtrasoAcesso(vencimento, referencia);
+  return diasAtraso > carencia;
 }
 
 export async function consultarBloqueioFinanceiroAluno({ aluno, direcao = "entrada" } = {}) {
