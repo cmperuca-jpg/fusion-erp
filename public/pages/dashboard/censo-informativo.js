@@ -89,7 +89,7 @@
 
   function urlCadastroAluno(a = {}) {
     const id = idAlunoCenso(a);
-    return id ? `/pages/alunos/index.html?editar=${encodeURIComponent(id)}&tab=cadastro` : "";
+    return id ? `/pages/alunos/prontuario.html?id=${encodeURIComponent(id)}` : "";
   }
 
   function valorPeso(av = {}) {
