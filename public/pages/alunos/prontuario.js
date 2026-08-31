@@ -34,7 +34,7 @@ function atualizarIdadeFicha(valor){
   const el = $('#fuIdade');
   if (!el) return;
   const idade = calcularIdade(valor);
-  el.textContent = idade === null ? '' : `· ${idade} anos`;
+  el.textContent = idade === null ? '' : `Idade: ${idade} anos`;
 }
 function instalarMascaraCpfFicha(){
   const el = $('#fuCpf');
