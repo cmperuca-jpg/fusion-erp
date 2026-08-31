@@ -1,0 +1,33 @@
+.censo-dashboard{margin:18px 0;padding:18px}
+.censo-cabecalho,.censo-movimento-topo{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.censo-cabecalho h2,.censo-bloco h3,.censo-movimento h3{margin:0;color:#0f172a}
+.censo-cabecalho h2{font-size:20px}
+.censo-cabecalho p{margin:4px 0 0;color:#64748b;font-size:13px}
+.censo-cabecalho>span{font-size:12px;color:#64748b}
+.censo-resumo{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:14px}
+.censo-kpi{border:1px solid #e2e8f0;border-radius:10px;padding:12px;background:#fff;min-width:0}
+.censo-kpi span,.censo-kpi small{display:block;color:#64748b;font-size:12px}
+.censo-kpi strong{display:block;margin:4px 0;font-size:22px;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.censo-kpi-financeiro strong{font-size:18px}
+.censo-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:10px}
+.censo-bloco{border:1px solid #e2e8f0;border-radius:10px;padding:12px;background:#fff;min-width:0}
+.censo-bloco h3{font-size:14px;margin-bottom:8px}
+.censo-lista{display:grid;gap:5px;font-size:12px;color:#334155}
+.censo-linha{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-bottom:4px;border-bottom:1px solid #f1f5f9}
+.censo-linha:last-child{border-bottom:0}
+.censo-linha b{color:#0f172a;font-size:12px;text-align:right}
+.censo-linha small{color:#64748b}
+.censo-picos .censo-linha b{min-width:60px}
+.censo-movimento{border:1px solid #e2e8f0;border-radius:10px;padding:12px;margin-top:10px;background:#fff}
+.censo-movimento h3{font-size:14px}
+.censo-movimento small{color:#64748b;font-size:11px}
+.censo-movimento-topo>strong{font-size:13px;color:#334155}
+.censo-sparkline{height:105px;margin-top:8px;overflow:hidden}
+.censo-sparkline svg{display:block;width:100%;height:100%}
+.censo-sparkline .grid{stroke:#e2e8f0;stroke-width:1}
+.censo-sparkline .linha{fill:none;stroke:currentColor;stroke-width:2}
+.censo-sparkline .ponto{fill:currentColor}
+.censo-sparkline .rotulo{fill:#64748b;font-size:9px}
+.censo-sem-dado{color:#94a3b8;font-style:italic}
+@media (max-width:1200px){.censo-resumo,.censo-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:700px){.censo-resumo,.censo-grid{grid-template-columns:1fr}.censo-dashboard{padding:12px}}

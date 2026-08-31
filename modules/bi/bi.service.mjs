@@ -271,6 +271,108 @@ function filtrarPeriodo(lista, getData, inicio, fim) {
   return lista.filter(item => dentroPeriodo(getData(item), inicio, fim));
 }
 
+
+function idadeAlunoEmAnos(valor, referencia = hojeISO()) {
+  const nascimento = dataISO(valor);
+  const ref = dataISO(referencia);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(nascimento) || !/^\d{4}-\d{2}-\d{2}$/.test(ref)) return null;
+
+  const [ano, mes, dia] = nascimento.split("-").map(Number);
+  const [anoRef, mesRef, diaRef] = ref.split("-").map(Number);
+  let idade = anoRef - ano;
+  if (mesRef < mes || (mesRef === mes && diaRef < dia)) idade -= 1;
+  return idade >= 0 && idade <= 130 ? idade : null;
+}
+
+function sexoCenso(aluno = {}) {
+  const sexo = normalizar(aluno.sexo ?? aluno.genero ?? aluno.gênero);
+  if (["masculino", "masc", "m"].includes(sexo)) return "masculino";
+  if (["feminino", "fem", "f"].includes(sexo)) return "feminino";
+  return "nao_informado";
+}
+
+function horaInteira(valor) {
+  const match = texto(valor).match(/^(\d{1,2}):/);
+  if (!match) return null;
+  const hora = Number(match[1]);
+  return Number.isInteger(hora) && hora >= 0 && hora <= 23 ? hora : null;
+}
+
+function inicioMesISO(referencia = hojeISO()) {
+  const ref = dataISO(referencia);
+  return /^\d{4}-\d{2}-\d{2}$/.test(ref) ? ref.slice(0, 7) : hojeISO().slice(0, 7);
+}
+
+export function montarCensoDashboard({ alunos = [], presencas = [], referencia = hojeISO() } = {}) {
+  const listaAlunos = Array.isArray(alunos) ? alunos : [];
+  const listaPresencas = Array.isArray(presencas) ? presencas.filter(presencaReal) : [];
+  const idsAlunos = new Set(listaAlunos.map(a => normalizar(a.id ?? a.alunoId ?? a.aluno_id)).filter(Boolean));
+
+  const porSexo = { masculino: 0, feminino: 0, nao_informado: 0 };
+  const faixas = new Map();
+  const extremosIdade = { masculino: null, feminino: null };
+
+  for (const aluno of listaAlunos) {
+    const sexo = sexoCenso(aluno);
+    porSexo[sexo] = (porSexo[sexo] || 0) + 1;
+
+    const idade = idadeAlunoEmAnos(aluno.data_nascimento ?? aluno.dataNascimento ?? aluno.nascimento, referencia);
+    if (idade === null) continue;
+
+    const inicio = Math.floor(idade / 10) * 10;
+    const chave = `${inicio}-${inicio + 9}`;
+    const atual = faixas.get(chave) || { faixa: chave, inicio, total: 0, masculino: 0, feminino: 0, nao_informado: 0 };
+    atual.total += 1;
+    atual[sexo] = (atual[sexo] || 0) + 1;
+    faixas.set(chave, atual);
+
+    if (sexo === "masculino" || sexo === "feminino") {
+      const vigente = extremosIdade[sexo];
+      if (!vigente || idade > vigente.idade) {
+        extremosIdade[sexo] = { nome: texto(aluno.nome ?? aluno.aluno ?? aluno.name) || "Aluno", idade };
+      }
+    }
+  }
+
+  const presencasAluno = listaPresencas.filter(p => {
+    const id = normalizar(alunoId(p));
+    return id && idsAlunos.has(id);
+  });
+
+  const mapaHoras = new Map();
+  for (const p of presencasAluno) {
+    const hora = horaInteira(horaInicio(p));
+    if (hora === null) continue;
+    mapaHoras.set(hora, (mapaHoras.get(hora) || 0) + 1);
+  }
+
+  const horasPico = [...mapaHoras.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0] - b[0])
+    .slice(0, 10)
+    .map(([hora, entradas]) => ({ hora, faixa: `${String(hora).padStart(2, "0")}:00`, entradas }));
+
+  const mes = inicioMesISO(referencia);
+  const mapaDias = new Map();
+  for (const p of presencasAluno) {
+    const data = dataPresenca(p);
+    if (!data || !data.startsWith(mes)) continue;
+    mapaDias.set(data, (mapaDias.get(data) || 0) + 1);
+  }
+
+  const movimentoMes = [...mapaDias.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([data, entradas]) => ({ data, entradas }));
+
+  return {
+    totalAlunos: listaAlunos.length,
+    sexo: porSexo,
+    faixasEtarias: [...faixas.values()].sort((a, b) => a.inicio - b.inicio),
+    maisVelho: extremosIdade,
+    horasPico,
+    movimentoMes
+  };
+}
+
 export async function gerarDashboardExecutivo(filtros = {}) {
   const base = await carregarBaseBI();
   const hoje = hojeISO();
@@ -289,6 +391,11 @@ export async function gerarDashboardExecutivo(filtros = {}) {
       alunosPorPlano: contarPorCampo(base.alunos, "plano", "Sem plano"),
       alunosPorStatus: contarPorCampo(base.alunos, "status", "Sem status")
     },
+    censo: montarCensoDashboard({
+      alunos: base.alunos,
+      presencas: presencasReais,
+      referencia: hoje
+    }),
     alertas: [],
     ultimasAtividades: []
   };

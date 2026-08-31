@@ -17,6 +17,7 @@
   <link rel="stylesheet" href="./informacoes-dia.css?v=20260820-rel-av-1">
   <link rel="stylesheet" href="/pages/dashboard/checkin-operacional-dashboard.css?v=20260826-1" />
   <link rel="stylesheet" href="/pages/dashboard/financeiro-operacional-dashboard.css?v=20260828-popup-pagamento-1" />
+  <link rel="stylesheet" href="/pages/dashboard/censo-informativo.css?v=20260831-v21f6-1" />
 </head>
 <body>
   <div class="fusion-shell">
@@ -91,6 +92,54 @@
 
 
         <!-- DASHBOARD CHECKIN OPERACIONAL 6 COLUNAS 20260826 -->
+          <!-- CENSO INFORMATIVO V21F6 -->
+          <section id="censoInformativoDashboard" class="fusion-card censo-dashboard" aria-label="Censo informativo da academia">
+            <div class="censo-cabecalho">
+              <div>
+                <h2>Censo informativo</h2>
+                <p>Perfil dos alunos, previsão de recebimento e comportamento de entrada.</p>
+              </div>
+              <span id="censoAtualizado">Atualizando...</span>
+            </div>
+
+            <div class="censo-resumo">
+              <article class="censo-kpi"><span>Masculino</span><strong id="censoMasculino">0</strong><small>alunos cadastrados</small></article>
+              <article class="censo-kpi"><span>Feminino</span><strong id="censoFeminino">0</strong><small>alunas cadastradas</small></article>
+              <article class="censo-kpi"><span>Fumantes identificados</span><strong id="censoFumantes">0</strong><small id="censoFumantesBase">sem avaliações</small></article>
+              <article class="censo-kpi censo-kpi-financeiro"><span>Maior semana a receber</span><strong id="censoSemanaReceber">-</strong><small id="censoSemanaReceberPeriodo">sem valores futuros</small></article>
+            </div>
+
+            <div class="censo-grid">
+              <article class="censo-bloco">
+                <h3>Faixas de idade</h3>
+                <div id="censoFaixas" class="censo-lista"><em>Carregando...</em></div>
+              </article>
+
+              <article class="censo-bloco">
+                <h3>Extremos masculinos</h3>
+                <div id="censoExtremosMasculino" class="censo-lista"><em>Carregando...</em></div>
+              </article>
+
+              <article class="censo-bloco">
+                <h3>Extremos femininos</h3>
+                <div id="censoExtremosFeminino" class="censo-lista"><em>Carregando...</em></div>
+              </article>
+
+              <article class="censo-bloco">
+                <h3>Horas de pico</h3>
+                <div id="censoHorasPico" class="censo-lista censo-picos"><em>Carregando...</em></div>
+              </article>
+            </div>
+
+            <article class="censo-movimento">
+              <div class="censo-movimento-topo">
+                <div><h3>Movimento de alunos no mês</h3><small>Entradas registradas por dia</small></div>
+                <strong id="censoMovimentoTotal">0 entradas</strong>
+              </div>
+              <div id="censoMovimentoGrafico" class="censo-sparkline"><em>Carregando movimento...</em></div>
+            </article>
+          </section>
+
         <section id="movimentoHojeDashboard" class="fusion-card dashboard-checkin-operacional" aria-label="Movimento e presença em tempo real">
           <div class="dashboard-checkin-cabecalho">
             <div>
@@ -321,5 +370,6 @@
   <script src="./informacoes-dia.js?v=20260820-rel-av-1" defer></script>
   <script src="/pages/dashboard/checkin-operacional-dashboard.js?v=20260826-1" defer></script>
   <script src="/pages/dashboard/financeiro-operacional-dashboard.js?v=20260828-desconto-estorno-2" defer></script>
+  <script src="/pages/dashboard/censo-informativo.js?v=20260831-v21f6-1" defer></script>
 </body>
 </html>
