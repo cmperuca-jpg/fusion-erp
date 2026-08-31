@@ -1,0 +1,288 @@
+/* V21G6B - prontuario e cadastro compactos, sem alterar dados */
+
+/* Densidade geral do prontuário no desktop */
+@media (min-width: 1000px) {
+  .prontuario-page{
+    gap:8px !important;
+  }
+
+  .prontuario-header.fusion-card{
+    min-height:0 !important;
+    padding:10px 20px !important;
+    gap:14px !important;
+  }
+
+  .prontuario-header > .foto-grande{
+    width:78px !important;
+    height:78px !important;
+    min-width:78px !important;
+    min-height:78px !important;
+  }
+
+  .prontuario-header h2{
+    margin:0 0 2px !important;
+    font-size:22px !important;
+    line-height:1.08 !important;
+  }
+
+  .prontuario-header .chip-row{
+    gap:5px !important;
+    margin-top:5px !important;
+  }
+
+  .prontuario-header .chip{
+    padding:4px 9px !important;
+    min-height:0 !important;
+    font-size:11px !important;
+    line-height:1.2 !important;
+  }
+
+  .prontuario-header .prontuario-actions{
+    gap:7px !important;
+  }
+
+  .prontuario-header .prontuario-actions .fusion-button,
+  .prontuario-header .prontuario-actions button{
+    min-height:34px !important;
+    height:34px !important;
+    padding:0 14px !important;
+    font-size:11px !important;
+  }
+
+  .prontuario-nav-status-wrap{
+    min-width:118px !important;
+    margin-right:4px !important;
+  }
+
+  .prontuario-nav-status-wrap select{
+    min-height:34px !important;
+    height:34px !important;
+    padding-top:0 !important;
+    padding-bottom:0 !important;
+  }
+
+  .prontuario-kpis{
+    gap:8px !important;
+    margin:8px 0 !important;
+  }
+
+  .prontuario-kpis .aluno-kpi{
+    min-height:62px !important;
+    padding:8px 16px !important;
+  }
+
+  .prontuario-kpis .aluno-kpi span{
+    margin-bottom:3px !important;
+    font-size:11px !important;
+  }
+
+  .prontuario-kpis .aluno-kpi strong{
+    font-size:24px !important;
+    line-height:1.05 !important;
+  }
+
+  .prontuario-tabs.fusion-card{
+    min-height:0 !important;
+    padding:6px 10px !important;
+    gap:5px !important;
+    margin:0 0 8px !important;
+  }
+
+  .prontuario-tabs .tab{
+    min-height:34px !important;
+    height:34px !important;
+    padding:0 12px !important;
+    font-size:11px !important;
+    line-height:1 !important;
+  }
+
+  /* Cadastro: transforma os grupos existentes numa grade contínua de 4 colunas */
+  #tab-cadastro .ficha-unica-card{
+    display:grid !important;
+    grid-template-columns:repeat(4,minmax(0,1fr)) !important;
+    gap:5px 9px !important;
+    padding:9px 12px 11px !important;
+    margin:0 !important;
+  }
+
+  #tab-cadastro .ficha-unica-head{
+    grid-column:1 / -1 !important;
+    min-height:0 !important;
+    margin:0 0 2px !important;
+    padding:0 !important;
+    align-items:center !important;
+  }
+
+  #tab-cadastro .ficha-unica-head h3{
+    margin:0 !important;
+    font-size:16px !important;
+    line-height:1.1 !important;
+  }
+
+  #tab-cadastro .ficha-unica-head p{
+    margin:2px 0 0 !important;
+    font-size:10.5px !important;
+    line-height:1.2 !important;
+  }
+
+  #tab-cadastro .ficha-unica-status-edicao{
+    padding:4px 8px !important;
+    font-size:10px !important;
+  }
+
+  #tab-cadastro .ficha-foto-edicao{
+    grid-column:1 / -1 !important;
+    display:grid !important;
+    grid-template-columns:58px minmax(0,1fr) !important;
+    align-items:center !important;
+    gap:9px !important;
+    margin:0 0 2px !important;
+    padding:0 !important;
+  }
+
+  #tab-cadastro #fuFoto.foto-grande{
+    width:58px !important;
+    height:58px !important;
+    min-width:58px !important;
+    min-height:58px !important;
+  }
+
+  #tab-cadastro .grid-2,
+  #tab-cadastro .grid-3{
+    display:contents !important;
+  }
+
+  #tab-cadastro .field{
+    min-width:0 !important;
+    margin:0 !important;
+    gap:0 !important;
+  }
+
+  #tab-cadastro .field label{
+    display:block !important;
+    margin:0 0 2px !important;
+    font-size:10.5px !important;
+    line-height:1.15 !important;
+    font-weight:700 !important;
+  }
+
+  #tab-cadastro .field input:not([type="file"]),
+  #tab-cadastro .field select{
+    width:100% !important;
+    min-height:31px !important;
+    height:31px !important;
+    padding:4px 8px !important;
+    border-radius:8px !important;
+    font-size:12px !important;
+    line-height:1.1 !important;
+  }
+
+  #tab-cadastro .field input[type="file"]{
+    width:100% !important;
+    min-height:31px !important;
+    padding:3px 6px !important;
+    font-size:11px !important;
+  }
+
+  #tab-cadastro .field textarea{
+    width:100% !important;
+    min-height:43px !important;
+    height:43px !important;
+    padding:5px 8px !important;
+    border-radius:8px !important;
+    font-size:12px !important;
+    line-height:1.2 !important;
+    resize:vertical !important;
+  }
+
+  #tab-cadastro .field small{
+    display:block !important;
+    margin-top:1px !important;
+    font-size:9px !important;
+    line-height:1.1 !important;
+  }
+
+  /* Distribuição compacta, mantendo os IDs e a gravação existentes */
+  #tab-cadastro .field:has(#fuNome){grid-column:span 2 !important}
+  #tab-cadastro .field:has(#fuCpf){grid-column:span 1 !important}
+  #tab-cadastro .field:has(#fuRg){grid-column:span 1 !important}
+
+  #tab-cadastro .field:has(#fuNascimento),
+  #tab-cadastro .field:has(#fuSexo),
+  #tab-cadastro .field:has(#fuTelefone),
+  #tab-cadastro .field:has(#fuWhatsapp){
+    grid-column:span 1 !important;
+  }
+
+  #tab-cadastro .field:has(#fuEmail){grid-column:span 2 !important}
+  #tab-cadastro .field:has(#fuProfessor){grid-column:span 1 !important}
+  #tab-cadastro .field:has(#fuResponsavel){grid-column:span 1 !important}
+
+  #tab-cadastro .field:has(#fuEmergencia),
+  #tab-cadastro .field:has(#fuCep),
+  #tab-cadastro .field:has(#fuCidade),
+  #tab-cadastro .field:has(#fuEstado){
+    grid-column:span 1 !important;
+  }
+
+  #tab-cadastro .ficha-unica-card > .field:has(#fuEndereco),
+  #tab-cadastro .ficha-unica-card > .field:has(#fuObjetivo){
+    grid-column:span 2 !important;
+  }
+
+  #tab-cadastro .ficha-unica-card > .field:has(#fuObservacoes){
+    grid-column:span 2 !important;
+  }
+
+  #tab-cadastro .field:has(#fuSenha),
+  #tab-cadastro .field:has(#fuSenha2){
+    grid-column:span 1 !important;
+  }
+}
+
+/* Tablet: duas colunas, ainda compacto */
+@media (min-width: 761px) and (max-width: 999px) {
+  #tab-cadastro .ficha-unica-card{
+    padding:10px !important;
+  }
+
+  #tab-cadastro .grid-2,
+  #tab-cadastro .grid-3{
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    gap:7px !important;
+  }
+
+  #tab-cadastro .field input,
+  #tab-cadastro .field select{
+    min-height:34px !important;
+  }
+}
+
+/* Mobile preserva o fluxo vertical e apenas reduz excesso de espaço */
+@media (max-width: 760px) {
+  #tab-cadastro .ficha-unica-card{
+    padding:10px !important;
+  }
+
+  #tab-cadastro .ficha-unica-head{
+    margin-bottom:6px !important;
+  }
+
+  #tab-cadastro .ficha-foto-edicao{
+    gap:8px !important;
+    margin-bottom:7px !important;
+  }
+
+  #tab-cadastro .field{
+    margin-bottom:6px !important;
+  }
+
+  #tab-cadastro .field input,
+  #tab-cadastro .field select{
+    min-height:38px !important;
+  }
+
+  #tab-cadastro .field textarea{
+    min-height:58px !important;
+  }
+}
