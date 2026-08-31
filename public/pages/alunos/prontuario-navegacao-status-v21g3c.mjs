@@ -190,7 +190,17 @@ function garantirPainelIndicadoresRapidos() {
   const subtitulo = document.getElementById("subtituloAluno");
   if (!subtitulo?.parentElement) return null;
 
-  subtitulo.parentElement.classList.add("prontuario-identidade-v21g3c");
+  const identidade = subtitulo.parentElement;
+  identidade.classList.add("prontuario-identidade-v21g3c");
+
+  let linha = document.getElementById("prontuarioLinhaContatoIndicadores");
+  if (!linha) {
+    linha = document.createElement("div");
+    linha.id = "prontuarioLinhaContatoIndicadores";
+    linha.className = "prontuario-linha-contato-indicadores";
+    subtitulo.insertAdjacentElement("beforebegin", linha);
+    linha.appendChild(subtitulo);
+  }
 
   painel = document.createElement("div");
   painel.id = "prontuarioIndicadoresRapidos";
@@ -202,7 +212,7 @@ function garantirPainelIndicadoresRapidos() {
     <span class="prontuario-indicador neutro" data-indicador="app"><i></i>App</span>
     <span class="prontuario-indicador neutro" data-indicador="biometria"><i></i>Biometria</span>`;
 
-  subtitulo.insertAdjacentElement("afterend", painel);
+  linha.appendChild(painel);
   return painel;
 }
 

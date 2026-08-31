@@ -34,17 +34,29 @@
   }
 }
 
+.prontuario-linha-contato-indicadores{
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:8px;
+  margin:0 0 6px;
+  min-width:0;
+}
 .prontuario-identidade-v21g3c #subtituloAluno{
-  display:inline-block;
-  margin-right:8px;
-  margin-bottom:4px;
+  display:inline-flex;
+  align-items:center;
+  flex:0 1 auto;
+  width:auto;
+  margin:0;
+  white-space:nowrap;
 }
 .prontuario-indicadores-rapidos{
   display:inline-flex;
   align-items:center;
-  flex-wrap:wrap;
+  flex-wrap:nowrap;
+  flex:0 0 auto;
   gap:8px;
-  margin:2px 0 6px;
+  margin:0;
   vertical-align:middle;
   font-size:11px;
   font-weight:700;
@@ -68,8 +80,14 @@
 .prontuario-indicador.bad i{background:#ef4444}
 .prontuario-indicador.neutro i{background:#94a3b8}
 @media (max-width:760px){
+  .prontuario-linha-contato-indicadores{
+    align-items:flex-start;
+  }
+  .prontuario-identidade-v21g3c #subtituloAluno{
+    white-space:normal;
+  }
   .prontuario-indicadores-rapidos{
     display:flex;
-    margin-top:4px;
+    flex-wrap:wrap;
   }
 }
