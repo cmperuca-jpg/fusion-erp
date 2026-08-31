@@ -4,6 +4,7 @@
   const $ = (id) => document.getElementById(id);
   const esc = (v) => String(v ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;" }[c]));
   const norm = (v) => String(v ?? "").trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  let alunosCenso = [];
 
   function fetchAuth(url) {
     if (window.FusionAuth?.fetchAuth) return window.FusionAuth.fetchAuth(url);
@@ -59,6 +60,29 @@
     return "";
   }
 
+  function statusAluno(a = {}) {
+    const st = norm(a.status || a.situacao || a.statusMatricula || a.matriculaStatus);
+    if (a.ativo === false || a.bloqueado === true) return "inativo";
+    if (["inativo","inativa","bloqueado","bloqueada","suspenso","suspensa","cancelado","cancelada","encerrado","encerrada","removido","removida"].includes(st)) return "inativo";
+    if (a.ativo === true || ["ativo","ativa"].includes(st)) return "ativo";
+    return "inativo";
+  }
+
+  function idadeAluno(a = {}, referencia = new Date()) {
+    const nascimento = dataISO(a.data_nascimento || a.dataNascimento || a.nascimento);
+    if (!nascimento) return null;
+    const [ano, mes, dia] = nascimento.split("-").map(Number);
+    let idade = referencia.getFullYear() - ano;
+    const mesRef = referencia.getMonth() + 1;
+    const diaRef = referencia.getDate();
+    if (mesRef < mes || (mesRef === mes && diaRef < dia)) idade -= 1;
+    return idade >= 0 && idade <= 130 ? idade : null;
+  }
+
+  function nomeAluno(a = {}) {
+    return String(a.nome || a.aluno || a.name || "Aluno").trim() || "Aluno";
+  }
+
   function valorPeso(av = {}) {
     return numero(av.peso ?? av.assistente_contexto?.composicao?.peso);
   }
@@ -97,13 +121,99 @@
     return Number.isFinite(n) && n > 0;
   }
 
+  function garantirModalFaixa() {
+    let modal = $("censoFaixaModal");
+    if (modal) return modal;
+
+    modal = document.createElement("div");
+    modal.id = "censoFaixaModal";
+    modal.className = "censo-modal";
+    modal.hidden = true;
+    modal.innerHTML = `
+      <div class="censo-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="censoFaixaModalTitulo">
+        <div class="censo-modal-topo">
+          <div>
+            <h3 id="censoFaixaModalTitulo">Alunos da faixa etária</h3>
+            <small id="censoFaixaModalResumo"></small>
+          </div>
+          <button type="button" class="censo-modal-fechar" aria-label="Fechar">×</button>
+        </div>
+        <div class="censo-modal-cabecalho" aria-hidden="true">
+          <span>Aluno</span><span>Idade</span><span>Sexo</span><span>Status</span>
+        </div>
+        <div id="censoFaixaModalLista" class="censo-modal-lista"></div>
+      </div>`;
+
+    document.body.appendChild(modal);
+
+    const fechar = () => {
+      modal.hidden = true;
+      document.body.classList.remove("censo-modal-aberto");
+    };
+
+    modal.querySelector(".censo-modal-fechar")?.addEventListener("click", fechar);
+    modal.addEventListener("click", (ev) => {
+      if (ev.target === modal) fechar();
+    });
+    document.addEventListener("keydown", (ev) => {
+      if (ev.key === "Escape" && !modal.hidden) fechar();
+    });
+
+    return modal;
+  }
+
+  function abrirFaixaEtaria(inicio) {
+    const faixaInicio = Number(inicio);
+    if (!Number.isFinite(faixaInicio)) return;
+    const faixaFim = faixaInicio + 9;
+    const hoje = new Date();
+
+    const pessoas = alunosCenso
+      .map(a => ({ aluno:a, idade:idadeAluno(a, hoje), status:statusAluno(a), sexo:sexo(a) }))
+      .filter(x => x.idade != null && x.idade >= faixaInicio && x.idade <= faixaFim)
+      .sort((a,b) => nomeAluno(a.aluno).localeCompare(nomeAluno(b.aluno), "pt-BR"));
+
+    const ativos = pessoas.filter(x => x.status === "ativo").length;
+    const inativos = pessoas.length - ativos;
+
+    const modal = garantirModalFaixa();
+    $("censoFaixaModalTitulo").textContent = `Alunos de ${faixaInicio}-${faixaFim} anos`;
+    $("censoFaixaModalResumo").textContent = `${pessoas.length} aluno(s) · ${ativos} ativo(s) · ${inativos} inativo(s)`;
+
+    const listaEl = $("censoFaixaModalLista");
+    listaEl.innerHTML = pessoas.length ? pessoas.map(x => {
+      const sx = x.sexo === "masculino" ? "Masculino" : x.sexo === "feminino" ? "Feminino" : "Não informado";
+      const status = x.status === "ativo" ? "Ativo" : "Inativo";
+      return `<div class="censo-modal-linha">
+        <strong>${esc(nomeAluno(x.aluno))}</strong>
+        <span>${Number(x.idade)} anos</span>
+        <span>${esc(sx)}</span>
+        <span><b class="censo-status censo-status-${esc(x.status)}">${status}</b></span>
+      </div>`;
+    }).join("") : '<div class="censo-modal-vazio">Nenhum aluno nesta faixa.</div>';
+
+    modal.hidden = false;
+    document.body.classList.add("censo-modal-aberto");
+    modal.querySelector(".censo-modal-fechar")?.focus();
+  }
+
   function renderFaixas(censo = {}) {
     const el = $("censoFaixas");
     if (!el) return;
     const itens = Array.isArray(censo.faixasEtarias) ? censo.faixasEtarias : [];
     el.innerHTML = itens.length ? itens.map(x =>
-      `<div class="censo-linha"><span>${esc(x.faixa)} anos</span><b>${Number(x.total || 0)} <small>M ${Number(x.masculino || 0)} · F ${Number(x.feminino || 0)}</small></b></div>`
+      `<button type="button" class="censo-linha censo-faixa-btn" data-inicio="${Number(x.inicio || 0)}" title="Abrir alunos desta faixa">
+        <span>${esc(x.faixa)} anos</span>
+        <b>${Number(x.total || 0)}
+          <small>M ${Number(x.masculino || 0)} · F ${Number(x.feminino || 0)}</small>
+          <small class="censo-status-resumo">A ${Number(x.ativos || 0)} · I ${Number(x.inativos || 0)}</small>
+        </b>
+      </button>`
     ).join("") : '<span class="censo-sem-dado">Sem datas de nascimento.</span>';
+
+    el.querySelectorAll(".censo-faixa-btn").forEach(btn => {
+      btn.addEventListener("click", () => abrirFaixaEtaria(btn.dataset.inicio));
+    });
   }
 
   function linhaExtremo(rotulo, dado, sufixo = "") {
@@ -210,9 +320,16 @@
   function renderHoras(censo = {}) {
     const el = $("censoHorasPico");
     if (!el) return;
-    const itens = Array.isArray(censo.horasPico) ? censo.horasPico : [];
+    const itens = Array.isArray(censo.horasPicoStatus)
+      ? censo.horasPicoStatus
+      : (Array.isArray(censo.horasPico) ? censo.horasPico : []);
     el.innerHTML = itens.length ? itens.map((x, i) =>
-      `<div class="censo-linha"><span>${i + 1}º · ${esc(x.faixa)}</span><b>${Number(x.entradas || 0)} <small>entradas</small></b></div>`
+      `<div class="censo-linha censo-hora-linha">
+        <span>${i + 1}º · ${esc(x.faixa)}</span>
+        <b>${Number(x.entradas || 0)} <small>entradas</small>
+          <small class="censo-status-resumo">A ${Number(x.ativos || 0)} · I ${Number(x.inativos || 0)}</small>
+        </b>
+      </div>`
     ).join("") : '<span class="censo-sem-dado">Sem entradas com horário.</span>';
   }
 
@@ -264,9 +381,17 @@
       const alunos = lista(alunosRaw, ["alunos"]);
       const avaliacoes = lista(avaliacoesRaw, ["avaliacoes"]);
       const mensalidades = lista(mensalidadesRaw, ["mensalidades"]);
+      alunosCenso = alunos;
 
       $("censoMasculino").textContent = String(censo?.sexo?.masculino || 0);
       $("censoFeminino").textContent = String(censo?.sexo?.feminino || 0);
+
+      const mascSmall = $("censoMasculino")?.parentElement?.querySelector("small");
+      const femSmall = $("censoFeminino")?.parentElement?.querySelector("small");
+      if (mascSmall) mascSmall.textContent =
+        `Ativos: ${Number(censo?.statusPorSexo?.masculino?.ativo || 0)} · Inativos: ${Number(censo?.statusPorSexo?.masculino?.inativo || 0)}`;
+      if (femSmall) femSmall.textContent =
+        `Ativas: ${Number(censo?.statusPorSexo?.feminino?.ativo || 0)} · Inativas: ${Number(censo?.statusPorSexo?.feminino?.inativo || 0)}`;
 
       renderFaixas(censo);
       renderExtremos(censo, alunos, avaliacoes);

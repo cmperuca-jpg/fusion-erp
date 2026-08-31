@@ -291,6 +291,28 @@ function sexoCenso(aluno = {}) {
   return "nao_informado";
 }
 
+function situacaoAlunoCenso(aluno = {}) {
+  const status = normalizar(
+    aluno.status
+    ?? aluno.situacao
+    ?? aluno.statusMatricula
+    ?? aluno.matriculaStatus
+  );
+
+  if (aluno.ativo === false || aluno.bloqueado === true) return "inativo";
+  if ([
+    "inativo", "inativa",
+    "bloqueado", "bloqueada",
+    "suspenso", "suspensa",
+    "cancelado", "cancelada",
+    "encerrado", "encerrada",
+    "removido", "removida"
+  ].includes(status)) return "inativo";
+
+  if (aluno.ativo === true || ["ativo", "ativa"].includes(status)) return "ativo";
+  return "inativo";
+}
+
 function horaInteira(valor) {
   const match = texto(valor).match(/^(\d{1,2}):/);
   if (!match) return null;
@@ -309,21 +331,45 @@ export function montarCensoDashboard({ alunos = [], presencas = [], referencia =
   const idsAlunos = new Set(listaAlunos.map(a => normalizar(a.id ?? a.alunoId ?? a.aluno_id)).filter(Boolean));
 
   const porSexo = { masculino: 0, feminino: 0, nao_informado: 0 };
+  const porSituacao = { ativo: 0, inativo: 0 };
+  const statusPorSexo = {
+    masculino: { ativo: 0, inativo: 0 },
+    feminino: { ativo: 0, inativo: 0 },
+    nao_informado: { ativo: 0, inativo: 0 }
+  };
+  const statusPorId = new Map();
   const faixas = new Map();
   const extremosIdade = { masculino: null, feminino: null };
 
   for (const aluno of listaAlunos) {
     const sexo = sexoCenso(aluno);
+    const situacao = situacaoAlunoCenso(aluno);
     porSexo[sexo] = (porSexo[sexo] || 0) + 1;
+    porSituacao[situacao] = (porSituacao[situacao] || 0) + 1;
+    statusPorSexo[sexo][situacao] = (statusPorSexo[sexo][situacao] || 0) + 1;
+
+    const idAtual = normalizar(aluno.id ?? aluno.alunoId ?? aluno.aluno_id);
+    if (idAtual) statusPorId.set(idAtual, situacao);
 
     const idade = idadeAlunoEmAnos(aluno.data_nascimento ?? aluno.dataNascimento ?? aluno.nascimento, referencia);
     if (idade === null) continue;
 
     const inicio = Math.floor(idade / 10) * 10;
     const chave = `${inicio}-${inicio + 9}`;
-    const atual = faixas.get(chave) || { faixa: chave, inicio, total: 0, masculino: 0, feminino: 0, nao_informado: 0 };
+    const atual = faixas.get(chave) || {
+      faixa: chave,
+      inicio,
+      total: 0,
+      masculino: 0,
+      feminino: 0,
+      nao_informado: 0,
+      ativos: 0,
+      inativos: 0
+    };
     atual.total += 1;
     atual[sexo] = (atual[sexo] || 0) + 1;
+    if (situacao === "ativo") atual.ativos += 1;
+    else atual.inativos += 1;
     faixas.set(chave, atual);
 
     if (sexo === "masculino" || sexo === "feminino") {
@@ -343,13 +389,29 @@ export function montarCensoDashboard({ alunos = [], presencas = [], referencia =
   for (const p of presencasAluno) {
     const hora = horaInteira(horaInicio(p));
     if (hora === null) continue;
-    mapaHoras.set(hora, (mapaHoras.get(hora) || 0) + 1);
+
+    const atual = mapaHoras.get(hora) || { entradas: 0, ativos: 0, inativos: 0 };
+    atual.entradas += 1;
+
+    const situacao = statusPorId.get(normalizar(alunoId(p))) || "inativo";
+    if (situacao === "ativo") atual.ativos += 1;
+    else atual.inativos += 1;
+
+    mapaHoras.set(hora, atual);
   }
 
-  const horasPico = [...mapaHoras.entries()]
-    .sort((a, b) => b[1] - a[1] || a[0] - b[0])
+  const horasPicoStatus = [...mapaHoras.entries()]
+    .sort((a, b) => b[1].entradas - a[1].entradas || a[0] - b[0])
     .slice(0, 10)
-    .map(([hora, entradas]) => ({ hora, faixa: `${String(hora).padStart(2, "0")}:00`, entradas }));
+    .map(([hora, dados]) => ({
+      hora,
+      faixa: `${String(hora).padStart(2, "0")}:00`,
+      entradas: dados.entradas,
+      ativos: dados.ativos,
+      inativos: dados.inativos
+    }));
+
+  const horasPico = horasPicoStatus.map(({ hora, faixa, entradas }) => ({ hora, faixa, entradas }));
 
   const mes = inicioMesISO(referencia);
   const mapaDias = new Map();
@@ -366,9 +428,12 @@ export function montarCensoDashboard({ alunos = [], presencas = [], referencia =
   return {
     totalAlunos: listaAlunos.length,
     sexo: porSexo,
+    situacao: porSituacao,
+    statusPorSexo,
     faixasEtarias: [...faixas.values()].sort((a, b) => a.inicio - b.inicio),
     maisVelho: extremosIdade,
     horasPico,
+    horasPicoStatus,
     movimentoMes
   };
 }
