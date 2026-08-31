@@ -57,7 +57,7 @@ function render(){
   $('#subtituloAluno').textContent = `${a.cpf ? 'CPF '+a.cpf+' · ' : ''}${a.telefone || a.whatsapp || ''}`;
   $('#fotoAluno').innerHTML = (a.foto_base64 || a.foto) ? `<img src="${esc(a.foto_base64 || a.foto)}" alt="Foto do aluno">` : 'Foto';
   $('#chipsAluno').innerHTML = [
-    chip(`Status: ${a.status || '-'}`, statusClass(a.status)),
+    chip(`Status: ${prontuario?.restricaoAcesso?.bloqueadoFinanceiro ? 'Bloqueado financeiro' : (a.status || '-')}`, prontuario?.restricaoAcesso?.bloqueadoFinanceiro ? 'bad' : statusClass(a.status)),
     chip(`Matrícula: ${a.statusMatricula || '-'}`, statusClass(a.statusMatricula)),
     chip(`Plano: ${a.plano || '-'}`),
     chip(`Professor: ${a.professor_responsavel || '-'}`)

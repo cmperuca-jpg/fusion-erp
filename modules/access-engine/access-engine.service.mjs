@@ -115,6 +115,61 @@ async function pendenciaFinanceiraAluno(aluno = {}) {
   return pendencias[0] || null;
 }
 
+export function diasAtrasoAcesso(vencimento = "", referencia = "") {
+  const venc = String(vencimento || "").slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(venc)) return 0;
+
+  const dataVenc = new Date(`${venc}T00:00:00`);
+  const refTxt = String(referencia || "").slice(0, 10);
+  const dataRef = /^\d{4}-\d{2}-\d{2}$/.test(refTxt)
+    ? new Date(`${refTxt}T00:00:00`)
+    : new Date();
+
+  if (Number.isNaN(dataVenc.getTime()) || Number.isNaN(dataRef.getTime())) return 0;
+  dataRef.setHours(0, 0, 0, 0);
+  dataVenc.setHours(0, 0, 0, 0);
+  return Math.max(0, Math.floor((dataRef.getTime() - dataVenc.getTime()) / 86400000));
+}
+
+export async function consultarBloqueioFinanceiroAluno({ aluno, direcao = "entrada" } = {}) {
+  if (!aluno || direcao === "saida") {
+    return {
+      bloqueadoFinanceiro: false,
+      acessoBloqueado: false,
+      motivoBloqueio: "",
+      vencimentoEmAtraso: "",
+      diasAtraso: 0
+    };
+  }
+
+  const pendencia = await pendenciaFinanceiraAluno(aluno);
+  if (!pendencia) {
+    return {
+      bloqueadoFinanceiro: false,
+      acessoBloqueado: false,
+      motivoBloqueio: "",
+      vencimentoEmAtraso: "",
+      diasAtraso: 0
+    };
+  }
+
+  const vencimento = String(
+    pendencia.vencimento || pendencia.dataVencimento || pendencia.data_vencimento || ""
+  ).slice(0, 10);
+  const diasAtraso = diasAtrasoAcesso(vencimento);
+  const motivo = vencimento
+    ? `Pagamento em atraso desde ${vencimento}`
+    : "Pagamento em atraso";
+
+  return {
+    bloqueadoFinanceiro: true,
+    acessoBloqueado: true,
+    motivoBloqueio: motivo,
+    vencimentoEmAtraso: vencimento,
+    diasAtraso
+  };
+}
+
 async function cobrancaDeAtivacaoPendente(aluno = {}, matricula = null) {
   const alunoId = String(aluno.id || aluno._id || '');
   const matriculaId = String(matricula?.id || aluno.matriculaId || '');

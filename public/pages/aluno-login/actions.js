@@ -269,17 +269,32 @@
 
   async function atualizarContador() {
     if (!deviceToken() || !$("liberarCatracaApp")) return;
+    const btn = $("liberarCatracaApp");
     try {
       const data = await request("/catraca-contador", { method: "GET" });
-      const btn = $("liberarCatracaApp");
       const saida = data.proximaDirecao === "saida";
-      btn.textContent = saida ? "Liberar saída" : "Liberar entrada";
-      // O limite diário só bloqueia nova entrada. Quem está dentro sempre pode sair.
-      btn.disabled = Boolean(data.limiteAtingido && !saida);
-      btn.title = data.limiteAtingido && !saida ? "Limite diário de entradas atingido." : "";
+      const bloqueadoFinanceiro = Boolean(data.bloqueadoFinanceiro || data.acessoBloqueado);
+      const bloqueadoEntrada = !saida && (bloqueadoFinanceiro || Boolean(data.limiteAtingido));
+
+      btn.textContent = saida
+        ? "Liberar saída"
+        : bloqueadoFinanceiro
+          ? "Acesso bloqueado"
+          : "Liberar entrada";
+      btn.disabled = bloqueadoEntrada;
+      btn.title = bloqueadoFinanceiro && !saida
+        ? (data.motivoBloqueio || "Acesso bloqueado por pendência financeira.")
+        : data.limiteAtingido && !saida
+          ? "Limite diário de entradas atingido."
+          : "";
+
       setStatus(
-        saida ? "Você está dentro da academia. Próximo giro: saída." : textoContador(data),
-        data.limiteAtingido && !saida ? "erro" : ""
+        saida
+          ? "Você está dentro da academia. Próximo giro: saída."
+          : bloqueadoFinanceiro
+            ? (data.motivoBloqueio || "Acesso bloqueado por pendência financeira. Procure a recepção.")
+            : textoContador(data),
+        bloqueadoEntrada ? "erro" : ""
       );
     } catch (error) {
       if (error.status === 401) return;
@@ -287,7 +302,7 @@
     }
   }
 
-  async function liberarCatraca() {
+async function liberarCatraca() {
     const btn = $("liberarCatracaApp");
     busy(btn, true, "Liberando...");
     setStatus("Verificando seu acesso...");
@@ -311,7 +326,10 @@
     } catch (error) {
       setStatus(error.message || "Não foi possível liberar a catraca.", "erro");
     } finally {
-      window.setTimeout(() => busy(btn, false), 1200);
+      window.setTimeout(() => {
+        busy(btn, false);
+        atualizarContador();
+      }, 1200);
     }
   }
 

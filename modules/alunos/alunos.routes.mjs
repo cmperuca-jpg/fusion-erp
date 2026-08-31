@@ -1,3 +1,4 @@
+import { consultarBloqueioFinanceiroAluno } from "../access-engine/access-engine.service.mjs";
 import { listarAgendaAvaliacoes } from "../agenda-avaliacoes/agenda-avaliacoes.repository.mjs";
 import { Router } from "express";
 import * as alunosService from "./alunos.service.mjs";
@@ -536,6 +537,13 @@ router.post("/:id/reativar", async (req, res) => {
 router.get("/:id/prontuario", async (req, res) => {
   try {
     const resultado = await alunosService.prontuario(req.params.id);
+    const restricaoAcesso = await consultarBloqueioFinanceiroAluno({
+      aluno: resultado?.aluno || {},
+      direcao: "entrada"
+    });
+    if (resultado && typeof resultado === "object") {
+      resultado.restricaoAcesso = restricaoAcesso;
+    }
 
     if (!resultado) {
       return res.status(404).json({ ok: false, erro: "Aluno não encontrado", mensagem: "Aluno não encontrado" });

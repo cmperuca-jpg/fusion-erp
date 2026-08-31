@@ -1,5 +1,5 @@
 import { listarTreinos, salvarTreinos } from "./treinos.repository.mjs";
-import { avaliarAcessoAluno } from "../access-engine/access-engine.service.mjs";
+import { avaliarAcessoAluno, consultarBloqueioFinanceiroAluno } from "../access-engine/access-engine.service.mjs";
 import { listarLogs as listarLogsAcesso, registrarLog as registrarLogAcesso } from "../access-engine/access-engine.repository.mjs";
 import { lerJsonDuravel } from "../core/persistence/durable-json.mjs";
 import { lerColecao } from "../core/persistence/collection-store.mjs";
@@ -110,7 +110,47 @@ function logContaComoAcessoPortal(log = {}, alunoId = "", dataAlvo = dataLocalIS
   return dataLocalISO(log.criadoEm || log.data || log.timestamp) === dataAlvo;
 }
 
+function providerPostgresPrincipalAtivo() {
+  return String(process.env.FUSION_DATABASE_PROVIDER || "")
+    .trim()
+    .toLowerCase() === "postgres";
+}
+
 async function acessosBiometriaEdgeHoje(alunoId, dataAlvo) {
+  if (providerPostgresPrincipalAtivo()) {
+    const { Client } = await import("pg");
+    const client = new Client({
+      host: process.env.PGHOST || "/var/run/postgresql",
+      port: Number(process.env.PGPORT || 5432),
+      database: process.env.PGDATABASE || "fusion_erp",
+      user: process.env.PGUSER || "fusion",
+      ...(process.env.PGPASSWORD ? { password: process.env.PGPASSWORD } : {})
+    });
+
+    try {
+      await client.connect();
+      const resultado = await client.query(
+        `SELECT entry_count
+           FROM public.fusion_edge_daily_frequency
+          WHERE tenant_id = $1
+            AND student_id = $2
+            AND attendance_date = $3::date
+            AND modality = 'biometria'
+          LIMIT 1`,
+        [tenantAtual(), String(alunoId || ""), String(dataAlvo || "")]
+      );
+      const quantidade = Number(resultado.rows?.[0]?.entry_count || 0);
+      return Number.isFinite(quantidade) ? Math.max(0, Math.trunc(quantidade)) : 0;
+    } catch (error) {
+      throw erroHttp(
+        `Nao foi possivel consultar os acessos biometricos locais do dia: ${error.message}`,
+        502
+      );
+    } finally {
+      await client.end().catch(() => undefined);
+    }
+  }
+
   const supabase = obterSupabaseAdmin();
   if (!supabase) return 0;
 
@@ -310,14 +350,21 @@ export async function obterContadorCatracaPortalAluno({ alunoId, token } = {}) {
   const aluno = await buscarAlunoPorId(alunoId);
   if (!aluno) throw erroHttp("Aluno nao encontrado para consultar acessos.", 404);
 
-  const controle = await contadorAcessosPortal(aluno);
+  const [controle, restricaoFinanceira] = await Promise.all([
+    contadorAcessosPortal(aluno),
+    consultarBloqueioFinanceiroAluno({ aluno, direcao: "entrada" })
+  ]);
+
   return {
+    ...controle,
     alunoId: idPessoa(aluno),
-    alunoNome: nomePessoa(aluno),
-    ...controle
+    acessoBloqueado: Boolean(restricaoFinanceira.acessoBloqueado),
+    bloqueadoFinanceiro: Boolean(restricaoFinanceira.bloqueadoFinanceiro),
+    motivoBloqueio: restricaoFinanceira.motivoBloqueio || "",
+    vencimentoEmAtraso: restricaoFinanceira.vencimentoEmAtraso || "",
+    diasAtraso: Number(restricaoFinanceira.diasAtraso || 0)
   };
 }
-
 
 export async function obterBiblioteca() {
   let metadados = { grupos: [], objetivos: [], exercicios: [] };
