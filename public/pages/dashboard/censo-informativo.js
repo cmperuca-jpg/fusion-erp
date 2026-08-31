@@ -83,6 +83,15 @@
     return String(a.nome || a.aluno || a.name || "Aluno").trim() || "Aluno";
   }
 
+  function idAlunoCenso(a = {}) {
+    return String(a.id || a._id || a.alunoId || a.aluno_id || "").trim();
+  }
+
+  function urlCadastroAluno(a = {}) {
+    const id = idAlunoCenso(a);
+    return id ? `/pages/alunos/index.html?editar=${encodeURIComponent(id)}&tab=cadastro` : "";
+  }
+
   function valorPeso(av = {}) {
     return numero(av.peso ?? av.assistente_contexto?.composicao?.peso);
   }
@@ -184,8 +193,12 @@
     listaEl.innerHTML = pessoas.length ? pessoas.map(x => {
       const sx = x.sexo === "masculino" ? "Masculino" : x.sexo === "feminino" ? "Feminino" : "Não informado";
       const status = x.status === "ativo" ? "Ativo" : "Inativo";
+      const cadastroUrl = urlCadastroAluno(x.aluno);
+      const nomeHtml = cadastroUrl
+        ? `<a class="censo-aluno-link" href="${esc(cadastroUrl)}" title="Abrir cadastro do aluno">${esc(nomeAluno(x.aluno))}</a>`
+        : `<strong>${esc(nomeAluno(x.aluno))}</strong>`;
       return `<div class="censo-modal-linha">
-        <strong>${esc(nomeAluno(x.aluno))}</strong>
+        ${nomeHtml}
         <span>${Number(x.idade)} anos</span>
         <span>${esc(sx)}</span>
         <span><b class="censo-status censo-status-${esc(x.status)}">${status}</b></span>
