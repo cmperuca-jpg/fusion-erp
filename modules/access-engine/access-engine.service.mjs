@@ -6,6 +6,7 @@ import { listarDrivers, obterDriver } from './drivers/driver-registry.mjs';
 import { mapaLegado } from './drivers/sdk-legacy.adapter.mjs';
 import { queueRelease, getAgent, getCommand } from '../access-bridge/access-bridge.service.mjs';
 import { normalizarTenantId, tenantAtual } from '../core/persistence/tenant-context.mjs';
+import { obterControleAcessosAluno } from '../alunos/aluno-limite-acessos.service.mjs';
 
 
 const HENRY_PADRAO = {
@@ -300,6 +301,38 @@ export async function dashboard() {
   };
 }
 
+export async function obterEstadoEntradaSaidaAluno(alunoOuId = '') {
+  const alunoId = alunoOuId && typeof alunoOuId === 'object'
+    ? String(
+        alunoOuId.id ||
+        alunoOuId._id ||
+        alunoOuId.alunoId ||
+        alunoOuId.matriculaId ||
+        alunoOuId.numeroMatricula ||
+        ''
+      ).trim()
+    : String(alunoOuId || '').trim();
+
+  if (!alunoId) {
+    return {
+      alunoId: '',
+      presente: false,
+      proximaDirecao: 'entrada'
+    };
+  }
+
+  const presentes = await repo.listarPresentes();
+  const presente = (Array.isArray(presentes) ? presentes : []).some(item =>
+    String(item?.alunoId || item?.id || '').trim() === alunoId
+  );
+
+  return {
+    alunoId,
+    presente,
+    proximaDirecao: presente ? 'saida' : 'entrada'
+  };
+}
+
 async function executarAvaliacao({ aluno, identificador = '', dispositivoId = '', direcao = 'entrada', origem = 'simulador' } = {}) {
   const dispositivo = await obterDispositivoOuPadrao(dispositivoId || process.env.ACCESS_EQUIPMENT_ID || 'disp_henry7x_01');
   const matricula = aluno ? await repo.buscarMatriculaAtualDoAluno(aluno) : null;
@@ -307,24 +340,25 @@ async function executarAvaliacao({ aluno, identificador = '', dispositivoId = ''
   let autorizado = true;
   let motivo = 'Acesso liberado';
   const statusMatricula = matricula?.status || aluno?.statusMatricula || aluno?.matriculaStatus || '';
+  const saida = String(direcao || 'entrada') === 'saida';
 
   if (!aluno) {
     autorizado = false;
     motivo = 'Aluno não encontrado';
-  } else if (statusBloqueado(aluno.status) || statusBloqueado(statusMatricula)) {
+  } else if (!saida && (statusBloqueado(aluno.status) || statusBloqueado(statusMatricula))) {
     autorizado = false;
     motivo = 'Aluno ou matrícula bloqueada';
-  } else if (!statusAtivo(statusMatricula || aluno.status || 'Ativa')) {
+  } else if (!saida && !statusAtivo(statusMatricula || aluno.status || 'Ativa')) {
     autorizado = false;
     motivo = 'Matrícula pendente, cancelada ou inativa';
   }
 
-  if (autorizado && aluno && bloqueioManualAluno(aluno, matricula)) {
+  if (!saida && autorizado && aluno && bloqueioManualAluno(aluno, matricula)) {
     autorizado = false;
     motivo = 'Aluno ou matricula bloqueada';
   }
 
-  if (autorizado && aluno) {
+  if (!saida && autorizado && aluno) {
     const ativacaoPendente = await cobrancaDeAtivacaoPendente(aluno, matricula);
     if (ativacaoPendente) {
       autorizado = false;
@@ -332,7 +366,7 @@ async function executarAvaliacao({ aluno, identificador = '', dispositivoId = ''
     }
   }
 
-  if (autorizado && aluno) {
+  if (!saida && autorizado && aluno) {
     const pendencia = await pendenciaFinanceiraAluno(aluno);
     if (pendencia) {
       autorizado = false;
@@ -340,7 +374,7 @@ async function executarAvaliacao({ aluno, identificador = '', dispositivoId = ''
     }
   }
 
-  if (autorizado && aluno && matricula && aluno.ativo === false && statusAtivo(aluno.status) && statusAtivo(matricula.status)) {
+  if (!saida && autorizado && aluno && matricula && aluno.ativo === false && statusAtivo(aluno.status) && statusAtivo(matricula.status)) {
     const regularizado = await repo.regularizarAlunoComMatriculaAtiva(aluno.id || aluno._id, matricula);
     if (regularizado) aluno = regularizado;
   }
@@ -390,6 +424,86 @@ async function executarAvaliacao({ aluno, identificador = '', dispositivoId = ''
 
   if (autorizado && aluno) await repo.marcarPresenca({ aluno, direcao, logId: log.id });
   return { ok: true, autorizado, motivo, aluno, matricula, dispositivo, driver: driverInfo, comando, catraca, log };
+}
+
+export async function avaliarAcessoUnificado({
+  identificador = '',
+  aluno = null,
+  dispositivoId = '',
+  direcao = 'auto',
+  origem = 'access-engine'
+} = {}) {
+  const pessoa = aluno || await repo.buscarAlunoPorIdentificador(identificador);
+
+  const estadoAntes = await obterEstadoEntradaSaidaAluno(
+    pessoa || identificador
+  );
+
+  const solicitada = String(direcao || 'auto').trim().toLowerCase();
+
+  const direcaoEfetiva = solicitada === 'saida'
+    ? 'saida'
+    : solicitada === 'entrada'
+      ? 'entrada'
+      : estadoAntes.proximaDirecao;
+
+  let controleAcessos = null;
+
+  /*
+   * Saida nunca consome nem e bloqueada pelo limite de entradas.
+   * Entrada usa a mesma regra aplicada a biometria e Portal do Aluno.
+   */
+  if (pessoa && direcaoEfetiva !== 'saida') {
+    controleAcessos = await obterControleAcessosAluno(pessoa);
+
+    if (controleAcessos?.limiteAtingido) {
+      return {
+        ok: true,
+        autorizado: false,
+        motivo:
+          `Limite diario de ${controleAcessos.limite} entradas atingido. Procure a recepcao.`,
+        aluno: pessoa,
+        dispositivo: null,
+        catraca: null,
+        log: null,
+        direcao: direcaoEfetiva,
+        presenteAntes: estadoAntes.presente,
+        presenteDepois: estadoAntes.presente,
+        proximaDirecao: estadoAntes.proximaDirecao,
+        limiteAtingido: true,
+        limiteDiario: controleAcessos.limite,
+        acessosUsadosHoje: controleAcessos.usados,
+        acessosRestantesHoje: controleAcessos.restantes,
+        controleAcessos
+      };
+    }
+  }
+
+  const resultado = await executarAvaliacao({
+    aluno: pessoa,
+    identificador: String(
+      pessoa?.id ||
+      identificador ||
+      ''
+    ),
+    dispositivoId,
+    direcao: direcaoEfetiva,
+    origem
+  });
+
+  const estadoDepois = resultado.autorizado && pessoa
+    ? await obterEstadoEntradaSaidaAluno(pessoa)
+    : estadoAntes;
+
+  return {
+    ...resultado,
+    direcao: direcaoEfetiva,
+    presenteAntes: estadoAntes.presente,
+    presenteDepois: estadoDepois.presente,
+    proximaDirecao: estadoDepois.proximaDirecao,
+    limiteAtingido: false,
+    controleAcessos
+  };
 }
 
 export async function avaliarAcessoAluno({ aluno, dispositivoId = 'disp_henry7x_01', direcao = 'entrada', origem = 'access-engine' } = {}) {
@@ -507,16 +621,95 @@ export async function statusAgenteAcesso() {
 }
 
 export async function liberarRemoto(payload = {}) {
-  const dispositivo = await obterDispositivoOuPadrao(payload.dispositivoId || process.env.ACCESS_EQUIPMENT_ID || 'disp_henry7x_01');
-  const pessoaTipo = String(payload.pessoaTipo || payload.tipoPessoa || 'aluno').trim().toLowerCase() || 'aluno';
-  const pessoaId = payload.pessoaId || payload.funcionarioId || payload.professorId || payload.usuarioId || payload.alunoId || null;
-  const pessoaNome = payload.pessoaNome || payload.funcionarioNome || payload.professorNome || payload.usuarioNome || payload.alunoNome || 'Liberação manual';
-  const direcao = payload.direcao || 'entrada';
+  // Mantem o isolamento fisico por tenant antes de qualquer avaliacao.
+  tenantPermitidoParaCatraca();
+
+  const dispositivo = await obterDispositivoOuPadrao(
+    payload.dispositivoId ||
+    process.env.ACCESS_EQUIPMENT_ID ||
+    'disp_henry7x_01'
+  );
+
+  const pessoaTipo = String(
+    payload.pessoaTipo ||
+    payload.tipoPessoa ||
+    'aluno'
+  ).trim().toLowerCase() || 'aluno';
+
+  const pessoaId =
+    payload.pessoaId ||
+    payload.funcionarioId ||
+    payload.professorId ||
+    payload.usuarioId ||
+    payload.alunoId ||
+    null;
+
+  const pessoaNome =
+    payload.pessoaNome ||
+    payload.funcionarioNome ||
+    payload.professorNome ||
+    payload.usuarioNome ||
+    payload.alunoNome ||
+    'Liberação manual';
+
   const origem = payload.origem || 'painel-access-engine';
   const motivo = payload.motivo || 'liberacao-manual';
+  const direcaoSolicitada = String(payload.direcao || 'auto')
+    .trim()
+    .toLowerCase();
+
+  /*
+   * ALUNO:
+   * Dashboard, Check-in e botoes administrativos passam pelo mesmo
+   * Access Engine que controla estado dentro/fora.
+   */
+  if (pessoaTipo === 'aluno' && pessoaId) {
+    const resultado = await avaliarAcessoUnificado({
+      identificador: String(pessoaId),
+      dispositivoId: dispositivo?.id || '',
+      direcao: direcaoSolicitada,
+      origem
+    });
+
+    return {
+      ok: true,
+      autorizado: Boolean(resultado.autorizado),
+      mensagem:
+        resultado.motivo ||
+        (resultado.autorizado ? 'Acesso liberado.' : 'Acesso bloqueado.'),
+      motivo: resultado.motivo || '',
+      direcao: resultado.direcao,
+      presenteAntes: resultado.presenteAntes,
+      presenteDepois: resultado.presenteDepois,
+      proximaDirecao: resultado.proximaDirecao,
+      limiteAtingido: Boolean(resultado.limiteAtingido),
+      limiteDiario: resultado.limiteDiario,
+      acessosUsadosHoje: resultado.acessosUsadosHoje,
+      acessosRestantesHoje: resultado.acessosRestantesHoje,
+      controleAcessos: resultado.controleAcessos || null,
+      aluno: resultado.aluno
+        ? {
+            id: resultado.aluno.id || '',
+            nome: resultado.aluno.nome || pessoaNome || ''
+          }
+        : null,
+      catraca: resultado.catraca || null,
+      log: resultado.log || null
+    };
+  }
+
+  /*
+   * Funcionarios/professores mantem o fluxo manual existente.
+   */
+  const direcao = direcaoSolicitada === 'saida'
+    ? 'saida'
+    : 'entrada';
 
   const catraca = await enfileirarLiberacaoRemota({
-    aluno: { id: pessoaId, nome: pessoaNome },
+    aluno: {
+      id: pessoaId,
+      nome: pessoaNome
+    },
     dispositivo,
     direcao,
     origem,
@@ -525,6 +718,7 @@ export async function liberarRemoto(payload = {}) {
   });
 
   let log = null;
+
   if (pessoaId) {
     log = await repo.registrarLog({
       autorizado: true,
@@ -545,7 +739,14 @@ export async function liberarRemoto(payload = {}) {
     });
   }
 
-  return { ok: true, mensagem: 'Comando enviado ao agente local.', catraca, log };
+  return {
+    ok: true,
+    autorizado: true,
+    mensagem: 'Comando enviado ao agente local.',
+    direcao,
+    catraca,
+    log
+  };
 }
 
 export async function consultarComandoRemoto(id) {

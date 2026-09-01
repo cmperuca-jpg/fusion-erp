@@ -111,7 +111,6 @@ router.post('/agent/commands/:id/result', wrap(async (req, res) => {
   res.json({ ok: true, command });
 }));
 
-import { obterControleAcessosAluno } from "../alunos/aluno-limite-acessos.service.mjs";
 
 router.post('/agent/edge/pull', wrap(async (req, res) => {
   const agent = await validateAgent(req);
@@ -153,39 +152,19 @@ router.post('/agent/biometria/acesso', wrap(async (req, res) => {
     return res.status(400).json({ ok: false, erro: 'alunoId obrigatorio.' });
   }
 
-  const direcao = texto(req.body?.direcao, 20) === 'saida' ? 'saida' : 'entrada';
   const dispositivoId = agent.equipmentId || '';
 
-  // LIMITE ENTRADAS ALUNO CATRACA FISICA 20260826
-  // Saida ignora este limite. Demais regras do Access Engine continuam intactas.
-  if (direcao !== 'saida') {
-    const controle = await executarComTenant(agent.tenantId, () =>
-      obterControleAcessosAluno(alunoId)
-    );
-
-    if (controle?.limiteAtingido) {
-      return res.json({
-        ok: true,
-        autorizado: false,
-        motivo: `Limite diario de ${controle.limite} entradas atingido. Procure a recepcao.`,
-        alunoId,
-        direcao,
-        limiteAtingido: true,
-        limiteDiario: controle.limite,
-        acessosUsadosHoje: controle.usados,
-        acessosRestantesHoje: controle.restantes,
-        controleAcessos: controle,
-        commandId: null,
-        logId: null
-      });
-    }
-  }
-
+  /*
+   * A digital identifica o aluno.
+   * O servidor decide automaticamente:
+   * fora -> entrada
+   * dentro -> saida
+   */
   const resultado = await executarComTenant(agent.tenantId, () =>
-    accessEngine.avaliarAcesso({
+    accessEngine.avaliarAcessoUnificado({
       identificador: alunoId,
       dispositivoId,
-      direcao,
+      direcao: 'auto',
       origem: 'biometria-fs80'
     })
   );
@@ -195,6 +174,14 @@ router.post('/agent/biometria/acesso', wrap(async (req, res) => {
     autorizado: resultado.autorizado === true,
     motivo: resultado.motivo || '',
     alunoId,
+    direcao: resultado.direcao,
+    presenteAntes: resultado.presenteAntes,
+    presenteDepois: resultado.presenteDepois,
+    proximaDirecao: resultado.proximaDirecao,
+    limiteAtingido: Boolean(resultado.limiteAtingido),
+    limiteDiario: resultado.limiteDiario,
+    acessosUsadosHoje: resultado.acessosUsadosHoje,
+    acessosRestantesHoje: resultado.acessosRestantesHoje,
     commandId: resultado.catraca?.commandId || resultado.catraca?.command?.id || null,
     logId: resultado.log?.id || null
   });

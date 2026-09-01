@@ -552,6 +552,14 @@ function dashboardFimMesAnteriorISO(dataIso) {
         );
       }
 
+      if (liberacao.autorizado === false) {
+        throw new Error(
+          liberacao.motivo ||
+          liberacao.mensagem ||
+          "O Access Engine bloqueou a entrada."
+        );
+      }
+
       const commandId =
         liberacao?.catraca?.commandId ||
         liberacao?.catraca?.command?.id ||
@@ -599,6 +607,10 @@ function dashboardFimMesAnteriorISO(dataIso) {
               tipo:
                 "Check-in Inteligente Musculação",
               usuario: "Recepção",
+              accessLogId:
+                liberacao?.log?.id || "",
+              comandoCatracaId:
+                commandId,
               observacao:
                 `Entrada física confirmada pelo Fusion Access Agent. commandId=${commandId}`
             })

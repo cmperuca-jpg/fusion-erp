@@ -70,6 +70,7 @@ const {
 const {
   avaliarAcesso,
   liberarRemoto,
+  obterEstadoEntradaSaidaAluno,
   statusAgenteAcesso
 } = await import('../modules/access-engine/access-engine.service.mjs');
 const { executarComTenant } = await import('../modules/core/persistence/tenant-context.mjs');
@@ -96,7 +97,7 @@ try {
     identificador: 'MAT-INT-01',
     dispositivoId: 'catraca-piloto-01',
     direcao: 'entrada',
-    origem: 'teste-integrado-access'
+    origem: 'dashboard-entrada-rapida'
   }));
 
   assert.equal(avaliacao.ok, true);
@@ -150,6 +151,75 @@ try {
   assert.equal(logs[0]?.autorizado, true);
   assert.equal(logs[0]?.catraca?.commandId, claimed.id);
   assert.equal(presentes.some(item => item.alunoId === 'aluno-integrado-01'), true);
+
+  const estadoAposEntrada = await executarComTenant(
+    'academia-piloto',
+    () => obterEstadoEntradaSaidaAluno('aluno-integrado-01')
+  );
+
+  assert.equal(estadoAposEntrada.presente, true);
+  assert.equal(estadoAposEntrada.proximaDirecao, 'saida');
+
+  // Mesmo que o cadastro fique bloqueado depois da entrada,
+  // a saida fisica precisa continuar permitida.
+  const alunosAntesSaida = JSON.parse(
+    await fs.readFile(path.join(data, 'alunos.json'), 'utf8')
+  );
+
+  alunosAntesSaida[0] = {
+    ...alunosAntesSaida[0],
+    status: 'Bloqueado',
+    bloqueado: true
+  };
+
+  await fs.writeFile(
+    path.join(data, 'alunos.json'),
+    JSON.stringify(alunosAntesSaida, null, 2),
+    'utf8'
+  );
+
+  const saidaAutomatica = await executarComTenant(
+    'academia-piloto',
+    () => liberarRemoto({
+      alunoId: 'aluno-integrado-01',
+      alunoNome: 'Aluno Integrado',
+      direcao: 'auto',
+      origem: 'biometria-fs80'
+    })
+  );
+
+  assert.equal(saidaAutomatica.autorizado, true);
+  assert.equal(saidaAutomatica.direcao, 'saida');
+  assert.equal(saidaAutomatica.presenteAntes, true);
+  assert.equal(saidaAutomatica.presenteDepois, false);
+  assert.equal(saidaAutomatica.proximaDirecao, 'entrada');
+
+  const checkinsDepoisSaida = JSON.parse(
+    await fs.readFile(path.join(data, 'checkin.json'), 'utf8')
+  );
+
+  const checkinsAluno = checkinsDepoisSaida.filter(
+    item => item.alunoId === 'aluno-integrado-01'
+  );
+
+  assert.equal(checkinsAluno.length, 1);
+  assert.ok(checkinsAluno[0]?.horaEntrada);
+  assert.ok(checkinsAluno[0]?.horaSaida);
+
+  const frontendCheckin = await fs.readFile(
+    path.join(raiz, 'public/pages/checkin/checkin.js'),
+    'utf8'
+  );
+
+  assert.equal(
+    frontendCheckin.includes('/api/henry7x/liberar'),
+    false
+  );
+
+  assert.equal(
+    frontendCheckin.includes('/api/access-engine/liberar-remoto'),
+    true
+  );
 
   await assert.rejects(
     () => executarComTenant('outra-academia', () => liberarRemoto({ alunoId: 'aluno-integrado-01' })),

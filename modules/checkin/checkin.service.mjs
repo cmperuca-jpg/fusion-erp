@@ -788,8 +788,24 @@ export async function registrarCheckinMusculacaoInteligente(dados = {}) {
   const servico = autorizacao.servicoContratado || {};
   const registros = await listarCheckins();
 
+  const accessLogId = texto(
+    dados.accessLogId ||
+    dados.access_log_id
+  );
+
+  const existenteIndex = accessLogId
+    ? registros.findIndex(item =>
+        texto(item.accessLogId) === accessLogId
+      )
+    : -1;
+
+  const existente = existenteIndex >= 0
+    ? registros[existenteIndex]
+    : null;
+
   const registro = {
-    id: gerarId(),
+    ...(existente || {}),
+    id: existente?.id || gerarId(),
     alunoId: aluno.id || contrato.alunoId || matricula.alunoId || dados.alunoId || dados.aluno_id || "",
     aluno: aluno.nome || contrato.aluno || matricula.aluno || dados.aluno || "",
     matricula: matricula.numero || contrato.numeroMatricula || dados.matricula || "",
@@ -807,8 +823,11 @@ export async function registrarCheckinMusculacaoInteligente(dados = {}) {
     servicoId: servico.servicoId || "",
     servico: servico.servico || servico.nome || "Musculação",
     data: dados.data || hojeISO(),
-    horaEntrada: dados.horaEntrada || horaAtual(),
-    horaSaida: "",
+    horaEntrada:
+      existente?.horaEntrada ||
+      dados.horaEntrada ||
+      horaAtual(),
+    horaSaida: existente?.horaSaida || "",
     tipo: dados.tipo || "Check-in Inteligente Musculação",
     status: autorizacao.autorizado ? "Liberado" : "Bloqueado",
     motivoBloqueio: autorizacao.autorizado ? "" : autorizacao.motivo,
@@ -816,9 +835,22 @@ export async function registrarCheckinMusculacaoInteligente(dados = {}) {
     origem: "fusion_erp_2_6_a",
     treinoId: autorizacao.treinoAtivo?.id || "",
     treinoNome: autorizacao.treinoAtivo?.nome || autorizacao.treinoAtivo?.objetivo || "",
-    execucaoTreinoId: "",
-    frequenciaId: "",
-    criadoEm: new Date().toISOString(),
+    execucaoTreinoId:
+      existente?.execucaoTreinoId || "",
+    frequenciaId:
+      existente?.frequenciaId || "",
+    accessLogId:
+      accessLogId ||
+      texto(existente?.accessLogId),
+    comandoCatracaId:
+      texto(
+        dados.comandoCatracaId ||
+        dados.commandId ||
+        existente?.comandoCatracaId
+      ),
+    criadoEm:
+      existente?.criadoEm ||
+      new Date().toISOString(),
     atualizadoEm: new Date().toISOString()
   };
 
@@ -841,7 +873,12 @@ export async function registrarCheckinMusculacaoInteligente(dados = {}) {
     }
   }
 
-  registros.push(registro);
+  if (existenteIndex >= 0) {
+    registros[existenteIndex] = registro;
+  } else {
+    registros.push(registro);
+  }
+
   await salvarCheckins(registros);
 
   return {

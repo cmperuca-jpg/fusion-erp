@@ -128,7 +128,7 @@ async function sendIdentifiedOnline(evt, skipCooldown = false) {
       headers: agentHeaders(),
       body: JSON.stringify({
         alunoId,
-        direcao: 'entrada',
+        direcao: 'auto',
         sensor: 'futronic-fs80',
         farNumerico: evt?.farNumerico ?? null
       }),

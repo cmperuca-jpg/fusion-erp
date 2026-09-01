@@ -501,69 +501,167 @@
 
     async function entradaRapida() {
       const codigo = els.entradaCodigo.value.trim();
+
       if (!codigo) {
         alert("Informe uma matrícula, CPF, QR Code ou código do aluno.");
         return;
       }
 
+      /*
+       * 1. Somente autorizacao.
+       * Nenhuma presenca e gravada nesta etapa.
+       */
+      const parametros = new URLSearchParams({ codigo });
+
+      const respostaAutorizacao = await fetch(
+        `${API}/musculacao/autorizacao?${parametros.toString()}`
+      );
+
+      const autorizacao = await respostaAutorizacao
+        .json()
+        .catch(() => ({}));
+
+      if (!respostaAutorizacao.ok || autorizacao.ok === false) {
+        alert(
+          autorizacao.mensagem ||
+          autorizacao.motivo ||
+          "Não foi possível validar o acesso."
+        );
+        return;
+      }
+
+      const nome = autorizacao?.aluno?.nome || codigo;
+      const alunoId = autorizacao?.aluno?.id || "";
+
+      if (!autorizacao.autorizado) {
+        alert(
+          `Bloqueado: ${nome}\n${
+            autorizacao.motivo ||
+            autorizacao.mensagem ||
+            "Acesso não autorizado."
+          }`
+        );
+        return;
+      }
+
+      /*
+       * 2. Mesmo Access Engine usado pelo Dashboard e biometria.
+       */
+      let acesso = null;
+
+      try {
+        const respostaCatraca = await fetch(
+          "/api/access-engine/liberar-remoto",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              pessoaTipo: "aluno",
+              alunoId,
+              alunoNome: nome,
+              direcao: "entrada",
+              origem: "checkin-entrada-rapida",
+              motivo: "checkin-musculacao-autorizado"
+            })
+          }
+        );
+
+        acesso = await respostaCatraca
+          .json()
+          .catch(() => ({}));
+
+        if (
+          !respostaCatraca.ok ||
+          acesso.ok === false ||
+          acesso.autorizado === false
+        ) {
+          throw new Error(
+            acesso.motivo ||
+            acesso.mensagem ||
+            acesso.erro ||
+            "A catraca não foi autorizada."
+          );
+        }
+      } catch (erro) {
+        console.error(
+          "Falha na liberação unificada da catraca:",
+          erro
+        );
+
+        alert(
+          `Não foi possível liberar a catraca para ${nome}.\n${
+            erro?.message || "Falha de comunicação."
+          }`
+        );
+        return;
+      }
+
+      const accessLogId = acesso?.log?.id || "";
+      const commandId =
+        acesso?.catraca?.commandId ||
+        acesso?.catraca?.command?.id ||
+        "";
+
+      if (!accessLogId) {
+        alert(
+          "A catraca foi autorizada, mas o servidor não retornou o evento de acesso."
+        );
+        await carregarRegistros();
+        return;
+      }
+
+      /*
+       * 3. O Access Engine ja criou o evento e a presenca.
+       * Este POST apenas complementa o MESMO registro com os dados
+       * da musculacao, frequencia e treino.
+       */
       const resp = await fetch(`${API}/musculacao`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json"
+        },
         body: JSON.stringify({
           codigo,
           data: hojeISO(),
           horaEntrada: horaAtual(),
           tipo: "Check-in Inteligente Musculação",
-          usuario: "Recepção"
+          usuario: "Recepção",
+          accessLogId,
+          comandoCatracaId: commandId,
+          observacao:
+            `Acesso criado pelo Access Engine. accessLogId=${accessLogId}` +
+            (commandId ? ` commandId=${commandId}` : "")
         })
       });
 
-      const json = await resp.json().catch(() => ({}));
+      const json = await resp
+        .json()
+        .catch(() => ({}));
+
       if (!resp.ok || !json.ok) {
-        alert(json.mensagem || "Não foi possível registrar o check-in inteligente.");
+        alert(
+          `Acesso registrado para ${nome}, mas não foi possível complementar os dados do check-in.`
+        );
+
+        els.entradaCodigo.value = "";
+        await carregarRegistros();
         return;
       }
 
-      let catraca = null;
-      if (json.autorizado) {
-        try {
-          const respostaCatraca = await fetch("/api/henry7x/liberar", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              host: "10.0.0.236",
-              port: 3000,
-              tempoSegundos: 5,
-              alunoId: json?.registro?.alunoId || "",
-              alunoNome: json?.registro?.aluno || codigo,
-              origem: "checkin"
-            })
-          });
+      const treino = json?.execucaoTreino?.id
+        ? `\nTreino iniciado: ${json.execucaoTreino.id}`
+        : "";
 
-          catraca = await respostaCatraca.json().catch(() => ({}));
-          if (!respostaCatraca.ok || catraca.ok === false || catraca.respostasValidas === false) {
-            throw new Error(catraca.mensagem || catraca.erro || "A catraca não confirmou a liberação.");
-          }
-        } catch (erroCatraca) {
-          console.error("Check-in aprovado, mas houve falha ao liberar a catraca:", erroCatraca);
-          catraca = {
-            ok: false,
-            erro: erroCatraca?.message || "Falha de comunicação com a catraca."
-          };
-        }
-      }
+      const frequencia = json?.frequencia?.id
+        ? `\nFrequência: ${json.frequencia.id}`
+        : "";
 
-      const nome = json?.registro?.aluno || codigo;
-      const status = json?.status || (json?.autorizado ? "Liberado" : "Bloqueado");
-      const treino = json?.execucaoTreino?.id ? `\nTreino iniciado: ${json.execucaoTreino.id}` : "";
-      const frequencia = json?.frequencia?.id ? `\nFrequência: ${json.frequencia.id}` : "";
-      const resultadoCatraca = !json.autorizado
-        ? ""
-        : catraca?.ok
-          ? "\nCatraca: liberada por 5 segundos."
-          : `\nCatraca: não liberada (${catraca?.erro || "falha desconhecida"}).`;
+      alert(
+        `Liberado: ${nome}\nAcesso registrado pela catraca.${frequencia}${treino}`
+      );
 
-      alert(`${status}: ${nome}\n${json.mensagem || "Check-in processado."}${frequencia}${treino}${resultadoCatraca}`);
       els.entradaCodigo.value = "";
       await carregarRegistros();
     }
