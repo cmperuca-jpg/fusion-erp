@@ -290,11 +290,11 @@ export async function lerJsonDuravel(arquivoOuNome, padrao = []) {
         for (const [id, meta] of normalizacao.cancelados) {
           contexto.mensalidadesCanceladas.set(id, meta);
         }
-      } else {
-        await salvarColecao(colecao, dados, {
-          operacaoId: `integridade-mensalidades-${crypto.randomUUID()}`
-        });
       }
+      // Leitura deve ser semanticamente pura. Fora de uma transação explícita,
+      // a normalização é aplicada apenas em memória para preservar o comportamento
+      // de leitura sem transformar GET/auditoria em operação de escrita. A
+      // persistência da normalização acontece somente em fluxos que já gravam.
     }
   }
 

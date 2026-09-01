@@ -1,6 +1,6 @@
 import { dataLocalISO } from "../core/time/fusion-time.mjs";
 import { lerJsonDuravel, salvarJsonMultiplosAtomico } from "../core/persistence/durable-json.mjs";
-import { persistenciaAtiva, verificarPersistenciaTransacional } from "../core/persistence/collection-store.mjs";
+import { verificarPersistenciaTransacional } from "../core/persistence/collection-store.mjs";
 
 const COL = Object.freeze({
   financeiro: "financeiro.json",
@@ -289,17 +289,21 @@ function vincularMovimento(registros, predicado, movimento) {
   }
 }
 
-async function garantirPersistenciaSupabase(exigirSupabase) {
-  if (!exigirSupabase) return { ok: true, provider: persistenciaAtiva() };
+async function garantirPersistenciaReconciliacao({ permitirJson = false } = {}) {
   const status = await verificarPersistenciaTransacional();
-  if (status.provider !== "supabase") {
-    throw new Error("Reconciliação financeira exige Supabase. Configure SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY e FUSION_DATABASE_PROVIDER=supabase.");
+
+  if (status.provider === "json" && !permitirJson) {
+    throw new Error(
+      "Reconciliação financeira em JSON local exige autorização explícita (--allow-json-local). " +
+      "Em produção, use o provider transacional configurado no ambiente."
+    );
   }
+
   return status;
 }
 
-export async function reconciliarFinanceiroCaixa({ aplicar = false, usuario = "sistema", exigirSupabase = true } = {}) {
-  const persistencia = await garantirPersistenciaSupabase(exigirSupabase);
+export async function reconciliarFinanceiroCaixa({ aplicar = false, usuario = "sistema", permitirJson = false } = {}) {
+  const persistencia = await garantirPersistenciaReconciliacao({ permitirJson });
   const [recibos, itens, financeiro, recebimentos, caixaRaw, auditoriaRaw] = await Promise.all([
     lerJsonDuravel(COL.recibos, []),
     lerJsonDuravel(COL.itens, []),
