@@ -896,13 +896,68 @@ export async function atualizarMensalidade(id, dados = {}) {
     throw erro;
   }
 
+  const registroAtual = mensalidades[idx];
+  const valorFoiInformado = dados.valor !== undefined;
+  const novoValor = valorFoiInformado
+    ? numero(dados.valor)
+    : numero(registroAtual.valor, 0);
+  const statusAtual = statusInterno(registroAtual.status);
+  const valorJaPago = numero(
+    registroAtual.valorPago ?? registroAtual.valorRecebido ?? 0,
+    0
+  );
+
+  if (valorFoiInformado && novoValor <= 0) {
+    const erro = new Error('O valor da mensalidade deve ser maior que zero.');
+    erro.status = 400;
+    throw erro;
+  }
+
+  if (
+    valorFoiInformado &&
+    (['pago', 'parcial', 'cancelado'].includes(statusAtual) || valorJaPago > 0)
+  ) {
+    const erro = new Error(
+      'Não é possível alterar o valor de mensalidade paga, parcial ou cancelada.'
+    );
+    erro.status = 409;
+    throw erro;
+  }
+
+  const atualizarPrincipal =
+    valorFoiInformado && !ehMatriculaInicial(registroAtual);
+
   const atualizada = {
-    ...mensalidades[idx],
+    ...registroAtual,
     ...dados,
     alunoId,
     vencimento,
     competencia,
-    valor: dados.valor !== undefined ? numero(dados.valor) : numero(mensalidades[idx].valor, 0),
+    valor: novoValor,
+    valorOriginal: atualizarPrincipal
+      ? novoValor
+      : registroAtual.valorOriginal,
+    valorDevido: atualizarPrincipal
+      ? novoValor
+      : registroAtual.valorDevido,
+    valorAtualizado: atualizarPrincipal
+      ? novoValor
+      : registroAtual.valorAtualizado,
+    saldoRestante: atualizarPrincipal
+      ? 0
+      : registroAtual.saldoRestante,
+    valorRestante: atualizarPrincipal
+      ? 0
+      : registroAtual.valorRestante,
+    valorAjustadoAdministrativamente: atualizarPrincipal
+      ? true
+      : registroAtual.valorAjustadoAdministrativamente,
+    valorAnteriorAjusteAdministrativo: atualizarPrincipal
+      ? valorPrincipalMensalidade(registroAtual)
+      : registroAtual.valorAnteriorAjusteAdministrativo,
+    valorAjustadoEm: atualizarPrincipal
+      ? agoraISO()
+      : registroAtual.valorAjustadoEm,
     status: (() => {
       const atual = statusInterno(dados.status ?? mensalidades[idx].status ?? 'aberto');
       if (['pago', 'parcial', 'cancelado'].includes(atual)) return atual;

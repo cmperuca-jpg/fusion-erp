@@ -58,7 +58,7 @@ await fs.writeFile(path.join(dataDir, "mensalidades.json"), JSON.stringify([
   { id: "men_parcial", alunoId: "aluno_parcial", matriculaId: "mat_aluno_parcial", planoId: "plano_mensal", competencia, vencimento: ontem, valor: 65, status: "parcial", valorPago: 20, valorRestante: 45, origem: "mensalidades" },
   { id: "men_pago", alunoId: "aluno_pago", matriculaId: "mat_aluno_pago", planoId: "plano_mensal", competencia, vencimento: ontem, valor: 65, status: "pago", origem: "mensalidades" },
   { id: "men_cancelado", alunoId: "aluno_cancelado", matriculaId: "mat_aluno_cancelado", planoId: "plano_mensal", competencia, vencimento: ontem, valor: 65, status: "cancelado", origem: "mensalidades" },
-  { id: "men_programada", alunoId: "aluno_programada", matriculaId: "mat_aluno_programada", planoId: "plano_mensal", competencia, vencimento: amanha, valor: 65, status: "programada", origem: "mensalidades" }
+  { id: "men_programada", alunoId: "aluno_programada", matriculaId: "mat_aluno_programada", planoId: "plano_mensal", competencia, vencimento: amanha, valor: 65, valorOriginal: 65, status: "programada", origem: "mensalidades" }
 ]));
 
 process.chdir(temporario);
@@ -81,6 +81,33 @@ try {
   assert.equal(resumo.atrasadas, 1);
   assert.equal(resumo.parciais, 1);
   assert.equal(resumo.recorrentesAbertas, 3);
+
+  const editada = await service.atualizarMensalidade("men_programada", {
+    alunoId: "aluno_programada",
+    vencimento: amanha,
+    valor: 1
+  });
+
+  assert.equal(editada.valor, 1);
+  assert.equal(editada.valorOriginal, 1);
+
+  const programadas = await service.listarMensalidades({
+    status: "programada"
+  });
+  const programadaEditada = programadas.find(
+    (item) => item.id === "men_programada"
+  );
+  assert.equal(programadaEditada.valorBase, 1);
+  assert.equal(programadaEditada.valorAtualizado, 1);
+
+  const financeiroDepois = JSON.parse(
+    await fs.readFile(path.join(dataDir, "financeiro.json"), "utf8")
+  );
+  const tituloEditado = financeiroDepois.find(
+    (item) => item.mensalidadeId === "men_programada"
+  );
+  assert.equal(tituloEditado.valor, 1);
+  assert.equal(tituloEditado.valorBruto, 1);
 
   console.log(JSON.stringify({ ok: true, totalEmAberto: resumo.total, recorrentesAbertas: resumo.recorrentesAbertas }, null, 2));
 } finally {
