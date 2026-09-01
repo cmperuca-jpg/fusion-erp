@@ -30,7 +30,7 @@
     "test:multiempresa-isolamento": "node scripts/test-multiempresa-isolamento.mjs",
     "test:p0-http-multiempresa": "node scripts/test-p0-http-multiempresa-smoke.mjs",
     "test:regressoes-p0": "node scripts/test-regressoes-p0-fusion.mjs",
-    "test:p0-auditoria": "npm run test:access-agent-auth && npm run test:access-liberacao-integrada && npm run test:multiempresa-isolamento && npm run test:p0-http-multiempresa && npm run test:financeiro && npm run test:financeiro:persistencia && npm run test:mensalidades-em-aberto && npm run test:cobranca-automatica && npm run test:regressoes-p0 && npm run test:p0-jornada-financeiro-acesso && npm run test:aluno-app-acoes && npm run test:aluno-app-frequencia && npm run test:access-frequencia-sync && npm run test:pagamentos-online && npm run test:aluno-app-entrada-saida",
+    "test:p0-auditoria": "npm run test:access-agent-auth && npm run test:access-liberacao-integrada && npm run test:multiempresa-isolamento && npm run test:p0-http-multiempresa && npm run test:financeiro && npm run test:financeiro:persistencia && npm run test:dashboard:corte-financeiro && npm run test:mensalidades-em-aberto && npm run test:cobranca-automatica && npm run test:regressoes-p0 && npm run test:p0-jornada-financeiro-acesso && npm run test:aluno-app-acoes && npm run test:aluno-app-frequencia && npm run test:access-frequencia-sync && npm run test:pagamentos-online && npm run test:aluno-app-entrada-saida",
     "test:observabilidade-webhook": "node scripts/test-observabilidade-webhook.mjs",
     "test:observabilidade": "node scripts/test-observabilidade-http.mjs && node scripts/test-observabilidade-agendador.mjs && node scripts/test-observabilidade-webhook.mjs",
     "test:saas-billing-manual": "node scripts/test-saas-billing-manual.mjs",
@@ -52,7 +52,8 @@
     "test:access-frequencia-sync": "node scripts/test-access-frequencia-sync.mjs",
     "test:pagamentos-online": "node scripts/test-pagamentos-online.mjs",
     "test:aluno-app-entrada-saida": "node scripts/test-aluno-app-entrada-saida.mjs",
-    "test:financeiro:persistencia": "node scripts/test-financeiro-persistencia-segura.mjs"
+    "test:financeiro:persistencia": "node scripts/test-financeiro-persistencia-segura.mjs",
+    "test:dashboard:corte-financeiro": "node scripts/test-dashboard-corte-financeiro-v2.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.53.0",

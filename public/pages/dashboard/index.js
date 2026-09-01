@@ -238,17 +238,65 @@ agendarViradaAgendaDashboard(() =>
   renderAgendaAvaliacoesDashboard(agendaAvaliacoesDashboardAtual)
 );
 
+const DASHBOARD_FINANCEIRO_CORTE_OFICIAL = '2026-09-01';
+const DASHBOARD_TIMEZONE_OPERACIONAL = 'America/Maceio';
+
+function dashboardDataLocalISO(valor = new Date()) {
+  const data = valor instanceof Date ? valor : new Date(valor);
+  if (Number.isNaN(data.getTime())) return '';
+
+  const partes = new Intl.DateTimeFormat('pt-BR', {
+    timeZone: DASHBOARD_TIMEZONE_OPERACIONAL,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).formatToParts(data);
+
+  const mapa = Object.fromEntries(partes.map(parte => [parte.type, parte.value]));
+  return `${mapa.year}-${mapa.month}-${mapa.day}`;
+}
+
+function dashboardInicioMesISO(dataIso) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(String(dataIso || ''))
+    ? `${String(dataIso).slice(0, 7)}-01`
+    : '';
+}
+
+function dashboardFimMesAnteriorISO(dataIso) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(dataIso || ''));
+  if (!match) return '';
+
+  let ano = Number(match[1]);
+  let mes = Number(match[2]) - 1;
+  if (mes === 0) {
+    ano -= 1;
+    mes = 12;
+  }
+
+  const ultimoDia = new Date(Date.UTC(ano, mes, 0)).getUTCDate();
+  return `${String(ano).padStart(4, '0')}-${String(mes).padStart(2, '0')}-${String(ultimoDia).padStart(2, '0')}`;
+}
+
 (async function carregarDashboard() {
-  const hoje = new Date();
-  const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString().slice(0, 10);
-  const hojeIso = hoje.toISOString().slice(0, 10);
-  const fimMesAnterior = new Date(hoje.getFullYear(), hoje.getMonth(), 0).toISOString().slice(0, 10);
+  const hojeIso = dashboardDataLocalISO();
+  const inicioMesCivil = dashboardInicioMesISO(hojeIso);
+  const inicioMes = inicioMesCivil < DASHBOARD_FINANCEIRO_CORTE_OFICIAL
+    ? DASHBOARD_FINANCEIRO_CORTE_OFICIAL
+    : inicioMesCivil;
+  const fimMesAnterior = dashboardFimMesAnteriorISO(hojeIso);
+  const consultaAnterior = fimMesAnterior >= DASHBOARD_FINANCEIRO_CORTE_OFICIAL
+    ? buscarObjeto(
+        `/api/financeiro/relatorios/bi-financeiro?inicio=${DASHBOARD_FINANCEIRO_CORTE_OFICIAL}&fim=${fimMesAnterior}`,
+        'resumo'
+      )
+    : Promise.resolve({});
+
   const [alunos, mensalidadesResumo, avaliacoes, financeiroResumo, financeiroAnteriorResumo, agendaAvaliacoes] = await Promise.all([
     buscar('/api/alunos', 'alunos'),
     buscarObjeto('/api/mensalidades/resumo'),
     buscar('/api/avaliacoes', 'avaliacoes'),
     buscarObjeto(`/api/financeiro/relatorios/bi-financeiro?inicio=${inicioMes}&fim=${hojeIso}`, 'resumo'),
-    buscarObjeto(`/api/financeiro/relatorios/bi-financeiro?inicio=2000-01-01&fim=${fimMesAnterior}`, 'resumo'),
+    consultaAnterior,
     buscar('/api/agenda-avaliacoes', 'agenda')
   ]);
 
@@ -263,8 +311,11 @@ agendarViradaAgendaDashboard(() =>
   const recebidoMes = Number(financeiroResumo.recebido ?? financeiroResumo.receitasLiquidasPagas ?? 0);
   const saidoMes = Number(financeiroResumo.pago ?? financeiroResumo.despesasPagas ?? 0);
   const resultadoMes = Number(financeiroResumo.saldoRealizado ?? (recebidoMes - saidoMes));
-  const fechamentoAnterior = Number(financeiroAnteriorResumo.saldoRealizado ?? 0);
-  const disponivelAgora = Number((fechamentoAnterior + resultadoMes).toFixed(2));
+  // Acumulado oficial = resultado realizado desde o corte contábil.
+  // Não é saldo de caixa/banco e não inclui saldo de abertura, que deve ser
+  // informado separadamente quando houver valor real auditado.
+  const acumuladoAnterior = Number(financeiroAnteriorResumo.saldoRealizado ?? 0);
+  const acumuladoOficial = Number((acumuladoAnterior + resultadoMes).toFixed(2));
 
   setText('kpiAlunos', ativos);
   setText('kpiAbertas', abertas);
@@ -288,8 +339,8 @@ agendarViradaAgendaDashboard(() =>
   setText('kpiReceita', moeda(recebidoMes));
   setText('kpiSaidoMes', moeda(saidoMes));
   setText('kpiResultadoMes', moeda(resultadoMes));
-  setText('kpiDisponivelAgora', moeda(disponivelAgora));
-  setText('kpiFechamentoAnterior', moeda(fechamentoAnterior));
+  setText('kpiDisponivelAgora', moeda(acumuladoOficial));
+  setText('kpiFechamentoAnterior', moeda(acumuladoAnterior));
 
   renderAgendaAvaliacoesDashboard(agendaAvaliacoes);
 })();
