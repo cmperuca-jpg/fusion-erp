@@ -257,49 +257,13 @@ async function resolverExternalReference(ref = "") {
   const parsed = parseExternalReference(referencia);
   if (!parsed?.tenantId) return parsed;
 
-  if (!supabaseConfigurado()) return parsed;
-
-  const tabela = texto(
-    process.env.FUSION_SUPABASE_RECORDS_TABLE || "fusion_v3_records"
-  ) || "fusion_v3_records";
-
-  const supabase = obterSupabaseAdmin();
-  const { data, error } = await supabase
-    .from(tabela)
-    .select("tenant_id,record_id")
-    .eq("collection", COL_PAGAMENTOS)
-    .contains("payload", { externalReference: referencia })
-    .limit(2);
-
-  if (error) {
-    throw erro(
-      "Não foi possível resolver o tenant da referência de pagamento.",
-      503,
-      "PAYMENT_EXTERNAL_REFERENCE_LOOKUP_FAILED"
-    );
-  }
-
-  const tenants = [...new Set(
-    (data || [])
-      .map((item) => normalizarTenantId(item.tenant_id))
-      .filter(Boolean)
-  )];
-
-  if (tenants.length > 1) {
-    throw erro(
-      "Referência de pagamento associada a mais de um tenant.",
-      409,
-      "PAYMENT_EXTERNAL_REFERENCE_AMBIGUOUS"
-    );
-  }
-
-  if (tenants.length === 1) {
-    return {
-      ...parsed,
-      tenantId: tenants[0]
-    };
-  }
-
+  // A referência InfinitePay é criada pelo próprio Fusion e já contém
+  // o tenant completo. A autoridade operacional do ERP é o PostgreSQL
+  // local; o webhook não pode depender da disponibilidade do Supabase.
+  //
+  // Após entrar no tenant, o fluxo ainda exige a existência do registro
+  // local de pagamentos_online e valida a transação diretamente na
+  // InfinitePay antes de executar qualquer baixa.
   return parsed;
 }
 

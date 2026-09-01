@@ -127,7 +127,10 @@ for (const marcador of [
 assert.ok(!conteudo.service.includes("parteReferencia(normalizarTenantId(tenantId), 20)"));
 assert.ok(conteudo.service.includes("const tenantCompleto = normalizarTenantId(tenantId);"));
 assert.ok(conteudo.service.includes("async function resolverExternalReference"));
-assert.ok(conteudo.service.includes('.contains("payload", { externalReference: referencia })'));
+// O webhook InfinitePay nao pode depender do Supabase para resolver o tenant.
+// O order_nsu gerado pelo Fusion ja carrega o tenant completo.
+assert.ok(!conteudo.service.includes('.contains("payload", { externalReference: referencia })'));
+assert.ok(!conteudo.service.includes('"PAYMENT_EXTERNAL_REFERENCE_LOOKUP_FAILED"'));
 assert.ok(conteudo.service.includes("await resolverExternalReference(referencia)"));
 assert.ok(conteudo.service.includes("await resolverExternalReference(pagamento.externalReference)"));
 assert.ok(conteudo.service.includes("await resolverExternalReference(orderNsu)"));
